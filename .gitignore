@@ -22,6 +22,10 @@ desktop.ini
 *.swo
 *~
 
+# Temporary scratch files
+.tmp_*
+*.tmp
+
 # Local env / secrets
 .env
 .env.local
