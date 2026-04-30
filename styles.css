@@ -12721,3 +12721,361 @@ body[data-role="admin"].dreams-on textarea:focus-visible,
 body[data-role="admin"].dreams-on select:focus-visible {
   box-shadow: 0 0 0 2px var(--admin-accent) !important;
 }
+
+/* =========================================================
+   ADMIN VISUAL UPGRADES (data-driven dengan animation):
+     1. Section dividers (uppercase label + horizontal line)
+     2. Panel accent stripe (color-coded per tone, gradient flow animation)
+     3. KPI sparkline (animated stroke draw-in)
+     4. Avatar stack (stagger fade-in)
+     5. Activity timeline (vertical line + pulsing colored dots)
+     6. KPI number flash highlight saat update
+   ========================================================= */
+
+/* 1. SECTION DIVIDER */
+body[data-role="admin"] .admin-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 14px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .25em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+body[data-role="admin"] .admin-section-divider::before,
+body[data-role="admin"] .admin-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(48, 54, 79, .14), transparent);
+}
+body[data-role="admin"] .admin-section-divider span {
+  padding: 4px 12px;
+  border: 1px solid rgba(48, 54, 79, .14);
+  border-radius: 100px;
+  background: var(--surface);
+  color: var(--admin-accent-2);
+}
+body[data-theme="light"][data-role="admin"] .admin-section-divider::before,
+body[data-theme="light"][data-role="admin"] .admin-section-divider::after {
+  background: linear-gradient(90deg, transparent, rgba(48, 54, 79, .22), transparent);
+}
+
+/* 2. PANEL ACCENT STRIPE — left edge color-coded per tone, gradient flow */
+body[data-role="admin"] .admin-panel[data-panel-tone] {
+  position: relative;
+  overflow: hidden;
+}
+body[data-role="admin"] .admin-panel[data-panel-tone]::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent-stripe-c1, #ACBAC4), var(--accent-stripe-c2, #30364F), var(--accent-stripe-c1, #ACBAC4));
+  background-size: 100% 200%;
+  animation: stripeFlow 6s linear infinite;
+  border-radius: 0 2px 2px 0;
+  z-index: 1;
+  display: block !important;
+}
+@keyframes stripeFlow {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 0% 200%; }
+}
+body[data-role="admin"] .admin-panel[data-panel-tone="live"]      { --accent-stripe-c1: #ef4444; --accent-stripe-c2: #DCD3A9; }
+body[data-role="admin"] .admin-panel[data-panel-tone="recent"]    { --accent-stripe-c1: #ACBAC4; --accent-stripe-c2: #30364F; }
+body[data-role="admin"] .admin-panel[data-panel-tone="users"]     { --accent-stripe-c1: #DCD3A9; --accent-stripe-c2: #ACBAC4; }
+body[data-role="admin"] .admin-panel[data-panel-tone="creators"]  { --accent-stripe-c1: #30364F; --accent-stripe-c2: #DCD3A9; }
+body[data-role="admin"] .admin-panel[data-panel-tone="performance"] { --accent-stripe-c1: #DCD3A9; --accent-stripe-c2: #30364F; }
+body.reduced-motion[data-role="admin"] .admin-panel[data-panel-tone]::before { animation: none; }
+body[data-role="admin"] .admin-panel[data-panel-tone] > * { position: relative; z-index: 2; }
+body[data-role="admin"] .admin-panel[data-panel-tone] { padding-left: 22px; }
+
+/* 3. KPI SPARKLINE */
+body[data-role="admin"] .admin-kpi-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 12px 14px;
+  align-items: start;
+}
+body[data-role="admin"] .admin-kpi-card .admin-kpi-icon { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+body[data-role="admin"] .admin-kpi-card .kpi-content { grid-column: 2; grid-row: 1; }
+body[data-role="admin"] .admin-kpi-card .kpi-sparkline {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  height: 36px;
+  display: block;
+  margin-top: 4px;
+  pointer-events: none;
+  overflow: visible;
+}
+body[data-role="admin"] .kpi-sparkline path.spark-fill {
+  fill: var(--admin-accent-2);
+  opacity: .12;
+}
+body[data-role="admin"] .kpi-sparkline path.spark-line {
+  fill: none;
+  stroke: var(--admin-accent-2);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(48, 54, 79, .35));
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: sparkDraw 1.2s var(--ease) forwards;
+}
+@keyframes sparkDraw { to { stroke-dashoffset: 0; } }
+body[data-role="admin"] .kpi-sparkline circle.spark-dot {
+  fill: var(--admin-accent-2);
+  filter: drop-shadow(0 0 4px rgba(48, 54, 79, .55));
+  opacity: 0;
+  animation: sparkDotIn .3s var(--ease) 1s forwards;
+}
+@keyframes sparkDotIn { to { opacity: 1; } }
+body[data-role="admin"] .admin-kpi-card:hover .kpi-sparkline path.spark-line {
+  stroke: var(--admin-accent);
+  filter: drop-shadow(0 0 4px rgba(172, 186, 196, .65));
+}
+body.reduced-motion[data-role="admin"] .kpi-sparkline path.spark-line { animation: none; stroke-dashoffset: 0; }
+body.reduced-motion[data-role="admin"] .kpi-sparkline circle.spark-dot { animation: none; opacity: 1; }
+
+/* 4. AVATAR STACK */
+body[data-role="admin"] .admin-avatar-stack {
+  display: flex;
+  align-items: center;
+  margin: -4px 0 12px;
+  min-height: 32px;
+}
+body[data-role="admin"] .admin-avatar-stack:empty { display: none; }
+body[data-role="admin"] .admin-avatar-stack .av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--admin-grad);
+  border: 2px solid var(--bg-elev);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--admin-accent-2);
+  margin-left: -10px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-6px) scale(.85);
+  animation: avatarStackIn .35s var(--ease) forwards;
+  transition: transform .2s var(--ease), z-index 0s;
+  cursor: default;
+}
+body[data-role="admin"] .admin-avatar-stack .av:first-child { margin-left: 0; }
+body[data-role="admin"] .admin-avatar-stack .av img { width: 100%; height: 100%; object-fit: cover; }
+body[data-role="admin"] .admin-avatar-stack .av:nth-child(1) { animation-delay: .05s; }
+body[data-role="admin"] .admin-avatar-stack .av:nth-child(2) { animation-delay: .12s; }
+body[data-role="admin"] .admin-avatar-stack .av:nth-child(3) { animation-delay: .19s; }
+body[data-role="admin"] .admin-avatar-stack .av:nth-child(4) { animation-delay: .26s; }
+body[data-role="admin"] .admin-avatar-stack .av:nth-child(5) { animation-delay: .33s; }
+body[data-role="admin"] .admin-avatar-stack .av:hover {
+  transform: translateY(-3px) scale(1.05);
+  z-index: 5;
+}
+body[data-role="admin"] .admin-avatar-stack .av-more {
+  width: auto;
+  padding: 0 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+@keyframes avatarStackIn { to { opacity: 1; transform: translateX(0) scale(1); } }
+body.reduced-motion[data-role="admin"] .admin-avatar-stack .av { animation: none; opacity: 1; transform: none; }
+
+/* 5. ACTIVITY TIMELINE */
+body[data-role="admin"] .admin-activity-stream {
+  position: relative;
+  padding-left: 18px;
+}
+body[data-role="admin"] .admin-activity-stream::before {
+  content: '';
+  position: absolute;
+  left: 6px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(48, 54, 79, .25) 10%, rgba(48, 54, 79, .25) 90%, transparent);
+  border-radius: 2px;
+}
+body[data-role="admin"] .admin-activity-stream .activity-row {
+  position: relative;
+  padding: 10px 12px 10px 18px;
+}
+body[data-role="admin"] .admin-activity-stream .activity-row::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--admin-accent-2);
+  box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(48, 54, 79, .25);
+  z-index: 1;
+}
+body[data-role="admin"] .admin-activity-stream .activity-row.upload::before { background: #ACBAC4; box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(172, 186, 196, .45); }
+body[data-role="admin"] .admin-activity-stream .activity-row.signup::before { background: #DCD3A9; box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(220, 211, 169, .55); }
+body[data-role="admin"] .admin-activity-stream .activity-row.like::before { background: #ef4444; box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(239, 68, 68, .35); }
+body[data-role="admin"] .admin-activity-stream .activity-row:first-child::before {
+  animation: activityPulse 2s ease-out infinite;
+}
+@keyframes activityPulse {
+  0%   { box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(48, 54, 79, .55); }
+  70%  { box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 12px rgba(48, 54, 79, 0); }
+  100% { box-shadow: 0 0 0 3px var(--bg-elev), 0 0 0 4px rgba(48, 54, 79, .55); }
+}
+body.reduced-motion[data-role="admin"] .admin-activity-stream .activity-row::before { animation: none !important; }
+
+/* 6. KPI count-up flash highlight saat angka berubah */
+body[data-role="admin"] .admin-kpi-card strong.kpi-flash {
+  animation: kpiFlashViz .8s var(--ease);
+}
+@keyframes kpiFlashViz {
+  0%   { color: var(--text); transform: scale(1); }
+  35%  { color: var(--admin-accent); transform: scale(1.06); }
+  100% { color: var(--text); transform: scale(1); }
+}
+body.reduced-motion[data-role="admin"] .admin-kpi-card strong.kpi-flash { animation: none; }
+
+/* =========================================================
+   ADMIN DATA-VIZ EXTRAS — section divider, sparklines,
+   avatar stacks, panel tones. Diaplikasikan ke admin home.
+   ========================================================= */
+
+/* Section divider — heading kecil dengan garis flanking di kiri-kanan */
+.admin-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 4px;
+  position: relative;
+}
+.admin-section-divider::before,
+.admin-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+}
+.admin-section-divider span {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+body[data-role="admin"] .admin-section-divider span {
+  color: var(--admin-accent);
+  border-color: rgba(172, 186, 196, .25);
+  background: rgba(172, 186, 196, .06);
+}
+
+/* KPI sparkline — line + area chart kecil di bagian bawah card.
+   data-points di-set runtime via JS (renderKpiSparkline). */
+.admin-kpi-card { position: relative; overflow: hidden; padding-bottom: 14px; }
+.admin-kpi-card .kpi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kpi-sparkline {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 36px;
+  pointer-events: none;
+  opacity: .85;
+}
+.kpi-sparkline path.area {
+  fill: var(--primary);
+  fill-opacity: .14;
+}
+.kpi-sparkline path.line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 240;
+  stroke-dashoffset: 240;
+  animation: sparklineDraw 1.2s var(--ease) forwards;
+}
+@keyframes sparklineDraw {
+  to { stroke-dashoffset: 0; }
+}
+body.reduced-motion .kpi-sparkline path.line { animation: none; stroke-dashoffset: 0; }
+
+body[data-role="admin"] .kpi-sparkline path.area  { fill: var(--admin-accent); fill-opacity: .12; }
+body[data-role="admin"] .kpi-sparkline path.line  { stroke: var(--admin-accent); }
+
+/* Per-KPI tone — variasi warna sparkline biar tidak monoton */
+.admin-kpi-card[data-kpi="users"]  .kpi-sparkline path.area  { fill: #5b8def; fill-opacity: .14; }
+.admin-kpi-card[data-kpi="users"]  .kpi-sparkline path.line  { stroke: #5b8def; }
+.admin-kpi-card[data-kpi="videos"] .kpi-sparkline path.area  { fill: #d4574d; fill-opacity: .14; }
+.admin-kpi-card[data-kpi="videos"] .kpi-sparkline path.line  { stroke: #d4574d; }
+.admin-kpi-card[data-kpi="views"]  .kpi-sparkline path.area  { fill: #10b981; fill-opacity: .14; }
+.admin-kpi-card[data-kpi="views"]  .kpi-sparkline path.line  { stroke: #10b981; }
+
+/* Avatar stack — overlapping circle row untuk preview cepat user/creator */
+.admin-avatar-stack {
+  display: flex;
+  align-items: center;
+  margin: 10px 0 12px;
+  min-height: 28px;
+}
+.admin-avatar-stack:empty { display: none; }
+.admin-avatar-stack > .ast-item {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  display: grid; place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  border: 2px solid var(--bg-elev);
+  margin-left: -8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s var(--ease);
+}
+.admin-avatar-stack > .ast-item:first-child { margin-left: 0; }
+.admin-avatar-stack > .ast-item:hover { transform: translateY(-2px) scale(1.06); z-index: 2; }
+.admin-avatar-stack > .ast-item img { width: 100%; height: 100%; object-fit: cover; }
+.admin-avatar-stack > .ast-more {
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 800;
+}
+body[data-role="admin"] .admin-avatar-stack > .ast-item {
+  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
+}
+
+/* Panel tone — accent border-left & subtle gradient overlay sesuai tema panel.
+   Hanya menyentuh admin-panel di view admin home. */
+.admin-panel[data-panel-tone] { position: relative; }
+.admin-panel[data-panel-tone]::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  pointer-events: none;
+}
+.admin-panel[data-panel-tone="live"]::after        { background: #d4574d; }   /* red-orange untuk live */
+.admin-panel[data-panel-tone="recent"]::after      { background: #5b8def; }   /* blue untuk recent videos */
+.admin-panel[data-panel-tone="users"]::after       { background: #10b981; }   /* green untuk users */
+.admin-panel[data-panel-tone="creators"]::after    { background: #DCD3A9; }   /* khaki untuk creators */
+.admin-panel[data-panel-tone="performance"]::after { background: #ACBAC4; }   /* slate untuk performance */

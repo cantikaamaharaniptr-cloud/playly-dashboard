@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260430-light-blue-dominant" />
+  <link rel="stylesheet" href="styles.css?v=20260430-data-viz-anim" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -566,36 +566,45 @@
           </div>
         </div>
 
+        <!-- Section divider — KPI overview -->
+        <div class="admin-section-divider"><span>OVERVIEW · KPI</span></div>
+
         <div class="admin-kpi">
-          <div class="admin-kpi-card" data-popup="kpi-users" role="button" tabindex="0" title="Detail Total Users">
+          <div class="admin-kpi-card" data-popup="kpi-users" role="button" tabindex="0" title="Detail Total Users" data-kpi="users">
             <div class="admin-kpi-icon users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="3"/><path d="M22 19a5 5 0 0 0-7-4.5"/></svg></div>
-            <div>
+            <div class="kpi-content">
               <small>Total Users</small>
-              <strong id="kpiUsers">0</strong>
+              <strong id="kpiUsers" data-kpi-num="0">0</strong>
               <span class="kpi-trend up">↑ 12.4%</span>
             </div>
+            <svg class="kpi-sparkline" id="kpiUsersSpark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
           </div>
-          <div class="admin-kpi-card" data-popup="kpi-videos" role="button" tabindex="0" title="Detail Total Videos">
+          <div class="admin-kpi-card" data-popup="kpi-videos" role="button" tabindex="0" title="Detail Total Videos" data-kpi="videos">
             <div class="admin-kpi-icon videos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg></div>
-            <div>
+            <div class="kpi-content">
               <small>Total Videos</small>
-              <strong id="kpiVideos">0</strong>
+              <strong id="kpiVideos" data-kpi-num="0">0</strong>
               <span class="kpi-trend up">↑ 8.7%</span>
             </div>
+            <svg class="kpi-sparkline" id="kpiVideosSpark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
           </div>
-          <div class="admin-kpi-card" data-popup="kpi-views" role="button" tabindex="0" title="Detail Views Bulan Ini">
+          <div class="admin-kpi-card" data-popup="kpi-views" role="button" tabindex="0" title="Detail Views Bulan Ini" data-kpi="views">
             <div class="admin-kpi-icon views"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
-            <div>
+            <div class="kpi-content">
               <small>Views Bulan Ini</small>
-              <strong id="kpiViews">2.4M</strong>
+              <strong id="kpiViews" data-kpi-num="2400000">2.4M</strong>
               <span class="kpi-trend up">↑ 23.1%</span>
             </div>
+            <svg class="kpi-sparkline" id="kpiViewsSpark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
           </div>
         </div>
 
+        <!-- Section divider — Live activity -->
+        <div class="admin-section-divider"><span>LIVE · REAL-TIME</span></div>
+
         <!-- 1. LIVE USER ACTIVITY — feed real-time semua aksi user (bukan admin) -->
-        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 18px">
-          <div class="admin-panel">
+        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
+          <div class="admin-panel" data-panel-tone="live">
             <div class="admin-panel-head">
               <h3>🔴 Live Activity User</h3>
               <span style="font-size:11px;color:var(--muted)">Real-time event signup, upload, like dari seluruh user</span>
@@ -604,34 +613,43 @@
           </div>
         </div>
 
+        <!-- Section divider — Recent -->
+        <div class="admin-section-divider"><span>RECENT · HARI INI</span></div>
+
         <!-- 2. RECENT — Video baru, User baru, Top Creators (3 col) -->
-        <div class="admin-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px">
-          <div class="admin-panel">
+        <div class="admin-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px">
+          <div class="admin-panel" data-panel-tone="recent">
             <div class="admin-panel-head">
               <h3>🎬 Video Baru di-upload</h3>
               <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>
             </div>
+            <div class="admin-avatar-stack" id="adminRecentVideosStack" aria-hidden="true"></div>
             <div id="adminRecentVideosLive" class="admin-list-rows"></div>
           </div>
-          <div class="admin-panel">
+          <div class="admin-panel" data-panel-tone="users">
             <div class="admin-panel-head">
               <h3>👋 User Baru</h3>
               <button class="btn ghost sm" data-jump="admin-users">Lihat semua</button>
             </div>
+            <div class="admin-avatar-stack" id="adminRecentUsersStack" aria-hidden="true"></div>
             <div id="adminRecentUsersLive" class="admin-list-rows"></div>
           </div>
-          <div class="admin-panel">
+          <div class="admin-panel" data-panel-tone="creators">
             <div class="admin-panel-head">
               <h3>👑 Top Creators</h3>
               <button class="btn ghost sm" data-jump="admin-users">Lihat semua</button>
             </div>
+            <div class="admin-avatar-stack" id="adminTopCreatorsStack" aria-hidden="true"></div>
             <div id="adminTopCreatorsLive" class="admin-list-rows"></div>
           </div>
         </div>
 
+        <!-- Section divider — Performance -->
+        <div class="admin-section-divider"><span>PERFORMANCE · LEADERBOARD</span></div>
+
         <!-- 3. TOP PERFORMING — Combined Most Viewed + Most Liked (single panel, both metrics per row) -->
-        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 16px">
-          <div class="admin-panel">
+        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
+          <div class="admin-panel" data-panel-tone="performance">
             <div class="admin-panel-head">
               <h3>🏆 Top Performing Videos</h3>
               <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>

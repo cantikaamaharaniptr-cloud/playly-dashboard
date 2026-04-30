@@ -4703,6 +4703,147 @@ function renderAdminKPI() {
   const trendEls = $$(".admin-kpi-card .kpi-trend");
   const trendTxt = m.newUsers24h > 0 ? `↑ ${m.newUsers24h} baru 24j` : `0 baru 24j`;
   if (trendEls[0]) trendEls[0].textContent = trendTxt;
+
+  // Sparkline + avatar stack — data-viz extras
+  renderKpiSparklines(m);
+  renderAdminAvatarStacks(m);
+}
+
+/* ---------- KPI sparklines ---------- */
+function _bucketByDay(items, getTs, days = 14) {
+  const buckets = new Array(days).fill(0);
+  const dayMs = 86400000;
+  const now = Date.now();
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  for (const it of items) {
+    const ts = Number(getTs(it) || 0);
+    if (!ts) continue;
+    const dayDiff = Math.floor((startOfToday - new Date(ts).setHours(0, 0, 0, 0)) / dayMs);
+    if (dayDiff >= 0 && dayDiff < days) {
+      buckets[days - 1 - dayDiff]++;
+    }
+  }
+  return buckets;
+}
+
+// Build cumulative trend (running total) from per-day deltas — kasih efek "growth line"
+function _toCumulative(deltas, currentTotal) {
+  // Backfill: estimate cumulative end = currentTotal, work backward
+  const total = deltas.reduce((s, n) => s + n, 0);
+  const baseline = Math.max(0, currentTotal - total);
+  let acc = baseline;
+  return deltas.map(d => (acc += d));
+}
+
+function _sparkPath(values, w = 120, h = 36, pad = 2) {
+  if (!values.length) return { line: "", area: "" };
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = (w - pad * 2) / Math.max(1, values.length - 1);
+  const points = values.map((v, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return [x, y];
+  });
+  // Smooth bezier-ish line via simple curve (not catmull-rom, keep small)
+  let line = `M ${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+  for (let i = 1; i < points.length; i++) {
+    const [px, py] = points[i - 1];
+    const [x, y] = points[i];
+    const cx = (px + x) / 2;
+    line += ` Q ${cx.toFixed(1)} ${py.toFixed(1)}, ${cx.toFixed(1)} ${((py + y) / 2).toFixed(1)}`;
+    line += ` T ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  const area = `${line} L ${points[points.length - 1][0].toFixed(1)} ${h} L ${points[0][0].toFixed(1)} ${h} Z`;
+  return { line, area };
+}
+
+function renderKpiSparklines(m) {
+  const bucketsUsers  = _toCumulative(_bucketByDay(m.accounts || [], a => new Date(a.joinedAt || 0).getTime()),  (m.accounts || []).length);
+  const bucketsVideos = _toCumulative(_bucketByDay(m.videos || [],   v => v.uploadedAt || v.ts || 0),             (m.videos || []).length);
+  // Views: derive from videos uploadedAt, weight by view count — synthetic but plausible
+  const totalViews = m.totalViews || 0;
+  const bucketsViews = _toCumulative(
+    _bucketByDay(m.videos || [], v => v.uploadedAt || v.ts || 0).map((c, i, arr) => Math.round(c * (totalViews / Math.max(1, (m.videos || []).length)))),
+    totalViews
+  );
+
+  _drawSpark("#kpiUsersSpark",  bucketsUsers);
+  _drawSpark("#kpiVideosSpark", bucketsVideos);
+  _drawSpark("#kpiViewsSpark",  bucketsViews);
+}
+
+function _drawSpark(selector, values) {
+  const svg = document.querySelector(selector);
+  if (!svg) return;
+  // Pastikan ada minimal 2 point — kalau data kosong, isi flat baseline
+  if (values.length < 2) values = [0, 0, 0, 0, 0, 0, 0];
+  const { line, area } = _sparkPath(values);
+  svg.innerHTML = `<path class="area" d="${area}"/><path class="line" d="${line}"/>`;
+  // Restart line draw animation
+  const lineEl = svg.querySelector("path.line");
+  if (lineEl) {
+    lineEl.style.animation = "none";
+    void lineEl.getBBox();
+    lineEl.style.animation = "";
+  }
+}
+
+/* ---------- Avatar stacks (recent videos / users / top creators) ---------- */
+function renderAdminAvatarStacks(m) {
+  const accounts = m.accounts || [];
+  const videos = m.videos || [];
+
+  // Recent videos — initials creator dari 5 video terbaru
+  const recentVids = [...videos].sort((a, b) => (b.uploadedAt || b.ts || 0) - (a.uploadedAt || a.ts || 0)).slice(0, 5);
+  _renderAvatarStack("#adminRecentVideosStack", recentVids.map(v => ({
+    label: (v.creator || "U"),
+    avatar: _findAvatarByUsername(v.creator, accounts)
+  })), videos.length);
+
+  // Recent users — 5 user terbaru
+  const recentUsers = [...accounts].sort((a, b) => new Date(b.joinedAt || 0) - new Date(a.joinedAt || 0)).slice(0, 5);
+  _renderAvatarStack("#adminRecentUsersStack", recentUsers.map(a => ({
+    label: a.name || a.username || "U",
+    avatar: a.avatar
+  })), accounts.length);
+
+  // Top creators — by total views
+  const creatorMap = {};
+  videos.forEach(v => {
+    if (!v.creator) return;
+    creatorMap[v.creator] = creatorMap[v.creator] || { name: v.creator, views: 0 };
+    creatorMap[v.creator].views += v.viewsNum || 0;
+  });
+  const topCreators = Object.values(creatorMap).sort((a, b) => b.views - a.views).slice(0, 5);
+  _renderAvatarStack("#adminTopCreatorsStack", topCreators.map(c => ({
+    label: c.name,
+    avatar: _findAvatarByUsername(c.name, accounts)
+  })), Object.keys(creatorMap).length);
+}
+
+function _findAvatarByUsername(uname, accounts) {
+  if (!uname || !accounts) return null;
+  const a = accounts.find(x => String(x.username || "").toLowerCase() === String(uname).toLowerCase());
+  return a?.avatar || null;
+}
+
+function _renderAvatarStack(selector, items, total) {
+  const wrap = document.querySelector(selector);
+  if (!wrap) return;
+  if (!items.length) { wrap.innerHTML = ""; return; }
+  const visible = items.slice(0, 4);
+  const more = Math.max(0, total - visible.length);
+  const html = visible.map(it => {
+    const init = String(it.label || "U")
+      .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    if (it.avatar) {
+      return `<div class="ast-item"><img src="${escapeHtml(it.avatar)}" alt=""/></div>`;
+    }
+    return `<div class="ast-item">${escapeHtml(init)}</div>`;
+  }).join("") + (more > 0 ? `<div class="ast-item ast-more">+${more}</div>` : "");
+  wrap.innerHTML = html;
 }
 
 let lastFeedTopId = null;
