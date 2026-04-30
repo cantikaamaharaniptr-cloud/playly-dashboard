@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Playly Embed</title>
+  <meta name="robots" content="noindex"/>
+  <link rel="preconnect" href="https://ocsonstwwdnwjmhojntf.supabase.co" crossorigin/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      color: #f1e4d6;
+      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+    .player {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      background: #000;
+    }
+    video {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+    .state {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(135deg, #2a1418, #0c0305);
+      z-index: 2;
+    }
+    .state[hidden] { display: none; }
+    .state .icon { font-size: 40px; margin-bottom: 8px; opacity: 0.7; }
+    .state h2 { font-size: 14px; margin-bottom: 4px; }
+    .state p { font-size: 11.5px; color: #bfae9e; max-width: 320px; line-height: 1.5; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.12);
+      border-top-color: #C7B7A3;
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Watermark Playly kecil di pojok kanan-atas — branding ringan saat di-embed */
+    .wm {
+      position: absolute;
+      top: 10px; right: 12px;
+      z-index: 3;
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f1e4d6;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+      opacity: 0.85;
+      transition: opacity .2s;
+    }
+    .wm:hover { opacity: 1; }
+    .wm-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FED7B8, #9a3a44);
+    }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <div class="state" id="loadingState">
+      <div>
+        <div class="spinner"></div>
+        <h2>Memuat...</h2>
+      </div>
+    </div>
+    <div class="state" id="errorState" hidden>
+      <div>
+        <div class="icon">⚠️</div>
+        <h2 id="errTitle">Video tidak tersedia</h2>
+        <p id="errMsg">Link mungkin salah atau video sudah dihapus.</p>
+      </div>
+    </div>
+    <video id="videoEl" controls playsinline preload="metadata" hidden></video>
+  </div>
+
+  <a class="wm" id="wmLink" href="/" target="_blank" rel="noopener" title="Powered by Playly">
+    <span class="wm-dot"></span>
+    Playly
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      "use strict";
+      const SB_URL = "https://ocsonstwwdnwjmhojntf.supabase.co";
+      const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jc29uc3R3d2Rud2ptaG9qbnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTk1NjcsImV4cCI6MjA5MjkzNTU2N30.ys8e3cGHOFrp2IONtbzsqRQeehOPfOt4CU3X0hHk6Tc";
+      const BUCKET = "videos";
+
+      const $ = (id) => document.getElementById(id);
+      function showError(title, msg) {
+        $("loadingState").hidden = true;
+        $("errorState").hidden = false;
+        if (title) $("errTitle").textContent = title;
+        if (msg) $("errMsg").textContent = msg;
+      }
+
+      // Vercel rewrite (`/id/:videoId/embed` → `/embed.html?v=:videoId`) hanya jalan
+      // di server-side. URL bar di browser tetap path asli, jadi location.search bisa
+      // kosong. Parse dari pathname dulu, fallback ke query untuk akses langsung
+      // ke /embed.html?v=...
+      function parseIdFromPath() {
+        const parts = location.pathname.split("/").filter(Boolean);
+        if (parts[0] !== "id") return { id: NaN, username: null };
+        let username = null;
+        let id = NaN;
+        for (let i = 1; i < parts.length; i++) {
+          const seg = parts[i];
+          if (seg === "embed") continue;
+          if (/^\d+$/.test(seg)) { id = parseInt(seg, 10); continue; }
+          if (!username) username = seg;
+        }
+        return { id, username };
+      }
+      const params = new URLSearchParams(location.search);
+      const fromPath = parseIdFromPath();
+      const fromQuery = parseInt(params.get("v") || params.get("id") || "", 10);
+      const videoId = Number.isFinite(fromPath.id) ? fromPath.id : fromQuery;
+      // Watermark link → buka halaman watch publik
+      if (videoId) {
+        $("wmLink").href = `/id/${videoId}`;
+      }
+
+      if (!videoId) {
+        showError("Link tidak valid", "Video ID tidak ditemukan.");
+        return;
+      }
+
+      const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+
+      async function findVideoMeta(id) {
+        const { data, error } = await sb
+          .from("kv")
+          .select("key,value")
+          .like("key", "playly-state-%");
+        if (error) return null;
+        for (const row of data || []) {
+          const myVids = row.value && Array.isArray(row.value.myVideos) ? row.value.myVideos : [];
+          const hit = myVids.find((v) => v && v.id === id);
+          if (hit) return { meta: hit, creator: hit.creator || String(row.key).replace("playly-state-", "") };
+        }
+        return null;
+      }
+
+      async function resolveBlobUrl(id) {
+        try {
+          const { data: list } = await sb.storage.from(BUCKET).list("", { search: `${id}.` });
+          const f = (list || []).find((x) => x.name && x.name.startsWith(`${id}.`));
+          if (!f) return null;
+          const SIGNED_TTL = 7200;
+          const { data: signed, error } = await sb.storage
+            .from(BUCKET).createSignedUrl(f.name, SIGNED_TTL);
+          if (!error && signed?.signedUrl) return signed.signedUrl;
+          const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(f.name);
+          return pub?.publicUrl || null;
+        } catch { return null; }
+      }
+
+      (async function load() {
+        try {
+          const found = await findVideoMeta(videoId);
+          let url = null;
+          if (found?.meta?.videoUrl && /^https?:/.test(found.meta.videoUrl)) {
+            url = found.meta.videoUrl;
+          } else {
+            url = await resolveBlobUrl(videoId);
+          }
+          if (!url) {
+            showError("Video belum tersedia", "File video belum di-upload atau sudah dihapus.");
+            return;
+          }
+          if (found?.meta?.title) {
+            document.title = `${found.meta.title} • Playly`;
+          }
+          const v = $("videoEl");
+          v.src = url;
+          v.hidden = false;
+          $("loadingState").hidden = true;
+          // Autoplay muted (browser policy) — kalau di-iframe, suara user-gesture only
+          v.muted = true;
+          v.play().catch(() => { /* user gesture required, OK */ });
+        } catch {
+          showError("Gagal memuat", "Coba refresh atau cek koneksi.");
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>

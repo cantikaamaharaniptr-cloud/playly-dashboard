@@ -1,0 +1,27 @@
+{
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/id/:videoId/embed", "destination": "/embed.html?v=:videoId" },
+    { "source": "/id/:videoId", "destination": "/watch.html?v=:videoId" },
+    { "source": "/id/:username/:videoId/embed", "destination": "/embed.html?v=:videoId&u=:username" },
+    { "source": "/id/:username/:videoId", "destination": "/watch.html?v=:videoId&u=:username" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/watch", "destination": "/watch.html" },
+    { "source": "/embed", "destination": "/embed.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/(.*).(js|css)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}

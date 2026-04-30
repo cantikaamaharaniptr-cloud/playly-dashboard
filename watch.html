@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Playly • Tonton Video</title>
+  <meta name="description" content="Tonton video dari Playly tanpa login."/>
+  <meta name="theme-color" content="#1a0e10"/>
+  <meta property="og:type" content="video.other"/>
+  <meta property="og:site_name" content="Playly"/>
+  <meta property="og:title" id="ogTitle" content="Playly Video"/>
+  <meta property="og:description" id="ogDesc" content="Tonton video di Playly"/>
+  <link rel="preconnect" href="https://ocsonstwwdnwjmhojntf.supabase.co" crossorigin/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a0e10;
+      --bg-elev: #2a1418;
+      --surface: #371b20;
+      --border: rgba(255, 200, 170, 0.12);
+      --text: #f1e4d6;
+      --muted: #bfae9e;
+      --primary: #C7B7A3;
+      --grad: linear-gradient(135deg, #6D2932, #C7B7A3);
+    }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26, 14, 16, 0.9);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--grad);
+      display: grid; place-items: center;
+      font-weight: 800; color: #1a0e10; font-size: 18px;
+    }
+    .brand strong { font-size: 16px; letter-spacing: -0.3px; }
+    .brand small { display: block; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .open-app {
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: var(--grad);
+      color: #1a0e10;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      border: 0;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .open-app:hover { transform: translateY(-1px); }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .video-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+    .video-wrap video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: #000;
+    }
+    .state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #2a1418, #1a0e10);
+    }
+    .state[hidden] { display: none; }
+    .state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.7; }
+    .state h2 { font-size: 18px; margin-bottom: 6px; }
+    .state p { font-size: 13px; color: var(--muted); max-width: 360px; line-height: 1.5; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .meta {
+      margin-top: 18px;
+      padding: 18px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .meta h1 {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .creator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .creator .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--grad);
+      display: grid; place-items: center;
+      color: #1a0e10;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .creator b { font-size: 14px; }
+    .creator small { display: block; color: var(--muted); font-size: 11.5px; }
+    .desc {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .footer-cta {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-align: center;
+    }
+    .footer-cta p { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .footer-cta a {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 10px;
+      background: var(--grad);
+      color: #1a0e10;
+      font-weight: 700;
+      font-size: 13.5px;
+      text-decoration: none;
+    }
+
+    /* === ADS: Pre-roll overlay (di atas video) === */
+    .preroll-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: #000;
+      display: grid;
+      place-items: center;
+    }
+    .preroll-overlay[hidden] { display: none; }
+    .preroll-overlay video,
+    .preroll-overlay img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+    .preroll-overlay img[hidden],
+    .preroll-overlay video[hidden] { display: none; }
+    /* Click-through layer: invisible link di atas media buat klik → buka linkUrl */
+    .preroll-clickarea {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      cursor: pointer;
+    }
+    .preroll-clickarea[hidden] { display: none; }
+    .preroll-info {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      z-index: 6;
+      letter-spacing: 0.2px;
+    }
+    .preroll-tag {
+      background: linear-gradient(135deg, #6D2932, #C7B7A3);
+      color: #1a0e10;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .preroll-info button {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .preroll-info button:hover { background: rgba(255, 255, 255, 0.25); }
+    .preroll-unmute {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      z-index: 6;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+    .preroll-unmute[hidden] { display: none; }
+
+    /* === ADS: Banner overlay (kanan-bawah video) === */
+    .banner-overlay {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 4;
+      max-width: 280px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      animation: bannerIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .banner-overlay[hidden] { display: none; }
+    @keyframes bannerIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .banner-overlay a, .banner-overlay > img {
+      display: block;
+      width: 100%;
+      height: auto;
+      cursor: pointer;
+    }
+    .banner-overlay img { display: block; width: 100%; height: auto; }
+    .banner-close {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      backdrop-filter: blur(6px);
+    }
+    .banner-close:hover { background: rgba(0, 0, 0, 0.85); }
+    .banner-tag {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 12px 14px; }
+      .brand strong { font-size: 14px; }
+      .brand-logo { width: 32px; height: 32px; font-size: 16px; }
+      .container { padding: 12px; }
+      .meta { padding: 14px; border-radius: 12px; }
+      .meta h1 { font-size: 17px; }
+      .banner-overlay { max-width: 200px; bottom: 10px; right: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" style="text-decoration:none;color:inherit">
+      <span class="brand-logo">P</span>
+      <div>
+        <strong>Playly.</strong>
+        <small>Video Platform</small>
+      </div>
+    </a>
+    <a class="open-app" href="/" id="openAppBtn">Buka Aplikasi</a>
+  </header>
+
+  <main class="container">
+    <div class="video-wrap">
+      <div class="state" id="loadingState">
+        <div>
+          <div class="spinner"></div>
+          <h2>Memuat video...</h2>
+          <p>Sebentar, kami sedang ambil video dari cloud.</p>
+        </div>
+      </div>
+      <div class="state" id="errorState" hidden>
+        <div>
+          <div class="icon">⚠️</div>
+          <h2 id="errTitle">Video tidak ditemukan</h2>
+          <p id="errMsg">Link mungkin salah, video sudah dihapus, atau belum di-upload ke cloud.</p>
+        </div>
+      </div>
+      <video id="videoEl" controls playsinline preload="metadata" hidden></video>
+      <!-- Pre-roll overlay (sponsor/iklan sebelum video utama) -->
+      <div class="preroll-overlay" id="prerollOverlay" hidden>
+        <video id="prerollVideo" playsinline hidden></video>
+        <img id="prerollImage" alt="Iklan" hidden/>
+        <a class="preroll-clickarea" id="prerollClick" target="_blank" rel="noopener nofollow" hidden></a>
+        <div class="preroll-info">
+          <span class="preroll-tag">IKLAN</span>
+          <span><span id="prerollIdx">1</span>/<span id="prerollTotal">2</span></span>
+          <span id="prerollCountdown"></span>
+          <button id="prerollSkip" type="button" hidden>Lewati ▶</button>
+        </div>
+        <button class="preroll-unmute" id="prerollUnmute" type="button" hidden>🔊 Aktifkan suara</button>
+      </div>
+      <!-- Banner iklan kanan-bawah -->
+      <div class="banner-overlay" id="bannerOverlay" hidden>
+        <span class="banner-tag">Iklan</span>
+        <a id="bannerLink" target="_blank" rel="noopener nofollow"><img id="bannerImg" alt="Banner iklan"/></a>
+        <button class="banner-close" id="bannerClose" type="button" aria-label="Tutup">✕</button>
+      </div>
+    </div>
+
+    <div class="meta" id="metaBox" hidden>
+      <h1 id="videoTitle">—</h1>
+      <div class="creator">
+        <div class="avatar" id="creatorInit">—</div>
+        <div>
+          <b id="creatorName">—</b>
+          <small id="videoStats">—</small>
+        </div>
+      </div>
+      <p class="desc" id="videoDesc"></p>
+    </div>
+
+    <div class="footer-cta">
+      <p>Mau upload video atau interaksi sama kreator?</p>
+      <a href="/" id="ctaBtn">Buka Playly →</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      "use strict";
+      const SB_URL = "https://ocsonstwwdnwjmhojntf.supabase.co";
+      const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jc29uc3R3d2Rud2ptaG9qbnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTk1NjcsImV4cCI6MjA5MjkzNTU2N30.ys8e3cGHOFrp2IONtbzsqRQeehOPfOt4CU3X0hHk6Tc";
+      const BUCKET = "videos";
+
+      const $ = (id) => document.getElementById(id);
+      function showError(title, msg) {
+        $("loadingState").hidden = true;
+        $("errorState").hidden = false;
+        if (title) $("errTitle").textContent = title;
+        if (msg) $("errMsg").textContent = msg;
+      }
+      function fmtNum(n) {
+        if (typeof n !== "number") return n || "0";
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
+        return String(n);
+      }
+
+      // Vercel rewrite (`/id/:videoId` → `/watch.html?v=:videoId`) hanya jalan di
+      // server-side. Di browser, location.search sering tetap kosong karena URL bar
+      // menampilkan path asli. Karena itu kita parse videoId dari pathname lebih dulu,
+      // baru fallback ke query string untuk akses langsung ke /watch.html?v=...
+      function parseIdFromPath() {
+        const parts = location.pathname.split("/").filter(Boolean);
+        // /id/:videoId | /id/:videoId/embed | /id/:username/:videoId | /id/:username/:videoId/embed
+        if (parts[0] !== "id") return { id: NaN, username: null };
+        let username = null;
+        let id = NaN;
+        for (let i = 1; i < parts.length; i++) {
+          const seg = parts[i];
+          if (seg === "embed") continue;
+          if (/^\d+$/.test(seg)) { id = parseInt(seg, 10); continue; }
+          if (!username) username = seg;
+        }
+        return { id, username };
+      }
+      const params = new URLSearchParams(location.search);
+      const fromPath = parseIdFromPath();
+      const fromQuery = parseInt(params.get("v") || params.get("id") || "", 10);
+      const videoId = Number.isFinite(fromPath.id) ? fromPath.id : fromQuery;
+      const videoUsername = fromPath.username || params.get("u") || null;
+
+      // Update CTA links: bawa video id sebagai query string supaya setelah
+      // user login dari auth screen, dashboard auto-open video itu.
+      // Tidak pakai `#video=` lagi karena legacy redirect script bakal mantulin
+      // user balik ke /watch (loop).
+      if (videoId) {
+        const deep = `/?v=${videoId}`;
+        $("openAppBtn").href = deep;
+        $("ctaBtn").href = deep;
+      }
+
+      if (!videoId) {
+        showError("Link tidak valid", "Video ID tidak ditemukan di URL.");
+        return;
+      }
+
+      const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+
+      // 1) Cari metadata video: scan semua `playly-state-*` di kv → temukan myVideos.id
+      async function findVideoMeta(id) {
+        const { data, error } = await sb
+          .from("kv")
+          .select("key,value")
+          .like("key", "playly-state-%");
+        if (error) return null;
+        for (const row of data || []) {
+          const myVids = row.value && Array.isArray(row.value.myVideos) ? row.value.myVideos : [];
+          const hit = myVids.find((v) => v && v.id === id);
+          if (hit) {
+            const username = String(row.key).replace("playly-state-", "");
+            return { meta: hit, creator: hit.creator || username };
+          }
+        }
+        return null;
+      }
+
+      // 2) Resolve URL video di bucket Supabase Storage (`videos/{id}.{mp4|webm|mov}`)
+      //    Pakai signed URL: tiap akses URL beda + auto-expire 2 jam (anti-bajak,
+      //    link tidak bisa di-hotlink permanen). Fallback ke public URL kalau
+      //    bucket tidak support signed (misal bucket public-only / RLS off).
+      async function resolveBlobUrl(id) {
+        try {
+          const { data: list } = await sb.storage.from(BUCKET).list("", { search: `${id}.` });
+          const f = (list || []).find((x) => x.name && x.name.startsWith(`${id}.`));
+          if (!f) return null;
+          const SIGNED_TTL = 7200; // 2 jam
+          const { data: signed, error: signErr } = await sb.storage
+            .from(BUCKET).createSignedUrl(f.name, SIGNED_TTL);
+          if (!signErr && signed?.signedUrl) return signed.signedUrl;
+          const { data } = sb.storage.from(BUCKET).getPublicUrl(f.name);
+          return data?.publicUrl || null;
+        } catch {
+          return null;
+        }
+      }
+
+      function renderMeta(meta, creator) {
+        $("videoTitle").textContent = meta.title || "Video";
+        $("creatorName").textContent = "@" + creator;
+        const init = String(creator || "U").slice(0, 2).toUpperCase();
+        $("creatorInit").textContent = init;
+        const stats = [];
+        if (meta.views) stats.push(meta.views + " views");
+        else if (typeof meta.viewsNum === "number") stats.push(fmtNum(meta.viewsNum) + " views");
+        if (meta.duration) stats.push(meta.duration);
+        if (meta.category) stats.push(meta.category);
+        $("videoStats").textContent = stats.join(" • ") || "—";
+        const descEl = $("videoDesc");
+        if (meta.desc) descEl.textContent = meta.desc;
+        else descEl.style.display = "none";
+        $("metaBox").hidden = false;
+        // Update OG / title
+        document.title = `${meta.title} • @${creator} — Playly`;
+        const og = $("ogTitle"); if (og) og.setAttribute("content", `${meta.title} • @${creator}`);
+        const od = $("ogDesc"); if (od && meta.desc) od.setAttribute("content", String(meta.desc).slice(0, 200));
+      }
+
+      // === ADS: fetch config dari Supabase kv (admin set via Ad Manager dashboard) ===
+      async function fetchAdConfig() {
+        try {
+          const { data, error } = await sb
+            .from("kv")
+            .select("value")
+            .eq("key", "playly-ad-config")
+            .maybeSingle();
+          if (error) return null;
+          return data?.value || null;
+        } catch { return null; }
+      }
+
+      // Pilih max N preroll item — sesuai rotation (random / sequential).
+      // Pre-roll bisa berupa video (videoUrl) atau gambar (imageUrl).
+      function pickPrerolls(cfg, max) {
+        const items = (cfg?.preroll?.items || []).filter(it => {
+          if (!it.enabled) return false;
+          if (it.mediaType === "image") return !!it.imageUrl;
+          return !!it.videoUrl;
+        });
+        if (!items.length) return [];
+        const rotation = cfg?.preroll?.rotation || "random";
+        if (rotation === "random") {
+          const shuffled = [...items].sort(() => Math.random() - 0.5);
+          return shuffled.slice(0, max);
+        }
+        return items.slice(0, max);
+      }
+
+      // Pilih satu banner item — sesuai rotation.
+      function pickBanner(cfg) {
+        const items = (cfg?.banner?.items || []).filter(it => it.enabled && it.imageUrl);
+        if (!items.length) return null;
+        const rotation = cfg?.banner?.rotation || "random";
+        if (rotation === "random") return items[Math.floor(Math.random() * items.length)];
+        return items[0];
+      }
+
+      function playPrerollSequence(items, onDone) {
+        if (!items.length) { onDone(); return; }
+        const overlay = $("prerollOverlay");
+        const v = $("prerollVideo");
+        const img = $("prerollImage");
+        const click = $("prerollClick");
+        const skipBtn = $("prerollSkip");
+        const unmuteBtn = $("prerollUnmute");
+        const countdown = $("prerollCountdown");
+        const idxEl = $("prerollIdx");
+        const totalEl = $("prerollTotal");
+        totalEl.textContent = items.length;
+        let cur = 0;
+        let skipTimer = null;
+        let imageTimer = null;
+
+        function clearTimers() {
+          if (skipTimer) { clearInterval(skipTimer); skipTimer = null; }
+          if (imageTimer) { clearTimeout(imageTimer); imageTimer = null; }
+        }
+
+        function setupSkipCountdown(item, onAvailable) {
+          const skippable = item.skippable !== false;
+          let remaining = Math.max(0, item.skipAfterSec || 0);
+          if (skippable && remaining > 0) {
+            countdown.textContent = `Lewati setelah ${remaining}s`;
+            skipTimer = setInterval(() => {
+              remaining--;
+              if (remaining <= 0) {
+                clearInterval(skipTimer); skipTimer = null;
+                countdown.textContent = "";
+                skipBtn.hidden = false;
+                onAvailable && onAvailable();
+              } else {
+                countdown.textContent = `Lewati setelah ${remaining}s`;
+              }
+            }, 1000);
+          } else if (skippable) {
+            countdown.textContent = "";
+            skipBtn.hidden = false;
+            onAvailable && onAvailable();
+          } else {
+            countdown.textContent = "";
+            skipBtn.hidden = true;
+          }
+        }
+
+        function setupClickThrough(item) {
+          if (item.linkUrl) {
+            click.href = item.linkUrl;
+            click.hidden = false;
+          } else {
+            click.removeAttribute("href");
+            click.hidden = true;
+          }
+        }
+
+        function playNext() {
+          clearTimers();
+          if (cur >= items.length) {
+            overlay.hidden = true;
+            v.pause();
+            v.removeAttribute("src");
+            v.load();
+            v.hidden = true;
+            img.hidden = true;
+            img.removeAttribute("src");
+            click.hidden = true;
+            onDone();
+            return;
+          }
+          const item = items[cur];
+          const isImage = item.mediaType === "image";
+          idxEl.textContent = cur + 1;
+          skipBtn.hidden = true;
+          unmuteBtn.hidden = true;
+          overlay.hidden = false;
+
+          if (isImage) {
+            // Mode gambar: tampilkan <img>, auto-advance setelah durationSec.
+            // Tidak ada skip button — user bisa klik image untuk buka linkUrl
+            // di tab baru, dan iklan auto-lanjut ke item berikutnya saat durasi habis.
+            v.pause();
+            v.hidden = true;
+            v.removeAttribute("src");
+            v.load();
+            img.src = item.imageUrl;
+            img.hidden = false;
+            setupClickThrough(item);
+            // Hide skip controls untuk image
+            skipBtn.hidden = true;
+            countdown.textContent = "";
+            const dur = Math.max(1, item.durationSec || 5) * 1000;
+            imageTimer = setTimeout(() => { cur++; playNext(); }, dur);
+          } else {
+            // Mode video: pakai <video>
+            img.hidden = true;
+            img.removeAttribute("src");
+            v.hidden = false;
+            v.src = item.videoUrl;
+            v.muted = true; // Browser autoplay policy: harus muted dulu
+            v.play().then(() => {
+              v.muted = false;
+              v.play().catch(() => {
+                v.muted = true;
+                v.play().catch(() => {});
+                unmuteBtn.hidden = false;
+              });
+            }).catch(() => { /* autoplay blocked total, jarang */ });
+            setupClickThrough(item);
+            setupSkipCountdown(item);
+            v.onended = () => { cur++; playNext(); };
+          }
+        }
+
+        skipBtn.onclick = () => { cur++; playNext(); };
+        unmuteBtn.onclick = () => {
+          v.muted = false;
+          v.play().catch(() => {});
+          unmuteBtn.hidden = true;
+        };
+
+        playNext();
+      }
+
+      function showBanner(item) {
+        if (!item) return;
+        const overlay = $("bannerOverlay");
+        const img = $("bannerImg");
+        const link = $("bannerLink");
+        const close = $("bannerClose");
+        img.src = item.imageUrl;
+        if (item.linkUrl) {
+          link.href = item.linkUrl;
+          link.style.pointerEvents = "auto";
+        } else {
+          link.removeAttribute("href");
+          link.style.pointerEvents = "none";
+        }
+        close.style.display = item.closable === false ? "none" : "";
+        close.onclick = () => { overlay.hidden = true; };
+        const delay = Math.max(0, (item.showAfterSec || 0) * 1000);
+        setTimeout(() => { overlay.hidden = false; }, delay);
+      }
+
+      (async function load() {
+        try {
+          // Fetch metadata video & ad config paralel
+          const adCfgPromise = fetchAdConfig();
+          const found = await findVideoMeta(videoId);
+          if (!found) {
+            showError("Video tidak ditemukan", "Video ID tidak dikenali. Mungkin sudah dihapus atau belum di-publish.");
+            return;
+          }
+          renderMeta(found.meta, found.creator);
+
+          // Sumber video: prioritas `videoUrl` di metadata (kalau https), lalu cari di bucket
+          let url = null;
+          if (found.meta.videoUrl && /^https?:/.test(found.meta.videoUrl)) {
+            url = found.meta.videoUrl;
+          } else {
+            url = await resolveBlobUrl(videoId);
+          }
+          if (!url) {
+            showError("Video belum tersedia", "File video belum di-upload ke cloud, jadi belum bisa diputar tanpa login.");
+            return;
+          }
+
+          const v = $("videoEl");
+          v.src = url;
+
+          // Tunggu ad config (max 2 detik — kalau lambat, skip iklan dan langsung putar)
+          const adCfg = await Promise.race([
+            adCfgPromise,
+            new Promise(r => setTimeout(() => r(null), 2000))
+          ]);
+
+          $("loadingState").hidden = true;
+
+          const prerolls = pickPrerolls(adCfg, 2);
+          const banner = pickBanner(adCfg);
+
+          function startMain() {
+            v.hidden = false;
+            v.muted = true;
+            v.play().catch(() => {});
+            if (banner) showBanner(banner);
+          }
+
+          if (prerolls.length) {
+            playPrerollSequence(prerolls, startMain);
+          } else {
+            startMain();
+          }
+        } catch (e) {
+          console.warn(e);
+          showError("Gagal memuat video", "Coba refresh halaman atau periksa koneksi internet.");
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
