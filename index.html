@@ -2042,41 +2042,49 @@
           </div>
         </div>
         <div class="settings-grid">
-          <!-- Platform Control -->
-          <div class="card settings-card-control" data-super-admin-only>
-            <h3>🛠️ Kontrol Platform</h3>
-            <p class="muted" style="font-size:12.5px; margin-bottom:10px">Berlaku untuk seluruh user.</p>
-            <div class="toggle-list">
-              <label class="tog">
-                <span>Maintenance mode<small class="muted-mini" style="display:block;margin-top:2px">User non-admin diblokir akses</small></span>
-                <input type="checkbox" data-platform="maintenance"/><i></i>
-              </label>
-              <label class="tog">
-                <span>Registrasi terbuka<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user baru daftar</small></span>
-                <input type="checkbox" data-platform="registrationOpen" checked/><i></i>
-              </label>
-              <label class="tog">
-                <span>Upload aktif<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user upload video</small></span>
-                <input type="checkbox" data-platform="uploadEnabled" checked/><i></i>
-              </label>
-              <label class="tog">
-                <span>Komentar aktif<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user berkomentar di video</small></span>
-                <input type="checkbox" data-platform="commentsEnabled" checked/><i></i>
-              </label>
-            </div>
-          </div>
+          <!-- ALL-IN-ONE settings card: Kontrol Platform + Notifikasi + Bahasa
+               + Keamanan Admin digabung jadi 1 card dengan divider antar
+               section, supaya tidak ada ruang kosong antar kolom.
+               Buat Admin Baru tetap kartu terpisah di bawah. -->
+          <div class="card settings-card-security settings-card-all">
 
-          <!-- Notifikasi Admin + Bahasa & Region (digabung satu kolom) -->
-          <div class="card settings-card-prefs" data-super-admin-only>
-            <div class="settings-section">
+            <!-- 🛠️ Kontrol Platform -->
+            <div class="settings-section" data-super-admin-only>
+              <h3>🛠️ Kontrol Platform</h3>
+              <p class="muted" style="font-size:12.5px; margin-bottom:10px">Berlaku untuk seluruh user.</p>
+              <div class="toggle-list">
+                <label class="tog">
+                  <span>Maintenance mode<small class="muted-mini" style="display:block;margin-top:2px">User non-admin diblokir akses</small></span>
+                  <input type="checkbox" data-platform="maintenance"/><i></i>
+                </label>
+                <label class="tog">
+                  <span>Registrasi terbuka<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user baru daftar</small></span>
+                  <input type="checkbox" data-platform="registrationOpen" checked/><i></i>
+                </label>
+                <label class="tog">
+                  <span>Upload aktif<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user upload video</small></span>
+                  <input type="checkbox" data-platform="uploadEnabled" checked/><i></i>
+                </label>
+                <label class="tog">
+                  <span>Komentar aktif<small class="muted-mini" style="display:block;margin-top:2px">Izinkan user berkomentar di video</small></span>
+                  <input type="checkbox" data-platform="commentsEnabled" checked/><i></i>
+                </label>
+              </div>
+            </div>
+            <div class="settings-divider" data-super-admin-only></div>
+
+            <!-- 🔔 Notifikasi Admin -->
+            <div class="settings-section" data-super-admin-only>
               <h3>🔔 Notifikasi Admin</h3>
               <div class="toggle-list" style="margin-top:10px">
                 <label class="tog"><span>Alert bug report baru</span><input type="checkbox" data-pref="adminNotif.bugs" checked/><i></i></label>
                 <label class="tog"><span>Alert user baru daftar</span><input type="checkbox" data-pref="adminNotif.newUser"/><i></i></label>
               </div>
             </div>
-            <div class="settings-divider"></div>
-            <div class="settings-section">
+            <div class="settings-divider" data-super-admin-only></div>
+
+            <!-- 🌍 Bahasa & Region -->
+            <div class="settings-section" data-super-admin-only>
               <h3>🌍 Bahasa & Region</h3>
               <div class="upload-form" style="margin-top:10px">
                 <label>Bahasa
@@ -2097,91 +2105,85 @@
                 </label>
               </div>
             </div>
-          </div>
+            <div class="settings-divider" data-super-admin-only></div>
 
-          <!-- Admin Security — di sebelah kanan kolom prefs, span 2 baris supaya
-               tinggi seimbang dengan stack [Kontrol Platform + Notifikasi+Bahasa]. -->
-          <div class="card settings-card-security">
-            <h3>🛡️ Keamanan Admin</h3>
-
-            <!-- Section: Ganti Password -->
+            <!-- 🛡️ Keamanan Admin (header + sub-sections) -->
             <div class="settings-section">
-              <h4 class="settings-subhead">🔑 Ganti Password</h4>
+              <h3>🛡️ Keamanan Admin</h3>
+
+              <!-- 🔑 Ganti Password (semua admin) -->
+              <h4 class="settings-subhead" style="margin-top:14px">🔑 Ganti Password</h4>
               <form class="upload-form security-form-grid" id="adminChangePasswordForm" novalidate>
                 <label>Password Lama<input type="password" name="oldPw" placeholder="Min. 6 karakter" required minlength="6"/></label>
                 <label>Password Baru<input type="password" name="newPw" placeholder="Min. 6 karakter" required minlength="6"/></label>
                 <label>Konfirmasi<input type="password" name="confirmPw" placeholder="Ulangi password baru" required minlength="6"/></label>
                 <button type="submit" class="btn primary" style="align-self:flex-start">Ganti Password Admin</button>
               </form>
-            </div>
 
-            <div class="settings-divider"></div>
+              <div class="settings-divider"></div>
 
-            <!-- Section: Proteksi Login -->
-            <div class="settings-section" data-super-admin-only>
-              <h4 class="settings-subhead">🔒 Proteksi Login</h4>
-              <div class="upload-form">
-                <label>Maks. percobaan login gagal
-                  <select data-pref="adminSafety.maxFailedLogins">
-                    <option value="3">3 kali</option>
-                    <option value="5" selected>5 kali</option>
-                    <option value="10">10 kali</option>
-                    <option value="0">Tidak terbatas</option>
-                  </select>
-                </label>
-                <label>Durasi lockout setelah gagal
-                  <select data-pref="adminSafety.lockoutDuration">
-                    <option value="300">5 menit</option>
-                    <option value="900" selected>15 menit</option>
-                    <option value="1800">30 menit</option>
-                    <option value="3600">1 jam</option>
-                  </select>
-                </label>
+              <!-- 🔒 Proteksi Login (super-admin only) -->
+              <div data-super-admin-only>
+                <h4 class="settings-subhead">🔒 Proteksi Login</h4>
+                <div class="upload-form">
+                  <label>Maks. percobaan login gagal
+                    <select data-pref="adminSafety.maxFailedLogins">
+                      <option value="3">3 kali</option>
+                      <option value="5" selected>5 kali</option>
+                      <option value="10">10 kali</option>
+                      <option value="0">Tidak terbatas</option>
+                    </select>
+                  </label>
+                  <label>Durasi lockout setelah gagal
+                    <select data-pref="adminSafety.lockoutDuration">
+                      <option value="300">5 menit</option>
+                      <option value="900" selected>15 menit</option>
+                      <option value="1800">30 menit</option>
+                      <option value="3600">1 jam</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="toggle-list" style="margin-top:10px">
+                  <label class="tog">
+                    <span>Notifikasi login dari device baru<small class="muted-mini" style="display:block;margin-top:2px">Beri tahu saat ada login dari browser / lokasi baru</small></span>
+                    <input type="checkbox" data-pref="adminSafety.newDeviceAlert" checked/><i></i>
+                  </label>
+                  <label class="tog">
+                    <span>Re-auth untuk aksi sensitif<small class="muted-mini" style="display:block;margin-top:2px">Minta password lagi sebelum hapus user / bulk takedown</small></span>
+                    <input type="checkbox" data-pref="adminSafety.requireReauth"/><i></i>
+                  </label>
+                </div>
+                <div class="settings-divider"></div>
               </div>
-              <div class="toggle-list" style="margin-top:10px">
-                <label class="tog">
-                  <span>Notifikasi login dari device baru<small class="muted-mini" style="display:block;margin-top:2px">Beri tahu saat ada login dari browser / lokasi baru</small></span>
-                  <input type="checkbox" data-pref="adminSafety.newDeviceAlert" checked/><i></i>
-                </label>
-                <label class="tog">
-                  <span>Re-auth untuk aksi sensitif<small class="muted-mini" style="display:block;margin-top:2px">Minta password lagi sebelum hapus user / bulk takedown</small></span>
-                  <input type="checkbox" data-pref="adminSafety.requireReauth"/><i></i>
-                </label>
+
+              <!-- 📝 Audit & Konfirmasi (super-admin only) -->
+              <div data-super-admin-only>
+                <h4 class="settings-subhead">📝 Audit & Konfirmasi</h4>
+                <div class="toggle-list">
+                  <label class="tog">
+                    <span>Audit log aktif<small class="muted-mini" style="display:block;margin-top:2px">Catat semua aksi admin</small></span>
+                    <input type="checkbox" data-platform="auditLog" checked/><i></i>
+                  </label>
+                  <label class="tog">
+                    <span>Konfirmasi aksi destruktif<small class="muted-mini" style="display:block;margin-top:2px">Selalu minta konfirmasi sebelum hapus / suspend</small></span>
+                    <input type="checkbox" data-pref="adminSafety.confirm" checked/><i></i>
+                  </label>
+                </div>
+                <div class="upload-form" style="margin-top:10px">
+                  <label>Auto-logout idle
+                    <select data-pref="adminSafety.idleLogout">
+                      <option value="0">Tidak pernah</option>
+                      <option value="900">15 menit</option>
+                      <option value="1800" selected>30 menit</option>
+                      <option value="3600">1 jam</option>
+                      <option value="7200">2 jam</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="settings-divider"></div>
               </div>
-            </div>
 
-            <div class="settings-divider"></div>
-
-            <!-- Section: Audit & Konfirmasi -->
-            <div class="settings-section" data-super-admin-only>
-              <h4 class="settings-subhead">📝 Audit & Konfirmasi</h4>
-              <div class="toggle-list">
-                <label class="tog">
-                  <span>Audit log aktif<small class="muted-mini" style="display:block;margin-top:2px">Catat semua aksi admin</small></span>
-                  <input type="checkbox" data-platform="auditLog" checked/><i></i>
-                </label>
-                <label class="tog">
-                  <span>Konfirmasi aksi destruktif<small class="muted-mini" style="display:block;margin-top:2px">Selalu minta konfirmasi sebelum hapus / suspend</small></span>
-                  <input type="checkbox" data-pref="adminSafety.confirm" checked/><i></i>
-                </label>
-              </div>
-              <div class="upload-form" style="margin-top:10px">
-                <label>Auto-logout idle
-                  <select data-pref="adminSafety.idleLogout">
-                    <option value="0">Tidak pernah</option>
-                    <option value="900">15 menit</option>
-                    <option value="1800" selected>30 menit</option>
-                    <option value="3600">1 jam</option>
-                    <option value="7200">2 jam</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div class="settings-divider"></div>
-
-            <!-- Section: Akses & Sesi -->
-            <div class="settings-section">
+              <!-- 🔐 Akses & Sesi (semua admin) -->
               <h4 class="settings-subhead">🔐 Akses & Sesi</h4>
               <div class="toggle-list">
                 <label class="tog">
@@ -2204,10 +2206,11 @@
                 <button type="button" class="btn ghost small settings-logout-btn" id="adminLogoutNowBtn">↗ Logout sesi ini sekarang</button>
               </div>
             </div>
+
           </div>
 
-          <!-- Buat Admin Baru — hanya super admin -->
-          <div class="card" id="createAdminCard" data-super-admin-only style="grid-column:1 / -1">
+          <!-- Buat Admin Baru — kartu terpisah di bawah, hanya super admin -->
+          <div class="card" id="createAdminCard" data-super-admin-only>
             <h3>👑 Buat Admin Baru <span class="role-tag admin" style="font-size:10px;vertical-align:middle;margin-left:6px">SUPER ADMIN</span></h3>
             <p class="muted" style="font-size:12.5px; margin-bottom:10px">Tambah admin baru buat bantu moderasi. Admin yang dibuat di sini bisa langsung login di <code>/admin</code>.</p>
             <form class="upload-form" id="createAdminForm" novalidate autocomplete="off">

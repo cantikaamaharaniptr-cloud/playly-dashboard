@@ -3630,23 +3630,27 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   margin: 0 auto;
   width: 100%;
 }
-.settings-card-control,
-.settings-card-prefs,
-.settings-card-security {
+.settings-card-security,
+.settings-card-all {
   width: 100%;
 }
-.settings-card-prefs .settings-section h3,
-.settings-card-security h3 {
-  font-size: 15px;
+.settings-card-security h3,
+.settings-card-all .settings-section > h3 {
+  font-size: 15.5px;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0 0 8px;
 }
-.settings-card-prefs .settings-divider {
+.settings-card-all > .settings-section:first-child > h3 {
+  margin-top: 0;
+}
+.settings-card-all .settings-divider {
   height: 1px;
   background: var(--border);
   margin: 18px 0;
+  border: none;
 }
 .settings-card-security .security-form-grid {
   display: grid;
