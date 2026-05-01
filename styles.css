@@ -3617,17 +3617,15 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
 }
 @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
-/* === SETTINGS PAGE — single column stack ===
-   Semua kartu full-width berurutan ke bawah, max-width center supaya
-   tidak terlalu lebar di layar besar. Antar fitur dibedakan oleh card
-   boundary (border + bg) + gap. */
+/* === SETTINGS PAGE — multi-column flow inside one big card ===
+   Settings-grid penuh-lebar (no max-width). Settings-card-all pakai
+   CSS multi-column biar 7 section flow ke 2-3 kolom otomatis sesuai
+   lebar viewport, mengisi penuh halaman tanpa ruang kosong. */
 .settings-grid {
   display: flex;
   flex-direction: column;
   gap: 20px;
   align-items: stretch;
-  max-width: 920px;
-  margin: 0 auto;
   width: 100%;
 }
 .settings-card-security,
@@ -3643,14 +3641,35 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   gap: 8px;
   margin: 0 0 8px;
 }
-.settings-card-all > .settings-section:first-child > h3 {
-  margin-top: 0;
-}
 .settings-card-all .settings-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 18px 0;
-  border: none;
+  display: none; /* sections sudah dipisah lewat column gap & margin */
+}
+
+/* Multi-column flow di dalam settings-card-all */
+.settings-card-all {
+  column-count: 2;
+  column-gap: 32px;
+  column-rule: 1px solid var(--border);
+}
+.settings-card-all > .settings-section {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  display: block;
+  margin: 0 0 24px;
+  padding-bottom: 4px;
+}
+.settings-card-all > .settings-section:last-child {
+  margin-bottom: 0;
+}
+@media (min-width: 1500px) {
+  .settings-card-all { column-count: 3; }
+}
+@media (max-width: 900px) {
+  .settings-card-all {
+    column-count: 1;
+    column-rule: none;
+  }
 }
 .settings-card-security .security-form-grid {
   display: grid;
@@ -14378,28 +14397,50 @@ body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target=
   .an-user-3col { grid-template-columns: 1fr; }
 }
 
-/* 6. Settings Admin — single column stack, semua kartu full-width berurutan
-      ke bawah, dibatasi max-width supaya readable di layar besar.
-      Antar kartu dipisah lewat gap + boundary card sendiri (border + bg). */
+/* 6. Settings Admin — full-width settings-grid (no max-width center),
+      isi card pakai multi-column flow. Tidak ada ruang kosong di
+      kanan/kiri. */
 body[data-role="admin"] section[data-view="settings"] .settings-grid {
   display: flex;
   flex-direction: column;
   gap: 18px;
   align-items: stretch;
-  max-width: 920px;
-  margin: 0 auto;
   width: 100%;
+  max-width: none;
+  margin: 0;
 }
 body[data-role="admin"] section[data-view="settings"] .settings-grid > .card {
   grid-column: auto !important;
   grid-row: auto !important;
   width: 100%;
 }
-body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-security {
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-all {
+  column-count: 2;
+  column-gap: 32px;
+  column-rule: 1px solid rgba(164, 192, 224, .18);
   display: block;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-all > .settings-section {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  display: block;
+  margin: 0 0 24px;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-all > .settings-section:last-child {
+  margin-bottom: 0;
 }
 body[data-role="admin"] section[data-view="settings"] .settings-grid #createAdminCard {
   width: 100%;
+}
+@media (min-width: 1500px) {
+  body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-all { column-count: 3; }
+}
+@media (max-width: 900px) {
+  body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-all {
+    column-count: 1;
+    column-rule: none;
+  }
 }
 
 /* Keamanan Admin — kompakkan password fields jadi 1 kolom + auto-logout inline */
