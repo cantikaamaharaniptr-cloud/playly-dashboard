@@ -12843,4 +12843,39 @@ body[data-role="admin"] .admin-section-divider span {
 /* KPI content wrapper — sparkline dihapus per permintaan user, hanya layout flex tetap */
 .admin-kpi-card .kpi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
-/* Avatar stack & panel-tone DIHAPUS per permintaan user (Apr 2026). */
+/* Avatar stack — overlapping circle row di header panel admin home untuk
+   preview cepat creator/user. Panel-tone tetap dihapus per permintaan. */
+.admin-avatar-stack {
+  display: flex;
+  align-items: center;
+  margin: 10px 0 12px;
+  min-height: 28px;
+}
+.admin-avatar-stack:empty { display: none; }
+.admin-avatar-stack > .ast-item {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  display: grid; place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  border: 2px solid var(--bg-elev);
+  margin-left: -8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s var(--ease);
+}
+.admin-avatar-stack > .ast-item:first-child { margin-left: 0; }
+.admin-avatar-stack > .ast-item:hover { transform: translateY(-2px) scale(1.06); z-index: 2; }
+.admin-avatar-stack > .ast-item img { width: 100%; height: 100%; object-fit: cover; }
+.admin-avatar-stack > .ast-more {
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 800;
+}
+body[data-role="admin"] .admin-avatar-stack > .ast-item {
+  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
+}
