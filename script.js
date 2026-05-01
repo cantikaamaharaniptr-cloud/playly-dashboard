@@ -153,19 +153,17 @@ function getPlatformCreators({ activeOnly = false } = {}) {
   return creators;
 }
 
-// ----------------------- ONE-TIME RESET -----------------------
-// Hapus semua data user/admin yang pernah login. Jalan sekali saja per browser.
-(function purgePlaylyDataOnce() {
-  const FLAG = "__playly_reset_v4";
-  if (localStorage.getItem(FLAG)) return;
-  for (let i = localStorage.length - 1; i >= 0; i--) {
-    const k = localStorage.key(i);
-    if (k && (k.startsWith("playly-") || k.startsWith("playly."))) {
-      localStorage.removeItem(k);
-    }
-  }
-  localStorage.setItem(FLAG, "1");
-})();
+// ----------------------- ONE-TIME RESET — DIHAPUS PERMANEN -----------------------
+// Sebelumnya ada IIFE `purgePlaylyDataOnce` yang sekali per-browser menghapus
+// semua key `playly-*` dari localStorage. Bug kritikal: cloud-sync.js men-hijack
+// `localStorage.removeItem` dan otomatis ikut menghapus key dari Supabase.
+// Akibatnya, tiap kali ada visitor baru/incognito buka site, akun & state user
+// dari device lain ikut terhapus dari cloud — termasuk akun yang baru daftar.
+// Itu sebabnya Search User & Komunitas Aktif kelihatan kosong di device user
+// baru. Migrasi reset sudah selesai jadinya kode-nya dihapus permanen.
+//
+// Hapus flag yang mungkin masih nyangkut supaya bersih total.
+try { localStorage.removeItem("__playly_reset_v4"); } catch {}
 
 // ----------------------- ADMIN LOCK -----------------------
 // Hanya email & username ini yang boleh jadi admin. User lain tidak boleh memakainya.
@@ -501,6 +499,19 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderTopPerforming === "function") renderTopPerforming();
   } else if (view === "discover") {
     if (typeof renderFYP === "function") renderFYP();
+  } else if (view === "people") {
+    // Search User: refresh saat ada akun baru / akun lama update profil dari device lain
+    if (typeof renderPeople === "function") renderPeople();
+  } else if (view === "messages") {
+    // Inbox: refresh thread list & re-render chat aktif saat ada pesan masuk dari device/user lain
+    if (state && Array.isArray(state.messages)) {
+      try {
+        const fresh = JSON.parse(localStorage.getItem(`playly-state-${user.username}`) || "{}");
+        if (Array.isArray(fresh.messages)) state.messages = fresh.messages;
+      } catch {}
+    }
+    if (typeof renderMsgList === "function") renderMsgList();
+    if (state?.chatOpen != null && typeof renderChat === "function") renderChat();
   } else if (view === "videos") {
     if (typeof refreshAllVideoGrids === "function") refreshAllVideoGrids();
   } else if (view === "player" && state?.currentVideo) {
@@ -633,7 +644,7 @@ const VIEW_TITLES = {
   home: "Home", videos: "My Library", upload: "Upload", history: "History",
   stats: "Stats", messages: "Messages", activity: "Activity", discover: "Discover", people: "Search User", profile: "Edit Profil", settings: "Settings",
   player: "My Library", "user-profile": "Profil Kreator",
-  "admin-dashboard": "Admin Dashboard", "admin-users": "User Management",
+  "admin-dashboard": "Home", "admin-users": "User Management",
   "admin-videos": "Content Control",
   "admin-comms": "Conversation",
   "admin-comms-broadcasts": "Riwayat Broadcast",
@@ -710,10 +721,13 @@ function ensureAdminGradients() {
   if (!document.getElementById("admin-grad-defs")) {
     const wrap = document.createElement("div");
     wrap.innerHTML = `<svg id="admin-grad-defs" width="0" height="0" style="position:absolute"><defs>
-      <linearGradient id="admin-grad-sb" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#F0EBD3"/>
-        <stop offset="40%" stop-color="#DCD3A9"/>
-        <stop offset="100%" stop-color="#ACBAC4"/>
+      <linearGradient id="admin-grad-sb" x1="10%" y1="0%" x2="90%" y2="100%">
+        <stop offset="0%"   stop-color="#FFFFFF"/>
+        <stop offset="22%"  stop-color="#F1F5F9"/>
+        <stop offset="45%"  stop-color="#CBD5E1"/>
+        <stop offset="65%"  stop-color="#94A3B8"/>
+        <stop offset="85%"  stop-color="#64748B"/>
+        <stop offset="100%" stop-color="#475569"/>
       </linearGradient></defs></svg>`;
     document.body.appendChild(wrap.firstChild);
   }
@@ -741,6 +755,10 @@ function showAuth() {
   // Re-detect admin mode tiap kali auth screen muncul (initial load + setelah logout/switch)
   // — supaya tema admin (caramel/coffee) tetap aktif kalau URL `/?admin=1`.
   applyAuthScreenMode();
+  // Inject gradient SVG defs sekarang juga supaya logo brand di /admin login
+  // langsung kelihatan (sebelumnya cuma di-inject sehabis bootDashboard, jadi
+  // di halaman login P-logo invisible karena ref ke gradient yang belum ada).
+  if (typeof ensureAdminGradients === "function") ensureAdminGradients();
   // Field auth = data sensitif. Jangan biarkan autofill browser nge-isi
   // value saat URL dibuka. Reset dilakukan beberapa kali karena Chrome
   // sering menyelipkan autofill 50-300ms setelah DOM siap.
@@ -981,6 +999,15 @@ function applyUserToUI() {
   const heroH = $(".hero-text h2");
   if (heroH) heroH.innerHTML = `Halo, ${user.name.split(" ")[0]} <span class="wave">👋</span>`;
 
+  // Creator Hub identitas — pakai nama lengkap + @username supaya jelas siapa yang
+  // login. User-only (admin punya hero card sendiri).
+  if (user.role !== "admin") {
+    const heroName = $("#heroHcName");
+    const heroHandle = $("#heroHcHandle");
+    if (heroName) heroName.textContent = user.name || user.username || "Creator";
+    if (heroHandle) heroHandle.textContent = `@${user.username || "user"} · creator hub`;
+  }
+
   // Avatar gambar (kalau ada)
   syncAvatarImages();
 
@@ -991,11 +1018,25 @@ function applyUserToUI() {
 
 // ----------------------- AVATAR (sync gambar di tempat-tempat utama user sendiri) -----------------------
 function syncAvatarImages() {
-  // Cuma ganti avatar user sendiri di sidebar, header chip, dan dropdown
+  // Cuma ganti avatar user sendiri di sidebar, header chip, dropdown, dan
+  // Creator Hub icon (hero card user). Tiap tempat di-treat sebagai container
+  // avatar bulat dengan initial fallback + img overlay.
+  const heroAvatar = $("#heroHcAvatar");
+  if (heroAvatar && user) {
+    const init = (user.name || user.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+    let span = heroAvatar.querySelector(".hc-id-initials");
+    if (!span) {
+      span = document.createElement("span");
+      span.className = "hc-id-initials";
+      heroAvatar.appendChild(span);
+    }
+    span.textContent = init;
+  }
   const targets = [
     ...$$(".sidebar .profile-card .avatar"),
     ...$$(".user-chip .avatar"),
-    ...$$(".pd-header .avatar")
+    ...$$(".pd-header .avatar"),
+    ...(heroAvatar ? [heroAvatar] : [])
   ];
   targets.forEach(el => {
     el.style.position ||= "relative";
@@ -1352,17 +1393,99 @@ function populateSettingsPrefs() {
       el.addEventListener(el.tagName === "SELECT" ? "change" : "change", handler);
     }
   });
+  // Apply visual side effects (CSS class body) saat login — sebelumnya hanya tersimpan
+  // di localStorage tapi tidak ke-apply sampai user toggle manual lagi.
+  applyVisualPrefsOnInit();
+}
+
+function applyVisualPrefsOnInit() {
+  document.body.classList.toggle("reduced-motion", !!getPref("display.reducedMotion", false));
+  document.body.classList.toggle("compact-mode", !!getPref("display.compact", false));
+  document.body.classList.toggle("no-autoplay", !getPref("display.autoplay", true));
 }
 
 function applyPrefSideEffects(key, val) {
-  // Reduced motion → set CSS class on body
+  // Tampilan → CSS class on body
   if (key === "display.reducedMotion") {
     document.body.classList.toggle("reduced-motion", !!val);
+    toast(val ? "✓ Animasi dikurangi" : "✓ Animasi normal", "success");
   }
   if (key === "display.compact") {
     document.body.classList.toggle("compact-mode", !!val);
+    toast(val ? "✓ Compact mode aktif — UI jadi padat" : "✓ Compact mode mati", "success");
   }
-  // Bahasa & timezone hanya disimpan untuk demo (tidak benar-benar mengubah teks)
+  if (key === "display.autoplay") {
+    document.body.classList.toggle("no-autoplay", !val);
+    toast(val ? "✓ Autoplay video aktif" : "✓ Autoplay video dimatikan", "success");
+  }
+
+  // Notifikasi push browser → minta permission saat di-toggle ON
+  if (key === "notif.push" && val && "Notification" in window) {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(p => {
+        if (p === "granted") toast("✓ Push notifikasi diizinkan oleh browser", "success");
+        else if (p === "denied") {
+          toast("⚠️ Browser menolak push — buka site settings untuk izinkan", "warning");
+          setPref("notif.push", false);
+          const cb = document.querySelector('[data-pref="notif.push"]');
+          if (cb) cb.checked = false;
+        }
+      });
+    } else if (Notification.permission === "denied") {
+      toast("⚠️ Push diblokir browser — izinkan dari address bar", "warning");
+    }
+  }
+  if (key === "notif.push" && !val) toast("✓ Push notifikasi dimatikan", "success");
+  if (key === "notif.message") toast(val ? "✓ Notif pesan baru aktif" : "✓ Notif pesan baru dimatikan", "success");
+  if (key === "notif.comment") toast(val ? "✓ Notif komentar aktif" : "✓ Notif komentar dimatikan", "success");
+  if (key === "notif.follower") toast(val ? "✓ Notif follower baru aktif" : "✓ Notif follower baru dimatikan", "success");
+  if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "info");
+
+  // Privasi
+  if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya follower yang lihat detail lengkap", "success");
+  if (key === "privacy.showHistory") toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
+  if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim DM" : "✓ DM dibatasi — hanya kreator yang kamu follow yang bisa kirim", "success");
+
+  // Bahasa & timezone — perlu re-render time labels biar langsung kerasa
+  if (key === "lang") {
+    toast("✓ Bahasa tersimpan — efek penuh setelah refresh", "info");
+  }
+  if (key === "timezone") {
+    toast(`✓ Zona waktu di-set ke ${val}`, "success");
+    if (typeof renderAll === "function") renderAll();
+  }
+}
+
+// ----------------------- HELPERS: baca preferensi user lain (untuk delivery checks) -----------------------
+// Mapping dari notification type → settings key di sisi penerima.
+const NOTIF_TYPE_PREF = {
+  comment: "notif.comment",
+  like: "notif.message", // like masuk kategori interaksi inbox-style
+  follow: "notif.follower",
+  "video-share": "notif.message",
+  message: "notif.message"
+};
+
+function getOtherUserPref(email, key, def) {
+  if (!email) return def;
+  try {
+    const prefs = JSON.parse(localStorage.getItem(`playly-prefs-${email}`) || "{}");
+    const parts = key.split(".");
+    let obj = prefs;
+    for (const p of parts) {
+      if (obj == null || typeof obj !== "object") return def;
+      obj = obj[p];
+    }
+    return obj === undefined ? def : obj;
+  } catch { return def; }
+}
+
+function getOtherUserPrefByUsername(username, key, def) {
+  if (!username) return def;
+  if (user && user.username === username) return getPref(key, def);
+  const acc = getAllAccounts().find(a => a.username === username);
+  if (!acc?.email) return def;
+  return getOtherUserPref(acc.email, key, def);
 }
 
 // ----------------------- PLATFORM SETTINGS (admin-only, global) -----------------------
@@ -1456,6 +1579,33 @@ function populatePlatformSettings() {
   // Card "Buat Admin" disembunyikan via CSS [data-super-admin-only].
   // Cuma render daftar admin tambahan kalau super admin yang buka.
   if (isSuperAdmin(user)) renderExtraAdminList();
+}
+
+// Isi info sesi admin (browser saat ini) di card Keamanan Admin → Akses & Sesi.
+function populateAdminSessionInfo() {
+  const deviceEl = document.getElementById("adminSessionDevice");
+  if (deviceEl) {
+    const ua = navigator.userAgent || "";
+    let browser = "Browser";
+    if (/Edg\//.test(ua)) browser = "Edge";
+    else if (/Chrome\//.test(ua)) browser = "Chrome";
+    else if (/Firefox\//.test(ua)) browser = "Firefox";
+    else if (/Safari\//.test(ua)) browser = "Safari";
+    let os = "Desktop";
+    if (/Windows/.test(ua)) os = "Windows";
+    else if (/Mac OS X|Macintosh/.test(ua)) os = "macOS";
+    else if (/Android/.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iOS/.test(ua)) os = "iOS";
+    else if (/Linux/.test(ua)) os = "Linux";
+    deviceEl.textContent = `${browser} • ${os} • aktif sekarang`;
+  }
+  const logoutBtn = document.getElementById("adminLogoutNowBtn");
+  if (logoutBtn && !logoutBtn.dataset.bound) {
+    logoutBtn.dataset.bound = "1";
+    logoutBtn.addEventListener("click", () => {
+      if (typeof confirmLogout === "function") confirmLogout();
+    });
+  }
 }
 
 // ----------------------- CHANGE PASSWORD -----------------------
@@ -2692,7 +2842,18 @@ function pushAdminEvent(ico, text) {
   // Cegah flood karena re-render / reload berulang.
   const top = events[0];
   if (top && top.text === text && (Date.now() - top.ts) < 120000) return;
-  events.unshift({ id: Date.now() + Math.random(), ico, text, ts: Date.now() });
+  // Capture actor email + role tier supaya Audit Log bisa di-filter
+  // "Super Admin" vs "Admin" via sidebar sub-item.
+  const actorEmail = (user?.email || "").toLowerCase();
+  const actorTier = (typeof OFFICIAL_ADMIN_EMAIL !== "undefined" && actorEmail === OFFICIAL_ADMIN_EMAIL)
+    ? "super-admin" : "admin";
+  events.unshift({
+    id: Date.now() + Math.random(),
+    ico, text,
+    ts: Date.now(),
+    actorEmail,
+    actorTier
+  });
   // Keep last 50
   saveAdminData("events", events.slice(0, 50));
 }
@@ -4497,6 +4658,10 @@ function startAdminLiveRefresh() {
     // Refresh analytics kalau view aktif (revenue punya tick sendiri)
     if (state?.currentView === "admin-analytics") renderAdminAnalytics();
     if (state?.currentView === "admin-revenue") renderAdminRevenue();
+    // Refresh Inbox & User Management kalau lagi dilihat — pesan/bug/chat baru
+    // bisa muncul kapan saja dari cloud-sync, dan stamp "last refresh" perlu update.
+    if (state?.currentView === "admin-inbox" && typeof renderAdminInbox === "function") renderAdminInbox();
+    if (state?.currentView === "admin-users" && typeof renderAdminUsers === "function") renderAdminUsers();
   }, 4000);
 }
 function stopAdminLiveRefresh() {
@@ -4726,21 +4891,44 @@ function renderUserCommunityStack() {
     ? `${total} kreator yang lagi aktif di Playly`
     : "Belum ada kreator lain — jadilah yang pertama upload!";
 
+  // Tandai stack ini sebagai komunitas (bukan admin) supaya CSS bisa kasih ukuran beda
+  wrap.classList.add("community-stack");
+
   if (!total) { wrap.innerHTML = ""; return; }
-  const items = creators.slice(0, 4).map(c => ({
+  const items = creators.slice(0, 5).map(c => ({
     label: c.displayName || c.name || "U",
+    username: c.name,                        // ← dipakai untuk klik → profil
     avatar: c.avatar || null
   }));
   const more = Math.max(0, total - items.length);
   const html = items.map(it => {
     const init = String(it.label || "U")
       .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const handle = escapeHtml(it.username || "");
+    const tooltip = `${escapeHtml(it.label)} (@${handle}) — buka profil`;
     if (it.avatar) {
-      return `<div class="ast-item"><img src="${escapeHtml(it.avatar)}" alt=""/></div>`;
+      return `<button type="button" class="ast-item ast-clickable" data-community-user="${handle}" title="${tooltip}" aria-label="${tooltip}"><img src="${escapeHtml(it.avatar)}" alt=""/></button>`;
     }
-    return `<div class="ast-item">${escapeHtml(init)}</div>`;
-  }).join("") + (more > 0 ? `<div class="ast-item ast-more">+${more}</div>` : "");
+    return `<button type="button" class="ast-item ast-clickable" data-community-user="${handle}" title="${tooltip}" aria-label="${tooltip}">${escapeHtml(init)}</button>`;
+  }).join("") + (more > 0 ? `<button type="button" class="ast-item ast-more ast-clickable" data-community-more="1" title="Lihat semua kreator" aria-label="Lihat semua kreator">+${more}</button>` : "");
   wrap.innerHTML = html;
+
+  // Klik avatar → buka profil user terkait. Klik "+N more" → halaman Search User.
+  // stopPropagation supaya tidak ikut trigger handler `.community-card[data-jump]`
+  // di parent (yang lompat ke discover).
+  wrap.querySelectorAll("[data-community-user]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const uname = btn.dataset.communityUser;
+      if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+    });
+  });
+  wrap.querySelectorAll("[data-community-more]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (typeof switchView === "function") switchView("people");
+    });
+  });
 }
 
 /* ---------- Avatar stacks (recent videos / users / top creators) ---------- */
@@ -4799,6 +4987,21 @@ function _renderAvatarStack(selector, items, total) {
   wrap.innerHTML = html;
 }
 
+// Infer view-jump dari teks/icon event admin (untuk live feed di notif panel)
+function inferAdminEventJump(e) {
+  const t = (e?.text || "").toLowerCase();
+  const ico = e?.ico || "";
+  if (ico === "🐛" || /\bbug\b/.test(t)) return "admin-inbox";
+  if (ico === "📧" || ico === "🎫" || /\b(tiket|email|inbox|pesan baru di inbox)\b/.test(t)) return "admin-inbox";
+  if (ico === "💬" || /\b(chat|live chat|pesan dari)\b/.test(t)) return "admin-inbox";
+  if (ico === "📢" || /broadcast/.test(t)) return "admin-comms";
+  if (ico === "🛡️" || /login ke control panel|2fa|admin.*login/.test(t)) return "admin-audit";
+  if (ico === "🗑️" || /(suspend|reactiv|hapus|akun)/.test(t)) return "admin-users";
+  if (/(user baru|registrasi|@\w+)/.test(t)) return "admin-users";
+  if (/(video|moderasi|approve|reject|takedown|publish)/.test(t)) return "admin-videos";
+  return null;
+}
+
 let lastFeedTopId = null;
 function renderAdminLiveFeed() {
   const list = $("#adminLiveFeed"); if (!list) return;
@@ -4816,11 +5019,16 @@ function renderAdminLiveFeed() {
   }
   const newTop = events[0].id;
   const isNew = lastFeedTopId !== null && newTop !== lastFeedTopId;
-  list.innerHTML = events.map((e, i) => `<li${i === 0 && isNew ? ' class="new-event"' : ""}>
-    <span class="feed-ico">${e.ico}</span>
-    <span class="feed-text">${e.text}</span>
-    <span class="feed-time">${relTime(e.ts)}</span>
-  </li>`).join("");
+  list.innerHTML = events.map((e, i) => {
+    const jump = inferAdminEventJump(e);
+    const cls = `${i === 0 && isNew ? " new-event" : ""}${jump ? " feed-clickable" : ""}`.trim();
+    const attrs = jump ? ` data-jump="${jump}" data-close-sp="notifPanel" role="button" tabindex="0"` : "";
+    return `<li${cls ? ` class="${cls}"` : ""}${attrs}>
+      <span class="feed-ico">${e.ico}</span>
+      <span class="feed-text">${e.text}</span>
+      <span class="feed-time">${relTime(e.ts)}</span>
+    </li>`;
+  }).join("");
   lastFeedTopId = newTop;
 }
 
@@ -4845,7 +5053,7 @@ function renderAdminAlerts() {
     return;
   }
 
-  wrap.innerHTML = rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}" style="cursor:pointer">
+  wrap.innerHTML = rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}" data-close-sp="notifPanel" role="button" tabindex="0" style="cursor:pointer">
     <span>${r.text}</span><b>${r.count}</b>
   </li>`).join("");
 }
@@ -4854,17 +5062,50 @@ function renderAdminUsers() {
   const tbody = $("#adminUserTbody"); if (!tbody) return;
   const search = ($("#adminUserSearch")?.value || "").toLowerCase().trim();
   const accounts = getAllAccounts();
+  const now = Date.now();
   const rows = accounts.map(a => {
+    // Hitung video real + last activity timestamp dari user state.
+    // Last activity = max(latest upload, latest history view, joinedAt fallback).
     const stateRaw = localStorage.getItem(`playly-state-${a.username}`);
     let videoCount = 0;
-    try { videoCount = JSON.parse(stateRaw)?.myVideos?.length || 0; } catch {}
+    let lastActivity = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
+    try {
+      const s = JSON.parse(stateRaw) || {};
+      const arr = Array.isArray(s.myVideos) ? s.myVideos : [];
+      videoCount = arr.length;
+      // Latest upload timestamp
+      arr.forEach(v => {
+        const t = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
+        if (t > lastActivity) lastActivity = t;
+      });
+      // Latest history watch timestamp (proxy for "user actively browsing")
+      const hist = Array.isArray(s.history) ? s.history : [];
+      hist.forEach(h => { if (h.ts && h.ts > lastActivity) lastActivity = h.ts; });
+    } catch {}
+    // Compute real-time status:
+    // suspended → suspended | <5m → online | <1d → active | else → inactive
+    let status;
+    if (a.suspended) status = "suspended";
+    else {
+      const diff = now - lastActivity;
+      if (lastActivity && diff < 5 * 60 * 1000) status = "online";
+      else if (lastActivity && diff < 24 * 60 * 60 * 1000) status = "active";
+      else status = "inactive";
+    }
     return {
       name: a.name, username: a.username, email: a.email,
       role: a.role || "user", videos: videoCount,
       joinedAt: (a.joinedAt || "").split("T")[0] || "—",
-      status: a.suspended ? "suspended" : "active"
+      lastActivity, status
     };
   });
+
+  // Update last-refresh timestamp di header
+  const stamp = $("#adminUserRefreshTime");
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+  }
 
   const filtered = search ? rows.filter(r =>
     r.name.toLowerCase().includes(search) ||
@@ -4885,7 +5126,7 @@ function renderAdminUsers() {
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
       <td>${r.videos}</td>
       <td>${r.joinedAt}</td>
-      <td><span class="row-status ${r.status === "active" ? "" : r.status}">${r.status}</span></td>
+      <td><span class="row-status status-${r.status}" title="${r.lastActivity ? `Aktivitas terakhir: ${relTime(r.lastActivity)}` : "Tidak ada aktivitas tercatat"}">${r.status}</span></td>
       <td><div class="row-actions">
         <button title="Kirim Pesan" data-action="message">💬</button>
         <button title="Detail" data-action="detail">👤</button>
@@ -5595,8 +5836,10 @@ function openKpiDetail(key) {
 document.addEventListener("click", e => {
   const k = e.target.closest("[data-kpi]");
   if (!k) return;
-  // Jangan trigger kalau klik berasal dari elemen interaktif di dalam card
-  if (e.target.closest("a, button:not([data-close])")) return;
+  // Jangan trigger kalau klik berasal dari elemen interaktif di dalam card,
+  // KECUALI kalau elemen itu sendiri yang punya data-kpi (mini-kpi pill).
+  const inner = e.target.closest("a, button:not([data-close])");
+  if (inner && inner !== k) return;
   e.preventDefault();
   openKpiDetail(k.dataset.kpi);
 });
@@ -5699,38 +5942,110 @@ function anRangeLabel(r) {
 
 // Common SVG chart drawing helpers
 function anDrawAreaChart(svg, values, labels, opts = {}) {
-  const W = 700, H = 200, PAD_L = opts.padL ?? 40, PAD_R = 14, PAD_T = 16, PAD_B = 28;
-  const max = Math.max(...values, 1) * 1.1;
+  const W = 700, H = 240, PAD_L = opts.padL ?? 44, PAD_R = 18, PAD_T = 20, PAD_B = 32;
+  const isAdmin = document.body.dataset.role === "admin";
+  // Stroke / fill: admin pakai soft blue palette, user pakai warm cream→wine
+  const stops = isAdmin
+    ? { strokeA: "#7DA3CC", strokeB: "#A4C0E0", fillA: "#7DA3CC", fillB: "#A4C0E0" }
+    : { strokeA: "#561C24", strokeB: "#E8D8C4", fillA: "#561C24", fillB: "#E8D8C4" };
+
+  const rawMax = Math.max(...values, 1);
+  // "Nice" Y-axis: untuk nilai kecil (<= 5), pakai integer step 1; untuk yg lebih besar, pakai step yang dibulatkan
+  const nice = niceYAxis(rawMax);
+  const max = nice.max;
   const n = values.length;
   const stepX = (W - PAD_L - PAD_R) / Math.max(1, n - 1);
-  const points = values.map((v, i) => [PAD_L + i * stepX, H - PAD_B - (v / max) * (H - PAD_T - PAD_B)]);
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(" ");
-  const area = `${path} L ${points[n-1][0]} ${H - PAD_B} L ${points[0][0]} ${H - PAD_B} Z`;
+  const innerH = H - PAD_T - PAD_B;
+  const points = values.map((v, i) => [PAD_L + i * stepX, H - PAD_B - (v / max) * innerH]);
+
+  // Smooth path pakai bezier sederhana — biar kurva nggak terlalu tajam
+  const path = buildSmoothPath(points);
+  const lastX = points[n - 1][0];
+  const firstX = points[0][0];
+  const area = `${path} L ${lastX} ${H - PAD_B} L ${firstX} ${H - PAD_B} Z`;
   const fmt = opts.yFmt || (v => fmtNum(Math.round(v)));
 
   let grid = "";
-  for (let i = 0; i <= 3; i++) {
-    const y = PAD_T + (i * (H - PAD_T - PAD_B) / 3);
-    const val = max - (i * max / 3);
-    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(140,150,180,.1)" stroke-dasharray="2,4"/>`;
-    grid += `<text x="${PAD_L - 6}" y="${y + 3}" fill="rgba(140,150,180,.6)" font-size="9" text-anchor="end" font-family="Inter">${fmt(val)}</text>`;
+  for (let i = 0; i < nice.ticks.length; i++) {
+    const tickVal = nice.ticks[i];
+    const y = H - PAD_B - (tickVal / max) * innerH;
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(140,150,180,.12)" stroke-dasharray="2,4"/>`;
+    grid += `<text x="${PAD_L - 8}" y="${y + 3.5}" fill="rgba(140,150,180,.7)" font-size="10" text-anchor="end" font-family="Inter">${fmt(tickVal)}</text>`;
   }
+
   let xLabels = "";
   const labelStep = n > 14 ? Math.ceil(n / 8) : 1;
   labels.forEach((l, i) => {
     if (i % labelStep !== 0 && i !== n - 1) return;
-    xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 16}" fill="rgba(140,150,180,.6)" font-size="10" text-anchor="middle" font-family="Inter">${l}</text>`;
+    xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 18}" fill="rgba(140,150,180,.65)" font-size="10.5" text-anchor="middle" font-family="Inter">${l}</text>`;
   });
+
+  // Marker dot untuk titik tertinggi — lebih informatif dari sekedar garis
+  let peakDot = "";
+  let peakIdx = 0;
+  for (let i = 1; i < values.length; i++) if (values[i] > values[peakIdx]) peakIdx = i;
+  if (values[peakIdx] > 0) {
+    const [px, py] = points[peakIdx];
+    peakDot = `
+      <circle cx="${px}" cy="${py}" r="6" fill="${stops.strokeB}" opacity=".25"/>
+      <circle cx="${px}" cy="${py}" r="3.5" fill="${stops.strokeB}" stroke="${isAdmin ? '#1a1d2c' : '#fff'}" stroke-width="1.5"/>
+    `;
+  }
+
   svg.innerHTML = `
     <defs>
-      <linearGradient id="${opts.gradId || 'anG'}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#561C24"/><stop offset="100%" stop-color="#E8D8C4"/></linearGradient>
-      <linearGradient id="${opts.gradId || 'anG'}Fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#561C24" stop-opacity=".35"/><stop offset="100%" stop-color="#E8D8C4" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${opts.gradId || 'anG'}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${stops.strokeA}"/><stop offset="100%" stop-color="${stops.strokeB}"/></linearGradient>
+      <linearGradient id="${opts.gradId || 'anG'}Fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${stops.fillA}" stop-opacity=".30"/><stop offset="100%" stop-color="${stops.fillB}" stop-opacity="0"/></linearGradient>
     </defs>
     ${grid}
     <path d="${area}" fill="url(#${opts.gradId || 'anG'}Fill)"/>
     <path d="${path}" fill="none" stroke="url(#${opts.gradId || 'anG'})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${peakDot}
     ${xLabels}
   `;
+}
+
+// Nice Y-axis: hasilkan max dan tick array yang "manusiawi" — untuk nilai
+// kecil pakai integer step 1, untuk besar pakai step 10/50/100/dst.
+function niceYAxis(rawMax) {
+  if (rawMax <= 4) {
+    const m = Math.max(2, Math.ceil(rawMax));
+    const ticks = [];
+    for (let v = 0; v <= m; v++) ticks.push(v);
+    return { max: m, ticks };
+  }
+  // Cari step terbesar dari [1, 2, 5] × 10^n yang menghasilkan ≤ 6 tick
+  const targetTicks = 4;
+  const rough = rawMax / targetTicks;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  let step;
+  if (norm <= 1) step = 1 * mag;
+  else if (norm <= 2) step = 2 * mag;
+  else if (norm <= 5) step = 5 * mag;
+  else step = 10 * mag;
+  const max = Math.ceil(rawMax / step) * step;
+  const ticks = [];
+  for (let v = 0; v <= max; v += step) ticks.push(v);
+  return { max, ticks };
+}
+
+// Buat smooth path dari array points pakai catmull-rom-ish bezier
+function buildSmoothPath(points) {
+  if (points.length < 2) return points.length === 1 ? `M ${points[0][0]} ${points[0][1]}` : "";
+  let d = `M ${points[0][0]} ${points[0][1]}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x0, y0] = points[Math.max(0, i - 1)];
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[i + 1];
+    const [x3, y3] = points[Math.min(points.length - 1, i + 2)];
+    const cp1x = x1 + (x2 - x0) / 6;
+    const cp1y = y1 + (y2 - y0) / 6;
+    const cp2x = x2 - (x3 - x1) / 6;
+    const cp2y = y2 - (y3 - y1) / 6;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
+  }
+  return d;
 }
 
 function anDrawBarChart(svg, values, labels, opts = {}) {
@@ -5761,9 +6076,13 @@ function anDrawBarChart(svg, values, labels, opts = {}) {
     if (i % labelStep !== 0 && i !== n - 1) return;
     xLabels += `<text x="${PAD_L + i * stepX + stepX / 2}" y="${H - PAD_B + 16}" fill="rgba(140,150,180,.6)" font-size="10" text-anchor="middle" font-family="Inter">${l}</text>`;
   });
+  const isAdmin = document.body.dataset.role === "admin";
+  const bwStops = isAdmin
+    ? { a: "#A4C0E0", b: "#30364F" }
+    : { a: "#E8D8C4", b: "#561C24" };
   svg.innerHTML = `
     <defs>
-      <linearGradient id="anBwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8D8C4"/><stop offset="100%" stop-color="#561C24"/></linearGradient>
+      <linearGradient id="anBwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${bwStops.a}"/><stop offset="100%" stop-color="${bwStops.b}"/></linearGradient>
     </defs>
     ${grid}${bars}${xLabels}
   `;
@@ -5879,12 +6198,76 @@ function renderAnTopCreatorsList(allVideos) {
   }).join("");
 }
 
+// ----------- Achievement User: 3 kolom (Top Likes / Top Followers / Top Views) -----------
+function renderAnUserAchievement(allVideos) {
+  const wrap = $("#anUserAchievement");
+  if (!wrap) return;
+  // Aggregate per creator: total likes, total views, follower count via getUserFollowers
+  const grouped = {};
+  allVideos.forEach(v => {
+    const k = v.creator || "—";
+    grouped[k] = grouped[k] || { name: k, videos: 0, views: 0, likes: 0 };
+    grouped[k].videos++;
+    grouped[k].views += v.viewsNum || 0;
+    grouped[k].likes += v.likes || 0;
+  });
+  // Tambahkan creator yang punya follower tapi belum upload (jarang tapi mungkin)
+  try {
+    if (typeof getAllAccounts === "function") {
+      getAllAccounts().forEach(a => {
+        if (!a.username || a.role === "admin") return;
+        if (!grouped[a.username]) grouped[a.username] = { name: a.username, videos: 0, views: 0, likes: 0 };
+      });
+    }
+  } catch {}
+  // Hitung follower per creator
+  Object.values(grouped).forEach(c => {
+    try { c.followers = (typeof getUserFollowers === "function" ? getUserFollowers(c.name) : []).length; }
+    catch { c.followers = 0; }
+  });
+  const arr = Object.values(grouped);
+  const initOf = (name) => String(name || "U").slice(0, 2).toUpperCase();
+  const fillCol = (id, sortKey, valFmt, metaFn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const sorted = arr.slice().sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0)).slice(0, 5);
+    if (!sorted.length || sorted.every(c => !(c[sortKey] || 0))) {
+      el.innerHTML = `<div style="padding:14px 8px;text-align:center;color:var(--muted);font-size:11px">Belum ada data.</div>`;
+      return;
+    }
+    el.innerHTML = sorted.map((c, i) => `
+      <div class="an-user-row" data-username="${escapeHtml(c.name)}">
+        <span class="an-user-rank">${i + 1}</span>
+        <div class="an-user-avatar"><span>${escapeHtml(initOf(c.name))}</span></div>
+        <div class="an-user-info">
+          <div class="an-user-name">@${escapeHtml(c.name)}</div>
+          <div class="an-user-meta">${metaFn(c)}</div>
+        </div>
+        <div class="an-user-value">${valFmt(c[sortKey] || 0)}</div>
+      </div>`).join("");
+    // Klik baris → buka profil user
+    el.querySelectorAll("[data-username]").forEach(row => {
+      row.style.cursor = "pointer";
+      row.addEventListener("click", () => {
+        if (typeof openUserProfile === "function") openUserProfile(row.dataset.username);
+      });
+    });
+  };
+  fillCol("anUserTopLikes",     "likes",     v => fmtNum(v) + " ❤️", c => `${c.videos} video`);
+  fillCol("anUserTopFollowers", "followers", v => fmtNum(v) + " 👥", c => `${c.videos} video • ${fmtNum(c.likes)} likes`);
+  fillCol("anUserTopViews",     "views",     v => fmtNum(v) + " 👁️", c => `${c.videos} video • ${fmtNum(c.likes)} likes`);
+}
+
 // ----------- Master render & lifecycle -----------
 function renderAdminAnalytics() {
   renderAnKPIs();
   drawAnTrafficChart();
   drawAnBandwidthChart();
   renderAnTopVideos();
+  // Achievement User 3-kolom — kalau wrap ada, populate
+  if (document.getElementById("anUserAchievement")) {
+    try { renderAnUserAchievement(getPlatformVideos()); } catch {}
+  }
 }
 
 (function setupAnalyticsEvents() {
@@ -6017,7 +6400,12 @@ function renderAdminVideos() {
 
   // Apply filters
   let list = all.slice();
-  if (adminVideoState.filter !== "all") {
+  if (adminVideoState.filter === "new") {
+    // "New videos" — published & uploaded < 24 jam
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    list = list.filter(v => getAdminVideoStatus(v) === "published"
+      && Number(v.uploadedAt || v.createdAt || v.id || 0) > cutoff);
+  } else if (adminVideoState.filter !== "all") {
     list = list.filter(v => getAdminVideoStatus(v) === adminVideoState.filter);
   }
   if (adminVideoState.category) {
@@ -6074,7 +6462,12 @@ function renderAdminVideos() {
         <td>${fmtNum(v.viewsNum || 0)}</td>
         <td>${fmtNum(v.likes || 0)}</td>
         <td>${adminVideoStatusBadge(status)}</td>
-        <td><small class="muted">${escapeHtml(v.time || "—")}</small></td>
+        <td><small class="muted">${(() => {
+          // Real-time relative timestamp dari upload time. Fallback ke v.time string
+          // (legacy) atau v.id (yang juga Date.now() saat upload).
+          const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
+          return ts ? relTime(ts) : escapeHtml(v.time || "—");
+        })()}</small></td>
         <td>
           <div class="row-actions gv-actions">
             ${status === "pending" ? `<button title="Approve" class="gv-act-approve" data-gv-act="approve">✓</button>` : ""}
@@ -6591,6 +6984,7 @@ $("#commsBroadcastBtn2")?.addEventListener("click", () => openAdminSendMsg({ bro
 
 // =========== ADMIN: Audit Log (admin-audit) ===========
 let __auditFilter = "all";
+let __auditActor = "all"; // "all" | "super-admin" | "admin"
 
 function getAuditEvents() {
   // Gabungkan event admin (pushAdminEvent) + broadcast log → satu timeline
@@ -6598,7 +6992,11 @@ function getAuditEvents() {
     id: `evt-${e.id}`,
     ico: e.ico || "•",
     text: e.text || "",
-    ts: Number(e.ts) || 0
+    ts: Number(e.ts) || 0,
+    // Backward-compat: event lama tanpa actorTier dianggap super-admin
+    // (historikal cuma satu admin) — supaya filter Super Admin gak kosong total.
+    actorTier: e.actorTier || "super-admin",
+    actorEmail: e.actorEmail || ""
   }));
   let bc = [];
   try { bc = JSON.parse(localStorage.getItem("playly-admin-sent") || "[]") || []; } catch {}
@@ -6607,11 +7005,16 @@ function getAuditEvents() {
     const target = item.targetCount > 1
       ? `<b>${item.targetCount} user</b>`
       : `<b>@${escapeHtml((item.targets && item.targets[0]) || "user")}</b>`;
+    const senderEmail = String(item.senderEmail || item.sender || "").toLowerCase();
+    const tier = (typeof OFFICIAL_ADMIN_EMAIL !== "undefined" && senderEmail === OFFICIAL_ADMIN_EMAIL)
+      ? "super-admin" : (senderEmail ? "admin" : "super-admin");
     events.push({
       id: `bc-${item.id || ts}`,
       ico: "📨",
       text: `Broadcast/DM ke ${target}: <i>"${escapeHtml((item.text || "").slice(0, 120))}${(item.text || "").length > 120 ? "..." : ""}"</i>`,
-      ts
+      ts,
+      actorTier: tier,
+      actorEmail: senderEmail
     });
   }
   events.sort((a, b) => b.ts - a.ts);
@@ -6653,6 +7056,9 @@ function renderAuditTimeline(filter, query) {
   renderAuditStats(all);
 
   let filtered = applyAuditFilter(all, filter);
+  // Apply actor filter dari sidebar sub-item (Super Admin / Admin)
+  if (__auditActor === "super-admin") filtered = filtered.filter(e => e.actorTier === "super-admin");
+  else if (__auditActor === "admin")  filtered = filtered.filter(e => e.actorTier === "admin");
   if (query) {
     const q = query.toLowerCase();
     filtered = filtered.filter(e => (e.text || "").toLowerCase().includes(q) || (e.ico || "").toLowerCase().includes(q));
@@ -6692,20 +7098,25 @@ $$(".audit-filter").forEach(b => {
 $("#auditSearch")?.addEventListener("input", () => renderAdminAudit());
 
 // =================== INBOX (Email + Live Chat + Bug Reports) ===================
+const _inboxState = { filter: "all", search: "" };
+
 function renderAdminInbox() {
-  const wrap = $('[data-view="admin-inbox"]');
+  // PENTING: ada DUA element dengan data-view="admin-inbox" — nav-item di sidebar
+  // dan section view di main. querySelector("[data-view=...]") ngambil nav-item
+  // yang gak nerima klik card. Pakai selector spesifik ke section.
+  const wrap = document.querySelector('section.view[data-view="admin-inbox"]');
   if (!wrap) return;
 
   const tickets = [...getAdminData("tickets")].sort((a, b) => b.createdAt - a.createdAt);
   const bugs = [...getAdminData("bugs")].sort((a, b) => b.createdAt - a.createdAt);
   // Email column = semua tiket dari Email Support modal
-  const emailTickets = tickets.filter(t => t.type !== "chat" && t.ch !== "💬");
+  let emailTickets = tickets.filter(t => t.type !== "chat" && t.ch !== "💬");
 
   // Live Chat column = thread chat real dari state.messages (admin's conversations).
   // Tiap thread: { name, init, unread, history:[{from, text, ts}, ...] }
   const threads = Array.isArray(state?.messages) ? state.messages : [];
   // Buat list dengan latest message + sort terbaru di atas
-  const chatItems = threads.map((th, idx) => {
+  let chatItems = threads.map((th, idx) => {
     const hist = Array.isArray(th.history) ? th.history : [];
     const last = hist[hist.length - 1];
     return {
@@ -6719,65 +7130,127 @@ function renderAdminInbox() {
     };
   }).filter(x => x.lastText).sort((a, b) => b.lastTs - a.lastTs);
 
-  // Top stats pill
+  let bugList = bugs;
+
+  // Top stats pill — pakai TOTAL tanpa filter biar count akurat
   $("#inboxStatEmail") && ($("#inboxStatEmail").textContent = emailTickets.length);
   $("#inboxStatChat") && ($("#inboxStatChat").textContent = chatItems.length);
-  $("#inboxStatBug") && ($("#inboxStatBug").textContent = bugs.length);
+  $("#inboxStatBug") && ($("#inboxStatBug").textContent = bugList.length);
 
-  // Per-column count badge
+  // Apply status filter (untuk tiket & bug; chat selalu tampil semua)
+  const f = _inboxState.filter;
+  if (f === "new") {
+    emailTickets = emailTickets.filter(t => (t.status || "new") === "new");
+    bugList = bugList.filter(b => (b.status || "open") === "open");
+  } else if (f === "progress") {
+    emailTickets = emailTickets.filter(t => t.status === "progress");
+    bugList = bugList.filter(b => b.status === "assigned");
+  } else if (f === "resolved") {
+    emailTickets = emailTickets.filter(t => t.status === "resolved");
+    bugList = bugList.filter(b => b.status === "closed");
+  }
+
+  // Apply search across all columns (case-insensitive)
+  const q = (_inboxState.search || "").toLowerCase().trim();
+  if (q) {
+    emailTickets = emailTickets.filter(t =>
+      (t.title || "").toLowerCase().includes(q) ||
+      (t.from || "").toLowerCase().includes(q) ||
+      (t.fromEmail || "").toLowerCase().includes(q) ||
+      (t.body || "").toLowerCase().includes(q)
+    );
+    bugList = bugList.filter(b =>
+      (b.title || "").toLowerCase().includes(q) ||
+      (b.reporter || "").toLowerCase().includes(q) ||
+      (b.desc || "").toLowerCase().includes(q)
+    );
+    chatItems = chatItems.filter(c =>
+      (c.name || "").toLowerCase().includes(q) ||
+      (c.lastText || "").toLowerCase().includes(q)
+    );
+  }
+
+  // Per-column count badge — count setelah filter/search
   $("#inboxEmailCount") && ($("#inboxEmailCount").textContent = emailTickets.length);
   $("#inboxChatCount") && ($("#inboxChatCount").textContent = chatItems.length);
-  $("#inboxBugCount") && ($("#inboxBugCount").textContent = bugs.length);
+  $("#inboxBugCount") && ($("#inboxBugCount").textContent = bugList.length);
+
+  // Last-refresh stamp
+  const stamp = $("#inboxRefreshTime");
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+  }
 
   const ticketLabels = { new: "BARU", progress: "DIPROSES", resolved: "RESOLVED" };
 
+  // Inisial avatar dari nama
+  const initOf = (name) => (String(name || "U").trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("") || "U").toUpperCase();
+
+  // Email row — Gmail-style: avatar, sender, subject + preview snippet, time.
+  // Unread = bold sender + subject. Klik = detail.
   const renderTicketCard = (t) => {
-    const emailRow = (t.fromEmail && t.fromEmail !== "—") ? `<div class="inbox-card-email">✉️ ${escapeHtml(t.fromEmail)}</div>` : "";
-    return `<div class="inbox-card status-${t.status || "new"}" data-card-kind="ticket" data-card-id="${t.id}">
-      <div class="inbox-card-head">
-        <strong>${escapeHtml(t.title || "(tanpa subjek)")}</strong>
-        <span class="inbox-card-status ${t.status || "new"}">${ticketLabels[t.status] || (t.status || "new").toUpperCase()}</span>
-      </div>
-      <div class="inbox-card-from">👤 ${escapeHtml(t.from || "—")}</div>
-      ${emailRow}
-      <div class="inbox-card-time">${relTime(t.createdAt)}</div>
-      <div class="inbox-card-actions">
-        <button class="btn primary sm" data-card-action="detail">📖 Detail</button>
-        <button class="btn ghost sm" data-card-action="status">↻ Status</button>
+    const sender = t.from || "—";
+    const subj = t.title || "(tanpa subjek)";
+    const preview = (t.body || "").replace(/\s+/g, " ").trim().slice(0, 90);
+    const isUnread = (t.status || "new") === "new";
+    const time = relTime(t.createdAt);
+    const tier = (t.fromEmail && t.fromEmail.toLowerCase() === (typeof OFFICIAL_ADMIN_EMAIL !== "undefined" ? OFFICIAL_ADMIN_EMAIL : "")) ? "super" : "";
+    return `<div class="inbox-row inbox-row-email ${isUnread ? "unread" : ""}" data-card-kind="ticket" data-card-id="${t.id}">
+      <div class="inbox-row-avatar"><span>${escapeHtml(initOf(sender))}</span></div>
+      <div class="inbox-row-main">
+        <div class="inbox-row-line1">
+          <span class="inbox-row-sender">${escapeHtml(sender)}${tier ? ' <span class="inbox-tier-badge">SUPER</span>' : ""}</span>
+          <span class="inbox-row-time">${time}</span>
+        </div>
+        <div class="inbox-row-line2">
+          <span class="inbox-row-subject">${escapeHtml(subj)}</span>
+          ${preview ? `<span class="inbox-row-snippet"> — ${escapeHtml(preview)}</span>` : ""}
+        </div>
+        <div class="inbox-row-line3">
+          <span class="inbox-row-status status-${t.status || "new"}">${ticketLabels[t.status] || (t.status || "new").toUpperCase()}</span>
+          ${(t.fromEmail && t.fromEmail !== "—") ? `<span class="inbox-row-email">✉️ ${escapeHtml(t.fromEmail)}</span>` : ""}
+        </div>
       </div>
     </div>`;
   };
 
+  // Bug row — kolom: severity badge, title, reporter, browser, time, action.
   const renderBugCard = (b) => {
     const sevColor = { critical: "danger", high: "danger", medium: "warn", low: "ok" }[b.sev] || "warn";
-    return `<div class="inbox-card sev-${b.sev}" data-card-kind="bug" data-card-id="${b.id}">
-      <div class="inbox-card-head">
-        <strong>${escapeHtml(b.title || "(tanpa judul)")}</strong>
-        <span class="inbox-card-sev ${sevColor}">${(b.sev || "medium").toUpperCase()}</span>
+    const statusBtnLabel = b.status === "open" ? "Assign" : b.status === "assigned" ? "Close" : "Reopen";
+    return `<div class="inbox-row inbox-row-bug sev-${b.sev}" data-card-kind="bug" data-card-id="${b.id}">
+      <span class="inbox-row-sev ${sevColor}">${(b.sev || "medium").toUpperCase()}</span>
+      <div class="inbox-row-main">
+        <div class="inbox-row-title">${escapeHtml(b.title || "(tanpa judul)")}</div>
+        <div class="inbox-row-meta">
+          <span class="inbox-row-reporter">👤 ${escapeHtml(b.reporter || "—")}</span>
+          <span class="inbox-row-browser">🖥️ ${escapeHtml((b.browser || "—").slice(0, 32))}</span>
+          <span class="inbox-row-time">${relTime(b.createdAt)}</span>
+        </div>
       </div>
-      <div class="inbox-card-from">👤 ${escapeHtml(b.reporter || "—")}</div>
-      <div class="inbox-card-time">${relTime(b.createdAt)} · 🖥️ ${escapeHtml((b.browser || "—").slice(0, 40))}</div>
-      <div class="inbox-card-actions">
-        <button class="btn primary sm" data-card-action="detail">📖 Detail</button>
-        <button class="btn ghost sm" data-card-action="bug-status">↻ ${b.status === "open" ? "Assign" : b.status === "assigned" ? "Close" : "Reopen"}</button>
+      <div class="inbox-row-actions">
+        <button class="btn ghost sm" data-card-action="detail">Detail</button>
+        <button class="btn primary sm" data-card-action="bug-status">${statusBtnLabel}</button>
       </div>
     </div>`;
   };
 
+  // Chat row — kolom: avatar, sender, preview, time, action.
   const renderChatCard = (c) => {
-    const preview = escapeHtml((c.lastText || "").slice(0, 100));
+    const preview = (c.lastText || "").slice(0, 80);
     const time = (typeof chatRelTime === "function" ? chatRelTime(c.lastTs) : relTime(c.lastTs));
-    const fromLabel = c.lastFrom === "me" ? `<span class="inbox-card-meta-tag">Kamu:</span> ` : "";
-    return `<div class="inbox-card ${c.unread ? "unread" : ""}" data-card-kind="chat" data-card-thread="${c.idx}">
-      <div class="inbox-card-head">
-        <strong>@${escapeHtml(c.name)}</strong>
-        ${c.unread ? `<span class="inbox-card-status new">BARU</span>` : ""}
+    const fromLabel = c.lastFrom === "me" ? `<span class="inbox-row-from-tag">Kamu:</span> ` : "";
+    return `<div class="inbox-row inbox-row-chat ${c.unread ? "unread" : ""}" data-card-kind="chat" data-card-thread="${c.idx}">
+      <div class="inbox-row-avatar"><span>${escapeHtml(c.init || initOf(c.name))}</span></div>
+      <div class="inbox-row-main">
+        <div class="inbox-row-line1">
+          <span class="inbox-row-sender">@${escapeHtml(c.name)}</span>
+          <span class="inbox-row-time">${time || ""}</span>
+        </div>
+        <div class="inbox-row-snippet inbox-row-chat-preview">${fromLabel}${escapeHtml(preview)}</div>
       </div>
-      <div class="inbox-card-chat-preview">${fromLabel}${preview}</div>
-      <div class="inbox-card-time">${time || ""}</div>
-      <div class="inbox-card-actions">
-        <button class="btn primary sm" data-card-action="open-chat">💬 Buka Chat</button>
-      </div>
+      ${c.unread ? `<span class="inbox-row-unread-dot" title="Belum dibaca"></span>` : ""}
     </div>`;
   };
 
@@ -6787,16 +7260,24 @@ function renderAdminInbox() {
   const chatEl = $("#inboxChatList");
   const bugEl = $("#inboxBugList");
 
-  if (emailEl) emailEl.innerHTML = emailTickets.length ? emailTickets.map(renderTicketCard).join("") : emptyState("📧", "Belum ada pesan email masuk.");
-  if (chatEl) chatEl.innerHTML = chatItems.length ? chatItems.map(renderChatCard).join("") : emptyState("💬", "Belum ada thread live chat.");
-  if (bugEl) bugEl.innerHTML = bugs.length ? bugs.map(renderBugCard).join("") : emptyState("🐛", "Belum ada bug yang dilaporkan.");
+  const emptyMsg = q ? `Tidak ada hasil untuk "${escapeHtml(q)}"` : null;
+  if (emailEl) emailEl.innerHTML = emailTickets.length
+    ? emailTickets.map(renderTicketCard).join("")
+    : emptyState("📧", emptyMsg || (f === "all" ? "Belum ada pesan email masuk." : "Tidak ada email di filter ini."));
+  if (chatEl) chatEl.innerHTML = chatItems.length
+    ? chatItems.map(renderChatCard).join("")
+    : emptyState("💬", emptyMsg || "Belum ada thread live chat.");
+  if (bugEl) bugEl.innerHTML = bugList.length
+    ? bugList.map(renderBugCard).join("")
+    : emptyState("🐛", emptyMsg || (f === "all" ? "Belum ada bug yang dilaporkan." : "Tidak ada bug di filter ini."));
 
   // Event delegation — pasang listener SEKALI di wrap level. Re-render innerHTML
   // tidak menghilangkan listener karena listener-nya di parent yang persistent.
   if (!wrap.__inboxBound) {
     wrap.__inboxBound = true;
     wrap.addEventListener("click", e => {
-      const card = e.target.closest(".inbox-card");
+      // Match both legacy `.inbox-card` & new gmail-style `.inbox-row` rows
+      const card = e.target.closest(".inbox-card, .inbox-row");
       if (!card) return;
       const kind = card.dataset.cardKind;
       const btn = e.target.closest("[data-card-action]");
@@ -6861,6 +7342,48 @@ function renderAdminInbox() {
       openDetail();
     });
   }
+
+  // Toolbar bindings — search, filter chips, refresh button
+  if (!wrap.__inboxToolbarBound) {
+    wrap.__inboxToolbarBound = true;
+    const searchEl = $("#inboxSearch");
+    if (searchEl) {
+      let t = null;
+      searchEl.addEventListener("input", e => {
+        clearTimeout(t);
+        t = setTimeout(() => {
+          _inboxState.search = e.target.value || "";
+          renderAdminInbox();
+        }, 120);
+      });
+    }
+    wrap.querySelectorAll(".inbox-filter").forEach(btn => {
+      btn.addEventListener("click", () => {
+        wrap.querySelectorAll(".inbox-filter").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        _inboxState.filter = btn.dataset.inboxFilter || "all";
+        renderAdminInbox();
+      });
+    });
+    const refreshBtn = $("#inboxRefresh");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        refreshBtn.classList.add("spinning");
+        // Trigger soft re-pull dari cloud kalau tersedia, lalu re-render.
+        const done = () => {
+          renderAdminInbox();
+          syncAdminNavBadges?.();
+          setTimeout(() => refreshBtn.classList.remove("spinning"), 320);
+          toast("✓ Inbox di-refresh", "success");
+        };
+        if (window.cloudSync?.softResync) {
+          Promise.resolve(window.cloudSync.softResync()).finally(done);
+        } else {
+          done();
+        }
+      });
+    }
+  }
 }
 
 // Modal detail untuk ticket email & bug report. Tampilkan full content + aksi
@@ -6880,13 +7403,34 @@ function openInboxDetailModal({ kind, item }) {
   const browser = !isTicket ? item.browser : null;
   const ts = item.createdAt || Date.now();
   const dateStr = new Date(ts).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" });
+  const replies = isTicket && Array.isArray(item.replies) ? item.replies : [];
+
+  const repliesHtml = replies.length ? `
+    <div class="ticket-thread" style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;font-weight:700">Riwayat Balasan (${replies.length})</div>
+      ${replies.map(r => `
+        <div class="ticket-thread-item">
+          <div class="ticket-thread-head">
+            <span class="ticket-thread-avatar">${escapeHtml((r.fromName || "Admin").slice(0,1).toUpperCase())}</span>
+            <div class="ticket-thread-meta">
+              <strong>${escapeHtml(r.fromName || "Super Admin")}</strong>
+              <span>&lt;${escapeHtml(r.fromEmail || OFFICIAL_ADMIN_EMAIL)}&gt;</span>
+            </div>
+            <span class="ticket-thread-time" title="${new Date(r.ts).toLocaleString("id-ID")}">${chatRelTime(r.ts) || relTime(r.ts) || "—"}</span>
+          </div>
+          <div class="ticket-thread-body">${escapeHtml(r.body || "")}</div>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
 
   const modal = document.createElement("div");
   modal.className = "modal show inbox-detail-modal";
   modal.style.cssText = "z-index:9999";
+  modal.dataset.ticketId = isTicket ? String(item.id) : "";
   modal.innerHTML = `
     <div class="modal-backdrop" data-inbox-close></div>
-    <div class="modal-panel" style="max-width:560px;padding:24px">
+    <div class="modal-panel" style="max-width:580px;padding:24px">
       <button class="modal-close" data-inbox-close>✕</button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <span style="font-size:22px">${isTicket ? "📧" : "🐛"}</span>
@@ -6896,17 +7440,18 @@ function openInboxDetailModal({ kind, item }) {
       <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
         <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px">
           <span style="color:var(--muted)">Dari</span><strong>${escapeHtml(sender)}</strong>
-          ${senderEmail ? `<span style="color:var(--muted)">Email</span><a href="mailto:${escapeHtml(senderEmail)}" style="color:var(--primary);text-decoration:none">${escapeHtml(senderEmail)}</a>` : ""}
+          ${senderEmail ? `<span style="color:var(--muted)">Email</span><span style="color:var(--text)">${escapeHtml(senderEmail)}</span>` : ""}
           <span style="color:var(--muted)">Waktu</span><span>${escapeHtml(dateStr)}</span>
           ${browser ? `<span style="color:var(--muted)">Browser</span><span style="font-size:11.5px;color:var(--muted);word-break:break-all">${escapeHtml(browser)}</span>` : ""}
         </div>
       </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;max-height:300px;overflow-y:auto">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;max-height:260px;overflow-y:auto">
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:700">${isTicket ? "Isi Pesan" : "Deskripsi Bug"}</div>
         <div style="font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(body)}</div>
       </div>
+      ${repliesHtml}
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        ${senderEmail ? `<button class="btn primary" data-inbox-action="reply">📧 Balas via Email</button>` : ""}
+        ${isTicket && senderEmail ? `<button class="btn primary" data-inbox-action="reply">📧 ${replies.length ? "Balas Lagi" : "Balas Email"}</button>` : ""}
         <button class="btn ghost" data-inbox-action="status">↻ ${isTicket ? "Update Status" : (status === "open" ? "Assign" : status === "assigned" ? "Tutup" : "Reopen")}</button>
         <button class="btn ghost" data-inbox-close>Tutup</button>
       </div>
@@ -6919,11 +7464,8 @@ function openInboxDetailModal({ kind, item }) {
     const actBtn = e.target.closest("[data-inbox-action]");
     if (!actBtn) return;
     const act = actBtn.dataset.inboxAction;
-    if (act === "reply" && senderEmail) {
-      const subject = encodeURIComponent(`Re: ${title}`);
-      const replyBody = encodeURIComponent(`Halo ${sender},\n\n[Tulis balasan di sini]\n\n— Tim Playly\n\n---\nPesan asli:\n${body}`);
-      const params = new URLSearchParams({ view: "cm", fs: "1", to: senderEmail, su: decodeURIComponent(subject), body: decodeURIComponent(replyBody) });
-      window.open(`https://mail.google.com/mail/?${params.toString()}`, "_blank", "noopener");
+    if (act === "reply" && senderEmail && isTicket) {
+      openEmailComposer({ ticket: item, parentModal: modal });
       return;
     }
     if (act === "status") {
@@ -6948,6 +7490,131 @@ function openInboxDetailModal({ kind, item }) {
       modal.remove();
       renderAdminInbox();
       syncAdminNavBadges?.();
+    }
+  });
+}
+
+// Compose dock gaya Gmail untuk admin balas email tiket. Floating panel
+// fixed di kanan-bawah, header gelap, fields To/From/Subject/Body. Kirim
+// menyimpan reply ke ticket.replies[], otomatis status → progress, dan
+// deliver salinan ke chat thread user supaya user tahu admin sudah balas
+// (tanpa simulasi/auto-reply — ini dipicu manual oleh admin).
+function openEmailComposer({ ticket, parentModal }) {
+  // Hindari duplicate dock untuk ticket yang sama
+  const existing = document.querySelector(`.compose-dock[data-ticket-id="${ticket.id}"]`);
+  if (existing) { existing.classList.remove("minimized"); existing.querySelector(".compose-body-input")?.focus(); return; }
+
+  const adminName = user?.name || user?.username || "Super Admin";
+  const adminEmail = user?.email || OFFICIAL_ADMIN_EMAIL;
+  const subjectDefault = (ticket.title || "").startsWith("Re:") ? ticket.title : `Re: ${ticket.title || "(tanpa subjek)"}`;
+  const recipientName = ticket.from || "User";
+  const recipientUsernameMatch = /\(@([^)]+)\)/.exec(ticket.from || "");
+  const recipientUsername = recipientUsernameMatch ? recipientUsernameMatch[1] : null;
+  const greeting = recipientName.replace(/\s*\(@[^)]+\)\s*$/, "").trim();
+
+  const dock = document.createElement("div");
+  dock.className = "compose-dock";
+  dock.dataset.ticketId = String(ticket.id);
+  dock.innerHTML = `
+    <div class="compose-header">
+      <span class="compose-title" data-compose-toggle>Balas Pesan</span>
+      <div class="compose-header-actions">
+        <button type="button" class="compose-icon-btn" data-compose-toggle title="Minimize">—</button>
+        <button type="button" class="compose-icon-btn" data-compose-close title="Tutup">✕</button>
+      </div>
+    </div>
+    <div class="compose-fields">
+      <div class="compose-row">
+        <label class="compose-label">Dari</label>
+        <div class="compose-static">${escapeHtml(adminName)} &lt;${escapeHtml(adminEmail)}&gt;</div>
+      </div>
+      <div class="compose-row">
+        <label class="compose-label">Kepada</label>
+        <div class="compose-static">${escapeHtml(recipientName)} &lt;${escapeHtml(ticket.fromEmail)}&gt;</div>
+      </div>
+      <div class="compose-row">
+        <label class="compose-label" for="composeSubject_${ticket.id}">Subjek</label>
+        <input type="text" id="composeSubject_${ticket.id}" class="compose-subject-input" value="${escapeHtml(subjectDefault)}" />
+      </div>
+      <textarea class="compose-body-input" placeholder="Tulis balasan kamu di sini..." rows="10">Halo ${escapeHtml(greeting)},
+
+Terima kasih sudah menghubungi kami.
+
+[Tulis balasan di sini]
+
+Salam,
+${escapeHtml(adminName)}
+Tim Playly</textarea>
+    </div>
+    <div class="compose-footer">
+      <button type="button" class="btn primary compose-send-btn">📤 Kirim</button>
+      <button type="button" class="compose-icon-btn compose-discard" data-compose-close title="Buang draft">🗑️</button>
+      <span class="compose-hint">Pesan masuk ke inbox user via chat &amp; tersimpan di tiket</span>
+    </div>
+  `;
+  document.body.appendChild(dock);
+  setTimeout(() => dock.querySelector(".compose-body-input")?.focus(), 80);
+
+  dock.addEventListener("click", e => {
+    if (e.target.closest("[data-compose-close]")) {
+      const ta = dock.querySelector(".compose-body-input");
+      const original = `Halo ${greeting},\n\nTerima kasih sudah menghubungi kami.`;
+      const dirty = ta && ta.value.trim() && !ta.value.startsWith(original.slice(0, 30));
+      if (dirty && !confirm("Buang draft balasan?")) return;
+      dock.remove();
+      return;
+    }
+    if (e.target.closest("[data-compose-toggle]")) {
+      dock.classList.toggle("minimized");
+      return;
+    }
+    if (e.target.closest(".compose-send-btn")) {
+      const subjectInput = dock.querySelector(".compose-subject-input");
+      const bodyInput = dock.querySelector(".compose-body-input");
+      const subject = (subjectInput.value || "").trim();
+      const replyBody = (bodyInput.value || "").trim();
+      if (!subject) { subjectInput.focus(); toast("⚠️ Subjek wajib diisi", "warning"); return; }
+      if (replyBody.length < 10) { bodyInput.focus(); toast("⚠️ Pesan minimal 10 karakter", "warning"); return; }
+
+      const tickets = getAdminData("tickets");
+      const t = tickets.find(x => x.id === ticket.id);
+      if (!t) { toast("⚠️ Tiket tidak ditemukan", "warning"); return; }
+      if (!Array.isArray(t.replies)) t.replies = [];
+      const replyEntry = {
+        id: Date.now() + Math.random(),
+        ts: Date.now(),
+        fromName: adminName,
+        fromEmail: adminEmail,
+        subject,
+        body: replyBody
+      };
+      t.replies.push(replyEntry);
+      // Auto-bump status → progress kalau masih new
+      if (t.status === "new") t.status = "progress";
+      saveAdminData("tickets", tickets);
+
+      // Deliver ke chat thread user supaya user dapat notif real (tidak auto-reply,
+      // ini balasan manual admin atas tiket user).
+      if (recipientUsername && typeof deliverAdminMessage === "function") {
+        const chatPreview = `📧 Balasan dari admin untuk tiket "${ticket.title}":\n\n${replyBody}`;
+        try { deliverAdminMessage(recipientUsername, chatPreview); } catch {}
+      }
+
+      pushAdminEvent("📨", `Balasan email terkirim ke <b>${recipientName}</b>`);
+      toast("📨 Balasan terkirim & tersimpan di tiket", "success");
+
+      dock.remove();
+      // Refresh detail modal kalau masih kebuka & inbox list
+      if (parentModal && document.body.contains(parentModal)) {
+        parentModal.remove();
+        openInboxDetailModal({ kind: "ticket", item: t });
+      }
+      renderAdminInbox?.();
+      renderAdminTickets?.();
+      syncAdminNavBadges?.();
+
+      // Cloud sync — propagate ke device lain
+      try { window.cloudSync?.softResync?.(); } catch {}
     }
   });
 }
@@ -7044,7 +7711,31 @@ function setupAdminEvents() {
 
   // User search (live filter)
   const search = $("#adminUserSearch");
-  if (search) search.addEventListener("input", () => renderAdminUsers());
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = "1";
+    search.addEventListener("input", () => renderAdminUsers());
+  }
+
+  // Refresh button — narik state terbaru dari Supabase lalu re-render
+  const refresh = $("#adminUserRefresh");
+  if (refresh && !refresh.dataset.bound) {
+    refresh.dataset.bound = "1";
+    refresh.addEventListener("click", () => {
+      refresh.classList.add("spinning");
+      const done = () => {
+        renderAdminUsers();
+        renderAdminKPI?.();
+        syncAdminNavBadges?.();
+        setTimeout(() => refresh.classList.remove("spinning"), 320);
+        toast("✓ User Management di-refresh dari cloud", "success");
+      };
+      if (window.cloudSync?.softResync) {
+        Promise.resolve(window.cloudSync.softResync()).finally(done);
+      } else {
+        done();
+      }
+    });
+  }
 }
 
 function renderAdminBugs() {
@@ -7088,21 +7779,12 @@ function renderAdminBugs() {
 // ----------------------- VIEW SWITCHING -----------------------
 function switchView(name, { fromNav = false } = {}) {
   const homeView = user?.role === "admin" ? "admin-dashboard" : "home";
-  if (fromNav && name === state.currentView && name !== homeView) {
-    name = state.prevView || homeView;
-  }
-  // Sidebar "Videos" → langsung ke player view dengan video terbaru.
-  // Halaman manajemen "Videos Saya" (data-view="videos") tetap diakses
-  // lewat tombol "📁 Kelola Video" di player view.
-  // Kalau user belum punya video, fallback ke halaman manajemen (yang
-  // sudah punya empty state dengan CTA upload).
-  if (fromNav && name === "videos") {
-    const latestId = state?.myVideos?.[0]?.id;
-    if (latestId) {
-      openPlayer(latestId);
-      return;
-    }
-  }
+  // BUG FIX: dulu ada "klik nav 2x → balik ke prevView" yang bikin user balik
+  // ke Home saat klik bar yang sama dua kali. User minta klik bar lagi tetap
+  // stay di halaman itu. Logic back-navigation dihilangkan sepenuhnya.
+  // Sidebar "My Library" → halaman /videos (3 section: My Video, New Videos,
+  // Download) sekarang aktif lagi sebagai view utama. Render via renderMyLibrary.
+  // (Dulu redirect ke player; sekarang user mau halaman list yang benar.)
   // Cleanup player kalau user meninggalkan view 'player'
   if (state.currentView === "player" && name !== "player") {
     cleanupPlayerView();
@@ -7163,8 +7845,17 @@ function switchView(name, { fromNav = false } = {}) {
   }
   if (name === "history") renderHistory();
   if (name === "stats") setTimeout(drawChart, 50);
-  if (name === "videos") renderVideoGrid();
-  if (name === "people") renderPeople();
+  if (name === "videos") { renderVideoGrid(); renderMyLibrary(); }
+  if (name === "people") {
+    // Render dulu pakai data lokal supaya tampilan tidak kosong, lalu force pull
+    // semua akun terbaru dari Supabase. Setelah cloud-sync apply, listener
+    // playly:cloud-applied yang sudah meng-handle "people" akan re-render
+    // otomatis sehingga user baru dari device lain langsung muncul.
+    renderPeople();
+    if (window.cloudSync?.softResync) {
+      Promise.resolve(window.cloudSync.softResync()).then(() => renderPeople()).catch(() => {});
+    }
+  }
   if (name === "discover") {
     renderFYP();
     renderTrendingInto("#discoverTrendingList");
@@ -7177,7 +7868,10 @@ function switchView(name, { fromNav = false } = {}) {
   if (name === "settings") {
     populateSettingsPrefs();
     refreshTwoFASettings();
-    if (user?.role === "admin") populatePlatformSettings();
+    if (user?.role === "admin") {
+      populatePlatformSettings();
+      populateAdminSessionInfo();
+    }
   }
   if (name === "admin-revenue") renderAdminRevenue();
   else stopRevenueLive();
@@ -7191,6 +7885,22 @@ function switchView(name, { fromNav = false } = {}) {
   if (name === "admin-analytics") renderAdminAnalytics();
   if (name === "admin-ads") loadAdManagerForm();
   if (name === "admin-inbox") renderAdminInbox();
+  // Admin views yang bergantung pada data lintas-device → soft resync dari Supabase
+  // begitu admin masuk view, supaya data user/inbox terbaru langsung kelihatan
+  // tanpa harus refresh manual atau tunggu interval 4s.
+  if ((name === "admin-users" || name === "admin-inbox" || name === "admin-dashboard")
+      && window.cloudSync?.softResync) {
+    Promise.resolve(window.cloudSync.softResync()).then(() => {
+      if (state?.currentView === name) {
+        if (name === "admin-users") renderAdminUsers();
+        else if (name === "admin-inbox") renderAdminInbox();
+        else if (name === "admin-dashboard") { renderAdminKPI?.(); renderAdminTopInsights?.(); }
+        renderAdminAlerts?.();
+        renderAdminLiveFeed?.();
+        syncAdminNavBadges?.();
+      }
+    }).catch(() => {});
+  }
 
   if (window.innerWidth <= 768) $("#sidebar").classList.remove("open");
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -7202,8 +7912,222 @@ function switchView(name, { fromNav = false } = {}) {
 $$(".nav-item, .footer-link[data-view]").forEach(n => {
   n.addEventListener("click", e => {
     e.preventDefault();
+    const group = n.closest(".nav-group");
+    const hasSub = !!group; // parent yang punya sub-list
+
+    // PARENT dengan sub-items → toggle expand + navigate ke parent view.
+    // Kalau user lagi di focused state di view ini, biarkan focus tetap stay
+    // (jangan reset). Ini sesuai permintaan: klik bar lagi → stay di halaman.
+    if (hasSub && n.classList.contains("nav-parent")) {
+      e.stopPropagation();
+      const willExpand = !group.classList.contains("expanded");
+      // Tutup group lain (collapse all siblings) untuk UX yang lebih bersih
+      $$(".nav-group.expanded").forEach(g => { if (g !== group) toggleNavGroup(g, false); });
+      toggleNavGroup(group, willExpand);
+      // Navigate ke parent view supaya beralih dari group lain langsung pindah
+      // halaman. switchView idempotent — kalau sudah aktif, no-op.
+      switchView(n.dataset.view, { fromNav: true });
+      return;
+    }
+
+    // Plain nav-item (tanpa sub) → navigasi seperti biasa
     switchView(n.dataset.view, { fromNav: true });
   });
+});
+
+// ----------------------- SIDEBAR EXPAND/COLLAPSE & SUB-NAV -----------------------
+// User minta: jangan langsung terbuka — hanya buka saat di-klik. Jadi default
+// SEMUA group collapsed di awal (tidak ada restore localStorage, tidak ada
+// auto-expand berdasarkan view aktif).
+function toggleNavGroup(group, expand) {
+  group.classList.toggle("expanded", !!expand);
+}
+// Bersihkan localStorage flag versi lama supaya tidak ada group yang nyangkut
+// terbuka di reload berikutnya.
+try { localStorage.removeItem("playly-nav-expanded"); } catch {}
+
+// Sub-item click → deep-link ke parent view + jalankan aksi (filter / scroll / focus)
+document.addEventListener("click", e => {
+  const sub = e.target.closest(".nav-subitem");
+  if (!sub) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const targetView = sub.dataset.view;
+  const action = sub.dataset.subAction || "";
+  const subText = (sub.textContent || "").trim();
+  // Mark active sub-item dalam group-nya
+  const group = sub.closest(".nav-group");
+  if (group) {
+    group.querySelectorAll(".nav-subitem").forEach(x => x.classList.toggle("active", x === sub));
+    if (!group.classList.contains("expanded")) toggleNavGroup(group, true);
+  }
+  // Navigate ke parent view dulu
+  if (typeof switchView === "function" && targetView) {
+    switchView(targetView, { fromNav: true });
+  }
+  // Jalankan SEMUA aksi (composable dengan separator "|") setelah view siap,
+  // lalu update judul halaman supaya match dengan nama sub-item.
+  setTimeout(() => {
+    action.split("|").forEach(a => runSubAction(a.trim()));
+    const view = document.querySelector(`section.view[data-view="${targetView}"]`);
+    if (view) updateViewTitle(view, subText);
+  }, 80);
+  // Tutup sidebar di mobile
+  if (window.innerWidth <= 768) $("#sidebar")?.classList.remove("open");
+});
+
+// Update h2 view dengan judul sub-item — simpan judul asli sekali supaya bisa
+// di-restore saat user reset/keluar dari focus mode.
+function updateViewTitle(view, title) {
+  if (!view || !title) return;
+  const h = view.querySelector(".page-head h2, .view-header h2");
+  if (!h) return;
+  if (!h.dataset.originalTitle) h.dataset.originalTitle = h.textContent;
+  h.textContent = title;
+  // Update breadcrumb biar match dengan focus
+  const crumb = document.querySelector(".breadcrumb");
+  if (crumb) {
+    const links = crumb.querySelectorAll("a");
+    const last = links[links.length - 1];
+    if (last) {
+      if (!last.dataset.originalText) last.dataset.originalText = last.textContent;
+      last.textContent = title;
+    }
+  }
+}
+function restoreViewTitle(view) {
+  if (!view) return;
+  const h = view.querySelector(".page-head h2, .view-header h2");
+  if (h && h.dataset.originalTitle) {
+    h.textContent = h.dataset.originalTitle;
+    delete h.dataset.originalTitle;
+  }
+  const crumb = document.querySelector(".breadcrumb");
+  if (crumb) {
+    crumb.querySelectorAll("a").forEach(a => {
+      if (a.dataset.originalText) {
+        a.textContent = a.dataset.originalText;
+        delete a.dataset.originalText;
+      }
+    });
+  }
+}
+
+// Reset focus + active sub-item saat user klik parent label langsung
+// (tanpa via sub-item) — kembalikan view ke "show all"
+function resetGroupFocus(group) {
+  if (!group) return;
+  group.querySelectorAll(".nav-subitem").forEach(x => x.classList.remove("active"));
+  const targetView = group.querySelector(".nav-parent")?.dataset.view;
+  if (!targetView) return;
+  const view = document.querySelector(`section.view[data-view="${targetView}"]`);
+  if (view) applyFocus(view, "all");
+}
+
+function runSubAction(action) {
+  if (!action) return;
+  const idx = action.indexOf(":");
+  const kind = idx === -1 ? action : action.slice(0, idx);
+  const value = idx === -1 ? "" : action.slice(idx + 1);
+  if (!kind) return;
+
+  if (kind === "focus") {
+    // Cari section view aktif lalu apply focus
+    const activeView = document.querySelector("section.view.active");
+    if (activeView) applyFocus(activeView, value);
+    return;
+  }
+  if (kind === "scroll") {
+    const target = document.querySelector(value);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("nav-sub-flash");
+      setTimeout(() => target.classList.remove("nav-sub-flash"), 1200);
+    }
+    return;
+  }
+  if (kind === "gv-filter") {
+    const tab = document.querySelector(`.gv-tab[data-gv-filter="${value}"]`);
+    tab?.click();
+    return;
+  }
+  if (kind === "act-filter") {
+    const chip = document.querySelector(`#activityFilters button[data-act-filter="${value}"]`);
+    chip?.click();
+    return;
+  }
+  if (kind === "audit-actor") {
+    // value: "super-admin" | "admin" | "all"
+    __auditActor = value;
+    if (typeof renderAdminAudit === "function") renderAdminAudit();
+    return;
+  }
+  if (kind === "chart-tab") {
+    const tab = document.querySelector(`#chartTabs button[data-range="${value}"]`);
+    tab?.click();
+    return;
+  }
+  if (kind === "nav") {
+    // Sub-item shortcut nav ke view berbeda dari parent (mis. My Library → upload)
+    if (typeof switchView === "function") switchView(value, { fromNav: true });
+    return;
+  }
+}
+
+// Apply focus mode ke section: hanya sub-section dengan data-focus-target sesuai
+// yang ditampilkan. value="all" → kembalikan show-all + restore judul asli.
+function applyFocus(view, value) {
+  if (!view) return;
+  const key = (value || "all").trim();
+  view.dataset.focus = key;
+  // Toggle class untuk styling visual + tampilkan/sembunyikan focus-target
+  const targets = view.querySelectorAll("[data-focus-target]");
+  targets.forEach(el => {
+    if (key === "all") {
+      el.removeAttribute("data-focus-hidden");
+    } else {
+      // Cocokin key — boleh multi value dipisah spasi (mis. "rt always")
+      const own = (el.dataset.focusTarget || "").split(/\s+/);
+      if (own.includes(key) || own.includes("always")) {
+        el.removeAttribute("data-focus-hidden");
+      } else {
+        el.setAttribute("data-focus-hidden", "1");
+      }
+    }
+  });
+  // Kalau ada Ad-grid yang biasanya 3-kolom, paksa jadi 1-kolom saat focus
+  view.classList.toggle("focus-mode", key !== "all");
+  // Saat reset ke "all" → restore judul asli (sebelum dimodifikasi oleh sub-item)
+  if (key === "all") restoreViewTitle(view);
+}
+
+// User minta: jangan auto-expand saat view berubah. Group hanya buka via klik.
+// Tapi tetap restore judul-h2 view yang ditinggalkan (kalau pernah di-focus
+// rename) supaya saat user balik lagi pakai parent click → judul asli, bukan
+// stale title dari focus sebelumnya.
+window.addEventListener("playly:view-changed", e => {
+  const incoming = e.detail?.view;
+  if (!incoming) return;
+  // Restore semua view non-aktif yang masih punya originalTitle (sisa dari
+  // focus terakhir). View yang baru aktif jangan di-restore sekarang — kalau
+  // dia punya focus aktif via sub-item, judul akan di-set oleh handler.
+  document.querySelectorAll('section.view h2[data-original-title]').forEach(h => {
+    const sec = h.closest('section.view');
+    if (!sec || sec.dataset.view === incoming) return;
+    h.textContent = h.dataset.originalTitle;
+    delete h.dataset.originalTitle;
+    // Kalau view yang ditinggalkan tidak ada lagi sub-item active → reset focus juga
+    if (sec.classList.contains('focus-mode')) {
+      const navGroup = document.querySelector(`.nav-group [data-view="${sec.dataset.view}"]`)?.closest('.nav-group');
+      if (navGroup) navGroup.querySelectorAll('.nav-subitem.active').forEach(x => x.classList.remove('active'));
+      applyFocus(sec, 'all');
+    }
+  });
+  // Reset audit actor filter saat keluar dari Audit Log
+  if (incoming !== "admin-audit" && __auditActor !== "all") {
+    __auditActor = "all";
+    if (typeof renderAdminAudit === "function") renderAdminAudit();
+  }
 });
 
 // ----------------------- BRAND CLICK (Logo → Home / Admin Dashboard) -----------------------
@@ -8752,10 +9676,83 @@ $$("#filterTabs button").forEach(b => {
   });
 });
 
+// ----------------------- MY LIBRARY VIEW (videos) -----------------------
+// Render 3 koleksi: My Video (upload sendiri), New Videos (terbaru dari kreator
+// lain), Download (yang sudah ditandai diunduh). Click → buka player video.
+function renderMyLibrary() {
+  const renderCard = (v) => {
+    const id = v.id;
+    const title = escapeHtml(v.title || "Video");
+    const thumb = v.thumb || v.thumbnail || "";
+    const creator = escapeHtml(v.creator || v.uploader || "—");
+    const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
+    const duration = v.duration || "";
+    const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
+    return `<div class="lib-item" data-vid="${id}">
+      <div class="lib-thumb" ${thumbBg}>
+        ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
+        ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
+      </div>
+      <div class="lib-meta">
+        <strong title="${title}">${title}</strong>
+        <small>@${creator} · ${views} views</small>
+      </div>
+    </div>`;
+  };
+  const emptyMsg = (icon, msg) => `<div class="lib-empty"><div class="lib-empty-icon">${icon}</div><p>${msg}</p></div>`;
+
+  // 1. My Video — video user sendiri
+  const myVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
+  myVideos.sort((a, b) => (b.id || 0) - (a.id || 0));
+  const myEl = $("#myVideoGrid");
+  const myCnt = $("#myVideoCount");
+  if (myEl) myEl.innerHTML = myVideos.length
+    ? myVideos.map(renderCard).join("")
+    : emptyMsg("🎬", "Belum ada video yang kamu upload. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload sekarang</a>");
+  if (myCnt) myCnt.textContent = myVideos.length;
+
+  // 2. New Videos — semua video kreator lain, sort by id desc (terbaru dulu)
+  const myIds = new Set(myVideos.map(v => v.id));
+  const platform = (typeof getPlatformVideos === "function" ? getPlatformVideos() : [])
+    .filter(v => !myIds.has(v.id));
+  platform.sort((a, b) => (b.id || 0) - (a.id || 0));
+  const newList = platform.slice(0, 24);
+  const newEl = $("#newVideoGrid");
+  const newCnt = $("#newVideoCount");
+  if (newEl) newEl.innerHTML = newList.length
+    ? newList.map(renderCard).join("")
+    : emptyMsg("🆕", "Belum ada video baru dari kreator lain.");
+  if (newCnt) newCnt.textContent = newList.length;
+
+  // 3. Download — video yang ditandai diunduh oleh user
+  const downloadIds = (state?.downloaded || []).map(d => d?.videoId).filter(Boolean);
+  const allLookup = new Map();
+  [...myVideos, ...platform].forEach(v => allLookup.set(v.id, v));
+  const dlList = downloadIds.map(id => allLookup.get(id)).filter(Boolean);
+  const dlEl = $("#downloadVideoGrid");
+  const dlCnt = $("#downloadVideoCount");
+  if (dlEl) dlEl.innerHTML = dlList.length
+    ? dlList.map(renderCard).join("")
+    : emptyMsg("📥", "Belum ada video yang didownload. Tonton video lalu klik tombol Download di player untuk menyimpan.");
+  if (dlCnt) dlCnt.textContent = dlList.length;
+
+  // Click handler: buka player saat item di-klik (delegasi sekali aja)
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (view && !view.__libBound) {
+    view.__libBound = true;
+    view.addEventListener("click", e => {
+      const item = e.target.closest(".lib-item");
+      if (!item) return;
+      const id = Number(item.dataset.vid);
+      if (Number.isFinite(id) && typeof openPlayer === "function") openPlayer(id);
+    });
+  }
+}
+
 // ----------------------- HISTORY VIEW -----------------------
 function renderHistory() {
   if (!state.history.length) {
-    $("#continueList").innerHTML = "";
+    $("#continueList").innerHTML = `<div style="padding:18px; text-align:center; color:var(--muted); font-size:12.5px">Belum ada video in-progress.</div>`;
     $("#historyGroups").innerHTML = `<div class="card">${emptyHTML("🕐", "Riwayat masih kosong", "Video yang kamu tonton akan muncul di sini, dikelompokkan berdasarkan tanggal.", "Discover Video", "discover")}</div>`;
     return;
   }
@@ -10084,10 +11081,11 @@ function setupFypObserver(feed) {
       const wrap = entry.target.querySelector(".fyp-video-wrap");
       if (!wrap) return;
       if (entry.intersectionRatio > 0.6) {
-        // Active card — autoplay
+        // Active card — autoplay (gated by Settings → Tampilan → Auto-play video)
+        const autoplayOn = getPref("display.autoplay", true);
         let video = wrap.querySelector("video");
         if (!video) video = await createFypVideo(wrap);
-        if (video) {
+        if (video && autoplayOn) {
           video.muted = fypMuted;
           video.play().catch(() => {});
         }
@@ -10175,6 +11173,17 @@ function renderPeople() {
 function startChatWithUser(username) {
   const acc = getAllAccounts().find(a => a.username === username);
   if (!acc) return toast("❌ User tidak ditemukan", "error");
+  // Privasi: hormati setting "Izinkan DM dari semua orang" milik target. Admin selalu boleh.
+  if (acc.role !== "admin" && user?.role !== "admin") {
+    const allowDM = getOtherUserPrefByUsername(username, "privacy.allowDM", true);
+    if (!allowDM) {
+      const targetFollowing = getUserFollowing(username);
+      if (!targetFollowing.includes(user?.username)) {
+        toast(`🔒 @${username} membatasi DM — hanya kreator yang dia follow yang bisa kirim`, "warning");
+        return;
+      }
+    }
+  }
   const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
 
   const existing = state.messages.findIndex(m => m.name === username);
@@ -10613,6 +11622,19 @@ function sendChat() {
 // Tulis ke `playly-state-{recipient}.messages` — cross-tab/cross-device sync
 // otomatis lewat storage event + cloud-sync.
 function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
+  // Privasi: kalau recipient mematikan "Izinkan DM dari semua orang" dan kita bukan
+  // admin & belum di-follow oleh recipient, hentikan chat. Admin selalu boleh.
+  if (!fromAdmin && user?.role !== "admin") {
+    const allowDM = getOtherUserPrefByUsername(recipientUsername, "privacy.allowDM", true);
+    if (!allowDM) {
+      const recFollowing = getUserFollowing(recipientUsername);
+      const senderName = user?.username || "";
+      if (!recFollowing.includes(senderName)) {
+        toast(`⚠️ @${recipientUsername} membatasi DM — hanya yang dia follow yang bisa kirim`, "warning");
+        return;
+      }
+    }
+  }
   const key = `playly-state-${recipientUsername}`;
   let s;
   try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
@@ -11420,6 +12442,12 @@ $("#followBtn")?.addEventListener("click", () => {
 // adalah user yang sedang login (test di tab yang sama), langsung sync UI.
 function deliverNotification(username, notif) {
   if (!username) return;
+  // Hormati preferensi notif penerima (Settings → Notifikasi). Mapping di NOTIF_TYPE_PREF.
+  const prefKey = NOTIF_TYPE_PREF[notif?.type];
+  if (prefKey) {
+    const allowed = getOtherUserPrefByUsername(username, prefKey, true);
+    if (!allowed) return; // penerima mematikan kategori notif ini
+  }
   const key = `playly-state-${username}`;
   let s;
   try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
@@ -11437,12 +12465,61 @@ function deliverNotification(username, notif) {
   });
   // Simpan max 100 notifikasi terakhir supaya tidak membengkak
   s.notifications = s.notifications.slice(0, 100);
+
+  // Mirror ke `activities` supaya muncul di tab Activity dengan filter sesuai.
+  // Mapping: notif type → activity type yang dipakai di chip-tabs Activity.
+  const ACT_TYPE_MAP = {
+    "video-share": "share",
+    "follow": "follow",
+    "like": "like",
+    "video-like": "like",
+    "comment": "comment",
+    "video-comment": "comment",
+    "upload": "upload"
+  };
+  const actType = ACT_TYPE_MAP[notif.type];
+  if (actType) {
+    if (!Array.isArray(s.activities)) s.activities = [];
+    const ICON = { like: "❤️", comment: "💬", follow: "👤", upload: "🎬", share: "📤" };
+    // Untuk share: tidak tampilkan username (sesuai permintaan user)
+    let actText = String(notif.text || "");
+    if (actType === "share") {
+      // Strip prefix "<b>@username</b> mengirim …" → "Video … di-share kepada Anda"
+      actText = actText.replace(/^<b>@[^<]+<\/b>\s*/i, "");
+      if (!actText) actText = "Seseorang men-share video";
+    }
+    s.activities.unshift({
+      id: Date.now() + Math.random(),
+      type: actType,
+      text: actText,
+      icon: ICON[actType] || "🔔",
+      videoId: notif.videoId || null,
+      time: "baru saja"
+    });
+    s.activities = s.activities.slice(0, 200);
+  }
   try { localStorage.setItem(key, JSON.stringify(s)); } catch {}
   // Kalau receiver = user login sekarang (jarang, tapi tetap aman): sync UI
   if (user && user.username === username && Array.isArray(state?.notifications)) {
     state.notifications = s.notifications;
     renderNotifications?.();
   }
+  if (user && user.username === username && Array.isArray(s.activities)) {
+    state.activities = s.activities;
+    if (state.currentView === "activity" && typeof renderActivityList === "function") {
+      renderActivityList();
+    }
+  }
+  // Push notifikasi browser — hanya kalau penerima opt-in (Settings → notif.push)
+  // dan permission dari browser sudah granted. Strip HTML tags dari body teks.
+  try {
+    const wantsPush = getOtherUserPrefByUsername(username, "notif.push", true);
+    const isMe = user && user.username === username;
+    if (wantsPush && isMe && "Notification" in window && Notification.permission === "granted") {
+      const body = String(notif.text || "").replace(/<[^>]*>/g, "");
+      new Notification("Playly", { body, tag: `playly-${notif.type || "generic"}-${Date.now()}` });
+    }
+  } catch {}
 }
 
 // ----------------------- USER PROFILE VIEW (other creator) -----------------------
@@ -11465,8 +12542,21 @@ function openUserProfile(username) {
     switchView("profile");
     return;
   }
+  // Privasi: hormati setting "Profil publik" milik target. Admin selalu boleh.
+  // Kalau target nge-privatkan profil, hanya follower yang bisa lihat versi penuh.
+  // Non-follower tetap masuk tapi sebagian section disembunyikan oleh renderUserProfile.
   state._viewingUser = username;
   switchView("user-profile");
+}
+
+function isProfilePubliclyVisibleTo(targetUsername) {
+  if (!targetUsername) return false;
+  if (user && (targetUsername === user.username || user.role === "admin")) return true;
+  const isPublic = getOtherUserPrefByUsername(targetUsername, "privacy.publicProfile", true);
+  if (isPublic) return true;
+  // Private: hanya follower yang bisa lihat
+  const targetFollowers = getUserFollowers(targetUsername);
+  return targetFollowers.includes(user?.username);
 }
 
 function renderUserProfile() {
@@ -11474,11 +12564,13 @@ function renderUserProfile() {
   if (!username) return;
   const isMe = !!user && username === user.username;  // ← deteksi own channel
   const acc = findAccountByUsername(username);
-  const videos = getUserVideos(username);
+  // Privasi: profil di-private + viewer bukan follower & bukan admin → render terbatas
+  const profileVisible = isMe || isProfilePubliclyVisibleTo(username);
+  const videos = profileVisible ? getUserVideos(username) : [];
 
   const displayName = acc?.name || username;
   const init = (acc?.name || username).slice(0, 2).toUpperCase();
-  const rawBio = acc?.bio?.trim();
+  const rawBio = profileVisible ? acc?.bio?.trim() : "";
 
   $("#upAvatar").innerHTML = acc?.avatar ? `<img src="${acc.avatar}" alt="${escapeHtml(displayName)}"/>` : `<span>${escapeHtml(init)}</span>`;
   $("#upDisplayName").textContent = displayName;
@@ -11534,8 +12626,16 @@ function renderUserProfile() {
   // Video grid
   const grid = $("#upVideoGrid");
   const empty = $("#upEmpty");
-  $("#upVideoCount").textContent = `${videos.length} video`;
-  if (!videos.length) {
+  $("#upVideoCount").textContent = profileVisible ? `${videos.length} video` : `🔒 Privat`;
+  if (!profileVisible) {
+    grid.innerHTML = `
+      <div class="people-empty" style="grid-column:1/-1; padding:32px 20px; text-align:center">
+        <div style="font-size:36px; margin-bottom:8px">🔒</div>
+        <h4 style="margin:0 0 6px;font-family:'Plus Jakarta Sans';font-weight:700;color:var(--text)">Profil ini privat</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0">Follow <b>@${escapeHtml(username)}</b> dulu supaya bisa lihat video & detail profilnya.</p>
+      </div>`;
+    if (empty) empty.hidden = true;
+  } else if (!videos.length) {
     grid.innerHTML = "";
     if (empty) empty.hidden = false;
   } else {
@@ -11677,7 +12777,23 @@ document.addEventListener("click", (e) => {
   // Bell icon → toggle notif panel
   if (t.closest("#openNotif")) {
     e.preventDefault();
-    $("#notifPanel")?.classList.toggle("open");
+    const panel = $("#notifPanel");
+    const wasOpen = panel?.classList.contains("open");
+    panel?.classList.toggle("open");
+    // Saat panel BUKA → segarkan alert + live feed supaya admin lihat data terbaru
+    // (klik bell sering jadi titik fokus admin yang baru kembali ke tab).
+    if (panel && !wasOpen && document.body.dataset.role === "admin") {
+      try {
+        renderAdminAlerts?.();
+        renderAdminLiveFeed?.();
+      } catch {}
+      if (window.cloudSync?.softResync) {
+        Promise.resolve(window.cloudSync.softResync()).then(() => {
+          renderAdminAlerts?.();
+          renderAdminLiveFeed?.();
+        }).catch(() => {});
+      }
+    }
     return;
   }
   // Close button [data-close-sp]

@@ -140,13 +140,15 @@ body[data-theme="light"]::before {
     radial-gradient(circle at center, rgba(220, 201, 181, .50), transparent 60%),
     radial-gradient(circle at center, rgba(242, 226, 204, .65), transparent 60%);
 }
-/* Admin — Navy & Slate & Khaki BRIGHTER variant */
+/* Admin — All-cool blue/navy variant. SEMUA tone hangat (khaki, cream, tan)
+   dihapus karena waktu blend dengan dark navy bg jadi muncul warm orange/wine
+   tint di area antara blob (terlihat seperti "wine glow" di bawah card). */
 body[data-role="admin"]::before {
   background-image:
-    radial-gradient(circle at center, rgba(77, 84, 112, .55),   transparent 60%),  /* bright navy */
-    radial-gradient(circle at center, rgba(197, 209, 218, .42), transparent 60%),  /* bright slate */
-    radial-gradient(circle at center, rgba(229, 219, 182, .25), transparent 60%),  /* bright khaki */
-    radial-gradient(circle at center, rgba(245, 240, 220, .14), transparent 60%);  /* bright cream */
+    radial-gradient(circle at center, rgba(48, 84, 140, .55),   transparent 60%),  /* deep ocean blue */
+    radial-gradient(circle at center, rgba(125, 163, 204, .42), transparent 60%),  /* sky steel */
+    radial-gradient(circle at center, rgba(164, 192, 224, .26), transparent 60%),  /* periwinkle */
+    radial-gradient(circle at center, rgba(207, 221, 234, .14), transparent 60%);  /* pale slate */
 }
 
 @keyframes shaderDrift {
@@ -179,10 +181,16 @@ input, textarea, select { font: inherit; color: inherit; }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+/* Scrollbar fully hidden across the app — scroll tetap jalan, tapi track/thumb
+   tidak pernah render. Berlaku global supaya sidebar, main, modal, drawer dll
+   tampil bersih tanpa garis vertikal yang mengganggu. */
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; background: transparent !important; }
+*::-webkit-scrollbar-track { background: transparent !important; }
+*::-webkit-scrollbar-thumb { background: transparent !important; }
+*::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+*::-webkit-scrollbar-corner { background: transparent !important; }
+* { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+html { scrollbar-width: none !important; -ms-overflow-style: none !important; }
 
 /* =========================================================
    SIDEBAR
@@ -312,6 +320,7 @@ img { display: block; max-width: 100%; }
 .nav-label:first-child { margin-top: 2px; }
 
 .nav-item {
+  position: relative;
   display: flex; align-items: center;
   gap: 12px;
   padding: 9px 12px;
@@ -320,18 +329,49 @@ img { display: block; max-width: 100%; }
   font-weight: 500;
   font-size: 13.5px;
   color: var(--text-2);
-  transition: all .15s var(--ease);
+  transition:
+    color .28s var(--ease),
+    background .35s var(--ease),
+    transform .28s var(--ease),
+    box-shadow .35s var(--ease);
 }
-.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: .85; }
+/* Animated left-bar indicator — scale-Y dari 0 → 1 dengan ease smooth saat
+   nav-item jadi active. Memberi efek "bar bergerak" yang halus tanpa JS. */
+.nav-item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 3px;
+  height: 60%;
+  border-radius: 2px;
+  background: var(--primary);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform .35s var(--ease), opacity .25s var(--ease);
+  pointer-events: none;
+}
+.nav-item.active::before {
+  transform: translateY(-50%) scaleY(1);
+  opacity: 1;
+}
+.nav-item svg {
+  width: 18px; height: 18px; flex-shrink: 0; opacity: .85;
+  transition: color .28s var(--ease), opacity .28s var(--ease), transform .35s var(--ease);
+}
 .nav-item:hover {
   color: var(--text);
   background: var(--surface-2);
+  transform: translateX(2px);
 }
 .nav-item.active {
   color: var(--text);
   background: var(--primary-soft);
   font-weight: 600;
+  transform: translateX(3px);
 }
+.nav-item.active svg { transform: scale(1.05); }
 .nav-item.active svg { color: var(--primary); opacity: 1; }
 .nav-item .badge {
   margin-left: auto;
@@ -364,6 +404,213 @@ img { display: block; max-width: 100%; }
   50%      { opacity: 1; }
 }
 .nav-item.active .badge { background: var(--surface-3); color: var(--text); }
+
+/* === EXPANDABLE NAV GROUP (parent + sub-items) === */
+.nav-group { display: block; margin-bottom: 2px; }
+.nav-item.nav-parent { position: relative; }
+.nav-toggle {
+  margin-left: auto;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .2s var(--ease), transform .25s var(--ease), color .2s var(--ease);
+  flex-shrink: 0;
+}
+.nav-toggle svg { width: 11px; height: 11px; }
+.nav-toggle:hover { background: var(--surface-3); color: var(--text); }
+.nav-item.nav-parent .badge + .nav-toggle { margin-left: 6px; }
+.nav-group.expanded .nav-toggle { transform: rotate(-180deg); color: var(--text); }
+.nav-sub {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 12px;
+  position: relative;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .28s var(--ease), opacity .2s var(--ease), padding-bottom .2s var(--ease), padding-top .2s var(--ease);
+}
+.nav-sub::before {
+  content: "";
+  position: absolute;
+  left: 21px; top: 6px; bottom: 6px;
+  width: 1px;
+  background: var(--border-strong);
+  opacity: .55;
+}
+.nav-group.expanded > .nav-sub {
+  max-height: 360px;
+  opacity: 1;
+  padding-top: 4px;
+  padding-bottom: 6px;
+}
+.nav-sub li { list-style: none; }
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px 7px 28px;
+  margin: 1px 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: 8px;
+  position: relative;
+  transition: all .15s var(--ease);
+  text-decoration: none;
+}
+.nav-subitem::before {
+  content: "";
+  position: absolute;
+  left: 11px; top: 50%;
+  transform: translateY(-50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background .2s var(--ease), transform .2s var(--ease);
+}
+.nav-subitem:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.nav-subitem:hover::before { background: var(--text-2); transform: translateY(-50%) scale(1.4); }
+.nav-subitem.active {
+  background: var(--surface-3);
+  color: var(--text);
+  font-weight: 600;
+}
+.nav-subitem.active::before { background: var(--primary); transform: translateY(-50%) scale(1.5); box-shadow: 0 0 6px var(--primary); }
+
+/* Admin theme override — sidebar nav pakai SOFT BLUE accent supaya
+   konsisten cool, tidak ada warm khaki yang ngerepotin tone. */
+body[data-role="admin"] .nav-subitem.active {
+  background: rgba(125, 163, 204, .14);
+  color: #CFDDEA;
+  font-weight: 600;
+}
+body[data-role="admin"] .nav-subitem.active::before {
+  background: #CFDDEA;
+  box-shadow: 0 0 8px rgba(125, 163, 204, .55);
+}
+body[data-role="admin"] .nav-sub::before { background: rgba(125, 163, 204, .25); }
+body[data-role="admin"] .nav-toggle:hover { color: #CFDDEA; background: rgba(125, 163, 204, .1); }
+body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #CFDDEA; }
+
+/* Flash highlight saat scroll-deep-link dari sidebar sub-item */
+.nav-sub-flash {
+  animation: navSubFlash 1.2s ease-out;
+}
+@keyframes navSubFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(220, 211, 169, .55); }
+  30%  { box-shadow: 0 0 0 4px rgba(220, 211, 169, .35), 0 0 24px rgba(220, 211, 169, .35); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 211, 169, 0); }
+}
+
+/* === MY LIBRARY (videos view) — koleksi 3-card === */
+.lib-card { margin-bottom: 18px; }
+.lib-card .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.lib-count {
+  font-size: 11.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.lib-item {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.lib-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--glow-deep, 0 6px 18px -8px rgba(0, 0, 0, .4));
+}
+.lib-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-elev-2) center/cover no-repeat;
+  display: grid; place-items: center;
+}
+.lib-thumb-fallback { font-size: 32px; opacity: .55; }
+.lib-thumb-dur {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  font-size: 10.5px; font-weight: 700;
+  background: rgba(0, 0, 0, .7);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.lib-meta { padding: 10px 12px 12px; }
+.lib-meta strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lib-meta small { font-size: 11px; color: var(--muted); }
+.lib-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.lib-empty-icon { font-size: 36px; opacity: .55; margin-bottom: 8px; }
+.lib-empty p { font-size: 13px; color: var(--muted); }
+
+/* === FOCUS MODE — sembunyikan sub-section yang tidak match dengan focus === */
+[data-focus-hidden] { display: none !important; }
+/* Saat focus aktif, paksa grid jadi 1-kolom supaya section yang fokus mengisi
+   penuh — view-nya jadi clean & terkonsentrasi. */
+section.view.focus-mode .ad-grid,
+section.view.focus-mode .inbox-grid,
+section.view.focus-mode .an-tops-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+section.view.focus-mode .ad-card,
+section.view.focus-mode .inbox-column {
+  max-width: 100%;
+}
+/* Saat fokus aktif, halaman jadi bersih: judul utama mengikuti nama sub-item
+   (di-set via JS). Yang redundant disembunyikan supaya tidak ada nama ganda
+   atau elemen yang membingungkan. */
+section.view.focus-mode .page-head > div > .muted,
+section.view.focus-mode .view-header > div > p,
+section.view.focus-mode [data-focus-target] > .card-head h3,
+section.view.focus-mode [data-focus-target] > .card-head small,
+section.view.focus-mode [data-focus-target] > .card-head .lib-count,
+section.view.focus-mode .history-col-title,
+section.view.focus-mode .chart-card .card-head > div > h3,
+section.view.focus-mode .chart-card .card-head > div > p,
+section.view.focus-mode #activityFilters,
+section.view.focus-mode .lib-card .card-head { display: none !important; }
+/* Achievements card jangan di-blokir judul-nya saat di Pencapaian focus */
+section.view.focus-mode .achievements .card-head { display: flex !important; }
+/* Stats: saat fokus pencapaian, sembunyikan subtitle "Statistik" tapi keep
+   period selector di view-actions. */
+section.view.focus-mode .view-actions { display: flex !important; }
 
 .sidebar-footer {
   padding-top: 14px;
@@ -3184,12 +3431,17 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   display: none;
   flex-direction: column;
   gap: 20px;
-  animation: viewIn .25s var(--ease);
+  animation: viewIn .42s cubic-bezier(.22, .61, .36, 1);
 }
 .view.active { display: flex; }
+/* Slide-up + fade lebih panjang (18px) supaya pergerakannya kerasa saat
+   pindah halaman dari sidebar — sebelumnya cuma 8px, terasa instan. */
 @keyframes viewIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(18px) scale(.985); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .view { animation: none; }
 }
 
 /* === DEEP GLOW universal — diaplikasikan ke kolom/bar/panel utama dashboard.
@@ -3327,10 +3579,11 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   background: var(--surface-2);
 }
 
-/* Quick stats (videos view) */
+/* Quick stats (My Library view) — auto-fit supaya 2 kartu tetap nyaman dilihat
+   dan kalau di masa depan ada tambahan kartu, ikut menyesuaikan tanpa edit. */
 .quick-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
 }
 .qs {
@@ -3363,6 +3616,60 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   gap: 20px;
 }
 @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* === SETTINGS PAGE — flexible 2-col grid ===
+   Layout:
+   - Kiri (1fr):  Kontrol Platform → di atas, lalu kartu gabungan Notifikasi + Bahasa
+   - Kanan (1.2fr, lebih fleksibel): Keamanan Admin (span 2 baris)
+   - Bawah (full width): Buat Admin Baru */
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  grid-template-rows: auto auto;
+  gap: 20px;
+  align-items: stretch;
+}
+.settings-card-control { grid-column: 1; grid-row: 1; }
+.settings-card-prefs   { grid-column: 1; grid-row: 2; }
+.settings-card-security {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+}
+.settings-card-prefs .settings-section h3,
+.settings-card-security h3 {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-card-prefs .settings-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
+.settings-card-security .security-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.settings-card-security .security-form-grid > button { grid-column: 1 / -1; }
+
+@media (max-width: 980px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .settings-card-control,
+  .settings-card-prefs,
+  .settings-card-security {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
 
 /* =========================================================
    UPLOAD VIEW
@@ -3499,10 +3806,39 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
 /* =========================================================
    HISTORY VIEW
    ========================================================= */
+
+/* Layout dua-kolom: side kiri Riwayat Tontonan (list lengkap), side kanan
+   Lanjutkan Nonton (video in-progress). Mobile fallback ke 1 kolom. */
+.history-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .history-layout { grid-template-columns: 1fr; }
+}
+.history-col { min-width: 0; }
+.history-col-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--text);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.history-col-right .continue-card-wrap { padding: 14px; }
+
 .continue-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
+}
+.history-col-right .continue-list {
+  grid-template-columns: 1fr; /* Side panel: cards stack vertikal supaya rapi */
 }
 .continue-card {
   display: flex;
@@ -4898,20 +5234,48 @@ body.auth-mode .main { display: none !important; }
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: .55;
+  /* Blur sangat tinggi + radial-gradient + screen blend → orb terasa kabut
+     ambient, bukan blok solid. Semua orb pakai mode "screen" konsisten supaya
+     tidak ada patch gelap yang nyembur (efek samping multiply di bg gelap). */
+  filter: blur(160px);
+  opacity: .32;
   animation: orbFloat 14s ease-in-out infinite;
+  mix-blend-mode: screen;
 }
-.orb-1 { width: 540px; height: 540px; top: -100px; left: -100px; background: #561C24; }
-.orb-2 { width: 480px; height: 480px; bottom: -120px; right: -80px; background: #E8D8C4; animation-delay: -5s; }
-.orb-3 { width: 360px; height: 360px; top: 40%; left: 35%; background: #1a0c10; opacity: .32; animation-delay: -8s; }
+.orb-1 {
+  width: 800px; height: 800px; top: -260px; left: -260px;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(86, 28, 36, .55) 0%,
+    rgba(86, 28, 36, .22) 38%,
+    rgba(86, 28, 36, 0) 72%);
+}
+.orb-2 {
+  width: 720px; height: 720px; bottom: -280px; right: -220px;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(232, 216, 196, .42) 0%,
+    rgba(232, 216, 196, .16) 38%,
+    rgba(232, 216, 196, 0) 72%);
+  animation-delay: -5s;
+}
+.orb-3 {
+  /* DULU pakai multiply yang bikin dark patch tidak rata di tengah viewport.
+     Sekarang pakai screen + warna sangat tipis supaya jadi ambient highlight
+     yang halus, bukan vignette gelap yang ngeblok. */
+  width: 520px; height: 520px; top: 30%; left: 30%;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(199, 183, 163, .25) 0%,
+    rgba(199, 183, 163, .10) 40%,
+    rgba(199, 183, 163, 0) 75%);
+  opacity: .25;
+  animation-delay: -8s;
+}
 @keyframes orbFloat {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(30px, -30px) scale(1.05); }
   66% { transform: translate(-20px, 20px) scale(.95); }
 }
-body[data-theme="light"] .orb { opacity: .3; }
-body[data-theme="light"] .orb-3 { opacity: .15; }
+body[data-theme="light"] .orb { opacity: .22; }
+body[data-theme="light"] .orb-3 { opacity: .10; }
 
 .auth-grid {
   position: relative;
@@ -5274,6 +5638,19 @@ body[data-theme="light"] .auth-illus .floating-card {
   line-height: 1.4;
   transition: color .2s var(--ease);
 }
+
+/* Select yang dikunci (cth: upload Visibility — public-only) — tetap kebaca jelas
+   tapi pointer/cursor disabled, dan opacity tidak terlalu pudar supaya readable. */
+.locked-select,
+select.locked-select:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  background-color: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+  pointer-events: none;
+}
+.locked-select:focus { outline: none; box-shadow: none; }
 .field-status-error {
   color: var(--danger);
   font-weight: 500;
@@ -6111,35 +6488,69 @@ body[data-role="admin"] .auth-left-admin .auth-stats b { color: #ACBAC4; }
 @media (max-width: 480px) {
   .auth-left-admin { padding: 24px; }
 }
-/* Admin auth card — pakai max-width sama dengan user (440px), border accent caramel */
+/* Admin auth card — kontain glow di dalam kartu saja supaya menyatu dengan
+   backdrop dashboard (tidak ada strip terang yang bleeding ke kiri/kanan).
+   Background tipis transparan + drop-shadow halus, tanpa pseudo-halo eksternal. */
 body[data-role="admin"] .auth-screen .auth-card {
+  position: relative;
   max-width: 440px;
   padding: 32px;
-  border-color: rgba(172, 186, 196, 0.18);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(148, 163, 184, 0.06), rgba(148, 163, 184, 0) 70%),
+    rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  backdrop-filter: blur(22px) saturate(115%);
+  -webkit-backdrop-filter: blur(22px) saturate(115%);
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(172, 186, 196, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 50px -28px rgba(0, 0, 0, 0.55);
+  overflow: hidden; /* contain inner glow supaya tidak bleeding ke samping */
 }
 
-/* Admin brand logo — bigger + caramel glow */
+/* Admin mode banner — sky-blue gradient (sebelumnya wine/red) */
+body[data-role="admin"] .admin-mode-banner {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(125, 211, 252, 0.06));
+  border: 1px solid rgba(125, 211, 252, 0.22);
+}
+body[data-role="admin"] .admin-mode-banner .amb-icon {
+  background: linear-gradient(135deg, #7DD3FC, #38BDF8);
+  color: #0B1C2C;
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.35);
+}
+body[data-role="admin"] .admin-mode-banner b { color: #E0F2FE; }
+
+/* Tombol "Masuk Sekarang" di admin — kasih nuansa biru juga supaya senada */
+body[data-role="admin"] .auth-screen .auth-submit {
+  background: linear-gradient(135deg, #7DD3FC 0%, #38BDF8 60%, #0EA5E9 100%);
+  color: #0B1C2C;
+  box-shadow: 0 14px 32px -8px rgba(56, 189, 248, 0.55);
+}
+body[data-role="admin"] .auth-screen .auth-submit:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 16px 38px -8px rgba(56, 189, 248, 0.7);
+}
+
+/* Admin brand logo — match user side size (68px) supaya proporsi seragam */
 body[data-role="admin"] .auth-left-admin .brand-logo.big {
-  width: 80px;
-  height: 80px;
+  width: 68px;
+  height: 68px;
   animation: brandGlowAdminBig 3.6s ease-in-out infinite;
 }
 body[data-role="admin"] .auth-left-admin .brand-logo.big svg { display: block; }
 @keyframes brandGlowAdminBig {
+  /* Soft chrome/silver glow — putih lembut → slate, biar nyatu sama gradient logo */
   0%, 100% {
     filter:
-      drop-shadow(0 0 10px rgba(172, 186, 196, .55))
-      drop-shadow(0 0 24px rgba(172, 186, 196, .35))
-      drop-shadow(0 8px 22px rgba(48, 54, 79, .25));
+      drop-shadow(0 0 10px rgba(241, 245, 249, .45))
+      drop-shadow(0 0 22px rgba(148, 163, 184, .30))
+      drop-shadow(0 8px 22px rgba(15, 23, 42, .35));
   }
   50% {
     filter:
-      drop-shadow(0 0 16px rgba(220, 211, 169, .85))
-      drop-shadow(0 0 38px rgba(172, 186, 196, .60))
-      drop-shadow(0 8px 28px rgba(48, 54, 79, .40));
+      drop-shadow(0 0 16px rgba(255, 255, 255, .65))
+      drop-shadow(0 0 32px rgba(203, 213, 225, .50))
+      drop-shadow(0 8px 28px rgba(15, 23, 42, .45));
   }
 }
 
@@ -6168,9 +6579,24 @@ body[data-role="admin"] .auth-screen .auth-right {
 }
 
 /* Override orb colors → coffee/caramel saat admin mode */
-body[data-role="admin"] .auth-screen .orb-1 { background: #30364F; }
-body[data-role="admin"] .auth-screen .orb-2 { background: #ACBAC4; }
-body[data-role="admin"] .auth-screen .orb-3 { background: #5a3d1f; }
+body[data-role="admin"] .auth-screen .orb-1 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(48, 54, 79, .80) 0%,
+    rgba(48, 54, 79, .35) 35%,
+    rgba(48, 54, 79, 0) 70%);
+}
+body[data-role="admin"] .auth-screen .orb-2 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(172, 186, 196, .55) 0%,
+    rgba(172, 186, 196, .22) 35%,
+    rgba(172, 186, 196, 0) 70%);
+}
+body[data-role="admin"] .auth-screen .orb-3 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(220, 211, 169, .30) 0%,
+    rgba(220, 211, 169, .12) 40%,
+    rgba(220, 211, 169, 0) 75%);
+}
 
 /* Admin banner pakai gradient caramel (bukan wine) */
 body[data-role="admin"] .admin-mode-banner {
@@ -6935,18 +7361,21 @@ body[data-role="admin"] {
   --admin-grad: linear-gradient(135deg, #DCD3A9 0%, #ACBAC4 50%, #30364F 100%);
   --admin-grad-deep: linear-gradient(135deg, #30364F 0%, #1f243a 100%);
 
-  /* Override base palette: shift from wine to deep espresso */
-  /* Dark mode admin: deep abyss bg, glacier text — ocean depth feel */
+  /* Override base palette: pure ocean blue — surfaces & border ALL-COOL.
+     Dulu pakai khaki tint (rgba 220,211,169) yang di-blend sama bg navy
+     bikin warm orange/wine glow di sekitar card → user kompain "wine glow".
+     Sekarang semua surface pakai sky-blue tint (rgba 125,163,204) supaya
+     tone-nya konsisten cool dari atas ke bawah. */
   --bg: #1a1d2c;
   --bg-elev: #232739;
   --bg-elev-2: #2c3146;
-  --surface: rgba(220, 211, 169, 0.04);
-  --surface-2: rgba(220, 211, 169, 0.07);
-  --surface-3: rgba(220, 211, 169, 0.11);
-  --border: rgba(220, 211, 169, 0.10);
-  --border-strong: rgba(220, 211, 169, 0.22);
-  --text: #F0EBD3;     /* Quartz */
-  --text-2: #DCD3A9;   /* Glacier */
+  --surface: rgba(125, 163, 204, 0.05);
+  --surface-2: rgba(125, 163, 204, 0.09);
+  --surface-3: rgba(125, 163, 204, 0.14);
+  --border: rgba(125, 163, 204, 0.12);
+  --border-strong: rgba(125, 163, 204, 0.26);
+  --text: #E8EEF5;     /* Pale slate (was warm cream) */
+  --text-2: #CFDDEA;   /* Soft sky (was warm khaki) */
   --muted: #7d8898;
 
   /* Primary mengikuti ocean — buttons / glows / .btn.primary otomatis ikut tema */
@@ -7015,15 +7444,40 @@ body[data-theme="light"][data-role="admin"] .topbar {
     linear-gradient(90deg, rgba(172, 186, 196, .22) 0%, rgba(255, 255, 255, .60) 50%, rgba(220, 211, 169, .15) 100%);
 }
 body[data-role="admin"] .nav-item.active {
-  background: rgba(172, 186, 196, .14);
-  color: var(--admin-accent);
+  background:
+    linear-gradient(90deg, rgba(220, 211, 169, .22) 0%, rgba(172, 186, 196, .18) 50%, rgba(48, 54, 79, .22) 100%);
+  color: var(--admin-cream);
+  font-weight: 700;
+  border: 1px solid rgba(220, 211, 169, .28);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 235, 211, .06),
+    0 4px 14px -6px rgba(48, 54, 79, .55);
+  text-shadow: 0 0 12px rgba(240, 235, 211, .35);
+}
+body[data-role="admin"] .nav-item.active svg {
+  color: var(--admin-cream) !important;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(220, 211, 169, .55));
 }
 body[data-role="admin"] .nav-item.active::before {
   background: var(--admin-grad);
+  box-shadow: 0 0 10px rgba(220, 211, 169, .55);
 }
 body[data-role="admin"] .nav-item .badge {
   background: var(--admin-grad);
   color: #fff;
+}
+/* Light mode: active item butuh tone gelap supaya kontras dengan bg pale slate */
+body[data-theme="light"][data-role="admin"] .nav-item.active {
+  background:
+    linear-gradient(90deg, rgba(48, 54, 79, .12) 0%, rgba(172, 186, 196, .22) 50%, rgba(220, 211, 169, .25) 100%);
+  color: var(--admin-deep);
+  border-color: rgba(48, 54, 79, .25);
+  text-shadow: none;
+}
+body[data-theme="light"][data-role="admin"] .nav-item.active svg {
+  color: var(--admin-deep) !important;
+  filter: drop-shadow(0 0 4px rgba(172, 186, 196, .45));
 }
 
 /* Admin logo — DARK GLOW EFFECT.
@@ -7067,26 +7521,48 @@ body[data-role="admin"] .brand-text h1 span {
     0 2px 6px rgba(48, 54, 79, .55);
 }
 
-/* Admin profile card — gold border + ADMIN badge */
+/* Admin profile card — clean navy card + ADMIN badge via ::after
+   (::before di-pakai gradient overlay glow universal di line 13984).
+   Border-radius eksplisit + overflow visible buat badge keluar atas. */
 body[data-role="admin"] .profile-card {
-  border: 1.5px solid rgba(172, 186, 196, .35);
+  border: 1px solid rgba(172, 186, 196, .22);
   background:
-    linear-gradient(135deg, rgba(172, 186, 196, .1), rgba(48, 54, 79, .04)),
-    var(--surface);
+    linear-gradient(135deg, rgba(172, 186, 196, .08), rgba(48, 54, 79, .03)),
+    var(--bg-elev);
+  border-radius: 14px;
+  padding: 11px 12px;
   position: relative;
+  overflow: visible;
+  /* Glow yang contained, sesuai bentuk card — tidak bocor ke sidebar.
+     Inset highlight tipis di atas + soft drop di bawah. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .04),
+    0 4px 14px -8px rgba(0, 0, 0, .55),
+    0 0 0 1px rgba(125, 163, 204, .08);
+  transition: box-shadow .25s var(--ease), border-color .25s var(--ease), transform .25s var(--ease);
 }
-body[data-role="admin"] .profile-card::before {
+body[data-role="admin"] .profile-card:hover {
+  border-color: rgba(164, 192, 224, .45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .06),
+    0 6px 18px -8px rgba(0, 0, 0, .6),
+    0 0 0 1px rgba(164, 192, 224, .25),
+    0 0 14px -4px rgba(125, 163, 204, .35);
+}
+body[data-role="admin"] .profile-card::after {
   content: "ADMIN";
   position: absolute;
   top: -8px; right: 12px;
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: .2em;
-  padding: 3px 8px;
+  letter-spacing: .18em;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--admin-grad);
   color: #fff;
-  box-shadow: 0 4px 10px rgba(172, 186, 196, .4);
+  box-shadow: 0 3px 8px rgba(48, 54, 79, .5);
+  z-index: 2;
+  pointer-events: none;
 }
 body[data-role="admin"] .profile-card .avatar {
   background: var(--admin-grad);
@@ -7330,8 +7806,22 @@ body[data-theme="light"] .admin-hero .hero-text::after {
   color: #fff;
   border-radius: 14px;
   box-shadow: 0 6px 18px rgba(109, 41, 50, .35), inset 0 1px 0 rgba(255,255,255,.18);
+  position: relative;
+  overflow: hidden;
 }
 .hc-id-icon svg { width: 26px; height: 26px; }
+.hc-id-icon .hc-id-initials {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+.hc-id-icon .avatar-img {
+  border-radius: 14px;
+}
 .hc-id-text {
   display: flex;
   flex-direction: column;
@@ -7825,6 +8315,24 @@ body[data-theme="light"] .hc-update-info strong { color: var(--primary); }
 .admin-kpi-icon.videos { background: rgba(232, 216, 196, .14); color: #E8D8C4; }
 .admin-kpi-icon.views { background: rgba(16, 185, 129, .14); color: #10b981; }
 .admin-kpi-icon.revenue { background: rgba(172, 186, 196, .14); color: #ACBAC4; }
+/* Override warna icon di admin role — hilangkan wine + cream khaki, semuanya
+   pakai palet biru lembut (sesuai referensi 3-circle yang user kasih). */
+body[data-role="admin"] .admin-kpi-icon.users {
+  background: rgba(164, 192, 224, .16);
+  color: #A4C0E0;
+}
+body[data-role="admin"] .admin-kpi-icon.videos {
+  background: rgba(207, 221, 234, .16);
+  color: #CFDDEA;
+}
+body[data-role="admin"] .admin-kpi-icon.views {
+  background: rgba(125, 163, 204, .18);
+  color: #7DA3CC;
+}
+body[data-role="admin"] .admin-kpi-icon.revenue {
+  background: rgba(232, 238, 245, .14);
+  color: #E8EEF5;
+}
 .admin-kpi-card small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 600; }
 .admin-kpi-card strong {
   display: block;
@@ -7918,6 +8426,22 @@ body[data-role="admin"] .live-dot i {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   font-size: 13px;
+  transition: transform .15s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+}
+.alert-row[data-jump]:hover { transform: translateX(2px); background: var(--surface-2); border-color: var(--border-strong); }
+.alert-row[data-jump]:focus-visible { outline: 2px solid var(--admin-accent, var(--primary)); outline-offset: 2px; }
+.admin-feed li.feed-clickable {
+  cursor: pointer;
+  transition: background .15s var(--ease), transform .15s var(--ease);
+  border-radius: 8px;
+}
+.admin-feed li.feed-clickable:hover {
+  background: var(--surface-2);
+  transform: translateX(2px);
+}
+.admin-feed li.feed-clickable:focus-visible {
+  outline: 2px solid var(--admin-accent, var(--primary));
+  outline-offset: 2px;
 }
 .alert-row b {
   padding: 2px 8px; border-radius: 999px;
@@ -8048,12 +8572,68 @@ body[data-role="admin"] .live-dot i {
 .row-status {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 600;
+  color: #10b981;
 }
-.row-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+.row-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, .55); }
 .row-status.suspended { color: #30364F; }
 .row-status.suspended::before { background: #30364F; }
 .row-status.pending { color: #ACBAC4; }
 .row-status.pending::before { background: #ACBAC4; }
+
+/* Admin theme — tabel User Management butuh kontras lebih kuat di dark navy bg.
+   Override role-tag warna supaya teks "USER" / "ADMIN" pop dengan jelas. */
+body[data-role="admin"] .role-tag.user {
+  background: linear-gradient(135deg, rgba(220, 211, 169, .28), rgba(172, 186, 196, .18));
+  color: #F0EBD3;
+  border: 1px solid rgba(220, 211, 169, .42);
+  text-shadow: 0 0 8px rgba(48, 54, 79, .35);
+}
+body[data-role="admin"] .role-tag.admin {
+  background: var(--admin-grad);
+  color: #fff;
+  border: 1px solid rgba(220, 211, 169, .55);
+  box-shadow: 0 2px 8px rgba(48, 54, 79, .45);
+}
+body[data-role="admin"] .role-tag.creator {
+  background: rgba(220, 211, 169, .22);
+  color: #DCD3A9;
+  border: 1px solid rgba(220, 211, 169, .35);
+}
+/* Status pill di admin theme — perkuat kontras */
+body[data-role="admin"] .row-status { color: #34d399; }
+body[data-role="admin"] .row-status::before { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, .6); }
+body[data-role="admin"] .row-status.suspended { color: #ACBAC4; }
+body[data-role="admin"] .row-status.suspended::before { background: #ACBAC4; box-shadow: 0 0 6px rgba(172, 186, 196, .55); }
+body[data-role="admin"] .row-status.pending { color: #DCD3A9; }
+body[data-role="admin"] .row-status.pending::before { background: #DCD3A9; box-shadow: 0 0 6px rgba(220, 211, 169, .55); }
+/* Avatar inisial — pakai gradient cerah supaya inisial putih tetap terbaca */
+body[data-role="admin"] .admin-table .avatar-sm {
+  background: var(--admin-grad);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(48, 54, 79, .35), inset 0 0 0 1px rgba(240, 235, 211, .25);
+}
+/* Tabel teks utama — pastikan nama / email pakai text-2 yg cerah */
+body[data-role="admin"] .admin-table tbody tr td {
+  color: var(--text);
+}
+body[data-role="admin"] .admin-table .user-cell b { color: var(--admin-cream); }
+body[data-role="admin"] .admin-table .user-cell small { color: var(--text-2) !important; }
+body[data-role="admin"] .admin-table tbody tr:hover { background: rgba(172, 186, 196, .08); }
+body[data-role="admin"] .row-actions button {
+  border-color: rgba(220, 211, 169, .22);
+  background: rgba(220, 211, 169, .05);
+  color: var(--text-2);
+}
+body[data-role="admin"] .row-actions button:hover {
+  background: rgba(220, 211, 169, .14);
+  color: var(--admin-cream);
+  border-color: rgba(220, 211, 169, .42);
+}
+body[data-role="admin"] .row-actions button.danger:hover {
+  background: rgba(192, 57, 43, .22);
+  color: #f8b4a8;
+  border-color: rgba(192, 57, 43, .55);
+}
 .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .row-actions button {
   width: 28px; height: 28px;
@@ -8628,6 +9208,104 @@ body[data-role="admin"] .live-dot i {
 .inbox-stats .status-pill { font-size: 11.5px; font-weight: 600; }
 .inbox-stats .status-pill b { color: var(--accent); margin-right: 4px; font-weight: 800; }
 
+.inbox-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.inbox-search {
+  flex: 1 1 280px;
+  min-width: 220px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.inbox-search::placeholder { color: var(--muted); }
+.inbox-search:focus {
+  outline: none;
+  border-color: var(--admin-accent, var(--primary));
+  box-shadow: 0 0 0 3px rgba(172, 186, 196, .18);
+}
+.inbox-filters {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.inbox-filter {
+  padding: 6px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all .2s var(--ease);
+}
+.inbox-filter:hover { color: var(--text); background: var(--surface-2); }
+.inbox-filter.active {
+  background: var(--admin-grad, var(--grad-primary));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(48, 54, 79, .35);
+}
+.inbox-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  flex-shrink: 0;
+}
+.inbox-refresh:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.inbox-refresh-icon {
+  display: inline-block;
+  font-size: 15px;
+  line-height: 1;
+  transition: transform .25s var(--ease);
+}
+.inbox-refresh:hover .inbox-refresh-icon { transform: rotate(90deg); }
+.inbox-refresh.spinning .inbox-refresh-icon { animation: inboxSpin .6s linear infinite; }
+@keyframes inboxSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.inbox-refresh-time {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+}
+@media (max-width: 720px) {
+  .inbox-toolbar { gap: 8px; }
+  .inbox-refresh-label { display: none; }
+  .inbox-search { flex: 1 1 100%; }
+}
+
 .inbox-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -8789,6 +9467,151 @@ body[data-role="admin"] .live-dot i {
 @media (max-width: 1024px) {
   .inbox-grid { grid-template-columns: 1fr; }
   .inbox-col-list { max-height: 400px; }
+}
+
+/* =========================================================
+   INBOX ROWS — Gmail-style untuk email + table-style untuk chat & bug
+   ========================================================= */
+.inbox-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: background .12s var(--ease);
+  position: relative;
+}
+.inbox-row:hover { background: var(--surface-2); }
+.inbox-row:last-child { border-bottom: none; }
+
+.inbox-row-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 13px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+body[data-role="admin"] .inbox-row-avatar {
+  background: linear-gradient(135deg, #94A3B8, #475569);
+}
+
+.inbox-row-main { flex: 1; min-width: 0; }
+.inbox-row-line1 {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  margin-bottom: 2px;
+}
+.inbox-row-sender {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 60%;
+}
+.inbox-row-time {
+  font-size: 11px; color: var(--muted); flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.inbox-row-line2 {
+  font-size: 12.5px; line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.inbox-row-subject { color: var(--text); font-weight: 500; }
+.inbox-row-snippet { color: var(--muted); font-weight: 400; }
+.inbox-row-line3 {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.inbox-row-status {
+  font-size: 9px; font-weight: 800; letter-spacing: .12em;
+  padding: 2px 7px; border-radius: 4px;
+}
+.inbox-row-status.status-new { background: var(--primary); color: #fff; }
+.inbox-row-status.status-progress { background: rgba(245, 158, 11, .16); color: var(--warning); }
+.inbox-row-status.status-resolved { background: rgba(16, 185, 129, .16); color: var(--success); }
+.inbox-row-email {
+  font-size: 10.5px; color: var(--muted);
+}
+.inbox-tier-badge {
+  font-size: 9px; font-weight: 800; letter-spacing: .1em;
+  padding: 2px 6px; border-radius: 4px;
+  background: linear-gradient(135deg, #94A3B8, #475569);
+  color: #fff;
+  margin-left: 4px;
+}
+
+/* Email-specific: unread = bold sender + subject (Gmail vibe) */
+.inbox-row-email.unread .inbox-row-sender,
+.inbox-row-email.unread .inbox-row-subject {
+  font-weight: 800;
+  color: var(--text);
+}
+.inbox-row-email.unread::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--primary);
+}
+
+/* Bug row — explicit columns */
+.inbox-row-bug {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+.inbox-row-sev {
+  font-size: 9px; font-weight: 800; letter-spacing: .12em;
+  padding: 4px 8px; border-radius: 4px; flex-shrink: 0;
+  text-align: center; min-width: 60px;
+}
+.inbox-row-sev.danger { background: rgba(239, 68, 68, .16); color: var(--danger); }
+.inbox-row-sev.warn   { background: rgba(245, 158, 11, .16); color: var(--warning); }
+.inbox-row-sev.ok     { background: rgba(16, 185, 129, .16); color: var(--success); }
+.inbox-row-title {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.inbox-row-meta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-size: 11px; color: var(--muted);
+}
+.inbox-row-actions {
+  display: flex; gap: 6px; flex-shrink: 0;
+}
+.inbox-row-actions .btn { padding: 4px 10px; font-size: 10.5px; }
+
+/* Chat row */
+.inbox-row-chat .inbox-row-snippet {
+  display: block; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.inbox-row-from-tag { color: var(--accent); font-weight: 600; margin-right: 2px; }
+.inbox-row-unread-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(109, 41, 50, .55);
+}
+.inbox-row-chat.unread .inbox-row-sender {
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* List wrapper jadi terlihat seperti table — tanpa gap supaya rows nempel */
+.inbox-col-list:has(.inbox-row) {
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0;
+  overflow: hidden;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 /* Tickets */
@@ -10448,6 +11271,7 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 22vw);
   grid-template-areas:
+    "header header"
     "video sidebar"
     "footer footer";
   column-gap: 20px;
@@ -10460,9 +11284,26 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
   padding: 14px 20px 28px;
   align-items: start;
 }
+.discover-layout .discover-header { grid-area: header; }
 .discover-layout .video-card { grid-area: video; }
 .discover-layout .discover-sidebar { grid-area: sidebar; }
 .discover-layout .discover-footer { grid-area: footer; }
+
+/* Standalone header card untuk Discover — pakai bento-card style supaya konsisten */
+.discover-header {
+  position: relative;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 80% at 0% 0%,    rgba(232, 216, 196, .10), transparent 55%),
+    radial-gradient(110% 90% at 100% 100%, rgba(109, 41, 50, .22),  transparent 65%),
+    radial-gradient(80% 60% at 80% 110%,  rgba(86, 28, 36, .26),    transparent 70%),
+    var(--bg-elev);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  padding: 18px 22px;
+}
+.discover-header .ds-bento-title h3 { margin: 0; }
+.discover-header .ds-bento-title small { display: block; margin-top: 4px; opacity: .75; }
 
 /* === Bento card base — Wine & Cream gradasi, 4-color radial layered, no glow === */
 .ds-bento-card {
@@ -10726,7 +11567,7 @@ body.light-mode .video-card .fyp-card { border-bottom-color: rgba(86, 28, 36, .0
 @media (max-width: 1024px) {
   .discover-layout {
     grid-template-columns: 1fr;
-    grid-template-areas: "video" "sidebar" "footer";
+    grid-template-areas: "header" "video" "sidebar" "footer";
     padding: 12px 12px 24px;
   }
   .discover-sidebar {
@@ -11914,11 +12755,71 @@ body.dreams-on[data-theme="light"] {
   --glow-ring-wine:  0 0 0 3px var(--primary-soft);
 }
 body.dreams-on[data-role="admin"] {
-  --glow-wine-soft:  0 6px 18px -10px rgba(0, 0, 0, 0.45);
-  --glow-wine-hover: 0 12px 28px -10px rgba(0, 0, 0, 0.55);
-  --glow-cream:      none;
-  --glow-cream-soft: 0 0 0 1px var(--border);
-  --glow-ring-wine:  0 0 0 3px var(--primary-soft);
+  /* Soft WHITE glow — multi-layer drop shadow biar terasa "halo" mengembang
+     pelan, bukan border solid yang nge-blok. Outer halo tipis, mid layer
+     yang ngasih kesan glow, plus depth shadow halus di bawah. */
+  --glow-wine-soft:
+    0 0 30px -6px rgba(255, 255, 255, 0.18),
+    0 6px 22px -8px rgba(255, 255, 255, 0.14),
+    0 16px 48px -16px rgba(255, 255, 255, 0.08),
+    0 6px 18px -10px rgba(0, 0, 0, 0.45);
+  --glow-wine-hover:
+    0 0 42px -4px rgba(255, 255, 255, 0.32),
+    0 10px 28px -6px rgba(255, 255, 255, 0.22),
+    0 22px 56px -16px rgba(255, 255, 255, 0.14),
+    0 10px 24px -10px rgba(0, 0, 0, 0.55);
+  --glow-cream:      0 0 24px -4px rgba(255, 255, 255, 0.22);
+  --glow-cream-soft: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --glow-ring-wine:  0 0 0 3px rgba(255, 255, 255, 0.16);
+}
+
+/* === ADMIN DASHBOARD WHITE GLOW — gradient overlay halus + halo blend === */
+/* Pseudo ::before di tiap kartu admin → soft radial gradient putih dari pojok
+   atas mengarah ke tengah, plus diagonal sweep tipis. mix-blend-mode: screen
+   bikin overlay berbaur halus dengan warna kartu, bukan flat solid. */
+body.dreams-on[data-role="admin"] .admin-kpi-card,
+body.dreams-on[data-role="admin"] .admin-panel,
+body.dreams-on[data-role="admin"] .hero-clock.admin,
+body.dreams-on[data-role="admin"] .admin-hero {
+  position: relative;
+  isolation: isolate;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body.dreams-on[data-role="admin"] .admin-kpi-card::before,
+body.dreams-on[data-role="admin"] .admin-panel::before,
+body.dreams-on[data-role="admin"] .hero-clock.admin::before,
+body.dreams-on[data-role="admin"] .admin-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(140% 90% at 50% -20%, rgba(255, 255, 255, 0.10), transparent 55%),
+    radial-gradient(80% 60% at 100% 100%, rgba(255, 255, 255, 0.05), transparent 65%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.00) 60%);
+  opacity: 0.9;
+  transition: opacity .35s var(--ease);
+  mix-blend-mode: screen;
+}
+body.dreams-on[data-role="admin"] .admin-kpi-card:hover::before,
+body.dreams-on[data-role="admin"] .admin-panel:hover::before,
+body.dreams-on[data-role="admin"] .admin-hero:hover::before {
+  opacity: 1;
+}
+/* Children harus di atas overlay supaya teks/icon tetap terbaca jelas */
+body.dreams-on[data-role="admin"] .admin-kpi-card > *,
+body.dreams-on[data-role="admin"] .admin-panel > *,
+body.dreams-on[data-role="admin"] .hero-clock.admin > *,
+body.dreams-on[data-role="admin"] .admin-hero > * {
+  position: relative;
+  z-index: 1;
+}
+body.dreams-on[data-role="admin"] .admin-kpi-card:hover,
+body.dreams-on[data-role="admin"] .admin-panel:hover,
+body.dreams-on[data-role="admin"] .admin-hero:hover {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* ---------- BUTTONS ---------- */
@@ -11978,7 +12879,13 @@ body.dreams-on .hc-update-item:focus-visible {
 
 /* List rows (admin recent lists) — hover glow tipis biar nggak ramai */
 body.dreams-on .admin-list-rows > *:hover {
-  box-shadow: var(--glow-cream-soft), 0 6px 18px -10px rgba(109, 41, 50, 0.55);
+  box-shadow: var(--glow-cream-soft), 0 6px 18px -10px rgba(255, 255, 255, 0.35);
+}
+body.dreams-on[data-role="admin"] .admin-list-rows > *:hover {
+  /* Admin role override — pakai sky/lapis glow, bukan wine */
+  box-shadow:
+    0 0 0 1px rgba(164, 192, 224, .15),
+    0 6px 18px -10px rgba(125, 163, 204, 0.55);
 }
 
 /* Icon glow dimatikan — hanya scale subtle saat hover, tanpa drop-shadow halo */
@@ -12005,7 +12912,10 @@ body.dreams-on .status-pill:hover {
   box-shadow: var(--glow-cream-soft), var(--glow-cream);
 }
 body.dreams-on .kpi-trend.up {
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 0 12px -2px rgba(16, 185, 129, 0.35);
+  box-shadow: none;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.55),
+    0 0 14px rgba(255, 255, 255, 0.28);
 }
 
 /* ---------- LIVE INDICATOR — pulse halo (warna mengikuti dot) ----------
@@ -12732,8 +13642,8 @@ body[data-role="admin"].dreams-on select:focus-visible {
      6. KPI number flash highlight saat update
    ========================================================= */
 
-/* 1. SECTION DIVIDER */
-body[data-role="admin"] .admin-section-divider {
+/* 1. SECTION DIVIDER — shared antara user & admin dashboard supaya rhythm visual sama */
+.admin-section-divider {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -12744,18 +13654,21 @@ body[data-role="admin"] .admin-section-divider {
   color: var(--muted);
   text-transform: uppercase;
 }
-body[data-role="admin"] .admin-section-divider::before,
-body[data-role="admin"] .admin-section-divider::after {
+.admin-section-divider::before,
+.admin-section-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(48, 54, 79, .14), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
-body[data-role="admin"] .admin-section-divider span {
+.admin-section-divider span {
   padding: 4px 12px;
-  border: 1px solid rgba(48, 54, 79, .14);
+  border: 1px solid var(--border);
   border-radius: 100px;
   background: var(--surface);
+  color: var(--text-2);
+}
+body[data-role="admin"] .admin-section-divider span {
   color: var(--admin-accent-2);
 }
 body[data-theme="light"][data-role="admin"] .admin-section-divider::before,
@@ -12913,6 +13826,24 @@ body[data-role="admin"] .admin-section-divider span {
   overflow: hidden;
   transition: transform .18s var(--ease);
 }
+
+/* Komunitas Aktif — avatar lebih besar + clickable supaya gampang dilihat & ditekan */
+.admin-avatar-stack.community-stack { gap: 0; min-height: 48px; margin: 14px 0 6px; }
+.admin-avatar-stack.community-stack > .ast-item {
+  width: 48px; height: 48px;
+  font-size: 14px;
+  border-width: 3px;
+  margin-left: -12px;
+}
+.admin-avatar-stack.community-stack > .ast-item:first-child { margin-left: 0; }
+.admin-avatar-stack > .ast-item.ast-clickable {
+  cursor: pointer;
+  appearance: none;
+  padding: 0;
+  outline: none;
+}
+.admin-avatar-stack > .ast-item.ast-clickable:hover { transform: translateY(-3px) scale(1.08); z-index: 3; box-shadow: 0 6px 18px rgba(125, 163, 204, .45); }
+.admin-avatar-stack > .ast-item.ast-clickable:focus-visible { box-shadow: 0 0 0 3px var(--primary-soft); }
 .admin-avatar-stack > .ast-item:first-child { margin-left: 0; }
 .admin-avatar-stack > .ast-item:hover { transform: translateY(-2px) scale(1.06); z-index: 2; }
 .admin-avatar-stack > .ast-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -12924,4 +13855,951 @@ body[data-role="admin"] .admin-section-divider span {
 }
 body[data-role="admin"] .admin-avatar-stack > .ast-item {
   background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
+}
+
+/* =========================================================
+   UNIVERSAL SOFT GLOW — semua card-like containers di SELURUH
+   halaman (login → home → discover → profil → settings → dst).
+   Pakai cream tone (#E8D8C4 / #C7B7A3) untuk user theme, white
+   tone untuk admin theme. Multi-layer drop shadow + opsional
+   gradient pseudo-overlay supaya halo blend halus, bukan blok
+   warna.
+   ========================================================= */
+:root {
+  /* USER theme (default) — cream/khaki halo */
+  --glow-soft-universal:
+    0 0 26px -8px rgba(232, 216, 196, 0.18),
+    0 6px 22px -8px rgba(232, 216, 196, 0.12),
+    0 16px 42px -16px rgba(232, 216, 196, 0.07),
+    0 6px 18px -10px rgba(0, 0, 0, 0.40);
+  --glow-soft-universal-hover:
+    0 0 38px -4px rgba(232, 216, 196, 0.30),
+    0 10px 28px -6px rgba(232, 216, 196, 0.18),
+    0 22px 56px -16px rgba(232, 216, 196, 0.12),
+    0 10px 24px -10px rgba(0, 0, 0, 0.50);
+  --glow-overlay-color: 232, 216, 196;
+}
+body[data-role="admin"] {
+  /* ADMIN theme — white halo (lebih netral di atas dark navy) */
+  --glow-soft-universal:
+    0 0 30px -6px rgba(255, 255, 255, 0.18),
+    0 6px 22px -8px rgba(255, 255, 255, 0.14),
+    0 16px 48px -16px rgba(255, 255, 255, 0.08),
+    0 6px 18px -10px rgba(0, 0, 0, 0.45);
+  --glow-soft-universal-hover:
+    0 0 42px -4px rgba(255, 255, 255, 0.32),
+    0 10px 28px -6px rgba(255, 255, 255, 0.22),
+    0 22px 56px -16px rgba(255, 255, 255, 0.14),
+    0 10px 24px -10px rgba(0, 0, 0, 0.55);
+  --glow-overlay-color: 255, 255, 255;
+}
+body[data-theme="light"] {
+  /* LIGHT theme — halo lebih tipis supaya tidak overpower bg cerah */
+  --glow-soft-universal:
+    0 0 22px -8px rgba(86, 28, 36, 0.10),
+    0 6px 20px -8px rgba(86, 28, 36, 0.08),
+    0 14px 36px -16px rgba(86, 28, 36, 0.05),
+    0 4px 12px -8px rgba(0, 0, 0, 0.10);
+  --glow-soft-universal-hover:
+    0 0 34px -4px rgba(86, 28, 36, 0.18),
+    0 8px 24px -6px rgba(86, 28, 36, 0.14),
+    0 18px 48px -16px rgba(86, 28, 36, 0.08),
+    0 8px 18px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Apply ke semua card-like container utama */
+.card,
+.auth-card,
+.admin-kpi-card,
+.admin-panel,
+.admin-hero,
+.hs-card,
+.ds-bento-card,
+.trending-card,
+.suggest-card,
+.bento-tile,
+.lib-card,
+.fyp-card,
+.video-card,
+.activity-list.large,
+.up-section,
+.continue-card-wrap,
+.modal-panel,
+.hero-clock,
+.profile-card,
+.inbox-card,
+.inbox-column,
+.history-item,
+.chart-card,
+.stats-card,
+.comms-kpi,
+.comms-col > .card,
+.audit-card,
+.gv-card {
+  /* Default rest state: NO GLOW. Glow muncul cuma saat user hover/click/focus.
+     Transition tetap ada supaya halo fade-in/out halus saat masuk-keluar hover. */
+  box-shadow: none;
+  transition: box-shadow .4s var(--ease), transform .25s var(--ease), border-color .25s var(--ease);
+}
+/* HOVER & ACTIVE & FOCUS — glow muncul saat interaksi */
+.card:hover,
+.card[role="button"]:hover,
+.auth-card:hover,
+.auth-card:focus-within,
+.admin-kpi-card:hover,
+.admin-panel:hover,
+.admin-hero:hover,
+.hs-card:hover,
+.ds-bento-card:hover,
+.trending-card:hover,
+.suggest-card:hover,
+.bento-tile:hover,
+.lib-card:hover,
+.fyp-card:hover,
+.video-card:hover,
+.inbox-card:hover,
+.inbox-column:hover,
+.profile-card:hover,
+.modal-panel:hover,
+.chart-card:hover,
+.up-section:hover,
+.continue-card-wrap:hover,
+.activity-list.large:hover,
+.hero-clock:hover,
+.audit-card:hover,
+.gv-card:hover,
+.comms-kpi:hover,
+.history-item:hover,
+.stats-card:hover {
+  box-shadow: var(--glow-soft-universal);
+}
+/* ACTIVE (saat di-klik/ditekan) — glow lebih intens */
+.card:active,
+.auth-card:active,
+.admin-kpi-card:active,
+.admin-panel:active,
+.hs-card:active,
+.ds-bento-card:active,
+.bento-tile:active,
+.lib-card:active,
+.fyp-card:active,
+.video-card:active,
+.inbox-card:active,
+.profile-card:active,
+.chart-card:active {
+  box-shadow: var(--glow-soft-universal-hover);
+}
+
+/* Gradient pseudo-overlay — bikin permukaan kartu terasa glass-like dengan
+   blend halus. Hanya di kartu utama supaya tidak ramai. */
+.auth-card,
+.admin-kpi-card,
+.admin-panel,
+.admin-hero,
+.hs-card,
+.ds-bento-card,
+.lib-card,
+.bento-tile,
+.chart-card,
+.profile-card,
+.modal-panel {
+  position: relative;
+  isolation: isolate;
+}
+.auth-card::before,
+.admin-kpi-card::before,
+.admin-panel::before,
+.admin-hero::before,
+.hs-card::before,
+.ds-bento-card::before,
+.lib-card::before,
+.bento-tile::before,
+.chart-card::before,
+.profile-card::before,
+.modal-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(140% 90% at 50% -20%, rgba(var(--glow-overlay-color), 0.10), transparent 55%),
+    radial-gradient(80% 60% at 100% 100%, rgba(var(--glow-overlay-color), 0.05), transparent 65%),
+    linear-gradient(135deg, rgba(var(--glow-overlay-color), 0.04) 0%, rgba(var(--glow-overlay-color), 0.00) 60%);
+  /* Default rest: overlay TIDAK terlihat. Muncul lewat hover/focus. */
+  opacity: 0;
+  transition: opacity .4s var(--ease);
+  mix-blend-mode: screen;
+}
+body[data-theme="light"] .auth-card::before,
+body[data-theme="light"] .admin-kpi-card::before,
+body[data-theme="light"] .admin-panel::before,
+body[data-theme="light"] .admin-hero::before,
+body[data-theme="light"] .hs-card::before,
+body[data-theme="light"] .ds-bento-card::before,
+body[data-theme="light"] .lib-card::before,
+body[data-theme="light"] .bento-tile::before,
+body[data-theme="light"] .chart-card::before,
+body[data-theme="light"] .profile-card::before,
+body[data-theme="light"] .modal-panel::before {
+  /* Light mode pakai multiply supaya tetap halus bila nanti di-show */
+  mix-blend-mode: multiply;
+}
+/* HOVER / FOCUS / ACTIVE — overlay fade in halus */
+.auth-card:hover::before,
+.auth-card:focus-within::before,
+.admin-kpi-card:hover::before,
+.admin-kpi-card:active::before,
+.admin-panel:hover::before,
+.admin-hero:hover::before,
+.hs-card:hover::before,
+.ds-bento-card:hover::before,
+.lib-card:hover::before,
+.bento-tile:hover::before,
+.chart-card:hover::before,
+.profile-card:hover::before,
+.modal-panel:hover::before {
+  opacity: 1;
+}
+body[data-theme="light"] .auth-card:hover::before,
+body[data-theme="light"] .auth-card:focus-within::before,
+body[data-theme="light"] .admin-kpi-card:hover::before,
+body[data-theme="light"] .admin-panel:hover::before,
+body[data-theme="light"] .admin-hero:hover::before,
+body[data-theme="light"] .hs-card:hover::before,
+body[data-theme="light"] .ds-bento-card:hover::before,
+body[data-theme="light"] .lib-card:hover::before,
+body[data-theme="light"] .bento-tile:hover::before,
+body[data-theme="light"] .chart-card:hover::before,
+body[data-theme="light"] .profile-card:hover::before,
+body[data-theme="light"] .modal-panel:hover::before {
+  opacity: 0.6;
+}
+
+/* Children harus z-index 1 supaya teks/icon kebaca di atas overlay */
+.auth-card > *,
+.admin-kpi-card > *,
+.admin-panel > *,
+.admin-hero > *,
+.hs-card > *,
+.ds-bento-card > *,
+.lib-card > *,
+.bento-tile > *,
+.chart-card > *,
+.profile-card > *,
+.modal-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Border halus warna senada dengan halo — bikin "edge" terasa nyatu */
+.auth-card,
+.admin-kpi-card,
+.admin-panel,
+.admin-hero,
+.hs-card,
+.ds-bento-card,
+.lib-card,
+.bento-tile,
+.chart-card,
+.profile-card {
+  border-color: rgba(var(--glow-overlay-color), 0.07);
+}
+.auth-card:hover,
+.admin-kpi-card:hover,
+.admin-panel:hover,
+.admin-hero:hover,
+.hs-card:hover,
+.lib-card:hover {
+  border-color: rgba(var(--glow-overlay-color), 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .auth-card, .admin-kpi-card, .admin-panel, .hs-card, .lib-card,
+  .bento-tile, .ds-bento-card, .modal-panel { transition: none; }
+}
+
+/* =========================================================
+   ADMIN VISUAL POLISH (per request user)
+   - Logo Home admin: efek "hidup" (gentle breathing + soft glow halo)
+   - Glow palette: SOFT BLUE (#E8EEF5 / #CFDDEA / #A4C0E0 / #7DA3CC) — no wine
+   - Glow only on :hover / :focus / :active (no always-on glow)
+   - Grafik Traffic: max-width supaya gak melebar
+   ========================================================= */
+
+/* 1. Logo Home admin — breathing pulse + soft halo. Pakai filter drop-shadow
+      yang animasi smooth, tidak mengganggu layout. */
+@keyframes adminHomeBreathe {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 4px rgba(207, 221, 234, .35))
+      drop-shadow(0 0 0 transparent);
+    transform: scale(1);
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 10px rgba(164, 192, 224, .65))
+      drop-shadow(0 0 18px rgba(125, 163, 204, .35));
+    transform: scale(1.06);
+  }
+}
+body[data-role="admin"] .nav-admin .nav-item[data-view="admin-dashboard"] svg {
+  animation: adminHomeBreathe 3.2s ease-in-out infinite;
+  color: #CFDDEA;
+  transition: color .25s var(--ease);
+}
+body[data-role="admin"] .nav-admin .nav-item[data-view="admin-dashboard"]:hover svg,
+body[data-role="admin"] .nav-admin .nav-item[data-view="admin-dashboard"].active svg {
+  color: #A4C0E0;
+}
+
+/* 2. Override admin glow palette — soft blue gradients (3-circle reference) */
+body[data-role="admin"] {
+  --glow-blue-pale:    rgba(232, 238, 245, .35); /* #E8EEF5 */
+  --glow-blue-mid:     rgba(207, 221, 234, .50); /* #CFDDEA */
+  --glow-blue-deep:    rgba(164, 192, 224, .55); /* #A4C0E0 */
+  --glow-blue-accent:  rgba(125, 163, 204, .60); /* #7DA3CC */
+}
+
+/* Hilangkan always-on box-shadow / glow dari kartu admin — biar bersih.
+   Glow muncul HANYA saat hover, focus, atau active. */
+body[data-role="admin"] .admin-kpi-card,
+body[data-role="admin"] .admin-panel,
+body[data-role="admin"] .an-card,
+body[data-role="admin"] .audit-card,
+body[data-role="admin"] section.view[data-view^="admin-"] .card {
+  box-shadow: none !important;
+  transition: box-shadow .25s var(--ease), border-color .25s var(--ease), transform .25s var(--ease);
+}
+body[data-role="admin"] .admin-kpi-card:hover,
+body[data-role="admin"] .admin-panel:hover,
+body[data-role="admin"] .an-card:hover,
+body[data-role="admin"] section.view[data-view^="admin-"] .card:hover {
+  border-color: rgba(164, 192, 224, .45) !important;
+  box-shadow:
+    0 0 0 1px rgba(164, 192, 224, .15),
+    0 12px 32px -16px rgba(125, 163, 204, .55),
+    0 0 32px -6px rgba(207, 221, 234, .25) !important;
+}
+body[data-role="admin"] .admin-kpi-card:focus-visible,
+body[data-role="admin"] .admin-kpi-card:active {
+  border-color: rgba(125, 163, 204, .65) !important;
+  box-shadow:
+    0 0 0 2px rgba(125, 163, 204, .35),
+    0 8px 24px -10px rgba(125, 163, 204, .55) !important;
+  outline: none !important;
+}
+
+/* Override .admin-kpi-card[data-jump]:hover yang sebelumnya pakai slate */
+body[data-role="admin"] .admin-kpi-card[data-jump]:hover,
+body[data-role="admin"] .admin-kpi-card[data-kpi]:hover {
+  border-color: rgba(164, 192, 224, .55) !important;
+  box-shadow:
+    0 0 0 1px rgba(164, 192, 224, .15),
+    0 12px 32px -16px rgba(125, 163, 204, .55) !important;
+}
+body[data-role="admin"] .admin-kpi-card[data-jump]:focus-visible,
+body[data-role="admin"] .admin-kpi-card[data-kpi]:focus-visible {
+  outline: 2px solid rgba(125, 163, 204, .7) !important;
+  outline-offset: 2px;
+}
+
+/* 3. Grafik Traffic — kontain width supaya gak melebar penuh, lebih flexible */
+body[data-role="admin"] section[data-view="admin-analytics"] .an-chart-wrap {
+  max-width: 100%;
+  overflow: hidden;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] svg {
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 7 / 2;
+}
+
+/* 4. Achievement Video — header KPI inline (di kanan atas card-head) */
+.an-card .an-head-kpi {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.an-card .an-head-kpi .an-mini-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 96px;
+}
+.an-card .an-head-kpi .an-mini-kpi small {
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.an-card .an-head-kpi .an-mini-kpi b {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* 5. Achievement User — 3-column layout (Top Likes / Top Followers / Top Views) */
+.an-user-3col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 6px;
+}
+.an-user-3col .an-user-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.an-user-3col .an-user-col-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.an-user-3col .an-user-col-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.an-user-3col .an-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: transparent;
+  transition: background .15s var(--ease);
+}
+.an-user-3col .an-user-row:hover { background: var(--surface-2); }
+.an-user-3col .an-user-rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.an-user-3col .an-user-row:nth-child(1) .an-user-rank { color: #FFD66B; }
+.an-user-3col .an-user-row:nth-child(2) .an-user-rank { color: #DCDCDC; }
+.an-user-3col .an-user-row:nth-child(3) .an-user-rank { color: #CD7F32; }
+.an-user-3col .an-user-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #94A3B8, #475569);
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 10.5px;
+  flex-shrink: 0;
+}
+.an-user-3col .an-user-info {
+  flex: 1; min-width: 0;
+}
+.an-user-3col .an-user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.an-user-3col .an-user-meta {
+  font-size: 10px;
+  color: var(--muted);
+}
+.an-user-3col .an-user-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1024px) {
+  .an-user-3col { grid-template-columns: 1fr; }
+}
+
+/* 6. Settings Admin — 2-column atas (Kontrol/Notifikasi vs Keamanan),
+      Buat Admin Baru SPAN FULL BOTTOM supaya tidak ada gap aneh di kanan. */
+body[data-role="admin"] section[data-view="settings"] .settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-control {
+  grid-column: 1;
+  grid-row: 1;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-prefs {
+  grid-column: 1;
+  grid-row: 2;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-security {
+  grid-column: 2;
+  grid-row: 1 / span 2;  /* Keamanan Admin span 2 baris di kanan supaya tinggi seimbang */
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid #createAdminCard {
+  grid-column: 1 / -1 !important;  /* FULL WIDTH bottom */
+  grid-row: 3;
+  width: 100%;
+}
+
+/* Keamanan Admin — kompakkan password fields jadi 1 kolom + auto-logout inline */
+body[data-role="admin"] .settings-card-security .security-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+body[data-role="admin"] .settings-card-security .security-form-grid label {
+  margin: 0;
+}
+body[data-role="admin"] .settings-card-security .toggle-list {
+  margin-top: 12px;
+  padding-top: 0;
+}
+body[data-role="admin"] .settings-card-security .upload-form {
+  margin-top: 10px;
+}
+/* Sub-heading per section (🔑 Ganti Password / 🔒 Proteksi Login / dll) */
+body[data-role="admin"] .settings-card-security .settings-subhead {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+body[data-role="admin"] .settings-card-security .settings-section {
+  display: block;
+}
+body[data-role="admin"] .settings-card-security .settings-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px -22px;
+  opacity: .6;
+}
+/* Sesi aktif row */
+body[data-role="admin"] .settings-card-security .settings-session-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body[data-role="admin"] .settings-card-security .settings-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+body[data-role="admin"] .settings-card-security .settings-session-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+body[data-role="admin"] .settings-card-security .settings-session-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, .18);
+  color: #34d399;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+body[data-role="admin"] .settings-card-security .settings-logout-btn {
+  width: 100%;
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, .25);
+}
+body[data-role="admin"] .settings-card-security .settings-logout-btn:hover {
+  background: rgba(239, 68, 68, .08);
+  border-color: rgba(239, 68, 68, .45);
+}
+
+@media (max-width: 1024px) {
+  body[data-role="admin"] section[data-view="settings"] .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  body[data-role="admin"] section[data-view="settings"] .settings-grid > * {
+    grid-column: 1 !important;
+    grid-row: auto !important; /* reset row span supaya tidak overlap di mobile */
+  }
+}
+
+/* =========================================================
+   ADMIN POLISH ROUND 2 (per request user)
+   ========================================================= */
+
+/* 1. Hapus wine glow di .hc-id-icon admin (SUPER ADMIN crown card).
+   Background-nya navy→blue gradient, tapi box-shadow masih wine. Override.
+   Plus: glow muncul HANYA saat hover (sesuai aturan no-always-on glow). */
+body[data-role="admin"] .hc-id-icon {
+  background: linear-gradient(135deg, #2c3e63 0%, #4a6595 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  transition: box-shadow .25s var(--ease), transform .25s var(--ease);
+}
+body[data-role="admin"] .hero-clock:hover .hc-id-icon,
+body[data-role="admin"] .hc-id-icon:hover {
+  box-shadow:
+    0 6px 18px rgba(125, 163, 204, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+/* User Management — sembunyikan tombol Refresh + clock yang user gak suka */
+body[data-role="admin"] section[data-view="admin-users"] #adminUserRefresh {
+  display: none !important;
+}
+
+/* Content Control — bersihkan halaman:
+   - Hapus subtitle <p> di page-head (yang nempel di bawah h2)
+   - Hapus tombol "✓ Pilih" + dropdown "Semua Kategori" + search "Cari judul/kreator/tag"
+   - Halaman jadi full-width fleksibel */
+body[data-role="admin"] section[data-view="admin-videos"] .page-head > div > p,
+body[data-role="admin"] section[data-view="admin-videos"] #adminVideoSelectToggle,
+body[data-role="admin"] section[data-view="admin-videos"] #gvCategoryFilter,
+body[data-role="admin"] section[data-view="admin-videos"] #adminVideoSearch {
+  display: none !important;
+}
+/* Page-head action area kosong supaya tidak ada gap aneh */
+body[data-role="admin"] section[data-view="admin-videos"] .page-head-actions:empty {
+  display: none;
+}
+/* gv-toolbar: tabs di kiri, sort di kanan supaya tetap rapi */
+body[data-role="admin"] section[data-view="admin-videos"] .gv-toolbar { gap: 12px; flex-wrap: wrap; }
+body[data-role="admin"] section[data-view="admin-videos"] .gv-filters { margin-left: auto; }
+
+/* Achievement Video — KPI di kanan atas, format inline "37 views · 5m · 0.0%"
+   bukan box mini lagi. */
+.an-card .an-head-kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.an-card .an-head-kpi .an-mini-kpi {
+  background: transparent;
+  border: none;
+  padding: 0;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  cursor: pointer;
+}
+.an-card .an-head-kpi .an-mini-kpi small {
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: lowercase;
+  color: var(--muted);
+  margin: 0;
+  font-weight: 600;
+}
+.an-card .an-head-kpi .an-mini-kpi b {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.an-card .an-head-kpi .an-mini-kpi:hover b { color: #A4C0E0; }
+.an-card .an-head-kpi-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
+/* Equalize Achievement Video & Achievement User — kolom kiri-kanan ratio 1:1
+   HANYA saat NOT focus-mode. Pakai :not(.focus-mode) supaya focus-mode bisa
+   collapse jadi 1-col penuh (rule line 587 dengan focus-mode kalah specificity). */
+body[data-role="admin"] section[data-view="admin-analytics"]:not(.focus-mode) .an-tops-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  align-items: stretch;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] .an-tops-grid > .an-card {
+  display: flex;
+  flex-direction: column;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] .an-tops-grid > .an-card[data-focus-target="ach-user"] .an-user-3col {
+  flex: 1;
+  align-content: stretch;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] .an-tops-grid > .an-card[data-focus-target="ach-user"] .an-user-col {
+  display: flex;
+  flex-direction: column;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] .an-tops-grid > .an-card[data-focus-target="ach-user"] .an-user-col-list {
+  flex: 1;
+}
+
+/* FOCUS MODE — paksa 1 kolom & full width supaya card mengisi seluruh halaman.
+   Specificity-nya tinggi supaya menang dari rule admin di atas. */
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-tops-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* Achievement User di focus mode — wrapper card jadi transparan,
+   3 sub-kolom (Top Likes/Followers/Views) tampil sebagai 3 card terpisah penuh. */
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-user"] {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-user"] > .card-head {
+  padding: 0 4px;
+  margin-bottom: 14px;
+}
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-user"] .an-user-3col {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px;
+}
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-user"] .an-user-col {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 22px -16px rgba(0,0,0,.6);
+}
+@media (max-width: 1100px) {
+  body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-user"] .an-user-3col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Achievement Video di focus mode — full width, padding nyaman, layout grid lebih lega */
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-video"] {
+  width: 100%;
+  padding: 22px 24px;
+}
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-video"] .an-top-row {
+  grid-template-columns: 36px 110px 1fr auto;
+  gap: 16px;
+  padding: 12px 14px;
+}
+body[data-role="admin"] section[data-view="admin-analytics"].focus-mode .an-card[data-focus-target="ach-video"] .an-top-thumb {
+  width: 110px; height: 64px;
+}
+
+/* Grafik Traffic — full width sesuai halaman, tidak rata tengah/mengecil */
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] {
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] svg {
+  max-width: 100%;
+  height: 280px;
+  aspect-ratio: auto;
+  width: 100%;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] .an-chart-wrap {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  height: 280px;
+}
+
+/* Override sisa-sisa wine glow di admin role:
+   - .an-top-bar-fill (progress bar di top videos / top creators) tadinya pakai
+     var(--primary)→var(--accent), di admin --accent masih warm tan dari user
+     theme yang nyangkut wine-ish. Override pakai gradient navy→slate.
+   - --accent default body[data-role="admin"]: pakai slate dingin, bukan tan. */
+body[data-role="admin"] {
+  --accent: #ACBAC4; /* slate, ganti dari warm tan #C7B7A3 */
+}
+body[data-role="admin"] .an-top-bar-fill {
+  background: linear-gradient(90deg, #30364F 0%, #7DA3CC 60%, #ACBAC4 100%) !important;
+}
+body[data-role="admin"] .rev-split-seg.ads,
+body[data-role="admin"] .rev-leg.ads .rev-leg-dot {
+  background: linear-gradient(135deg, #30364F, #ACBAC4) !important;
+}
+
+/* Settings Admin — ratakan kolom kanan-kiri supaya lurus rapi.
+   Issue lama: "Ganti Password Admin" button pakai align-self:flex-start di
+   dalam grid-form, jadinya melebar penuh + tidak rata dengan input di atas.
+   Force button jadi rata kiri & lebar wajar. */
+body[data-role="admin"] section[data-view="settings"] .settings-card-security .security-form-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-card-security .security-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+body[data-role="admin"] section[data-view="settings"] .settings-card-security .security-form-grid label input {
+  width: 100%;
+  box-sizing: border-box;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-card-security .security-form-grid > button[type="submit"] {
+  align-self: flex-start !important;
+  justify-self: start;
+  width: auto;
+  min-width: 200px;
+  padding: 10px 18px;
+  margin-top: 4px;
+}
+
+/* Settings cards — equalize padding & border radius supaya kolom rapi */
+body[data-role="admin"] section[data-view="settings"] .settings-grid > .card {
+  padding: 22px 22px 20px;
+  border-radius: 16px;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid > .card > h3 {
+  font-size: 15.5px;
+  margin-bottom: 4px;
+}
+body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-section + .settings-divider {
+  margin: 18px 0;
+}
+
+/* Buat Admin Baru — supaya grid-form 2-col input rapi & tombol selaras */
+body[data-role="admin"] section[data-view="settings"] #createAdminCard form > div[style*="grid-template-columns"] {
+  gap: 14px !important;
+}
+body[data-role="admin"] section[data-view="settings"] #createAdminCard label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+body[data-role="admin"] section[data-view="settings"] #createAdminCard label input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Status User Management — varian baru: online / active / inactive / suspended.
+   Real-time, di-compute dari last activity (upload/history). */
+body[data-role="admin"] .row-status.status-online { color: #34d399; }
+body[data-role="admin"] .row-status.status-online::before {
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, .65);
+  animation: rowStatusPulse 1.6s ease-in-out infinite;
+}
+body[data-role="admin"] .row-status.status-active { color: #7DA3CC; }
+body[data-role="admin"] .row-status.status-active::before {
+  background: #7DA3CC;
+  box-shadow: 0 0 6px rgba(125, 163, 204, .55);
+}
+body[data-role="admin"] .row-status.status-inactive { color: var(--muted); }
+body[data-role="admin"] .row-status.status-inactive::before {
+  background: var(--muted);
+  box-shadow: none;
+}
+@keyframes rowStatusPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.4); opacity: .65; }
+}
+
+/* =========================================================
+   ADMIN ROLE — NEUTRALIZE WINE GLOW (per user request)
+   Apapun warna wine yang nyangkut di kartu/panel/modal admin,
+   override pakai sky/lapis (admin theme: #ACBAC4 slate, #7DA3CC lapis,
+   #DCD3A9 caramel). Tidak boleh wine (109, 41, 50 / 6D2932 / 86, 28, 36).
+   ========================================================= */
+
+/* 1. Modal panels di admin role — pastikan glow & accent bukan wine */
+body[data-role="admin"] .modal-panel,
+body[data-role="admin"] .modal-panel:hover {
+  border-color: rgba(164, 192, 224, .22) !important;
+}
+
+/* 2. Status badge "DIPROSES" pada inbox detail modal — admin pakai sky gradient */
+body[data-role="admin"] .modal-panel span[style*="linear-gradient(90deg,#6D2932"],
+body[data-role="admin"] .modal-panel span[style*="linear-gradient(90deg, #6D2932"] {
+  background: linear-gradient(90deg, #38BDF8, #7DD3FC) !important;
+  color: #0B1C2C !important;
+}
+
+/* 3. Glow universal di .card admin saat hover/active — pakai sky overlay */
+body[data-role="admin"] .card:hover,
+body[data-role="admin"] .card[role="button"]:hover,
+body[data-role="admin"] .card:active {
+  box-shadow:
+    0 0 0 1px rgba(164, 192, 224, .15),
+    0 12px 32px -16px rgba(125, 163, 204, .55),
+    0 0 32px -6px rgba(207, 221, 234, .25) !important;
+  border-color: rgba(164, 192, 224, .35) !important;
+}
+
+/* 4. Modal-close X — pastikan posisi di top-right, terlihat jelas, tidak ketutup
+      icon/badge yang ada di kiri-atas (📧, DIPROSES). Naik z-index biar di atas. */
+body[data-role="admin"] .modal-panel .modal-close,
+.modal-panel .modal-close {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  left: auto !important;
+  z-index: 10 !important;
+}
+
+/* 5. Keamanan Admin card — buang empty space di bawah:
+      stop card stretch jadi full 2-row span height; sizing fit-content. */
+body[data-role="admin"] section[data-view="settings"] .settings-card-security {
+  align-self: start !important;
+  height: -webkit-fit-content;
+  height: -moz-fit-content;
+  height: fit-content;
+}
+
+/* 6. Grafik Traffic — kontain max-width supaya tidak full bleed terlalu lebar,
+      kasih padding dalam yang nyaman, dan glow saat hover sky bukan wine. */
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] .card {
+  max-width: 100%;
+  margin: 0 auto;
+}
+body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target="grafik"] .card:hover {
+  border-color: rgba(164, 192, 224, .45) !important;
+  box-shadow:
+    0 0 0 1px rgba(164, 192, 224, .15),
+    0 12px 32px -16px rgba(125, 163, 204, .55),
+    0 0 32px -6px rgba(207, 221, 234, .25) !important;
+}
+
+/* 7. Auth quote (di admin auth screen) — bersihkan tint wine pakai slate */
+body[data-role="admin"] .auth-quote {
+  background: linear-gradient(135deg, rgba(48, 54, 79, .14) 0%, rgba(220, 211, 169, .06) 100%) !important;
+  border-color: rgba(172, 186, 196, .22) !important;
 }
