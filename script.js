@@ -5942,15 +5942,16 @@ function anRangeLabel(r) {
 
 // Common SVG chart drawing helpers
 function anDrawAreaChart(svg, values, labels, opts = {}) {
-  const W = 700, H = 240, PAD_L = opts.padL ?? 44, PAD_R = 18, PAD_T = 20, PAD_B = 32;
-  const isAdmin = document.body.dataset.role === "admin";
-  // Stroke / fill: admin pakai soft blue palette, user pakai warm cream→wine
-  const stops = isAdmin
-    ? { strokeA: "#7DA3CC", strokeB: "#A4C0E0", fillA: "#7DA3CC", fillB: "#A4C0E0" }
-    : { strokeA: "#561C24", strokeB: "#E8D8C4", fillA: "#561C24", fillB: "#E8D8C4" };
+  // Visual identik dengan user chart (drawChart): straight lines + all dots
+  // dengan gradient stroke + area fill wine→cream + hover tooltip. Hanya
+  // padding/H disesuaikan dengan container admin (240px vs user 200px).
+  const wrap = svg.parentElement;
+  const containerW = Math.max(600, Math.round(wrap?.offsetWidth || svg.clientWidth || 700));
+  const W = containerW, H = 240;
+  const PAD_L = opts.padL ?? 44, PAD_R = 18, PAD_T = 20, PAD_B = 32;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
   const rawMax = Math.max(...values, 1);
-  // "Nice" Y-axis: untuk nilai kecil (<= 5), pakai integer step 1; untuk yg lebih besar, pakai step yang dibulatkan
   const nice = niceYAxis(rawMax);
   const max = nice.max;
   const n = values.length;
@@ -5958,8 +5959,8 @@ function anDrawAreaChart(svg, values, labels, opts = {}) {
   const innerH = H - PAD_T - PAD_B;
   const points = values.map((v, i) => [PAD_L + i * stepX, H - PAD_B - (v / max) * innerH]);
 
-  // Smooth path pakai bezier sederhana — biar kurva nggak terlalu tajam
-  const path = buildSmoothPath(points);
+  // Straight lines — match user chart (no bezier smoothing)
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(" ");
   const lastX = points[n - 1][0];
   const firstX = points[0][0];
   const area = `${path} L ${lastX} ${H - PAD_B} L ${firstX} ${H - PAD_B} Z`;
@@ -5980,29 +5981,50 @@ function anDrawAreaChart(svg, values, labels, opts = {}) {
     xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 18}" fill="rgba(140,150,180,.65)" font-size="10.5" text-anchor="middle" font-family="Inter">${l}</text>`;
   });
 
-  // Marker dot untuk titik tertinggi — lebih informatif dari sekedar garis
-  let peakDot = "";
-  let peakIdx = 0;
-  for (let i = 1; i < values.length; i++) if (values[i] > values[peakIdx]) peakIdx = i;
-  if (values[peakIdx] > 0) {
-    const [px, py] = points[peakIdx];
-    peakDot = `
-      <circle cx="${px}" cy="${py}" r="6" fill="${stops.strokeB}" opacity=".25"/>
-      <circle cx="${px}" cy="${py}" r="3.5" fill="${stops.strokeB}" stroke="${isAdmin ? '#1a1d2c' : '#fff'}" stroke-width="1.5"/>
-    `;
-  }
+  // ALL dots — sama persis kayak user chart, bukan cuma peak.
+  const dotFill = getComputedStyle(document.body).getPropertyValue("--bg-elev").trim() || "#11131f";
+  const gradId = opts.gradId || 'anG';
+  let dots = "";
+  points.forEach((p, i) => {
+    dots += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${dotFill}" stroke="url(#${gradId})" stroke-width="2" data-i="${i}" class="an-traffic-dot" style="cursor:pointer;transition:r .2s"/>`;
+  });
 
+  // Wine→cream gradient (match user chart)
   svg.innerHTML = `
     <defs>
-      <linearGradient id="${opts.gradId || 'anG'}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${stops.strokeA}"/><stop offset="100%" stop-color="${stops.strokeB}"/></linearGradient>
-      <linearGradient id="${opts.gradId || 'anG'}Fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${stops.fillA}" stop-opacity=".30"/><stop offset="100%" stop-color="${stops.fillB}" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#561C24"/>
+        <stop offset="100%" stop-color="#E8D8C4"/>
+      </linearGradient>
+      <linearGradient id="${gradId}Fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6D2932" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#E8D8C4" stop-opacity="0"/>
+      </linearGradient>
     </defs>
     ${grid}
-    <path d="${area}" fill="url(#${opts.gradId || 'anG'}Fill)"/>
-    <path d="${path}" fill="none" stroke="url(#${opts.gradId || 'anG'})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-    ${peakDot}
+    <path d="${area}" fill="url(#${gradId}Fill)"/>
+    <path d="${path}" fill="none" stroke="url(#${gradId})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
     ${xLabels}
   `;
+
+  // Hover tooltip — copy persis behavior dari user chart drawChart()
+  const tip = wrap?.querySelector(".chart-tooltip");
+  if (tip) {
+    $$(".an-traffic-dot", svg).forEach((d, i) => {
+      d.addEventListener("mouseenter", () => {
+        d.setAttribute("r", "5");
+        const rect = svg.getBoundingClientRect();
+        const cx = +d.getAttribute("cx") * (rect.width / W);
+        const cy = +d.getAttribute("cy") * (rect.height / H);
+        tip.innerHTML = `<small>${labels[i]}</small><b>${fmt(values[i])}</b>`;
+        tip.style.left = `${cx - tip.offsetWidth / 2}px`;
+        tip.style.top = `${cy - tip.offsetHeight - 10}px`;
+        tip.classList.add("show");
+      });
+      d.addEventListener("mouseleave", () => { d.setAttribute("r", "3.5"); tip.classList.remove("show"); });
+    });
+  }
 }
 
 // Nice Y-axis: hasilkan max dan tick array yang "manusiawi" — untuk nilai
@@ -6105,6 +6127,26 @@ function drawAnTrafficChart() {
   if (empty) empty.hidden = true;
   anDrawAreaChart(svg, series.values, series.labels, { gradId: "anTrG" });
 }
+
+// Auto-redraw admin traffic chart saat container width berubah
+// (window resize / sidebar collapse). viewBox dihitung dari container width
+// sehingga tanpa observer, chart stuck di lebar lama.
+(function setupAnTrafficResizeObserver() {
+  const wrap = document.getElementById("anTrafficWrap");
+  if (!wrap || !window.ResizeObserver) return;
+  let lastW = 0;
+  let raf = 0;
+  const ro = new ResizeObserver(entries => {
+    const w = Math.round(entries[0].contentRect.width);
+    if (w === lastW || w < 100) return;
+    lastW = w;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (state?.currentView === "admin-analytics") drawAnTrafficChart();
+    });
+  });
+  ro.observe(wrap);
+})();
 
 function drawAnBandwidthChart() {
   const svg = $("#anBwChart"); if (!svg) return;

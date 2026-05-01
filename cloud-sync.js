@@ -331,7 +331,7 @@
   function injectMainScript() {
     if (document.querySelector('script[data-playly-main]')) return;
     const s = document.createElement("script");
-    s.src = "script.js?v=20260501-aud-modal-theme";
+    s.src = "script.js?v=20260501-admin-chart-match";
     s.dataset.playlyMain = "1";
     document.body.appendChild(s);
   }
