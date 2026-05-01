@@ -601,7 +601,7 @@
 
         <!-- 1. LIVE USER ACTIVITY — feed real-time semua aksi user (bukan admin) -->
         <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
-          <div class="admin-panel" data-panel-tone="live">
+          <div class="admin-panel">
             <div class="admin-panel-head">
               <h3>🔴 Live Activity User</h3>
               <span style="font-size:11px;color:var(--muted)">Real-time event signup, upload, like dari seluruh user</span>
@@ -615,28 +615,25 @@
 
         <!-- 2. RECENT — Video baru, User baru, Top Creators (3 col) -->
         <div class="admin-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px">
-          <div class="admin-panel" data-panel-tone="recent">
+          <div class="admin-panel">
             <div class="admin-panel-head">
               <h3>🎬 Video Baru di-upload</h3>
               <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>
             </div>
-            <div class="admin-avatar-stack" id="adminRecentVideosStack" aria-hidden="true"></div>
             <div id="adminRecentVideosLive" class="admin-list-rows"></div>
           </div>
-          <div class="admin-panel" data-panel-tone="users">
+          <div class="admin-panel">
             <div class="admin-panel-head">
               <h3>👋 User Baru</h3>
               <button class="btn ghost sm" data-jump="admin-users">Lihat semua</button>
             </div>
-            <div class="admin-avatar-stack" id="adminRecentUsersStack" aria-hidden="true"></div>
             <div id="adminRecentUsersLive" class="admin-list-rows"></div>
           </div>
-          <div class="admin-panel" data-panel-tone="creators">
+          <div class="admin-panel">
             <div class="admin-panel-head">
               <h3>👑 Top Creators</h3>
               <button class="btn ghost sm" data-jump="admin-users">Lihat semua</button>
             </div>
-            <div class="admin-avatar-stack" id="adminTopCreatorsStack" aria-hidden="true"></div>
             <div id="adminTopCreatorsLive" class="admin-list-rows"></div>
           </div>
         </div>
@@ -646,7 +643,7 @@
 
         <!-- 3. TOP PERFORMING — Combined Most Viewed + Most Liked (single panel, both metrics per row) -->
         <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
-          <div class="admin-panel" data-panel-tone="performance">
+          <div class="admin-panel">
             <div class="admin-panel-head">
               <h3>🏆 Top Performing Videos</h3>
               <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>

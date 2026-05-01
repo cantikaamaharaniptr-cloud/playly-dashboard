@@ -4704,64 +4704,7 @@ function renderAdminKPI() {
   const trendTxt = m.newUsers24h > 0 ? `↑ ${m.newUsers24h} baru 24j` : `0 baru 24j`;
   if (trendEls[0]) trendEls[0].textContent = trendTxt;
 
-  // Avatar stack — data-viz extra (sparkline removed per user request)
-  renderAdminAvatarStacks(m);
-}
-
-/* ---------- Avatar stacks (recent videos / users / top creators) ---------- */
-function renderAdminAvatarStacks(m) {
-  const accounts = m.accounts || [];
-  const videos = m.videos || [];
-
-  // Recent videos — initials creator dari 5 video terbaru
-  const recentVids = [...videos].sort((a, b) => (b.uploadedAt || b.ts || 0) - (a.uploadedAt || a.ts || 0)).slice(0, 5);
-  _renderAvatarStack("#adminRecentVideosStack", recentVids.map(v => ({
-    label: (v.creator || "U"),
-    avatar: _findAvatarByUsername(v.creator, accounts)
-  })), videos.length);
-
-  // Recent users — 5 user terbaru
-  const recentUsers = [...accounts].sort((a, b) => new Date(b.joinedAt || 0) - new Date(a.joinedAt || 0)).slice(0, 5);
-  _renderAvatarStack("#adminRecentUsersStack", recentUsers.map(a => ({
-    label: a.name || a.username || "U",
-    avatar: a.avatar
-  })), accounts.length);
-
-  // Top creators — by total views
-  const creatorMap = {};
-  videos.forEach(v => {
-    if (!v.creator) return;
-    creatorMap[v.creator] = creatorMap[v.creator] || { name: v.creator, views: 0 };
-    creatorMap[v.creator].views += v.viewsNum || 0;
-  });
-  const topCreators = Object.values(creatorMap).sort((a, b) => b.views - a.views).slice(0, 5);
-  _renderAvatarStack("#adminTopCreatorsStack", topCreators.map(c => ({
-    label: c.name,
-    avatar: _findAvatarByUsername(c.name, accounts)
-  })), Object.keys(creatorMap).length);
-}
-
-function _findAvatarByUsername(uname, accounts) {
-  if (!uname || !accounts) return null;
-  const a = accounts.find(x => String(x.username || "").toLowerCase() === String(uname).toLowerCase());
-  return a?.avatar || null;
-}
-
-function _renderAvatarStack(selector, items, total) {
-  const wrap = document.querySelector(selector);
-  if (!wrap) return;
-  if (!items.length) { wrap.innerHTML = ""; return; }
-  const visible = items.slice(0, 4);
-  const more = Math.max(0, total - visible.length);
-  const html = visible.map(it => {
-    const init = String(it.label || "U")
-      .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
-    if (it.avatar) {
-      return `<div class="ast-item"><img src="${escapeHtml(it.avatar)}" alt=""/></div>`;
-    }
-    return `<div class="ast-item">${escapeHtml(init)}</div>`;
-  }).join("") + (more > 0 ? `<div class="ast-item ast-more">+${more}</div>` : "");
-  wrap.innerHTML = html;
+  // Avatar stack & sparkline DIHAPUS per permintaan user (Apr 2026)
 }
 
 let lastFeedTopId = null;

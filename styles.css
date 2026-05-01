@@ -52,16 +52,10 @@
   --glow-soft:        0 8px 22px -12px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(232, 216, 196, 0.04) inset;
   --glow-soft-hover:  0 14px 30px -12px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(232, 216, 196, 0.06) inset;
   --glow-soft-cream:  none;
-  --glow-deep:
-    0 0 0 1px rgba(199, 183, 163, .10),
-    0 12px 38px -10px rgba(86, 28, 36, .42),
-    0 0 80px -16px rgba(139, 56, 69, .55),
-    0 1px 0 rgba(232, 216, 196, .06) inset;
-  --glow-deep-hover:
-    0 0 0 1px rgba(199, 183, 163, .18),
-    0 18px 50px -10px rgba(86, 28, 36, .58),
-    0 0 110px -16px rgba(184, 58, 69, .65),
-    0 1px 0 rgba(232, 216, 196, .10) inset;
+  /* Glow-deep DIHAPUS per permintaan user — token tetap ada dgn nilai flat
+     supaya nggak break selector lama, tapi tidak ada efek glow halo. */
+  --glow-deep:        0 8px 22px -12px rgba(0, 0, 0, .45);
+  --glow-deep-hover:  0 14px 30px -12px rgba(0, 0, 0, .55);
   --blur-soft:        blur(14px) saturate(110%);
   --blur-mild:        blur(8px) saturate(105%);
 }
@@ -96,14 +90,9 @@ body[data-theme="light"] {
   --glow-soft:        0 6px 16px -8px rgba(86, 28, 36, 0.18);
   --glow-soft-hover:  0 12px 28px -10px rgba(86, 28, 36, 0.28);
   --glow-soft-cream:  none;
-  --glow-deep:
-    0 0 0 1px rgba(86, 28, 36, .10),
-    0 10px 28px -10px rgba(86, 28, 36, .22),
-    0 0 60px -16px rgba(139, 56, 69, .25);
-  --glow-deep-hover:
-    0 0 0 1px rgba(86, 28, 36, .18),
-    0 16px 40px -10px rgba(86, 28, 36, .35),
-    0 0 80px -16px rgba(184, 58, 69, .35);
+  /* Glow-deep light variant — flat shadow saja, no halo */
+  --glow-deep:        0 6px 16px -8px rgba(86, 28, 36, .18);
+  --glow-deep-hover:  0 12px 28px -10px rgba(86, 28, 36, .28);
 }
 
 html, body {
@@ -6948,17 +6937,9 @@ body[data-role="admin"] {
   --grad-primary: linear-gradient(135deg, #30364F 0%, #30364F 100%);
   --grad-soft: linear-gradient(135deg, rgba(172, 186, 196, 0.22), rgba(48, 54, 79, 0.12));
   --grad-hero: linear-gradient(135deg, #30364F 0%, #30364F 45%, #DCD3A9 100%);
-  /* Deep glow admin — navy + slate halo, fits theme tanpa nge-clash sama wine user */
-  --glow-deep:
-    0 0 0 1px rgba(220, 211, 169, .10),
-    0 12px 38px -10px rgba(48, 54, 79, .55),
-    0 0 80px -16px rgba(172, 186, 196, .55),
-    0 1px 0 rgba(240, 235, 211, .06) inset;
-  --glow-deep-hover:
-    0 0 0 1px rgba(220, 211, 169, .18),
-    0 18px 50px -10px rgba(48, 54, 79, .70),
-    0 0 110px -16px rgba(197, 209, 218, .65),
-    0 1px 0 rgba(240, 235, 211, .10) inset;
+  /* Glow-deep DIHAPUS per permintaan user — flat shadow saja, tidak ada halo */
+  --glow-deep:        0 8px 22px -12px rgba(0, 0, 0, .50);
+  --glow-deep-hover:  0 14px 30px -12px rgba(0, 0, 0, .60);
 }
 
 /* Admin ambient — definisi shader gradient ada di body::before utama (animasi global).
@@ -12763,88 +12744,9 @@ body[data-theme="light"][data-role="admin"] .admin-section-divider::after {
   background: linear-gradient(90deg, transparent, rgba(48, 54, 79, .22), transparent);
 }
 
-/* 2. PANEL ACCENT STRIPE — left edge color-coded per tone, gradient flow */
-body[data-role="admin"] .admin-panel[data-panel-tone] {
-  position: relative;
-  overflow: hidden;
-}
-body[data-role="admin"] .admin-panel[data-panel-tone]::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--accent-stripe-c1, #ACBAC4), var(--accent-stripe-c2, #30364F), var(--accent-stripe-c1, #ACBAC4));
-  background-size: 100% 200%;
-  animation: stripeFlow 6s linear infinite;
-  border-radius: 0 2px 2px 0;
-  z-index: 1;
-  display: block !important;
-}
-@keyframes stripeFlow {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 0% 200%; }
-}
-body[data-role="admin"] .admin-panel[data-panel-tone="live"]      { --accent-stripe-c1: #ef4444; --accent-stripe-c2: #DCD3A9; }
-body[data-role="admin"] .admin-panel[data-panel-tone="recent"]    { --accent-stripe-c1: #ACBAC4; --accent-stripe-c2: #30364F; }
-body[data-role="admin"] .admin-panel[data-panel-tone="users"]     { --accent-stripe-c1: #DCD3A9; --accent-stripe-c2: #ACBAC4; }
-body[data-role="admin"] .admin-panel[data-panel-tone="creators"]  { --accent-stripe-c1: #30364F; --accent-stripe-c2: #DCD3A9; }
-body[data-role="admin"] .admin-panel[data-panel-tone="performance"] { --accent-stripe-c1: #DCD3A9; --accent-stripe-c2: #30364F; }
-body.reduced-motion[data-role="admin"] .admin-panel[data-panel-tone]::before { animation: none; }
-body[data-role="admin"] .admin-panel[data-panel-tone] > * { position: relative; z-index: 2; }
-body[data-role="admin"] .admin-panel[data-panel-tone] { padding-left: 22px; }
-
-/* 3. KPI SPARKLINE — REMOVED per user request (Apr 2026).
-   Sparkline svg + grid-template hacks dihapus karena user nggak suka. */
-
-/* 4. AVATAR STACK */
-body[data-role="admin"] .admin-avatar-stack {
-  display: flex;
-  align-items: center;
-  margin: -4px 0 12px;
-  min-height: 32px;
-}
-body[data-role="admin"] .admin-avatar-stack:empty { display: none; }
-body[data-role="admin"] .admin-avatar-stack .av {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--admin-grad);
-  border: 2px solid var(--bg-elev);
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--admin-accent-2);
-  margin-left: -10px;
-  position: relative;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateX(-6px) scale(.85);
-  animation: avatarStackIn .35s var(--ease) forwards;
-  transition: transform .2s var(--ease), z-index 0s;
-  cursor: default;
-}
-body[data-role="admin"] .admin-avatar-stack .av:first-child { margin-left: 0; }
-body[data-role="admin"] .admin-avatar-stack .av img { width: 100%; height: 100%; object-fit: cover; }
-body[data-role="admin"] .admin-avatar-stack .av:nth-child(1) { animation-delay: .05s; }
-body[data-role="admin"] .admin-avatar-stack .av:nth-child(2) { animation-delay: .12s; }
-body[data-role="admin"] .admin-avatar-stack .av:nth-child(3) { animation-delay: .19s; }
-body[data-role="admin"] .admin-avatar-stack .av:nth-child(4) { animation-delay: .26s; }
-body[data-role="admin"] .admin-avatar-stack .av:nth-child(5) { animation-delay: .33s; }
-body[data-role="admin"] .admin-avatar-stack .av:hover {
-  transform: translateY(-3px) scale(1.05);
-  z-index: 5;
-}
-body[data-role="admin"] .admin-avatar-stack .av-more {
-  width: auto;
-  padding: 0 10px;
-  background: var(--surface-2);
-  color: var(--text-2);
-  font-size: 10.5px;
-  font-weight: 700;
-}
-@keyframes avatarStackIn { to { opacity: 1; transform: translateX(0) scale(1); } }
-body.reduced-motion[data-role="admin"] .admin-avatar-stack .av { animation: none; opacity: 1; transform: none; }
+/* 2. PANEL ACCENT STRIPE — DIHAPUS per permintaan user */
+/* 3. KPI SPARKLINE — DIHAPUS per permintaan user */
+/* 4. AVATAR STACK — DIHAPUS per permintaan user */
 
 /* 5. ACTIVITY TIMELINE */
 body[data-role="admin"] .admin-activity-stream {
@@ -12941,55 +12843,4 @@ body[data-role="admin"] .admin-section-divider span {
 /* KPI content wrapper — sparkline dihapus per permintaan user, hanya layout flex tetap */
 .admin-kpi-card .kpi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
-/* Avatar stack — overlapping circle row untuk preview cepat user/creator */
-.admin-avatar-stack {
-  display: flex;
-  align-items: center;
-  margin: 10px 0 12px;
-  min-height: 28px;
-}
-.admin-avatar-stack:empty { display: none; }
-.admin-avatar-stack > .ast-item {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: #fff;
-  display: grid; place-items: center;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  border: 2px solid var(--bg-elev);
-  margin-left: -8px;
-  position: relative;
-  overflow: hidden;
-  transition: transform .18s var(--ease);
-}
-.admin-avatar-stack > .ast-item:first-child { margin-left: 0; }
-.admin-avatar-stack > .ast-item:hover { transform: translateY(-2px) scale(1.06); z-index: 2; }
-.admin-avatar-stack > .ast-item img { width: 100%; height: 100%; object-fit: cover; }
-.admin-avatar-stack > .ast-more {
-  background: var(--surface-3);
-  color: var(--text-2);
-  font-size: 9px;
-  font-weight: 800;
-}
-body[data-role="admin"] .admin-avatar-stack > .ast-item {
-  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
-}
-
-/* Panel tone — accent border-left & subtle gradient overlay sesuai tema panel.
-   Hanya menyentuh admin-panel di view admin home. */
-.admin-panel[data-panel-tone] { position: relative; }
-.admin-panel[data-panel-tone]::after {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  border-radius: 3px 0 0 3px;
-  pointer-events: none;
-}
-.admin-panel[data-panel-tone="live"]::after        { background: #d4574d; }   /* red-orange untuk live */
-.admin-panel[data-panel-tone="recent"]::after      { background: #5b8def; }   /* blue untuk recent videos */
-.admin-panel[data-panel-tone="users"]::after       { background: #10b981; }   /* green untuk users */
-.admin-panel[data-panel-tone="creators"]::after    { background: #DCD3A9; }   /* khaki untuk creators */
-.admin-panel[data-panel-tone="performance"]::after { background: #ACBAC4; }   /* slate untuk performance */
+/* Avatar stack & panel-tone DIHAPUS per permintaan user (Apr 2026). */
