@@ -7536,15 +7536,15 @@ function openInboxDetailModal({ kind, item }) {
   });
 }
 
-// Compose dock gaya Gmail untuk admin balas email tiket. Floating panel
-// fixed di kanan-bawah, header gelap, fields To/From/Subject/Body. Kirim
+// Modal compose untuk admin balas email tiket. Centered di tengah halaman
+// supaya menyatu dengan dashboard (bukan floating dock di pojok). Kirim
 // menyimpan reply ke ticket.replies[], otomatis status → progress, dan
 // deliver salinan ke chat thread user supaya user tahu admin sudah balas
 // (tanpa simulasi/auto-reply — ini dipicu manual oleh admin).
 function openEmailComposer({ ticket, parentModal }) {
-  // Hindari duplicate dock untuk ticket yang sama
-  const existing = document.querySelector(`.compose-dock[data-ticket-id="${ticket.id}"]`);
-  if (existing) { existing.classList.remove("minimized"); existing.querySelector(".compose-body-input")?.focus(); return; }
+  // Hindari duplicate composer untuk ticket yang sama
+  const existing = document.querySelector(`.compose-modal[data-ticket-id="${ticket.id}"]`);
+  if (existing) { existing.querySelector(".compose-body-input")?.focus(); return; }
 
   const adminName = user?.name || user?.username || "Super Admin";
   const adminEmail = user?.email || OFFICIAL_ADMIN_EMAIL;
@@ -7555,30 +7555,29 @@ function openEmailComposer({ ticket, parentModal }) {
   const greeting = recipientName.replace(/\s*\(@[^)]+\)\s*$/, "").trim();
 
   const dock = document.createElement("div");
-  dock.className = "compose-dock";
+  dock.className = "compose-modal";
   dock.dataset.ticketId = String(ticket.id);
   dock.innerHTML = `
-    <div class="compose-header">
-      <span class="compose-title" data-compose-toggle>Balas Pesan</span>
-      <div class="compose-header-actions">
-        <button type="button" class="compose-icon-btn" data-compose-toggle title="Minimize">—</button>
+    <div class="compose-modal-backdrop" data-compose-close></div>
+    <div class="compose-modal-panel">
+      <div class="compose-header">
+        <span class="compose-title">📧 Balas Pesan</span>
         <button type="button" class="compose-icon-btn" data-compose-close title="Tutup">✕</button>
       </div>
-    </div>
-    <div class="compose-fields">
-      <div class="compose-row">
-        <label class="compose-label">Dari</label>
-        <div class="compose-static">${escapeHtml(adminName)} &lt;${escapeHtml(adminEmail)}&gt;</div>
-      </div>
-      <div class="compose-row">
-        <label class="compose-label">Kepada</label>
-        <div class="compose-static">${escapeHtml(recipientName)} &lt;${escapeHtml(ticket.fromEmail)}&gt;</div>
-      </div>
-      <div class="compose-row">
-        <label class="compose-label" for="composeSubject_${ticket.id}">Subjek</label>
-        <input type="text" id="composeSubject_${ticket.id}" class="compose-subject-input" value="${escapeHtml(subjectDefault)}" />
-      </div>
-      <textarea class="compose-body-input" placeholder="Tulis balasan kamu di sini..." rows="10">Halo ${escapeHtml(greeting)},
+      <div class="compose-fields">
+        <div class="compose-row">
+          <label class="compose-label">Dari</label>
+          <div class="compose-static">${escapeHtml(adminName)} &lt;${escapeHtml(adminEmail)}&gt;</div>
+        </div>
+        <div class="compose-row">
+          <label class="compose-label">Kepada</label>
+          <div class="compose-static">${escapeHtml(recipientName)} &lt;${escapeHtml(ticket.fromEmail)}&gt;</div>
+        </div>
+        <div class="compose-row">
+          <label class="compose-label" for="composeSubject_${ticket.id}">Subjek</label>
+          <input type="text" id="composeSubject_${ticket.id}" class="compose-subject-input" value="${escapeHtml(subjectDefault)}" />
+        </div>
+        <textarea class="compose-body-input" placeholder="Tulis balasan kamu di sini..." rows="10">Halo ${escapeHtml(greeting)},
 
 Terima kasih sudah menghubungi kami.
 
@@ -7587,29 +7586,37 @@ Terima kasih sudah menghubungi kami.
 Salam,
 ${escapeHtml(adminName)}
 Tim Playly</textarea>
-    </div>
-    <div class="compose-footer">
-      <button type="button" class="btn primary compose-send-btn">📤 Kirim</button>
-      <button type="button" class="compose-icon-btn compose-discard" data-compose-close title="Buang draft">🗑️</button>
-      <span class="compose-hint">Pesan masuk ke inbox user via chat &amp; tersimpan di tiket</span>
+      </div>
+      <div class="compose-footer">
+        <button type="button" class="btn primary compose-send-btn">📤 Kirim</button>
+        <button type="button" class="btn ghost" data-compose-close>Batal</button>
+        <span class="compose-hint">Pesan masuk ke inbox user via chat &amp; tersimpan di tiket</span>
+      </div>
     </div>
   `;
   document.body.appendChild(dock);
   setTimeout(() => dock.querySelector(".compose-body-input")?.focus(), 80);
 
+  // ESC key to close
+  const escHandler = (ev) => {
+    if (ev.key === "Escape" && document.body.contains(dock)) {
+      ev.preventDefault();
+      tryClose();
+    }
+  };
+  document.addEventListener("keydown", escHandler);
+
+  function tryClose() {
+    const ta = dock.querySelector(".compose-body-input");
+    const original = `Halo ${greeting},\n\nTerima kasih sudah menghubungi kami.`;
+    const dirty = ta && ta.value.trim() && !ta.value.startsWith(original.slice(0, 30));
+    if (dirty && !confirm("Buang draft balasan?")) return;
+    dock.remove();
+    document.removeEventListener("keydown", escHandler);
+  }
+
   dock.addEventListener("click", e => {
-    if (e.target.closest("[data-compose-close]")) {
-      const ta = dock.querySelector(".compose-body-input");
-      const original = `Halo ${greeting},\n\nTerima kasih sudah menghubungi kami.`;
-      const dirty = ta && ta.value.trim() && !ta.value.startsWith(original.slice(0, 30));
-      if (dirty && !confirm("Buang draft balasan?")) return;
-      dock.remove();
-      return;
-    }
-    if (e.target.closest("[data-compose-toggle]")) {
-      dock.classList.toggle("minimized");
-      return;
-    }
+    if (e.target.closest("[data-compose-close]")) { tryClose(); return; }
     if (e.target.closest(".compose-send-btn")) {
       const subjectInput = dock.querySelector(".compose-subject-input");
       const bodyInput = dock.querySelector(".compose-body-input");
@@ -7646,6 +7653,7 @@ Tim Playly</textarea>
       toast("📨 Balasan terkirim & tersimpan di tiket", "success");
 
       dock.remove();
+      document.removeEventListener("keydown", escHandler);
       // Refresh detail modal kalau masih kebuka & inbox list
       if (parentModal && document.body.contains(parentModal)) {
         parentModal.remove();

@@ -14881,68 +14881,74 @@ body[data-role="admin"] .auth-quote {
 }
 
 /* =========================================================
-   GMAIL-STYLE EMAIL COMPOSE DOCK (admin reply tickets)
-   Floating panel kanan-bawah untuk balas pesan tiket dari
-   user. Dipakai sebagai pengganti window.open(gmail).
+   EMAIL COMPOSE MODAL (admin reply tickets)
+   Centered modal dengan backdrop, menyatu dengan dashboard
+   (bukan floating dock di pojok). Dipakai sebagai pengganti
+   window.open(gmail).
    ========================================================= */
-.compose-dock {
+.compose-modal {
   position: fixed;
-  right: 24px;
-  bottom: 0;
-  width: 480px;
-  max-width: calc(100vw - 32px);
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: composeFadeIn .18s ease-out;
+}
+@keyframes composeFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.compose-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  cursor: pointer;
+}
+.compose-modal-panel {
+  position: relative;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 60px);
   background: var(--bg-elev, #15212F);
   border: 1px solid var(--border, rgba(164, 192, 224, .18));
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, .35);
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
-  z-index: 10000;
+  overflow: hidden;
   font-family: inherit;
   color: var(--text, #E6EEF7);
-  animation: composeSlideUp .22s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .55);
+  animation: composeSlideIn .22s ease-out;
 }
-@keyframes composeSlideUp {
-  from { transform: translateY(20px); opacity: 0; }
+@keyframes composeSlideIn {
+  from { transform: translateY(16px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
-.compose-dock.minimized {
-  height: 44px;
-  overflow: hidden;
-}
-.compose-dock.minimized .compose-fields,
-.compose-dock.minimized .compose-footer { display: none; }
 
 .compose-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  background: linear-gradient(90deg, #30364F, #1B2333);
+  padding: 14px 18px;
+  background: linear-gradient(90deg, #1F2A3D, #30364F);
   color: #E6EEF7;
-  border-radius: 12px 12px 0 0;
-  cursor: pointer;
-  user-select: none;
+  border-bottom: 1px solid rgba(164, 192, 224, .15);
 }
 .compose-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.2px;
-}
-.compose-header-actions {
-  display: flex;
-  gap: 6px;
 }
 .compose-icon-btn {
   background: transparent;
   border: none;
   color: #E6EEF7;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -14952,20 +14958,21 @@ body[data-role="admin"] .auth-quote {
 .compose-icon-btn:hover { background: rgba(255, 255, 255, .10); }
 
 .compose-fields {
-  padding: 10px 14px 0;
+  padding: 14px 18px 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-height: 0;
+  overflow-y: auto;
 }
 .compose-row {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 64px 1fr;
   gap: 10px;
   align-items: center;
   border-bottom: 1px solid rgba(164, 192, 224, .12);
-  padding: 6px 0;
+  padding: 8px 0;
 }
 .compose-label {
   font-size: 12px;
@@ -14998,9 +15005,9 @@ body[data-role="admin"] .auth-quote {
   font-size: 14px;
   font-family: inherit;
   line-height: 1.6;
-  padding: 12px 0;
+  padding: 14px 0;
   resize: none;
-  min-height: 200px;
+  min-height: 240px;
 }
 .compose-body-input::placeholder { color: var(--muted, #8E9BAA); }
 
@@ -15008,16 +15015,12 @@ body[data-role="admin"] .auth-quote {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px 12px;
-  border-top: 1px solid rgba(164, 192, 224, .12);
+  padding: 14px 18px;
+  border-top: 1px solid rgba(164, 192, 224, .15);
 }
 .compose-send-btn {
-  padding: 8px 18px !important;
+  padding: 9px 20px !important;
   font-weight: 600;
-}
-.compose-discard {
-  margin-left: auto;
-  color: var(--muted, #8E9BAA);
 }
 .compose-hint {
   font-size: 11px;
@@ -15027,8 +15030,8 @@ body[data-role="admin"] .auth-quote {
 }
 
 /* Admin sky theme override */
-body[data-role="admin"] .compose-dock {
-  border-color: rgba(125, 163, 204, .25);
+body[data-role="admin"] .compose-modal-panel {
+  border-color: rgba(125, 163, 204, .28);
 }
 body[data-role="admin"] .compose-header {
   background: linear-gradient(90deg, #1F2A3D, #30364F);
@@ -15037,16 +15040,15 @@ body[data-role="admin"] .compose-row {
   border-bottom-color: rgba(125, 163, 204, .15);
 }
 body[data-role="admin"] .compose-footer {
-  border-top-color: rgba(125, 163, 204, .15);
+  border-top-color: rgba(125, 163, 204, .18);
 }
 
 @media (max-width: 540px) {
-  .compose-dock {
-    right: 0;
-    left: 0;
-    bottom: 0;
+  .compose-modal { padding: 0; align-items: flex-end; }
+  .compose-modal-panel {
     width: 100%;
     max-width: 100%;
+    max-height: 100vh;
     border-radius: 12px 12px 0 0;
   }
 }
