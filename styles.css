@@ -3617,25 +3617,23 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
 }
 @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
-/* === SETTINGS PAGE — flexible 2-col grid ===
-   Layout:
-   - Kiri (1fr):  Kontrol Platform → di atas, lalu kartu gabungan Notifikasi + Bahasa
-   - Kanan (1.2fr, lebih fleksibel): Keamanan Admin (span 2 baris)
-   - Bawah (full width): Buat Admin Baru */
+/* === SETTINGS PAGE — single column stack ===
+   Semua kartu full-width berurutan ke bawah, max-width center supaya
+   tidak terlalu lebar di layar besar. Antar fitur dibedakan oleh card
+   boundary (border + bg) + gap. */
 .settings-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-  grid-template-rows: auto auto;
-  gap: 20px;
-  align-items: stretch;
-}
-.settings-card-control { grid-column: 1; grid-row: 1; }
-.settings-card-prefs   { grid-column: 1; grid-row: 2; }
-.settings-card-security {
-  grid-column: 2;
-  grid-row: 1 / span 2;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+.settings-card-control,
+.settings-card-prefs,
+.settings-card-security {
+  width: 100%;
 }
 .settings-card-prefs .settings-section h3,
 .settings-card-security h3 {
@@ -3657,19 +3655,6 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   align-items: start;
 }
 .settings-card-security .security-form-grid > button { grid-column: 1 / -1; }
-
-@media (max-width: 980px) {
-  .settings-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-  .settings-card-control,
-  .settings-card-prefs,
-  .settings-card-security {
-    grid-column: 1;
-    grid-row: auto;
-  }
-}
 
 /* =========================================================
    UPLOAD VIEW
@@ -14341,29 +14326,27 @@ body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target=
   .an-user-3col { grid-template-columns: 1fr; }
 }
 
-/* 6. Settings Admin — 2-column atas (Kontrol/Notifikasi vs Keamanan),
-      Buat Admin Baru SPAN FULL BOTTOM supaya tidak ada gap aneh di kanan. */
+/* 6. Settings Admin — single column stack, semua kartu full-width berurutan
+      ke bawah, dibatasi max-width supaya readable di layar besar.
+      Antar kartu dipisah lewat gap + boundary card sendiri (border + bg). */
 body[data-role="admin"] section[data-view="settings"] .settings-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
 }
-body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-control {
-  grid-column: 1;
-  grid-row: 1;
-}
-body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-prefs {
-  grid-column: 1;
-  grid-row: 2;
+body[data-role="admin"] section[data-view="settings"] .settings-grid > .card {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  width: 100%;
 }
 body[data-role="admin"] section[data-view="settings"] .settings-grid .settings-card-security {
-  grid-column: 2;
-  grid-row: 1 / span 2;  /* Keamanan Admin span 2 baris di kanan supaya tinggi seimbang */
+  display: block;
 }
 body[data-role="admin"] section[data-view="settings"] .settings-grid #createAdminCard {
-  grid-column: 1 / -1 !important;  /* FULL WIDTH bottom */
-  grid-row: 3;
   width: 100%;
 }
 
