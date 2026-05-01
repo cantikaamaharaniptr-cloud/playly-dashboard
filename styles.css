@@ -12726,7 +12726,7 @@ body[data-role="admin"].dreams-on select:focus-visible {
    ADMIN VISUAL UPGRADES (data-driven dengan animation):
      1. Section dividers (uppercase label + horizontal line)
      2. Panel accent stripe (color-coded per tone, gradient flow animation)
-     3. KPI sparkline (animated stroke draw-in)
+     3. KPI sparkline — REMOVED per user request
      4. Avatar stack (stagger fade-in)
      5. Activity timeline (vertical line + pulsing colored dots)
      6. KPI number flash highlight saat update
@@ -12793,55 +12793,8 @@ body.reduced-motion[data-role="admin"] .admin-panel[data-panel-tone]::before { a
 body[data-role="admin"] .admin-panel[data-panel-tone] > * { position: relative; z-index: 2; }
 body[data-role="admin"] .admin-panel[data-panel-tone] { padding-left: 22px; }
 
-/* 3. KPI SPARKLINE */
-body[data-role="admin"] .admin-kpi-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  gap: 12px 14px;
-  align-items: start;
-}
-body[data-role="admin"] .admin-kpi-card .admin-kpi-icon { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
-body[data-role="admin"] .admin-kpi-card .kpi-content { grid-column: 2; grid-row: 1; }
-body[data-role="admin"] .admin-kpi-card .kpi-sparkline {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  width: 100%;
-  height: 36px;
-  display: block;
-  margin-top: 4px;
-  pointer-events: none;
-  overflow: visible;
-}
-body[data-role="admin"] .kpi-sparkline path.spark-fill {
-  fill: var(--admin-accent-2);
-  opacity: .12;
-}
-body[data-role="admin"] .kpi-sparkline path.spark-line {
-  fill: none;
-  stroke: var(--admin-accent-2);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 2px rgba(48, 54, 79, .35));
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: sparkDraw 1.2s var(--ease) forwards;
-}
-@keyframes sparkDraw { to { stroke-dashoffset: 0; } }
-body[data-role="admin"] .kpi-sparkline circle.spark-dot {
-  fill: var(--admin-accent-2);
-  filter: drop-shadow(0 0 4px rgba(48, 54, 79, .55));
-  opacity: 0;
-  animation: sparkDotIn .3s var(--ease) 1s forwards;
-}
-@keyframes sparkDotIn { to { opacity: 1; } }
-body[data-role="admin"] .admin-kpi-card:hover .kpi-sparkline path.spark-line {
-  stroke: var(--admin-accent);
-  filter: drop-shadow(0 0 4px rgba(172, 186, 196, .65));
-}
-body.reduced-motion[data-role="admin"] .kpi-sparkline path.spark-line { animation: none; stroke-dashoffset: 0; }
-body.reduced-motion[data-role="admin"] .kpi-sparkline circle.spark-dot { animation: none; opacity: 1; }
+/* 3. KPI SPARKLINE — REMOVED per user request (Apr 2026).
+   Sparkline svg + grid-template hacks dihapus karena user nggak suka. */
 
 /* 4. AVATAR STACK */
 body[data-role="admin"] .admin-avatar-stack {
@@ -12985,47 +12938,8 @@ body[data-role="admin"] .admin-section-divider span {
   background: rgba(172, 186, 196, .06);
 }
 
-/* KPI sparkline — line + area chart kecil di bagian bawah card.
-   data-points di-set runtime via JS (renderKpiSparkline). */
-.admin-kpi-card { position: relative; overflow: hidden; padding-bottom: 14px; }
+/* KPI content wrapper — sparkline dihapus per permintaan user, hanya layout flex tetap */
 .admin-kpi-card .kpi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.kpi-sparkline {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  width: 100%;
-  height: 36px;
-  pointer-events: none;
-  opacity: .85;
-}
-.kpi-sparkline path.area {
-  fill: var(--primary);
-  fill-opacity: .14;
-}
-.kpi-sparkline path.line {
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 240;
-  stroke-dashoffset: 240;
-  animation: sparklineDraw 1.2s var(--ease) forwards;
-}
-@keyframes sparklineDraw {
-  to { stroke-dashoffset: 0; }
-}
-body.reduced-motion .kpi-sparkline path.line { animation: none; stroke-dashoffset: 0; }
-
-body[data-role="admin"] .kpi-sparkline path.area  { fill: var(--admin-accent); fill-opacity: .12; }
-body[data-role="admin"] .kpi-sparkline path.line  { stroke: var(--admin-accent); }
-
-/* Per-KPI tone — variasi warna sparkline biar tidak monoton */
-.admin-kpi-card[data-kpi="users"]  .kpi-sparkline path.area  { fill: #5b8def; fill-opacity: .14; }
-.admin-kpi-card[data-kpi="users"]  .kpi-sparkline path.line  { stroke: #5b8def; }
-.admin-kpi-card[data-kpi="videos"] .kpi-sparkline path.area  { fill: #d4574d; fill-opacity: .14; }
-.admin-kpi-card[data-kpi="videos"] .kpi-sparkline path.line  { stroke: #d4574d; }
-.admin-kpi-card[data-kpi="views"]  .kpi-sparkline path.area  { fill: #10b981; fill-opacity: .14; }
-.admin-kpi-card[data-kpi="views"]  .kpi-sparkline path.line  { stroke: #10b981; }
 
 /* Avatar stack — overlapping circle row untuk preview cepat user/creator */
 .admin-avatar-stack {
