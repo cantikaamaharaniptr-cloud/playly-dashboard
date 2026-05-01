@@ -15069,3 +15069,17 @@ body[data-role="admin"] .compose-footer {
   color: var(--text, #E6EEF7);
   padding-left: 34px;
 }
+
+/* =========================================================
+   ADMIN .btn.primary — flat, NO wine glow halo
+   Default `.btn.primary` punya box-shadow wine (rgba(109,41,50,...))
+   yang muncul sebagai glow merah di sekitar tombol. Per user request
+   + memory rule "no glow halo + no glass", admin role pakai tombol
+   flat. Hover masih sedikit lift via translateY tapi tanpa glow.
+   ========================================================= */
+body[data-role="admin"] .btn.primary,
+body[data-role="admin"] .btn.primary:hover,
+body[data-role="admin"] .btn.primary:focus,
+body[data-role="admin"] .btn.primary:active {
+  box-shadow: none !important;
+}
