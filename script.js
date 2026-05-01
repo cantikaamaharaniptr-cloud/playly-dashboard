@@ -7507,7 +7507,9 @@ function openInboxDetailModal({ kind, item }) {
     if (!actBtn) return;
     const act = actBtn.dataset.inboxAction;
     if (act === "reply" && senderEmail && isTicket) {
-      openEmailComposer({ ticket: item, parentModal: modal });
+      // Tutup detail modal dulu supaya tidak overlap dengan compose
+      modal.remove();
+      openEmailComposer({ ticket: item, reopenDetailOnSend: true });
       return;
     }
     if (act === "status") {
@@ -7541,7 +7543,7 @@ function openInboxDetailModal({ kind, item }) {
 // menyimpan reply ke ticket.replies[], otomatis status → progress, dan
 // deliver salinan ke chat thread user supaya user tahu admin sudah balas
 // (tanpa simulasi/auto-reply — ini dipicu manual oleh admin).
-function openEmailComposer({ ticket, parentModal }) {
+function openEmailComposer({ ticket, reopenDetailOnSend }) {
   // Hindari duplicate composer untuk ticket yang sama
   const existing = document.querySelector(`.compose-modal[data-ticket-id="${ticket.id}"]`);
   if (existing) { existing.querySelector(".compose-body-input")?.focus(); return; }
@@ -7654,9 +7656,8 @@ Tim Playly</textarea>
 
       dock.remove();
       document.removeEventListener("keydown", escHandler);
-      // Refresh detail modal kalau masih kebuka & inbox list
-      if (parentModal && document.body.contains(parentModal)) {
-        parentModal.remove();
+      // Re-open detail modal dengan reply terbaru (kalau awalnya dibuka dari sana)
+      if (reopenDetailOnSend) {
         openInboxDetailModal({ kind: "ticket", item: t });
       }
       renderAdminInbox?.();
