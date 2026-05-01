@@ -67,10 +67,108 @@
     .open-app:hover { transform: translateY(-1px); }
 
     .container {
-      max-width: 920px;
+      max-width: 1480px;   /* lebih lebar — perlu space buat side slots */
       margin: 0 auto;
       padding: 20px;
     }
+
+    /* Watch layout: 3 kolom — side-left | video | side-right.
+       Banner-side hanya tampil di desktop (≥ 1100px). Di bawah itu side
+       columns hidden, layout collapse jadi single column. */
+    .watch-layout {
+      display: grid;
+      grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) minmax(180px, 240px);
+      gap: 16px;
+      align-items: start;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+    .watch-center { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .banner-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: space-between;
+      min-height: 480px; /* reservasi tinggi 2 slot supaya layout stabil */
+    }
+    .banner-slot {
+      width: 100%;
+      aspect-ratio: 4 / 3;     /* ukuran fixed proportional, bukan melar */
+      max-height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Slot kosong = invisible total (no bg, no border) — supaya cuma slot
+       yang dipilih yang keliatan. */
+    .banner-slot:empty {
+      visibility: hidden;
+    }
+    .banner-slot a, .banner-slot > img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    .banner-slot img {
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .banner-slot .banner-tag-out {
+      position: absolute;
+      top: 8px; left: 8px;
+      background: rgba(0,0,0,.7);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+      z-index: 2;
+    }
+    .banner-slot .banner-close-out {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.7);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      z-index: 2;
+    }
+
+    /* Running text bar di atas video */
+    .rt-bar {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+      position: relative;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+    }
+    .rt-bar[hidden] { display: none; }
+    .rt-track {
+      display: inline-block;
+      white-space: nowrap;
+      will-change: transform;
+      animation: rtScroll linear infinite;
+      padding-left: 100%;
+    }
+    @keyframes rtScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-100%); }
+    }
+
     .video-wrap {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -251,60 +349,26 @@
     }
     .preroll-unmute[hidden] { display: none; }
 
-    /* === ADS: Banner overlay (kanan-bawah video) === */
-    .banner-overlay {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      z-index: 4;
-      max-width: 280px;
+    /* Responsive — collapse side columns di bawah 1100px (banner slots
+       hidden, video full-width). Di mobile, kalau ada banner aktif kita
+       fallback munculin satu banner inline DI BAWAH video. */
+    @media (max-width: 1100px) {
+      .watch-layout { grid-template-columns: 1fr; }
+      .banner-side { display: none; }
+    }
+    .banner-mobile {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-      animation: bannerIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
     }
-    .banner-overlay[hidden] { display: none; }
-    @keyframes bannerIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
-    }
-    .banner-overlay a, .banner-overlay > img {
-      display: block;
-      width: 100%;
-      height: auto;
-      cursor: pointer;
-    }
-    .banner-overlay img { display: block; width: 100%; height: auto; }
-    .banner-close {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #fff;
-      font-size: 12px;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      backdrop-filter: blur(6px);
-    }
-    .banner-close:hover { background: rgba(0, 0, 0, 0.85); }
-    .banner-tag {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      background: rgba(0, 0, 0, 0.7);
-      color: #fff;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 9.5px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      backdrop-filter: blur(4px);
+    .banner-mobile[hidden] { display: none; }
+    .banner-mobile img { display: block; width: 100%; height: auto; }
+    @media (max-width: 1100px) {
+      .banner-mobile:not([hidden]) { display: block; }
     }
 
     @media (max-width: 600px) {
@@ -314,7 +378,6 @@
       .container { padding: 12px; }
       .meta { padding: 14px; border-radius: 12px; }
       .meta h1 { font-size: 17px; }
-      .banner-overlay { max-width: 200px; bottom: 10px; right: 10px; }
     }
   </style>
 </head>
@@ -331,58 +394,74 @@
   </header>
 
   <main class="container">
-    <div class="video-wrap">
-      <div class="state" id="loadingState">
-        <div>
-          <div class="spinner"></div>
-          <h2>Memuat video...</h2>
-          <p>Sebentar, kami sedang ambil video dari cloud.</p>
-        </div>
-      </div>
-      <div class="state" id="errorState" hidden>
-        <div>
-          <div class="icon">⚠️</div>
-          <h2 id="errTitle">Video tidak ditemukan</h2>
-          <p id="errMsg">Link mungkin salah, video sudah dihapus, atau belum di-upload ke cloud.</p>
-        </div>
-      </div>
-      <video id="videoEl" controls playsinline preload="metadata" hidden></video>
-      <!-- Pre-roll overlay (sponsor/iklan sebelum video utama) -->
-      <div class="preroll-overlay" id="prerollOverlay" hidden>
-        <video id="prerollVideo" playsinline hidden></video>
-        <img id="prerollImage" alt="Iklan" hidden/>
-        <a class="preroll-clickarea" id="prerollClick" target="_blank" rel="noopener nofollow" hidden></a>
-        <div class="preroll-info">
-          <span class="preroll-tag">IKLAN</span>
-          <span><span id="prerollIdx">1</span>/<span id="prerollTotal">2</span></span>
-          <span id="prerollCountdown"></span>
-          <button id="prerollSkip" type="button" hidden>Lewati ▶</button>
-        </div>
-        <button class="preroll-unmute" id="prerollUnmute" type="button" hidden>🔊 Aktifkan suara</button>
-      </div>
-      <!-- Banner iklan kanan-bawah -->
-      <div class="banner-overlay" id="bannerOverlay" hidden>
-        <span class="banner-tag">Iklan</span>
-        <a id="bannerLink" target="_blank" rel="noopener nofollow"><img id="bannerImg" alt="Banner iklan"/></a>
-        <button class="banner-close" id="bannerClose" type="button" aria-label="Tutup">✕</button>
-      </div>
-    </div>
+    <div class="watch-layout">
+      <!-- Banner side LEFT — 2 slot (top + bottom) -->
+      <aside class="banner-side left">
+        <div class="banner-slot" data-slot="left-top"></div>
+        <div class="banner-slot" data-slot="left-bottom"></div>
+      </aside>
 
-    <div class="meta" id="metaBox" hidden>
-      <h1 id="videoTitle">—</h1>
-      <div class="creator">
-        <div class="avatar" id="creatorInit">—</div>
-        <div>
-          <b id="creatorName">—</b>
-          <small id="videoStats">—</small>
+      <!-- Center: running text bar + video + meta -->
+      <div class="watch-center">
+        <!-- Running text bar — di atas video, hidden default sampai admin set running text -->
+        <div class="rt-bar" id="runningTextBar" hidden>
+          <span class="rt-track" id="runningTextTrack"></span>
+        </div>
+
+        <div class="video-wrap">
+          <div class="state" id="loadingState">
+            <div>
+              <div class="spinner"></div>
+              <h2>Memuat video...</h2>
+              <p>Sebentar, kami sedang ambil video dari cloud.</p>
+            </div>
+          </div>
+          <div class="state" id="errorState" hidden>
+            <div>
+              <div class="icon">⚠️</div>
+              <h2 id="errTitle">Video tidak ditemukan</h2>
+              <p id="errMsg">Link mungkin salah, video sudah dihapus, atau belum di-upload ke cloud.</p>
+            </div>
+          </div>
+          <video id="videoEl" controls playsinline preload="metadata" hidden></video>
+          <!-- Pre-roll overlay (sponsor/iklan sebelum video utama).
+               Info badge "IKLAN 1/1" + skip button DIHAPUS per request user. -->
+          <div class="preroll-overlay" id="prerollOverlay" hidden>
+            <video id="prerollVideo" playsinline hidden></video>
+            <img id="prerollImage" alt="Iklan" hidden/>
+            <a class="preroll-clickarea" id="prerollClick" target="_blank" rel="noopener nofollow" hidden></a>
+            <button class="preroll-unmute" id="prerollUnmute" type="button" hidden>🔊 Aktifkan suara</button>
+          </div>
+        </div>
+
+        <!-- Banner mobile fallback (≤ 1100px) — satu banner di bawah video -->
+        <div class="banner-mobile" id="bannerMobile" hidden>
+          <a id="bannerMobileLink" target="_blank" rel="noopener nofollow"><img id="bannerMobileImg" alt="Banner iklan"/></a>
+        </div>
+
+        <div class="meta" id="metaBox" hidden>
+          <h1 id="videoTitle">—</h1>
+          <div class="creator">
+            <div class="avatar" id="creatorInit">—</div>
+            <div>
+              <b id="creatorName">—</b>
+              <small id="videoStats">—</small>
+            </div>
+          </div>
+          <p class="desc" id="videoDesc"></p>
+        </div>
+
+        <div class="footer-cta">
+          <p>Mau upload video atau interaksi sama kreator?</p>
+          <a href="./" id="ctaBtn">Buka Playly →</a>
         </div>
       </div>
-      <p class="desc" id="videoDesc"></p>
-    </div>
 
-    <div class="footer-cta">
-      <p>Mau upload video atau interaksi sama kreator?</p>
-      <a href="./" id="ctaBtn">Buka Playly →</a>
+      <!-- Banner side RIGHT — 2 slot (top + bottom) -->
+      <aside class="banner-side right">
+        <div class="banner-slot" data-slot="right-top"></div>
+        <div class="banner-slot" data-slot="right-bottom"></div>
+      </aside>
     </div>
   </main>
 
@@ -547,51 +626,31 @@
         return items[0];
       }
 
+      // Pilih satu running-text item — sesuai rotation. Tidak include "all"
+      // karena marquee single-track lebih simpel & rapi (admin bisa stack
+      // banyak text dengan separator manual kalau mau).
+      function pickRunningText(cfg) {
+        const items = (cfg?.runningText?.items || []).filter(it => it.enabled && it.text);
+        if (!items.length) return null;
+        const rotation = cfg?.runningText?.rotation || "random";
+        if (rotation === "random") return items[Math.floor(Math.random() * items.length)];
+        return items[0];
+      }
+
       function playPrerollSequence(items, onDone) {
         if (!items.length) { onDone(); return; }
         const overlay = $("prerollOverlay");
         const v = $("prerollVideo");
         const img = $("prerollImage");
         const click = $("prerollClick");
-        const skipBtn = $("prerollSkip");
         const unmuteBtn = $("prerollUnmute");
-        const countdown = $("prerollCountdown");
-        const idxEl = $("prerollIdx");
-        const totalEl = $("prerollTotal");
-        totalEl.textContent = items.length;
         let cur = 0;
-        let skipTimer = null;
         let imageTimer = null;
+        let autoSkipTimer = null;
 
         function clearTimers() {
-          if (skipTimer) { clearInterval(skipTimer); skipTimer = null; }
           if (imageTimer) { clearTimeout(imageTimer); imageTimer = null; }
-        }
-
-        function setupSkipCountdown(item, onAvailable) {
-          const skippable = item.skippable !== false;
-          let remaining = Math.max(0, item.skipAfterSec || 0);
-          if (skippable && remaining > 0) {
-            countdown.textContent = `Lewati setelah ${remaining}s`;
-            skipTimer = setInterval(() => {
-              remaining--;
-              if (remaining <= 0) {
-                clearInterval(skipTimer); skipTimer = null;
-                countdown.textContent = "";
-                skipBtn.hidden = false;
-                onAvailable && onAvailable();
-              } else {
-                countdown.textContent = `Lewati setelah ${remaining}s`;
-              }
-            }, 1000);
-          } else if (skippable) {
-            countdown.textContent = "";
-            skipBtn.hidden = false;
-            onAvailable && onAvailable();
-          } else {
-            countdown.textContent = "";
-            skipBtn.hidden = true;
-          }
+          if (autoSkipTimer) { clearTimeout(autoSkipTimer); autoSkipTimer = null; }
         }
 
         function setupClickThrough(item) {
@@ -620,15 +679,11 @@
           }
           const item = items[cur];
           const isImage = item.mediaType === "image";
-          idxEl.textContent = cur + 1;
-          skipBtn.hidden = true;
           unmuteBtn.hidden = true;
           overlay.hidden = false;
 
           if (isImage) {
             // Mode gambar: tampilkan <img>, auto-advance setelah durationSec.
-            // Tidak ada skip button — user bisa klik image untuk buka linkUrl
-            // di tab baru, dan iklan auto-lanjut ke item berikutnya saat durasi habis.
             v.pause();
             v.hidden = true;
             v.removeAttribute("src");
@@ -636,9 +691,6 @@
             img.src = item.imageUrl;
             img.hidden = false;
             setupClickThrough(item);
-            // Hide skip controls untuk image
-            skipBtn.hidden = true;
-            countdown.textContent = "";
             const dur = Math.max(1, item.durationSec || 5) * 1000;
             imageTimer = setTimeout(() => { cur++; playNext(); }, dur);
           } else {
@@ -647,7 +699,7 @@
             img.removeAttribute("src");
             v.hidden = false;
             v.src = item.videoUrl;
-            v.muted = true; // Browser autoplay policy: harus muted dulu
+            v.muted = true;
             v.play().then(() => {
               v.muted = false;
               v.play().catch(() => {
@@ -655,14 +707,12 @@
                 v.play().catch(() => {});
                 unmuteBtn.hidden = false;
               });
-            }).catch(() => { /* autoplay blocked total, jarang */ });
+            }).catch(() => {});
             setupClickThrough(item);
-            setupSkipCountdown(item);
             v.onended = () => { cur++; playNext(); };
           }
         }
 
-        skipBtn.onclick = () => { cur++; playNext(); };
         unmuteBtn.onclick = () => {
           v.muted = false;
           v.play().catch(() => {});
@@ -672,24 +722,84 @@
         playNext();
       }
 
+      // Banner: pilih SATU random slot dari 4 (left-top/left-bottom/right-top/
+      // right-bottom). Di mobile (≤ 1100px), side slots disembunyikan & banner
+      // muncul di .banner-mobile di bawah video.
       function showBanner(item) {
         if (!item) return;
-        const overlay = $("bannerOverlay");
-        const img = $("bannerImg");
-        const link = $("bannerLink");
-        const close = $("bannerClose");
-        img.src = item.imageUrl;
-        if (item.linkUrl) {
-          link.href = item.linkUrl;
-          link.style.pointerEvents = "auto";
-        } else {
-          link.removeAttribute("href");
-          link.style.pointerEvents = "none";
+        const slots = document.querySelectorAll(".banner-slot");
+        if (!slots.length) return;
+        const targetIdx = Math.floor(Math.random() * slots.length);
+        const slot = slots[targetIdx];
+
+        // Build banner content di slot yg dipilih
+        const linkAttrs = item.linkUrl ? `href="${item.linkUrl}" target="_blank" rel="noopener nofollow"` : "";
+        const closable = item.closable !== false;
+        slot.innerHTML = `
+          <span class="banner-tag-out">Iklan</span>
+          ${closable ? `<button class="banner-close-out" type="button" aria-label="Tutup">✕</button>` : ""}
+          ${item.linkUrl
+            ? `<a ${linkAttrs}><img src="${item.imageUrl}" alt="Banner iklan"/></a>`
+            : `<img src="${item.imageUrl}" alt="Banner iklan"/>`}
+        `;
+        if (closable) {
+          const closeBtn = slot.querySelector(".banner-close-out");
+          if (closeBtn) closeBtn.onclick = () => { slot.innerHTML = ""; };
         }
-        close.style.display = item.closable === false ? "none" : "";
-        close.onclick = () => { overlay.hidden = true; };
+
+        // Mobile fallback — sama image, render di .banner-mobile
+        const mobBox = $("bannerMobile");
+        const mobImg = $("bannerMobileImg");
+        const mobLink = $("bannerMobileLink");
+        if (mobImg && mobBox) {
+          mobImg.src = item.imageUrl;
+          if (item.linkUrl) {
+            mobLink.href = item.linkUrl;
+            mobLink.style.pointerEvents = "auto";
+          } else {
+            mobLink.removeAttribute("href");
+            mobLink.style.pointerEvents = "none";
+          }
+        }
+
         const delay = Math.max(0, (item.showAfterSec || 0) * 1000);
-        setTimeout(() => { overlay.hidden = false; }, delay);
+        setTimeout(() => {
+          slot.style.display = "flex";
+          if (mobBox) mobBox.hidden = false;
+        }, delay);
+      }
+
+      // Running text: render single-track marquee di atas video. Apply
+      // styling dari config (font, size, color, bg, speed, italic).
+      function showRunningText(item) {
+        if (!item || !item.text) return;
+        const bar = $("runningTextBar");
+        const track = $("runningTextTrack");
+        if (!bar || !track) return;
+        track.textContent = item.text;
+        // Apply styling
+        const opacity = (Number(item.bgOpacity) || 0) / 100;
+        const bgColor = item.bgColor || "#000000";
+        const r = parseInt(bgColor.slice(1,3), 16);
+        const g = parseInt(bgColor.slice(3,5), 16);
+        const b = parseInt(bgColor.slice(5,7), 16);
+        bar.style.backgroundColor = `rgba(${r},${g},${b},${opacity})`;
+        bar.style.color = item.textColor || "#ffffff";
+        bar.style.padding = `${item.padding || 8}px 0`;
+        track.style.fontFamily = item.fontFamily || "Inter";
+        track.style.fontSize = (item.fontSize || 14) + "px";
+        track.style.fontWeight = item.fontWeight || 600;
+        track.style.fontStyle = item.italic ? "italic" : "normal";
+        // Speed: px/sec → animation duration. Asumsi container width ~1200px,
+        // duration = (containerWidth + textWidth) / speed. Pakai estimasi
+        // sederhana: speed dijadikan inverse ke duration.
+        const speedPxPerSec = Math.max(20, Number(item.speed) || 80);
+        // Marquee total distance ≈ 100% (container) + text width.
+        // Pakai durasi inversely proportional: makin tinggi speed → makin
+        // pendek durasi. Estimasi 1500px total scroll @ speedPxPerSec.
+        const dur = Math.max(8, 1500 / speedPxPerSec);
+        track.style.animationDuration = dur + "s";
+        bar.hidden = false;
       }
 
       (async function load() {
@@ -728,6 +838,11 @@
 
           const prerolls = pickPrerolls(adCfg, 2);
           const banner = pickBanner(adCfg);
+          const rtItem = pickRunningText(adCfg);
+
+          // Running text muncul SEKARANG juga (tidak tunggu video play),
+          // supaya user tetap lihat marquee jalan walaupun preroll lagi muter.
+          if (rtItem) showRunningText(rtItem);
 
           function startMain() {
             v.hidden = false;
