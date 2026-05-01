@@ -4742,6 +4742,54 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
 .user-cell { cursor: pointer; transition: opacity .15s; }
 .user-cell:hover { opacity: .75; }
 
+/* =========================================================
+   ADMIN USER DETAIL MODAL — selaras dengan tema admin (Lapis/silver)
+   Avatar pakai admin-grad supaya nyatu, info rows + stats di-boost
+   contrast biar gak ke-blend sama bg modal yang gelap.
+   ========================================================= */
+body[data-role="admin"] .aud-avatar {
+  background: var(--admin-grad);
+  color: #fff;
+  border: 2px solid rgba(220, 211, 169, .35);
+  box-shadow:
+    0 4px 14px rgba(48, 54, 79, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+body[data-role="admin"] .aud-avatar img {
+  /* Pastikan foto user override gradient kalau ada */
+  z-index: 1;
+}
+body[data-role="admin"] .aud-stat {
+  background: rgba(172, 186, 196, .07);
+  border-color: rgba(172, 186, 196, .18);
+}
+body[data-role="admin"] .aud-stat b {
+  background: linear-gradient(135deg, #DCD3A9 0%, #ACBAC4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+body[data-role="admin"] .aud-section h4 {
+  color: var(--admin-accent);
+  letter-spacing: .04em;
+}
+body[data-role="admin"] .admin-user-panel .info-row {
+  background: rgba(172, 186, 196, .06);
+  border-color: rgba(172, 186, 196, .14);
+  transition: border-color .15s var(--ease), background .15s var(--ease);
+}
+body[data-role="admin"] .admin-user-panel .info-row:hover {
+  background: rgba(172, 186, 196, .10);
+  border-color: rgba(172, 186, 196, .28);
+}
+body[data-role="admin"] .admin-user-panel .info-row b { color: var(--text); }
+body[data-role="admin"] .admin-user-panel .info-row span { color: var(--muted); }
+body[data-role="admin"] .aud-namerow h3 { color: var(--text); }
+body[data-role="admin"] .aud-head { border-bottom-color: rgba(172, 186, 196, .18); }
+body[data-role="admin"] .aud-actions { border-top-color: rgba(172, 186, 196, .18); }
+
 /* Notifications panel — admin sections (Aktivitas + Perlu Perhatian dipindah ke sini) */
 .notif-admin-only { display: none; padding: 8px 16px 0; }
 body[data-role="admin"] .notif-admin-only { display: block; }
