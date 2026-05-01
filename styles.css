@@ -12843,6 +12843,33 @@ body[data-role="admin"] .admin-section-divider span {
 /* KPI content wrapper — sparkline dihapus per permintaan user, hanya layout flex tetap */
 .admin-kpi-card .kpi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
+/* Komunitas Aktif card (user home) — sama avatar-stack pattern dgn admin */
+.community-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px 16px;
+  cursor: pointer;
+  transition: transform .18s var(--ease), border-color .18s var(--ease);
+}
+.community-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+.community-card:active { transform: scale(.99); }
+.community-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 4px;
+}
+.community-title h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15.5px; font-weight: 800; letter-spacing: -.015em;
+  margin-bottom: 2px;
+}
+.community-title small { font-size: 11.5px; color: var(--muted); }
+.community-cta {
+  font-size: 11.5px; font-weight: 700; color: var(--primary);
+  white-space: nowrap; padding-top: 2px;
+}
+.community-card:hover .community-cta { color: var(--primary-hover); }
+
 /* Avatar stack — overlapping circle row di header panel admin home untuk
    preview cepat creator/user. Panel-tone tetap dihapus per permintaan. */
 .admin-avatar-stack {

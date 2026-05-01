@@ -4708,6 +4708,41 @@ function renderAdminKPI() {
   renderAdminAvatarStacks(m);
 }
 
+/* ---------- Komunitas Aktif avatar stack (user home) ---------- */
+function renderUserCommunityStack() {
+  const wrap = document.querySelector("#userCommunityStack");
+  if (!wrap) return;
+  let creators = [];
+  try {
+    creators = (typeof getPlatformCreators === "function" ? getPlatformCreators({ activeOnly: true }) : []) || [];
+  } catch { creators = []; }
+  // Sort by latest upload (paling baru aktif di atas), fallback ke videoCount
+  creators.sort((a, b) => (b.latestUploadAt || 0) - (a.latestUploadAt || 0) || (b.videoCount || 0) - (a.videoCount || 0));
+  const total = creators.length;
+
+  // Update subtitle dengan jumlah real
+  const sub = document.getElementById("communitySubtitle");
+  if (sub) sub.textContent = total > 0
+    ? `${total} kreator yang lagi aktif di Playly`
+    : "Belum ada kreator lain — jadilah yang pertama upload!";
+
+  if (!total) { wrap.innerHTML = ""; return; }
+  const items = creators.slice(0, 4).map(c => ({
+    label: c.displayName || c.name || "U",
+    avatar: c.avatar || null
+  }));
+  const more = Math.max(0, total - items.length);
+  const html = items.map(it => {
+    const init = String(it.label || "U")
+      .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    if (it.avatar) {
+      return `<div class="ast-item"><img src="${escapeHtml(it.avatar)}" alt=""/></div>`;
+    }
+    return `<div class="ast-item">${escapeHtml(init)}</div>`;
+  }).join("") + (more > 0 ? `<div class="ast-item ast-more">+${more}</div>` : "");
+  wrap.innerHTML = html;
+}
+
 /* ---------- Avatar stacks (recent videos / users / top creators) ---------- */
 function renderAdminAvatarStacks(m) {
   const accounts = m.accounts || [];
@@ -7423,6 +7458,7 @@ function renderUserStats() {
 
   renderStatsRow();
   renderAchievements();
+  renderUserCommunityStack();
 
   // Quick stats (Videos view)
   $("#qsTotal") && ($("#qsTotal").textContent = myUploads);
