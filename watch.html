@@ -93,7 +93,7 @@
     }
     .banner-slot {
       width: 100%;
-      aspect-ratio: 4 / 3;     /* ukuran fixed proportional, bukan melar */
+      aspect-ratio: 4 / 3;
       max-height: 220px;
       border-radius: 14px;
       overflow: hidden;
@@ -101,19 +101,27 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #0e0608; /* dark fallback supaya kalau image lambat ada placeholder */
     }
-    /* Slot kosong = invisible total (no bg, no border) — supaya cuma slot
-       yang dipilih yang keliatan. */
+    /* Slot kosong = invisible total — cuma slot yang dipilih tampil. */
     .banner-slot:empty {
       visibility: hidden;
+      background: transparent;
     }
-    .banner-slot a, .banner-slot > img {
+    /* Anchor (kalau banner punya linkUrl) jadi container 100% */
+    .banner-slot a {
       display: block;
       width: 100%;
       height: 100%;
       cursor: pointer;
     }
+    /* IMG di dalam slot SELALU full width × full height, baik yang nested
+       di <a> maupun direct child. Bug sebelumnya: nested img tidak dapat
+       dimensi karena selector cuma match direct child. */
     .banner-slot img {
+      display: block;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       border-radius: 12px;
     }
@@ -146,27 +154,37 @@
       z-index: 2;
     }
 
-    /* Running text bar di atas video */
-    .rt-bar {
+    /* Running text bar — FULL VIEWPORT WIDTH (di luar .container).
+       Membentang dari ujung kiri ke ujung kanan halaman. Marquee seamless:
+       2 piece identik, animasi geser 0 → -50% jadi piece kedua nyambung
+       tanpa gap. Infinite loop, tidak akan berhenti sampai tab/web ditutup. */
+    .rt-overlay {
       width: 100%;
       overflow: hidden;
-      border-radius: 10px;
-      position: relative;
-      min-height: 32px;
       display: flex;
       align-items: center;
+      min-height: 36px;
+      white-space: nowrap;
+      position: relative;
+      z-index: 5;
     }
-    .rt-bar[hidden] { display: none; }
+    .rt-overlay[hidden] { display: none !important; }
+    .rt-marquee {
+      display: inline-flex;
+      flex-shrink: 0;
+      white-space: nowrap;
+      animation: rtScroll var(--rt-dur, 20s) linear infinite;
+      animation-play-state: running !important;
+      will-change: transform;
+    }
     .rt-track {
       display: inline-block;
-      white-space: nowrap;
-      will-change: transform;
-      animation: rtScroll linear infinite;
-      padding-left: 100%;
+      padding-right: 4em;
+      flex-shrink: 0;
     }
     @keyframes rtScroll {
       from { transform: translateX(0); }
-      to   { transform: translateX(-100%); }
+      to   { transform: translateX(-50%); }
     }
 
     .video-wrap {
@@ -393,6 +411,16 @@
     <a class="open-app" href="./" id="openAppBtn">Buka Aplikasi</a>
   </header>
 
+  <!-- Running text bar — FULL VIEWPORT WIDTH, di luar .container.
+       Membentang dari ujung kiri sampai ujung kanan halaman.
+       Marquee infinite, tidak berhenti kecuali tab ditutup. -->
+  <div class="rt-overlay" id="runningTextBar" hidden>
+    <div class="rt-marquee" id="runningTextMarquee">
+      <span class="rt-track" id="runningTextTrack"></span>
+      <span class="rt-track" id="runningTextTrack2" aria-hidden="true"></span>
+    </div>
+  </div>
+
   <main class="container">
     <div class="watch-layout">
       <!-- Banner side LEFT — 2 slot (top + bottom) -->
@@ -401,13 +429,8 @@
         <div class="banner-slot" data-slot="left-bottom"></div>
       </aside>
 
-      <!-- Center: running text bar + video + meta -->
+      <!-- Center: video + meta -->
       <div class="watch-center">
-        <!-- Running text bar — di atas video, hidden default sampai admin set running text -->
-        <div class="rt-bar" id="runningTextBar" hidden>
-          <span class="rt-track" id="runningTextTrack"></span>
-        </div>
-
         <div class="video-wrap">
           <div class="state" id="loadingState">
             <div>
@@ -769,15 +792,23 @@
         }, delay);
       }
 
-      // Running text: render single-track marquee di atas video. Apply
-      // styling dari config (font, size, color, bg, speed, italic).
+      // Running text: render full-viewport-width marquee di atas video.
+      // 2 track duplikat untuk seamless infinite loop — animasi geser
+      // 0 → -50% pas piece kedua di posisi piece pertama, jadi nggak ada
+      // jeda. Loop infinite via CSS animation, tidak berhenti sampai tab
+      // ditutup.
       function showRunningText(item) {
         if (!item || !item.text) return;
         const bar = $("runningTextBar");
-        const track = $("runningTextTrack");
-        if (!bar || !track) return;
-        track.textContent = item.text;
-        // Apply styling
+        const marquee = $("runningTextMarquee");
+        const track1 = $("runningTextTrack");
+        const track2 = $("runningTextTrack2");
+        if (!bar || !track1 || !track2 || !marquee) return;
+
+        track1.textContent = item.text;
+        track2.textContent = item.text;
+
+        // Background dengan opacity
         const opacity = (Number(item.bgOpacity) || 0) / 100;
         const bgColor = item.bgColor || "#000000";
         const r = parseInt(bgColor.slice(1,3), 16);
@@ -785,21 +816,35 @@
         const b = parseInt(bgColor.slice(5,7), 16);
         bar.style.backgroundColor = `rgba(${r},${g},${b},${opacity})`;
         bar.style.color = item.textColor || "#ffffff";
-        bar.style.padding = `${item.padding || 8}px 0`;
-        track.style.fontFamily = item.fontFamily || "Inter";
-        track.style.fontSize = (item.fontSize || 14) + "px";
-        track.style.fontWeight = item.fontWeight || 600;
-        track.style.fontStyle = item.italic ? "italic" : "normal";
-        // Speed: px/sec → animation duration. Asumsi container width ~1200px,
-        // duration = (containerWidth + textWidth) / speed. Pakai estimasi
-        // sederhana: speed dijadikan inverse ke duration.
-        const speedPxPerSec = Math.max(20, Number(item.speed) || 80);
-        // Marquee total distance ≈ 100% (container) + text width.
-        // Pakai durasi inversely proportional: makin tinggi speed → makin
-        // pendek durasi. Estimasi 1500px total scroll @ speedPxPerSec.
-        const dur = Math.max(8, 1500 / speedPxPerSec);
-        track.style.animationDuration = dur + "s";
+        bar.style.padding = `${item.padding != null ? item.padding : 8}px 0`;
+
+        // Font styling — apply ke marquee container supaya inherit ke kedua track
+        marquee.style.fontFamily = (item.fontFamily || "Inter") + ", sans-serif";
+        marquee.style.fontSize = (item.fontSize || 14) + "px";
+        marquee.style.fontWeight = item.fontWeight || 600;
+        marquee.style.fontStyle = item.italic ? "italic" : "normal";
+
         bar.hidden = false;
+
+        // Hitung durasi animasi dari lebar piece sebenarnya. Tanpa ini,
+        // estimasi 1500px scroll bisa nggak match → text potong di tengah.
+        // speed = px/detik (default 80, range 20-400).
+        const speedPxPerSec = Math.max(20, Math.min(400, Number(item.speed) || 80));
+        const measure = () => {
+          const pieceW = track1.getBoundingClientRect().width;
+          if (pieceW < 20) return;
+          const rawDur = pieceW / speedPxPerSec;
+          const dur = Math.max(8, Math.min(90, rawDur));
+          marquee.style.setProperty("--rt-dur", dur + "s");
+        };
+        requestAnimationFrame(measure);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => requestAnimationFrame(measure)).catch(() => {});
+        }
+        if (window.ResizeObserver) {
+          const ro = new ResizeObserver(() => measure());
+          ro.observe(track1);
+        }
       }
 
       (async function load() {
