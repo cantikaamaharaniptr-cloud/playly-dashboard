@@ -9857,6 +9857,7 @@ function emptyChartData(range) {
 
 function drawChart() {
   const svg = $("#lineChart");
+  const wrap = $("#chartWrap");
   const empty = $("#chartEmpty");
   if (!svg) return;
   const hasData = state.myVideos.length > 0;
@@ -9879,7 +9880,11 @@ function drawChart() {
   if (empty) empty.hidden = true;
 
   const data = CHART_DATA_DEMO[state.chartRange];
-  const W = 700, H = 200, PAD_L = 36, PAD_R = 16, PAD_T = 16, PAD_B = 28;
+  // Lebar viewBox dinamis = lebar container aktual, supaya grafik mengisi penuh
+  // kolom (bukan center-with-empty-sides karena preserveAspectRatio meet).
+  const containerW = Math.max(600, Math.round(wrap?.offsetWidth || svg.clientWidth || 700));
+  const W = containerW, H = 200, PAD_L = 40, PAD_R = 24, PAD_T = 16, PAD_B = 28;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const max = Math.max(...data.values, 100) * 1.1;
   const stepX = (W - PAD_L - PAD_R) / (data.values.length - 1);
   const points = data.values.map((v, i) => [PAD_L + i * stepX, H - PAD_B - (v / max) * (H - PAD_T - PAD_B)]);
@@ -9942,6 +9947,26 @@ $$("#chartTabs button").forEach(b => {
   });
 });
 $("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.target.options[e.target.selectedIndex].text}</b>`));
+
+// Auto-redraw chart saat lebar container berubah (window resize, sidebar
+// collapse, dll) — viewBox dihitung dari container width jadi tanpa
+// resize observer chart akan stuck di lebar lama.
+(function setupChartResizeObserver() {
+  const wrap = document.getElementById("chartWrap");
+  if (!wrap || !window.ResizeObserver) return;
+  let lastW = 0;
+  let raf = 0;
+  const ro = new ResizeObserver(entries => {
+    const w = Math.round(entries[0].contentRect.width);
+    if (w === lastW || w < 100) return;
+    lastW = w;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (state?.currentView === "stats" && state?.myVideos?.length) drawChart();
+    });
+  });
+  ro.observe(wrap);
+})();
 
 function renderTopPerforming() {
   const list = $("#topPerformList");
