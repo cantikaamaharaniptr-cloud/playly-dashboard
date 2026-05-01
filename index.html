@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260501-admin-chart-match" />
+  <link rel="stylesheet" href="styles.css?v=20260501-multi-fix" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -177,7 +177,10 @@
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <input type="password" name="password" placeholder="Min. 6 karakter" required autocomplete="current-password"/>
-                <button type="button" class="pw-toggle" tabindex="-1">👁</button>
+                <button type="button" class="pw-toggle" tabindex="-1" aria-label="Tampilkan password">
+                    <svg class="pw-eye pw-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="pw-eye pw-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7"/><path d="M9.4 5.2A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7-.5 1-1.2 1.9-2 2.7"/><path d="M6.7 6.7C3.7 8.7 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.6-1.2"/></svg>
+                  </button>
               </div>
             </label>
 
@@ -267,7 +270,10 @@
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <input type="password" name="password" placeholder="Min. 6 karakter" required minlength="6"/>
-                <button type="button" class="pw-toggle" tabindex="-1">👁</button>
+                <button type="button" class="pw-toggle" tabindex="-1" aria-label="Tampilkan password">
+                    <svg class="pw-eye pw-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="pw-eye pw-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7"/><path d="M9.4 5.2A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7-.5 1-1.2 1.9-2 2.7"/><path d="M6.7 6.7C3.7 8.7 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.6-1.2"/></svg>
+                  </button>
               </div>
               <div class="pw-strength" id="pwStrength">
                 <i></i><i></i><i></i><i></i>
@@ -473,11 +479,19 @@
           <li><a href="#" class="nav-subitem" data-view="activity" data-sub-action="act-filter:follow">Followers</a></li>
         </ul>
       </div>
-      <a href="#" class="nav-item" data-view="messages">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        <span>Messages</span>
-        <span class="badge dot" id="msgBadge">3</span>
-      </a>
+      <div class="nav-group" data-nav-group="messages">
+        <a href="#" class="nav-item nav-parent" data-view="messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Messages</span>
+          <span class="badge dot" id="msgBadge">3</span>
+          <button type="button" class="nav-toggle" aria-label="Expand" data-nav-toggle><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5l3 3 3-3"/></svg></button>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#" class="nav-subitem" data-view="messages" data-sub-action="msg-filter:all">All Messages</a></li>
+          <li><a href="#" class="nav-subitem" data-view="messages" data-sub-action="msg-filter:broadcast">Broadcast Admin</a></li>
+          <li><a href="#" class="nav-subitem" data-view="messages" data-sub-action="msg-filter:unread">Unread</a></li>
+        </ul>
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -643,7 +657,7 @@
           </div>
         </div>
 
-        <!-- Section divider — KPI overview -->
+        <!-- Section divider — KPI overview + Performance leaderboard (1st row) -->
         <div class="admin-section-divider"><span>OVERVIEW · KPI</span></div>
 
         <div class="admin-kpi">
@@ -673,10 +687,24 @@
           </div>
         </div>
 
+        <!-- Section divider — Performance (paired with KPI overview as 1st block) -->
+        <div class="admin-section-divider"><span>PERFORMANCE · LEADERBOARD</span></div>
+
+        <!-- TOP PERFORMING — Combined Most Viewed + Most Liked (single panel, both metrics per row) -->
+        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
+          <div class="admin-panel">
+            <div class="admin-panel-head">
+              <h3>🏆 Top Performing Videos</h3>
+              <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>
+            </div>
+            <div id="adminTopVideosLive" class="admin-list-rows"></div>
+          </div>
+        </div>
+
         <!-- Section divider — Live activity -->
         <div class="admin-section-divider"><span>LIVE · REAL-TIME</span></div>
 
-        <!-- 1. LIVE USER ACTIVITY — feed real-time semua aksi user (bukan admin) -->
+        <!-- LIVE USER ACTIVITY — feed real-time semua aksi user (bukan admin) -->
         <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
           <div class="admin-panel">
             <div class="admin-panel-head">
@@ -690,7 +718,7 @@
         <!-- Section divider — Recent -->
         <div class="admin-section-divider"><span>RECENT · HARI INI</span></div>
 
-        <!-- 2. RECENT — Video baru, User baru, Top Creators (3 col) -->
+        <!-- RECENT — Video baru, User baru, Top Creators (3 col) -->
         <div class="admin-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px">
           <div class="admin-panel">
             <div class="admin-panel-head">
@@ -715,20 +743,6 @@
             </div>
             <div class="admin-avatar-stack" id="adminTopCreatorsStack" aria-hidden="true"></div>
             <div id="adminTopCreatorsLive" class="admin-list-rows"></div>
-          </div>
-        </div>
-
-        <!-- Section divider — Performance -->
-        <div class="admin-section-divider"><span>PERFORMANCE · LEADERBOARD</span></div>
-
-        <!-- 3. TOP PERFORMING — Combined Most Viewed + Most Liked (single panel, both metrics per row) -->
-        <div class="admin-grid" style="grid-template-columns: 1fr; gap: 16px">
-          <div class="admin-panel">
-            <div class="admin-panel-head">
-              <h3>🏆 Top Performing Videos</h3>
-              <button class="btn ghost sm" data-jump="admin-videos">Lihat semua</button>
-            </div>
-            <div id="adminTopVideosLive" class="admin-list-rows"></div>
           </div>
         </div>
       </section>
@@ -788,9 +802,6 @@
             <button class="gv-tab" data-gv-filter="takedown">Take down</button>
           </div>
           <div class="gv-filters">
-            <select id="gvCategoryFilter" class="gv-select">
-              <option value="">Semua Kategori</option>
-            </select>
             <select id="gvSortBy" class="gv-select">
               <option value="newest">Terbaru</option>
               <option value="oldest">Terlama</option>
@@ -820,7 +831,6 @@
                 <th class="gv-col-check"><input type="checkbox" id="gvSelectAll"/></th>
                 <th>Video</th>
                 <th>Kreator</th>
-                <th>Kategori</th>
                 <th>Views</th>
                 <th>Likes</th>
                 <th>Status</th>
@@ -1041,13 +1051,6 @@
             <h2>📊 Analytics & Monitoring</h2>
             <p class="muted">Total views, watch time, bandwidth & video terpopuler dari seluruh platform.</p>
           </div>
-          <div class="page-head-actions">
-            <select id="anRangeSelect" class="gv-select">
-              <option value="24h">24 Jam Terakhir</option>
-              <option value="7d">7 Hari</option>
-              <option value="30d">30 Hari</option>
-            </select>
-          </div>
         </div>
 
         <!-- Achievement Video + Achievement User — kolom terpisah, KPI summary
@@ -1117,18 +1120,30 @@
             <div class="card-head">
               <div>
                 <h3>📈 Grafik Traffic</h3>
-                <small class="muted" id="anTrafficSubtitle">Hari / Minggu / Bulan / Tahun — kinerja akun seluruh user</small>
+                <small class="muted" id="anTrafficSubtitle">Distribusi views per user — hari / minggu / bulan / tahun</small>
               </div>
               <b id="anTrafficTotal">0 views</b>
             </div>
+
+            <!-- 4 period tabs -->
+            <div class="an-tab-row" role="tablist" aria-label="Periode Grafik Traffic">
+              <button type="button" class="an-tab active" data-an-range="day"   role="tab" aria-selected="true">Hari ini</button>
+              <button type="button" class="an-tab"        data-an-range="week"  role="tab" aria-selected="false">Minggu ini</button>
+              <button type="button" class="an-tab"        data-an-range="month" role="tab" aria-selected="false">Bulan ini</button>
+              <button type="button" class="an-tab"        data-an-range="year"  role="tab" aria-selected="false">Tahun ini</button>
+            </div>
+
             <div class="an-chart-wrap" id="anTrafficWrap">
-              <svg id="anTrafficChart" viewBox="0 0 700 240" preserveAspectRatio="none"></svg>
+              <svg id="anTrafficChart" viewBox="0 0 700 260" preserveAspectRatio="none"></svg>
               <div class="chart-tooltip" id="anTrafficTip"></div>
               <div class="an-chart-empty" id="anTrafficEmpty" hidden>
                 <div class="an-empty-icon">📊</div>
                 <p>Belum ada views untuk ditampilkan</p>
               </div>
             </div>
+
+            <!-- Legend: top users contributing to this period -->
+            <div class="an-traffic-legend" id="anTrafficLegend"></div>
           </div>
         </div>
       </section>
@@ -1460,26 +1475,42 @@
           </div>
         </div>
 
-        <!-- Section divider — Discover & komunitas -->
-        <div class="admin-section-divider"><span>DISCOVER · KOMUNITAS</span></div>
-
-        <!-- Komunitas Aktif — preview kreator paling aktif via avatar stack.
-             Heading "👥 Komunitas Aktif" dihapus (divider section sudah cukup);
-             subtitle dipertahankan karena dipakai sebagai pesan empty-state. -->
-        <div class="community-card" id="communityCard" data-jump="discover" role="button" tabindex="0" title="Buka Discover untuk lihat semua kreator">
-          <div class="community-head">
-            <div class="community-title">
-              <small id="communitySubtitle">Kreator yang lagi aktif di Playly</small>
+        <!-- 2-column row: SPOTLIGHT KREATOR (kiri) + DISCOVER KOMUNITAS (kanan) -->
+        <div class="home-row-2col">
+          <div class="home-row-section">
+            <div class="admin-section-divider"><span>SPOTLIGHT · KREATOR</span></div>
+            <div class="creator-spotlight" id="creatorSpotlight">
+              <div class="cs-head">
+                <h3>🌟 Creator Spotlight</h3>
+                <div class="cs-controls">
+                  <button class="cs-nav" id="csPrev" aria-label="Prev">‹</button>
+                  <span class="cs-counter"><span id="csCurrent">0</span> / <span id="csTotal">0</span></span>
+                  <button class="cs-nav" id="csNext" aria-label="Next">›</button>
+                </div>
+              </div>
+              <div class="cs-stage">
+                <div class="cs-track" id="csTrack"></div>
+              </div>
+              <div class="cs-dots" id="csDots"></div>
             </div>
-            <span class="community-cta">Lihat semua →</span>
           </div>
-          <div class="admin-avatar-stack" id="userCommunityStack" aria-hidden="true"></div>
+
+          <div class="home-row-section">
+            <div class="admin-section-divider"><span>DISCOVER · KOMUNITAS</span></div>
+            <div class="community-card" id="communityCard" data-jump="discover" role="button" tabindex="0" title="Buka Discover untuk lihat semua kreator">
+              <div class="community-head">
+                <div class="community-title">
+                  <small id="communitySubtitle">Kreator yang lagi aktif di Playly</small>
+                </div>
+                <span class="community-cta">Lihat semua →</span>
+              </div>
+              <div class="admin-avatar-stack" id="userCommunityStack" aria-hidden="true"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- Section divider — Live trending feed -->
+        <!-- LIVE · TRENDING — full width di bawah 2-col row -->
         <div class="admin-section-divider"><span>LIVE · TRENDING</span></div>
-
-        <!-- Trending Hari Ini — agregasi hashtag dari video di platform 48 jam terakhir -->
         <div class="trending-card" id="trendingHome">
           <div class="trending-head">
             <div class="trending-title">
@@ -1493,25 +1524,6 @@
           <div class="trending-list" id="trendingList"></div>
         </div>
 
-        <!-- Section divider — Spotlight kreator -->
-        <div class="admin-section-divider"><span>SPOTLIGHT · KREATOR</span></div>
-
-        <!-- Creator Spotlight Slider — top kreator berdasarkan views real -->
-        <div class="creator-spotlight" id="creatorSpotlight">
-          <div class="cs-head">
-            <h3>🌟 Creator Spotlight</h3>
-            <div class="cs-controls">
-              <button class="cs-nav" id="csPrev" aria-label="Prev">‹</button>
-              <span class="cs-counter"><span id="csCurrent">0</span> / <span id="csTotal">0</span></span>
-              <button class="cs-nav" id="csNext" aria-label="Next">›</button>
-            </div>
-          </div>
-          <div class="cs-stage">
-            <div class="cs-track" id="csTrack"></div>
-          </div>
-          <div class="cs-dots" id="csDots"></div>
-        </div>
-
       </section>
 
       <!-- ============== MY LIBRARY (videos) — koleksi pribadi user ============== -->
@@ -1523,7 +1535,7 @@
           </div>
         </div>
 
-        <div class="card lib-card" data-focus-target="my-video">
+        <div class="card lib-card" data-focus-target="my-video" data-lib="my">
           <div class="card-head">
             <div>
               <h3>🎬 My Video</h3>
@@ -1531,10 +1543,16 @@
             </div>
             <span class="lib-count" id="myVideoCount">0</span>
           </div>
-          <div class="lib-grid" id="myVideoGrid"></div>
+          <!-- Top row: 3 preview items + "Lainnya" button -->
+          <div class="lib-head-row">
+            <div class="lib-preview-row" id="myVideoPreview"></div>
+            <button type="button" class="lib-more-btn" data-lib-more="my" hidden>Lainnya →</button>
+          </div>
+          <!-- Full grid (collapsed by default) -->
+          <div class="lib-grid" id="myVideoGrid" data-collapsed="1"></div>
         </div>
 
-        <div class="card lib-card" data-focus-target="new-videos">
+        <div class="card lib-card" data-focus-target="new-videos" data-lib="new">
           <div class="card-head">
             <div>
               <h3>🆕 New Videos</h3>
@@ -1542,10 +1560,14 @@
             </div>
             <span class="lib-count" id="newVideoCount">0</span>
           </div>
-          <div class="lib-grid" id="newVideoGrid"></div>
+          <div class="lib-head-row">
+            <div class="lib-preview-row" id="newVideoPreview"></div>
+            <button type="button" class="lib-more-btn" data-lib-more="new" hidden>Lainnya →</button>
+          </div>
+          <div class="lib-grid" id="newVideoGrid" data-collapsed="1"></div>
         </div>
 
-        <div class="card lib-card" data-focus-target="download">
+        <div class="card lib-card" data-focus-target="download" data-lib="download">
           <div class="card-head">
             <div>
               <h3>📥 Download</h3>
@@ -1553,7 +1575,11 @@
             </div>
             <span class="lib-count" id="downloadVideoCount">0</span>
           </div>
-          <div class="lib-grid" id="downloadVideoGrid"></div>
+          <div class="lib-head-row">
+            <div class="lib-preview-row" id="downloadVideoPreview"></div>
+            <button type="button" class="lib-more-btn" data-lib-more="download" hidden>Lainnya →</button>
+          </div>
+          <div class="lib-grid" id="downloadVideoGrid" data-collapsed="1"></div>
         </div>
       </section>
 
@@ -1626,19 +1652,21 @@
           </div>
         </div>
 
-        <!-- Layout dua-kolom: kiri Riwayat Tontonan (history list lengkap),
-             kanan Lanjutkan Nonton (video yang masih in-progress). -->
+        <!-- Layout dua-kolom: kiri Lanjutkan Nonton (in-progress),
+             kanan Riwayat Tontonan (history list lengkap). Saat focus mode
+             pada satu sub-item (cth "Riwayat Tontonan" dari sidebar), grid
+             collapse jadi 1 kolom full-width sesuai aturan focus-mode. -->
         <div class="history-layout">
-          <div class="history-col history-col-left" data-focus-target="riwayat">
-            <h3 class="history-col-title">📜 Riwayat Tontonan</h3>
-            <div id="historyGroups"></div>
-          </div>
-          <aside class="history-col history-col-right" data-focus-target="lanjutkan">
+          <aside class="history-col history-col-left" data-focus-target="lanjutkan">
             <h3 class="history-col-title">▶️ Lanjutkan Nonton</h3>
             <div class="card continue-card-wrap">
               <div class="continue-list" id="continueList"></div>
             </div>
           </aside>
+          <div class="history-col history-col-right" data-focus-target="riwayat">
+            <h3 class="history-col-title">📜 Riwayat Tontonan</h3>
+            <div id="historyGroups"></div>
+          </div>
         </div>
       </section>
 
@@ -1704,7 +1732,22 @@
 
         <div class="card" id="topPerfCard">
           <h3 style="margin-bottom:14px">🏆 Top Performing</h3>
-          <div class="top-perf" id="topPerformList"></div>
+          <!-- 3 kolom: Top Views / Top Likes / Top Watch — semua dihitung
+               real-time dari state.myVideos (akun user aktif). -->
+          <div class="top-perf-3col" id="topPerformList">
+            <div class="top-perf-col">
+              <h4 class="top-perf-col-title">👁️ Top Views</h4>
+              <div class="top-perf-col-list" id="topPerformViews"></div>
+            </div>
+            <div class="top-perf-col">
+              <h4 class="top-perf-col-title">❤️ Top Likes</h4>
+              <div class="top-perf-col-list" id="topPerformLikes"></div>
+            </div>
+            <div class="top-perf-col">
+              <h4 class="top-perf-col-title">⏱️ Top Watch</h4>
+              <div class="top-perf-col-list" id="topPerformWatch"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1716,12 +1759,16 @@
             <p>Temukan user lain di Playly dan mulai berinteraksi.</p>
           </div>
         </div>
-        <div class="card">
-          <div class="people-search-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            <input type="text" id="peopleSearch" placeholder="Cari nama atau username..." autocomplete="off"/>
-          </div>
-          <div class="people-grid" id="peopleGrid"></div>
+        <div class="people-search-wrap people-search-bare">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="text" id="peopleSearch" placeholder="Cari nama atau username..." autocomplete="off"/>
+        </div>
+        <div class="people-grid" id="peopleGrid"></div>
+        <div class="people-more-wrap" id="peopleMoreWrap" hidden>
+          <button type="button" class="people-more-btn" id="peopleMoreBtn">
+            <span>more</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
         </div>
       </section>
 
@@ -1737,15 +1784,16 @@
           </div>
         </div>
 
-        <div class="messages-layout card">
+        <!-- Card wrapper dilepas — list & chat menyatu langsung dengan halaman. -->
+        <div class="messages-layout messages-layout-bare">
           <div class="ml-list">
             <div class="msg-search">
               <input type="text" placeholder="Cari user..." id="msgSearch"/>
             </div>
             <div class="msg-tabs">
               <button class="active" data-msg-filter="all">Semua</button>
+              <button data-msg-filter="broadcast">Broadcast Admin</button>
               <button data-msg-filter="unread">Belum dibaca</button>
-              <button data-msg-filter="groups">Grup</button>
             </div>
             <div class="msg-list" id="msgList"></div>
           </div>
@@ -1983,23 +2031,66 @@
           </div>
 
           <div class="card">
-            <h3>🌍 Bahasa & Region</h3>
+            <h3 data-i18n="settings.language">🌍 Language & Region</h3>
             <div class="upload-form" style="margin-top:14px">
-              <label>Bahasa
-                <select data-pref="lang">
+              <label data-i18n="settings.language.label">Language
+                <select data-pref="lang" id="userLangSelect">
+                  <option value="en" selected>🇺🇸 English</option>
                   <option value="id">🇮🇩 Bahasa Indonesia</option>
-                  <option value="en">🇺🇸 English</option>
                   <option value="ms">🇲🇾 Bahasa Melayu</option>
                   <option value="ja">🇯🇵 日本語</option>
+                  <option value="ar">🇸🇦 العربية</option>
+                  <option value="zh">🇨🇳 中文</option>
+                  <option value="ko">🇰🇷 한국어</option>
+                  <option value="es">🇪🇸 Español</option>
                 </select>
               </label>
-              <label>Zona Waktu
-                <select data-pref="timezone">
-                  <option value="WIB">WIB (UTC+7)</option>
-                  <option value="WITA">WITA (UTC+8)</option>
-                  <option value="WIT">WIT (UTC+9)</option>
+              <label data-i18n="settings.timezone.label">Time Zone
+                <select data-pref="timezone" id="userTimezoneSelect">
+                  <optgroup label="Indonesia">
+                    <option value="Asia/Jakarta">WIB — Jakarta (UTC+7)</option>
+                    <option value="Asia/Makassar">WITA — Makassar (UTC+8)</option>
+                    <option value="Asia/Jayapura">WIT — Jayapura (UTC+9)</option>
+                  </optgroup>
+                  <optgroup label="Asia">
+                    <option value="Asia/Kuala_Lumpur">Malaysia — Kuala Lumpur (UTC+8)</option>
+                    <option value="Asia/Singapore">Singapore (UTC+8)</option>
+                    <option value="Asia/Tokyo">Japan — Tokyo (UTC+9)</option>
+                    <option value="Asia/Seoul">Korea — Seoul (UTC+9)</option>
+                    <option value="Asia/Shanghai">China — Shanghai (UTC+8)</option>
+                    <option value="Asia/Hong_Kong">Hong Kong (UTC+8)</option>
+                    <option value="Asia/Bangkok">Thailand — Bangkok (UTC+7)</option>
+                    <option value="Asia/Manila">Philippines — Manila (UTC+8)</option>
+                  </optgroup>
+                  <optgroup label="Middle East">
+                    <option value="Asia/Riyadh">Saudi Arabia — Riyadh (UTC+3)</option>
+                    <option value="Asia/Dubai">UAE — Dubai (UTC+4)</option>
+                    <option value="Asia/Tehran">Iran — Tehran (UTC+3:30)</option>
+                  </optgroup>
+                  <optgroup label="Europe">
+                    <option value="Europe/London">UK — London (UTC+0)</option>
+                    <option value="Europe/Paris">France — Paris (UTC+1)</option>
+                    <option value="Europe/Berlin">Germany — Berlin (UTC+1)</option>
+                    <option value="Europe/Moscow">Russia — Moscow (UTC+3)</option>
+                  </optgroup>
+                  <optgroup label="Americas">
+                    <option value="America/New_York">USA — New York (UTC-5)</option>
+                    <option value="America/Chicago">USA — Chicago (UTC-6)</option>
+                    <option value="America/Denver">USA — Denver (UTC-7)</option>
+                    <option value="America/Los_Angeles">USA — Los Angeles (UTC-8)</option>
+                    <option value="America/Sao_Paulo">Brazil — São Paulo (UTC-3)</option>
+                    <option value="America/Toronto">Canada — Toronto (UTC-5)</option>
+                    <option value="America/Mexico_City">Mexico — Mexico City (UTC-6)</option>
+                  </optgroup>
+                  <optgroup label="Oceania">
+                    <option value="Australia/Sydney">Australia — Sydney (UTC+10)</option>
+                    <option value="Pacific/Auckland">New Zealand — Auckland (UTC+12)</option>
+                  </optgroup>
                 </select>
               </label>
+              <small class="field-hint" data-i18n="settings.localtime.hint" id="userLocalTimeHint">
+                Local time: <b id="userLocalTimePreview">—</b>
+              </small>
             </div>
           </div>
 
@@ -2049,7 +2140,7 @@
                ruang kosong di kanan/kiri. Buat Admin Baru kartu terpisah. -->
           <div class="card settings-card-security settings-card-all">
 
-            <!-- 🛠️ Kontrol Platform -->
+            <!-- ROW 1, COL 1 — 🛠️ Kontrol Platform -->
             <div class="settings-section" data-super-admin-only>
               <h3>🛠️ Kontrol Platform</h3>
               <p class="muted" style="font-size:12.5px; margin-bottom:10px">Berlaku untuk seluruh user.</p>
@@ -2073,39 +2164,7 @@
               </div>
             </div>
 
-            <!-- 🔔 Notifikasi Admin -->
-            <div class="settings-section" data-super-admin-only>
-              <h3>🔔 Notifikasi Admin</h3>
-              <div class="toggle-list" style="margin-top:10px">
-                <label class="tog"><span>Alert bug report baru</span><input type="checkbox" data-pref="adminNotif.bugs" checked/><i></i></label>
-                <label class="tog"><span>Alert user baru daftar</span><input type="checkbox" data-pref="adminNotif.newUser"/><i></i></label>
-              </div>
-            </div>
-
-            <!-- 🌍 Bahasa & Region -->
-            <div class="settings-section" data-super-admin-only>
-              <h3>🌍 Bahasa & Region</h3>
-              <div class="upload-form" style="margin-top:10px">
-                <label>Bahasa
-                  <select data-pref="lang">
-                    <option value="id">🇮🇩 Bahasa Indonesia</option>
-                    <option value="en">🇺🇸 English</option>
-                    <option value="ms">🇲🇾 Bahasa Melayu</option>
-                    <option value="ja">🇯🇵 日本語</option>
-                  </select>
-                </label>
-                <label>Zona Waktu Server
-                  <select data-platform="serverTz">
-                    <option value="WIB">WIB (UTC+7)</option>
-                    <option value="WITA">WITA (UTC+8)</option>
-                    <option value="WIT">WIT (UTC+9)</option>
-                    <option value="UTC">UTC</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <!-- 🔑 Ganti Password (semua admin) -->
+            <!-- ROW 1, COL 2 — 🔑 Ganti Password (semua admin) -->
             <div class="settings-section">
               <h3>🔑 Ganti Password</h3>
               <form class="upload-form security-form-grid" id="adminChangePasswordForm" novalidate>
@@ -2116,7 +2175,85 @@
               </form>
             </div>
 
-            <!-- 🔒 Proteksi Login (super-admin only) -->
+            <!-- ROW 1, COL 3 — 📝 Audit & Konfirmasi (super-admin only) -->
+            <div class="settings-section" data-super-admin-only>
+              <h3>📝 Audit & Konfirmasi</h3>
+              <div class="toggle-list">
+                <label class="tog">
+                  <span>Audit log aktif<small class="muted-mini" style="display:block;margin-top:2px">Catat semua aksi admin</small></span>
+                  <input type="checkbox" data-platform="auditLog" checked/><i></i>
+                </label>
+                <label class="tog">
+                  <span>Konfirmasi aksi destruktif<small class="muted-mini" style="display:block;margin-top:2px">Selalu minta konfirmasi sebelum hapus / suspend</small></span>
+                  <input type="checkbox" data-pref="adminSafety.confirm" checked/><i></i>
+                </label>
+              </div>
+              <div class="upload-form" style="margin-top:10px">
+                <label>Auto-logout idle
+                  <select data-pref="adminSafety.idleLogout">
+                    <option value="0">Tidak pernah</option>
+                    <option value="900">15 menit</option>
+                    <option value="1800" selected>30 menit</option>
+                    <option value="3600">1 jam</option>
+                    <option value="7200">2 jam</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <!-- ROW 2, COL 1 — 🔔 Notifikasi Admin -->
+            <div class="settings-section" data-super-admin-only>
+              <h3>🔔 Notifikasi Admin</h3>
+              <div class="toggle-list" style="margin-top:10px">
+                <label class="tog"><span>Alert bug report baru</span><input type="checkbox" data-pref="adminNotif.bugs" checked/><i></i></label>
+                <label class="tog"><span>Alert user baru daftar</span><input type="checkbox" data-pref="adminNotif.newUser"/><i></i></label>
+              </div>
+              <div class="upload-form" style="margin-top:14px">
+                <label>Language
+                  <select data-pref="lang">
+                    <option value="en" selected>🇺🇸 English</option>
+                    <option value="id">🇮🇩 Bahasa Indonesia</option>
+                    <option value="ms">🇲🇾 Bahasa Melayu</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="zh">🇨🇳 中文</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                    <option value="es">🇪🇸 Español</option>
+                  </select>
+                </label>
+                <label>Server Time Zone
+                  <select data-platform="serverTz">
+                    <optgroup label="Indonesia">
+                      <option value="Asia/Jakarta">WIB — Jakarta (UTC+7)</option>
+                      <option value="Asia/Makassar">WITA — Makassar (UTC+8)</option>
+                      <option value="Asia/Jayapura">WIT — Jayapura (UTC+9)</option>
+                    </optgroup>
+                    <optgroup label="Asia">
+                      <option value="Asia/Kuala_Lumpur">Malaysia (UTC+8)</option>
+                      <option value="Asia/Singapore">Singapore (UTC+8)</option>
+                      <option value="Asia/Tokyo">Japan (UTC+9)</option>
+                      <option value="Asia/Seoul">Korea (UTC+9)</option>
+                      <option value="Asia/Shanghai">China (UTC+8)</option>
+                    </optgroup>
+                    <optgroup label="Middle East">
+                      <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
+                      <option value="Asia/Dubai">UAE (UTC+4)</option>
+                    </optgroup>
+                    <optgroup label="Europe">
+                      <option value="Europe/London">UK (UTC+0)</option>
+                      <option value="Europe/Paris">France (UTC+1)</option>
+                    </optgroup>
+                    <optgroup label="Americas">
+                      <option value="America/New_York">USA East (UTC-5)</option>
+                      <option value="America/Los_Angeles">USA West (UTC-8)</option>
+                    </optgroup>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <!-- ROW 2, COL 2 — 🔒 Proteksi Login (super-admin only) -->
             <div class="settings-section" data-super-admin-only>
               <h3>🔒 Proteksi Login</h3>
               <div class="upload-form">
@@ -2149,33 +2286,7 @@
               </div>
             </div>
 
-            <!-- 📝 Audit & Konfirmasi (super-admin only) -->
-            <div class="settings-section" data-super-admin-only>
-              <h3>📝 Audit & Konfirmasi</h3>
-              <div class="toggle-list">
-                <label class="tog">
-                  <span>Audit log aktif<small class="muted-mini" style="display:block;margin-top:2px">Catat semua aksi admin</small></span>
-                  <input type="checkbox" data-platform="auditLog" checked/><i></i>
-                </label>
-                <label class="tog">
-                  <span>Konfirmasi aksi destruktif<small class="muted-mini" style="display:block;margin-top:2px">Selalu minta konfirmasi sebelum hapus / suspend</small></span>
-                  <input type="checkbox" data-pref="adminSafety.confirm" checked/><i></i>
-                </label>
-              </div>
-              <div class="upload-form" style="margin-top:10px">
-                <label>Auto-logout idle
-                  <select data-pref="adminSafety.idleLogout">
-                    <option value="0">Tidak pernah</option>
-                    <option value="900">15 menit</option>
-                    <option value="1800" selected>30 menit</option>
-                    <option value="3600">1 jam</option>
-                    <option value="7200">2 jam</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <!-- 🔐 Akses & Sesi (semua admin) -->
+            <!-- ROW 2, COL 3 — 🔐 Akses & Sesi (semua admin) -->
             <div class="settings-section">
               <h3>🔐 Akses & Sesi</h3>
               <div class="toggle-list">
@@ -2473,13 +2584,17 @@
           <div class="about-logo">
             <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="plyl-hp" x1="0" y1="0" x2="1" y2="1">
+                <linearGradient id="plyl-hp" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stop-color="#E8D8C4"/>
-                  <stop offset="50%" stop-color="#C7B7A3"/>
+                  <stop offset="45%" stop-color="#C7B7A3"/>
                   <stop offset="100%" stop-color="#6D2932"/>
                 </linearGradient>
               </defs>
-              <path fill="url(#plyl-hp)" d="M 16 10 H 52 A 23 23 0 0 1 52 56 H 32 V 90 H 16 Z M 32 24 H 48 A 9 9 0 0 1 48 42 H 32 Z"/>
+              <path
+                fill="url(#plyl-hp)"
+                fill-rule="evenodd"
+                d="M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z"
+              />
             </svg>
           </div>
           <div>
@@ -2812,7 +2927,10 @@
           <div class="input-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <input type="password" name="password" placeholder="Min. 6 karakter" required minlength="6" autocomplete="new-password"/>
-            <button type="button" class="pw-toggle" tabindex="-1">👁</button>
+            <button type="button" class="pw-toggle" tabindex="-1" aria-label="Tampilkan password">
+                    <svg class="pw-eye pw-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="pw-eye pw-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7"/><path d="M9.4 5.2A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7-.5 1-1.2 1.9-2 2.7"/><path d="M6.7 6.7C3.7 8.7 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.6-1.2"/></svg>
+                  </button>
           </div>
         </label>
         <label class="auth-field">

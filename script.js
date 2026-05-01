@@ -1446,15 +1446,268 @@ function applyPrefSideEffects(key, val) {
   if (key === "privacy.showHistory") toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
   if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim DM" : "✓ DM dibatasi — hanya kreator yang kamu follow yang bisa kirim", "success");
 
-  // Bahasa & timezone — perlu re-render time labels biar langsung kerasa
+  // Bahasa & timezone — apply langsung ke UI
   if (key === "lang") {
-    toast("✓ Bahasa tersimpan — efek penuh setelah refresh", "info");
+    if (typeof applyI18n === "function") applyI18n(val);
+    toast("✓ Language updated", "success");
   }
   if (key === "timezone") {
-    toast(`✓ Zona waktu di-set ke ${val}`, "success");
+    if (typeof updateTimezonePreview === "function") updateTimezonePreview();
+    toast(`✓ Time zone set to ${val}`, "success");
     if (typeof renderAll === "function") renderAll();
   }
 }
+
+// ============== i18n DICTIONARY ==============
+// Default English. Dict ringkas — fokus ke label paling visible (sidebar,
+// settings, page titles). Element punya [data-i18n="key"] → text di-replace.
+const I18N = {
+  en: {
+    "settings.language":         "🌍 Language & Region",
+    "settings.language.label":   "Language",
+    "settings.timezone.label":   "Time Zone",
+    "settings.localtime.hint":   "Local time",
+    "nav.home":                  "Home",
+    "nav.discover":              "Discover",
+    "nav.library":               "My Library",
+    "nav.upload":                "Upload",
+    "nav.history":               "History",
+    "nav.stats":                 "Rating Scale",
+    "nav.search":                "Search User",
+    "nav.activity":              "Activity",
+    "nav.messages":              "Messages",
+    "nav.settings":              "Settings",
+    "nav.help":                  "Help",
+    "common.save":               "Save",
+    "common.cancel":             "Cancel",
+    "common.search":             "Search",
+  },
+  id: {
+    "settings.language":         "🌍 Bahasa & Region",
+    "settings.language.label":   "Bahasa",
+    "settings.timezone.label":   "Zona Waktu",
+    "settings.localtime.hint":   "Waktu lokal",
+    "nav.home":                  "Beranda",
+    "nav.discover":              "Jelajahi",
+    "nav.library":               "Pustaka Saya",
+    "nav.upload":                "Unggah",
+    "nav.history":               "Riwayat",
+    "nav.stats":                 "Statistik",
+    "nav.search":                "Cari User",
+    "nav.activity":              "Aktivitas",
+    "nav.messages":              "Pesan",
+    "nav.settings":              "Pengaturan",
+    "nav.help":                  "Bantuan",
+    "common.save":               "Simpan",
+    "common.cancel":             "Batal",
+    "common.search":             "Cari",
+  },
+  ms: {
+    "settings.language":         "🌍 Bahasa & Wilayah",
+    "settings.language.label":   "Bahasa",
+    "settings.timezone.label":   "Zon Waktu",
+    "settings.localtime.hint":   "Waktu tempatan",
+    "nav.home":                  "Utama",
+    "nav.discover":              "Terokai",
+    "nav.library":               "Pustaka Saya",
+    "nav.upload":                "Muat Naik",
+    "nav.history":               "Sejarah",
+    "nav.stats":                 "Statistik",
+    "nav.search":                "Cari Pengguna",
+    "nav.activity":              "Aktiviti",
+    "nav.messages":              "Mesej",
+    "nav.settings":              "Tetapan",
+    "nav.help":                  "Bantuan",
+    "common.save":               "Simpan",
+    "common.cancel":             "Batal",
+    "common.search":             "Cari",
+  },
+  ja: {
+    "settings.language":         "🌍 言語と地域",
+    "settings.language.label":   "言語",
+    "settings.timezone.label":   "タイムゾーン",
+    "settings.localtime.hint":   "現地時刻",
+    "nav.home":                  "ホーム",
+    "nav.discover":              "見つける",
+    "nav.library":               "マイライブラリ",
+    "nav.upload":                "アップロード",
+    "nav.history":               "履歴",
+    "nav.stats":                 "統計",
+    "nav.search":                "ユーザー検索",
+    "nav.activity":              "アクティビティ",
+    "nav.messages":              "メッセージ",
+    "nav.settings":              "設定",
+    "nav.help":                  "ヘルプ",
+    "common.save":               "保存",
+    "common.cancel":             "キャンセル",
+    "common.search":             "検索",
+  },
+  ar: {
+    "settings.language":         "🌍 اللغة والمنطقة",
+    "settings.language.label":   "اللغة",
+    "settings.timezone.label":   "المنطقة الزمنية",
+    "settings.localtime.hint":   "الوقت المحلي",
+    "nav.home":                  "الرئيسية",
+    "nav.discover":              "اكتشف",
+    "nav.library":               "مكتبتي",
+    "nav.upload":                "رفع",
+    "nav.history":               "السجل",
+    "nav.stats":                 "إحصائيات",
+    "nav.search":                "بحث مستخدم",
+    "nav.activity":              "النشاط",
+    "nav.messages":              "الرسائل",
+    "nav.settings":              "الإعدادات",
+    "nav.help":                  "مساعدة",
+    "common.save":               "حفظ",
+    "common.cancel":             "إلغاء",
+    "common.search":             "بحث",
+  },
+  zh: {
+    "settings.language":         "🌍 语言和地区",
+    "settings.language.label":   "语言",
+    "settings.timezone.label":   "时区",
+    "settings.localtime.hint":   "当地时间",
+    "nav.home":                  "首页",
+    "nav.discover":              "发现",
+    "nav.library":               "我的库",
+    "nav.upload":                "上传",
+    "nav.history":               "历史",
+    "nav.stats":                 "统计",
+    "nav.search":                "搜索用户",
+    "nav.activity":              "活动",
+    "nav.messages":              "消息",
+    "nav.settings":              "设置",
+    "nav.help":                  "帮助",
+    "common.save":               "保存",
+    "common.cancel":             "取消",
+    "common.search":             "搜索",
+  },
+  ko: {
+    "settings.language":         "🌍 언어 및 지역",
+    "settings.language.label":   "언어",
+    "settings.timezone.label":   "시간대",
+    "settings.localtime.hint":   "현지 시간",
+    "nav.home":                  "홈",
+    "nav.discover":              "둘러보기",
+    "nav.library":               "내 라이브러리",
+    "nav.upload":                "업로드",
+    "nav.history":               "기록",
+    "nav.stats":                 "통계",
+    "nav.search":                "사용자 검색",
+    "nav.activity":              "활동",
+    "nav.messages":              "메시지",
+    "nav.settings":              "설정",
+    "nav.help":                  "도움말",
+    "common.save":               "저장",
+    "common.cancel":             "취소",
+    "common.search":             "검색",
+  },
+  es: {
+    "settings.language":         "🌍 Idioma y Región",
+    "settings.language.label":   "Idioma",
+    "settings.timezone.label":   "Zona Horaria",
+    "settings.localtime.hint":   "Hora local",
+    "nav.home":                  "Inicio",
+    "nav.discover":              "Descubrir",
+    "nav.library":               "Mi Biblioteca",
+    "nav.upload":                "Subir",
+    "nav.history":               "Historial",
+    "nav.stats":                 "Estadísticas",
+    "nav.search":                "Buscar Usuario",
+    "nav.activity":              "Actividad",
+    "nav.messages":              "Mensajes",
+    "nav.settings":              "Configuración",
+    "nav.help":                  "Ayuda",
+    "common.save":               "Guardar",
+    "common.cancel":             "Cancelar",
+    "common.search":             "Buscar",
+  },
+};
+
+// Default lang = "en". Tetap honor user pref kalau sudah set.
+function currentLang() {
+  const v = (typeof getPref === "function") ? getPref("lang", "en") : "en";
+  return I18N[v] ? v : "en";
+}
+
+function t(key, fallback) {
+  const lang = currentLang();
+  return (I18N[lang] && I18N[lang][key]) || (I18N.en && I18N.en[key]) || fallback || key;
+}
+
+// Walk DOM, translate elements with [data-i18n="key"] → replace direct text
+// content. Element yang punya child elements (nested HTML) di-skip biar
+// nggak overwrite struktur (cuma label yang murni text yang di-translate).
+function applyI18n(lang) {
+  if (lang) {
+    // Sync select dropdowns
+    document.querySelectorAll('[data-pref="lang"]').forEach(s => { if (s.value !== lang) s.value = lang; });
+  }
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (!key) return;
+    const val = t(key);
+    // Untuk <label>, isi child input sering ada — hanya update first text node
+    const firstTextNode = Array.from(el.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+    if (firstTextNode) {
+      firstTextNode.textContent = val + " ";
+    } else if (!el.querySelector("input,select,textarea,button,svg")) {
+      el.textContent = val;
+    }
+  });
+  document.documentElement.setAttribute("lang", currentLang());
+  document.documentElement.setAttribute("dir", currentLang() === "ar" ? "rtl" : "ltr");
+}
+
+// Apply i18n saat load awal — default English untuk new user.
+window.addEventListener("DOMContentLoaded", () => {
+  // Setelah login user terjadi, getPref akan dipanggil & lang diapply via
+  // populateSettingsPrefs. Untuk pre-login, skip dulu.
+  setTimeout(() => { try { applyI18n(currentLang()); } catch {} }, 100);
+});
+
+// ============== TIMEZONE ==============
+// User pref "timezone" sekarang berisi IANA tz name (contoh "Asia/Jakarta").
+// Format ulang waktu lokal sesuai pref user. Default Asia/Jakarta (WIB) untuk
+// backward-compat dengan akun lama yang belum migrate ke IANA name.
+const TZ_LEGACY_MAP = {
+  "WIB":  "Asia/Jakarta",
+  "WITA": "Asia/Makassar",
+  "WIT":  "Asia/Jayapura",
+  "UTC":  "UTC",
+};
+function currentTimezone() {
+  let tz = (typeof getPref === "function") ? getPref("timezone", "Asia/Jakarta") : "Asia/Jakarta";
+  if (TZ_LEGACY_MAP[tz]) tz = TZ_LEGACY_MAP[tz];
+  return tz || "Asia/Jakarta";
+}
+function fmtLocalTime(date, opts = {}) {
+  try {
+    const tz = currentTimezone();
+    return new Intl.DateTimeFormat(currentLang() || "en", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: opts.withSeconds ? "2-digit" : undefined,
+      hour12: false,
+    }).format(date instanceof Date ? date : new Date(date));
+  } catch {
+    return new Date(date).toLocaleTimeString();
+  }
+}
+
+// Update preview "Local time: HH:MM:SS (Asia/Jakarta)" di Settings.
+function updateTimezonePreview() {
+  const el = document.getElementById("userLocalTimePreview");
+  if (!el) return;
+  const tz = currentTimezone();
+  const now = new Date();
+  el.textContent = `${fmtLocalTime(now, { withSeconds: true })} (${tz})`;
+}
+// Tick preview tiap detik kalau settings page kebuka
+setInterval(() => {
+  if (document.getElementById("userLocalTimePreview")?.offsetParent) updateTimezonePreview();
+}, 1000);
 
 // ----------------------- HELPERS: baca preferensi user lain (untuk delivery checks) -----------------------
 // Mapping dari notification type → settings key di sisi penerima.
@@ -1768,9 +2021,14 @@ $$("[data-auth-tab]").forEach(b => {
 // Password toggle
 $$(".pw-toggle").forEach(b => {
   b.addEventListener("click", () => {
-    const input = b.previousElementSibling.tagName === "INPUT" ? b.previousElementSibling : b.parentElement.querySelector("input");
-    if (input.type === "password") { input.type = "text"; b.textContent = "🙈"; }
-    else { input.type = "password"; b.textContent = "👁"; }
+    const input = b.previousElementSibling?.tagName === "INPUT"
+      ? b.previousElementSibling
+      : b.parentElement.querySelector("input");
+    if (!input) return;
+    const showing = input.type === "text";
+    input.type = showing ? "password" : "text";
+    b.classList.toggle("is-shown", !showing);
+    b.setAttribute("aria-label", showing ? "Tampilkan password" : "Sembunyikan password");
   });
 });
 
@@ -4175,8 +4433,11 @@ async function applyAdOverlays(videoEl) {
   const screen = videoEl.closest(".player-screen");
   if (!screen) return;
 
-  // Cleanup overlays lama
-  screen.querySelectorAll(".ad-overlay").forEach(el => el.remove());
+  // Cleanup overlays lama (disconnect resize observer dulu kalau ada)
+  screen.querySelectorAll(".ad-overlay").forEach(el => {
+    try { el._adRtRO?.disconnect(); } catch {}
+    el.remove();
+  });
 
   // Pre-roll: inject DULU sebelum overlay lain
   const prItem = pickAdItemForPlay(cfg.preroll, "pr");
@@ -4206,8 +4467,13 @@ async function applyAdOverlays(videoEl) {
 }
 
 function injectRunningText(screen, c) {
+  // Normalize position — pastikan menyatu dengan video frame (top atau
+  // bottom). Nilai legacy / unknown → fallback ke "bottom".
+  const validPositions = ["top", "middle", "bottom"];
+  const pos = validPositions.includes(c.position) ? c.position : "bottom";
+
   const overlay = document.createElement("div");
-  overlay.className = `ad-overlay ad-runtext ad-pos-${c.position}`;
+  overlay.className = `ad-overlay ad-runtext ad-pos-${pos}`;
   const bg = hexToRgba(c.bgColor, c.bgOpacity / 100);
   overlay.style.background = bg;
   overlay.style.padding = `${c.padding != null ? c.padding : 8}px 0`;
@@ -4232,12 +4498,35 @@ function injectRunningText(screen, c) {
   screen.appendChild(overlay);
   const track = overlay.querySelector(".ad-runtext-track");
   const piece = overlay.querySelector(".ad-runtext-piece");
-  requestAnimationFrame(() => {
-    // Durasi = waktu untuk track menggeser sejauh satu piece (termasuk gap).
-    const pieceW = piece.offsetWidth;
-    const dur = pieceW / Math.max(20, c.speed);
+
+  // Hitung durasi setelah font siap → biar measurement pieceW akurat. Tanpa
+  // ini, kalau font Inter belum loaded saat measurement, pieceW lebih kecil
+  // dari sebenarnya → animasi loop di tengah teks (kelihatan kepotong).
+  const measure = () => {
+    // getBoundingClientRect lebih reliable dari offsetWidth untuk subpixel.
+    const pieceW = piece.getBoundingClientRect().width;
+    if (pieceW < 20) return; // belum di-layout, skip
+    // speed = px/detik (default 80). Min duration 8s biar text kebaca,
+    // max 90s biar nggak terlalu lambat.
+    const speedPxPerSec = Math.max(20, Math.min(400, Number(c.speed) || 80));
+    const rawDur = pieceW / speedPxPerSec;
+    const dur = Math.max(8, Math.min(90, rawDur));
     track.style.setProperty("--ad-rt-dur", `${dur}s`);
-  });
+  };
+
+  // Pertama, measure setelah next frame (basic case)
+  requestAnimationFrame(measure);
+  // Lalu, re-measure setelah font siap (kalau ada custom font)
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => requestAnimationFrame(measure)).catch(() => {});
+  }
+  // Re-measure saat container resize (fullscreen, sidebar collapse, dll.)
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(overlay);
+    // Stop observer kalau overlay di-cleanup nanti
+    overlay._adRtRO = ro;
+  }
 }
 
 function injectBanner(screen, c) {
@@ -5528,7 +5817,7 @@ $("#adminBroadcastBtn")?.addEventListener("click", () => {
 // karena tidak ada backend — angka diturunkan dari data video yang sungguh
 // ada di localStorage agar konsisten & tidak menyesatkan.
 
-const anState = { range: "24h" };
+const anState = { range: "day" };
 
 function anParseDuration(d) {
   if (!d) return 0;
@@ -5898,7 +6187,15 @@ function anGenSeries(range /*, totalViews */) {
   const buckets = _vbLoad();
   const now = new Date();
 
-  if (range === "24h") {
+  const sumDay = (d) => {
+    const dp = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    let s = 0;
+    for (let h = 0; h < 24; h++) s += (buckets[`${dp}T${pad2(h)}`] || 0);
+    return s;
+  };
+
+  // Hari ini — 24 jam, jam 00:00 → 23:00
+  if (range === "day" || range === "24h") {
     const labels = [], values = [];
     const dp = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
     for (let h = 0; h < 24; h++) {
@@ -5908,36 +6205,114 @@ function anGenSeries(range /*, totalViews */) {
     return { labels, values };
   }
 
-  const sumDay = (d) => {
-    const dp = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-    let s = 0;
-    for (let h = 0; h < 24; h++) s += (buckets[`${dp}T${pad2(h)}`] || 0);
-    return s;
-  };
-
-  if (range === "7d") {
+  // Minggu ini — Senin → Minggu
+  if (range === "week" || range === "7d") {
     const labels = [], values = [];
-    const dayNames = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      labels.push(dayNames[d.getDay()]);
+    const dayNames = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
+    // ISO week: Senin = day 1
+    const dow = (now.getDay() + 6) % 7; // 0=Sen .. 6=Min
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+      labels.push(dayNames[i]);
       values.push(sumDay(d));
     }
     return { labels, values };
   }
 
-  // 30d
-  const labels = [], values = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    labels.push(`${d.getDate()}`);
-    values.push(sumDay(d));
+  // Bulan ini — tanggal 1 → akhir bulan
+  if (range === "month" || range === "30d") {
+    const labels = [], values = [];
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), i);
+      labels.push(String(i));
+      values.push(sumDay(d));
+    }
+    return { labels, values };
   }
-  return { labels, values };
+
+  // Tahun ini — Jan → Des
+  if (range === "year") {
+    const monthNames = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    const labels = [], values = [];
+    for (let m = 0; m < 12; m++) {
+      labels.push(monthNames[m]);
+      const daysInM = new Date(now.getFullYear(), m + 1, 0).getDate();
+      let s = 0;
+      for (let day = 1; day <= daysInM; day++) {
+        s += sumDay(new Date(now.getFullYear(), m, day));
+      }
+      values.push(s);
+    }
+    return { labels, values };
+  }
+
+  // fallback — empty
+  return { labels: [], values: [] };
 }
 
 function anRangeLabel(r) {
-  return r === "24h" ? "24 jam terakhir" : r === "7d" ? "7 hari terakhir" : "30 hari terakhir";
+  if (r === "day"   || r === "24h") return "Hari ini";
+  if (r === "week"  || r === "7d")  return "Minggu ini";
+  if (r === "month" || r === "30d") return "Bulan ini";
+  if (r === "year")                  return "Tahun ini";
+  return "Hari ini";
+}
+
+// Aggregate views per creator across all platform videos.
+// Returns top N creators sorted desc by total views, plus an "Lainnya" bucket
+// for the remainder. Used to populate the per-user breakdown legend.
+function anComputePerUserViews(limit = 5) {
+  const videos = (typeof getPlatformVideos === "function") ? getPlatformVideos() : [];
+  const grouped = {};
+  videos.forEach(v => {
+    const k = v.creator || "—";
+    grouped[k] = (grouped[k] || 0) + (v.viewsNum || 0);
+  });
+  const arr = Object.entries(grouped)
+    .map(([name, views]) => ({ name, views }))
+    .filter(u => u.views > 0)
+    .sort((a, b) => b.views - a.views);
+  const top = arr.slice(0, limit);
+  const restTotal = arr.slice(limit).reduce((s, u) => s + u.views, 0);
+  if (restTotal > 0) top.push({ name: "Lainnya", views: restTotal, _rest: true });
+  const totalAll = arr.reduce((s, u) => s + u.views, 0);
+  return { top, totalAll };
+}
+
+function renderAnTrafficLegend(periodTotal) {
+  const el = document.getElementById("anTrafficLegend");
+  if (!el) return;
+  const { top, totalAll } = anComputePerUserViews(5);
+  if (!top.length || totalAll === 0) {
+    el.innerHTML = `<div class="an-traffic-legend-empty">Belum ada views per user untuk periode ini.</div>`;
+    return;
+  }
+  // Scale per-user views to this period's total so the legend reflects the chart.
+  // (We don't have per-user-per-hour buckets, so use the user's overall share.)
+  const factor = (totalAll > 0 && periodTotal >= 0) ? (periodTotal / totalAll) : 0;
+  const palette = ["#A4C0E0","#E8D8C4","#C7B7A3","#7A5C45","#561C24","#3a425e"];
+  const max = Math.max(...top.map(u => u.views), 1);
+  el.innerHTML = `
+    <div class="an-traffic-legend-head">
+      <span>Distribusi per user — top ${Math.min(5, top.length)}</span>
+      <span class="muted">total ${fmtNum(Math.round(periodTotal))} views</span>
+    </div>
+    <div class="an-traffic-legend-list">
+      ${top.map((u, i) => {
+        const color = u._rest ? "#5a6378" : (palette[i] || "#A4C0E0");
+        const pct = (u.views / max) * 100;
+        const userPeriod = Math.round(u.views * factor);
+        return `<div class="an-traffic-legend-row">
+          <span class="an-tlg-dot" style="background:${color}"></span>
+          <span class="an-tlg-name">${u._rest ? u.name : "@" + escapeHtml(u.name)}</span>
+          <span class="an-tlg-bar"><i style="width:${pct.toFixed(1)}%;background:${color}"></i></span>
+          <b class="an-tlg-val">${fmtNum(userPeriod)}</b>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
 }
 
 // Common SVG chart drawing helpers
@@ -6117,15 +6492,25 @@ function drawAnTrafficChart() {
   const series = anGenSeries(anState.range, m.totalViews);
   const total = series.values.reduce((s, v) => s + v, 0);
   $("#anTrafficTotal") && ($("#anTrafficTotal").textContent = `${fmtNum(total)} views`);
-  $("#anTrafficSubtitle") && ($("#anTrafficSubtitle").textContent = anRangeLabel(anState.range));
+  $("#anTrafficSubtitle") && ($("#anTrafficSubtitle").textContent =
+    `Distribusi views per user — ${anRangeLabel(anState.range)}`);
+
+  // Sync active tab styling for the new an-tab row
+  document.querySelectorAll(".an-tab[data-an-range]").forEach(b => {
+    const on = b.dataset.anRange === anState.range;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
 
   if (m.totalViews === 0) {
     svg.innerHTML = "";
     if (empty) empty.hidden = false;
+    renderAnTrafficLegend(0);
     return;
   }
   if (empty) empty.hidden = true;
   anDrawAreaChart(svg, series.values, series.labels, { gradId: "anTrG" });
+  renderAnTrafficLegend(total);
 }
 
 // Auto-redraw admin traffic chart saat container width berubah
@@ -6152,8 +6537,17 @@ function drawAnBandwidthChart() {
   const svg = $("#anBwChart"); if (!svg) return;
   const empty = $("#anBwEmpty");
   const m = anComputeMetrics();
-  // Bandwidth per range = totalBytes × range_factor (estimasi linier)
-  const rangeFactor = { "24h": 1/30, "7d": 7/30, "30d": 1 }[anState.range];
+  // Bandwidth per range = totalBytes × range_factor (estimasi linier).
+  // 30d (1 bulan) = baseline 1.0; periode lain di-skala relatif terhadap itu.
+  const rangeFactor = ({
+    "day":   1 / 30,
+    "24h":   1 / 30,
+    "week":  7 / 30,
+    "7d":    7 / 30,
+    "month": 1,
+    "30d":   1,
+    "year":  12,
+  })[anState.range] ?? 1;
   const totalBwForRange = m.bandwidthBytes * rangeFactor;
   const series = anGenSeries(anState.range, m.totalViews);
   const sumViews = series.values.reduce((s, v) => s + v, 0) || 1;
@@ -6315,8 +6709,13 @@ function renderAdminAnalytics() {
 (function setupAnalyticsEvents() {
   if (window.__analyticsBound) return;
   window.__analyticsBound = true;
-  $("#anRangeSelect")?.addEventListener("change", e => {
-    anState.range = e.target.value;
+  // 4 period tabs (Hari ini / Minggu ini / Bulan ini / Tahun ini)
+  document.addEventListener("click", e => {
+    const tab = e.target.closest(".an-tab[data-an-range]");
+    if (!tab) return;
+    const r = tab.dataset.anRange;
+    if (!r || r === anState.range) return;
+    anState.range = r;
     drawAnTrafficChart();
     drawAnBandwidthChart();
   });
@@ -6429,17 +6828,6 @@ function renderAdminVideos() {
   $("#gvStatPublished") && ($("#gvStatPublished").textContent = all.filter(v => getAdminVideoStatus(v) === "published").length);
   $("#gvStatTakedown") && ($("#gvStatTakedown").textContent = all.filter(v => getAdminVideoStatus(v) === "takedown").length);
 
-  // Populate category dropdown once with currently used categories
-  const catSel = $("#gvCategoryFilter");
-  if (catSel && !catSel.dataset.populated) {
-    CATEGORIES.forEach(c => {
-      const o = document.createElement("option");
-      o.value = c.key; o.textContent = `${c.emoji} ${c.label}`;
-      catSel.appendChild(o);
-    });
-    catSel.dataset.populated = "1";
-  }
-
   // Apply filters
   let list = all.slice();
   if (adminVideoState.filter === "new") {
@@ -6449,9 +6837,6 @@ function renderAdminVideos() {
       && Number(v.uploadedAt || v.createdAt || v.id || 0) > cutoff);
   } else if (adminVideoState.filter !== "all") {
     list = list.filter(v => getAdminVideoStatus(v) === adminVideoState.filter);
-  }
-  if (adminVideoState.category) {
-    list = list.filter(v => (v.category || "") === adminVideoState.category);
   }
   const q = (adminVideoState.search || "").toLowerCase().trim();
   if (q) {
@@ -6481,8 +6866,6 @@ function renderAdminVideos() {
     if (empty) empty.hidden = true;
     tbody.innerHTML = list.map(v => {
       const status = getAdminVideoStatus(v);
-      const cat = CATEGORIES.find(c => c.key === v.category);
-      const catLabel = cat ? `${cat.emoji} ${cat.label}` : `<span class="muted">—</span>`;
       const checked = adminVideoState.selected.has(v.id) ? "checked" : "";
       const thumb = v.thumb || "https://picsum.photos/seed/playly/120/72";
       return `<tr data-vid="${v.id}" class="${checked ? "gv-row-selected" : ""}">
@@ -6500,7 +6883,6 @@ function renderAdminVideos() {
           </div>
         </td>
         <td><span class="gv-creator">@${escapeHtml(v.creator || v._owner || "—")}</span></td>
-        <td>${catLabel}</td>
         <td>${fmtNum(v.viewsNum || 0)}</td>
         <td>${fmtNum(v.likes || 0)}</td>
         <td>${adminVideoStatusBadge(status)}</td>
@@ -6681,10 +7063,6 @@ function setupAdminVideoEvents() {
   // Search & dropdowns
   $("#adminVideoSearch")?.addEventListener("input", e => {
     adminVideoState.search = e.target.value;
-    renderAdminVideos();
-  });
-  $("#gvCategoryFilter")?.addEventListener("change", e => {
-    adminVideoState.category = e.target.value;
     renderAdminVideos();
   });
   $("#gvSortBy")?.addEventListener("change", e => {
@@ -8118,6 +8496,11 @@ function runSubAction(action) {
     tab?.click();
     return;
   }
+  if (kind === "msg-filter") {
+    const tab = document.querySelector(`.msg-tabs button[data-msg-filter="${value}"]`);
+    tab?.click();
+    return;
+  }
   if (kind === "nav") {
     // Sub-item shortcut nav ke view berbeda dari parent (mis. My Library → upload)
     if (typeof switchView === "function") switchView(value, { fromNav: true });
@@ -9098,18 +9481,91 @@ function renderTrendingInto(targetSelector) {
 function renderTrendingHome() {
   renderTrendingInto("#trendingList");
   renderTrendingInto("#discoverTrendingList");
-  // Tag chips di footer trending card (Discover sidebar) — kategori unik dari top items
-  const items = getDailyTrending();
+  // Tag chips: 4 kategori fixed (Hiburan, Olahraga, K-Pop, Tech). Click → fetch
+  // berita real dari Google News RSS via rss2json proxy. Click news item → buka
+  // sumber asli di tab baru.
   const chipsEl = document.querySelector("#trendingTagChips");
   if (chipsEl) {
-    const cats = [];
-    items.forEach(t => {
-      if (t.category && !cats.includes(t.category)) cats.push(t.category);
+    const fixed = ["Hiburan", "Olahraga", "K-Pop", "Tech"];
+    chipsEl.innerHTML = fixed.map(c =>
+      `<button type="button" class="trending-chip" data-news-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+    ).join("");
+    chipsEl.querySelectorAll("[data-news-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cat = btn.dataset.newsCat;
+        // Visual active state
+        chipsEl.querySelectorAll(".trending-chip").forEach(c => c.classList.toggle("active", c === btn));
+        loadNewsByCategory(cat, "#discoverTrendingList");
+      });
     });
-    chipsEl.innerHTML = cats.slice(0, 4).map(c => `<span class="trending-chip">${escapeHtml(c)}</span>`).join("");
   }
+  const items = getDailyTrending();
   const cntLabel = document.querySelector("#trendingCountLabel");
   if (cntLabel) cntLabel.textContent = `(${items.length}) trending`;
+}
+
+// Fetch berita real-time dari Google News RSS via rss2json (free CORS proxy).
+// Per category, query keyword dipilih supaya hasil relevan dengan tone topic.
+const NEWS_QUERIES = {
+  "Hiburan": "hiburan indonesia",
+  "Olahraga": "olahraga indonesia",
+  "K-Pop": "k-pop",
+  "Tech": "teknologi indonesia"
+};
+async function loadNewsByCategory(category, targetSelector) {
+  const wrap = document.querySelector(targetSelector);
+  if (!wrap) return;
+  const query = NEWS_QUERIES[category] || category;
+  // Loading state
+  wrap.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">⏳</div>Memuat berita ${escapeHtml(category)}...</div>`;
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=id&gl=ID&ceid=ID:id`;
+  const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+  try {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    const items = (data?.items || []).slice(0, 10);
+    if (!items.length) {
+      wrap.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">📭</div>Tidak ada berita ${escapeHtml(category)} saat ini.</div>`;
+      return;
+    }
+    wrap.innerHTML = items.map((it, i) => {
+      const fire = i === 0 ? "🔥" : (i < 3 ? "⚡" : "");
+      // Source: extract dari title (Google News format: "title - source") atau dari link host
+      let title = it.title || "";
+      let source = "";
+      const m = title.match(/^(.+?)\s+-\s+([^-]+)$/);
+      if (m) { title = m[1]; source = m[2]; }
+      else { try { source = new URL(it.link).hostname.replace(/^www\./, ""); } catch {} }
+      const pubDate = it.pubDate ? relativeTimeShort(new Date(it.pubDate).getTime()) : "";
+      return `<button class="trending-item" type="button" data-news-link="${escapeHtml(it.link)}" title="Buka berita di tab baru">
+        <span class="trending-rank">${i + 1}</span>
+        <div class="trending-info">
+          <small class="trending-cat">${escapeHtml(category)} · 📰 ${escapeHtml(source)}</small>
+          <strong>${escapeHtml(title)} ${fire}</strong>
+          ${pubDate ? `<small>${escapeHtml(pubDate)}</small>` : ""}
+        </div>
+      </button>`;
+    }).join("");
+    wrap.querySelectorAll("[data-news-link]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const link = btn.dataset.newsLink;
+        if (link) window.open(link, "_blank", "noopener");
+      });
+    });
+  } catch (err) {
+    wrap.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">⚠️</div>
+      Gagal load berita.<br/><small>Coba cek koneksi atau klik kategori lain.</small></div>`;
+  }
+}
+
+// Helper: relative time pendek (e.g. "2j", "5m") — buat news pubDate
+function relativeTimeShort(ts) {
+  if (!ts) return "";
+  const diff = Date.now() - ts;
+  if (diff < 60000) return "baru saja";
+  if (diff < 3600000) return Math.floor(diff / 60000) + "m lalu";
+  if (diff < 86400000) return Math.floor(diff / 3600000) + "j lalu";
+  return Math.floor(diff / 86400000) + "h lalu";
 }
 
 // =================== SUGGEST USERS (sarankan kreator di Discover sidebar) ===================
@@ -9752,47 +10208,104 @@ function renderMyLibrary() {
   };
   const emptyMsg = (icon, msg) => `<div class="lib-empty"><div class="lib-empty-icon">${icon}</div><p>${msg}</p></div>`;
 
+  // Render preview item (kompak — thumb kecil + title + meta)
+  const renderPreview = (v) => {
+    const title = v.title || "(tanpa judul)";
+    const creator = v.creator || "—";
+    const thumb = v.thumb ? `style="background-image:url('${escapeHtml(v.thumb)}')"` : "";
+    return `
+    <div class="lib-preview-item" data-vid="${v.id}" title="${escapeHtml(title)}">
+      <div class="lib-preview-thumb" ${thumb}></div>
+      <div class="lib-preview-info">
+        <strong>${escapeHtml(title)}</strong>
+        <small>@${escapeHtml(creator)}</small>
+      </div>
+    </div>`;
+  };
+
+  // Helper: render satu lib section (preview row + grid + lainnya button).
+  // Saat collapsed: grid hidden via CSS, preview tampilkan first 3.
+  // Klik "Lainnya" → expand grid (data-collapsed="0"), hide preview.
+  function renderLibSection(key, list, gridId, previewId, countId, emptyIcon, emptyMsgHtml) {
+    const gridEl = $(`#${gridId}`);
+    const previewEl = $(`#${previewId}`);
+    const countEl = $(`#${countId}`);
+    const moreBtn = document.querySelector(`[data-lib-more="${key}"]`);
+    if (countEl) countEl.textContent = list.length;
+
+    if (!list.length) {
+      // Empty state — hide preview & button, show empty msg di grid (selalu visible)
+      if (previewEl) previewEl.innerHTML = "";
+      if (moreBtn) moreBtn.hidden = true;
+      if (gridEl) {
+        gridEl.removeAttribute("data-collapsed");
+        gridEl.innerHTML = `<div class="lib-empty"><div class="lib-empty-icon">${emptyIcon}</div><p>${emptyMsgHtml}</p></div>`;
+      }
+      return;
+    }
+
+    // Render full grid (selalu render, tapi collapsed via CSS attribute)
+    if (gridEl) gridEl.innerHTML = list.map(renderCard).join("");
+
+    // Render preview (max 3)
+    const top3 = list.slice(0, 3);
+    if (previewEl) previewEl.innerHTML = top3.map(renderPreview).join("");
+
+    // Lainnya button — visible kalau total > 3
+    if (moreBtn) moreBtn.hidden = list.length <= 3;
+  }
+
   // 1. My Video — video user sendiri
   const myVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
   myVideos.sort((a, b) => (b.id || 0) - (a.id || 0));
-  const myEl = $("#myVideoGrid");
-  const myCnt = $("#myVideoCount");
-  if (myEl) myEl.innerHTML = myVideos.length
-    ? myVideos.map(renderCard).join("")
-    : emptyMsg("🎬", "Belum ada video yang kamu upload. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload sekarang</a>");
-  if (myCnt) myCnt.textContent = myVideos.length;
+  renderLibSection("my", myVideos, "myVideoGrid", "myVideoPreview", "myVideoCount", "🎬",
+    "Belum ada video yang kamu upload. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload sekarang</a>");
 
-  // 2. New Videos — semua video kreator lain, sort by id desc (terbaru dulu)
+  // 2. New Videos — semua video kreator lain, sort by id desc
   const myIds = new Set(myVideos.map(v => v.id));
   const platform = (typeof getPlatformVideos === "function" ? getPlatformVideos() : [])
     .filter(v => !myIds.has(v.id));
   platform.sort((a, b) => (b.id || 0) - (a.id || 0));
   const newList = platform.slice(0, 24);
-  const newEl = $("#newVideoGrid");
-  const newCnt = $("#newVideoCount");
-  if (newEl) newEl.innerHTML = newList.length
-    ? newList.map(renderCard).join("")
-    : emptyMsg("🆕", "Belum ada video baru dari kreator lain.");
-  if (newCnt) newCnt.textContent = newList.length;
+  renderLibSection("new", newList, "newVideoGrid", "newVideoPreview", "newVideoCount", "🆕",
+    "Belum ada video baru dari kreator lain.");
 
   // 3. Download — video yang ditandai diunduh oleh user
   const downloadIds = (state?.downloaded || []).map(d => d?.videoId).filter(Boolean);
   const allLookup = new Map();
   [...myVideos, ...platform].forEach(v => allLookup.set(v.id, v));
   const dlList = downloadIds.map(id => allLookup.get(id)).filter(Boolean);
-  const dlEl = $("#downloadVideoGrid");
-  const dlCnt = $("#downloadVideoCount");
-  if (dlEl) dlEl.innerHTML = dlList.length
-    ? dlList.map(renderCard).join("")
-    : emptyMsg("📥", "Belum ada video yang didownload. Tonton video lalu klik tombol Download di player untuk menyimpan.");
-  if (dlCnt) dlCnt.textContent = dlList.length;
+  renderLibSection("download", dlList, "downloadVideoGrid", "downloadVideoPreview", "downloadVideoCount", "📥",
+    "Belum ada video yang didownload. Tonton video lalu klik tombol Download di player untuk menyimpan.");
 
-  // Click handler: buka player saat item di-klik (delegasi sekali aja)
+  // Click handler — gabung: lib-item (full grid card), lib-preview-item (preview row),
+  // dan lib-more-btn (toggle collapsed). Delegasi sekali per view.
   const view = document.querySelector('section.view[data-view="videos"]');
   if (view && !view.__libBound) {
     view.__libBound = true;
     view.addEventListener("click", e => {
-      const item = e.target.closest(".lib-item");
+      // Tombol "Lainnya" → toggle expand
+      const moreBtn = e.target.closest(".lib-more-btn");
+      if (moreBtn) {
+        const key = moreBtn.dataset.libMore;
+        const card = moreBtn.closest(".lib-card");
+        const grid = card?.querySelector(".lib-grid");
+        const preview = card?.querySelector(".lib-preview-row");
+        if (!grid) return;
+        const isCollapsed = grid.getAttribute("data-collapsed") === "1";
+        if (isCollapsed) {
+          grid.removeAttribute("data-collapsed");
+          if (preview) preview.hidden = true;
+          moreBtn.textContent = "Tutup ↑";
+        } else {
+          grid.setAttribute("data-collapsed", "1");
+          if (preview) preview.hidden = false;
+          moreBtn.textContent = "Lainnya →";
+        }
+        return;
+      }
+      // Click pada video card / preview item → buka player
+      const item = e.target.closest(".lib-item, .lib-preview-item");
       if (!item) return;
       const id = Number(item.dataset.vid);
       if (Number.isFinite(id) && typeof openPlayer === "function") openPlayer(id);
@@ -10020,25 +10533,63 @@ $("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.ta
 })();
 
 function renderTopPerforming() {
-  const list = $("#topPerformList");
   const card = $("#topPerfCard");
-  if (!list || !card) return;
+  const colViews = $("#topPerformViews");
+  const colLikes = $("#topPerformLikes");
+  const colWatch = $("#topPerformWatch");
+  if (!card || !colViews || !colLikes || !colWatch) return;
   if (!state.myVideos.length) {
-    // Hide entire card for new user — no clutter
     card.style.display = "none";
     return;
   }
   card.style.display = "";
-  const top = [...state.myVideos].sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0)).slice(0, 5);
-  list.innerHTML = top.map((v, i) => `
+
+  // Real-time aggregate dari state.myVideos. Watch time = views × duration ×
+  // 0.6 (avg retention) — konsisten dengan formula admin analytics.
+  const parseDur = (d) => {
+    if (!d) return 0;
+    const p = String(d).split(":").map(Number);
+    if (p.some(isNaN)) return 0;
+    if (p.length === 2) return p[0] * 60 + p[1];
+    if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
+    return 0;
+  };
+  const fmtWatch = (sec) => {
+    if (sec < 60) return Math.floor(sec) + "s";
+    if (sec < 3600) return Math.floor(sec / 60) + "m";
+    if (sec < 86400) return (sec / 3600).toFixed(1) + "h";
+    return (sec / 86400).toFixed(1) + "d";
+  };
+
+  const enriched = state.myVideos.map(v => ({
+    ...v,
+    _views: v.viewsNum || 0,
+    _likes: v.likes || 0,
+    _watch: (v.viewsNum || 0) * parseDur(v.duration) * 0.6,
+  }));
+
+  const renderRow = (v, i, valFmt, valSrc) => `
     <div class="top-perf-item" data-vid="${v.id}">
       <div class="top-perf-rank ${i === 0 ? 'first' : ''}">#${i + 1}</div>
       <div class="mini-thumb"><img src="${v.thumb}" alt=""/></div>
-      <div class="info"><h5>${v.title}</h5><div class="meta">@${v.creator} • ${v.duration}</div></div>
-      <div class="views">${v.views}</div>
+      <div class="info"><h5>${escapeHtml(v.title || "")}</h5><div class="meta">${escapeHtml(v.duration || "0:00")}</div></div>
+      <div class="views">${valFmt(v[valSrc])}</div>
     </div>
-  `).join("");
-  $$(".top-perf-item", list).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
+  `;
+
+  const topViews = [...enriched].sort((a, b) => b._views - a._views).slice(0, 5);
+  const topLikes = [...enriched].sort((a, b) => b._likes - a._likes).slice(0, 5);
+  const topWatch = [...enriched].sort((a, b) => b._watch - a._watch).slice(0, 5);
+
+  const empty = `<div class="top-perf-empty">Belum ada data.</div>`;
+  colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
+    ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
+  colLikes.innerHTML = topLikes.length && topLikes.some(v => v._likes > 0)
+    ? topLikes.map((v, i) => renderRow(v, i, fmtNum, "_likes")).join("") : empty;
+  colWatch.innerHTML = topWatch.length && topWatch.some(v => v._watch > 0)
+    ? topWatch.map((v, i) => renderRow(v, i, fmtWatch, "_watch")).join("") : empty;
+
+  $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
 }
 
 // ----------------------- ACTIVITY VIEW -----------------------
@@ -11190,8 +11741,12 @@ function escapeHtml(s) {
   return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+// Pagination state untuk Search User — increment per klik "more >".
+const peopleState = { limit: 20 };
+
 function renderPeople() {
   const grid = $("#peopleGrid");
+  const moreWrap = $("#peopleMoreWrap");
   if (!grid) return;
   const q = ($("#peopleSearch")?.value || "").trim().toLowerCase();
   const accounts = getAllAccounts()
@@ -11201,11 +11756,25 @@ function renderPeople() {
 
   if (!accounts.length) {
     grid.innerHTML = `<div class="people-empty">${q ? `Tidak ada user yang cocok dengan "<b>${escapeHtml(q)}</b>".` : "Belum ada user lain — ajak teman daftar di Playly!"}</div>`;
+    if (moreWrap) moreWrap.hidden = true;
     return;
   }
 
+  const totalCount = accounts.length;
+  const limit = Math.max(20, peopleState.limit || 20);
+  const visible = accounts.slice(0, limit);
+
+  if (moreWrap) {
+    moreWrap.hidden = totalCount <= limit;
+    const moreBtn = $("#peopleMoreBtn");
+    if (moreBtn) {
+      const remaining = totalCount - limit;
+      moreBtn.querySelector("span").textContent = `more (+${remaining})`;
+    }
+  }
+
   const myUsername = user?.username;
-  grid.innerHTML = accounts.map(a => {
+  grid.innerHTML = visible.map(a => {
     const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
     const isAdmin = a.role === "admin";
     const handle = isAdmin ? "Administrator" : `@${escapeHtml(a.username)}`;
@@ -11278,7 +11847,14 @@ function startChatWithUser(username) {
   setTimeout(() => openChat(0), 80);
 }
 
-$("#peopleSearch")?.addEventListener("input", renderPeople);
+$("#peopleSearch")?.addEventListener("input", () => {
+  peopleState.limit = 20; // reset pagination saat user ngetik search baru
+  renderPeople();
+});
+$("#peopleMoreBtn")?.addEventListener("click", () => {
+  peopleState.limit += 20;
+  renderPeople();
+});
 
 // ----------------------- MESSAGES VIEW -----------------------
 function renderMsgList() {
@@ -11296,12 +11872,16 @@ function renderMsgList() {
 
   let filtered = state.messages;
   if (state.msgFilter === "unread") filtered = filtered.filter(m => m.unread);
+  else if (state.msgFilter === "broadcast") filtered = filtered.filter(m => m.isAdmin || m.isBroadcast);
   else if (state.msgFilter === "groups") filtered = [];
   const q = ($("#msgSearch")?.value || "").toLowerCase();
   if (q) filtered = filtered.filter(m => m.name.toLowerCase().includes(q) || m.preview.toLowerCase().includes(q));
 
   if (!filtered.length) {
-    list.innerHTML = `<div style="text-align:center; padding:32px 16px; color:var(--muted); font-size:12.5px">${state.msgFilter === "groups" ? "Belum ada grup chat." : "Tidak ditemukan."}</div>`;
+    const emptyMsg = state.msgFilter === "groups" ? "Belum ada grup chat."
+      : state.msgFilter === "broadcast" ? "Belum ada broadcast dari admin."
+      : "Tidak ditemukan.";
+    list.innerHTML = `<div style="text-align:center; padding:32px 16px; color:var(--muted); font-size:12.5px">${emptyMsg}</div>`;
     return;
   }
 
@@ -12787,7 +13367,10 @@ function cleanupPlayerView() {
   v.pause(); v.removeAttribute("src"); v.load();
   if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {});
   // Cleanup ad overlays (running text, banner, pre-roll)
-  document.querySelectorAll(".player-screen .ad-overlay").forEach(el => el.remove());
+  document.querySelectorAll(".player-screen .ad-overlay").forEach(el => {
+    try { el._adRtRO?.disconnect(); } catch {}
+    el.remove();
+  });
 }
 
 document.addEventListener("keydown", e => {
@@ -12799,6 +13382,32 @@ document.addEventListener("keydown", e => {
 });
 
 // ----------------------- NOTIFICATIONS -----------------------
+// Notif panel di-group per kategori: section hanya muncul kalau punya
+// minimal 1 notif real-time. Mapping type internal → kategori display:
+//   - follow                              → 👤 New Followers
+//   - like / video-like                   → ❤️ New Likes
+//   - comment / video-comment             → 💬 New Comments
+//   - share / video-share                 → 📤 New Share Link
+//   - message / msg                       → 💌 New Messages
+//   - broadcast                           → 📢 Broadcast Admin
+//   - email-reply / admin-email           → 📧 Balasan Email Admin
+const NOTIF_CATEGORY_MAP = {
+  follow:          { key: "followers",  icon: "👤", title: "New Followers" },
+  like:            { key: "likes",      icon: "❤️", title: "New Likes" },
+  "video-like":    { key: "likes",      icon: "❤️", title: "New Likes" },
+  comment:         { key: "comments",   icon: "💬", title: "New Comments" },
+  "video-comment": { key: "comments",   icon: "💬", title: "New Comments" },
+  share:           { key: "share",      icon: "📤", title: "New Share Link" },
+  "video-share":   { key: "share",      icon: "📤", title: "New Share Link" },
+  message:         { key: "messages",   icon: "💌", title: "New Messages" },
+  msg:             { key: "messages",   icon: "💌", title: "New Messages" },
+  broadcast:       { key: "broadcast",  icon: "📢", title: "Broadcast Admin" },
+  "admin-broadcast": { key: "broadcast", icon: "📢", title: "Broadcast Admin" },
+  "email-reply":   { key: "email",      icon: "📧", title: "Balasan Email Admin" },
+  "admin-email":   { key: "email",      icon: "📧", title: "Balasan Email Admin" },
+};
+const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
+
 function renderNotifications() {
   const list = $("#notifList");
   if (!list) return;
@@ -12810,12 +13419,41 @@ function renderNotifications() {
     </div>`;
     return;
   }
-  list.innerHTML = state.notifications.map(n => `
-    <div class="notif-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}" style="cursor:pointer">
-      <div class="avatar small"><span>${n.init}</span></div>
-      <div class="info"><p>${n.text}</p><div class="time">${n.time}</div></div>
-    </div>
-  `).join("");
+
+  // Group notif by category. Setiap grup = { key, icon, title, items[] }.
+  const grouped = {};
+  state.notifications.forEach(n => {
+    const cat = NOTIF_CATEGORY_MAP[n.type] || { key: "other", icon: "🔔", title: "Lainnya" };
+    if (!grouped[cat.key]) grouped[cat.key] = { ...cat, items: [] };
+    grouped[cat.key].items.push(n);
+  });
+
+  // Render dalam urutan canonical, skip kategori yang kosong (no real-time data).
+  const order = [...NOTIF_CATEGORY_ORDER];
+  if (grouped.other) order.push("other");
+
+  list.innerHTML = order
+    .filter(k => grouped[k] && grouped[k].items.length)
+    .map(k => {
+      const g = grouped[k];
+      const rows = g.items.map(n => `
+        <div class="notif-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}" style="cursor:pointer">
+          <div class="avatar small"><span>${n.init || "?"}</span></div>
+          <div class="info"><p>${n.text}</p><div class="time">${n.time}</div></div>
+        </div>
+      `).join("");
+      return `
+        <div class="notif-cat">
+          <div class="notif-cat-head">
+            <span class="notif-cat-icon">${g.icon}</span>
+            <span class="notif-cat-title">${g.title}</span>
+            <span class="notif-cat-count">${g.items.length}</span>
+          </div>
+          <div class="notif-cat-list">${rows}</div>
+        </div>
+      `;
+    }).join("");
+
   // Klik notifikasi: tandai dibaca + arahkan sesuai jenis (video / profil / pesan).
   list.querySelectorAll(".notif-item").forEach(el => {
     el.addEventListener("click", () => {
