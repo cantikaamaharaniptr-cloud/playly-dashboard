@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playly — Watch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       RESET & CSS VARIABLES
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #1a0c10;
+      --bg-elev:      #251419;
+      --bg-elev-2:    #311c22;
+      --surface:      rgba(232,216,196,.04);
+      --surface-2:    rgba(232,216,196,.08);
+      --surface-3:    rgba(232,216,196,.13);
+      --border:       rgba(232,216,196,.09);
+      --border-s:     rgba(232,216,196,.16);
+      --text:         #E8D8C4;
+      --text-2:       #C7B7A3;
+      --muted:        #806a5e;
+      --primary:      #6D2932;
+      --primary-h:    #8c3a45;
+      --primary-soft: rgba(109,41,50,.18);
+      --accent:       #C7B7A3;
+      --grad:         linear-gradient(135deg,#6D2932 0%,#561C24 100%);
+      --ease:         cubic-bezier(.4,0,.2,1);
+      --r:            14px;
+      --r-sm:         9px;
+      --shadow:       0 8px 24px rgba(0,0,0,.35), 0 24px 60px rgba(0,0,0,.28);
+      --topbar-h:     54px;
+      --ticker-h:     38px;
+      --banner-h:     96px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      padding-top: calc(var(--topbar-h) + var(--ticker-h));
+      padding-bottom: calc(var(--banner-h) + 20px);
+      min-height: 100dvh;
+    }
+
+    /* ============================================================
+       TOPBAR
+    ============================================================ */
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto;
+      height: var(--topbar-h);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 22px;
+      background: rgba(37,20,25,.88);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+      flex-shrink: 0;
+    }
+    .brand-icon {
+      width: 34px; height: 34px;
+      background: var(--grad);
+      border-radius: 9px;
+      display: grid; place-items: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px; font-weight: 800;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(109,41,50,.45);
+    }
+    .brand-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px; font-weight: 800;
+      letter-spacing: -.02em;
+    }
+    .brand-name em { font-style: normal; color: var(--primary); }
+
+    .breadcrumb {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--muted);
+    }
+    .breadcrumb a {
+      color: var(--text-2); text-decoration: none;
+      transition: color .15s;
+    }
+    .breadcrumb a:hover { color: var(--text); }
+
+    .spacer { flex: 1; }
+
+    .top-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
+      border: none; border-radius: 9px;
+      background: var(--surface);
+      color: var(--text-2);
+      cursor: pointer; font-size: 15px;
+      transition: background .15s, color .15s;
+    }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    /* ============================================================
+       TICKER (RUNNING TEXT — fixed top, below topbar)
+    ============================================================ */
+    .ticker {
+      position: fixed;
+      top: var(--topbar-h);
+      inset-inline: 0;
+      height: var(--ticker-h);
+      z-index: 290;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      background: rgba(26,12,16,.82);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .ticker-badge {
+      flex-shrink: 0;
+      padding: 0 14px;
+      display: flex; align-items: center;
+      background: var(--primary);
+      font-size: 10px; font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #fff;
+      border-right: 1px solid var(--border-s);
+      gap: 5px;
+    }
+    .ticker-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      animation: tickerPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes tickerPulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+
+    .ticker-runway {
+      flex: 1;
+      overflow: hidden;
+      display: flex; align-items: center;
+    }
+
+    /* Two identical spans back-to-back → seamless loop via -50% shift */
+    .ticker-inner {
+      display: inline-flex;
+      white-space: nowrap;
+      will-change: transform;
+      animation: tickerScroll 22s linear infinite;
+    }
+    .ticker-inner:hover { animation-play-state: paused; }
+
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      padding: 0 36px;
+      font-size: 12px;
+      color: var(--text-2);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .ticker-item b { color: var(--accent); font-weight: 700; }
+    .ticker-sep {
+      color: var(--primary);
+      font-size: 14px;
+      margin: 0 4px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker-inner { animation: none; }
+    }
+
+    /* ============================================================
+       MAIN LAYOUT
+    ============================================================ */
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 22px 20px 0;
+    }
+
+    /* ============================================================
+       VIDEO PLAYER
+    ============================================================ */
+    .player-shell {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .player-shell video {
+      width: 100%;
+      height: 70vh;
+      display: block;
+      object-fit: contain;
+      background: #000;
+    }
+
+    /* Custom fullscreen helper (F key) */
+    .player-shell:fullscreen video { height: 100vh; }
+
+    /* ============================================================
+       VIDEO INFO SECTION
+    ============================================================ */
+    .video-info {
+      margin-top: 20px;
+    }
+
+    .video-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 21px; font-weight: 800;
+      letter-spacing: -.025em;
+      line-height: 1.25;
+      margin-bottom: 14px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .creator-row { display: flex; align-items: center; gap: 10px; }
+
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--grad);
+      display: grid; place-items: center;
+      color: #fff; font-weight: 700; font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .creator-name  { font-size: 13px; font-weight: 600; }
+    .creator-subs  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .action-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 15px;
+      border-radius: var(--r-sm);
+      font: 600 12.5px 'Inter', sans-serif;
+      cursor: pointer; border: none;
+      transition: all .18s var(--ease);
+      text-decoration: none;
+    }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn.primary { background: var(--grad); color: #fff; }
+    .btn.primary:hover { opacity: .85; }
+    .btn.ghost {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+    }
+    .btn.ghost:hover { background: var(--surface-3); color: var(--text); }
+    .btn.liked { color: #ef4444; border-color: rgba(239,68,68,.35); }
+
+    .video-stats {
+      display: flex; gap: 18px;
+      margin-top: 12px;
+      font-size: 12px; color: var(--muted);
+    }
+    .video-stats b { color: var(--text-2); }
+
+    /* ============================================================
+       AD BANNER (fixed bottom, scrolling horizontally)
+    ============================================================ */
+    .ad-banner {
+      position: fixed;
+      inset: auto 0 0;
+      height: var(--banner-h);
+      z-index: 280;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      background: rgba(26,12,16,.90);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: opacity .3s var(--ease);
+    }
+    .ad-banner:hover { opacity: .72; }
+
+    .ad-label {
+      flex-shrink: 0;
+      width: 70px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 3px;
+      border-right: 1px solid var(--border);
+      font-size: 9px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .ad-label span { font-size: 15px; }
+
+    .ad-runway {
+      flex: 1;
+      overflow: hidden;
+      display: flex; align-items: center;
+    }
+
+    /* Two identical sets → seamless loop via -50% shift */
+    .ad-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 14px;
+      will-change: transform;
+      animation: adScroll 30s linear infinite;
+    }
+    .ad-track:hover { animation-play-state: paused; }
+
+    @keyframes adScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ad-slot {
+      flex-shrink: 0;
+      width: 300px; height: 68px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border-s);
+      position: relative;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .22s var(--ease), border-color .22s;
+    }
+    .ad-slot:hover {
+      transform: scale(1.04) translateY(-2px);
+      border-color: var(--primary);
+    }
+    .ad-slot:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 3px;
+    }
+    .ad-slot img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+    }
+
+    /* Text-only ad card */
+    .ad-card {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 10px 14px; text-align: center;
+      color: #fff;
+    }
+    .ad-card strong { font-size: 13px; font-weight: 700; display: block; line-height: 1.2; }
+    .ad-card small  { font-size: 10.5px; opacity: .8; display: block; margin-top: 3px; }
+    .ad-tag {
+      position: absolute; top: 5px; right: 6px;
+      background: rgba(255,255,255,.15);
+      font-size: 8.5px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 2px 5px; border-radius: 4px; color: #fff;
+    }
+
+    /* Caption overlay on image ads */
+    .ad-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 5px 10px;
+      background: linear-gradient(transparent, rgba(0,0,0,.75));
+      color: #fff; font-size: 11px; font-weight: 600;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ad-track { animation: none; }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      :root {
+        --topbar-h:  50px;
+        --ticker-h:  34px;
+        --banner-h:  80px;
+      }
+      .wrap { padding: 0; }
+      .player-shell { border-radius: 0; border-inline: none; }
+      .player-shell video { height: 100svh; }
+      .video-info { padding: 16px; }
+      .video-title { font-size: 17px; }
+      .ad-slot { width: 220px; height: 52px; }
+      .ad-label { width: 52px; font-size: 7.5px; }
+      .ad-label span { font-size: 13px; }
+      .ad-card strong { font-size: 11.5px; }
+      .brand-name { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .meta-row { flex-direction: column; align-items: flex-start; }
+      .ticker-item { padding: 0 20px; font-size: 11px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       TOPBAR
+  ══════════════════════════════════════════════ -->
+  <header class="topbar" role="banner">
+    <a href="#" class="brand" aria-label="Kembali ke Playly Home">
+      <div class="brand-icon" aria-hidden="true">P</div>
+      <span class="brand-name">Play<em>ly</em></span>
+    </a>
+
+    <nav class="breadcrumb" aria-label="Breadcrumb navigasi">
+      <a href="#">Home</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Watch</span>
+    </nav>
+
+    <div class="spacer"></div>
+
+    <div class="top-actions">
+      <button class="icon-btn" id="muteBtn" title="Mute/Unmute (M)" aria-label="Mute video" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button class="icon-btn" id="fsBtn" title="Fullscreen (F)" aria-label="Fullscreen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Notifikasi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════
+       TICKER — teks berjalan promo
+  ══════════════════════════════════════════════ -->
+  <aside class="ticker" role="marquee" aria-label="Teks promo berjalan" aria-live="off">
+    <div class="ticker-badge" aria-hidden="true">
+      <span class="ticker-dot"></span>
+      PROMO
+    </div>
+    <div class="ticker-runway">
+      <!--
+        Dua salinan teks yang identik berdampingan.
+        Animasi geser -50% = pindah satu lebar salinan → loop mulus.
+      -->
+      <div class="ticker-inner">
+        <span class="ticker-item">
+          <b>Flash Sale:</b> Diskon 50% Premium bulan ini
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+          <b>New Release Alert</b> — Konten kreator terbaru sudah tayang
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+          Subscribe &amp; dapatkan akses eksklusif sekarang
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+          Upload video &amp; raih penghasilan dari konten kamu
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+          <b>Playly Premium</b> — Bebas iklan, HD 4K, download offline
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+          Creator Academy: Kursus editing gratis untuk semua kreator
+          <span class="ticker-sep" aria-hidden="true">✦</span>
+        </span>
+        <!-- Salinan identik untuk loop tanpa jeda -->
+        <span class="ticker-item" aria-hidden="true">
+          <b>Flash Sale:</b> Diskon 50% Premium bulan ini
+          <span class="ticker-sep">✦</span>
+          <b>New Release Alert</b> — Konten kreator terbaru sudah tayang
+          <span class="ticker-sep">✦</span>
+          Subscribe &amp; dapatkan akses eksklusif sekarang
+          <span class="ticker-sep">✦</span>
+          Upload video &amp; raih penghasilan dari konten kamu
+          <span class="ticker-sep">✦</span>
+          <b>Playly Premium</b> — Bebas iklan, HD 4K, download offline
+          <span class="ticker-sep">✦</span>
+          Creator Academy: Kursus editing gratis untuk semua kreator
+          <span class="ticker-sep">✦</span>
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════════════ -->
+  <main class="wrap" id="main" tabindex="-1">
+
+    <!-- ─── VIDEO PLAYER ─── -->
+    <section class="player-shell" id="playerShell" aria-label="Pemutar video">
+      <video
+        id="mainVideo"
+        controls
+        preload="metadata"
+        poster="https://placehold.co/1280x720/1a0c10/C7B7A3?text=Playly+Watch"
+        aria-label="Video sampel: For Bigger Fun"
+      >
+        <source
+          src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+          type="video/mp4"
+        />
+        <!-- Fallback src jika yang utama gagal -->
+        <source
+          src="https://www.w3schools.com/html/mov_bbb.mp4"
+          type="video/mp4"
+        />
+        <track kind="captions" label="Bahasa Indonesia" default />
+        <p>Browser kamu tidak mendukung elemen <code>&lt;video&gt;</code> HTML5.</p>
+      </video>
+    </section>
+
+    <!-- ─── VIDEO INFO ─── -->
+    <div class="video-info">
+      <h1 class="video-title">For Bigger Fun — Sample HD Video</h1>
+
+      <div class="meta-row">
+        <div class="creator-row">
+          <div class="avatar" aria-hidden="true">PL</div>
+          <div>
+            <div class="creator-name">@playly_demo</div>
+            <div class="creator-subs">12.4K subscriber</div>
+          </div>
+          <button
+            class="btn primary"
+            style="margin-left:8px"
+            id="subBtn"
+            aria-label="Subscribe ke playly_demo"
+            aria-pressed="false"
+          >+ Subscribe</button>
+        </div>
+
+        <div class="action-row" role="group" aria-label="Aksi video">
+          <button class="btn ghost" id="likeBtn" aria-label="Like video" aria-pressed="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>
+            <span id="likeCount">4.2K</span>
+          </button>
+          <button class="btn ghost" aria-label="Share video" id="shareBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <button class="btn ghost" aria-label="Save video" id="saveBtn" aria-pressed="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div class="video-stats" aria-label="Statistik video">
+        <span><b id="viewCount">127K</b> penonton</span>
+        <span><b>05 Mei 2026</b></span>
+        <span><b>HD</b> · 1080p</span>
+        <span id="videoTime" aria-live="polite"><b>0:00</b> / <b id="vidDuration">—</b></span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       AD BANNER — iklan scroll horizontal (fixed bottom)
+  ══════════════════════════════════════════════ -->
+  <aside class="ad-banner" role="complementary" aria-label="Banner iklan">
+    <div class="ad-label" aria-hidden="true">
+      <span>📢</span>
+      IKLAN
+    </div>
+
+    <div class="ad-runway">
+      <!--
+        Dua set slot iklan yang identik.
+        Animasi geser -50% = satu set width → loop mulus.
+      -->
+      <div class="ad-track" id="adTrack" role="list" aria-label="Iklan berjalan">
+
+        <!-- ── SET A (5 slot) ── -->
+        <a href="#" class="ad-slot" role="listitem" aria-label="Iklan: Playly Premium">
+          <div class="ad-card" style="background:var(--grad)">
+            <span class="ad-tag">AD</span>
+            <strong>Playly Premium</strong>
+            <small>Bebas iklan · 4K Ultra HD · Mulai gratis</small>
+          </div>
+        </a>
+
+        <a href="#" class="ad-slot" role="listitem" aria-label="Iklan: Flash Sale 50% OFF">
+          <img
+            src="https://picsum.photos/seed/playad2/300/100"
+            alt="Flash Sale Playly — Diskon 50% hari ini"
+            loading="lazy"
+          />
+          <div class="ad-caption">Flash Sale 50% OFF · Hari ini saja! 🔥</div>
+          <span class="ad-tag">AD</span>
+        </a>
+
+        <a href="#" class="ad-slot" role="listitem" aria-label="Iklan: Upload dan Monetisasi">
+          <div class="ad-card" style="background:linear-gradient(135deg,#1a3a5c,#0d2242)">
+            <span class="ad-tag">AD</span>
+            <strong>Upload &amp; Monetisasi</strong>
+            <small>Dapatkan penghasilan dari konten kamu</small>
+          </div>
+        </a>
+
+        <a href="#" class="ad-slot" role="listitem" aria-label="Iklan: Creator Academy">
+          <img
+            src="https://picsum.photos/seed/playad4/300/100"
+            alt="Creator Academy — Kursus editing gratis"
+            loading="lazy"
+          />
+          <div class="ad-caption">Creator Academy — Editing gratis untuk semua</div>
+          <span class="ad-tag">AD</span>
+        </a>
+
+        <a href="#" class="ad-slot" role="listitem" aria-label="Iklan: Download Playly App">
+          <div class="ad-card" style="background:linear-gradient(135deg,#1c4a2e,#0d2918)">
+            <span class="ad-tag">AD</span>
+            <strong>Download Playly App</strong>
+            <small>iOS &amp; Android — 100% Gratis</small>
+          </div>
+        </a>
+
+        <!-- ── SET B (identik, aria-hidden agar screen reader tidak baca dua kali) ── -->
+        <a href="#" class="ad-slot" aria-hidden="true" tabindex="-1">
+          <div class="ad-card" style="background:var(--grad)">
+            <span class="ad-tag">AD</span>
+            <strong>Playly Premium</strong>
+            <small>Bebas iklan · 4K Ultra HD · Mulai gratis</small>
+          </div>
+        </a>
+        <a href="#" class="ad-slot" aria-hidden="true" tabindex="-1">
+          <img src="https://picsum.photos/seed/playad2/300/100" alt="" loading="lazy" />
+          <div class="ad-caption">Flash Sale 50% OFF · Hari ini saja! 🔥</div>
+          <span class="ad-tag">AD</span>
+        </a>
+        <a href="#" class="ad-slot" aria-hidden="true" tabindex="-1">
+          <div class="ad-card" style="background:linear-gradient(135deg,#1a3a5c,#0d2242)">
+            <span class="ad-tag">AD</span>
+            <strong>Upload &amp; Monetisasi</strong>
+            <small>Dapatkan penghasilan dari konten kamu</small>
+          </div>
+        </a>
+        <a href="#" class="ad-slot" aria-hidden="true" tabindex="-1">
+          <img src="https://picsum.photos/seed/playad4/300/100" alt="" loading="lazy" />
+          <div class="ad-caption">Creator Academy — Editing gratis untuk semua</div>
+          <span class="ad-tag">AD</span>
+        </a>
+        <a href="#" class="ad-slot" aria-hidden="true" tabindex="-1">
+          <div class="ad-card" style="background:linear-gradient(135deg,#1c4a2e,#0d2918)">
+            <span class="ad-tag">AD</span>
+            <strong>Download Playly App</strong>
+            <small>iOS &amp; Android — 100% Gratis</small>
+          </div>
+        </a>
+
+      </div><!-- /ad-track -->
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT (inline, tanpa dependensi)
+  ══════════════════════════════════════════════ -->
+  <script>
+    'use strict';
+
+    const video   = document.getElementById('mainVideo');
+    const shell   = document.getElementById('playerShell');
+    const likeBtn = document.getElementById('likeBtn');
+    const subBtn  = document.getElementById('subBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const fsBtn   = document.getElementById('fsBtn');
+
+    /* ── Like toggle ── */
+    let likeCount = 4200;
+    let liked = false;
+    likeBtn?.addEventListener('click', () => {
+      liked = !liked;
+      likeCount += liked ? 1 : -1;
+      document.getElementById('likeCount').textContent =
+        likeCount >= 1000 ? (likeCount / 1000).toFixed(1) + 'K' : likeCount;
+      likeBtn.classList.toggle('liked', liked);
+      likeBtn.setAttribute('aria-pressed', liked.toString());
+      likeBtn.querySelector('svg').setAttribute('fill', liked ? '#ef4444' : 'none');
+    });
+
+    /* ── Subscribe toggle ── */
+    let subscribed = false;
+    subBtn?.addEventListener('click', () => {
+      subscribed = !subscribed;
+      subBtn.textContent = subscribed ? '✓ Subscribed' : '+ Subscribe';
+      subBtn.classList.toggle('ghost', subscribed);
+      subBtn.classList.toggle('primary', !subscribed);
+      subBtn.setAttribute('aria-pressed', subscribed.toString());
+    });
+
+    /* ── Save toggle ── */
+    let saved = false;
+    saveBtn?.addEventListener('click', () => {
+      saved = !saved;
+      saveBtn.setAttribute('aria-pressed', saved.toString());
+      saveBtn.querySelector('svg').setAttribute('fill', saved ? 'currentColor' : 'none');
+    });
+
+    /* ── Mute toggle (topbar button) ── */
+    muteBtn?.addEventListener('click', () => {
+      video.muted = !video.muted;
+      muteBtn.setAttribute('aria-pressed', video.muted.toString());
+      muteBtn.setAttribute('aria-label', video.muted ? 'Unmute video' : 'Mute video');
+    });
+
+    /* ── Fullscreen (topbar button) ── */
+    fsBtn?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        shell.requestFullscreen?.() ?? shell.webkitRequestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    /* ── Live view counter update ── */
+    let views = 127000;
+    const viewEl = document.getElementById('viewCount');
+    setInterval(() => {
+      if (Math.random() > .6) {
+        views += Math.floor(Math.random() * 3) + 1;
+        viewEl.textContent = (views / 1000).toFixed(1) + 'K';
+      }
+    }, 4500);
+
+    /* ── Video time display ── */
+    const timeEl = document.getElementById('videoTime');
+    const durEl  = document.getElementById('vidDuration');
+    function fmtTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + String(sec).padStart(2, '0');
+    }
+    video?.addEventListener('loadedmetadata', () => {
+      durEl.textContent = fmtTime(video.duration);
+    });
+    video?.addEventListener('timeupdate', () => {
+      timeEl.innerHTML = `<b>${fmtTime(video.currentTime)}</b> / <b id="vidDuration">${fmtTime(video.duration || 0)}</b>`;
+    });
+
+    /* ── Keyboard shortcuts ── */
+    document.addEventListener('keydown', (e) => {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          video.paused ? video.play() : video.pause();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          video.volume = Math.min(1, video.volume + 0.1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          video.volume = Math.max(0, video.volume - 0.1);
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          fsBtn?.click();
+          break;
+        case 'KeyM':
+          e.preventDefault();
+          muteBtn?.click();
+          break;
+      }
+    });
+
+    /* ── Share (Web Share API atau fallback clipboard) ── */
+    document.getElementById('shareBtn')?.addEventListener('click', async () => {
+      const url = location.href;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Playly Watch', url }); return; } catch {}
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('Link disalin ke clipboard!');
+      } catch {
+        prompt('Salin link ini:', url);
+      }
+    });
+
+    /* ── Pause ad / ticker animation when tab is hidden (performa) ── */
+    document.addEventListener('visibilitychange', () => {
+      const paused = document.hidden ? 'paused' : 'running';
+      document.querySelectorAll('.ticker-inner, .ad-track').forEach(el => {
+        el.style.animationPlayState = paused;
+      });
+    });
+
+    /* ── prefers-reduced-motion: nonaktifkan animasi ticker & ad ── */
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('.ticker-inner, .ad-track').forEach(el => {
+        el.style.animation = 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>
