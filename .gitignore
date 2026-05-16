@@ -35,3 +35,6 @@ desktop.ini
 node_modules/
 dist/
 build/
+
+# Playwright/MCP browser snapshots (ephemeral test artifacts)
+.playwright-mcp/

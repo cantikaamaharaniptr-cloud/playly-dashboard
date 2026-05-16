@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260511-avatar-light-fix" />
+  <link rel="stylesheet" href="styles.css?v=20260516-sectlabel-gap-v190" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -217,9 +217,9 @@
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="plyl-tb" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#E8D8C4"/>
+              <stop offset="0%" stop-color="#6D2932"/>
               <stop offset="45%" stop-color="#C7B7A3"/>
-              <stop offset="100%" stop-color="#6D2932"/>
+              <stop offset="100%" stop-color="#E8D8C4"/>
             </linearGradient>
           </defs>
           <path fill="url(#plyl-tb)" fill-rule="evenodd" d="M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z"/>
@@ -396,9 +396,9 @@
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <linearGradient id="plyl-au" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#E8D8C4"/>
+                      <stop offset="0%" stop-color="#6D2932"/>
                       <stop offset="45%" stop-color="#C7B7A3"/>
-                      <stop offset="100%" stop-color="#6D2932"/>
+                      <stop offset="100%" stop-color="#E8D8C4"/>
                     </linearGradient>
                   </defs>
                   <path
@@ -588,7 +588,7 @@
                           </linearGradient>
                         </defs>
                         <path class="aps-chart-area" d="M 0 60 L 25 50 L 50 55 L 75 35 L 100 40 L 125 25 L 150 20 L 175 15 L 200 10 L 200 80 L 0 80 Z" fill="url(#aps-grad)"/>
-                        <path class="aps-chart-line" d="M 0 60 L 25 50 L 50 55 L 75 35 L 100 40 L 125 25 L 150 20 L 175 15 L 200 10" fill="none" stroke="#C7B7A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path class="aps-chart-line" d="M 0 60 L 25 50 L 50 55 L 75 35 L 100 40 L 125 25 L 150 20 L 175 15 L 200 10" fill="none" stroke="#6D2932" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </div>
                     <div class="aps-kpi-row">
@@ -2174,9 +2174,9 @@
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="plyl-sb" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#E8D8C4"/>
+              <stop offset="0%" stop-color="#6D2932"/>
               <stop offset="45%" stop-color="#C7B7A3"/>
-              <stop offset="100%" stop-color="#6D2932"/>
+              <stop offset="100%" stop-color="#E8D8C4"/>
             </linearGradient>
           </defs>
           <path
@@ -2379,7 +2379,7 @@
           <svg viewBox="0 0 36 36">
             <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
             <path id="storageRingPath" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="url(#sg)" stroke-width="3" stroke-dasharray="0, 100" stroke-linecap="round"/>
-            <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#561C24"/><stop offset="100%" stop-color="#E8D8C4"/></linearGradient></defs>
+            <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#561C24"/><stop offset="100%" stop-color="#6D2932"/></linearGradient></defs>
           </svg>
           <span id="storageRingPct">0%</span>
         </div>
@@ -3723,6 +3723,9 @@
           <div class="hero-bg"></div>
           <div class="hero-content">
             <div class="hero-text">
+              <!-- Pintasan 2x2 DIHAPUS per request user 2026-05-16, layout
+                   dikembalikan ke 1 kolom + baris tombol aksi (seperti semula).
+                   CSS .hsq-*/.hero-text-main/.hero-side-slot jadi dead-rule. -->
               <div class="hero-meta">
                 <span class="hero-pill">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -3738,175 +3741,185 @@
               <p id="heroSubtitle">Memuat...</p>
               <div class="hero-tip" id="heroTip"></div>
               <div class="hero-dm-alert" id="heroDmAlert"></div>
+              <!-- 5 tombol aksi SERAGAM (dikembalikan): semua .btn ghost, tanpa
+                   emoji, data-i18n eksplisit → autoTranslate skip. -->
               <div class="hero-actions">
-                <button class="btn primary" data-jump="upload">📤 Upload Video</button>
-                <button class="btn ghost" data-jump="discover">🔍 Discover</button>
-                <button class="btn ghost" data-jump="messages">💬 Messages</button>
+                <button class="btn ghost" data-jump="upload" data-i18n="btn.upload.video">Unggah Video</button>
+                <button class="btn ghost" data-jump="stats" data-i18n="btn.analytics">Analitik</button>
+                <button class="btn ghost" data-jump="messages" data-i18n="btn.messages">Pesan</button>
+                <button class="btn ghost" data-jump="discover" data-i18n="btn.discover">Jelajahi</button>
+                <!-- "Edit Profil" DIHAPUS per request user 2026-05-16 — sudah
+                     ada di kartu profil (hero-profile-card). -->
               </div>
             </div>
-
-            <div class="hero-clock user">
-              <div class="hc-identity">
-                <div class="hc-id-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
-                  </svg>
-                </div>
-                <div class="hc-id-text">
+            <!-- PROFILE CARD — per request user 2026-05-15 v55: Creator Hub
+                 jadi kartu profil clickable → buka My Profile. ID stat lama
+                 dipertahankan supaya JS refreshHeroGreeting tetap mengisi. -->
+            <!-- Per request user 2026-05-15 v57: tampil nama + @username, stats
+                 Video/Pengikut/Yang diikuti, tombol Edit Profil + Upload Video.
+                 Panah > dihapus — cuma foto profil yg clickable → My Profile. -->
+            <div class="hero-clock user hero-profile-card">
+              <div class="hpc-top">
+                <div class="hpc-avatar hpc-avatar-clickable" id="hpcAvatar" data-jump="myprofile" role="button" tabindex="0" title="Buka My Profile"><span id="hpcInit">U</span></div>
+                <div class="hpc-id">
                   <strong id="heroClockName">Creator</strong>
+                  <span class="hpc-username" id="heroClockUser">@username</span>
                   <small id="heroClockTier">Free Plan</small>
                 </div>
               </div>
-              <div class="hc-status-line">
-                <span class="hc-status-dot"></span>
-                <span>Sesi aktif · konten siap dibuat</span>
+              <p class="hpc-bio" id="hpcBio"></p>
+              <div class="hpc-stats">
+                <button type="button" class="hpc-stat" data-jump="videos" title="Lihat video kamu">
+                  <strong id="heroStatVideos">0</strong>
+                  <small>Video</small>
+                </button>
+                <button type="button" class="hpc-stat" data-jump="myprofile" title="Lihat pengikut">
+                  <strong id="heroStatFollowers">0</strong>
+                  <small>Pengikut</small>
+                </button>
+                <button type="button" class="hpc-stat" data-jump="discover" title="Kreator yang kamu ikuti">
+                  <strong id="heroStatFollowing">0</strong>
+                  <small>Yang diikuti</small>
+                </button>
               </div>
-              <div class="hc-updates">
-                <button type="button" class="hc-update-item" data-jump="videos" title="Total video kamu">
-                  <span class="hc-update-icon">🎬</span>
-                  <div class="hc-update-info">
-                    <strong id="heroStatVideos">0</strong>
-                    <small>Videos</small>
-                  </div>
+              <div class="hpc-actions">
+                <button type="button" class="hpc-act-btn primary" data-jump="profile" id="hpcEditBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit Profil
                 </button>
-                <button type="button" class="hc-update-item" data-jump="videos" title="Total views">
-                  <span class="hc-update-icon">👁</span>
-                  <div class="hc-update-info">
-                    <strong id="heroStatViews">0</strong>
-                    <small>Views</small>
-                  </div>
-                </button>
-                <button type="button" class="hc-update-item" data-jump="profile" title="Followers">
-                  <span class="hc-update-icon">❤️</span>
-                  <div class="hc-update-info">
-                    <strong id="heroStatFollowers">0</strong>
-                    <small>Followers</small>
-                  </div>
+                <button type="button" class="hpc-act-btn ghost" data-jump="upload" id="hpcUploadBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Video
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- TRENDING SEKARANG — 4-col video grid (per user request 2026-05-11) -->
-        <div class="home-vid-section home-trending-now-section">
-          <div class="home-vid-section-head">
-            <div class="home-vid-section-title">
-              <h3>Trending sekarang</h3>
-              <span class="home-vid-hot-pill">HOT</span>
+        <!-- Pill judul utk Quick Stats (style = .admin-section-divider, sama
+             dgn PROGRES & PENCAPAIAN / PAPAN PERINGKAT). Per request user
+             2026-05-16. order:2 + DOM sebelum quick-stats → tampil di atasnya. -->
+        <div class="admin-section-divider home-divider-stats">
+          <span>RINGKASAN STATISTIK</span>
+        </div>
+
+        <!-- QUICK STATS — 4 kartu horizontal compact (icon kiri, content stacked kanan).
+             Section header dihapus per fix user 2026-05-15 v33. -->
+        <!-- Minimalis bersih per request user 2026-05-15 v65: icon + angka +
+             label aja. Tanpa delta/CTA/dot/sub-text. -->
+        <div class="home-quick-stats hqs-minimal" id="homeQuickStats" aria-label="Statistik kreator real-time">
+          <div class="hqs-card" data-stat="views" role="button" tabindex="0" data-jump="videos">
+            <div class="hqs-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="hqs-content">
+              <div class="hqs-value" id="hqsViewsValue">0</div>
+              <div class="hqs-label">Total Tontonan</div>
+              <div class="hqs-spark" data-spark="views" aria-hidden="true"></div>
             </div>
-            <button type="button" class="home-vid-section-link" data-jump="discover">
-              See all <span aria-hidden="true">›</span>
-            </button>
           </div>
-          <div class="home-vid-grid" id="homeTrendingNowGrid">
-            <!-- populated by renderHomeTrendingNow() -->
+          <div class="hqs-card" data-stat="likes" role="button" tabindex="0" data-jump="videos">
+            <div class="hqs-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg></div>
+            <div class="hqs-content">
+              <div class="hqs-value" id="hqsLikesValue">0</div>
+              <div class="hqs-label">Total Suka</div>
+              <div class="hqs-spark" data-spark="likes" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="hqs-card" data-stat="followers" role="button" tabindex="0" data-jump="profile">
+            <div class="hqs-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="hqs-content">
+              <div class="hqs-value" id="hqsFollowersValue">0</div>
+              <div class="hqs-label">Total Followers</div>
+              <div class="hqs-spark" data-spark="followers" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="hqs-card" data-stat="watch" role="button" tabindex="0" data-jump="stats">
+            <div class="hqs-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div>
+            <div class="hqs-content">
+              <div class="hqs-value" id="hqsWatchValue">0m</div>
+              <div class="hqs-label">Waktu Ditonton</div>
+              <div class="hqs-spark" data-spark="watch" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
 
-        <!-- UNTUK KAMU — category tabs + 4-col video grid -->
-        <div class="home-vid-section home-foryou-section">
-          <div class="home-vid-section-head">
-            <div class="home-vid-section-title">
-              <h3>Untuk kamu</h3>
-              <small>Berdasarkan apa yang kamu nonton</small>
-            </div>
-            <button type="button" class="home-vid-section-link" data-jump="discover">
-              See all <span aria-hidden="true">›</span>
-            </button>
-          </div>
-          <div class="home-foryou-tabs" id="homeForYouTabs" role="tablist">
-            <button type="button" class="active" data-foryou-cat="all">Semua</button>
-            <button type="button" data-foryou-cat="vlog">Vlog</button>
-            <button type="button" data-foryou-cat="gaming">Gaming</button>
-            <button type="button" data-foryou-cat="musik">Musik</button>
-            <button type="button" data-foryou-cat="tutorial">Tutorial</button>
-            <button type="button" data-foryou-cat="kuliner">Kuliner</button>
-            <button type="button" data-foryou-cat="travel">Travel</button>
-            <button type="button" data-foryou-cat="tech">Tech</button>
-            <button type="button" data-foryou-cat="komedi">Komedi</button>
-          </div>
-          <div class="home-vid-grid" id="homeForYouGrid">
-            <!-- populated by renderHomeForYou() -->
-          </div>
+        <!-- TRENDING SEKARANG + UNTUK KAMU dihapus dari beranda per request
+             user 2026-05-16: beranda = workspace kreator murni; discovery
+             (nonton konten orang lain) sepenuhnya pindah ke halaman Discover
+             — hindari duplikasi & jaga fokus. renderHomeTrendingNow() &
+             renderHomeForYou() auto no-op (guard `if (!grid) return`); handler
+             klik tab #homeForYouTabs juga auto no-op (closest() → null). Div
+             legacy #homeTrendingNowGrid / #homeForYouGrid / #homeForYouTabs
+             sengaja tidak di-restore. -->
+        <!-- ===== LAYOUT 2 KOLOM (per request user 2026-05-16) =====
+             KIRI  = 📈 Level Kreator (progress maju, tanpa batas)
+             KANAN = 🎖️ Pencapaian (milestone yang sudah diraih)
+             Keduanya pakai sub-judul. Peringkat Kreator tetap full-width
+             di bawah. .home-2col/.home-col CSS sudah ada; order .home-2col=4,
+             Peringkat .home-ranking-section order 8. (Rekap/Checklist/AI/
+             Momentum sudah dihapus — fungsi & CSS jadi no-op/dead-rule.) -->
+
+        <!-- Pill pemisah (style = .admin-section-divider, sama persis dgn admin
+             "PUSAT AKSI · BUTUH PERHATIAN"). Per request user 2026-05-16.
+             Class home-divider-* cuma utk atur CSS order (lihat styles.css). -->
+        <div class="admin-section-divider home-divider-progress">
+          <span>PROGRES &amp; PENCAPAIAN</span>
         </div>
 
-        <!-- TIER-AWARE WIDGET (Free quota / Premium insights) — pindah ke bawah hero per request 2026-05-10 -->
-        <div class="home-tier-widget" id="homeTierWidget"></div>
+        <div class="home-2col">
+          <div class="home-col home-col-left">
 
-        <!-- PERFORMA HARI INI + SARAN KREATOR (2-col, per request 2026-05-10) -->
-        <div class="home-row-2col home-row-perf-suggest">
-          <div class="home-row-section">
-            <div class="admin-section-divider home-perf-divider">
-              <span data-i18n="home.perf.title">PERFORMA HARI INI</span>
+            <!-- 📈 LEVEL KREATOR (XP) — renderHomeCreatorLevel() (string-concat,
+                 NO backtick). Sub-judul di-set di dalam fungsi (.hlv-sub). -->
+            <div class="home-level" id="homeCreatorLevel" aria-label="Level kreator">
+              <!-- populated by renderHomeCreatorLevel() -->
             </div>
-            <div class="home-perf-card" id="homePerfCard">
-              <div class="hra-empty">
-                <div class="hra-empty-icon">📊</div>
-                <p>Memuat performa…</p>
+
+          </div>
+          <div class="home-col home-col-right">
+
+            <!-- 🎖️ PENCAPAIAN KREATOR -->
+            <div class="home-achievements" aria-label="Pencapaian kreator">
+              <div class="ha-head">
+                <div class="ha-titlewrap">
+                  <h3><span class="ha-h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg></span> Pencapaian</h3>
+                  <small class="ha-sub">Lencana milestone yang sudah kamu raih</small>
+                </div>
+                <small id="haCount">0 ter-unlock</small>
+              </div>
+              <div class="ha-grid" id="homeAchievementsGrid">
+                <!-- populated by renderHomeAchievements() -->
               </div>
             </div>
-          </div>
-          <div class="home-row-section">
-            <div class="admin-section-divider home-suggest-divider">
-              <span data-i18n="home.suggest.title">SARAN KREATOR</span>
-            </div>
-            <div class="home-suggest-card" id="homeSuggestCard">
-              <div class="hra-empty">
-                <div class="hra-empty-icon">⭐</div>
-                <p>Memuat saran…</p>
-              </div>
-            </div>
+
           </div>
         </div>
 
-        <!-- 1. NOTIFICATIONS + FROM FOLLOWING (full width 2-col) -->
-        <div class="home-row-2col home-row-spotlight-stats">
-          <div class="home-row-section">
-            <div class="admin-section-divider"><span data-i18n="home.notif.title">NOTIFICATIONS · LATEST</span></div>
-            <div class="home-notif-list" id="homeNotifList">
-              <div class="hra-empty">
-                <div class="hra-empty-icon">🔔</div>
-                <p data-i18n="home.notif.empty">No notifications yet — interactions on your content will appear here.</p>
-              </div>
-            </div>
+        <!-- Pill pemisah ke-2 (atas Peringkat) -->
+        <div class="admin-section-divider home-divider-ranking">
+          <span>PAPAN PERINGKAT</span>
+        </div>
+
+        <!-- 🏆 PERINGKAT KREATOR (Leaderboard) — full-width. renderHomeRanking()
+             + renderHomeRankingSelf() (caption "Peringkat kamu"). -->
+        <div class="home-ranking-section" id="homeRankingSection" aria-label="Peringkat kreator">
+          <div class="hrk-head">
+            <h3>🏆 Peringkat Kreator</h3>
+            <small id="hrkSelf">Top kreator berdasarkan total tontonan</small>
           </div>
-          <div class="home-row-section">
-            <div class="admin-section-divider home-act-divider">
-              <span data-i18n="home.activity.title">LIVE · AKTIVITAS PLATFORM</span>
-            </div>
-            <div class="home-activity-ticker" id="homeActivityTicker">
-              <div class="hra-empty">
-                <div class="hra-empty-icon">📡</div>
-                <p data-i18n="home.activity.empty">Memantau aktivitas platform...</p>
-              </div>
-            </div>
+          <div class="ranking-row" id="rankingRow">
+            <!-- populated by renderHomeRanking() -->
+          </div>
+          <div class="ranking-empty-state" id="rankingEmpty" hidden>
+            <p>Belum ada data peringkat — upload video untuk masuk papan peringkat.</p>
           </div>
         </div>
 
-        <!-- 2. TRENDING NEWS — Google News (id-ID) per kategori -->
-        <div class="trending-card home-trending-card" id="homeTrendingCard">
-          <div class="trending-head">
-            <div class="trending-title">
-              <h3>Trending Hari Ini</h3>
-              <small>Berita & topik trending real-time</small>
-            </div>
-            <span class="trending-live-pill">
-              <span class="trending-live-dot"></span>
-              LIVE
-            </span>
-          </div>
-          <div class="trending-cat-tabs" data-trending-target="homeTrendingList">
-            <button type="button" data-trend-cat="top" class="active">Utama</button>
-            <button type="button" data-trend-cat="tech">Tekno</button>
-            <button type="button" data-trend-cat="business">Bisnis</button>
-            <button type="button" data-trend-cat="entertainment">Hiburan</button>
-            <button type="button" data-trend-cat="sports">Olahraga</button>
-          </div>
-          <div class="trending-list" id="homeTrendingList">
-            <!-- populated by renderTrendingNews() -->
-          </div>
-        </div>
+        <!-- TIER-AWARE WIDGET dipindah ke My Profile per request user 2026-05-15 v54.
+             Div #homeTierWidget sekarang ada di section myprofile. -->
+        <!-- Legacy: #homePerfCard/#homeSuggestCard/#homeActivityTicker dihapus
+             (v62), Notifikasi|Trending row dihapus (v70), Pintasan Cepat ke hero
+             (v72), "Dari kreator yang kamu ikuti" dihapus (v77). Render
+             function-nya auto no-op (guard if(!wrap)return). -->
 
       </section>
 
@@ -4167,15 +4180,15 @@
 
         <div class="lib-card lib-card-bare" data-focus-target="status-videos" data-lib="status">
           <div class="dl-section-head">
-            <h3>📋 Status Video</h3>
+            <h3><span class="lib-h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span> Status Video</h3>
             <small>Lihat dan kelola video berdasarkan status — Diterbitkan, Draf, Sampah, atau Takedown</small>
           </div>
           <span class="lib-count lib-count-hidden" id="statusVideoCount">0</span>
           <div class="status-sub-tabs" id="statusSubTabs">
-            <button type="button" class="status-sub-tab active" data-status-tab="all">📋 <span data-i18n="library.status.tab.all">Published</span> <span class="ssc-count" id="statusCntAll">0</span></button>
-            <button type="button" class="status-sub-tab" data-status-tab="draft">📝 <span data-i18n="library.status.tab.draft">Draft</span> <span class="ssc-count" id="statusCntDraft">0</span></button>
-            <button type="button" class="status-sub-tab" data-status-tab="trash">🗑️ <span data-i18n="library.status.tab.trash">Trash</span> <span class="ssc-count" id="statusCntTrash">0</span></button>
-            <button type="button" class="status-sub-tab" data-status-tab="takedown">⛔ <span data-i18n="library.status.tab.takedown">Takedown</span> <span class="ssc-count" id="statusCntTakedown">0</span></button>
+            <button type="button" class="status-sub-tab active" data-status-tab="all"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span> <span data-i18n="library.status.tab.all">Published</span> <span class="ssc-count" id="statusCntAll">0</span></button>
+            <button type="button" class="status-sub-tab" data-status-tab="draft"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"/><polyline points="14 2 14 8 20 8"/><path d="M18.4 12.6a2 2 0 0 1 3 3L17 20l-3 1 1-3Z"/></svg></span> <span data-i18n="library.status.tab.draft">Draft</span> <span class="ssc-count" id="statusCntDraft">0</span></button>
+            <button type="button" class="status-sub-tab" data-status-tab="trash"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span> <span data-i18n="library.status.tab.trash">Trash</span> <span class="ssc-count" id="statusCntTrash">0</span></button>
+            <button type="button" class="status-sub-tab" data-status-tab="takedown"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span> <span data-i18n="library.status.tab.takedown">Takedown</span> <span class="ssc-count" id="statusCntTakedown">0</span></button>
           </div>
           <div class="lib-grid" id="statusVideoGrid"></div>
         </div>
@@ -4186,7 +4199,7 @@
           <!-- Section 1: Tersimpan di Dashboard (offline access via dashboard) -->
           <div class="dl-section">
             <div class="dl-section-head">
-              <h3>📺 Tersimpan di Dashboard</h3>
+              <h3><span class="lib-h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="8 3 12 7 16 3"/></svg></span> Tersimpan di Dashboard</h3>
               <small>Video yang kamu simpan untuk ditonton offline lewat dashboard Playly</small>
             </div>
             <div class="lib-grid" id="downloadDashboardGrid"></div>
@@ -4195,7 +4208,7 @@
           <!-- Section 2: Tersimpan di File (downloaded to device) -->
           <div class="dl-section">
             <div class="dl-section-head">
-              <h3>💾 Tersimpan di File</h3>
+              <h3><span class="lib-h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span> Tersimpan di File</h3>
               <small>Video yang sudah kamu download ke perangkat (file lokal)</small>
             </div>
             <div class="lib-grid" id="downloadFileGrid"></div>
@@ -4214,7 +4227,7 @@
 
         <!-- Tier-aware upload limits banner -->
         <div class="upload-tier-banner" id="uploadTierBanner" hidden>
-          <span class="utb-icon">⭐</span>
+          <span class="utb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg></span>
           <div class="utb-text">
             <strong id="utbTitle">Premium · Unlimited Upload</strong>
             <small id="utbDesc">No file-size cap, no duration limit, no monthly quota — upload videos &gt; 1 GB and &gt; 1 hour freely.</small>
@@ -4249,6 +4262,9 @@
               <div class="dz-pro-filled">
                 <img class="dz-pro-preview" id="dropzonePreviewFill" alt="Video preview"/>
                 <div class="dz-pro-overlay">
+                  <button type="button" class="dz-pro-action" id="dropzoneEditVideoBtn" title="Edit Video (trim / speed / mute)" aria-label="Edit video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                  </button>
                   <button type="button" class="dz-pro-action" id="dropzoneReplaceBtn" title="Ganti video" aria-label="Ganti video">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   </button>
@@ -4300,9 +4316,93 @@
               <small id="upStatus">Mengunggah... 0%</small>
             </div>
 
+            <!-- ====== VIDEO INFO CARD — metadata otomatis ======
+                 Stay visible by default (per fix user 2026-05-15 v28).
+                 Empty state: nilai "—" sampai user pilih video. -->
+            <div class="upf-field upf-info-section is-empty" id="upInfoSection">
+              <div class="upf-label-row">
+                <label>Info Video</label>
+              </div>
+              <!-- Text label + value (per fix user 2026-05-15 v26): label muted
+                   ("Durasi", "Resolusi", dst) + value bold. Tanpa icon — minimalis
+                   tapi tetap clear apa konteksnya. -->
+              <div class="upf-info-strip">
+                <span class="upf-info-pill"><span class="upf-info-key">Durasi</span><strong id="upInfoDuration">—</strong></span>
+                <span class="upf-info-sep">·</span>
+                <span class="upf-info-pill"><span class="upf-info-key">Resolusi</span><strong id="upInfoResolution">—</strong></span>
+                <span class="upf-info-sep">·</span>
+                <span class="upf-info-pill"><span class="upf-info-key">Format</span><strong id="upInfoFormat">—</strong></span>
+                <span class="upf-info-sep">·</span>
+                <span class="upf-info-pill"><span class="upf-info-key">Ukuran</span><strong id="upInfoSize">—</strong></span>
+                <!-- Hidden fallback elements supaya JS yang masih reference tidak null-error -->
+                <span hidden id="upInfoAspect"></span>
+                <span hidden id="upInfoBitrate"></span>
+              </div>
+            </div>
+
+            <!-- ====== COVER FRAME PICKER — pilih frame dari video sebagai thumbnail ======
+                 Stay visible by default (per fix user 2026-05-15 v28).
+                 Empty state: placeholder "Upload video dulu" + slider/buttons disabled. -->
+            <div class="upf-field upf-frame-section is-empty" id="upFrameSection">
+              <div class="upf-label-row">
+                <label>Pilih Frame Thumbnail <small class="muted">(opsional)</small></label>
+                <span class="upf-thumb-active-badge" id="upFrameActiveBadge" hidden>✓ Aktif</span>
+              </div>
+              <div class="upf-frame-wrap">
+                <!-- Box disamakan dgn Thumbnail Kustom (.dz-pro). Slider + "Pakai
+                     Frame Ini" DIPINDAH ke modal Edit (per request user 2026-05-16).
+                     #upFrameVideo disembunyikan (cuma utk capture/scrub). -->
+                <div class="dz-pro upf-frame-dz" id="upFrameDz" data-state="empty">
+                  <video id="upFrameVideo" class="upf-frame-vid-hidden" preload="metadata" muted playsinline crossorigin="anonymous"></video>
+                  <canvas id="upFrameCanvas" hidden></canvas>
+                  <div class="dz-pro-empty" id="upFrameEmpty">
+                    <div class="dz-pro-empty-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0.5 7.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0 -5 0"/><path d="M0.5 16.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0 -5 0"/><path d="M8.5 11.5V3a1 1 0 0 1 1 -1h13a1 1 0 0 1 1 1v18a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-5"/><path d="m20.5 2 0 8 -9 0 0 -8"/><path d="m11.5 22 0 -4.5"/><path d="m13.5 14 7 0 0 8"/><path d="m11.5 6 -3 0"/><path d="m11.5 10 -3 0"/><path d="m23.5 6 -3 0"/><path d="m23.5 10 -3 0"/><path d="m23.5 18 -3 0"/><path d="m23.5 14 -3 0"/><path d="m2.361 9.917 12.628 7.484"/><path d="M2.361 14.082 7 11.333"/></svg>
+                    </div>
+                    <p><b>Upload video dulu</b> untuk pilih frame</p>
+                    <small>Lalu klik <b>Edit</b> untuk pilih &amp; atur frame thumbnail</small>
+                  </div>
+                  <div class="dz-pro-filled">
+                    <img id="upFramePreviewImg" class="dz-pro-preview" alt="Frame thumbnail"/>
+                    <div class="dz-pro-overlay">
+                      <button type="button" class="dz-pro-action" id="upFrameEdit" title="Pilih / edit frame thumbnail" aria-label="Pilih / edit frame">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button type="button" class="dz-pro-action danger" id="upFrameDzClear" title="Hapus frame" aria-label="Hapus frame">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="upf-frame-loading" id="upFrameLoading" hidden>
+                    <span class="upf-frame-spinner" aria-hidden="true"></span>
+                    <span>Memuat frame...</span>
+                  </div>
+                  <span class="upf-frame-time" id="upFrameTime" hidden>0:00 / 0:00</span>
+                </div>
+                <!-- DIPINDAH ke modal Edit; tetap di DOM (hidden) supaya IIFE
+                     frame picker lama tidak null-error. -->
+                <input type="range" id="upFrameSlider" min="0" max="1000" value="500" step="1" class="upf-frame-slider" aria-label="Geser untuk pilih frame" hidden/>
+                <button type="button" class="upf-frame-apply" id="upFrameApply" hidden>Pakai Frame Ini</button>
+                <!-- Applied frame preview (muncul setelah klik "Pakai Frame Ini") -->
+                <div class="upf-frame-applied" id="upFrameAppliedPreview" hidden>
+                  <div class="upf-frame-applied-label">Frame yang dipilih</div>
+                  <div class="upf-frame-applied-row">
+                    <img id="upFrameAppliedThumb" class="upf-frame-applied-thumb" alt="Frame thumbnail terpilih"/>
+                    <div class="upf-frame-applied-actions">
+                      <button type="button" class="btn ghost small" id="upFrameAppliedEdit" title="Edit frame ini"><span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span> Edit</button>
+                      <button type="button" class="btn ghost small" id="upFrameAppliedClear" title="Hapus frame ini">✕ Hapus</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Thumbnail Kustom dipindah ke kolom kiri (di bawah dropzone) -->
             <div class="upf-field upf-thumb-section">
-              <label>Thumbnail Kustom</label>
+              <div class="upf-label-row">
+                <label>Thumbnail Kustom</label>
+                <span class="upf-thumb-active-badge" id="upThumbActiveBadge" hidden>✓ Aktif</span>
+              </div>
               <label class="dz-pro" id="upThumbLabel" data-state="empty">
                 <input type="file" id="upThumbInput" accept="image/*" hidden/>
                 <div class="dz-pro-empty" id="upThumbPlaceholder">
@@ -4315,6 +4415,9 @@
                 <div class="dz-pro-filled">
                   <img id="upThumbPreview" class="dz-pro-preview" alt="Thumbnail preview"/>
                   <div class="dz-pro-overlay">
+                    <button type="button" class="dz-pro-action" id="upThumbEditBtn" title="Edit (crop / filter / text)" aria-label="Edit thumbnail">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
                     <button type="button" class="dz-pro-action" id="upThumbReplaceBtn" title="Ganti thumbnail" aria-label="Ganti thumbnail">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </button>
@@ -4336,6 +4439,93 @@
 
           <!-- RIGHT COL: metadata form -->
           <div class="upload-col-right">
+            <div class="upf-field">
+              <div class="upf-label-row">
+                <label for="upTitle">Judul Video</label>
+                <span class="upf-counter" id="upTitleCounter">0/100</span>
+              </div>
+              <input type="text" id="upTitle" maxlength="100" placeholder="Beri judul yang menarik..."/>
+            </div>
+
+            <div class="upf-field">
+              <div class="upf-label-row">
+                <label for="upDesc">Deskripsi</label>
+                <span class="upf-counter" id="upDescCounter">0/2000</span>
+              </div>
+              <textarea id="upDesc" rows="5" maxlength="2000" placeholder="Ceritakan tentang video kamu..."></textarea>
+            </div>
+
+            <!-- ====== TAGS & KATEGORI — 2-col grid ====== -->
+            <div class="upf-grid-2col">
+              <div class="upf-field">
+                <div class="upf-label-row">
+                  <label for="upTagsInput">Tags <small class="muted">(max 10)</small></label>
+                </div>
+                <div class="upf-tags-wrap" id="upTagsWrap">
+                  <div class="upf-tags-chips" id="upTagsList"></div>
+                  <input type="text" id="upTagsInput" class="upf-tags-input" placeholder="Ketik & tekan Enter / koma" autocomplete="off"/>
+                </div>
+              </div>
+              <div class="upf-field">
+                <label for="upCategoryTrigger">Kategori</label>
+                <!-- Custom dropdown — native select dropdown popup tidak bisa di-scroll
+                     saat opsi banyak. Pattern: hidden input untuk value (script.js
+                     baca #upCategory.value) + trigger button + scrollable popup. -->
+                <div class="upf-custom-select" id="upCategorySelect">
+                  <input type="hidden" id="upCategory" value=""/>
+                  <button type="button" class="ucs-trigger" id="upCategoryTrigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Pilih kategori video">
+                    <span class="ucs-trigger-label" id="upCategoryLabel">— pilih kategori —</span>
+                    <svg class="ucs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                  <div class="ucs-pop" id="upCategoryPop" hidden role="listbox" aria-label="Daftar kategori">
+                    <div class="ucs-option" role="option" data-value="vlog"     data-label="🎥 Vlog">🎥 Vlog</div>
+                    <div class="ucs-option" role="option" data-value="gaming"   data-label="🎮 Gaming">🎮 Gaming</div>
+                    <div class="ucs-option" role="option" data-value="musik"    data-label="🎵 Musik">🎵 Musik</div>
+                    <div class="ucs-option" role="option" data-value="tutorial" data-label="📚 Tutorial">📚 Tutorial</div>
+                    <div class="ucs-option" role="option" data-value="kuliner"  data-label="🍳 Kuliner">🍳 Kuliner</div>
+                    <div class="ucs-option" role="option" data-value="travel"   data-label="✈️ Travel">✈️ Travel</div>
+                    <div class="ucs-option" role="option" data-value="tech"     data-label="💻 Tech">💻 Tech</div>
+                    <div class="ucs-option" role="option" data-value="komedi"   data-label="🎭 Komedi">🎭 Komedi</div>
+                    <div class="ucs-option" role="option" data-value="tekno"    data-label="⚙️ Tekno">⚙️ Tekno</div>
+                    <div class="ucs-option" role="option" data-value="bisnis"   data-label="💼 Bisnis">💼 Bisnis</div>
+                    <div class="ucs-option" role="option" data-value="hiburan"  data-label="🎬 Hiburan">🎬 Hiburan</div>
+                    <div class="ucs-option" role="option" data-value="olahraga" data-label="⚽ Olahraga">⚽ Olahraga</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== AI ASSIST — Premium-only (auto-suggest title/desc/tags) ======
+                 Pindah ke paling atas right col per request user 2026-05-14
+                 supaya fitur AI Assist langsung kelihatan begitu user buka halaman upload.
+                 Dibungkus .upf-field + .upf-label-row supaya label "AI Assist (premium)"
+                 sejajar dengan label "Video (wajib)" di left col. -->
+            <div class="upf-field upf-ai-section">
+              <div class="upf-label-row">
+                <label data-i18n="upload.ai.assist">AI Assist <small class="muted">(premium)</small></label>
+              </div>
+              <div class="upf-ai-assist" id="upAiAssist">
+                <div class="upf-ai-head">
+                  <span class="upf-ai-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M20.5 20.5 15.5 15.5"/><path d="M10 5.6c.45 2.75 1.65 3.95 4.4 4.4-2.75.45-3.95 1.65-4.4 4.4-.45-2.75-1.65-3.95-4.4-4.4 2.75-.45 3.95-1.65 4.4-4.4Z" fill="currentColor" stroke="none"/></svg></span>
+                  <div class="upf-ai-text">
+                    <strong data-i18n="upload.ai.assist">AI Assist <span class="upf-premium-pill">PREMIUM</span></strong>
+                    <small data-i18n="upload.ai.assist.desc">Generate judul, deskripsi, &amp; tag otomatis dari isi video / subtitle.</small>
+                  </div>
+                </div>
+                <div class="upf-ai-topic-row">
+                  <input type="text" id="upAiTopic" class="upf-ai-topic" maxlength="120" autocomplete="off" placeholder="Ketik judul atau topik video..."/>
+                  <button type="button" class="upf-ai-gen-btn" id="upAiGenBtn">
+                    <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12M6 22h12"/><path d="M8 2v4.2a2 2 0 0 0 .6 1.4L12 11l3.4-3.4A2 2 0 0 0 16 6.2V2"/><path d="M8 22v-4.2a2 2 0 0 1 .6-1.4L12 13l3.4 3.4a2 2 0 0 1 .6 1.4V22"/></svg></span>
+                    <span data-i18n="upload.ai.gen.btn">Buat Referensi</span>
+                  </button>
+                </div>
+                <div class="upf-ai-result" id="upAiResult" hidden></div>
+                <small class="upf-ai-note" id="upAiNote" hidden></small>
+              </div>
+            </div>
+
             <!-- Subtitle (Opsi 1: upload .vtt/.srt + Opsi 2: auto-generate AI) — pindah ke
                  atas right col per request 2026-05-10 supaya AI feature lebih prominent. -->
             <div class="upf-field upf-subtitle-section">
@@ -4344,45 +4534,63 @@
               </div>
               <!-- 2 KARTU: Auto-generate AI (kiri) + Upload Manual (kanan) — per user 2026-05-10o -->
               <div class="upf-sub-2col">
-                <!-- KARTU 1: AUTO-GENERATE AI -->
-                <div class="upf-sub-card upf-sub-card-ai">
+                <!-- KARTU 1: AUTO-GENERATE AI — Premium-only.
+                     Per redesign 2026-05-15 v27: struktur disamakan dengan AI Assist
+                     card (icon | title + premium pill | desc | action | note bar).
+                     Premium pill auto-hide untuk premium user via refreshSubtitleAiLockedState. -->
+                <div class="upf-sub-card upf-sub-card-ai" id="upSubtitleAiCard">
                   <div class="upf-sub-card-head">
-                    <span class="upf-sub-card-emoji" aria-hidden="true">🎙</span>
-                    <span class="upf-sub-card-title">Auto-generate AI</span>
+                    <span class="upf-sub-card-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></span>
+                    <span class="upf-sub-card-title" data-i18n="upload.sub.autogen">Auto-generate AI <span class="upf-premium-pill">PREMIUM</span></span>
                   </div>
-                  <p class="upf-sub-card-desc">Generate subtitle otomatis dari audio video pakai Whisper Tiny.</p>
-                  <button type="button" class="btn primary small upf-sub-card-cta" id="upSubtitleAutoBtn">🎙 Generate Sekarang</button>
+                  <p class="upf-sub-card-desc" data-i18n="upload.sub.autogen.desc">Generate subtitle otomatis dari audio video pakai Whisper Tiny.</p>
+                  <div class="upf-sub-act3">
+                    <button type="button" class="btn primary small upf-sub-card-cta upf-sub-btn" id="upSubtitleAutoBtn" data-i18n="upload.sub.gen.now">Generate Sekarang</button>
+                    <button type="button" class="upf-sub-btn js-sub-preview">
+                      <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                      <span data-i18n="subprev.see">Lihat</span>
+                    </button>
+                    <button type="button" class="upf-sub-btn js-sub-apply">
+                      <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+                      <span data-i18n="subprev.apply">Unggah</span>
+                    </button>
+                  </div>
+                  <small class="upf-sub-card-note" id="upSubtitleAiNote" hidden></small>
                 </div>
                 <!-- KARTU 2: UPLOAD MANUAL -->
                 <label class="upf-sub-card upf-sub-card-manual" id="upSubtitleLabel" data-state="empty">
                   <input type="file" id="upSubtitleInput" accept=".vtt,.srt,text/vtt,text/plain,application/x-subrip" hidden/>
                   <div class="upf-sub-card-head">
-                    <span class="upf-sub-card-emoji" aria-hidden="true">📄</span>
-                    <span class="upf-sub-card-title">Upload Manual</span>
+                    <span class="upf-sub-card-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                    <span class="upf-sub-card-title" data-i18n="upload.sub.manual">Upload Manual</span>
                   </div>
-                  <!-- EMPTY state: ajakan upload -->
                   <p class="upf-sub-card-desc upf-subtitle-empty" id="upSubtitlePlaceholder">
-                    Sudah punya file <b>.vtt</b> / <b>.srt</b>? Pilih file untuk upload.
+                    Sudah punya file <b>.vtt</b> / <b>.srt</b>? Pilih file lalu Lihat / Unggah.
                   </p>
-                  <span class="btn ghost small upf-sub-card-cta upf-subtitle-empty">📁 Pilih File</span>
-                  <!-- FILLED state: info file + actions -->
-                  <div class="upf-subtitle-filled upf-sub-filled-row">
-                    <span class="upf-subtitle-info" id="upSubtitleInfo">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
-                      <span class="upf-subtitle-text">
-                        <strong id="upSubtitleName">subtitle.vtt</strong>
-                        <small id="upSubtitleMeta">— cues</small>
-                      </span>
-                    </span>
-                    <span class="upf-subtitle-actions">
-                      <button type="button" class="dz-pro-action" id="upSubtitleReplaceBtn" title="Ganti subtitle" aria-label="Ganti subtitle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      </button>
-                      <button type="button" class="dz-pro-action danger" id="upSubtitleClear" title="Hapus subtitle" aria-label="Hapus subtitle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                      </button>
+                  <div class="upf-subtitle-filled upf-sub-fileinfo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+                    <span class="upf-subtitle-text">
+                      <strong id="upSubtitleName">subtitle.vtt</strong>
+                      <small id="upSubtitleMeta">— cues</small>
                     </span>
                   </div>
+                  <div class="upf-sub-act3">
+                    <button type="button" class="btn ghost small upf-sub-card-cta upf-sub-btn js-sub-pick">
+                      <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h3.2l2 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></span>
+                      <span data-i18n="subprev.pick">Pilih File</span>
+                    </button>
+                    <button type="button" class="upf-sub-btn js-sub-preview">
+                      <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                      <span data-i18n="subprev.see">Lihat</span>
+                    </button>
+                    <button type="button" class="upf-sub-btn js-sub-apply">
+                      <span class="upf-btn-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+                      <span data-i18n="subprev.apply">Unggah</span>
+                    </button>
+                  </div>
+                  <!-- elemen lama tetap ada (hidden) — handler JS pakai ?., aman -->
+                  <button type="button" id="upSubtitleReplaceBtn" hidden aria-hidden="true"></button>
+                  <button type="button" id="upSubtitleClear" hidden aria-hidden="true"></button>
                 </label>
               </div>
               <!-- Auto-generate progress (hidden by default) -->
@@ -4403,32 +4611,160 @@
               </div>
             </div>
 
+            <!-- ====== VISIBILITY & AUDIENCE — 2-col grid (list style, side-by-side)
+                 Per request user 2026-05-14: pair side-by-side supaya tidak terlalu
+                 panjang, tetap list style dalam masing-masing kolom. -->
+            <div class="upf-grid-2col">
             <div class="upf-field">
-              <div class="upf-label-row">
-                <label for="upTitle">Judul Video</label>
-                <span class="upf-counter" id="upTitleCounter">0/100</span>
+              <label>Visibility</label>
+              <div class="upf-segmented" role="radiogroup" aria-label="Visibility">
+                <label class="upf-seg">
+                  <input type="radio" name="upVisibility" value="public" checked/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Public</strong>
+                      <small>Semua orang bisa nonton &amp; cari</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upVisibility" value="unlisted"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Unlisted</strong>
+                      <small>Hanya yang punya link</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upVisibility" value="private"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Private</strong>
+                      <small>Cuma kamu yang bisa lihat</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upVisibility" value="draft"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Draft</strong>
+                      <small>Simpan dulu, publish nanti</small>
+                    </span>
+                  </span>
+                </label>
               </div>
-              <input type="text" id="upTitle" maxlength="100" placeholder="Beri judul yang menarik..."/>
+            </div>
+            <div class="upf-field">
+              <label>Audiens</label>
+              <div class="upf-segmented" role="radiogroup" aria-label="Audiens">
+                <label class="upf-seg">
+                  <input type="radio" name="upAudience" value="all" checked/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Semua usia</strong>
+                      <small>Aman untuk anak-anak</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upAudience" value="13+"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>13+</strong>
+                      <small>Remaja ke atas</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upAudience" value="18+"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>18+</strong>
+                      <small>Konten dewasa</small>
+                    </span>
+                  </span>
+                </label>
+                <label class="upf-seg">
+                  <input type="radio" name="upAudience" value="subs"/>
+                  <span class="upf-seg-card">
+                    <span class="upf-seg-text">
+                      <strong>Subscriber</strong>
+                      <small>Khusus follower kamu</small>
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
             </div>
 
+            <!-- ====== ENGAGEMENT — toggle row ====== -->
             <div class="upf-field">
-              <div class="upf-label-row">
-                <label for="upDesc">Deskripsi</label>
-                <span class="upf-counter" id="upDescCounter">0/2000</span>
-              </div>
-              <textarea id="upDesc" rows="5" maxlength="2000" placeholder="Ceritakan tentang video kamu..."></textarea>
+              <label>Engagement &amp; Komentar</label>
+            </div>
+            <div class="upf-toggle-grid">
+              <label class="upf-toggle-card">
+                <span class="upf-toggle-info">
+                  <span class="upf-toggle-ico" aria-hidden="true">💬</span>
+                  <span class="upf-toggle-text">
+                    <strong>Izinkan Komentar</strong>
+                    <small>User bisa komentar di video</small>
+                  </span>
+                </span>
+                <span class="upf-switch">
+                  <input type="checkbox" id="upAllowComments" checked/>
+                  <span class="upf-switch-track"><span class="upf-switch-knob"></span></span>
+                </span>
+              </label>
+              <label class="upf-toggle-card">
+                <span class="upf-toggle-info">
+                  <span class="upf-toggle-ico" aria-hidden="true">👍</span>
+                  <span class="upf-toggle-text">
+                    <strong>Tampilkan Like / Dislike</strong>
+                    <small>Hitungan reaksi publik terlihat</small>
+                  </span>
+                </span>
+                <span class="upf-switch">
+                  <input type="checkbox" id="upAllowReactions" checked/>
+                  <span class="upf-switch-track"><span class="upf-switch-knob"></span></span>
+                </span>
+              </label>
+              <label class="upf-toggle-card">
+                <span class="upf-toggle-info">
+                  <span class="upf-toggle-ico" aria-hidden="true">🎬</span>
+                  <span class="upf-toggle-text">
+                    <strong>Izinkan Duet / Remix</strong>
+                    <small>User lain boleh re-create</small>
+                  </span>
+                </span>
+                <span class="upf-switch">
+                  <input type="checkbox" id="upAllowDuet"/>
+                  <span class="upf-switch-track"><span class="upf-switch-knob"></span></span>
+                </span>
+              </label>
+              <label class="upf-toggle-card">
+                <span class="upf-toggle-info">
+                  <span class="upf-toggle-ico" aria-hidden="true">📥</span>
+                  <span class="upf-toggle-text">
+                    <strong>Izinkan Download</strong>
+                    <small>User bisa simpan offline</small>
+                  </span>
+                </span>
+                <span class="upf-switch">
+                  <input type="checkbox" id="upAllowDownload"/>
+                  <span class="upf-switch-track"><span class="upf-switch-knob"></span></span>
+                </span>
+              </label>
             </div>
 
-            <!-- Audiens DIHAPUS dari UI per user 2026-05-07 — select tetap di
-                 DOM (hidden) supaya JS yang baca upAge.value tidak break. -->
-            <div class="upf-field" hidden style="display:none">
-              <label for="upAge">Audiens</label>
-              <select id="upAge">
-                <option value="all" selected>👥 Semua umur</option>
-                <option value="18+">🔞 18+ — konten dewasa</option>
-                <option value="13+">⚠️ 13+ — remaja ke atas</option>
-              </select>
-            </div>
+            <!-- LEGACY: hidden select untuk backward-compat (script.js baca upAge.value) -->
+            <select id="upAge" hidden style="display:none">
+              <option value="all" selected>Semua umur</option>
+              <option value="18+">18+</option>
+              <option value="13+">13+</option>
+              <option value="subs">Subscriber</option>
+            </select>
 
             <!-- Schedule publish — custom picker (bukan native datetime-local
                  supaya theme bisa di-control penuh, sesuai user/admin theme) -->
@@ -4463,7 +4799,7 @@
                 </button>
                 <button class="unggah-btn-anim" id="startUpload" type="submit" aria-label="Unggah Sekarang" data-no-i18n>
                   <span class="uba-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   </span>
                   <span class="uba-text" data-no-i18n>Unggah Sekarang</span>
                 </button>
@@ -4492,7 +4828,7 @@
             <svg viewBox="0 0 36 36">
               <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
               <path id="storagePageRing" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="url(#sg2)" stroke-width="3" stroke-dasharray="0, 100" stroke-linecap="round"/>
-              <defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#561C24"/><stop offset="100%" stop-color="#E8D8C4"/></linearGradient></defs>
+              <defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#561C24"/><stop offset="100%" stop-color="#6D2932"/></linearGradient></defs>
             </svg>
             <span id="storagePagePct">0%</span>
           </div>
@@ -4819,14 +5155,88 @@
         <!-- Section tabs (per user 2026-05-06): default "Semua" tampilin gabungan,
              klik tab spesifik → filter ke section itu. -->
         <div class="dm-section-tabs">
-          <button type="button" class="dm-section-tab active" data-dm-filter="all" data-i18n="dm.tab.all">Semua</button>
-          <button type="button" class="dm-section-tab" data-dm-filter="dm" data-i18n="dm.tab.dm">💬 DM</button>
-          <button type="button" class="dm-section-tab" data-dm-filter="broadcast" data-i18n="dm.tab.broadcast">📢 Broadcast Admin</button>
-          <button type="button" class="dm-section-tab" data-dm-filter="requests" data-i18n="dm.tab.requests">📨 Permintaan</button>
-          <button type="button" class="dm-section-tab" data-dm-filter="archived" data-i18n="dm.tab.archived">📦 Arsip</button>
+          <button type="button" class="dm-section-tab active" data-dm-filter="all" data-i18n="dm.tab.all"><span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg></span>Semua</button>
+          <button type="button" class="dm-section-tab" data-dm-filter="dm" data-i18n="dm.tab.dm"><span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>DM</button>
+          <button type="button" class="dm-section-tab" data-dm-filter="broadcast" data-i18n="dm.tab.broadcast"><span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>Broadcast Admin</button>
+          <button type="button" class="dm-section-tab" data-dm-filter="requests" data-i18n="dm.tab.requests"><span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>Permintaan</button>
+          <button type="button" class="dm-section-tab" data-dm-filter="archived" data-i18n="dm.tab.archived"><span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>Arsip</button>
         </div>
 
-        <div class="dm-layout">
+        <!-- Overview "Semua" — kartu per kategori (gaya admin Inbox). Klik
+             kartu / tab spesifik → buka layout kolom DM (per request user
+             2026-05-16). -->
+        <div class="dm-overview" id="dmOverview">
+          <div class="inbox-grid dm-ov-grid">
+            <div class="inbox-column dm-ov-card" data-dm-open="dm" role="button" tabindex="0">
+              <div class="inbox-col-head">
+                <div class="inbox-col-title">
+                  <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+                  <h3>DM</h3>
+                </div>
+                <div class="inbox-col-actions">
+                  <button type="button" class="btn primary sm dm-ov-new" id="dmOvNew" title="Mulai percakapan baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Mulai Baru</button>
+                  <span class="inbox-col-count" id="dmOvCountDm">0</span>
+                </div>
+              </div>
+              <div class="inbox-col-list">
+                <div class="dm-ov-empty" id="dmOvBodyDm">
+                  <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+                  <p>Belum ada DM.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="inbox-column dm-ov-card" data-dm-open="broadcast" role="button" tabindex="0">
+              <div class="inbox-col-head">
+                <div class="inbox-col-title">
+                  <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>
+                  <h3>Broadcast Admin</h3>
+                </div>
+                <span class="inbox-col-count" id="dmOvCountBc">0</span>
+              </div>
+              <div class="inbox-col-list">
+                <div class="dm-ov-empty" id="dmOvBodyBc">
+                  <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>
+                  <p>Belum ada broadcast.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="inbox-column dm-ov-card" data-dm-open="requests" role="button" tabindex="0">
+              <div class="inbox-col-head">
+                <div class="inbox-col-title">
+                  <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                  <h3>Permintaan</h3>
+                </div>
+                <span class="inbox-col-count" id="dmOvCountReq">0</span>
+              </div>
+              <div class="inbox-col-list">
+                <div class="dm-ov-empty" id="dmOvBodyReq">
+                  <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                  <p>Belum ada permintaan.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="inbox-column dm-ov-card" data-dm-open="archived" role="button" tabindex="0">
+              <div class="inbox-col-head">
+                <div class="inbox-col-title">
+                  <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>
+                  <h3>Arsip</h3>
+                </div>
+                <span class="inbox-col-count" id="dmOvCountArc">0</span>
+              </div>
+              <div class="inbox-col-list">
+                <div class="dm-ov-empty" id="dmOvBodyArc">
+                  <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>
+                  <p>Belum ada chat diarsipkan.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dm-layout" id="dmLayout" hidden>
           <!-- LEFT: thread list -->
           <aside class="dm-side">
             <div class="dm-side-search">
@@ -4870,6 +5280,12 @@
               </div>
             </div>
           </section>
+        </div>
+
+        <!-- Broadcast Admin = feed pengumuman READ-ONLY (bukan chat 2-panel),
+             per request user 2026-05-16. -->
+        <div class="dm-broadcast" id="dmBroadcastView" hidden>
+          <div class="dm-bc-list" id="dmBroadcastList"></div>
         </div>
       </section>
 
@@ -5137,6 +5553,11 @@
               <button type="button" class="btn primary" data-pd-action="profile">✏️ <span data-i18n="profile.edit.btn">Edit Profile</span></button>
             </div>
           </div>
+
+          <!-- PREMIUM INSIGHT / TIER WIDGET — dipindah dari home ke My Profile
+               per request user 2026-05-15 v54. Render via renderHomeTierWidget()
+               yang cari element by id #homeTierWidget. -->
+          <div class="home-tier-widget myprofile-tier-widget" id="homeTierWidget"></div>
 
           <div class="profile-2col">
             <div class="profile-col">
@@ -5986,21 +6407,21 @@
   <div class="notif-dropdown" id="notifDropdown" hidden role="dialog" aria-label="Notifications">
     <div class="ndd-arrow" aria-hidden="true"></div>
     <div class="ndd-head">
-      <h4>🔔 Notifications</h4>
+      <h4><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg></span> Notifications</h4>
       <button class="ndd-close" type="button" aria-label="Tutup">✕</button>
     </div>
     <div class="ndd-body" id="notifDropdownBody">
       <div class="ndd-empty">Belum ada notifikasi baru.</div>
     </div>
     <div class="ndd-foot">
-      <button class="btn ghost sm" id="notifDropdownOpenPanel" type="button">📋 Lihat detail</button>
+      <button class="btn ghost sm" id="notifDropdownOpenPanel" type="button"><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></span> Lihat detail</button>
     </div>
   </div>
 
   <!-- =================== NOTIFICATIONS PANEL =================== -->
   <div class="side-panel" id="notifPanel">
     <div class="sp-head">
-      <h3>🔔 Notifications</h3>
+      <h3><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg></span> Notifications</h3>
       <button class="icon-btn" data-close-sp="notifPanel">✕</button>
     </div>
 
@@ -6030,14 +6451,14 @@
     <div class="notif-user-only">
       <div class="notif-section">
         <div class="notif-section-head">
-          <h4>⚠️ Perlu Perhatian</h4>
+          <h4><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span> Perlu Perhatian</h4>
           <button class="btn ghost sm" data-jump="videos" data-close-sp="notifPanel">Lihat semua</button>
         </div>
         <ul class="admin-alerts" id="userNotifAlerts"></ul>
       </div>
       <div class="notif-section">
         <div class="notif-section-head">
-          <h4>🔥 Aktivitas Real-time</h4>
+          <h4><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span> Aktivitas Real-time</h4>
           <button class="live-toggle" id="userLiveToggle" title="Live update aktivitas">
             <i class="lt-dot"></i>
             <span class="lt-label">LIVE</span>
@@ -6158,9 +6579,9 @@
             <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="plyl-hp" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#E8D8C4"/>
+                  <stop offset="0%" stop-color="#6D2932"/>
                   <stop offset="45%" stop-color="#C7B7A3"/>
-                  <stop offset="100%" stop-color="#6D2932"/>
+                  <stop offset="100%" stop-color="#E8D8C4"/>
                 </linearGradient>
               </defs>
               <path
@@ -6811,6 +7232,13 @@
       <button type="button" class="save-card-btn save-card-btn-ghost" id="saveCardSkipBtn">No, thanks</button>
     </div>
   </div>
+
+  <!-- ====== THUMBNAIL EDITOR DUPLICATE — REMOVED (per fix user 2026-05-14 v7)
+       Sebelumnya ada modal duplikat dengan ID `teCanvas`, `teReset`, `teApply`,
+       `teTextInput`, dll. yang konflik dengan modal asli — getElementById ambil
+       elemen pertama (yang hidden ini), jadi V2 editor draw ke canvas yang tak
+       tampak. Modal duplikat sudah dihapus seluruhnya. Modal lengkap ada di
+       bagian akhir HTML (#thumbEditorModal). -->
 
   <!-- =================== PAYMENT MODAL (dummy / simulated) =================== -->
   <!-- Triggered by Upgrade-to-Premium flow. No real payment processor — fully
@@ -7900,7 +8328,232 @@
        Pindahin ke sini per fix 2026-05-06: sebelumnya script.js di-load
        di line ~6963 (sebelum #createUserModal di line 6971), bikin
        handler X/Cancel/Backdrop/Submit gagal attach → modal "stuck". -->
-  <script src="script.js?v=20260510-no-mini-popup" data-playly-main="1"></script>
+  <!-- ====== VIDEO EDITOR MODAL — Trim / Speed / Mute ======
+       Per request user 2026-05-14. Metadata-only edit: store trim/speed/mute
+       di pendingUpload, akan di-apply saat playback (CSS filter + currentTime
+       constraints + playbackRate). Tidak mengubah file video aslinya. -->
+  <div class="modal" id="videoEditorModal">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel video-editor-panel">
+      <button class="modal-close" type="button" data-close aria-label="Close">✕</button>
+      <div class="ve-head">
+        <div class="ve-head-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></div>
+        <div>
+          <h3>Edit Video</h3>
+          <p class="muted">Trim mulai/akhir, atur kecepatan, dan mute audio. Tidak mengubah file asli.</p>
+        </div>
+      </div>
+      <div class="ve-stage">
+        <div class="ve-video-wrap">
+          <video id="veVideo" preload="metadata" playsinline></video>
+          <div class="ve-time-display">
+            <span id="veTimeCurrent">0:00</span>
+            <span class="ve-time-sep">/</span>
+            <span id="veTimeTotal">0:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="ve-controls">
+        <div class="ve-ctrl-block">
+          <div class="ve-ctrl-label">Trim Video</div>
+          <div class="ve-trim-wrap">
+            <div class="ve-trim-track" id="veTrimTrack">
+              <div class="ve-trim-range" id="veTrimRange"></div>
+              <div class="ve-trim-handle ve-trim-start" id="veTrimStart" data-handle="start"></div>
+              <div class="ve-trim-handle ve-trim-end" id="veTrimEnd" data-handle="end"></div>
+              <div class="ve-trim-playhead" id="veTrimPlayhead"></div>
+            </div>
+            <div class="ve-trim-meta">
+              <span>Mulai: <b id="veStartTime">0:00</b></span>
+              <span>Akhir: <b id="veEndTime">0:00</b></span>
+              <span>Durasi: <b id="veDurationTime">0:00</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="ve-ctrl-row">
+          <div class="ve-ctrl-block ve-ctrl-half">
+            <div class="ve-ctrl-label">Kecepatan</div>
+            <div class="ve-speed-pills" role="radiogroup" aria-label="Kecepatan video">
+              <button type="button" class="ve-speed" data-speed="0.5">0.5×</button>
+              <button type="button" class="ve-speed" data-speed="0.75">0.75×</button>
+              <button type="button" class="ve-speed active" data-speed="1">1×</button>
+              <button type="button" class="ve-speed" data-speed="1.25">1.25×</button>
+              <button type="button" class="ve-speed" data-speed="1.5">1.5×</button>
+              <button type="button" class="ve-speed" data-speed="2">2×</button>
+            </div>
+          </div>
+          <div class="ve-ctrl-block ve-ctrl-half">
+            <div class="ve-ctrl-label">Audio</div>
+            <label class="ve-mute-toggle">
+              <input type="checkbox" id="veMute"/>
+              <span class="ve-mute-track"><span class="ve-mute-knob"></span></span>
+              <span class="ve-mute-label"><span class="ve-mute-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></span> Mute audio video</span>
+            </label>
+          </div>
+        </div>
+        <div class="ve-ctrl-block">
+          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">▶ Putar Preview (trim + speed)</button>
+          <small class="ve-hint">Preview memutar dari "Mulai" sampai "Akhir" dengan kecepatan yang dipilih.</small>
+        </div>
+      </div>
+      <div class="ve-actions">
+        <button type="button" class="btn ghost" id="veReset">↺ Reset</button>
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="veApply">✓ Apply &amp; Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SUBTITLE PREVIEW MODAL — lihat hasil subtitle (per request user
+       2026-05-16). Read-only list cue: rentang waktu + teks. ====== -->
+  <div class="modal" id="subtitlePreviewModal">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel spv-panel">
+      <button class="modal-close" type="button" data-close aria-label="Close">✕</button>
+      <div class="spv-head">
+        <div class="spv-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h4M7 11h2M14 15h3M14 11h3"/></svg>
+        </div>
+        <div>
+          <h3 data-i18n="subprev.title">Preview Subtitle</h3>
+          <p class="muted" id="spvMeta">— cues</p>
+        </div>
+      </div>
+      <div class="spv-body" id="spvBody"></div>
+      <div class="spv-foot">
+        <button type="button" class="btn ghost" data-close data-i18n="subprev.close">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== THUMBNAIL EDITOR MODAL — Crop / Filter / Text ======
+       Per request user 2026-05-14. Editor canvas-based untuk crop region,
+       apply preset filter, dan tambah text overlay (drag-positioning). -->
+  <div class="modal" id="thumbEditorModal">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel thumb-editor-panel">
+      <button class="modal-close" type="button" data-close aria-label="Close">✕</button>
+      <div class="te-head">
+        <div class="te-head-ico" aria-hidden="true">🎨</div>
+        <div>
+          <h3>Edit Thumbnail</h3>
+          <p class="muted">Crop region, pilih filter, dan tambah text overlay.</p>
+        </div>
+      </div>
+      <div class="te-tabs" role="tablist">
+        <button type="button" class="te-tab active" data-te-tab="crop"   role="tab" aria-selected="true">✂️ Crop</button>
+        <button type="button" class="te-tab"        data-te-tab="filter" role="tab" aria-selected="false">🎨 Filter</button>
+        <button type="button" class="te-tab"        data-te-tab="text"   role="tab" aria-selected="false">📝 Text</button>
+      </div>
+      <div class="te-stage">
+        <div class="te-canvas-wrap" id="teCanvasWrap">
+          <canvas id="teCanvas"></canvas>
+          <!-- Crop overlay (active hanya saat tab Crop) -->
+          <div class="te-crop-overlay" id="teCropOverlay" hidden>
+            <div class="te-crop-frame" id="teCropFrame">
+              <div class="te-crop-handle te-crop-handle-nw" data-handle="nw"></div>
+              <div class="te-crop-handle te-crop-handle-ne" data-handle="ne"></div>
+              <div class="te-crop-handle te-crop-handle-sw" data-handle="sw"></div>
+              <div class="te-crop-handle te-crop-handle-se" data-handle="se"></div>
+            </div>
+          </div>
+          <!-- Text overlay layer (active hanya saat tab Text) -->
+          <div class="te-text-overlay" id="teTextOverlay" hidden></div>
+        </div>
+      </div>
+
+      <!-- Frame scrub bar — hanya muncul saat edit dari Frame Picker (source
+           "frame"). Slider geser video pilih frame + tombol Pakai Frame Ini.
+           Per request user 2026-05-16: dipindah dari halaman awal ke modal. -->
+      <div class="te-frame-bar" id="teFrameBar" hidden>
+        <span class="te-frame-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg>
+        </span>
+        <input type="range" id="teFrameSlider" class="te-frame-slider" min="0" max="1000" value="500" step="1" aria-label="Geser untuk pilih frame"/>
+        <span class="te-frame-time" id="teFrameTime">0:00 / 0:00</span>
+        <button type="button" class="btn primary small te-frame-apply" id="teFrameApply">Pakai Frame Ini</button>
+      </div>
+
+      <!-- Tab content panels -->
+      <div class="te-panel" data-te-panel="crop">
+        <div class="te-ctrl-label">Aspect Ratio</div>
+        <div class="te-aspect-pills" role="radiogroup" aria-label="Crop aspect ratio">
+          <button type="button" class="te-aspect active" data-aspect="free">Free</button>
+          <button type="button" class="te-aspect" data-aspect="16:9">16:9</button>
+          <button type="button" class="te-aspect" data-aspect="9:16">9:16</button>
+          <button type="button" class="te-aspect" data-aspect="1:1">1:1</button>
+          <button type="button" class="te-aspect" data-aspect="4:3">4:3</button>
+          <button type="button" class="te-aspect" data-aspect="3:4">3:4</button>
+        </div>
+        <small class="te-hint">Drag pojok crop frame untuk resize, drag bagian tengah untuk pindahkan.</small>
+      </div>
+
+      <div class="te-panel" data-te-panel="filter" hidden>
+        <div class="te-ctrl-label">Preset Filter</div>
+        <div class="te-filter-grid" id="teFilterGrid">
+          <!-- Diisi oleh JS supaya preview thumbnail per filter cepat -->
+        </div>
+      </div>
+
+      <div class="te-panel" data-te-panel="text" hidden>
+        <div class="te-text-row">
+          <div class="te-ctrl">
+            <label class="te-ctrl-label" for="teTextInput">Teks</label>
+            <input type="text" id="teTextInput" maxlength="60" placeholder="Tulis teks di thumbnail..." class="te-input"/>
+          </div>
+        </div>
+        <div class="te-text-row">
+          <div class="te-ctrl">
+            <label class="te-ctrl-label" for="teTextSize">Ukuran</label>
+            <input type="range" id="teTextSize" min="20" max="120" value="56" step="1" class="te-range"/>
+          </div>
+          <div class="te-ctrl">
+            <label class="te-ctrl-label" for="teTextColor">Warna</label>
+            <div class="te-color-row">
+              <input type="color" id="teTextColor" value="#ffffff" class="te-color"/>
+              <button type="button" class="te-color-preset" data-color="#ffffff" title="Putih" style="background:#fff"></button>
+              <button type="button" class="te-color-preset" data-color="#000000" title="Hitam" style="background:#000"></button>
+              <button type="button" class="te-color-preset" data-color="#facc15" title="Kuning" style="background:#facc15"></button>
+              <button type="button" class="te-color-preset" data-color="#ef4444" title="Merah" style="background:#ef4444"></button>
+              <button type="button" class="te-color-preset" data-color="#10b981" title="Hijau" style="background:#10b981"></button>
+              <button type="button" class="te-color-preset" data-color="#6366f1" title="Biru" style="background:#6366f1"></button>
+            </div>
+          </div>
+          <div class="te-ctrl">
+            <label class="te-ctrl-label" for="teTextStroke">Outline</label>
+            <select id="teTextStroke" class="te-select">
+              <option value="0">Tidak ada</option>
+              <option value="2" selected>Tipis (2px)</option>
+              <option value="4">Tebal (4px)</option>
+              <option value="6">Sangat tebal (6px)</option>
+            </select>
+          </div>
+        </div>
+        <div class="te-text-row">
+          <button type="button" class="btn primary small" id="teTextAdd">+ Tambah Teks</button>
+          <button type="button" class="btn ghost small" id="teTextClear">Hapus semua teks</button>
+          <small class="te-hint">Klik &amp; drag teks di preview untuk pindahkan posisinya.</small>
+        </div>
+      </div>
+
+      <div class="te-actions">
+        <button type="button" class="btn ghost" id="teReset">↺ Reset</button>
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="teApply">✓ Apply &amp; Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== VIDEO EDITOR DUPLICATE — REMOVED (per fix user 2026-05-14 v10)
+       Duplicate modal dengan ID `videoEditorModal`, `veVideo`, `veApply`, `veReset`,
+       `veMute` dll. yang sama dengan modal asli di atas → getElementById return
+       elemen pertama, jadi IIFE wireVideoEditor wire ke modal yang benar tapi
+       interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
+       sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
+
+  <script src="script.js?v=20260516-dm-broadcast-v187" data-playly-main="1"></script>
+  <script src="picons.js?v=20260516-icons-footersize-v186"></script>
+  <script src="particles-bg.js?v=20260516-particles-v1"></script>
   <script>
     console.log("[playly] script.js loaded:", typeof window.openAuthModal === "function" ? "✓ OK" : "✗ FAIL");
   </script>

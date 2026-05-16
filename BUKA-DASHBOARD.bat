@@ -28,15 +28,17 @@ if "%PICK%"=="0" exit /b 0
 goto :menu
 
 REM ==== Pastikan server jalan ====
+REM Per fix user 2026-05-15 v79: pakai `node dev-server.js` (server yg bener),
+REM BUKAN live-server (gak ke-install → server gagal start → ERR_CONNECTION_REFUSED).
 :ensure_server
-netstat -ano | findstr :8080 | findstr LISTENING >nul
+netstat -ano | findstr :1508 | findstr LISTENING >nul
 if %errorlevel% NEQ 0 (
-    echo  [INFO] Server belum jalan. Memulai live-server...
+    echo  [INFO] Server belum jalan. Memulai dev-server...
     cd /d "%~dp0"
-    start "Playly Server" cmd /k "live-server --port=8080 --host=127.0.0.1 --no-browser"
+    start "Playly Server" cmd /k "node dev-server.js"
     timeout /t 3 >nul
 ) else (
-    echo  [OK] Server sudah berjalan di port 8080
+    echo  [OK] Server sudah berjalan di port 1508
 )
 exit /b 0
 
@@ -50,11 +52,11 @@ if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "CHROME=
 if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe" set "CHROME=%LocalAppData%\Google\Chrome\Application\chrome.exe"
 
 if defined CHROME (
-    start "" "%CHROME%" "http://localhost:8080"
+    start "" "%CHROME%" "http://127.0.0.1:1508"
     echo  [OK] Chrome dibuka.
 ) else (
     echo  [WARN] Chrome tidak ditemukan, membuka browser default...
-    start "" "http://localhost:8080"
+    start "" "http://127.0.0.1:1508"
 )
 timeout /t 2 >nul
 exit /b 0
@@ -68,11 +70,11 @@ if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" set "EDGE=%Progr
 if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "EDGE=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
 
 if defined EDGE (
-    start "" "%EDGE%" "http://localhost:8080"
+    start "" "%EDGE%" "http://127.0.0.1:1508"
     echo  [OK] Edge dibuka.
 ) else (
     echo  [WARN] Edge tidak ditemukan, membuka browser default...
-    start "" microsoft-edge:http://localhost:8080
+    start "" microsoft-edge:http://127.0.0.1:1508
 )
 timeout /t 2 >nul
 exit /b 0
@@ -81,6 +83,6 @@ exit /b 0
 call :ensure_server
 echo.
 echo  Membuka dashboard di browser default...
-start "" "http://localhost:8080"
+start "" "http://127.0.0.1:1508"
 timeout /t 2 >nul
 exit /b 0

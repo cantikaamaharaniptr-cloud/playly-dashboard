@@ -6,7 +6,7 @@ const path = require('path');
 const url = require('url');
 
 const ROOT = __dirname;
-const PORT = 8080;
+const PORT = 1508;
 const HOST = '127.0.0.1';
 
 const MIME = {

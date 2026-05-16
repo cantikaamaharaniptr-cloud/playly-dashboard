@@ -44,36 +44,26 @@ echo    PLAYLY. - Start Server (vercel dev)
 echo  =========================================
 echo.
 
-REM Update 2026-05-11: switch dari live-server ke vercel dev biar localhost
-REM serve 100% sama dengan production di Vercel — termasuk:
-REM   - URL rewrites dari vercel.json (/admin, /watch, /id/:videoId, dst)
-REM   - Edge Functions di /api/* (translate-subtitle pakai DeepL)
-REM Reuse PM2 manager supaya autostart-on-login (via VBS) tetap kerja.
+REM Per fix user 2026-05-15 v79: pakai `node dev-server.js` (server yg
+REM beneran jalan & terbukti bind ke port 1508). pm2/vercel/live-server
+REM TIDAK ke-install di laptop ini → bikin server gagal start (ERR_CONNECTION_REFUSED).
 
 cd /d "%~dp0"
 
-REM Kill anything currently listening on port 8080
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+REM Kill apapun yang listen di port 1508 (server lama / nyangkut)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :1508 ^| findstr LISTENING') do (
     taskkill /F /PID %%a >nul 2>&1
 )
 
-pm2 describe playly >nul 2>&1
-if %errorlevel%==0 (
-    echo  [INFO] Server lama detected, hapus dulu...
-    pm2 delete playly >nul 2>&1
-)
-
-echo  [INFO] Memulai vercel dev di port 8080 via pm2...
-REM Note: PM2 di Windows nggak bisa spawn .cmd wrapper langsung — pakai path JS asli (vc.js)
-pm2 start "C:\Users\USER\AppData\Roaming\npm\node_modules\vercel\dist\vc.js" --name playly --cwd "%~dp0" -- dev --listen 8080 --yes --scope cantikaamaharaniptr-clouds-projects
-pm2 save --force
+echo  [INFO] Memulai Playly dev server (node dev-server.js) di port 1508...
+start "Playly Server" cmd /k "node dev-server.js"
+timeout /t 3 >nul
 
 echo.
-echo  [OK] Server aktif di http://localhost:8080
-echo  [INFO] Sama persis dengan https://playly-dashboard.vercel.app
+echo  [OK] Server aktif di http://127.0.0.1:1508
 echo.
-echo  Server akan tetap berjalan walau jendela ini ditutup.
-echo  Jalankan SERVER.bat stop untuk menghentikan server.
+echo  PENTING: jendela "Playly Server" yang baru kebuka JANGAN ditutup.
+echo  Selama jendela itu terbuka, server hidup. Ditutup = server mati.
 echo.
 if "%~1"=="" pause
 timeout /t 2 >nul
@@ -92,8 +82,8 @@ pm2 stop playly 2>nul
 pm2 delete playly 2>nul
 pm2 save --force 2>nul
 
-REM Backup: kill proses node yang masih listen di 8080
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+REM Backup: kill proses node yang masih listen di 1508
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :1508 ^| findstr LISTENING') do (
     taskkill /F /PID %%a >nul 2>&1
 )
 
@@ -115,12 +105,12 @@ echo.
 pm2 status
 
 echo.
-echo  Port 8080 status:
-netstat -ano | findstr :8080 | findstr LISTENING
+echo  Port 1508 status:
+netstat -ano | findstr :1508 | findstr LISTENING
 if %errorlevel% NEQ 0 (
-    echo  [!] Tidak ada proses listen di port 8080
+    echo  [!] Tidak ada proses listen di port 1508
 ) else (
-    echo  [OK] Server aktif di http://localhost:8080
+    echo  [OK] Server aktif di http://127.0.0.1:1508
 )
 
 echo.
