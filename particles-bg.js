@@ -4,11 +4,11 @@
  *  Port setia komponen <Particles> (reactbits / OGL) ke vanilla
  *  WebGL TANPA dependency (app ini vanilla monolith, no React/build,
  *  & offline — tak bisa load OGL dari CDN). Shader vertex/fragment
- *  identik dgn reactbits. Param sesuai request user 2026-05-16:
- *    particleCount=630, particleSpread=31, speed=0.1,
+ *  identik dgn reactbits. Param sesuai request user 2026-05-16 (revisi 2):
+ *    particleCount=620, particleSpread=40, speed=0.1,
  *    particleColors=#ffffff x3, moveParticlesOnHover=false,
- *    particleHoverFactor=0.1, alphaParticles=false,
- *    particleBaseSize=60, sizeRandomness=0.5, cameraDistance=29,
+ *    particleHoverFactor=0.2, alphaParticles=false,
+ *    particleBaseSize=40, sizeRandomness=1.5, cameraDistance=10,
  *    disableRotation=false.
  *  - Self-contained, reversible (hapus 1 <script> = balik).
  *  - Mount di slot backdrop ".dreams-fx" (di dlm .views), backdrop
@@ -22,14 +22,14 @@
   window.__particlesBgInit = true;
 
   var CFG = {
-    count: 630,
-    spread: 31,
+    count: 620,
+    spread: 40,
     speed: 0.1,
     colors: ["#ffffff", "#ffffff", "#ffffff"],
     alpha: false,
-    baseSize: 60,
-    sizeRandomness: 0.5,
-    cameraDistance: 29,
+    baseSize: 40,
+    sizeRandomness: 1.5,
+    cameraDistance: 10,
     rotate: true
   };
 
