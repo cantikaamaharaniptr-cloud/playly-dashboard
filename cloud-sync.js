@@ -427,7 +427,7 @@
   function injectMainScript() {
     if (document.querySelector('script[data-playly-main]')) return;
     const s = document.createElement("script");
-    s.src = "script.js?v=20260502-batch12";
+    s.src = "script.js?v=20260517-demo-purge-v277";
     s.dataset.playlyMain = "1";
     document.body.appendChild(s);
   }

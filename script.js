@@ -255,6 +255,7 @@ function getPlatformVideos() {
     if (!key || !key.startsWith("playly-state-")) continue;
     const uname = key.slice("playly-state-".length).toLowerCase();
     if (KNOWN_DEMO_USERNAMES.includes(uname)) continue;
+    if (DUMMY_USERNAMES.includes(uname)) continue; // demo_creator + kreator palsu
     // Skip video milik akun admin — admin bukan creator publik
     try {
       const accRaw = localStorage.getItem(`playly-account-${uname}`)
@@ -660,13 +661,34 @@ function seedDummyCreators() {
 // Karena cloud-sync re-pull dari Supabase tiap reload, purge HARUS jalan tiap load
 // (jangan pakai one-time flag) sampai cloud benar-benar bersih.
 const DEMO_EMAIL_DOMAIN = "@playly.local";
+// Domain semua akun dummy lama (demo_creator + 5 kreator palsu seedDummyCreators).
+// BUKAN email user asli — user sign up pakai email sendiri (gmail dst), admin
+// pakai @gmail.com. Jadi @playly.dev aman 100% sebagai penanda purge.
+const DUMMY_EMAIL_DOMAIN = "@playly.dev";
 const KNOWN_DEMO_USERNAMES = ["citra_d", "rinaldi", "mahasari", "budikece", "andiwijaya", "nadiap"];
+// Username dummy lama yang WAJIB ikut dibersihkan. Tanpa ini akun demo_creator
+// + 5 kreator palsu lolos dari isDemoAccount() → cloud-sync resurrect terus dari
+// Supabase tiap reload (bug user 2026-05-17: "Demo" masih muncul + auto-login
+// tanpa halaman login). Seeding-nya sudah dimatikan; ini bersihin SISA-nya.
+const DUMMY_USERNAMES = [
+  "demo_creator",
+  "aldoramadhan", "sasitirta", "rianpranata", "mayalestari", "aritechid",
+];
 
 function isDemoAccount(acc) {
   if (!acc) return false;
   if (acc.demo === true) return true;
-  if (typeof acc.email === "string" && acc.email.toLowerCase().endsWith(DEMO_EMAIL_DOMAIN)) return true;
-  if (typeof acc.username === "string" && KNOWN_DEMO_USERNAMES.includes(acc.username.toLowerCase())) return true;
+  if (acc.isDummy === true) return true;            // marker akun dummy/demo
+  if (typeof acc.email === "string") {
+    const em = acc.email.toLowerCase();
+    if (em.endsWith(DEMO_EMAIL_DOMAIN)) return true;  // *.@playly.local
+    if (em.endsWith(DUMMY_EMAIL_DOMAIN)) return true; // demo@playly.dev, *.@playly.dev
+  }
+  if (typeof acc.username === "string") {
+    const un = acc.username.toLowerCase();
+    if (KNOWN_DEMO_USERNAMES.includes(un)) return true;
+    if (DUMMY_USERNAMES.includes(un)) return true;
+  }
   return false;
 }
 
@@ -693,6 +715,18 @@ function purgeDemoData() {
   for (const key of stateKeys) localStorage.removeItem(key);
   // Jaga-jaga: hapus flag seeder versi lama supaya tidak ada yang nyangkut.
   localStorage.removeItem("playly-demo-users-seeded-v1");
+  localStorage.removeItem("playly-dummy-creators-seed-v");
+  // FIX no-login (user 2026-05-17): kalau session marker `playly-user` masih
+  // nunjuk ke akun demo/dummy yang barusan dipurge, hapus markernya supaya
+  // tryAutoBoot() tidak auto-login sebagai "Demo" — user dipaksa ke halaman
+  // login. (playly-user device-local, tidak di-sync; aman dihapus di sini.)
+  try {
+    const curRaw = localStorage.getItem("playly-user");
+    if (curRaw) {
+      const cur = JSON.parse(curRaw);
+      if (isDemoAccount(cur)) localStorage.removeItem("playly-user");
+    }
+  } catch {}
   return accountKeys.length + stateKeys.length;
 }
 purgeDemoData();
@@ -1076,7 +1110,10 @@ function purgeOrphanStates() {
       const key = localStorage.key(i);
       if (!key || !key.startsWith("playly-state-")) continue;
       const uname = key.slice("playly-state-".length).toLowerCase();
-      if (!validUsernames.has(uname) && !KNOWN_DEMO_USERNAMES.includes(uname)) {
+      // Orphan = state tanpa account record valid → purge (termasuk state
+      // demo/dummy: pengecualian KNOWN_DEMO_USERNAMES dihapus per fix user
+      // 2026-05-17 supaya sisa state demo tidak nyangkut).
+      if (!validUsernames.has(uname)) {
         try { localStorage.removeItem(key); } catch {}
       }
     }
@@ -1135,19 +1172,13 @@ function loadState(username) {
     try { s = { ...defaultState(), ...JSON.parse(raw) }; }
     catch { s = defaultState(); }
   }
-  // Auto-seed full demo data untuk akun dummy. Per fix user 2026-05-15 v64:
-  // pakai DEMO_SEED_VERSION — kalau state lama (versi beda / kosong), regenerate
-  // dengan range angka terbaru (v31, realistic). Ini benerin kasus angka demo
-  // lama yg kegedean (744k views / 4742d watch) gak pernah ke-reset.
-  if (username === DEMO_DUMMY_USERNAME) {
-    const stale = !Array.isArray(s.myVideos) || s.myVideos.length === 0
-                  || s.dummySeedVersion !== DEMO_SEED_VERSION;
-    if (stale) {
-      s = seedDummyDemoState();
-      try { localStorage.setItem(`playly-state-${username}`, JSON.stringify(s)); } catch {}
-      console.log("[playly] Demo state (re)seeded v" + DEMO_SEED_VERSION + " — angka realistic");
-    }
-  }
+  // === DEMO STATE RE-SEED DIMATIKAN (request user 2026-05-17) ===
+  // Dulu blok ini regenerate seedDummyDemoState() (16 video + angka palsu)
+  // tiap kali state demo_creator di-load — itu yang bikin "Demo" tetap
+  // muncul dengan 1.460 tontonan / 16 video walau seeding sudah dimatikan.
+  // Sekarang demo_creator dipurge total (lihat purgeDemoData), state-nya
+  // TIDAK pernah di-regenerate lagi.
+  // if (username === DEMO_DUMMY_USERNAME) { ...seedDummyDemoState()... }
   return s;
 }
 
@@ -42636,6 +42667,14 @@ function tryAutoBoot() {
   // doLogout() saat admin pakai fitur Hapus Akun.
   const accountData = acc || saved;
   if (acc?.suspended) return false; // akun di-suspend → kick
+  // FIX no-login (user 2026-05-17): JANGAN pernah auto-boot ke akun demo/dummy.
+  // Cek `acc` DAN `saved` (marker) — kalau acc null tapi marker masih demo,
+  // path fallback di atas tetap mau boot sebagai "Demo". Hapus markernya &
+  // kick ke halaman login. Defense-in-depth ganda dgn purgeDemoData().
+  if (isDemoAccount(acc) || isDemoAccount(saved)) {
+    try { localStorage.removeItem("playly-user"); } catch {}
+    return false;
+  }
   const isAdminAcc = isAllowedAdminEmail(accountData.email);
   // Strict URL/role match — kedua arah:
   //   - Admin di URL non-admin (`/`) → kick (UI admin tidak boleh bocor ke view user)
