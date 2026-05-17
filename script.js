@@ -524,9 +524,13 @@ function seedDummyDemo() {
     }
   } catch {}
 }
-seedDummyDemo();
-// Re-seed setelah cloud-sync apply (cloud bisa overwrite akun → re-seed pulihin)
-window.addEventListener("playly:cloud-applied", () => { try { seedDummyDemo(); } catch {} });
+// === SEEDING DUMMY DEMO DIMATIKAN (request user 2026-05-17) ===
+// User mau platform mulai dari NOL, data real-time, tidak ada akun
+// dummy & tidak boleh regenerate. Fungsi seedDummyDemo() dibiarkan
+// (untuk recovery), tapi TIDAK pernah dipanggil lagi. purgeDemoData()
+// @cloud-applied + ?cleanup=playly-reset yang membersihkan sisa data.
+// seedDummyDemo();
+// window.addEventListener("playly:cloud-applied", () => { try { seedDummyDemo(); } catch {} });
 
 // ===== DUMMY CREATORS (per request user 2026-05-15 v67) =====
 // 5 kreator dummy + video supaya feed Trending/Untuk-kamu variatif (gak semua
@@ -607,8 +611,11 @@ function seedDummyCreators() {
     console.log("[playly] 5 dummy creators seeded — feed Trending/Untuk-kamu jadi variatif");
   } catch (e) { console.warn("[seedDummyCreators]", e); }
 }
-seedDummyCreators();
-window.addEventListener("playly:cloud-applied", () => { try { seedDummyCreators(); } catch {} });
+// === SEEDING DUMMY CREATORS DIMATIKAN (request user 2026-05-17) ===
+// Kreator palsu (Aldo/Maya/user1/Ari/sasitirta/rianpranata dll) tidak
+// di-seed lagi & tidak regenerate. Fungsi dibiarkan utuk recovery.
+// seedDummyCreators();
+// window.addEventListener("playly:cloud-applied", () => { try { seedDummyCreators(); } catch {} });
 
 // ----------------------- PURGE DEMO/MOCK USERS (selalu jalan) -----------------------
 // Dashboard wajib 100% real-time — hanya akun yang benar-benar sign up yang boleh tampil.
