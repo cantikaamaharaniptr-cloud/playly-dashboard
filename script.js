@@ -14,6 +14,10 @@
     const adminEmails = ["admin.playly@gmail.com", "admin.playly2@gmail.com"];
     const removed = { accounts: 0, payments: 0, stateKeys: 0, otherKeys: 0 };
     const allKeys = Object.keys(localStorage);
+    // Kumpulkan key yg dihapus → dihapus juga di cloud Supabase
+    // (cleanup IIFE jalan SEBELUM hook removeItem cloud-sync terpasang,
+    // jadi delete cloud harus eksplisit di sini). request user 2026-05-17.
+    const cloudDeleteKeys = [];
 
     // 1. Non-admin accounts
     // Filter HARUS strict ke key yang suffix-nya beneran email (ada @).
@@ -25,6 +29,7 @@
       if (!suffix.includes("@")) return; // skip system key
       if (!adminEmails.includes(suffix)) {
         localStorage.removeItem(k);
+        cloudDeleteKeys.push(k);
         removed.accounts++;
       }
     });
@@ -51,6 +56,7 @@
       if (isAdminScoped) return;
       if (userPrefixes.some(p => k.startsWith(p))) {
         localStorage.removeItem(k);
+        cloudDeleteKeys.push(k);
         removed.stateKeys++;
       }
     });
@@ -62,20 +68,51 @@
      "playly-user", "playly-state"].forEach(k => {
       if (localStorage.getItem(k)) {
         localStorage.removeItem(k);
+        cloudDeleteKeys.push(k);
         removed.otherKeys++;
       }
     });
 
-    alert(
-      `✓ Reset berhasil!\n\n` +
-      `• ${removed.accounts} akun user dihapus\n` +
-      `• ${removed.payments} payment dihapus\n` +
-      `• ${removed.stateKeys} state keys dihapus\n` +
-      `• ${removed.otherKeys} platform keys dihapus\n\n` +
-      `Admin tetap aman. Klik OK untuk lanjut ke halaman bersih.`
-    );
-    // Strip cleanup param + redirect to clean URL
-    window.location.replace(window.location.pathname);
+    const finishRedirect = (cloudInfo) => {
+      alert(
+        `✓ Reset berhasil!\n\n` +
+        `• ${removed.accounts} akun user dihapus\n` +
+        `• ${removed.payments} payment dihapus\n` +
+        `• ${removed.stateKeys} state keys dihapus\n` +
+        `• ${removed.otherKeys} platform keys dihapus\n` +
+        `• Cloud: ${cloudInfo}\n\n` +
+        `Admin tetap aman. Klik OK untuk lanjut ke halaman bersih.`
+      );
+      // Strip cleanup param + redirect to clean URL
+      window.location.replace(window.location.pathname);
+    };
+    // Hapus juga di cloud Supabase (mirror scope localStorage di atas;
+    // 2 akun admin & system key TIDAK masuk cloudDeleteKeys karena
+    // filter yg sama). Redirect DITUNDA sampai cloud delete selesai
+    // supaya cloud-sync tidak menarik balik dummy sebelum terhapus.
+    try {
+      const cfg = window.PLAYLY_SUPABASE;
+      if (cfg && cfg.url && cfg.key && window.supabase && window.supabase.createClient) {
+        const sb = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: false } });
+        const ops = [];
+        // payments → reset [] di cloud juga
+        ops.push(sb.from("kv").upsert(
+          { key: "playly-premium-payments", value: [], updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        ));
+        for (let i = 0; i < cloudDeleteKeys.length; i += 50) {
+          ops.push(sb.from("kv").delete().in("key", cloudDeleteKeys.slice(i, i + 50)));
+        }
+        Promise.allSettled(ops)
+          .then(() => finishRedirect(`${cloudDeleteKeys.length} key dihapus`))
+          .catch(() => finishRedirect(`gagal (lihat console)`));
+      } else {
+        finishRedirect("dilewati (config tidak ada)");
+      }
+    } catch (e) {
+      console.error("[cleanup] cloud delete failed:", e);
+      finishRedirect("gagal (lihat console)");
+    }
   } catch (err) {
     console.error("[cleanup] failed:", err);
   }
