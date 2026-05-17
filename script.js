@@ -16274,7 +16274,7 @@ function openPremiumStatusPopup() {
     modal.className = "modal-overlay premium-status-popup";
     modal.innerHTML = `
       <div class="premium-status-card" role="dialog" aria-modal="true">
-        <div class="psp-icon-burst">⭐</div>
+        <div class="psp-icon-burst" data-no-picon><svg viewBox="0 0 24 24" fill="#FFC94D" aria-hidden="true" style="width:1em;height:1em;display:block"><path d="M12 2l2.92 6.26 6.58.86-4.83 4.66 1.2 6.5L12 17.9 5.13 20.28l1.2-6.5L1.5 9.12l6.58-.86z"/></svg></div>
         <h3 class="psp-title">${isID ? "Akun Premium Aktif" : "Premium Account Active"}</h3>
         <p class="psp-subtitle" id="pspPlan">—</p>
         <div class="psp-dates">
@@ -45222,7 +45222,7 @@ function saveVideoEdit() {
   window.__pjUserHomeTopbarNav = true;
 
   var SECTIONS = [
-    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg>' }
+    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>' }
   ];
 
   function tagSections() {

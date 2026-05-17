@@ -20473,8 +20473,8 @@ body[data-role="admin"] .breadcrumb::before {
   transform: translateY(-50%);
   width: 16px; height: 16px;
   background-color: var(--admin-accent);
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z' fill='black'/></svg>") center/contain no-repeat;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z' fill='black'/></svg>") center/contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z' fill='black'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z' fill='black'/></svg>") center/contain no-repeat;
 }
 body[data-role="admin"] .breadcrumb a { color: var(--admin-accent); }
 body[data-role="admin"] .breadcrumb a.active { color: var(--admin-accent); font-weight: 800; }
@@ -20509,8 +20509,8 @@ body:not([data-role="admin"]) .breadcrumb::before {
   transform: translateY(-50%);
   width: 14px; height: 14px;
   background-color: var(--text-2);
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 12 12 3l9 9v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z' fill='black'/></svg>") center/contain no-repeat;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 12 12 3l9 9v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z' fill='black'/></svg>") center/contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z' fill='black'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z' fill='black'/></svg>") center/contain no-repeat;
 }
 body:not([data-role="admin"]) .breadcrumb a { color: var(--text-2); }
 body:not([data-role="admin"]) .breadcrumb a.active { color: var(--text); font-weight: 700; }
@@ -26493,7 +26493,10 @@ img, video, canvas, svg { max-width: 100%; }
   .hero-content { flex-direction: column; align-items: flex-start; gap: 18px; }
   .hero-illus { width: 100%; height: 150px; }
   .chart-wrap { height: 220px; }
-  .topbar { gap: 10px; }
+  /* Search di-hide di ≤900px → tak ada elemen flex-grow yg ngedorong
+     aksi ke kanan. Beri space-between supaya breadcrumb tetap mepet
+     kiri & aksi mepet kanan (tanpa ini topbar nge-bunch ke kiri). */
+  .topbar { gap: 10px; justify-content: space-between !important; }
   .topbar-search { display: none; }
   .topbar .topbar-search.always { display: flex; }
   .upload-form .row { grid-template-columns: 1fr !important; }
@@ -26567,6 +26570,7 @@ img, video, canvas, svg { max-width: 100%; }
   .auth-illus { display: none; }
 
   /* Topbar search di-hide di phone, hamburger sudah handle */
+  .topbar { justify-content: space-between !important; }
   .topbar-search { display: none; }
   .topbar-actions { gap: 6px; }
   .topbar-actions .icon-btn { display: grid; }
@@ -40078,14 +40082,18 @@ body[data-theme="light"] .auth-preview-floats .apf {
 }
 /* Teks pill dirata-tengah, 2 baris PREMIUM / AKTIF (request user
    2026-05-17). align-items + text-align center. */
+/* PREMIUM & AKTIF jadi 1 BARIS sejajar dgn bintang (request user
+   2026-05-17): column → row + gap antar kata. */
 .dashboard-tier-pill .dtp-text {
-  display: flex; flex-direction: column; align-items: center;
-  line-height: 1.1; text-align: center;
+  display: flex; flex-direction: row; align-items: center;
+  gap: 5px; line-height: 1; text-align: center;
 }
 /* "Premium" → "PREMIUM" (uppercase) biar senada dgn "AKTIF" */
 .dashboard-tier-pill .dtp-label {
   font-size: 11.5px; font-weight: 700; color: var(--text);
-  text-transform: uppercase; letter-spacing: .4px;
+  /* "PREMIUM" → "Premium" (request user 2026-05-17): uppercase
+     dimatikan, pakai casing asli teks. */
+  text-transform: none; letter-spacing: .2px;
 }
 /* "AKTIF" dibuat SAMA PERSIS dgn "PREMIUM" (request user 2026-05-17):
    bukan cuma weight — font-size 10→11.5px & letter-spacing .8→.4px
@@ -40093,10 +40101,13 @@ body[data-theme="light"] .auth-preview-floats .apf {
    lebih tipis → kelihatan "bold-nya beda". Sekarang 1 blok seragam,
    rata tengah persis. */
 .dashboard-tier-pill .dtp-status {
-  /* "AKTIF" balik besar lagi = 11.5px (sama dgn "PREMIUM") —
-     user batal kecilkan (2026-05-17: "gajadi besarin lagi"). */
-  font-size: 11.5px; font-weight: 700; color: var(--text-2);
-  text-transform: uppercase; letter-spacing: .4px; margin-top: 2px;
+  /* ukuran teks → 13px (request user 2026-05-17),
+     tetap sama persis dgn "Premium" */
+  font-size: 13px; font-weight: 700; color: var(--text-2);
+  /* margin-top 2px (utk layout 2-baris) → 0: sekarang 1 baris,
+     jarak antar kata pakai gap di .dtp-text */
+  /* "AKTIF" → "Aktif" (request user 2026-05-17): uppercase off */
+  text-transform: none; letter-spacing: .2px; margin-top: 0;
 }
 
 /* Free state — match topbar search/icon-btn (per user 2026-05-08) */
@@ -40136,7 +40147,7 @@ body[data-theme="light"] .auth-preview-floats .apf {
   pointer-events: none;
 }
 .dashboard-tier-pill[data-tier="premium"] .dtp-icon {
-  color: #F3D9A8;
+  color: #FFC94D; /* warna ikon (request user 2026-05-17) */
   animation: tierPillStar 1.6s ease-in-out infinite;
 }
 /* Bintang pill premium (request user 2026-05-17):
@@ -40150,10 +40161,11 @@ body[data-theme="light"] .auth-preview-floats .apf {
 .dashboard-tier-pill .dtp-icon .picon {
   fill: currentColor !important;
   stroke: none !important;
-  width: 1.7em !important;
-  height: 1.7em !important;
-  min-width: 27px !important;
-  min-height: 27px !important;
+  /* dikecilkan lagi 27→20px (request user 2026-05-17) */
+  width: 1.25em !important;
+  height: 1.25em !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
 }
 /* picons kasih .picon-w `position:relative; top:-0.02em` → bintang
    naik ~0.3px (kelihatan tidak center vs blok teks). Nolkan khusus
@@ -40175,21 +40187,25 @@ body[data-theme="light"] .auth-preview-floats .apf {
    yg terlihat benar2 center optik. */
 .dashboard-tier-pill .dtp-text {
   position: relative !important;
-  top: 1px !important; /* 2px → 1px: user "+1 ke atas" (2026-05-17) */
+  /* nudge optik dinolkan: layout 1-baris, teks sudah selevel
+     bintang via align-items:center pill (request user 2026-05-17
+     "sejajar dengan ikon bintang") */
+  top: 0 !important;
 }
 /* Koreksi 2026-05-17 (final): 7.04px terlalu mungil — user minta
    font "PREMIUM" DIBESARKAN lagi & kotak cukup. Balik ke 11.5px
    (sama persis dgn "AKTIF"), kotak auto → muat natural. */
 .dashboard-tier-pill .dtp-label {
-  font-size: 11.5px !important;
+  /* ukuran teks → 13px (request user 2026-05-17) */
+  font-size: 13px !important;
   width: auto !important;
   height: auto !important;
 }
 /* Teks pill premium dibuat lebih TERANG (request user 2026-05-17):
    #DCA96D (gold redup) → #F3D9A8 (gold terang), opacity status
    .85 → 1 supaya "AKTIF" tak ikut redup. Ikon bintang tetap. */
-.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #F3D9A8; }
-.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #F3D9A8; opacity: 1; }
+.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #FFC94D; }
+.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #FFC94D; opacity: 1; }
 .dashboard-tier-pill[data-tier="premium"]:hover {
   background: linear-gradient(135deg, rgba(220,169,109,.32), rgba(80,16,10,.18));
   box-shadow: 0 4px 14px rgba(220, 169, 109, .35);
@@ -44242,6 +44258,14 @@ body[data-role] .topbar,
 body[data-role="admin"] .topbar,
 body[data-role="admin"]:not(.auth-mode) .topbar {
   gap: 4px !important;
+  /* Rata kanan-kiri di-handle lewat flex-grow search (bukan
+     justify-content:space-between — itu bikin search yg ke-cap
+     max-width nge-float di tengah dengan gap kiri-kanan). Lihat
+     rule @media>=1024px di L~58826 (search flex:1 isi penuh →
+     dempet ke aksi, aksi mepet kanan). Untuk layar ≤900px (search
+     di-hide) justify diberi di blok responsif masing-masing. */
+  display: flex !important;
+  align-items: center !important;
 }
 body .topbar-search,
 body[data-role] .topbar-search,
@@ -56093,13 +56117,13 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 .hqs-spark {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 9px;
+  margin-top: 6px;          /* chart didempetkan ke label, ramping */
   min-width: 64px;
 }
 .hqs-prog {
   flex: 1;
-  height: 10px;
+  height: 6px;              /* bar lebih tipis → bersih, tdk "rame" */
   border-radius: 999px;
   background: rgba(232, 216, 196, .14);
   overflow: hidden;
@@ -56136,8 +56160,8 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 }
 .hqs-delta {
   flex-shrink: 0;
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 11.5px;        /* selaras label, tdk lebih "teriak" dr angka */
+  font-weight: 700;
   color: #E8D8C4;
   font-variant-numeric: tabular-nums;
   letter-spacing: .01em;
@@ -56220,26 +56244,71 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   background: var(--primary-soft, rgba(109,41,50,.18));
   transform: scale(1.05);
 }
+/* Chart DIKEMBALIKAN (request user 2026-05-17): bar tren + persen di
+   sisi KANAN kartu. Warna disamakan dgn FONT TEXT BIASA (var(--text)
+   / krem — auto-adapt light theme) menggantikan gold/merah, + efek
+   GLOW bernapas (text-shadow persen + box-shadow bar + live-dot)
+   supaya tetap terasa data real-time. */
 .hqs-minimal .hqs-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "hqsv hqsc"
+    "hqsl hqsc";
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 3px;
 }
 .hqs-minimal .hqs-value {
-  font-size: 22px;
+  grid-area: hqsv;
+  font-size: 19px;
   font-weight: 800;
   color: var(--text);
-  line-height: 1.1;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
 }
 .hqs-minimal .hqs-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .06em;
+  grid-area: hqsl;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .085em;
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.hqs-minimal .hqs-spark {
+  display: flex !important;
+  grid-area: hqsc;
+  margin-top: 0;
+  align-self: center;
+  justify-self: end;
+  width: auto;
+  min-width: 0;
+}
+/* Garis tipis (bar progres) DIHAPUS per request user 2026-05-17 —
+   sisakan hanya angka/persen. */
+.hqs-minimal .hqs-spark .hqs-prog { display: none !important; }
+/* Persen "↑ N%" — warna = font text biasa + glow bernapas.
+   Bulatan/live-dot juga dihapus (request user). */
+.hqs-minimal .hqs-spark .hqs-delta {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: .005em;
+  width: auto;
+  flex-shrink: 0;
+  color: var(--text) !important;
+  animation: hqsDeltaGlow 2.4s ease-in-out infinite;
+}
+.hqs-minimal .hqs-spark .hqs-delta::before { content: none !important; }
+@keyframes hqsDeltaGlow {
+  0%, 100% { text-shadow: 0 0 0 rgba(232,216,196,0); }
+  50%      { text-shadow: 0 0 11px rgba(232,216,196,.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hqs-minimal .hqs-spark .hqs-delta { animation: none; }
 }
 
 /* === Adaptive Bottom Block — Empty CTA + Delta Arrow ===================
@@ -58810,9 +58879,14 @@ section.view[data-view="home"] .admin-section-divider {
 @media (min-width: 1024px) {
   html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-search,
   html body[data-role="admin"]:not(.auth-mode) .topbar .topbar-search {
+    /* Request user 2026-05-17 (revisi): search dilebarkan LAGI, isi
+       SELURUH ruang & dempet ke aksi kanan — hapus cap 1145px supaya
+       di monitor ultra-wide pun search tetap penuh (tak ada whitespace
+       kosong di kanan yg kelihatan "rata kiri"). flex:1 1 0 + min-width:0
+       tetap menjaga TIDAK pernah wrap (search nyusut kalau ruang sempit). */
     flex: 1 1 0 !important;
     width: auto !important;
-    max-width: 1145px !important;
+    max-width: none !important;
     min-width: 0 !important;
     margin-right: 0 !important;
   }
@@ -58831,4 +58905,58 @@ section.view[data-view="home"] .admin-section-divider {
    Rule uppercase #sidebar dihapus → casing kembali ke styling
    asli: menu normal-case, header UTAMA/PUSTAKA/SOSIAL tetap
    uppercase via CSS aslinya sendiri.) */
+
+/* SAMAKAN semua ikon (request user 2026-05-17). Standar ikon
+   sidebar = 18px (semua nav lain). Ikon Beranda baru (Material,
+   viewBox 0 -960 960 960) tadinya 18.9px → render 19.84px karena
+   overflow → lebih besar dari yg lain. Paku ke 18px + overflow
+   hidden supaya footprint persis sama dgn ikon sidebar lainnya.
+   Topbar-home-nav .thn-link svg disamakan juga ke 18px (dulu 16). */
+.sidebar .nav-item[data-view="home"] svg,
+.sidebar .nav-item[data-view="admin-dashboard"] svg,
+#sidebar .nav-item[data-view="home"] svg,
+#sidebar .nav-item[data-view="admin-dashboard"] svg {
+  width: 18px !important;
+  height: 18px !important;
+  overflow: hidden !important;
+}
+.topbar-home-nav .thn-link svg,
+body .topbar-home-nav .thn-link svg {
+  width: 18px !important;
+  height: 18px !important;
+  overflow: hidden !important;
+}
+/* Akar "tidak sama": `.nav-item.active svg { transform: scale(1.05) }`
+   (L~464) bikin ikon item AKTIF 5% lebih besar (18→18.9px) drpd yg
+   lain. Nolkan scale utk SEMUA ikon nav sidebar → tiap ikon persis
+   18px baik aktif/tidak (item aktif tetap dibedakan via warna+bg,
+   bukan ukuran). request user 2026-05-17 "samakan semua ikon". */
+#sidebar .nav-item.active svg,
+.sidebar .nav-item.active svg {
+  transform: none !important;
+}
+/* Ikon rumah di BREADCRUMB (::before mask) dulu 14px (user) /
+   16px (admin) → disamakan ke 18px biar konsisten dgn ikon
+   sidebar & topbar (request user 2026-05-17: "samakan semua,
+   ukuran masih lama"). Selector html-prefix + !important utk
+   kalahkan rule base `body(:not[data-role=admin]) .breadcrumb
+   ::before` (L~20474/20510). */
+html body:not([data-role="admin"]) .breadcrumb::before,
+html body[data-role="admin"] .breadcrumb::before {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* (Glow pill Premium dihapus lagi — request user 2026-05-17.) */
+
+/* Ikon bintang popup status premium ditaruh di TENGAH (request
+   user 2026-05-17). SVG display:block → auto margin = center
+   horizontal, tanpa ganggu animasi pspBurst di container. */
+.psp-icon-burst {
+  text-align: center !important;
+}
+.psp-icon-burst svg {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 
