@@ -29836,6 +29836,13 @@ function renderHomeRanking() {
   // (Kartu "Lawan Berikutnya" DIHAPUS per request user 2026-05-17 —
   // user kurang suka; minta saran fitur lain.)
 
+  // Ikon stat monokrom SVG (per request user 2026-05-17: ganti emoji
+  // 👁❤🎬 → SVG, konsisten dgn Level/Pencapaian yg sudah no-emoji).
+  // String-concat, NO backtick (konvensi render fn beranda).
+  const _lbsi = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const LB_EYE   = '<svg ' + _lbsi + '><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const LB_HEART = '<svg ' + _lbsi + '><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
+  const LB_VIDEO = '<svg ' + _lbsi + '><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>';
   const rows = ranked.map(function (c, i) {
     const isMe = String(c.name).toLowerCase() === me;
     const init = (String(c.name).replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase()) || "U";
@@ -29851,9 +29858,9 @@ function renderHomeRanking() {
       '<div class="lb-name">@' + escapeHtml(c.name) +
         (isMe ? '<span class="lb-you">kamu</span>' : '') + '</div>' +
       '<div class="lb-stats">' +
-        '<span>👁 ' + fmtNum(c.views) + '</span>' +
-        '<span>❤ ' + fmtNum(c.likes) + '</span>' +
-        '<span>🎬 ' + fmtNum(c.videos) + '</span>' +
+        '<span class="lb-st" title="Tontonan">' + LB_EYE + fmtNum(c.views) + '</span>' +
+        '<span class="lb-st" title="Suka">' + LB_HEART + fmtNum(c.likes) + '</span>' +
+        '<span class="lb-st" title="Video">' + LB_VIDEO + fmtNum(c.videos) + '</span>' +
       '</div>' +
     '</div>';
   }).join("");

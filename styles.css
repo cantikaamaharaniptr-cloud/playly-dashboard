@@ -4958,10 +4958,10 @@ body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text .hero-streak-badg
 .hero-tip-icon { flex-shrink: 0; font-size: 13px; margin-top: 1px; color: #E8D8C4; display: inline-flex; }
 .hero-tip-icon svg { width: 15px; height: 15px; }
 /* Ikon judul section (per request user 2026-05-16: ganti emoji 📈/🎖️) */
-.hlv-h-ico, .ha-h-ico {
+.hlv-h-ico, .ha-h-ico, .hrk-h-ico {
   display: inline-flex; vertical-align: -3px; color: #E8D8C4; margin-right: 2px;
 }
-.hlv-h-ico svg, .ha-h-ico svg { width: 17px; height: 17px; }
+.hlv-h-ico svg, .ha-h-ico svg, .hrk-h-ico svg { width: 17px; height: 17px; }
 
 .hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 /* Per fix user 2026-05-15 v74: 5 tombol pintasan di hero dibuat SERAGAM —
@@ -58958,5 +58958,68 @@ html body[data-role="admin"] .breadcrumb::before {
 .psp-icon-burst svg {
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+/* =====================================================================
+   BERANDA — RAPIKAN TIPOGRAFI & IKON (request user 2026-05-17)
+   "rapikan, font yang penting tapi terlihat biasa saja dibesarkan/
+   dipertegas, ikon yang tidak nyambung diganti."
+   Scoped ke dashboard user beranda saja (BUKAN admin / auth). Ditaruh
+   paling akhir → menang source-order tanpa perlu !important kecuali
+   melawan rule ber-!important (.lb-cta). Hanya menyentuh ukuran/berat/
+   kontras teks — layout/warna tema tidak diubah.
+   ===================================================================== */
+/* 1. Pita pemisah section (RINGKASAN STATISTIK / PROGRES & PENCAPAIAN /
+      PAPAN PERINGKAT) — label wayfinding utama tapi 10.5px + tracking .25em
+      bikin tipis & sulit kebaca. Naik 11.5px, tracking dikecilkan. */
+html body:not([data-role="admin"]) section[data-view="home"] .admin-section-divider span {
+  font-size: 11.5px; letter-spacing: .16em;
+}
+
+/* 2. Angka Ringkasan Statistik = metrik TERPENTING halaman tapi cuma 19px,
+      seberat teks biasa. Dibesarkan jadi 24px supaya jadi fokus. */
+html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-value {
+  font-size: 24px; letter-spacing: -.02em;
+}
+/* Label statistik (TOTAL TONTONAN dll) terlalu pudar → kontras+berat naik. */
+html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-label {
+  font-weight: 700; color: var(--text-2, var(--muted));
+}
+
+/* 3. Level Kreator — info progres penting tapi tampil kecil/pudar.
+      XP sekarang + target naik level dipertegas. */
+html body:not([data-role="admin"]) section[data-view="home"] .hlv-xp   { font-size: 13px; }
+html body:not([data-role="admin"]) section[data-view="home"] .hlv-next {
+  font-size: 13px; color: var(--text-2, var(--muted));
+}
+html body:not([data-role="admin"]) section[data-view="home"] .hlv-chip { font-size: 12.5px; }
+
+/* 4. Papan Peringkat — caption "Peringkat kamu #N" relevan personal tapi
+      12px/muted = biasa saja. Sedikit dibesarkan + kontras naik. */
+html body:not([data-role="admin"]) section[data-view="home"] #hrkSelf {
+  font-size: 12.5px; color: var(--text-2, var(--muted));
+}
+/* Stat per baris (ikon SVG baru pengganti emoji) — rapikan align & ukuran. */
+html body:not([data-role="admin"]) section[data-view="home"] .lb-stats .lb-st {
+  display: inline-flex; align-items: center; gap: 5px;
+}
+html body:not([data-role="admin"]) section[data-view="home"] .lb-stats .lb-st svg {
+  width: 13px; height: 13px; color: #E8D8C4; flex-shrink: 0;
+}
+
+/* 5. Pencapaian — deskripsi badge 11px agak terlalu kecil utk dibaca. */
+html body:not([data-role="admin"]) section[data-view="home"] .ha-badge-text small {
+  font-size: 11.5px;
+}
+/* Ajakan leaderboard (.lb-cta) di-set rgba .62 + !important → terlalu pudar
+   utk kalimat motivasi penting. Naikkan ke .82 (tetap kalem, lebih kebaca). */
+html body:not([data-role="admin"]) section[data-view="home"] .home-ranking-section .lb-cta {
+  color: rgba(232, 216, 196, .82) !important;
+}
+/* Clamp angka statistik di layar kecil supaya 4 kolom tak sesak. */
+@media (max-width: 560px) {
+  html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-value {
+    font-size: 20px;
+  }
 }
 
