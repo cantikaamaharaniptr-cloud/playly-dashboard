@@ -2935,7 +2935,7 @@ function applyUserToUI() {
   // Hero greeting — ikon tangan-melambai SVG monokrom (no backtick, concat).
   const heroH = $(".hero-text h2");
   if (heroH) {
-    var _hWave = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6.5a1.5 1.5 0 0 0-3 0V11"/><path d="M15 10.5V4.5a1.5 1.5 0 0 0-3 0V10"/><path d="M12 10V5.5a1.5 1.5 0 0 0-3 0V12"/><path d="M9 11V8a1.5 1.5 0 0 0-3 0v5.5"/><path d="M6 13.5l-1.2-2a1.5 1.5 0 0 0-2.6 1.5l2.4 4.4A7 7 0 0 0 11 21h1a7 7 0 0 0 7-7v-3.5a1.5 1.5 0 0 0-3 0"/></svg>';
+    var _hWave = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.83L7 15"/></svg>';
     // Sapaan ikut waktu (Selamat pagi/siang/sore/malam) per request user
     // 2026-05-16 — ikon tangan tetap, ikon bintang/streak dihapus.
     var _ghh = new Date().getHours();
@@ -15734,7 +15734,7 @@ function generatePaymentReceiptImage({ code, orderId, method, plan, planKey, pai
 
   // Header — Playly brand
   ctx.fillStyle = "#E8D8C4";
-  ctx.font = "bold 38px 'Plus Jakarta Sans', system-ui, sans-serif";
+  ctx.font = "bold 38px 'Inter', system-ui, sans-serif";
   ctx.textBaseline = "top";
   ctx.fillText("Playly.", 56, 52);
 
@@ -15770,7 +15770,7 @@ function generatePaymentReceiptImage({ code, orderId, method, plan, planKey, pai
   // Body — title
   let y = headerH + 36;
   ctx.fillStyle = "#1a0c10";
-  ctx.font = "bold 22px 'Plus Jakarta Sans', system-ui, sans-serif";
+  ctx.font = "bold 22px 'Inter', system-ui, sans-serif";
   ctx.fillText("Detail Transaksi", 56, y);
   y += 38;
 
@@ -15837,7 +15837,7 @@ function generatePaymentReceiptImage({ code, orderId, method, plan, planKey, pai
   ctx.fillStyle = "#561C24";
   ctx.font = "700 13px system-ui, sans-serif";
   ctx.fillText("TOTAL DIBAYAR", 70, y + 12);
-  ctx.font = "bold 30px 'Plus Jakarta Sans', system-ui, sans-serif";
+  ctx.font = "bold 30px 'Inter', system-ui, sans-serif";
   ctx.fillText(amountLabel, 70, y + 30);
   y += 100;
 
@@ -27077,20 +27077,22 @@ function timeOfDayGreeting(h) {
 function buildHeroSubtitle() {
   if (!user || !state) return "";
   const h = new Date().getHours();
-  const { greet, emoji } = timeOfDayGreeting(h);
+  // Ikon matahari/bulan (emoji) di akhir subtitle DIHAPUS per request
+  // user 2026-05-16 — `emoji` sengaja tidak dipakai lagi.
+  const { greet } = timeOfDayGreeting(h);
   const myUploads = state.myVideos.length;
   const following = state.followingCreators.length;
 
   if (myUploads === 0 && following === 0) {
-    return `${greet}! ${t("hero.sub.empty.start")} <b data-jump="upload" style="cursor:pointer; color:var(--primary)">${t("hero.sub.empty.upload")}</b> ${t("hero.sub.empty.or")} <b data-jump="discover" style="cursor:pointer; color:var(--primary)">${t("hero.sub.empty.discover")}</b> ${emoji}`;
+    return `${greet}! ${t("hero.sub.empty.start")} <b data-jump="upload" style="cursor:pointer; color:var(--primary)">${t("hero.sub.empty.upload")}</b> ${t("hero.sub.empty.or")} <b data-jump="discover" style="cursor:pointer; color:var(--primary)">${t("hero.sub.empty.discover")}</b>`;
   }
   if (following > 0 && myUploads === 0) {
-    return `${greet}! ${t("hero.sub.following.pre")} <b>${following}</b> ${t("hero.sub.following.post")} ${emoji}`;
+    return `${greet}! ${t("hero.sub.following.pre")} <b>${following}</b> ${t("hero.sub.following.post")}`;
   }
   if (myUploads > 0 && following === 0) {
-    return `${greet}! ${t("hero.sub.uploaded.pre")} <b>${myUploads}</b> ${t("hero.sub.uploaded.post")} ${emoji}`;
+    return `${greet}! ${t("hero.sub.uploaded.pre")} <b>${myUploads}</b> ${t("hero.sub.uploaded.post")}`;
   }
-  return `${greet}! <b>${myUploads}</b> ${t("hero.sub.video")} • <b>${following}</b> ${t("hero.sub.followed")} ${emoji}`;
+  return `${greet}! <b>${myUploads}</b> ${t("hero.sub.video")} • <b>${following}</b> ${t("hero.sub.followed")}`;
 }
 
 let liveClockTimer = null;
@@ -27150,19 +27152,42 @@ function refreshHeroGreeting() {
   if (greetEl) {
     // Ikon tangan-melambai minimalis monokrom (per request user 2026-05-16,
     // bukan emoji warna). String-concat + SVG single-quote, NO backtick.
-    var _waveSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6.5a1.5 1.5 0 0 0-3 0V11"/><path d="M15 10.5V4.5a1.5 1.5 0 0 0-3 0V10"/><path d="M12 10V5.5a1.5 1.5 0 0 0-3 0V12"/><path d="M9 11V8a1.5 1.5 0 0 0-3 0v5.5"/><path d="M6 13.5l-1.2-2a1.5 1.5 0 0 0-2.6 1.5l2.4 4.4A7 7 0 0 0 11 21h1a7 7 0 0 0 7-7v-3.5a1.5 1.5 0 0 0-3 0"/></svg>';
+    var _waveSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.83L7 15"/></svg>';
     // Sapaan ikut waktu (Selamat pagi/siang/sore/malam) per request user
     // 2026-05-16. Ikon tangan tetap; ikon bintang/streak dihapus (bawah).
     var _grh = new Date().getHours();
     var _grk = _grh < 5 ? "greet.night" : _grh < 11 ? "greet.morning"
       : _grh < 15 ? "greet.afternoon" : _grh < 19 ? "greet.evening" : "greet.night";
     greetEl.innerHTML = t(_grk) + ", " + user.name.split(" ")[0] + ' <span class="wave">' + _waveSvg + '</span>';
+    // Baris sapaan hangat (request user 2026-05-16: "saran yg seperti
+    // greeting") — kalimat motivasional pendek, ikut waktu, rotasi per
+    // HARI (stabil sehari → tak flicker walau refresh tiap menit).
+    var _wm = {
+      morning: ["Awali harimu dengan satu ide.", "Pagi yang pas buat berkarya.", "Semangat pagi — kontenmu dinanti.", "Hari baru, karya baru. Yuk mulai."],
+      afternoon: ["Tetap semangat, kreator hebat.", "Jaga momentum siang ini.", "Langkah kecil tetap kemajuan.", "Waktunya bikin sesuatu yang seru."],
+      evening: ["Sore yang pas buat rampungkan karya.", "Selesaikan satu hal sebelum senja.", "Konsistensi sore ini berbuah nanti.", "Masih ada waktu buat satu ide."],
+      night: ["Malam tenang, ide mengalir.", "Istirahat juga bagian dari berkarya.", "Tutup hari dengan satu progres kecil.", "Apresiasi dirimu — besok lanjut lagi."]
+    };
+    var _wk = _grh < 5 ? "night" : _grh < 11 ? "morning"
+      : _grh < 15 ? "afternoon" : _grh < 19 ? "evening" : "night";
+    var _warr = _wm[_wk];
+    var _wtext = _warr[Math.floor(Date.now() / 86400000) % _warr.length];
+    var _wEl = document.getElementById("heroWelcomeLine");
+    if (!_wEl) {
+      _wEl = document.createElement("p");
+      _wEl.id = "heroWelcomeLine";
+      _wEl.className = "hero-welcome";
+      _wEl.style.cssText = "margin:-3px 0 0;font-size:15.5px;line-height:1.2;" +
+        "color:var(--muted);font-weight:500;letter-spacing:.1px;opacity:.9";
+      greetEl.insertAdjacentElement("afterend", _wEl);
+    }
+    _wEl.textContent = _wtext;
   }
+  // Baris subtitle stats ("Selamat pagi! N video • M kreator diikuti")
+  // DIHAPUS per request user 2026-05-16 — hero cukup 2 baris: sapaan
+  // ("Selamat pagi, Demo ✋") + baris hangat ("Semangat pagi — ...").
   const subtitle = $("#heroSubtitle");
-  if (subtitle) {
-    subtitle.innerHTML = buildHeroSubtitle();
-    subtitle.dataset.init = "1";
-  }
+  if (subtitle) { subtitle.innerHTML = ""; subtitle.style.display = "none"; }
   // (Hero side slot dihapus per request user 2026-05-16 — hero bersih.)
   // Streak badge (ikon "bintang"/flame di samping sapaan) DIHAPUS per
   // request user 2026-05-16 — greeting hero dibikin bersih: sapaan
@@ -27247,9 +27272,11 @@ function refreshHeroGreeting() {
     let followers = 0, following = 0;
     try { followers = (typeof getUserFollowers === "function") ? getUserFollowers((user.username||"").toLowerCase()).length : (Array.isArray(state?.followers) ? state.followers.length : 0); } catch {}
     try { following = (typeof getUserFollowing === "function") ? getUserFollowing((user.username||"").toLowerCase()).length : (Array.isArray(state?.followingCreators) ? state.followingCreators.length : 0); } catch {}
-    const el = $("#heroStatVideos");    if (el) countUp(el, vids.length);
-    const ef = $("#heroStatFollowers"); if (ef) countUp(ef, followers);
-    const eg = $("#heroStatFollowing"); if (eg) countUp(eg, following);
+    // STATIS — tanpa animasi count-up (request user 2026-05-17:
+    // "angkanya gerak terus/countdown, gak mau"). Set langsung.
+    const el = $("#heroStatVideos");    if (el) el.textContent = String(vids.length);
+    const ef = $("#heroStatFollowers"); if (ef) ef.textContent = String(followers);
+    const eg = $("#heroStatFollowing"); if (eg) eg.textContent = String(following);
   } catch {}
 
   // Home sidebar (Catatan / File / Aktivitas) — per redesign user 2026-05-15 v45
@@ -29705,10 +29732,9 @@ function renderHomeRanking() {
     map[k].likes  += v.likes    || 0;
     map[k].videos++;
   });
-  const ranked = Object.keys(map).map(function (k) { return map[k]; })
-    .sort(function (a, b) { return b.views - a.views; })
-    .slice(0, 10);
-  if (!ranked.length) {
+  const rankedAll = Object.keys(map).map(function (k) { return map[k]; })
+    .sort(function (a, b) { return b.views - a.views; });
+  if (!rankedAll.length) {
     if (empty) empty.hidden = false;
     row.innerHTML = "";
     return;
@@ -29716,12 +29742,33 @@ function renderHomeRanking() {
   if (empty) empty.hidden = true;
 
   const me = ((user && user.username) || "").toLowerCase();
-  const medal = ["🥇", "🥈", "🥉"];
+  const myIdx = rankedAll.findIndex(function (c) { return String(c.name).toLowerCase() === me; });
+  const total = rankedAll.length;
+  const ranked = rankedAll.slice(0, 3);   // Top 3 saja (request user 2026-05-17)
+
+  // Kalimat ajakan utk user (request user 2026-05-17): muncul DI ATAS
+  // daftar 1-2-3, mendorong user bertanding masuk Top Creators.
+  let cta;
+  if (myIdx > -1 && myIdx < 3) {
+    cta = 'Keren! Kamu sudah di <b>Top 3</b> kreator — pertahankan posisimu!';
+  } else if (myIdx > -1) {
+    cta = 'Kamu peringkat <b>#' + (myIdx + 1) + '</b> dari ' + total +
+      ' kreator. Tingkatkan tontonan &amp; suka untuk bertanding masuk <b>Top Creators</b>!';
+  } else {
+    cta = 'Unggah video &amp; kumpulkan tontonan untuk bertanding masuk <b>Top Creators</b>!';
+  }
+
+  // (Kartu "Lawan Berikutnya" DIHAPUS per request user 2026-05-17 —
+  // user kurang suka; minta saran fitur lain.)
+
   const rows = ranked.map(function (c, i) {
     const isMe = String(c.name).toLowerCase() === me;
     const init = (String(c.name).replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase()) || "U";
+    // Rank 1-3 = MEDALI jelas (pita + medalion + angka di tengah) —
+    // request user 2026-05-17 ("medali tapi yang jelas"). Netral krem.
     const rankCell = (i < 3)
-      ? '<span class="lb-medal">' + medal[i] + '</span>'
+      ? '<span class="lb-medal3" data-rank="' + (i + 1) + '">' +
+          '<span class="lb-medal3-disc">' + (i + 1) + '</span></span>'
       : '<span class="lb-num">' + (i + 1) + '</span>';
     return '<div class="lb-row' + (isMe ? ' is-me' : '') + '">' +
       '<div class="lb-rank">' + rankCell + '</div>' +
@@ -29735,7 +29782,8 @@ function renderHomeRanking() {
       '</div>' +
     '</div>';
   }).join("");
-  row.innerHTML = '<div class="lb-list">' + rows + '</div>';
+  row.innerHTML = '<div class="lb-cta">' + cta + '</div>' +
+    '<div class="lb-list">' + rows + '</div>';
 }
 
 
@@ -41284,7 +41332,7 @@ function renderUserProfile() {
     grid.innerHTML = `
       <div class="people-empty" style="grid-column:1/-1; padding:32px 20px; text-align:center">
         <div style="font-size:36px; margin-bottom:8px">🔒</div>
-        <h4 style="margin:0 0 6px;font-family:'Plus Jakarta Sans';font-weight:700;color:var(--text)">Profil ini privat</h4>
+        <h4 style="margin:0 0 6px;font-family:'Inter';font-weight:700;color:var(--text)">Profil ini privat</h4>
         <p style="font-size:13px; color:var(--muted); margin:0">Follow <b>@${escapeHtml(username)}</b> dulu supaya bisa lihat video & detail profilnya.</p>
       </div>`;
     if (empty) empty.hidden = true;
@@ -41515,7 +41563,7 @@ function renderNotifications() {
   if (!state.notifications.length) {
     list.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted)">
       <div class="notif-empty-ico" style="opacity:.5">${NI_BELL}</div>
-      <h4 style="font-family:'Plus Jakarta Sans'; margin:10px 0 4px; font-weight:700; color:var(--text)">No notifications</h4>
+      <h4 style="font-family:'Inter'; margin:10px 0 4px; font-weight:700; color:var(--text)">No notifications</h4>
       <p style="font-size:12.5px">Latest notifications will appear here.</p>
     </div>`;
     return;

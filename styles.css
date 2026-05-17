@@ -108,6 +108,7 @@ body[data-theme="light"] {
 
 html, body {
   height: 100%;
+  /* #4: body = Inter (readable), display/heading = Bricolage Grotesque */
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
   color: var(--text);
@@ -332,7 +333,7 @@ body::-webkit-scrollbar-corner,
 }
 .brand-logo svg { width: 100%; height: 100%; display: block; }
 .brand-text h1 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -686,7 +687,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   border-bottom: 1px solid var(--border);
 }
 .user-email-folder-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -750,7 +751,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   margin-bottom: 4px;
 }
 .user-email-subject {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   font-weight: 700;
   letter-spacing: -.01em;
@@ -799,7 +800,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 }
 .user-email-empty-icon { font-size: 48px; opacity: .5; margin-bottom: 12px; }
 .user-email-empty h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
@@ -812,7 +813,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   width: min(540px, 100%);
 }
 .user-email-thread-subject {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -975,7 +976,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   gap: 8px;
 }
 .mini-chart-title h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   margin: 0;
@@ -992,7 +993,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 .mc-icon-views     { background: rgba(59, 130, 246, .15); }
 .mc-icon-followers { background: rgba(245, 158, 11, .15); }
 .mini-chart-total {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
@@ -1182,7 +1183,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   margin-bottom: 18px;
 }
 .vem-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   margin: 0;
@@ -1270,7 +1271,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   padding: 28px 26px 24px;
 }
 .email-recipient-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1317,7 +1318,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 .email-recipient-option .ero-info { flex: 1; min-width: 0; }
 .email-recipient-option .ero-info strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
@@ -1506,7 +1507,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   to   { transform: scale(1); opacity: 1; }
 }
 .upload-success-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1560,7 +1561,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   flex-shrink: 0;
 }
 .hs-popup-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1571,7 +1572,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   color: var(--muted);
 }
 .hs-popup-value {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -1653,13 +1654,13 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   color: #fff;
   font-size: 42px;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 16px;
   overflow: hidden;
 }
 .myprofile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .myprofile-card h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1701,7 +1702,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 }
 .myprofile-stat:hover { background: var(--surface-2); }
 .myprofile-stat b {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1728,7 +1729,7 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   border-bottom: 1px solid var(--border);
 }
 .myprofile-section-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -1764,13 +1765,13 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   color: #fff;
   font-size: 38px;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 12px;
   overflow: hidden;
 }
 .profile-header-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .profile-header-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -2437,7 +2438,7 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   flex-shrink: 0;
 }
 .lib-inline-comments-head h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -2528,7 +2529,7 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
 
 /* Title */
 .lib-inline-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -3146,7 +3147,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 }
 .metric-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .metric-value {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -.02em;
@@ -3227,7 +3228,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: .18em;
@@ -3321,7 +3322,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 }
 .hs-info strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   margin-top: 2px;
@@ -3456,7 +3457,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   padding: 12px 14px;
 }
 .trending-title h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15.5px;
   font-weight: 700;
   letter-spacing: -.01em;
@@ -3523,7 +3524,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   transform: translateX(2px);
 }
 .trending-rank {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--muted);
@@ -3620,7 +3621,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 }
 .suggest-head { margin-bottom: 12px; position: relative; z-index: 1; }
 .suggest-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14.5px; font-weight: 700;
   letter-spacing: -.01em; margin-bottom: 2px;
 }
@@ -3715,7 +3716,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   gap: 12px;
 }
 .cs-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15.5px;
   font-weight: 700;
   letter-spacing: -.01em;
@@ -3778,7 +3779,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 .cs-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .cs-info { min-width: 0; }
 .cs-info h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 700;
   margin-bottom: 2px;
@@ -4016,7 +4017,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   text-overflow: ellipsis;
 }
 .home-stat-row .val {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
@@ -4051,7 +4052,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   margin-bottom: 18px;
 }
 .card-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15.5px;
   font-weight: 700;
   letter-spacing: -.01em;
@@ -4140,7 +4141,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   border: 1px solid var(--border);
   color: #E8D8C4;
   cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: background .15s ease, border-color .15s ease, transform .15s ease;
 }
 .hsq-tile:hover {
@@ -4149,7 +4150,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   transform: translateY(-2px);
 }
 .hsq-tile:active { transform: translateY(0); }
-.hsq-tile:focus-visible { outline: 2px solid #d4a64a; outline-offset: 2px; }
+.hsq-tile:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .hsq-ico {
   width: 40px; height: 40px; flex-shrink: 0;
   display: grid; place-items: center;
@@ -4263,7 +4264,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   box-shadow: 0 6px 18px -6px rgba(109, 41, 50, .6);
 }
 .hpc-avatar-clickable:focus-visible {
-  outline: 2px solid #d4a64a;
+  outline: 2px solid var(--text); /* netral, bukan gold (req 2026-05-16) */
   outline-offset: 3px;
 }
 .hpc-top {
@@ -4281,7 +4282,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   overflow: hidden;
   background: linear-gradient(135deg, var(--primary), var(--primary-deep, #561C24));
   color: var(--cream, #E8D8C4);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 800;
   border: 2px solid rgba(232, 216, 196, .25);
@@ -4301,7 +4302,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 }
 .hpc-id strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 800;
   color: var(--text);
@@ -4379,7 +4380,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 /* Per request user 2026-05-16: warna font number → krem solid (dari gold
    gradient). Label tetap muted/krem. */
 .hpc-stat strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 21px;
   font-weight: 800;
   color: #E8D8C4;
@@ -4445,7 +4446,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   gap: 6px;
   padding: 9px 12px;
   border-radius: 11px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
@@ -4499,7 +4500,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   margin-bottom: 12px;
 }
 .hsb-card-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -4538,7 +4539,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 .hsb-prof-id { flex: 1; min-width: 0; }
 .hsb-prof-id strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 800;
   color: var(--text);
@@ -4591,7 +4592,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   transform: translateY(-1px);
 }
 .hsb-prof-stats strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   color: var(--text);
@@ -4782,7 +4783,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   margin-bottom: 14px;
 }
 .hsb-activity-sub strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 800;
   color: var(--text);
@@ -4840,7 +4841,7 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
   .hero-weather-panel { width: 100% !important; }
 }
 .hero-text h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;          /* dikecilkan lagi per request user 2026-05-16 (42 → 26) */
   font-weight: 800;
   letter-spacing: -.02em;
@@ -4992,15 +4993,22 @@ body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text .hero-streak-badg
 }
 .hero-actions .btn.ghost:hover {
   background: var(--surface-3) !important;
-  border-color: #d4a64a !important;   /* gold (bukan wine) — per request user 2026-05-16, samakan aksen */
+  /* INI sumber "fokus ring gold" yg dikira fokus ring — sebenarnya
+     border GOLD saat HOVER (mouse di atas tombol). Diganti netral
+     var(--border-strong) per request user 2026-05-17 (gak mau gold
+     /wine). Konsisten dgn .btn.ghost:hover generik. */
+  border-color: var(--border-strong) !important;
   transform: translateY(-1px);
 }
 /* Focus ring tombol hero → gold, konsisten dgn elemen interaktif lain
    (.hsq-tile/.hpc-* pakai #d4a64a). Per request user 2026-05-16. */
+/* Fokus ring tombol hero: NETRAL (var(--text) krem), BUKAN gold &
+   BUKAN wine — per request user 2026-05-16 ("gak mau fokus ring
+   warna wine ataupun gold"). Sama dgn neutral .hpc-stat/.dm-ov-card. */
 .hero-actions .btn:focus-visible {
-  outline: 2px solid #d4a64a !important;
+  outline: 2px solid var(--text) !important;
   outline-offset: 2px;
-  border-color: #d4a64a !important;
+  border-color: var(--text) !important;
 }
 
 .btn {
@@ -5133,7 +5141,7 @@ body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text .hero-streak-badg
   position: relative;
 }
 .hc-date {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 56px;
   font-weight: 800;
   line-height: 1;
@@ -5183,7 +5191,7 @@ body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text .hero-streak-badg
 }
 .hc-stats b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   line-height: 1;
@@ -5286,7 +5294,7 @@ body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text .hero-streak-badg
   text-transform: uppercase;
 }
 .stat-value {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -5579,7 +5587,7 @@ body[data-theme="light"] .chip-tabs button.active { background: white; }
   opacity: .55;
 }
 .chart-empty h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 4px;
@@ -5813,7 +5821,7 @@ body[data-theme="light"] .chip-tabs button.active { background: white; }
   gap: 10px;
 }
 .today-stats h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -6017,7 +6025,7 @@ body[data-role="admin"] .featured-badge {
 }
 @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal-panel h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 19px;
   font-weight: 700;
   margin-bottom: 6px;
@@ -6127,7 +6135,7 @@ body[data-role="admin"] #playerSidebar { display: none; }
 }
 .ps-ad-hero-percent {
   position: relative;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -1px;
@@ -6213,7 +6221,7 @@ body[data-role="admin"] #playerSidebar { display: none; }
   overflow: hidden;
 }
 .ps-ad-thumb-init {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 28px;
   font-weight: 800;
   color: #fff;
@@ -6266,7 +6274,7 @@ body[data-role="admin"] #playerSidebar { display: none; }
   margin-top: 4px;
 }
 .ps-section-head h4 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 14px;
   font-weight: 700;
   margin: 0;
@@ -6362,7 +6370,7 @@ body[data-role="admin"] #playerSidebar { display: none; }
 .player-side-head h4 {
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   letter-spacing: -.01em;
 }
 .player-side-count {
@@ -6724,7 +6732,7 @@ video::-internal-media-controls-overflow-menu-list-item {
   line-height: 1.35;
   margin: 0 0 10px;
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   letter-spacing: -.01em;
 }
 
@@ -7034,7 +7042,7 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
   display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--border);
 }
-.sp-head h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; }
+.sp-head h3 { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; }
 
 .msg-search { padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .msg-search input {
@@ -7219,7 +7227,7 @@ body[data-role="admin"] [data-pd-user-only] { display: none !important; }
 #notifPanel .sp-head h3 .nh-ico svg { width: 16px; height: 16px; }
 #notifDropdownOpenPanel .nh-ico svg { width: 14px; height: 14px; }
 .notif-cat-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .1em;
@@ -7423,7 +7431,7 @@ body[data-role="admin"] .view[data-view="premium-insights"] {
   padding: 4px 4px 0;
 }
 .view-header h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -7479,7 +7487,7 @@ body[data-role="admin"] .view[data-view="premium-insights"] {
 .qs:hover { border-color: var(--border-strong); transform: translateY(-1px); }
 .qs b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -7685,7 +7693,7 @@ section.view.focus-mode .history-layout {
 }
 .history-col { min-width: 0; }
 .history-col-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -8040,7 +8048,7 @@ section.view.focus-mode .history-layout {
   font-weight: 700;
 }
 .hpf-stat-body strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
@@ -8168,7 +8176,7 @@ section.view.focus-mode .history-layout {
   margin-top: 18px;
 }
 .history-group-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: var(--muted);
@@ -8239,7 +8247,7 @@ section.view.focus-mode .history-layout {
   padding: 14px;
 }
 .top-perf-col-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
@@ -8300,7 +8308,7 @@ section.view.focus-mode .history-layout {
 .top-perf-rank {
   width: 28px;
   text-align: center;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--muted);
@@ -8317,7 +8325,7 @@ section.view.focus-mode .history-layout {
 .top-perf-item h5 { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 .top-perf-item .meta { font-size: 10.5px; color: var(--muted); }
 .top-perf-item .views {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   color: var(--primary);
@@ -8365,7 +8373,7 @@ section.view.focus-mode .history-layout {
   min-height: 220px;
 }
 .messages-3col .ml-col-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -8714,7 +8722,7 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   margin-bottom: 14px;
 }
 .dm-chat-empty h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
@@ -8749,7 +8757,7 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
 }
 .dm-chat-header-info strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   color: var(--text);
@@ -9087,7 +9095,7 @@ section.view.focus-mode .messages-3col {
 }
 .chat-empty-icon::before { inset: -10px; opacity: .55; }
 .chat-empty-icon::after  { inset: -22px; opacity: .25; }
-.chat-empty h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; margin-bottom: 6px; font-weight: 700; }
+.chat-empty h3 { font-family: 'Inter', sans-serif; font-size: 18px; margin-bottom: 6px; font-weight: 700; }
 .chat-empty p { color: var(--muted); font-size: 13px; }
 
 /* =========================================================
@@ -9133,7 +9141,7 @@ section.view.focus-mode .messages-3col {
   .discover-hero { grid-template-columns: 1fr; }
 }
 .dh-text h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -9201,7 +9209,7 @@ section.view.focus-mode .messages-3col {
   position: relative;
 }
 .cat-card b {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 700;
   position: relative;
@@ -9638,7 +9646,7 @@ section.view.focus-mode .messages-3col {
 }
 .help-section:last-child { border-bottom: none; }
 .help-section h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -10461,7 +10469,7 @@ body.compact-mode .admin-section-divider { margin: 18px 0 10px; }
 }
 .confirm-input-wrap label b {
   color: var(--danger);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   letter-spacing: .04em;
 }
 .confirm-input-wrap input {
@@ -10540,7 +10548,7 @@ body.compact-mode .admin-section-divider { margin: 18px 0 10px; }
   display: inline-block;
 }
 .fo-content h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -10909,7 +10917,7 @@ body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin { display: flex
   border-bottom: 1px solid rgba(231, 215, 196, .07);
 }
 .aps-mini-brand-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px; font-weight: 800;
   color: var(--text);
   letter-spacing: -.01em;
@@ -11294,7 +11302,7 @@ body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin { display: flex
   flex-shrink: 0;
 }
 .auth-topbar-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -11452,7 +11460,7 @@ body[data-theme="light"] .orb-3 { opacity: .10; }
   backface-visibility: hidden;
 }
 .auth-brand h1 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -11470,7 +11478,7 @@ body[data-theme="light"] .orb-3 { opacity: .10; }
   position: relative;
 }
 .auth-showcase h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -11500,7 +11508,7 @@ body[data-theme="light"] .orb-3 { opacity: .10; }
   flex-direction: column;
 }
 .auth-stats b {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -11608,7 +11616,7 @@ body[data-theme="light"] .auth-illus .floating-card {
   position: absolute;
   top: -10px;
   left: 14px;
-  font-family: 'Plus Jakarta Sans', serif;
+  font-family: 'Inter', serif;
   font-size: 56px;
   line-height: 1;
   color: var(--primary);
@@ -11753,7 +11761,7 @@ body[data-theme="light"] .auth-illus .floating-card {
 
 /* === LANDING STATE === */
 .auth-welcome-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -11819,7 +11827,7 @@ body[data-theme="light"] .auth-illus .floating-card {
 .auth-back-btn svg { width: 14px; height: 14px; }
 .auth-back-btn-forms { margin-bottom: 4px; }
 .auth-pick-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -11874,13 +11882,13 @@ body[data-theme="light"] .auth-illus .floating-card {
 .apc-badge-premium { background: linear-gradient(135deg, #d4a64a, #6D2932); color: #fff; border-color: transparent; }
 .apc-icon { font-size: 26px; line-height: 1; }
 .auth-pick-card strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
 }
 .apc-price {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--text);
@@ -12017,7 +12025,7 @@ body[data-theme="light"] .auth-illus .floating-card {
 .auth-form.active { display: block; }
 
 .auth-form h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -12690,7 +12698,7 @@ section[data-view="upload"] .upload-form textarea {
   margin-bottom: 14px;
 }
 .auth-plans-head h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -12751,7 +12759,7 @@ section[data-view="upload"] .upload-form textarea {
   border-color: transparent;
 }
 .plan-card h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 800;
   margin: 0 0 6px;
@@ -12764,7 +12772,7 @@ section[data-view="upload"] .upload-form textarea {
   margin-bottom: 10px;
 }
 .plan-price strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 800;
   color: var(--text);
@@ -13492,7 +13500,7 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   letter-spacing: .05em;
 }
 .tw-insight strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
@@ -13577,7 +13585,7 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
     var(--bg-elev);
 }
 .preview-card h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
@@ -13709,7 +13717,7 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   opacity: .8;
 }
 .pm-tile-icon { font-size: 14px; line-height: 1; --accent: var(--primary); }
-.pm-tile strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); }
+.pm-tile strong { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); }
 .pm-tile small { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
 .pm-ad {
   display: flex;
@@ -13988,14 +13996,14 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   background: var(--primary);
   color: #fff;
   border-radius: 50%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   flex-shrink: 0;
 }
 .howit-icon { font-size: 24px; line-height: 1; margin: 0; }
 .howit-step h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -14060,7 +14068,7 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   font-weight: 800;
   font-size: 14px;
   color: #fff;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   flex-shrink: 0;
 }
 .testi-author strong { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
@@ -14434,7 +14442,7 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   margin-bottom: 16px;
 }
 .finalcta-card h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -14653,7 +14661,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
   margin-bottom: 14px;
 }
 .tier-locked-page h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -14754,7 +14762,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
   padding: 16px;
 }
 .ls-section h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   margin: 0 0 12px;
@@ -14796,7 +14804,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
 .pi-card.pi-card-big { grid-column: span 2; }
 @media (max-width: 800px) { .pi-card.pi-card-big { grid-column: 1; } }
 .pi-card h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 800;
   margin: 0 0 14px;
@@ -14818,7 +14826,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
   gap: 4px;
 }
 .pi-stat small { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .08em; }
-.pi-stat strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; }
+.pi-stat strong { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; }
 .pi-trend { font-size: 10.5px; font-weight: 700; }
 .pi-trend.up { color: #10b981; }
 .pi-trend.down { color: #ef4444; }
@@ -14907,7 +14915,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
 .admin-mode-banner .amb-icon svg { width: 22px; height: 22px; }
 .admin-mode-banner .amb-wordmark {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 4px;
@@ -14946,7 +14954,7 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
 .user-mode-banner .umb-icon svg { width: 100%; height: 100%; display: block; }
 .user-mode-banner b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.3px;
@@ -15779,7 +15787,7 @@ body[data-role="admin"] .twofa-input-grid input:focus { border-color: var(--admi
   border: 1.5px solid var(--border);
   color: var(--muted);
   font-size: 14px; font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: all .35s var(--ease);
   position: relative;
 }
@@ -16630,7 +16638,7 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 }
 
 .ap-title {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 22px;
   font-weight: 700;
   color: #FFFFFF;
@@ -16952,7 +16960,7 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 }
 .avp-info { padding: 16px 20px 4px; }
 .avp-title {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #FFFFFF;
@@ -17126,17 +17134,17 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 .awo-eyebrow {
   font-size: 10px; font-weight: 700; letter-spacing: 4px; color: #FFFFFF;
   padding: 5px 16px 4px; border: 1px solid rgba(165, 175, 195, .18); border-radius: 100px;
-  background: rgba(28, 40, 60, .55); font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase;
+  background: rgba(28, 40, 60, .55); font-family: 'Inter', sans-serif; text-transform: uppercase;
 }
 .awo-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px; font-weight: 700; color: #FFFFFF; letter-spacing: -.4px; margin: 4px 0 0;
 }
 .awo-title b {
   background: none;
   color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; font-weight: 800;
 }
-.awo-sub { font-size: 13px; color: #FFFFFF; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+.awo-sub { font-size: 13px; color: #FFFFFF; margin: 0; font-family: 'Inter', sans-serif; }
 
 @media (prefers-reduced-motion: reduce) {
   .admin-welcome-overlay[data-show] .admin-welcome-card,
@@ -17223,14 +17231,14 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 }
 .uwc-sub {
   font-size: 13px; font-weight: 500; letter-spacing: .3px;
-  color: rgba(232,210,180,.65); margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+  color: rgba(232,210,180,.65); margin: 0; font-family: 'Inter', sans-serif;
 }
 .uwc-name {
   font-size: 32px; font-weight: 700; letter-spacing: -.5px; line-height: 1.1;
   background: linear-gradient(135deg, #F8EDD8 0%, #EDD5B0 40%, #D4A96A 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   will-change: transform, opacity;
 }
 .user-welcome-overlay[data-show] .uwc-name {
@@ -17241,7 +17249,7 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 @keyframes uwcShimmer { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
 .uwc-tagline {
   font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-  color: rgba(199, 183, 163,.45); margin: 6px 0 0; font-family: 'Plus Jakarta Sans', sans-serif;
+  color: rgba(199, 183, 163,.45); margin: 6px 0 0; font-family: 'Inter', sans-serif;
 }
 
 /* Hover — GPU-only: transform only, no layout-triggering properties */
@@ -18104,7 +18112,7 @@ body[data-role="admin"] .auth-card .admin-mode-banner .amb-text {
   gap: 2px;
 }
 body[data-role="admin"] .auth-card .admin-mode-banner b {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #FFFFFF;
@@ -18277,7 +18285,7 @@ body[data-role="admin"].auth-mode .admin-landing-section {
   background: rgba(52, 58, 64, 0.25);
 }
 .admin-landing-head h2 {
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', 'Inter', system-ui, sans-serif;
   font-size: clamp(26px, 3.4vw, 40px);
   line-height: 1.18;
   font-weight: 800;
@@ -18621,7 +18629,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   color: #6C757D;
 }
 .apf-kpi-value {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -.4px;
@@ -19112,7 +19120,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 16px;
   font-weight: 800;
   color: var(--admin-accent, #ADB5BD);
@@ -19230,7 +19238,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
 }
 .afc-text strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(20px, 2.4vw, 28px);
   font-weight: 800;
   line-height: 1.2;
@@ -19298,7 +19306,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
 }
 @keyframes spinSlow { to { transform: rotate(360deg); } }
 .empty-state h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 700;
   margin-bottom: 6px;
@@ -19412,7 +19420,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
 }
 .social-modal-head .sm-logo svg { width: 100%; height: 100%; }
 .social-modal-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 4px;
@@ -20755,7 +20763,7 @@ body[data-theme="light"] .admin-hero .hero-text::after {
 }
 .hc-id-icon svg { width: 26px; height: 26px; }
 .hc-id-icon .hc-id-initials {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: .02em;
@@ -20773,7 +20781,7 @@ body[data-theme="light"] .admin-hero .hero-text::after {
   min-width: 0;
 }
 .hc-id-text strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -20897,7 +20905,7 @@ body[data-theme="light"] .admin-hero .hero-text::after {
 .hc-update-item:hover .hc-update-icon { transform: scale(1.08); }
 .hc-update-info { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
 .hc-update-info strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 19px;
   font-weight: 800;
   color: var(--accent);
@@ -21117,7 +21125,7 @@ body[data-theme="light"] .hc-update-info strong { color: var(--primary); }
 }
 .admin-hero-badge svg { width: 14px; height: 14px; }
 .admin-hero h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -21248,7 +21256,7 @@ body[data-theme="light"] .hc-update-info strong { color: var(--primary); }
 .aac-content .aac-count {
   font-size: 22px;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: var(--text);
   line-height: 1;
 }
@@ -21337,7 +21345,7 @@ body[data-theme="light"] .hc-update-info strong { color: var(--primary); }
   display: block;
   font-size: 14px;
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
 }
 .admin-action-empty small {
@@ -21384,7 +21392,7 @@ body[data-theme="light"] .hc-update-info strong { color: var(--primary); }
 }
 .kpi-detail-hero strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 800;
   color: var(--text);
@@ -21493,7 +21501,7 @@ body[data-role="admin"] .admin-kpi-icon.revenue {
 .admin-kpi-card small { display: block; font-size: 13px; color: var(--muted); font-weight: 600; }
 .admin-kpi-card strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   margin-top: 2px;
@@ -21632,7 +21640,7 @@ body[data-role="admin"] .live-dot i {
 .alert-empty strong {
   display: block;
   font-size: 14px; font-weight: 700; color: var(--success);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 2px;
 }
 .alert-empty small { font-size: 12px; color: var(--muted); line-height: 1.45; }
@@ -21655,7 +21663,7 @@ body[data-role="admin"] .live-dot i {
 .feed-empty strong {
   display: block;
   font-size: 14px; font-weight: 700; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 2px;
 }
 .feed-empty small { font-size: 12px; color: var(--muted); line-height: 1.45; }
@@ -21667,7 +21675,7 @@ body[data-role="admin"] .live-dot i {
   margin-bottom: 18px;
 }
 .page-head h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px; font-weight: 800; letter-spacing: -.02em;
 }
 .page-head .muted { color: var(--muted); font-size: 13px; margin-top: 4px; }
@@ -22096,7 +22104,7 @@ body[data-role="admin"] .row-actions button.danger:hover {
 .comms-kpi.ok   .comms-kpi-icon { background: rgba(16,185,129,.12); }
 .comms-kpi b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -22303,7 +22311,7 @@ body[data-role="admin"] .row-actions button.danger:hover {
 }
 .audit-stat b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -22542,7 +22550,7 @@ body[data-role="admin"] .row-actions button.danger:hover {
   flex-shrink: 0;
 }
 .inbox-col-title h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -.01em;
@@ -22822,7 +22830,7 @@ body[data-theme="light"][data-role="admin"] .audit-section-head {
   color: #fff;
   display: grid; place-items: center;
   font-weight: 700; font-size: 13px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 body[data-role="admin"] .inbox-row-avatar {
   background: linear-gradient(135deg, #6C757D, #495057);
@@ -23062,7 +23070,7 @@ body[data-role="admin"] .inbox-row-avatar {
 .gv-stat.warn::before { background: #ADB5BD; }
 .gv-stat.ok::before   { background: var(--success); }
 .gv-stat.bad::before  { background: var(--danger); }
-.gv-stat b { font-size: 22px; font-weight: 800; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; }
+.gv-stat b { font-size: 22px; font-weight: 800; color: var(--text); font-family: 'Inter', sans-serif; }
 .gv-stat small { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 
 .gv-toolbar {
@@ -23189,7 +23197,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
   text-align: center;
 }
 .gv-empty-icon { font-size: 38px; opacity: .5; margin-bottom: 10px; }
-.gv-empty h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.gv-empty h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; font-family: 'Inter', sans-serif; }
 .gv-empty p { font-size: 13px; color: var(--muted); }
 
 /* Edit metadata modal */
@@ -23197,7 +23205,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
   max-width: 520px; width: 100%;
 }
 .admin-video-edit-panel h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px; font-weight: 800;
   margin-bottom: 4px;
 }
@@ -23255,7 +23263,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
   max-width: 540px; width: 100%;
 }
 .admin-msg-panel h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px; font-weight: 800;
   margin-bottom: 4px;
 }
@@ -23385,7 +23393,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
   margin-bottom: 14px;
 }
 .an-card .card-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px; font-weight: 700;
   margin-bottom: 2px;
 }
@@ -23626,7 +23634,7 @@ body[data-role="admin"] .an-tab.active {
   background: var(--bg-elev);
   color: var(--text-2);
   font-size: 12px; font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 .an-rank.rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); color: #5a3a00; }
 .an-rank.rank-2 { background: linear-gradient(135deg, #C0C0C0, #909090); color: #2a2a2a; }
@@ -23643,7 +23651,7 @@ body[data-role="admin"] .an-tab.active {
   background: var(--grad-primary, linear-gradient(135deg, var(--primary), var(--accent)));
   color: #fff;
   font-size: 18px; font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   letter-spacing: .04em;
 }
 .an-top-info { min-width: 0; }
@@ -23664,7 +23672,7 @@ body[data-role="admin"] .an-tab.active {
   transition: width .6s var(--ease);
 }
 .an-top-stats { text-align: right; }
-.an-top-stats b { display: block; font-size: 16px; font-weight: 800; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; }
+.an-top-stats b { display: block; font-size: 16px; font-weight: 800; color: var(--text); font-family: 'Inter', sans-serif; }
 .an-top-stats small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 
 .an-empty {
@@ -23672,7 +23680,7 @@ body[data-role="admin"] .an-tab.active {
   text-align: center;
 }
 .an-empty-icon { font-size: 36px; opacity: .5; margin-bottom: 8px; }
-.an-empty h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.an-empty h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; font-family: 'Inter', sans-serif; }
 .an-empty p { font-size: 12.5px; color: var(--muted); }
 
 @media (max-width: 768px) {
@@ -23770,7 +23778,7 @@ body[data-role="admin"] .an-tab.active {
 .rev-leg.ads .rev-leg-dot { background: linear-gradient(135deg, #561C24, #ADB5BD); }
 .rev-leg.sub .rev-leg-dot { background: linear-gradient(135deg, #E8D8C4, #343A40); }
 .rev-leg small { display: block; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
-.rev-leg b { font-size: 14px; font-weight: 800; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-variant-numeric: tabular-nums; }
+.rev-leg b { font-size: 14px; font-weight: 800; color: var(--text); font-family: 'Inter', sans-serif; font-variant-numeric: tabular-nums; }
 
 /* Breakdown empty state — saat ledger kosong */
 .rev-split-empty {
@@ -23792,7 +23800,7 @@ body[data-role="admin"] .an-tab.active {
 .rev-split-empty strong {
   display: block;
   font-size: 14px; font-weight: 700; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 3px;
 }
 .rev-split-empty small { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
@@ -23809,7 +23817,7 @@ body[data-role="admin"] .an-tab.active {
   gap: 14px; margin-bottom: 16px;
 }
 .ad-card-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px; font-weight: 700;
   margin-bottom: 2px;
 }
@@ -24715,7 +24723,7 @@ body[data-role="admin"] .ad-count {
   padding: 6px 12px;
   background: #fbbf24; color: #1a1a1a;
   border-radius: 6px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px; font-weight: 800; letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -24743,7 +24751,7 @@ body[data-role="admin"] .ad-count {
 .rev-chart-wrap { min-height: 200px; }
 .rev-chart-wrap .an-chart-empty p {
   font-size: 13px; font-weight: 700; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin: 0;
 }
 .rev-chart-wrap .an-chart-empty small {
@@ -24772,7 +24780,7 @@ body[data-role="admin"] .ad-count {
 }
 .rev-feed-amount {
   font-size: 14px; font-weight: 800; color: var(--success);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -24858,7 +24866,7 @@ body[data-role="admin"] .up-hero-bg {
   gap: 10px;
 }
 .up-info h2 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -24907,7 +24915,7 @@ body[data-role="admin"] .up-bio.clickable-bio:hover { border-color: var(--admin-
   gap: 2px;
 }
 .up-stats b {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -24968,7 +24976,7 @@ body[data-role="admin"] .up-socials a:hover {
   margin-bottom: 18px;
 }
 .up-section-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -25007,7 +25015,7 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
 .up-empty-icon::before { inset: -10px; opacity: .55; }
 .up-empty-icon::after  { inset: -22px; opacity: .25; }
 .up-empty h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px; font-weight: 800; letter-spacing: -.02em;
   margin-bottom: 4px; color: var(--text);
 }
@@ -25269,7 +25277,7 @@ body[data-theme="light"] .ds-bento-card {
   gap: 5px;
   padding: 4px 11px;
   border-radius: 999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: .1em;
@@ -25300,7 +25308,7 @@ body.light-mode .ds-bento-tag.tag-fyp { color: var(--primary); }
 }
 
 .ds-bento-title h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -26128,7 +26136,7 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   max-height: 86vh;
 }
 .share-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -26210,7 +26218,7 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: white;
   font-weight: 800;
   font-size: 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   flex-shrink: 0;
 }
 body[data-role="admin"] .share-user-avatar { background: var(--admin-grad); }
@@ -27300,7 +27308,7 @@ body[data-theme="light"] .modal-panel.card-detail-panel {
 }
 .cd-head-text { flex: 1; min-width: 0; }
 .cd-head-text h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -27320,7 +27328,7 @@ body[data-theme="light"] .modal-panel.card-detail-panel {
 }
 .cd-stat strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 800;
   line-height: 1;
@@ -27765,7 +27773,7 @@ body.reduced-motion[data-role="admin"] .admin-kpi-card strong.kpi-flash { animat
   background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 .admin-section-divider span {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: .18em;
@@ -27927,7 +27935,7 @@ body[data-role="admin"] .admin-section-divider span {
   gap: 12px; margin-bottom: 4px;
 }
 .community-title h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15.5px; font-weight: 800; letter-spacing: -.015em;
   margin-bottom: 2px;
 }
@@ -27955,7 +27963,7 @@ body[data-role="admin"] .admin-section-divider span {
   display: grid; place-items: center;
   font-size: 10px;
   font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   border: 2px solid var(--bg-elev);
   margin-left: -8px;
   position: relative;
@@ -28481,7 +28489,7 @@ body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target=
   margin-bottom: 2px;
 }
 .an-card .an-head-kpi .an-mini-kpi b {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   color: var(--text);
@@ -28516,7 +28524,7 @@ body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target=
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -28552,7 +28560,7 @@ body[data-role="admin"] section[data-view="admin-analytics"] [data-focus-target=
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -29898,7 +29906,7 @@ body:not([data-role="admin"]) .btn.ghost {
 
 .hero-clock.user .hc-update-info { text-align: center; }
 .hero-clock.user .hc-update-info strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 28px !important;
   font-weight: 800;
   line-height: 1;
@@ -32160,7 +32168,7 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
   margin-bottom: 8px;
 }
 .plan-picker-head h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
   margin: 4px 0 4px;
@@ -32217,13 +32225,13 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
 }
 .pp-icon { font-size: 28px; line-height: 1; }
 .pp-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.01em;
 }
 .pp-price {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   color: var(--text);
@@ -32996,7 +33004,7 @@ html body #paymentPayBtn .payment-pay-spinner svg {
   line-height: 1.1;
 }
 .pfb-text strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -33355,7 +33363,7 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
 .ranking_number {
   position: relative;
   color: #ffc64b;
-  font-family: 'Plus Jakarta Sans', "Segoe UI", sans-serif;
+  font-family: 'Inter', "Segoe UI", sans-serif;
   font-weight: 700;
   font-size: 80px;
   left: 20px;
@@ -33369,7 +33377,7 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
   position: relative;
   font-size: 40px;
   color: #6b5030;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
 }
 
@@ -33434,7 +33442,7 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
   margin-left: 28px;
   color: rgba(212, 191, 166, .65);
   letter-spacing: 3px;
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   margin-top: 4px;
   font-weight: 800;
   font-size: 10px;
@@ -33443,7 +33451,7 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
 
 .gradesBoxNum {
   position: relative;
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   display: block;
   font-size: 22px;
   font-weight: 800;
@@ -33634,7 +33642,7 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
   z-index: 1;
 }
 .lfb-text strong {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -34163,7 +34171,7 @@ html body[data-theme="light"]:not([data-role="admin"]) #paymentSuccessCta:disabl
 .pq-stat-icon { font-size: 22px; }
 .pq-stat b {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 800;
 }
@@ -36542,7 +36550,7 @@ body[data-theme="dark"]::before {
 }
 .cookie-banner-title {
   display: flex; align-items: center; gap: 7px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px; font-weight: 800; color: var(--text);
   margin-bottom: 9px; letter-spacing: -.01em;
 }
@@ -36998,7 +37006,7 @@ body.player-view-active .main { padding-bottom: calc(92px + 24px); }
   line-height: 1.3;
   letter-spacing: -.015em;
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   margin: 0 0 12px;
 }
 
@@ -37138,7 +37146,7 @@ body.player-view-active .main { padding-bottom: calc(92px + 24px); }
   font-size: 16px;
   font-weight: 700;
   margin: 0;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 .lib-ytp-comments-count {
   font-size: 13px;
@@ -37234,7 +37242,7 @@ body.player-view-active .main { padding-bottom: calc(92px + 24px); }
   letter-spacing: -.02em !important;
   color: var(--text) !important;
   margin: 0 0 14px !important;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
 }
 
 /* 5. Action bar divider */
@@ -39019,7 +39027,7 @@ body[data-role="admin"].auth-mode .auth-card button[type="submit"] {
   width: 100% !important;
   padding: 13px 16px !important;
   border-radius: 10px !important;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 14.5px !important;
   font-weight: 700 !important;
   letter-spacing: -0.01em !important;
@@ -39334,7 +39342,7 @@ body:not([data-role="admin"]).auth-mode .auth-card .auth-link {
   padding: 4px 8px;
   border-radius: 4px;
   letter-spacing: .04em;
-  font-family: 'Arial Black', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   flex-shrink: 0;
 }
 .save-card-brand[data-brand="mastercard"] { background: linear-gradient(135deg, #EB001B 0%, #F79E1B 100%); }
@@ -40037,9 +40045,14 @@ body[data-theme="light"] .auth-preview-floats .apf {
 .dashboard-tier-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  /* gap ikon↔teks dirapatkan bertahap 10→6→3→1px (request user
+     2026-05-17: "dempet sedikit lagi dengan ikon bintang") */
+  gap: 1px;
   height: 38px;
-  padding: 0 12px 0 10px;
+  /* Grup (bintang+teks) ditarik sedikit ke KIRI: padding-left
+     12→7px, kanan tetap 12 (request user 2026-05-17: "ikon bintang
+     & text premium aktif tarik ke kiri sedikit"). */
+  padding: 0 12px 0 7px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -40056,17 +40069,34 @@ body[data-theme="light"] .auth-preview-floats .apf {
   border-color: var(--border-strong);
   transform: translateY(-1px);
 }
-.dashboard-tier-pill .dtp-icon { font-size: 16px; line-height: 1; }
+/* Ikon dibuat flex-center supaya bintang benar2 di tengah kotaknya
+   & sejajar tengah dgn blok teks (request user 2026-05-17: "gak
+   rapi ikon dan text nya buat rata tengah"). */
+.dashboard-tier-pill .dtp-icon {
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+/* Teks pill dirata-tengah, 2 baris PREMIUM / AKTIF (request user
+   2026-05-17). align-items + text-align center. */
 .dashboard-tier-pill .dtp-text {
-  display: flex; flex-direction: column; align-items: flex-start;
-  line-height: 1.1; text-align: left;
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 1.1; text-align: center;
 }
+/* "Premium" → "PREMIUM" (uppercase) biar senada dgn "AKTIF" */
 .dashboard-tier-pill .dtp-label {
-  font-size: 11.5px; font-weight: 700; color: var(--text); letter-spacing: -0.1px;
+  font-size: 11.5px; font-weight: 700; color: var(--text);
+  text-transform: uppercase; letter-spacing: .4px;
 }
+/* "AKTIF" dibuat SAMA PERSIS dgn "PREMIUM" (request user 2026-05-17):
+   bukan cuma weight — font-size 10→11.5px & letter-spacing .8→.4px
+   disamakan. Ukuran beda bikin teks 700 yg lebih kecil terlihat
+   lebih tipis → kelihatan "bold-nya beda". Sekarang 1 blok seragam,
+   rata tengah persis. */
 .dashboard-tier-pill .dtp-status {
-  font-size: 10px; font-weight: 600; color: var(--text-2);
-  text-transform: uppercase; letter-spacing: .8px; margin-top: 1px;
+  /* "AKTIF" balik besar lagi = 11.5px (sama dgn "PREMIUM") —
+     user batal kecilkan (2026-05-17: "gajadi besarin lagi"). */
+  font-size: 11.5px; font-weight: 700; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: .4px; margin-top: 2px;
 }
 
 /* Free state — match topbar search/icon-btn (per user 2026-05-08) */
@@ -40106,11 +40136,60 @@ body[data-theme="light"] .auth-preview-floats .apf {
   pointer-events: none;
 }
 .dashboard-tier-pill[data-tier="premium"] .dtp-icon {
-  color: #DCA96D;
+  color: #F3D9A8;
   animation: tierPillStar 1.6s ease-in-out infinite;
 }
-.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #DCA96D; }
-.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #DCA96D; opacity: .85; }
+/* Bintang pill premium (request user 2026-05-17):
+   1) warna disamakan dgn teks (#F3D9A8 via currentColor)
+   2) diperbesar sedikit (picons memberi [class*='pill'] .picon
+      hanya 1.05em → naikkan ke 1.32em / min 22px)
+   3) SOLID/penuh — picons default `fill:none;stroke:currentColor`
+      bikin bintang bolong di tengah; paksa fill:currentColor &
+      stroke:none → bintang isi penuh. !important utk kalahkan
+      <style> injeksi picons.js + tahan re-proses watchdog. */
+.dashboard-tier-pill .dtp-icon .picon {
+  fill: currentColor !important;
+  stroke: none !important;
+  width: 1.7em !important;
+  height: 1.7em !important;
+  min-width: 27px !important;
+  min-height: 27px !important;
+}
+/* picons kasih .picon-w `position:relative; top:-0.02em` → bintang
+   naik ~0.3px (kelihatan tidak center vs blok teks). Nolkan khusus
+   pill ini supaya bintang PERSIS center vertikal dgn teks (request
+   user 2026-05-17: "rata tengah"). align-self center eksplisit
+   utk ikon & teks. */
+.dashboard-tier-pill .dtp-icon .picon-w {
+  top: 0 !important;
+  vertical-align: middle !important;
+}
+.dashboard-tier-pill .dtp-icon,
+.dashboard-tier-pill .dtp-text {
+  align-self: center !important;
+}
+/* OPTICAL CENTERING (2026-05-17): box .dtp-text sudah center
+   geometris SEMPURNA (space atas == bawah == 6.36px), TAPI teks
+   all-caps (PREMIUM/AKTIF tanpa descender) duduk ke ATAS line-box
+   → mata lihat "kurang turun". Nudge turun 2px supaya tinta huruf
+   yg terlihat benar2 center optik. */
+.dashboard-tier-pill .dtp-text {
+  position: relative !important;
+  top: 1px !important; /* 2px → 1px: user "+1 ke atas" (2026-05-17) */
+}
+/* Koreksi 2026-05-17 (final): 7.04px terlalu mungil — user minta
+   font "PREMIUM" DIBESARKAN lagi & kotak cukup. Balik ke 11.5px
+   (sama persis dgn "AKTIF"), kotak auto → muat natural. */
+.dashboard-tier-pill .dtp-label {
+  font-size: 11.5px !important;
+  width: auto !important;
+  height: auto !important;
+}
+/* Teks pill premium dibuat lebih TERANG (request user 2026-05-17):
+   #DCA96D (gold redup) → #F3D9A8 (gold terang), opacity status
+   .85 → 1 supaya "AKTIF" tak ikut redup. Ikon bintang tetap. */
+.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #F3D9A8; }
+.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #F3D9A8; opacity: 1; }
 .dashboard-tier-pill[data-tier="premium"]:hover {
   background: linear-gradient(135deg, rgba(220,169,109,.32), rgba(80,16,10,.18));
   box-shadow: 0 4px 14px rgba(220, 169, 109, .35);
@@ -42851,7 +42930,7 @@ body[data-role="admin"] .auth-topbar-admin .auth-topbar-brand {
   color: #FFFFFF;
 }
 body[data-role="admin"] .auth-topbar-admin .auth-topbar-name {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 16px;
   font-weight: 800;
   color: #FFFFFF;
@@ -43003,7 +43082,7 @@ body[data-role="admin"] .auth-left-admin .auth-showcase {
   gap: 14px;
 }
 body[data-role="admin"] .auth-left-admin .auth-showcase h2 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: clamp(28px, 3.8vw, 44px);
   line-height: 1.18;
   font-weight: 800;
@@ -43036,7 +43115,7 @@ body[data-role="admin"] .auth-left-admin .auth-stats > div {
   gap: 4px;
 }
 body[data-role="admin"] .auth-left-admin .auth-stats b {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 28px;
   font-weight: 800;
   background: linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 30%, #FFFFFF 60%, #283850 100%);
@@ -43307,7 +43386,7 @@ body[data-role="admin"].auth-mode #adminModulesSection {
   background: rgba(20, 30, 48, .25);
 }
 .admin-landing-head h2 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: clamp(26px, 3.4vw, 40px);
   line-height: 1.18;
   font-weight: 800;
@@ -43498,7 +43577,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   gap: 4px;
 }
 .apf-kpi-label { font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #FFFFFF; }
-.apf-kpi-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: #FFFFFF; }
+.apf-kpi-value { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800; color: #FFFFFF; }
 .apf-kpi-trend { display: inline-flex; align-items: center; align-self: flex-start; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-top: 2px; }
 .apf-trend-up   { background: rgba(168, 247, 167, .12); color: #a8f7a7; }
 .apf-trend-down { background: rgba(255, 124, 124, .14); color: #ff9c9c; }
@@ -43596,7 +43675,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   color: #FFFFFF;
@@ -44341,7 +44420,7 @@ body[data-role="admin"]:not(.auth-mode) .view > h2,
 body[data-role="admin"]:not(.auth-mode) .view-head h2,
 body[data-role="admin"]:not(.auth-mode) section.view > .view-head > h2,
 body[data-role="admin"]:not(.auth-mode) section.view > h2 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: clamp(22px, 2vw, 28px);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -44364,7 +44443,7 @@ body[data-role="admin"]:not(.auth-mode) .audit-stat b,
 body[data-role="admin"]:not(.auth-mode) .pq-stat b,
 body[data-role="admin"]:not(.auth-mode) .comms-kpi b,
 body[data-role="admin"]:not(.auth-mode) .stats-card b {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-feature-settings: 'tnum' on, 'lnum' on;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -46711,7 +46790,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section {
   gap: 12px !important;
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .afs-wordmark {
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-size: 11px !important;
   font-weight: 700 !important;
   letter-spacing: 4px !important;
@@ -46796,7 +46875,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-text strong {
   display: block !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-size: clamp(20px, 2.4vw, 28px) !important;
   font-weight: 800 !important;
   line-height: 1.2 !important;
@@ -46891,7 +46970,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
 }
 .afs-info-icon svg { width: 24px; height: 24px; }
 .afs-info-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 800;
   margin: 0 0 14px;
@@ -47257,7 +47336,7 @@ html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-step .howi
 html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-front-title {
   display: block !important;
   text-align: center !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-size: 19px !important;
   font-weight: 700 !important;
   color: var(--text) !important;
@@ -47852,7 +47931,7 @@ html body[data-role="admin"] .admin-module-card:hover h3 {
   overflow-y: auto;
 }
 .amf-info-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -.01em;
@@ -48493,7 +48572,7 @@ html body[data-role="admin"] .apf-avatar.apf-avatar-letter {
   -webkit-text-fill-color: #FFFFFF !important;
   font-size: 14px !important;
   font-weight: 800 !important;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Inter', sans-serif !important;
   letter-spacing: 0 !important;
   line-height: 1 !important;
   border-radius: 50% !important;
@@ -48606,7 +48685,7 @@ body[data-role="admin"] [data-view="admin-revenue"] .admin-kpi {
   transform: translate(-50%, -50%);
   font-size: 9px;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: currentColor;
   pointer-events: none;
   letter-spacing: 0;
@@ -49982,7 +50061,7 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   font-size: 17px !important;
   font-weight: 800 !important;
   letter-spacing: -.02em !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   flex-shrink: 0 !important;
   position: relative !important;
 }
@@ -50057,7 +50136,7 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
 }
 .notif-dropdown .ndd-head h4 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 800;
   color: var(--text);
@@ -55233,7 +55312,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .home-vid-section-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .home-vid-section-title h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px; font-weight: 800; letter-spacing: -.015em; margin: 0;
   color: var(--text);
 }
@@ -55265,7 +55344,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .home-quick-actions .hqa-head h3,
 .home-achievements .ha-head h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -.015em;
@@ -55305,7 +55384,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   background: linear-gradient(155deg, rgba(232,216,196,.05), rgba(109,41,50,.12));
   border: 1px solid var(--border);
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
@@ -55317,7 +55396,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   background: linear-gradient(155deg, rgba(232,216,196,.08), rgba(109,41,50,.22));
 }
 .hqa-btn:active { transform: translateY(0); }
-.hqa-btn:focus-visible { outline: 2px solid #d4a64a; outline-offset: 2px; }
+.hqa-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .hqa-ico {
   font-size: 22px;
   line-height: 1;
@@ -55345,7 +55424,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hai-title strong {
   display: flex; align-items: center; gap: 8px;
   font-size: 15px; font-weight: 800; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 .hai-title small { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
 .hai-pill {
@@ -55354,7 +55433,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   background: linear-gradient(135deg, #f0c878, #d4a64a);
 }
 .hai-refresh-btn, .hai-upgrade-btn {
-  flex-shrink: 0; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  flex-shrink: 0; cursor: pointer; font-family: 'Inter', sans-serif;
   font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;
   border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
   transition: border-color .18s ease, transform .18s ease, background .18s ease;
@@ -55372,7 +55451,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hai-card:hover { border-color: var(--primary); transform: translateY(-2px); }
 .hai-card-hook {
   font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.35;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 .hai-card-meta { font-size: 12px; color: var(--muted); font-weight: 600; }
 .hai-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
@@ -55440,7 +55519,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .hck-head h3, .hrc-head h3, .hmo-head h3, .hrk-head h3 {
   font-size: 15px; font-weight: 800; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; margin: 0;
+  font-family: 'Inter', sans-serif; margin: 0;
 }
 .hck-head small, .hrc-head small, .hmo-head small, .hrk-head small {
   font-size: 12px; color: var(--muted); font-weight: 600; text-align: right;
@@ -55477,7 +55556,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .hrc-stat b {
   font-size: 22px; font-weight: 800; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1;
+  font-family: 'Inter', sans-serif; line-height: 1;
 }
 .hrc-stat small { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
 .hrc-up { color: #22c55e; font-weight: 700; }
@@ -55524,7 +55603,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .hlv-head h3 {
   font-size: 15px; font-weight: 800; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; margin: 0;
+  font-family: 'Inter', sans-serif; margin: 0;
 }
 /* hanya note kanan (direct child) yg rata-kanan — sub-judul kiri jangan kena */
 .hlv-head > small { font-size: 12px; color: var(--muted); font-weight: 600; text-align: right; }
@@ -55546,7 +55625,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hlv-title {
   display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
   font-size: 17px; font-weight: 800; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 10px;
+  font-family: 'Inter', sans-serif; margin-bottom: 10px;
 }
 .hlv-xp { font-size: 12px; font-weight: 700; color: var(--primary, #d4a64a); }   /* teks dikembalikan ke asli (per request user 2026-05-16: hanya kolom yg diganti, teks jangan) */
 .hlv-bar {
@@ -55906,7 +55985,7 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 }
 .hqs-section-titles h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.015em;
@@ -56190,7 +56269,7 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   background: linear-gradient(135deg, rgba(109, 41, 50, .14), rgba(109, 41, 50, .06));
   border: 1px solid rgba(109, 41, 50, .28);
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -.005em;
@@ -56238,7 +56317,7 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   align-items: center;
   gap: 6px;                /* compact horizontal gap */
   width: 100%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -58476,4 +58555,280 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 /* Gap dalam grup 2-kolom (Tag|Kategori, Visibilitas|Audiens) konsisten */
 .upload-col-left .upf-grid-2col,
 .upload-col-right .upf-grid-2col { gap: 14px 20px !important; }
+
+/* ============================================================
+   Hero action buttons (Unggah Video / Analitik / Pesan / Jelajahi)
+   Request user 2026-05-16: "rapikan, perbaiki ukuran teks tombol,
+   ratakan ukuran font". Tombol2 sudah seragam satu sama lain tapi
+   kekecilan (12.5px) & tak selaras dgn tip (13.5px). → samakan ke
+   13.5px (= ukuran tip) supaya teks pendukung hero konsisten;
+   tinggi & padding tetap rata. Scoped ke .hero-actions saja.
+   ============================================================ */
+.hero-actions .btn,
+.hero-actions button,
+.hero-actions a.btn,
+.hero-actions [data-jump] {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: .1px !important;
+  line-height: 1 !important;
+  padding: 9px 16px !important;
+}
+
+/* ============================================================
+   Ringkasan Statistik — BENTUK saja (request user 2026-05-17):
+   tetap 1 kartu container, tapi garis pemisah tegas DIBUANG &
+   tiap stat jadi panel inset halus (krem netral, rounded, ada
+   jarak). Isi/angka/ikon TIDAK diubah. Scoped ke .hqs-minimal.
+   ============================================================ */
+.home-quick-stats.hqs-minimal {
+  gap: 10px !important;
+  padding: 12px !important;
+}
+.home-quick-stats.hqs-minimal .hqs-card + .hqs-card {
+  border-left: 0 !important;   /* buang garis pemisah tegas */
+}
+.home-quick-stats.hqs-minimal .hqs-card {
+  background: rgba(232, 216, 196, 0.045) !important;
+  border: 1px solid rgba(232, 216, 196, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  transition: background .15s ease, border-color .15s ease !important;
+}
+.home-quick-stats.hqs-minimal .hqs-card:hover {
+  background: rgba(232, 216, 196, 0.08) !important;
+  border-color: rgba(232, 216, 196, 0.13) !important;
+}
+
+/* ============================================================
+   Peringkat Kreator (request user 2026-05-17): warna kolom &
+   highlight diri & hover/fokus ring → NETRAL krem (bukan
+   gold/wine), + ikon rank #1/#2/#3 dst dibikin lebih besar &
+   jelas. Scoped ke .home-ranking-section.
+   ============================================================ */
+.home-ranking-section .lb-row.is-me {
+  background: rgba(232, 216, 196, 0.08) !important;
+  border-color: rgba(232, 216, 196, 0.38) !important;
+}
+.home-ranking-section .lb-row:hover {
+  border-color: var(--border-strong) !important;   /* bukan wine */
+}
+.home-ranking-section .lb-row:focus-visible {
+  outline: 2px solid var(--text) !important;        /* netral, bukan gold/wine */
+  outline-offset: 2px;
+  border-color: var(--text) !important;
+}
+.home-ranking-section .lb-av {
+  background: rgba(232, 216, 196, 0.20) !important; /* bukan gold */
+  color: var(--text) !important;
+}
+.home-ranking-section .lb-you {
+  background: rgba(232, 216, 196, 0.20) !important; /* bukan gold */
+  color: var(--text) !important;
+}
+/* Ikon rank + nomor — lebih besar & jelas (semua baris) */
+.home-ranking-section .lb-rank { width: 34px !important; }
+.home-ranking-section .lb-medal .picon {
+  width: 23px !important; height: 23px !important;
+  min-width: 23px !important; min-height: 23px !important;
+  stroke-width: 2 !important; opacity: 1 !important;
+  color: var(--text) !important;
+}
+.home-ranking-section .lb-num {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: var(--text) !important;                    /* dari muted (samar) → jelas */
+}
+/* Top-3: badge bundar netral berisi NOMOR (jelas, bukan medali
+   ambigu) — request user 2026-05-17. Tetap krem, no gold/wine. */
+.home-ranking-section .lb-rank {
+  display: flex !important; align-items: center; justify-content: center;
+}
+.home-ranking-section .lb-num.lb-top3 {
+  display: grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(232, 216, 196, 0.55) !important;
+  background: rgba(232, 216, 196, 0.10) !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: var(--text) !important;
+}
+
+/* ===== Kalimat ajakan di ATAS daftar (request user 2026-05-17) ===== */
+.home-ranking-section .lb-cta {
+  font-size: 13px;
+  line-height: 1.45;
+  /* request user 2026-05-17: warna teks diganti (lebih kalem) &
+     KOTAK dihapus. Pakai warna eksplisit — var(--muted) di-override
+     ke krem di level body shg tak terlihat beda. */
+  color: rgba(232, 216, 196, 0.62) !important;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.home-ranking-section .lb-cta b { font-weight: 700; color: var(--text); }
+
+/* ===== MEDALI jelas utk rank 1-3 (pita + medalion + angka) =====
+   request user 2026-05-17: "ikon jadi medali tapi yang jelas".
+   Netral krem (bukan gold/wine), bentuk medali jelas, angka di tengah. */
+.home-ranking-section .lb-rank {
+  width: 30px !important;
+  height: auto !important;
+  flex-shrink: 0;
+}
+/* Pita medali DIHAPUS & medali dikecilkan (request user 2026-05-17:
+   "kurang suka bentuknya, kecilkan/ganti") → chip metal bundar
+   ringkas berisi angka, tanpa pita. Warna emas/perak/perunggu tetap. */
+.home-ranking-section .lb-medal3 {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+/* Warna per peringkat: EMAS / PERAK / PERUNGGU (request user
+   2026-05-17). Khusus ikon medali ini saja — elemen lain tetap
+   netral. Pakai CSS var per data-rank. */
+/* Fill SOLID metalik (gradient) biar benar2 kelihatan emas/perak/
+   perunggu (request user 2026-05-17: tint transparan lama keliatan
+   kusam). Angka GELAP spt ukiran utk kontras di metal terang. */
+.home-ranking-section .lb-medal3[data-rank="1"] {           /* EMAS */
+  --m-edge: #a9781f;
+  --m-fill: linear-gradient(145deg, #fbe6a8 0%, #e8bd57 48%, #c7942f 100%);
+  --m-num: #5a3c0a; --m-ribbon: #d8af4e;
+}
+.home-ranking-section .lb-medal3[data-rank="2"] {           /* PERAK */
+  --m-edge: #8c929c;
+  --m-fill: linear-gradient(145deg, #f6f8fb 0%, #d2d8e0 48%, #aab1bd 100%);
+  --m-num: #3a3f47; --m-ribbon: #c2c8d1;
+}
+.home-ranking-section .lb-medal3[data-rank="3"] {           /* PERUNGGU */
+  --m-edge: #80532b;
+  --m-fill: linear-gradient(145deg, #edbe8d 0%, #cd8a4c 48%, #9c5e2c 100%);
+  --m-num: #4a2b0d; --m-ribbon: #bb854e;
+}
+/* Pita DIHAPUS — tidak ada lagi ::before/::after */
+.home-ranking-section .lb-medal3::before,
+.home-ranking-section .lb-medal3::after { content: none !important; display: none !important; }
+/* Chip metal bundar ringkas + angka — warna sesuai metal */
+.home-ranking-section .lb-medal3-disc {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--m-edge, rgba(232, 216, 196, 0.7));
+  background: var(--m-fill, rgba(232, 216, 196, 0.12));
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.4),
+              inset 0 -1px 2px rgba(0,0,0,.25);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--m-num, var(--text));
+  text-shadow: 0 1px 0 rgba(255,255,255,.22);
+}
+
+/* ============================================================
+   Kartu fitur PREMIUM di halaman Unggah — warna by TIER
+   ------------------------------------------------------------
+   Request user 2026-05-17: user FREE tetap lihat kartu emas
+   (sbg penanda fitur premium yg belum bisa diakses), tapi user
+   PREMIUM (yg sudah bisa akses) → kartu jadi NETRAL senada
+   kartu lain (tanpa gradient/border emas). Gate: body[data-tier].
+   Hanya VISUAL — logika akses (free terkunci) tak diubah.
+   Free user: aturan emas lama dibiarkan (tidak di-scope ulang).
+   ============================================================ */
+body[data-tier="premium"] .upload-tier-banner,
+body[data-tier="premium"] .upf-ai-assist,
+body[data-tier="premium"] .upf-sub-card-ai {
+  background: var(--bg-elev-2, var(--surface)) !important;
+  background-image: none !important;
+  border-color: var(--border, rgba(232, 216, 196, .14)) !important;
+  box-shadow: none !important;
+}
+/* Glow radial emas di kartu subtitle AI — matikan utk premium */
+body[data-tier="premium"] .upf-sub-card-ai::before {
+  display: none !important;
+}
+/* Premium user: SEMUA penanda teks "premium" di halaman unggah
+   disembunyikan (request user 2026-05-17) — user premium tak perlu
+   label premium, tampilan bersih. Free TETAP lihat (upsell/locked). */
+body[data-tier="premium"] .upload-tier-banner { display: none !important; }
+body[data-tier="premium"] .upf-ai-section .upf-label-row small { display: none !important; }
+body[data-tier="premium"] .upf-premium-pill { display: none !important; }
+/* .dz-promo dipaksa inline-block oleh `html body #dropzoneLimit .dz-promo
+   !important` (L~49364). Selector premium harus >= spesifisitas itu
+   (samakan + tambah [data-tier]). */
+html body[data-tier="premium"] #dropzoneLimit .dz-promo,
+html body[data-tier="premium"] #dropzoneLimit span.dz-promo,
+html body[data-tier="premium"] .dz-pro-empty small#dropzoneLimit .dz-promo {
+  display: none !important;
+}
+
+/* Kartu "Lawan Berikutnya" + CSS-nya DIHAPUS per request user
+   2026-05-17 (kurang suka). */
+
+/* Rapatkan jarak antar-section beranda — tetap ada space (request
+   user 2026-05-17: "terlalu jauh, dempetkan tapi tetap kasih space").
+   View flex gap 16→12; pita pemisah margin-top 22→6 (yg bikin gap
+   besar ~38px → ~18px). Scoped ke beranda saja. */
+section.view[data-view="home"] { gap: 12px !important; }
+/* divider sebenarnya .admin-section-divider (+ .home-divider-STATS/
+   -progres dst), bukan .home-divider. Scoped ke beranda. */
+section.view[data-view="home"] .admin-section-divider {
+  margin-top: 6px !important;
+  margin-bottom: 4px !important;
+}
+
+/* TOP BAR — kolom pencarian dulu full-bleed (flex:1 → ~1140px) jadi
+   kelihatan kosong melebar. Pilihan user 2026-05-17: search tetap
+   LEBAR mengisi ruang tapi DIBATASI maksimal supaya tidak terlalu
+   kosong, aksi tetap nempel di pojok kanan, sisa whitespace kecil
+   ("jangan ada yang berjarak tapi tetap kasih space").
+   - Request user 2026-05-17: search dilebarkan lagi ~1145px. TAPI
+     width FIXED 1145px bikin Beranda+search+aksi > lebar topbar
+     (~1608, sidebar makan ~288) → flex WRAP, aksi turun ke baris ke-2,
+     konten kedorong. Solusi: flex-FILL (grow) + max-width:1145 →
+     search isi seluruh ruang yg ada (~1143 di layar ini, ADAPTIF,
+     tak pernah wrap), tapi tak melebihi 1145 di monitor ultra-wide.
+     flex-grow yg mendorong aksi ke pojok kanan (BUKAN margin-left:auto
+     — auto-margin nyolong free-space dari grow → search tak isi).
+   - Selector WAJIB lebih spesifik dari `html body:not([data-role=
+     admin]):not(.auth-mode) .topbar-search { flex:1 1 0!important;
+     width:auto!important }` (L~48928, spec 0-3-3). Tambah `.topbar`
+     di rantai → spec 0-4-2 > 0-3-3, + !important.
+   - Scoped @media >=1024px supaya rule mobile/tablet lama
+     (display:none / max-width:320) tak terganggu. */
+@media (min-width: 1024px) {
+  html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-search,
+  html body[data-role="admin"]:not(.auth-mode) .topbar .topbar-search {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    max-width: 1145px !important;
+    min-width: 0 !important;
+    margin-right: 0 !important;
+  }
+  /* Pill "Premium AKTIF" punya margin-left:8px hardcoded → di atas
+     gap flex topbar 4px jadi total jarak search↔Premium ~12px,
+     kelihatan masih berjarak (request user 2026-05-17: "dempetkan").
+     Nolkan margin-left pill itu → jarak tinggal 4px (gap flex) =
+     dempet tapi tetap ada sedikit space. ID selector = spesifisitas
+     tinggi, + !important utk aman. */
+  html body:not(.auth-mode) .topbar .topbar-actions > #dashboardTierPill {
+    margin-left: 0 !important;
+  }
+}
+
+/* (Dibatalkan 2026-05-17: user minta sidebar TIDAK kapital lagi.
+   Rule uppercase #sidebar dihapus → casing kembali ke styling
+   asli: menu normal-case, header UTAMA/PUSTAKA/SOSIAL tetap
+   uppercase via CSS aslinya sendiri.) */
 

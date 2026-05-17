@@ -93,7 +93,7 @@ http.createServer((req, res) => {
       const notFound = path.join(ROOT, '404.html');
       fs.readFile(notFound, (e, buf) => {
         if (e) return send(res, 404, { 'Content-Type': 'text/plain' }, 'Not Found');
-        send(res, 404, { 'Content-Type': 'text/html; charset=utf-8' }, buf);
+        send(res, 404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }, buf);
       });
       return;
     }
@@ -107,6 +107,16 @@ http.createServer((req, res) => {
     };
     if (ext === '.js' || ext === '.css') {
       headers['Cache-Control'] = 'public, max-age=0, must-revalidate';
+    } else if (ext === '.html' || ext === '') {
+      // FIX akar masalah "cache lama, gak ada yg berubah" (2026-05-17):
+      // index.html dulu TANPA Cache-Control → browser meng-cache HTML
+      // lama → <link styles.css?v=...> versi lama ke-load → perubahan
+      // CSS/JS tak pernah kelihatan walau cache-bust dibump. HTML
+      // sekarang TIDAK PERNAH di-cache → selalu ambil index.html
+      // terbaru → versi ?v= terbaru selalu kebaca.
+      headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+      headers['Expires'] = '0';
     }
     fs.createReadStream(filePath).pipe(res.writeHead(200, headers));
   });
