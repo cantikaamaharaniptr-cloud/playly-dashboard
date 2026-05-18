@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    PLAYLY. — Elegant Video Dashboard
    ========================================================= */
 
@@ -1979,28 +1979,30 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 }
 
 /* Main kebab panel + submenus */
+/* DISAMAKAN PERSIS dgn .ply-spd-pop (popup speed cepat) — request user
+   2026-05-18: "warna popup subtitle/kecepatan/kualitas samakan dgn
+   popup lain". Semua popup player kini identik. */
 .lib-kebab-panel {
   position: absolute;
   top: 50px;
   right: 10px;
   min-width: 220px;
-  background: rgba(20, 14, 16, .96);
-  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(14, 6, 6, .93);
+  border: 1px solid rgba(255, 255, 255, .13);
   border-radius: 10px;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   z-index: 5;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
   animation: libKebabIn .15s var(--ease);
 }
 .lib-kebab-panel[hidden] { display: none !important; }
 body[data-role="admin"] .lib-kebab-panel {
-  background: linear-gradient(135deg,
-    rgba(24, 30, 44, .92) 0%,
-    rgba(20, 30, 48, .88) 100%);
+  background: linear-gradient(135deg, rgba(24, 30, 44, .94) 0%, rgba(20, 30, 48, .90) 100%);
   border-color: rgba(165, 175, 195, .22);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
@@ -2048,24 +2050,42 @@ body[data-role="admin"] .lib-kebab-row:hover {
 }
 
 /* Submenu — replace main panel content saat dibuka */
-.lib-tool-submenu {
+/* DISAMAKAN PERSIS dgn .ply-spd-pop / .lib-kebab-panel (request user
+   2026-05-18). Submenu juga punya class .lib-tool-menu (var(--bg-elev),
+   defined LEBIH BAWAH ~2329) yg menang dari .lib-tool-submenu single-class
+   → INI penyebab warna submenu beda dari kebab/speed-popup. Naikkan
+   specificity ke .lib-tool-menu.lib-tool-submenu (0,2,0) supaya menang.
+   Submenu admin juga dulu masih dark-wine padahal kebab admin navy →
+   ditambah override admin biar konsisten. */
+.lib-tool-menu.lib-tool-submenu {
   position: absolute;
   top: 50px;
   right: 10px;
   min-width: 220px;
-  background: rgba(20, 14, 16, .96);
-  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(14, 6, 6, .93);
+  border: 1px solid rgba(255, 255, 255, .13);
   border-radius: 10px;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   z-index: 6;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
   animation: libKebabIn .15s var(--ease);
 }
-.lib-tool-submenu[hidden] { display: none !important; }
+.lib-tool-menu.lib-tool-submenu[hidden] { display: none !important; }
+body[data-role="admin"] .lib-tool-menu.lib-tool-submenu {
+  background: linear-gradient(135deg, rgba(24, 30, 44, .94) 0%, rgba(20, 30, 48, .90) 100%);
+  border-color: rgba(165, 175, 195, .22);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .60), 0 0 0 1px rgba(165, 175, 195, .08);
+}
+body[data-role="admin"] .lib-tool-submenu button:not(.lib-submenu-back):hover {
+  background: rgba(165, 175, 195, .16);
+}
 .lib-tool-submenu button:not(.lib-submenu-back) {
   text-align: left;
   padding: 9px 12px;
@@ -2114,17 +2134,20 @@ body[data-role="admin"] .lib-kebab-row:hover {
 /* CC submenu — wider popup dengan 2-column grid biar semua 16 bahasa visible
    tanpa scroll. Per user 2026-05-07: redesign drop badge yang ngebug
    ("User ID" rendering issue di Chrome), simpler text-only. */
+/* Request user 2026-05-18: popup subtitle terlalu lebar → compact
+   1 kolom (1 baris per bahasa), sisanya tinggal scroll. Lebar
+   disamakan dgn submenu lain (220px). */
 .lib-cc-submenu {
-  min-width: 360px;
-  max-width: min(440px, 92vw);
-  max-height: 480px;
+  min-width: 220px;
+  max-width: min(280px, 92vw);
+  max-height: 420px;
   overflow: hidden;
 }
 .lib-cc-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 2px;
-  max-height: 420px;
+  max-height: 340px;
   overflow-y: auto;
   scrollbar-width: thin;
   padding-right: 4px;
@@ -2361,22 +2384,25 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   font-weight: 700;
 }
 
-/* CC overlay di atas video */
+/* CC overlay di atas video — request user 2026-05-18: saat subtitle
+   jalan, kolomnya FULL (selebar video) TAPI ikon kontrol tetap jelas.
+   → full width (left/right 0), posisinya DI ATAS control bar
+   (bottom 68px), z-index 3 < .lvc-bar (z-index 4) shg ikon kontrol
+   selalu di atas & tidak ketutup caption. */
 .lib-inline-cc {
   position: absolute;
-  bottom: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, .75);
+  left: 0;
+  right: 0;
+  bottom: 68px;
+  z-index: 3;
+  background: rgba(0, 0, 0, .5);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 5px 16px;
   pointer-events: none;
-  max-width: 80%;
   text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85);
 }
 .lib-inline-cc[hidden] { display: none !important; }
 .lib-inline-screen { position: relative; }
@@ -6513,16 +6539,18 @@ body[data-theme="light"].player-view-active .main {
 
 .cpl-progress {
   position: relative;
-  height: 4px;
+  height: 3px;
   background: rgba(255,255,255,.22);
   cursor: pointer;
   transition: height .15s;
   margin-bottom: 0;
 }
-.cpl-progress:hover { height: 6px; }
+.cpl-progress:hover { height: 5px; }
+/* Garis progress ramping & netral (req user 2026-05-18): tipis, putih
+   lembut — bukan merah mencolok. */
 .cpl-progress-fill {
   height: 100%;
-  background: #c0392b;
+  background: rgba(255,255,255,.85);
   pointer-events: none;
   border-radius: 0 2px 2px 0;
 }
@@ -6530,13 +6558,13 @@ body[data-theme="light"].player-view-active .main {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px; height: 12px;
-  background: #e74c3c;
+  width: 10px; height: 10px;
+  background: #FFFFFF;
   border-radius: 50%;
   pointer-events: none;
   opacity: 0;
   transition: opacity .15s;
-  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 .cpl-progress:hover .cpl-progress-thumb { opacity: 1; }
 
@@ -6864,6 +6892,12 @@ body[data-role="admin"] .player-creator-link:hover strong { color: var(--admin-a
 
 /* Profile dropdown — user only */
 body[data-role="admin"] [data-pd-user-only] { display: none !important; }
+/* Profile dropdown — KHUSUS dashboard admin (request user 2026-05-18).
+   data-pd-admin-hide : item lama (Edit Profil, Ganti Tema) — disembunyikan
+                        HANYA saat role admin; dashboard user tetap utuh.
+   data-pd-admin-only : fitur baru admin — disembunyikan utk role non-admin. */
+body[data-role="admin"] [data-pd-admin-hide] { display: none !important; }
+body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 
 /* Keep action-btn class for JS that toggles .active on it */
 .action-btn.active { color: var(--primary); }
@@ -12660,28 +12694,39 @@ section[data-view="upload"] .upload-form textarea {
    dari midpoint vertikal slide. */
 .auth-plans-section {
   position: relative;
-  min-height: 100vh;
-  padding: 36px clamp(24px, 5vw, 80px) 40px;
+  /* RATA TENGAH dalam area di bawah topbar (request user 2026-05-17:
+     "terlalu tinggi, turunkan, rata di tengah"). Section ditempatkan tepat
+     di bawah nav via scroll-margin-top:64, jadi tingginya = sisa viewport
+     setelah nav; justify-content:center menengahkan konten secara vertikal
+     → seimbang atas-bawah, tetap 1 slide. (HANYA posisi yang diubah.) */
+  min-height: calc(100vh - 64px);
+  padding: clamp(22px, 3vh, 34px) clamp(12px, 2.2vw, 32px) 24px;
   max-width: none;
   margin: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   box-sizing: border-box;
   scroll-margin-top: 64px;
 }
-/* Viewport pendek (laptop kecil / mobile landscape) — release min-height
-   supaya konten ga ke-crush. */
-@media (max-height: 760px) {
+/* Viewport pendek (≤ 880px) — lepas min-height:100vh supaya kartu yg lebih
+   besar TIDAK meluber & nabrak section bawah (mengalir natural + scroll,
+   tetap tidak gabung karena tiap section blok full-width sendiri). Di layar
+   ≥ 880px tetap 1 slide penuh. */
+@media (max-height: 880px) {
   .auth-plans-section {
     min-height: auto;
-    padding: 64px clamp(24px, 5vw, 80px) 48px;
+    /* Dinaikkan lagi (request user 2026-05-17). Section sudah di bawah
+       topbar via scroll-margin-top:64 jadi padding-top boleh kecil. */
+    padding: 28px clamp(18px, 3.5vw, 48px) 36px;
   }
 }
 .auth-plans-head {
   text-align: center;
-  margin-bottom: 20px;  /* was 28px — tighter, eyebrow → heading → cards more cohesive */
+  /* Jarak sub-judul ke kartu ditambah (request user 2026-05-17: dulu
+     terlalu dempet dengan kolom). */
+  margin-bottom: 26px;
   padding-top: 0;
 }
 .auth-plans-eyebrow {
@@ -12695,18 +12740,18 @@ section[data-view="upload"] .upload-form textarea {
   letter-spacing: .2em;
   text-transform: uppercase;
   color: var(--text-2);
-  margin-bottom: 14px;
+  margin-bottom: 7px;
 }
 .auth-plans-head h2 {
   font-family: 'Inter', sans-serif;
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -.025em;
-  margin: 0 0 12px;
+  margin: 0 0 6px;
   color: var(--text);
 }
 .auth-plans-head p {
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--text-2);
   max-width: 560px;
   margin: 0 auto;
@@ -12716,6 +12761,9 @@ section[data-view="upload"] .upload-form textarea {
   grid-template-columns: 1fr 1fr;
   gap: 22px;
   align-items: stretch;
+  /* Lebar dikembalikan full (request user 2026-05-17: "gak suka kalau
+     kolomnya dikecilin, besarin lagi seperti tadi"). */
+  width: 100%;
 }
 @media (max-width: 800px) {
   .auth-plans-grid { grid-template-columns: 1fr; }
@@ -12726,8 +12774,8 @@ section[data-view="upload"] .upload-form textarea {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 28px 26px 36px;
-  min-height: 640px;
+  padding: 28px 30px 28px;
+  min-height: 0;
   position: relative;
   transition: border-color .2s var(--ease);
 }
@@ -12739,28 +12787,42 @@ section[data-view="upload"] .upload-form textarea {
     radial-gradient(ellipse at top, rgba(199, 183, 163, .06), transparent 60%),
     var(--bg-elev);
 }
-.plan-head { margin-bottom: 22px; }
+.plan-head { margin-bottom: 16px; }
+/* Badge = SATU sistem komponen utk kedua kartu (per request user
+   2026-05-17: dulu Free=chip abu kecil vs Premium=gradient emas tebal +
+   emoji ⭐ → terlihat jomplang). Geometri IDENTIK; Premium dibedakan
+   lewat AKSEN emas halus + ikon bintang SVG (bukan emoji), bobot visual
+   setara Free supaya seimbang tapi tetap jadi sorotan. */
 .plan-badge {
-  display: inline-block;
-  padding: 4px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: .08em;
+  letter-spacing: .1em;
+  line-height: 1;
   text-transform: uppercase;
   color: var(--text-2);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .plan-badge-premium {
-  background: linear-gradient(135deg, #d4a64a, #6D2932);
-  color: #fff;
-  border-color: transparent;
+  background: linear-gradient(135deg, rgba(212, 166, 74, .22), rgba(109, 41, 50, .18));
+  border-color: rgba(212, 166, 74, .55);
+  color: #e9c47f;
+}
+.plan-badge .pb-star {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: -1px;
 }
 .plan-card h3 {
   font-family: 'Inter', sans-serif;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 800;
   margin: 0 0 6px;
   color: var(--text);
@@ -12768,54 +12830,98 @@ section[data-view="upload"] .upload-form textarea {
 .plan-price {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin-bottom: 10px;
+  gap: 3px;
+  margin-bottom: 12px;
 }
 .plan-price strong {
+  display: inline-flex;
+  align-items: flex-start;
   font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 800;
   color: var(--text);
   line-height: 1;
+  letter-spacing: -.02em;
 }
-.plan-price span {
-  font-size: 13px;
+/* Simbol mata uang = superscript kecil (kaidah tipografi harga) supaya
+   angka jadi fokus & $0 vs $9 terbaca seimbang. */
+.plan-price strong .plan-cur {
+  font-size: .5em;
+  font-weight: 700;
   color: var(--muted);
+  line-height: 1;
+  margin-right: 2px;
+  padding-top: .18em;
+}
+.plan-price .plan-per {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-left: 3px;
 }
 .plan-tagline {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-2);
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
 }
 .plan-features {
   list-style: none;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 9px;
   flex: 1;
 }
+/* Per request user 2026-05-17: ikon SVG minimalis MONOKROM (bukan emoji
+   warna), UKURAN SERAGAM lewat chip ber-footprint identik → semua baris
+   rata rapi & mudah dipindai. Teks: 2 tingkat hierarki — keterangan kalem,
+   kata-kunci tebal terang supaya user cepat menangkap nilai tiap tier. */
 .plan-features li {
   display: flex;
-  gap: 10px;
-  font-size: 13.5px;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-2);
-  line-height: 1.5;
+  line-height: 1.25;
 }
-.plan-features li b { color: var(--text); font-weight: 700; }
+.plan-features li b {
+  color: var(--text);
+  font-weight: 700;
+}
+/* Chip ikon SERAGAM — footprint identik untuk semua baris, monokrom krem.
+   Kartu harga (.plan-features) = chip besar & menonjol; daftar preview
+   (.preview-features) = varian kompak yg pas dgn teks 12px-nya. */
 .pf-ico {
   flex-shrink: 0;
-  width: 22px;
-  text-align: center;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  /* monokrom krem — sama dgn sistem ikon dashboard (no color) */
+  color: #E8D8C4;
+}
+.pf-ico svg { display: block; }
+.plan-features .pf-ico { width: 25px; height: 25px; border-radius: 8px; }
+.plan-features .pf-ico svg { width: 14px; height: 14px; }
+.preview-features .pf-ico { width: 22px; height: 22px; }
+.preview-features .pf-ico svg { width: 13px; height: 13px; }
+.preview-features li { align-items: center; gap: 9px; }
+/* Premium: ikon tetap MONOKROM (no color, per request) — beda tipis lewat
+   chip yang sedikit lebih hidup, bukan warna ikon. */
+.plan-premium .pf-ico {
+  background: rgba(212, 166, 74, .10);
+  border-color: rgba(212, 166, 74, .28);
 }
 .plan-cta {
   width: 100%;
   justify-content: center;
-  padding: 14px;
-  font-size: 14.5px;
+  padding: 11px;
+  font-size: 14px;
   font-weight: 700;
   border-radius: 12px;
 }
@@ -12844,11 +12950,13 @@ section[data-view="upload"] .upload-form textarea {
 }
 .auth-plans-foot {
   text-align: center;
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--muted);
-  margin: 14px auto 0;
+  /* Jarak teks footer ke kartu ditambah (request user 2026-05-17: dulu
+     terlalu dempet dgn kolom). */
+  margin: 28px auto 0;
   max-width: 700px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* === TIER-AWARE GLOBAL TWEAKS (body[data-tier="premium"] vs "free") === */
@@ -13528,24 +13636,61 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
 /* === DASHBOARD PREVIEW SECTION (mockup Free vs Premium) === */
 .auth-preview-section {
   position: relative;
-  min-height: 100vh;
-  padding: 24px clamp(24px, 5vw, 80px) 32px;
+  /* RATA TENGAH dalam area di bawah topbar — sama spt slide harga
+     (request user 2026-05-17: "perbaiki pratinjau seperti slide harga").
+     padding-top kecil (footer sempat kepotong → rapatkan POSISI saja,
+     kartu TIDAK dikecilkan). scroll-margin-top:64 sudah hindari nav. */
+  min-height: calc(100vh - 64px);
+  padding: 6px clamp(12px, 2.2vw, 32px) 14px;
   max-width: none;
   margin: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   box-sizing: border-box;
   scroll-margin-top: 64px;
 }
+/* Layar pendek (≤ 880px): lepas min-height & center → mengalir natural,
+   plus KOMPAK-kan kartu/mockup supaya footer tidak kepotong. Di layar
+   ≥ 880px ukuran tetap NYAMAN/besar (request user 2026-05-17: jangan
+   mengecil di layar besar). */
+@media (max-height: 880px) {
+  .auth-preview-section {
+    min-height: auto;
+    justify-content: flex-start;
+    padding: 10px clamp(12px, 2.2vw, 32px) 20px;
+  }
+}
+/* (Kompaksi konten utk layar pendek ditaruh SETELAH rule base preview —
+   lihat blok @media (max-height:880px) di bawah — supaya menang cascade.) */
+
+/* === BEDAKAN WARNA Pratinjau Free vs Premium (request user 2026-05-17).
+   FREE = pakai TEMA dashboard asli (wine/krem — BUKAN biru) supaya mirip
+   tampilan free user beneran · PREMIUM = aksen EMAS/hangat. Hanya di area
+   pratinjau — ikon fitur & slide harga tidak tersentuh. === */
+.preview-card.preview-free {
+  border-color: var(--border);
+  background:
+    radial-gradient(ellipse at top, rgba(109, 41, 50, .06), transparent 60%),
+    var(--bg-elev);
+}
+.preview-card.preview-free .pm-bar i {
+  background: linear-gradient(90deg, var(--primary), #9c4450);
+}
+.preview-card.preview-free .pm-tile::before { background: var(--primary); }
+.preview-card.preview-premium h3 { color: #e9c47f; }
+.preview-card.preview-premium .pm-tile::before { background: #d4a64a; }
+/* Jarak sub-judul → kartu pratinjau (request user 2026-05-17: jangan
+   dempet, kasih napas dikit). Di-scope #id jadi slide harga tak kena. */
+#authPreviewSection .auth-plans-head { margin-bottom: 14px; }
 .auth-preview-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto 1fr;
   gap: 18px;
   align-items: stretch;
-  margin-top: 8px;
+  margin-top: 2px;
 }
 @media (max-width: 880px) {
   .auth-preview-grid {
@@ -13597,13 +13742,13 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   align-self: start;
 }
 .preview-features li {
   display: flex;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-2);
   line-height: 1.4;
 }
@@ -13613,10 +13758,10 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 10px;
+  padding: 11px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
 }
@@ -13642,7 +13787,36 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   color: var(--text-2);
   font-weight: 600;
 }
-.pm-search { flex: 1; height: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+.pm-search {
+  flex: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+/* Isi mock search field (sebelumnya kolom kosong) — magnifier SVG +
+   garis placeholder. Language-neutral, no emoji (selaras house-style). */
+.pm-search::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  background-color: var(--muted);
+  opacity: .55;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.pm-search::after {
+  content: "";
+  height: 4px;
+  width: 44%;
+  border-radius: 2px;
+  background: var(--border);
+}
 .pm-chip {
   font-size: 9.5px;
   padding: 3px 8px;
@@ -13765,6 +13939,45 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
   border-radius: 999px;
   color: var(--text);
   font-weight: 600;
+}
+/* Ikon mockup pratinjau: SVG monokrom SERAGAM (request user 2026-05-17:
+   "perbaiki pratinjau seperti slide harga" — ganti emoji warna). Ukuran
+   relatif ke font tiap konteks supaya proporsional di pill/chip kecil. */
+.preview-mockup .pm-ico {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -.18em;
+  flex-shrink: 0;
+}
+.pm-verified .pm-ico { width: 13px; height: 13px; vertical-align: -2px; }
+.pm-tile-icon { font-size: 0; }
+.pm-tile-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+  color: var(--text-2);
+}
+
+/* Kompaksi konten pratinjau utk layar PENDEK (≤880px) — ditaruh SETELAH
+   semua rule base supaya menang cascade. Layar ≥880px tetap NYAMAN/besar
+   (request user 2026-05-17: jangan mengecil di layar besar; di layar kecil
+   jangan kepotong). */
+@media (max-height: 880px) {
+  .auth-preview-grid { gap: 12px !important; margin-top: 2px !important; }
+  .preview-card { gap: 6px !important; padding: 9px !important; }
+  .preview-card h3 { font-size: 15px !important; }
+  .preview-features { gap: 4px !important; }
+  .preview-features li { line-height: 1.2 !important; }
+  .preview-mockup { padding: 8px !important; gap: 4px !important; }
+  .pm-topbar { padding-bottom: 6px !important; }
+  .pm-hero { padding: 8px 10px !important; }
+  .pm-buttons { margin-top: 5px !important; }
+  .pm-quota { padding: 6px 10px !important; gap: 3px !important; }
+  .pm-bar { margin-bottom: 1px !important; }
+  .pm-tile { padding: 7px 9px !important; gap: 1px !important; }
+  .pm-ad, .pm-upgrade-banner { padding: 5px 10px !important; }
+  .pm-insights { padding: 6px 10px !important; gap: 3px !important; }
+  .pm-feature { padding: 3px 8px !important; }
 }
 
 /* ===================================================================
@@ -16235,16 +16448,22 @@ body[data-role="admin"] .auth-left-admin .auth-showcase p {
   color: #ADB5BD !important;
   opacity: .85;
 }
-/* (2) Stats numbers — DEEP NAVY → WHITE gradient combo */
+/* (2) Stats numbers — DEEP NAVY → WHITE gradient combo.
+   Font = stack base body (styles.css:112) persis ref user 2026-05-18
+   ("ganti font dengan font di referensi"): 'Inter', system-ui,
+   -apple-system, sans-serif — sebelumnya cuma 'Inter', sans-serif
+   shg fallback beda dari body. */
 body[data-role="admin"] .auth-left-admin .auth-stats b {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   color: #FFFFFF !important;
   background: none !important;
   -webkit-text-fill-color: #FFFFFF !important;
   text-shadow: none !important;
   filter: none !important;
 }
-/* (3) Stats labels — pure white */
+/* (3) Stats labels — pure white, font sama dgn body */
 body[data-role="admin"] .auth-left-admin .auth-stats span {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   color: #FFFFFF !important;
   opacity: 1;
 }
@@ -16490,69 +16709,78 @@ section.view[data-view="admin-player"] { padding: 24px clamp(20px, 3vw, 36px); }
   display: block;
   background: #000;
 }
-/* CC subtitle overlay */
+/* CC subtitle overlay — disamakan dgn .lib-inline-cc (request user
+   2026-05-18): full width, DI ATAS control bar, z-index 3 < .ap-ctrl-bar
+   (z-index 4) shg ikon kontrol tetap terlihat jelas & tidak ketutup. */
 .ap-cc-overlay {
   position: absolute;
-  bottom: 60px;
+  bottom: 68px;
   left: 0; right: 0;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,.8);
-  background: rgba(0,0,0,.45);
-  padding: 4px 14px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.85);
+  background: rgba(0,0,0,.5);
+  padding: 5px 16px;
   pointer-events: none;
-  z-index: 4;
+  z-index: 3;
 }
-/* Custom controls bar — mirroring lvc-bar pattern for admin player */
+/* Custom controls bar — DISAMAKAN PERSIS dgn .lvc-bar dashboard user
+   (req user 2026-05-18): padding, gradient 3-stop, flex column gap. */
 .ap-stage { position: relative; }
 .ap-ctrl-bar {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 100%);
-  padding: 20px 10px 8px;
+  left: 0; right: 0; bottom: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 14px 10px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(0, 0, 0, .25) 35%,
+    rgba(0, 0, 0, .7) 100%);
+  color: #fff;
   opacity: 0;
   transition: opacity .25s;
-  z-index: 3;
 }
 .ap-stage:hover .ap-ctrl-bar,
 .ap-stage.ap-paused .ap-ctrl-bar,
 .ap-stage.ap-ctrl-show .ap-ctrl-bar { opacity: 1; }
 .ap-ctrl-progress {
-  height: 5px;
-  background: #9CA3AF;
-  border-radius: 4px;
-  margin-bottom: 6px;
+  height: 3px;
+  background: rgba(255, 255, 255, .22);
+  border-radius: 3px;
+  margin-bottom: 0;
   cursor: pointer;
   position: relative;
   transition: height .15s;
 }
-.ap-ctrl-progress:hover { height: 7px; }
-/* Per user 2026-05-11: fill putih supaya detik kelihatan jelas, BUKAN
-   var(--primary) (admin = navy → invisible against dark gradient bar). */
+.ap-ctrl-progress:hover { height: 5px; }
+/* Garis progress ramping & netral (req user 2026-05-18): tipis, putih
+   lembut, tanpa glow — biar gak mencolok. */
 .ap-ctrl-fill {
   height: 100%;
-  background: #FFFFFF;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, .85);
+  border-radius: 3px;
   width: 0%;
   pointer-events: none;
   position: relative;
-  box-shadow: 0 0 6px rgba(255, 255, 255, .35);
 }
 /* Thumb dot indicator di ujung fill — muncul saat hover supaya gak ganggu
    waktu video play normal */
 .ap-ctrl-fill::after {
   content: "";
   position: absolute;
-  right: -7px;
+  right: -5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .45), 0 0 0 2px rgba(0, 0, 0, .35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
   pointer-events: none;
   opacity: 0;
   transition: opacity .15s;
@@ -16593,26 +16821,51 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 .ap-ctrl-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 .ap-ctrl-btn {
   background: none;
   border: none;
   color: #fff;
   width: 32px; height: 32px;
-  border-radius: 6px;
+  border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
   transition: background .15s;
 }
-.ap-ctrl-btn:hover { background: rgba(255,255,255,.18); }
+.ap-ctrl-btn:hover { background: rgba(255,255,255,.15); }
 .ap-ctrl-btn svg { width: 18px; height: 18px; }
+/* Slider suara admin — disamakan dgn player user/library (req user
+   2026-05-18): track tipis netral + thumb bulat putih kecil, bukan
+   slider native bawaan browser yang tebal. */
 .ap-ctrl-vol {
   width: 70px;
-  accent-color: #fff;
+  height: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, .25);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  accent-color: #FFFFFF;
+  flex-shrink: 0;
+}
+.ap-ctrl-vol::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #FFFFFF;
   cursor: pointer;
 }
+.ap-ctrl-vol::-moz-range-thumb {
+  width: 11px; height: 11px;
+  border: none;
+  border-radius: 50%;
+  background: #FFFFFF;
+  cursor: pointer;
+}
+.ap-ctrl-vol::-moz-range-track { background: rgba(255, 255, 255, .25); border-radius: 2px; }
 .ap-ctrl-time { color: #fff; font-size: 12px; padding: 0 4px; white-space: nowrap; }
 .ap-ctrl-spacer { flex: 1; }
 
@@ -17040,121 +17293,96 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 }
 
 /* === ADMIN WELCOME OVERLAY — blue/slate theme matching admin dashboard === */
+/* =========================================================
+   ADMIN WELCOME OVERLAY — REDESIGN "CONTROL CENTER BOOT"
+   (req user 2026-05-18) aesthetic & eye-catching, tema admin:
+   navy near-black + slate + signature gradient, radar-sweep
+   ring, slim init progress bar. Reduced-motion dihormati.
+   ========================================================= */
+/* ADMIN WELCOME - "PARTICLE CONVERGE" (FINAL pick, req user 2026-05-18).
+   Node + garis berkumpul ke logo P. LOGO CLEAR - tanpa kolom/
+   badge (req user). Animasi WAJIB jalan -> TIDAK di-gate
+   prefers-reduced-motion. */
 .admin-welcome-overlay {
   position: fixed; inset: 0; z-index: 10020;
   display: flex; visibility: hidden; pointer-events: none;
-  align-items: center; justify-content: center;
-  overflow: hidden; background: #0B131D;
+  align-items: center; justify-content: center; overflow: hidden;
+  background: radial-gradient(72% 60% at 50% 44%, rgba(40,60,92,.22) 0%, rgba(40,60,92,0) 62%), #070C13;
 }
-.admin-welcome-overlay[data-show]   { visibility: visible; pointer-events: auto; animation: awoFadeIn  .4s ease both; }
-.admin-welcome-overlay[data-closing]{ visibility: visible; pointer-events: auto; animation: awoFadeOut .35s ease both; }
-@keyframes awoFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+.admin-welcome-overlay[data-show]    { visibility: visible; pointer-events: auto; animation: awoFadeIn .3s ease both; }
+.admin-welcome-overlay[data-closing] { visibility: visible; pointer-events: auto; animation: awoFadeOut .38s ease both; }
+@keyframes awoFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes awoFadeOut { from { opacity: 1; } to { opacity: 0; } }
-
-.awo-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.awo-orb { position: absolute; border-radius: 50%; filter: blur(55px); opacity: .45; will-change: transform; }
-.awo-orb-1 {
-  width: 380px; height: 380px; top: -80px; left: 50%; transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(60, 80, 120, .55) 0%, transparent 68%);
+.awo-pc { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 40px 28px; }
+.admin-welcome-overlay[data-show] .awo-pc { animation: awoUp .5s ease both; }
+.awo-net-stage { position: relative; width: 230px; height: 230px; display: grid; place-items: center; margin-bottom: 14px; }
+.awo-net-svg { position: absolute; inset: 15px; width: 200px; height: 200px; opacity: 0; transform: scale(1.7); }
+.admin-welcome-overlay[data-show] .awo-net-svg { animation: awoConverge .85s cubic-bezier(.22,1,.36,1) .1s forwards, awoDrift 26s linear 1s infinite; }
+@keyframes awoConverge { 0% { opacity: 0; transform: scale(1.7); } 60% { opacity: 1; } 100% { opacity: 1; transform: scale(1); } }
+@keyframes awoDrift { to { transform: rotate(360deg); } }
+.awo-spokes line { stroke-dasharray: 92; stroke-dashoffset: 92; }
+.admin-welcome-overlay[data-show] .awo-spokes line { animation: awoDraw .5s ease forwards; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(1) { animation-delay: .50s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(2) { animation-delay: .56s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(3) { animation-delay: .62s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(4) { animation-delay: .68s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(5) { animation-delay: .74s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(6) { animation-delay: .80s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(7) { animation-delay: .86s; }
+.admin-welcome-overlay[data-show] .awo-spokes line:nth-child(8) { animation-delay: .92s; }
+@keyframes awoDraw { to { stroke-dashoffset: 0; } }
+.awo-nodes circle { opacity: 0; transform: scale(0); transform-box: fill-box; transform-origin: center; }
+.admin-welcome-overlay[data-show] .awo-nodes circle { animation: awoNodePop .45s cubic-bezier(.22,1,.36,1) forwards; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(1) { animation-delay: .55s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(2) { animation-delay: .61s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(3) { animation-delay: .67s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(4) { animation-delay: .73s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(5) { animation-delay: .79s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(6) { animation-delay: .85s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(7) { animation-delay: .91s; }
+.admin-welcome-overlay[data-show] .awo-nodes circle:nth-child(8) { animation-delay: .97s; }
+@keyframes awoNodePop { 0% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
+.awo-core {
+  position: relative; z-index: 2; width: 74px; height: 74px;
+  display: grid; place-items: center;
+  color: #FFFFFF; opacity: 0; transform: scale(.3);
 }
-.awo-orb-2 {
-  width: 320px; height: 320px; bottom: -70px; left: 50%; transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(60, 80, 120, .35) 0%, transparent 68%);
+.awo-core svg { width: 100%; height: 100%; position: relative; z-index: 2; filter: drop-shadow(0 3px 9px rgba(0,0,0,.5)); }
+.awo-core::before, .awo-core::after {
+  content: ""; position: absolute; top: 50%; left: 50%;
+  width: 160px; height: 160px; border-radius: 50%;
+  transform: translate(-50%,-50%); pointer-events: none; opacity: 0;
 }
-.admin-welcome-overlay[data-show] .awo-orb   { animation: awoOrbDrift 7s ease-in-out infinite; }
-.admin-welcome-overlay[data-show] .awo-orb-2 { animation-delay: -3.5s; }
-@keyframes awoOrbDrift {
-  0%, 100% { transform: translateX(-50%) translateY(0px); }
-  50%       { transform: translateX(-50%) translateY(22px); }
+.awo-core::before { border: 1px solid rgba(173,181,189,.22); }
+.awo-core::after {
+  background: conic-gradient(from 0deg, rgba(130,175,235,.34) 0deg, rgba(130,175,235,.07) 48deg, rgba(130,175,235,0) 96deg, rgba(130,175,235,0) 360deg);
 }
-
-.admin-welcome-card {
-  position: relative; z-index: 1; max-width: 420px; width: 90%;
-  text-align: center; padding: 48px 32px 40px;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
+.admin-welcome-overlay[data-show] .awo-core::before { animation: awoRadarFade .5s ease .60s forwards; }
+.admin-welcome-overlay[data-show] .awo-core::after  { animation: awoRadarFade .5s ease .70s forwards, awoRadar 2.4s linear .70s infinite; }
+@keyframes awoRadarFade { to { opacity: 1; } }
+@keyframes awoRadar { from { transform: translate(-50%,-50%) rotate(0); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+.admin-welcome-overlay[data-show] .awo-core { animation: awoCoreIn .6s cubic-bezier(.22,1,.36,1) .62s forwards, awoCoreGlow 3.4s ease-in-out 1.3s infinite; }
+@keyframes awoCoreIn { 0% { opacity: 0; transform: scale(.3); } 65% { transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes awoCoreGlow {
+  0%,100% { filter: drop-shadow(0 4px 10px rgba(0,0,0,.55)); }
+  50%     { filter: drop-shadow(0 0 16px rgba(130,165,225,.6)) drop-shadow(0 4px 10px rgba(0,0,0,.55)); }
 }
-.admin-welcome-overlay[data-show] .admin-welcome-card {
-  animation: awoCardIn .6s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes awoCardIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-
-.awo-shield { position: relative; width: 100px; height: 100px; display: grid; place-items: center; margin-bottom: 10px; }
-.awo-pulse {
-  position: absolute; inset: -8px; border-radius: 28px;
-  border: 1.5px solid rgba(255, 255, 255, .35);
-  opacity: 0; pointer-events: none; will-change: transform, opacity;
-}
-.admin-welcome-overlay[data-show] .awo-pulse   { animation: awoRingExpand 2.6s ease-out infinite; }
-.admin-welcome-overlay[data-show] .awo-pulse-2 { animation-delay: 1.3s; }
-@keyframes awoRingExpand {
-  0%   { transform: scale(.85); opacity: 0; }
-  20%  { opacity: .8; }
-  100% { transform: scale(1.85); opacity: 0; }
-}
-.awo-shield-icon {
-  position: relative; z-index: 2; width: 100px; height: 100px; border-radius: 28px;
-  display: grid; place-items: center; overflow: hidden;
-  background: linear-gradient(140deg, #FFFFFF 0%, #3C5078 55%, #1C283C 100%);
-  border: 1px solid rgba(255, 255, 255, .18);
-  box-shadow:
-    0 18px 40px -10px rgba(0, 0, 0, .65),
-    0 0 0 1px rgba(255, 255, 255, .04),
-    inset 0 1px 0 rgba(255, 255, 255, .22);
-  will-change: transform;
-}
-.admin-welcome-overlay[data-show] .awo-shield-icon { animation: awoLogoBreathe 3.2s ease-in-out infinite; }
-@keyframes awoLogoBreathe {
-  0%, 100% { transform: scale(1); box-shadow: 0 18px 40px -10px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.22); }
-  50%      { transform: scale(1.04); box-shadow: 0 22px 48px -8px rgba(0,0,0,.7), 0 0 28px rgba(60, 80, 120, .55), inset 0 1px 0 rgba(255,255,255,.28); }
-}
-.awo-shield-icon svg {
-  width: 56px; height: 56px; position: relative; z-index: 1;
-  color: #FFFFFF; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35));
-}
-.awo-shield-icon path { fill: #FFFFFF; }
-.awo-eyebrow-sep { color: rgba(255, 255, 255, .45); font-style: normal; margin: 0 6px; font-weight: 400; }
-
-.awo-dots {
-  display: inline-flex; gap: 6px; margin-top: 14px; height: 8px; align-items: center;
-}
-.awo-dots span {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(255, 255, 255, .85);
-  box-shadow: 0 0 8px rgba(255, 255, 255, .55);
-  opacity: .25; will-change: opacity, transform;
-}
-.admin-welcome-overlay[data-show] .awo-dots span             { animation: awoDotsBounce 1.2s ease-in-out infinite; }
-.admin-welcome-overlay[data-show] .awo-dots span:nth-child(2){ animation-delay: .15s; }
-.admin-welcome-overlay[data-show] .awo-dots span:nth-child(3){ animation-delay: .3s; }
-@keyframes awoDotsBounce {
-  0%, 80%, 100% { opacity: .25; transform: translateY(0) scale(.9); }
-  40%           { opacity: 1;   transform: translateY(-3px) scale(1.15); }
-}
-
 .awo-eyebrow {
-  font-size: 10px; font-weight: 700; letter-spacing: 4px; color: #FFFFFF;
-  padding: 5px 16px 4px; border: 1px solid rgba(165, 175, 195, .18); border-radius: 100px;
-  background: rgba(28, 40, 60, .55); font-family: 'Inter', sans-serif; text-transform: uppercase;
+  font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 4px;
+  text-transform: uppercase; color: rgba(173,181,189,.85);
+  padding: 5px 16px; border: 1px solid rgba(173,181,189,.22); border-radius: 100px; background: rgba(173,181,189,.05); opacity: 0;
 }
+.admin-welcome-overlay[data-show] .awo-eyebrow { animation: awoUp .5s cubic-bezier(.22,1,.36,1) 1.05s both; }
+@keyframes awoUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .awo-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 28px; font-weight: 700; color: #FFFFFF; letter-spacing: -.4px; margin: 4px 0 0;
+  font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -.5px; margin: 14px 0 0;
+  background: linear-gradient(180deg,#FFFFFF 0%, #C8D2E0 100%); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: #F8FAFC; opacity: 0;
 }
-.awo-title b {
-  background: none;
-  color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; font-weight: 800;
-}
-.awo-sub { font-size: 13px; color: #FFFFFF; margin: 0; font-family: 'Inter', sans-serif; }
-
-@media (prefers-reduced-motion: reduce) {
-  .admin-welcome-overlay[data-show] .admin-welcome-card,
-  .admin-welcome-overlay[data-show] .awo-pulse,
-  .admin-welcome-overlay[data-show] .awo-orb,
-  .admin-welcome-overlay[data-show] .awo-shield-icon,
-  .admin-welcome-overlay[data-show] .awo-dots span
-  { animation: none !important; }
-  .admin-welcome-overlay[data-show] .awo-dots span { opacity: 1 !important; }
-}
+.admin-welcome-overlay[data-show] .awo-title { animation: awoUp .55s cubic-bezier(.22,1,.36,1) 1.18s both; }
+.awo-title b { font-weight: 800; -webkit-text-fill-color: transparent; }
+.awo-sub { font-family: 'Inter', sans-serif; font-size: 12.5px; color: rgba(173,181,189,.85); margin: 4px 0 0; letter-spacing: .3px; opacity: 0; }
+.admin-welcome-overlay[data-show] .awo-sub { animation: awoUp .55s ease 1.32s both; }
 
 /* === USER WELCOME CARD — wine/gold theme, play & share icons === */
 .user-welcome-overlay {
@@ -17457,11 +17685,15 @@ body[data-role="admin"] .admin-bg-grid {
   background: rgba(80, 16, 10, .16);
   color: #E8C2C2;
 }
-/* Restore particles & aurora di dashboard mode (rule sebelumnya nge-hide
-   semua sub-layer; sekarang cuma grid yang ditarget). */
-body[data-role="admin"]:not(.auth-mode) .admin-dashboard-bg .admin-bg-particles,
+/* Aurora tetap di dashboard mode (ambiance halus). PARTIKEL drifting
+   DIHAPUS dari dashboard (req user 2026-05-18: titik2 putih berserakan
+   di Manajemen Akun / Kontrol Konten dianggap "efek glitch / bug").
+   Partikel tetap muncul HANYA di auth-mode (rule ~17824). */
 body[data-role="admin"]:not(.auth-mode) .admin-dashboard-bg .admin-bg-aurora {
   display: block;
+}
+html body[data-role="admin"]:not(.auth-mode) .admin-dashboard-bg .admin-bg-particles {
+  display: none !important;
 }
 /* Background base color — force dark slate di SEMUA theme buat admin landing.
    Per request 2026-05-04: admin landing harus konsisten warna nya kayak
@@ -17934,19 +18166,23 @@ body[data-role="admin"] .admin-mode-banner .amb-icon {
   color: #212529;
 }
 
-/* Masuk topbar button — slightly elevated dari card surface */
+/* Tombol "Masuk" topbar — samakan warnanya dengan tombol Pengaturan
+   (gear) & nyatu dgn topbar admin (request user 2026-05-17: dulu navy
+   biru, beda sendiri). Pakai token tema yang SAMA dengan
+   .auth-topbar-settings-btn supaya konsisten lintas tema. */
 body[data-role="admin"] .auth-topbar-btn,
 body[data-role="admin"] .btn.primary.auth-topbar-btn {
-  background: rgba(28, 40, 60, .60) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(165, 175, 195, .20) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .40), 0 4px 16px rgba(0, 0, 0, .30) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .30) !important;
 }
 body[data-role="admin"] .auth-topbar-btn:hover,
 body[data-role="admin"] .btn.primary.auth-topbar-btn:hover {
-  background: rgba(40, 56, 80, .72) !important;
-  border-color: rgba(165, 175, 195, .35) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .50), 0 6px 20px rgba(0, 0, 0, .40) !important;
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .40) !important;
 }
 
 /* "Lupa password?" link & checkbox di admin pakai accent caramel */
@@ -18191,6 +18427,13 @@ body[data-role="admin"].auth-mode .auth-topbar-admin {
   border-bottom: 1px solid rgba(173, 181, 189, 0.14);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  /* Tinggi bar tetap (posisi tidak berubah) tapi padding-vertikal 0 supaya
+     align-items:center benar-benar menengahkan tombol Masuk/gear — dulu
+     38px CTA > area konten (56-24 padding) → dempet & tidak center
+     (request user 2026-05-18). Horizontal padding tetap 28px. */
+  min-height: 56px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 /* Override base auth-topbar nav alignment — admin has a 3-col grid with
    nav perfectly centered in the middle, brand left, pill right. */
@@ -19051,14 +19294,14 @@ body[data-role="admin"].auth-mode .admin-activity-section {
 .admin-security-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 .admin-security-card {
   position: relative;
-  padding: 24px 22px;
+  padding: 30px 26px;
   background: rgba(52, 58, 64, 0.30);
   border: 1px solid rgba(173, 181, 189, 0.14);
-  border-radius: 14px;
+  border-radius: 16px;
   transition: border-color .25s var(--ease, ease), background .25s var(--ease, ease);
 }
 .admin-security-card:hover {
@@ -19075,14 +19318,14 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   opacity: .7;
 }
 .admin-security-card h3 {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   margin: 0 0 8px;
   color: #FFFFFF;
   letter-spacing: -0.2px;
 }
 .admin-security-card p {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: #ADB5BD;
   margin: 0;
@@ -23739,25 +23982,36 @@ body[data-role="admin"] .an-tab.active {
 }
 
 /* Breakdown split bar */
-.rev-split { display: flex; flex-direction: column; gap: 14px; }
+/* Breakdown bar — tema admin (navy/slate), tidak dempet (req user
+   2026-05-18): jarak bar↔legend dilebarkan, warna modern. */
+.rev-split { display: flex; flex-direction: column; gap: 20px; }
+/* Parent ASLI bar+legend = .rev-split-content → kasih gap di sini biar
+   bar "Subscription" TIDAK dempet/crush dgn kartu Iklan/Langganan. */
+.rev-split-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.rev-split-content[hidden] { display: none !important; }
 .rev-split-bar {
   display: flex;
-  height: 36px;
-  border-radius: 10px;
+  height: 34px;
+  border-radius: 999px;
   overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(165, 175, 195, .12);
+  border: 1px solid rgba(165, 175, 195, .18);
 }
 .rev-split-seg {
   display: flex; align-items: center; justify-content: center;
   color: #fff;
   font-size: 12px; font-weight: 700;
+  letter-spacing: .01em;
   transition: width .6s var(--ease);
   white-space: nowrap; overflow: hidden;
 }
-.rev-split-seg.ads { background: linear-gradient(135deg, #561C24, #ADB5BD); }
-.rev-split-seg.sub { background: linear-gradient(135deg, #E8D8C4, #343A40); }
-.rev-split-seg span { padding: 0 10px; }
+.rev-split-seg.ads { background: linear-gradient(135deg, #2A3A52, #3C5078); }
+.rev-split-seg.sub { background: linear-gradient(135deg, #5B7BB4, #9DB4DA); }
+.rev-split-seg span { padding: 0 12px; }
 
 .rev-split-legend {
   display: grid;
@@ -23775,8 +24029,8 @@ body[data-role="admin"] .an-tab.active {
   width: 10px; height: 10px; border-radius: 50%;
   flex-shrink: 0;
 }
-.rev-leg.ads .rev-leg-dot { background: linear-gradient(135deg, #561C24, #ADB5BD); }
-.rev-leg.sub .rev-leg-dot { background: linear-gradient(135deg, #E8D8C4, #343A40); }
+.rev-leg.ads .rev-leg-dot { background: linear-gradient(135deg, #2A3A52, #3C5078); }
+.rev-leg.sub .rev-leg-dot { background: linear-gradient(135deg, #5B7BB4, #9DB4DA); }
 .rev-leg small { display: block; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
 .rev-leg b { font-size: 14px; font-weight: 800; color: var(--text); font-family: 'Inter', sans-serif; font-variant-numeric: tabular-nums; }
 
@@ -28947,13 +29201,15 @@ body[data-role="admin"] {
 body[data-role="admin"] .an-top-bar-fill {
   background: linear-gradient(90deg, #1C2535 0%, #3C5078 60%, #3C5078 100%) !important;
 }
+/* Breakdown bar admin — slate-blue jelas & enak dilihat (req user
+   2026-05-18): bukan navy→hitam slab gelap. */
 body[data-role="admin"] .rev-split-seg.ads,
 body[data-role="admin"] .rev-leg.ads .rev-leg-dot {
-  background: linear-gradient(135deg, #1C283C, #3C5078) !important;
+  background: linear-gradient(135deg, #2A3A52, #3C5078) !important;
 }
 body[data-role="admin"] .rev-split-seg.sub,
 body[data-role="admin"] .rev-leg.sub .rev-leg-dot {
-  background: linear-gradient(135deg, #3A4E70, #141C2A) !important;
+  background: linear-gradient(135deg, #5B7BB4, #8FA6CC) !important;
 }
 
 /* Settings Admin — ratakan kolom kanan-kiri supaya lurus rapi.
@@ -31663,27 +31919,29 @@ body[data-role="admin"] .comms-kpi {
   background: transparent !important;
 }
 
-/* CONTENT CONTROL — explicit play button in row actions */
+/* CONTENT CONTROL — play button: minimalist (req user 2026-05-18).
+   Ghost/outline, monokrom slate — senada tombol aksi lain di baris. */
 .gv-act-play {
-  background: linear-gradient(135deg, #6C757D, #A8A2F0) !important;
-  color: #fff !important;
-  border: 0 !important;
+  background: transparent !important;
+  color: #ADB5BD !important;
+  border: 1px solid rgba(173, 181, 189, .28) !important;
   width: 28px !important;
   height: 28px !important;
   display: inline-grid !important;
   place-items: center !important;
   border-radius: 8px !important;
   cursor: pointer !important;
-  transition: transform .15s var(--ease), filter .15s var(--ease);
+  transition: background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
 }
 .gv-act-play svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   display: block;
 }
 .gv-act-play:hover {
-  transform: scale(1.08);
-  filter: brightness(1.08);
+  background: rgba(173, 181, 189, .14) !important;
+  border-color: rgba(173, 181, 189, .5) !important;
+  color: #E8EBEF !important;
 }
 /* Also: thumbnail play overlay always visible (not hover-only) on admin */
 body[data-role="admin"] .gv-thumb-play {
@@ -36671,25 +36929,25 @@ body[data-role="admin"] .lib-player-orb3 { background: rgba(200,150,90,.7); }
 .lvc-bar .lvc-btn { color: #fff !important; }
 .lvc-bar .lvc-btn:hover { background: rgba(255, 255, 255, .15) !important; }
 .lvc-bar .lvc-time { color: #fff; font-size: 12px; padding: 0 4px; }
-/* Per user 2026-05-11: progress track abu-abu klasik + fill kontras putih
-   supaya posisi detik kelihatan jelas di semua mode (admin/user). */
-.lvc-bar .lvc-progress { background: rgba(255, 255, 255, .30); height: 5px; }
-.lvc-bar .lvc-progress:hover { height: 7px; }
-.lvc-bar .lvc-fill { background: #FFFFFF; box-shadow: 0 0 6px rgba(255, 255, 255, .35); }
+/* Garis progress ramping & netral (req user 2026-05-18): tipis, putih
+   lembut, tanpa glow — gak mencolok. */
+.lvc-bar .lvc-progress { background: rgba(255, 255, 255, .22); height: 3px; }
+.lvc-bar .lvc-progress:hover { height: 5px; }
+.lvc-bar .lvc-fill { background: rgba(255, 255, 255, .85); box-shadow: none; }
 .lvc-bar .lvc-vol { accent-color: #fff; background: rgba(255, 255, 255, .25); }
-/* Thumb dot di ujung fill (current time indicator) — visible 8px circle */
+/* Thumb dot di ujung fill (current time indicator) — kecil & subtle */
 .lvc-bar .lvc-fill::after {
   display: block !important;
   content: "";
   position: absolute;
-  right: -7px;
+  right: -5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .45), 0 0 0 2px rgba(0, 0, 0, .35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
   pointer-events: none;
   opacity: 0;
   transition: opacity .15s;
@@ -36700,18 +36958,18 @@ body[data-role="admin"] .lib-player-orb3 { background: rgba(200,150,90,.7); }
 }
 
 .lvc-progress {
-  height: 4px;
-  background: var(--border);
+  height: 3px;
+  background: rgba(255, 255, 255, .22);
   border-radius: 2px;
   cursor: pointer;
   position: relative;
   transition: height .15s;
   flex-shrink: 0;
 }
-.lvc-progress:hover { height: 6px; }
+.lvc-progress:hover { height: 5px; }
 .lvc-fill {
   height: 100%;
-  background: var(--wine-light, #8a3a47);
+  background: rgba(255, 255, 255, .85);
   border-radius: 2px;
   width: 0%;
   pointer-events: none;
@@ -36746,25 +37004,35 @@ body[data-role="admin"] .lib-player-orb3 { background: rgba(200,150,90,.7); }
 .lvc-btn:hover { background: var(--surface-2); }
 .lvc-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
+/* Slider suara — warna netral (req user 2026-05-18): putih lembut,
+   bukan caramel/krem. Berlaku semua player. */
 .lvc-vol {
   width: 60px;
-  height: 4px;
+  height: 3px;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--border);
+  background: rgba(255, 255, 255, .25);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
-  accent-color: var(--caramel, #C7B7A3);
+  accent-color: #FFFFFF;
   flex-shrink: 0;
 }
 .lvc-vol::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; height: 12px;
+  width: 11px; height: 11px;
   border-radius: 50%;
-  background: var(--caramel, #C7B7A3);
+  background: #FFFFFF;
   cursor: pointer;
 }
+.lvc-vol::-moz-range-thumb {
+  width: 11px; height: 11px;
+  border: none;
+  border-radius: 50%;
+  background: #FFFFFF;
+  cursor: pointer;
+}
+.lvc-vol::-moz-range-track { background: rgba(255, 255, 255, .25); border-radius: 2px; }
 
 .lvc-time {
   font-size: .68rem;
@@ -40436,11 +40704,12 @@ body[data-role="admin"] .audit-section-head {
   background: var(--bg-elev) !important;
 }
 
-/* pq-stat + pq-row: sedikit lebih terang dari bg agar terlihat jelas */
+/* pq-stat + pq-row: warna tema dashboard admin (navy surface) — bukan
+   abu-abu gelap. Samakan dgn kartu KPI / hero feed. (req user 2026-05-18) */
 body[data-role="admin"] .pq-stat,
 body[data-role="admin"] .pq-row {
-  background: #212529 !important;
-  border-color: rgba(173, 181, 189, 0.22) !important;
+  background: rgba(28, 40, 60, .55) !important;
+  border-color: rgba(165, 175, 195, .18) !important;
 }
 
 /* Inbox column inner list — pastikan child elements juga solid */
@@ -41378,12 +41647,18 @@ body[data-role="admin"].auth-mode .admin-preview-frame .apf-q-meta small {
    chrome gradient. Override keyframes adminLogoFloat lama (line 17742) yang
    cuma 3px translate — sekarang lebih dramatis: 12px float + slight tilt. */
 body[data-role="admin"] .auth-left-admin .brand-logo.big {
-  width: 92px !important;
-  height: 92px !important;
-  flex: 0 0 92px !important;
+  width: 76px !important;
+  height: 76px !important;
+  flex: 0 0 76px !important;
   /* Animations REMOVED per user request 2026-05-06 — logo static & clean */
   animation: none !important;
   transform-origin: center center !important;
+}
+/* Rapatkan brand ke pill KHUSUS ADMINISTRATOR -- teks turun sedikit
+   biar menempel dikit dgn pill (req user 2026-05-18). */
+body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin .auth-brand,
+body[data-role="admin"] .auth-left-admin .auth-brand {
+  margin-bottom: 2px !important;
 }
 @keyframes adminLogoFloatBig {
   0%, 100% { transform: translateY(0)     scale(1);     }
@@ -43488,6 +43763,154 @@ body[data-role="admin"].auth-mode .admin-activity-section {
 .aab-i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .aab-i-mod, .aab-i-user, .aab-i-vid, .aab-i-rev, .aab-i-comm { background: rgba(165, 175, 195, .60); }
 .aab-i-2fa { background: rgba(165, 175, 195, .30); }
+
+/* =========================================================
+   LIVE ACTIVITY TICKER -- selaraskan ke tema dashboard admin
+   (req user 2026-05-18). Buang biru off-theme -> navy
+   near-black + slate. Konsep: status strip recessed, LIVE
+   chip + pulse dot halus, teks putih lembut, divider slate.
+   Scoped body[data-role=admin] -> menang dari blok .admin-
+   activity-bar biru sebelumnya; light-theme tetap utuh.
+   ========================================================= */
+/* Swap warna (req user 2026-05-18): topbar pakai navy DALAM (eks-ticker),
+   ticker pakai navy lebih TERANG (eks-topbar) biar ticker kelihatan. */
+body[data-role="admin"] #authTopbarAdmin,
+body[data-role="admin"].auth-mode .auth-topbar-admin {
+  background: linear-gradient(180deg, rgba(22,32,47,.96) 0%, rgba(13,20,31,.97) 100%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body[data-role="admin"] .admin-activity-bar {
+  background: rgba(28, 40, 60, .85) !important;
+  border-top: 1px solid rgba(173,181,189,.16) !important;
+  border-bottom: 1px solid rgba(173,181,189,.20) !important;
+}
+body[data-role="admin"] .aab-label {
+  /* Sama keluarga dgn ticker bar rgba(28,40,60,.85), sedikit lebih terang */
+  background: rgba(42, 58, 82, .92) !important;
+  border-right: 1px solid rgba(173,181,189,.16) !important;
+  color: rgba(255,255,255,.88) !important;
+}
+body[data-role="admin"] .aab-dot {
+  background: #FFFFFF !important;
+  box-shadow: 0 0 0 4px rgba(173,181,189,.10), 0 0 6px rgba(255,255,255,.40) !important;
+}
+body[data-role="admin"] .aab-item {
+  color: rgba(226,232,240,.74) !important;
+}
+body[data-role="admin"] .aab-item b {
+  color: #FFFFFF !important;
+  font-weight: 700;
+}
+body[data-role="admin"] .aab-sep {
+  color: rgba(173,181,189,.30) !important;
+}
+body[data-role="admin"] .aab-i-mod,
+body[data-role="admin"] .aab-i-user,
+body[data-role="admin"] .aab-i-vid,
+body[data-role="admin"] .aab-i-rev,
+body[data-role="admin"] .aab-i-comm {
+  background: rgba(173,181,189,.55) !important;
+}
+body[data-role="admin"] .aab-i-2fa {
+  background: rgba(173,181,189,.30) !important;
+}
+
+/* =========================================================
+   TOPBAR "MASUK" BUTTON (admin) -- selaras Control Center:
+   slate->navy gradient, border slate, depth halus, hover lift.
+   #authTopbarAdmin (id) -> menang dari gradient khaki L16225
+   & flat rgba L18117. (req user 2026-05-18) ================= */
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: .2px !important;
+  /* Samakan dgn tombol Pengaturan (gear) & topbar admin (request user
+     2026-05-18: dulu gradient navy biru, beda sendiri). Pakai token tema
+     yg SAMA dgn .auth-topbar-settings-btn. */
+  color: var(--text) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .30) !important;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease !important;
+}
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin svg,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+  color: var(--text) !important;
+}
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin:hover,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn:hover {
+  background: var(--surface-2) !important;
+  border-color: var(--border-strong) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .40) !important;
+}
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin:active,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px -6px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.08) inset !important;
+}
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin:focus-visible,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn:focus-visible {
+  outline: 2px solid rgba(173, 181, 189, .55);
+  outline-offset: 2px;
+}
+/* Hapus efek animasi shimmer di tombol Masuk (req user 2026-05-18) --
+   matikan ::after sweep adminHeroBtnShimmer (L16242). */
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin::after,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn::after {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+body[data-role="admin"] #authTopbarAdmin .auth-topbar-signin,
+body[data-role="admin"] #authTopbarAdmin .btn.primary.auth-topbar-btn {
+  animation: none !important;
+}
+
+/* === REVERT ke Control Center + SEMUA font #F8FAFC + tombol
+   "Masuk Sekarang" TIDAK capslock (req user 2026-05-18).
+   Blok KONSEP-RESET & BENTUK dihapus -> balik versi sebelumnya. === */
+body[data-role="admin"] #authCard .admin-mode-banner b,
+body[data-role="admin"] #authCard .amb-text b,
+body[data-role="admin"] #authCard .admin-mode-banner small,
+body[data-role="admin"] #authCard .amb-text small,
+body[data-role="admin"] #authCard .auth-field > span,
+body[data-role="admin"] #authCard .auth-check span,
+body[data-role="admin"] #authCard .auth-row .auth-link,
+body[data-role="admin"] #authCard #forgotPw,
+body[data-role="admin"] #authCard .input-wrap input,
+body[data-role="admin"] #authCard .auth-form input[type="text"],
+body[data-role="admin"] #authCard .auth-form input[type="password"],
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  color: #F8FAFC !important;
+}
+body[data-role="admin"] #authCard .input-wrap input::placeholder {
+  color: rgba(248, 250, 252, .45) !important;
+}
+body[data-role="admin"] #authCard input:-webkit-autofill,
+body[data-role="admin"] #authCard input:-webkit-autofill:hover,
+body[data-role="admin"] #authCard input:-webkit-autofill:focus,
+body[data-role="admin"] #authCard input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+}
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  text-transform: none !important;
+  letter-spacing: .2px !important;
+}
 @keyframes aabScroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -46811,7 +47234,10 @@ html body[data-role="admin"].auth-mode .admin-foot-section {
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  gap: 12px !important;
+  /* gap di-nol-kan; jarak antar-blok diatur lewat margin tiap elemen
+     supaya ritme = slide final-CTA user (request user 2026-05-18:
+     hanya jarak antar teks). */
+  gap: 0 !important;
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .afs-wordmark {
   font-family: 'Inter', sans-serif !important;
@@ -46860,7 +47286,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .afs-links {
   align-items: center !important;
   gap: 12px !important;
   font-size: 12px !important;
-  margin-top: 8px !important;
+  margin-top: 10px !important;
   margin-bottom: 0 !important;
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .afs-link {
@@ -46887,7 +47313,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .afs-copy {
 /* Akses dibatasi card text — perbesar font */
 html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card {
   max-width: 720px !important;
-  gap: 14px !important;
+  gap: 8px !important;
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-icon {
   width: 36px !important;
@@ -46904,7 +47330,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
   font-weight: 800 !important;
   line-height: 1.2 !important;
   letter-spacing: -.01em !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 8px !important;
   color: #FFFFFF !important;
 }
 html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-text p {
@@ -47425,6 +47851,60 @@ html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-step:hover
   html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-back {
     transition: none !important;
   }
+}
+
+/* === HOWIT FRONT FACE — EYE-CATCHING + sesuai tema dashboard (request
+   user 2026-05-17). Chip ikon pakai warna brand wine/krem (BUKAN emas),
+   nomor di-TENGAH atas chip (bukan pojok kiri) — pola step rapi. SEMUA
+   animasi flip & entrance TIDAK disentuh. === */
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-step {
+  border: 1px solid var(--border) !important;
+  background:
+    radial-gradient(120% 85% at 50% 0%, rgba(109, 41, 50, .10), transparent 55%),
+    linear-gradient(160deg, var(--bg-elev), rgba(109, 41, 50, .08)) !important;
+}
+/* Nomor → badge nempel di POJOK KANAN-ATAS chip (pola "numbered avatar"):
+   nomor + ikon jadi satu kesatuan, tidak lagi dua lingkaran bertumpuk.
+   Anchor ke .howit-step-head (chip ter-center → 50% = pusat chip). Tetap
+   turunan head → ikut fade saat hover/flip. TANPA transform supaya
+   animasi entrance (rotateY) tidak rusak. */
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-step-head {
+  position: relative !important;
+}
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-num {
+  position: absolute !important;
+  top: -4px !important;
+  left: calc(50% + 14px) !important;
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 12px !important;
+  margin: 0 !important;
+  z-index: 3 !important;
+  border: 2px solid var(--bg-elev) !important;
+  box-shadow: 0 2px 7px rgba(109, 41, 50, .45) !important;
+}
+/* Ikon → chip lingkaran TEMA DASHBOARD (wine/krem, no emas) */
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon {
+  width: 78px !important;
+  height: 78px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  font-size: 33px !important;
+  color: #E8D8C4 !important;
+  background:
+    linear-gradient(160deg, var(--surface-2), rgba(109, 41, 50, .22)) !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .04),
+    0 6px 18px rgba(0, 0, 0, .30) !important;
+}
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon svg {
+  width: 35px !important;
+  height: 35px !important;
+}
+html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-front-title {
+  margin-top: 14px !important;
 }
 
 @media (max-width: 1024px) {
@@ -48272,6 +48752,274 @@ body[data-role="admin"] #authCard .admin-card-close:hover {
   border-color: rgba(165, 175, 195, .30) !important;
   transform: rotate(90deg);
 }
+
+/* =========================================================
+   ADMIN LOGIN MODAL -- REDESIGN v3 "CONTROL CENTER" (2026-05-18)
+   Rombak total per request user. Popup login = bagian dari
+   DASHBOARD ADMIN. Token tema admin ASLI (live):
+     base #0B131D  panel #141C2A  elev #1C2535
+     slate accent #ADB5BD = rgb(173,181,189)
+     brand gradient: #FFFFFF -> #3C5078 -> #1C283C
+   Admin = slate/silver di atas navy near-black (BUKAN biru).
+   Focus = outline rata (house-style: bukan glow).
+   ========================================================= */
+
+/* --- Card: panel admin navy near-black + brand bar atas
+   (gradient putih->slate->navy, crisp 2px, fixed/scroll-safe). --- */
+body[data-role="admin"] #authCard,
+body[data-role="admin"][data-auth-modal-open="true"] #authCard,
+body[data-role="admin"] #authModalWrap.show #authCard {
+  position: relative;
+  border-radius: 18px !important;
+  padding: 34px 32px 30px !important;
+  max-width: 452px !important;
+  border: 1px solid rgba(173, 181, 189, .18) !important;
+  outline: none !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,0) 18%),
+    linear-gradient(168deg, #16202F 0%, #111A27 55%, #0C141F 100%) !important;
+  box-shadow:
+    0 28px 70px -22px rgba(0, 0, 0, .68),
+    0 8px 24px -14px rgba(0, 0, 0, .45),
+    0 0 0 1px rgba(173, 181, 189, .06) !important;
+}
+
+/* --- Header: badge command + judul + eyebrow slate uppercase
+   (gaya eyebrow/label dashboard) + divider slate. --- */
+body[data-role="admin"] #authCard .admin-mode-banner {
+  position: relative;
+  text-align: center;
+  margin-bottom: 24px !important;
+  padding-bottom: 20px !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(173,181,189,0) 0%, rgba(173,181,189,.26) 50%, rgba(173,181,189,0) 100%);
+}
+body[data-role="admin"] #authCard .amb-icon {
+  width: 66px !important;
+  height: 66px !important;
+  margin: 0 auto 15px !important;
+  display: grid;
+  place-items: center;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(160deg, rgba(173,181,189,.16) 0%, rgba(173,181,189,0) 55%),
+    linear-gradient(160deg, #1C2738 0%, #131C29 100%) !important;
+  border: 1px solid rgba(173, 181, 189, .22) !important;
+  box-shadow:
+    0 12px 26px -12px rgba(0, 0, 0, .8),
+    0 0 0 4px rgba(173, 181, 189, .04),
+    0 1px 0 rgba(255, 255, 255, .10) inset !important;
+}
+body[data-role="admin"] #authCard .amb-icon svg {
+  width: 36px !important;
+  height: 36px !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner b,
+body[data-role="admin"] #authCard .amb-text b {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.2px !important;
+  color: #FFFFFF !important;
+  margin: 0 0 8px !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner small,
+body[data-role="admin"] #authCard .amb-text small {
+  display: block !important;
+  white-space: pre-line !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  color: rgba(173, 181, 189, .85) !important;
+  letter-spacing: .1px !important;
+  line-height: 1.6 !important;
+}
+
+/* --- Label: eyebrow style dashboard (uppercase slate). --- */
+body[data-role="admin"] #authCard .auth-field {
+  margin-bottom: 15px !important;
+}
+body[data-role="admin"] #authCard .auth-field > span {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  color: rgba(173, 181, 189, .85) !important;
+  letter-spacing: .1px !important;
+  margin-bottom: 8px !important;
+}
+
+/* --- Input: surface panel admin (#141C2A -> focus #1C2535). --- */
+body[data-role="admin"] #authCard .input-wrap input,
+body[data-role="admin"] #authCard .auth-form input[type="text"],
+body[data-role="admin"] #authCard .auth-form input[type="password"] {
+  padding: 13px 16px 13px 44px !important;
+  border-radius: 11px !important;
+  font-size: 14px !important;
+  color: #FFFFFF !important;
+  background: #141C2A !important;
+  border: 1px solid rgba(173, 181, 189, .20) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .30) !important;
+  transition: border-color .16s ease, background .16s ease !important;
+}
+body[data-role="admin"] #authCard .input-wrap:has(.pw-toggle) input {
+  padding-right: 46px !important;
+}
+body[data-role="admin"] #authCard .input-wrap input::placeholder {
+  color: rgba(173, 181, 189, .42) !important;
+  font-weight: 500;
+}
+body[data-role="admin"] #authCard .input-wrap input:focus,
+body[data-role="admin"] #authCard .auth-field .input-wrap:focus-within input {
+  border-color: rgba(173, 181, 189, .50) !important;
+  background: #1C2535 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .30) !important;
+  outline: none !important;
+}
+body[data-role="admin"] #authCard input:-webkit-autofill,
+body[data-role="admin"] #authCard input:-webkit-autofill:hover,
+body[data-role="admin"] #authCard input:-webkit-autofill:active {
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #FFFFFF !important;
+  -webkit-box-shadow: 0 0 0 1000px #141C2A inset !important;
+  box-shadow: 0 0 0 1000px #141C2A inset !important;
+  border: 1px solid rgba(173, 181, 189, .20) !important;
+  border-radius: 11px !important;
+  transition: background-color 600000s 0s, color 600000s 0s !important;
+}
+body[data-role="admin"] #authCard input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #FFFFFF !important;
+  -webkit-box-shadow: 0 0 0 1000px #1C2535 inset !important;
+  box-shadow: 0 0 0 1000px #1C2535 inset !important;
+  border-color: rgba(173, 181, 189, .50) !important;
+  border-radius: 11px !important;
+}
+body[data-role="admin"] #authCard .input-wrap svg {
+  color: rgba(173, 181, 189, .62) !important;
+  transition: color .16s ease;
+}
+body[data-role="admin"] #authCard .input-wrap:focus-within svg {
+  color: rgba(173, 181, 189, 1) !important;
+}
+body[data-role="admin"] #authCard .pw-toggle {
+  right: 8px !important;
+  color: rgba(173, 181, 189, .62) !important;
+  border-radius: 8px !important;
+  transition: color .15s ease, background .15s ease;
+}
+body[data-role="admin"] #authCard .pw-toggle:hover {
+  color: #FFFFFF !important;
+  background: rgba(173, 181, 189, .12) !important;
+}
+
+/* --- Row: Ingat saya / Lupa kata sandi --- */
+body[data-role="admin"] #authCard .auth-row {
+  align-items: center;
+  margin: 2px 0 20px !important;
+}
+body[data-role="admin"] #authCard .auth-check {
+  align-items: center !important;
+  gap: 9px !important;
+}
+body[data-role="admin"] #authCard .auth-check i {
+  width: 18px !important;
+  height: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1.5px solid rgba(173, 181, 189, .38) !important;
+  border-radius: 5px !important;
+  background: rgba(173, 181, 189, .06) !important;
+  transition: all .15s ease !important;
+}
+body[data-role="admin"] #authCard .auth-check i::after {
+  content: "" !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  transform: none !important;
+  background: center / 12px 12px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E") !important;
+  opacity: 0;
+  transition: opacity .14s ease !important;
+}
+body[data-role="admin"] #authCard .auth-check input:checked + i {
+  background: linear-gradient(150deg, #3C5078 0%, #233048 100%) !important;
+  border-color: rgba(173, 181, 189, .60) !important;
+}
+body[data-role="admin"] #authCard .auth-check input:checked + i::after {
+  opacity: 1 !important;
+}
+body[data-role="admin"] #authCard .auth-check span {
+  color: rgba(173, 181, 189, .85) !important;
+  font-weight: 600;
+  font-size: 12.5px !important;
+}
+body[data-role="admin"] #authCard .auth-row .auth-link,
+body[data-role="admin"] #authCard #forgotPw {
+  color: rgba(173, 181, 189, .85) !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  opacity: 1 !important;
+  transition: color .15s ease;
+}
+body[data-role="admin"] #authCard .auth-row .auth-link:hover,
+body[data-role="admin"] #authCard #forgotPw:hover {
+  color: #FFFFFF !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --- Tombol: gradient slate->navy khas admin, label uppercase
+   letter-spaced (gaya tombol command dashboard). --- */
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  width: 100% !important;
+  height: 50px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(135deg, #45597D 0%, #2C3C58 58%, #1C283C 100%) !important;
+  border: 1px solid rgba(173, 181, 189, .26) !important;
+  color: #FFFFFF !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  margin: 2px 0 4px !important;
+  box-shadow:
+    0 12px 24px -10px rgba(0, 0, 0, .65),
+    0 1px 0 rgba(255, 255, 255, .12) inset !important;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease !important;
+}
+body[data-role="admin"] #authCard .auth-submit:hover,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary:hover,
+body[data-role="admin"] #authCard .btn.primary.auth-submit:hover {
+  background: linear-gradient(135deg, #50658C 0%, #354767 58%, #233148 100%) !important;
+  border-color: rgba(173, 181, 189, .40) !important;
+  transform: translateY(-1px);
+  box-shadow:
+    0 18px 30px -12px rgba(0, 0, 0, .7),
+    0 1px 0 rgba(255, 255, 255, .16) inset !important;
+}
+body[data-role="admin"] #authCard .auth-submit:active,
+body[data-role="admin"] #authCard .btn.primary.auth-submit:active {
+  transform: translateY(0);
+  box-shadow:
+    0 6px 14px -6px rgba(0, 0, 0, .6),
+    0 1px 0 rgba(255, 255, 255, .08) inset !important;
+}
+body[data-role="admin"] #authCard .auth-submit:focus-visible,
+body[data-role="admin"] #authCard .btn.primary.auth-submit:focus-visible {
+  outline: 2px solid rgba(173, 181, 189, .55);
+  outline-offset: 2px;
+}
+
 .amf-info-body .amf-status-name { color: var(--text); font-weight: 600; flex: 1; }
 .amf-info-body .amf-status-state { color: var(--success); font-size: 12px; font-weight: 600; }
 
@@ -48690,6 +49438,10 @@ body[data-role="admin"] [data-view="admin-revenue"] .admin-kpi {
    filled circle bukan outline. */
 #lvcBack svg,
 #lvcSkip svg,
+#lvcMute svg,
+#lvcCC svg,
+#lvcSpeed svg,
+#lvcFS svg,
 #cplBackBtn svg,
 #cplSkipBtn svg,
 #apCtrlBack svg,
@@ -48699,6 +49451,15 @@ body[data-role="admin"] [data-view="admin-revenue"] .admin-kpi {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+/* Bagian solid yang sengaja terisi di dalam ikon outline (mis. titik
+   jarum speedometer) tetap pakai fill currentColor. */
+#lvcCC svg [fill="currentColor"],
+#lvcSpeed svg [fill="currentColor"],
+#apCtrlCC svg [fill="currentColor"],
+#apCtrlSpeed svg [fill="currentColor"] {
+  fill: currentColor !important;
+  stroke: none;
 }
 .cpl-skip-num,
 .ap-skip-num,
@@ -54084,12 +54845,10 @@ html body[data-theme="light"][data-role="admin"] .profile-dropdown .pd-divider {
   border: 0 !important;
 }
 
-/* Pastikan Edit Profil item TIDAK ke-hide untuk admin (data-pd-user-only
-   hanya target items spesifik user-only). Edit Profil pakai action="profile"
-   tanpa user-only flag → admin TETAP bisa akses. */
-html body[data-role="admin"] .profile-dropdown .pd-item[data-pd-action="profile"] {
-  display: flex !important;
-}
+/* DIHAPUS (request user 2026-05-18): rule lama yg memaksa "Edit Profil"
+   TETAP tampil utk admin. Sekarang Edit Profil & Ganti Tema sengaja
+   DISEMBUNYIKAN khusus dashboard admin via [data-pd-admin-hide]
+   (lihat ~baris 6866). Dashboard user tidak terpengaruh. */
 
 /* =========================================================
    ADMIN DASHBOARD LIGHT — PASS 12: card surface unify ke #BFC9D1
@@ -59023,3 +59782,1387 @@ html body:not([data-role="admin"]) section[data-view="home"] .home-ranking-secti
   }
 }
 
+
+/* =========================================================
+   FIX (req user 2026-05-18): override SEBELUMNYA gagal karena
+   ditaruh ~L43800, kalah dari blok Control Center ~L48500.
+   Blok INI ditaruh paling akhir file -> dijamin menang.
+   - Semua warna font login admin = #F8FAFC
+   - Tombol "Masuk Sekarang" TIDAK capslock
+   ========================================================= */
+body[data-role="admin"] #authCard .admin-mode-banner b,
+body[data-role="admin"] #authCard .amb-text b,
+body[data-role="admin"] #authCard .admin-mode-banner small,
+body[data-role="admin"] #authCard .amb-text small,
+body[data-role="admin"] #authCard .auth-field > span,
+body[data-role="admin"] #authCard .auth-check span,
+body[data-role="admin"] #authCard .auth-row .auth-link,
+body[data-role="admin"] #authCard #forgotPw,
+body[data-role="admin"] #authCard .input-wrap input,
+body[data-role="admin"] #authCard .auth-form input[type="text"],
+body[data-role="admin"] #authCard .auth-form input[type="password"],
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  color: #F8FAFC !important;
+}
+body[data-role="admin"] #authCard .input-wrap input::placeholder {
+  color: rgba(248, 250, 252, .45) !important;
+}
+body[data-role="admin"] #authCard input:-webkit-autofill,
+body[data-role="admin"] #authCard input:-webkit-autofill:hover,
+body[data-role="admin"] #authCard input:-webkit-autofill:focus,
+body[data-role="admin"] #authCard input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+}
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  text-transform: none !important;
+  letter-spacing: .2px !important;
+}
+
+
+/* === req user 2026-05-18: judul CAPS, subtitle 1-baris 15px,
+   popup lebih compact. Paling akhir file -> menang. === */
+body[data-role="admin"] #authCard .admin-mode-banner b,
+body[data-role="admin"] #authCard .amb-text b {
+  text-transform: uppercase !important;
+  letter-spacing: .3px !important;
+  font-size: 16.5px !important;
+  margin-bottom: 5px !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner small,
+body[data-role="admin"] #authCard .amb-text small {
+  font-size: 12.5px !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+  text-align: center !important;
+  display: block !important;
+  line-height: 1.4 !important;
+}
+body[data-role="admin"] #authCard,
+body[data-role="admin"][data-auth-modal-open="true"] #authCard,
+body[data-role="admin"] #authModalWrap.show #authCard {
+  padding: 24px 26px 22px !important;
+  max-width: 430px !important;
+}
+body[data-role="admin"] #authCard .amb-icon {
+  width: 54px !important;
+  height: 54px !important;
+  margin: 0 auto 10px !important;
+}
+body[data-role="admin"] #authCard .amb-icon svg {
+  width: 30px !important;
+  height: 30px !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner {
+  margin-bottom: 16px !important;
+  padding-bottom: 14px !important;
+}
+body[data-role="admin"] #authCard .auth-field {
+  margin-bottom: 11px !important;
+}
+body[data-role="admin"] #authCard .auth-field > span {
+  margin-bottom: 5px !important;
+}
+body[data-role="admin"] #authCard .input-wrap input,
+body[data-role="admin"] #authCard .auth-form input[type="text"],
+body[data-role="admin"] #authCard .auth-form input[type="password"] {
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+}
+body[data-role="admin"] #authCard .auth-row {
+  margin: 2px 0 14px !important;
+}
+body[data-role="admin"] #authCard .auth-submit,
+body[data-role="admin"] #authCard button[type="submit"].btn.primary,
+body[data-role="admin"] #authCard .btn.primary.auth-submit {
+  height: 44px !important;
+  margin-top: 2px !important;
+}
+
+
+/* === req user 2026-05-18: subtitle BENAR2 rata tengah +
+   animasi masuk pop up login admin. Paling akhir -> menang. === */
+body[data-role="admin"] #authCard .admin-mode-banner,
+body[data-role="admin"] #authCard .amb-text {
+  text-align: center !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+body[data-role="admin"] #authCard .admin-mode-banner b,
+body[data-role="admin"] #authCard .amb-text b,
+body[data-role="admin"] #authCard .admin-mode-banner small,
+body[data-role="admin"] #authCard .amb-text small {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+@keyframes adminLoginEnter {
+  0%   { opacity: 0; transform: translateY(18px) scale(.965); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes adminLoginBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+body[data-role="admin"] #authModalWrap.show #authCard,
+body[data-role="admin"][data-auth-modal-open="true"] #authCard,
+body[data-role="admin"] .auth-right.show #authCard {
+  animation: adminLoginEnter .42s cubic-bezier(.22, 1, .36, 1) both !important;
+  will-change: transform, opacity;
+}
+body[data-role="admin"] #authModalWrap.show .auth-modal-backdrop,
+body[data-role="admin"] .auth-right.show .auth-modal-backdrop {
+  animation: adminLoginBackdrop .32s ease both !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-role="admin"] #authModalWrap.show #authCard,
+  body[data-role="admin"][data-auth-modal-open="true"] #authCard,
+  body[data-role="admin"] .auth-right.show #authCard,
+  body[data-role="admin"] #authModalWrap.show .auth-modal-backdrop,
+  body[data-role="admin"] .auth-right.show .auth-modal-backdrop {
+    animation: none !important;
+  }
+}
+
+
+/* === req user 2026-05-18: FIX warna kolom saat browser autofill.
+   Chrome paksa bg pale rgb(232,240,254); mask balik ke
+   #141C2A (= kolom Control Center normal). Paling akhir -> menang. === */
+body[data-role="admin"] #authCard input:-webkit-autofill,
+body[data-role="admin"] #authCard input:-webkit-autofill:hover,
+body[data-role="admin"] #authCard input:-webkit-autofill:focus,
+body[data-role="admin"] #authCard input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+  -webkit-box-shadow: 0 0 0 1000px #141C2A inset !important;
+  box-shadow: 0 0 0 1000px #141C2A inset !important;
+  border: 1px solid rgba(173, 181, 189, .20) !important;
+  border-radius: 11px !important;
+  transition: background-color 600000s 0s, color 600000s 0s !important;
+}
+
+
+/* === req user 2026-05-18: PRATINJAU "Di dalam dashboard" jangan
+   kepotong -> center vertikal dalam 1 slide penuh + naikkan
+   (padding dikecilkan). SCOPED #adminPreviewSection saja, slide
+   landing lain TIDAK terganggu. Pola sama spt .auth-plans-section
+   (min-height:100vh + justify-content:center). === */
+html body[data-role="admin"].auth-mode #adminPreviewSection {
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding-top: clamp(24px, 3vw, 44px) !important;
+  padding-bottom: clamp(24px, 3vw, 44px) !important;
+  scroll-margin-top: 64px !important;
+}
+html body[data-role="admin"].auth-mode #adminPreviewSection .admin-landing-head {
+  margin-bottom: 20px !important;
+}
+html body[data-role="admin"].auth-mode #adminPreviewSection .admin-preview-frame {
+  width: 100% !important;
+  max-width: 1280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+/* Viewport pendek: lepas 100vh biar tidak meluber/kepotong (scroll natural) */
+@media (max-height: 820px) {
+  html body[data-role="admin"].auth-mode #adminPreviewSection {
+    min-height: auto !important;
+    justify-content: flex-start !important;
+    padding-top: 70px !important;
+    padding-bottom: 48px !important;
+  }
+}
+
+
+/* === req user 2026-05-18: paragraf restricted-footer jadi 2 baris
+   terkontrol (break setelah "...dicatat.") + rata tengah. Scoped
+   .admin-foot-section saja -> slide lain tidak terganggu. === */
+body[data-role="admin"] .admin-foot-section .afc-text p {
+  white-space: pre-line !important;
+  text-align: center !important;
+}
+
+
+/* === ADMIN LOGOUT overlay v7 (req user 2026-05-18): GEMBOK TERKUNCI
+   + 1 ripple kontinu. Gembok ter-animasi mengunci (body muncul halus,
+   shackle turun & terkunci dgn sedikit pegas, lubang kunci muncul +
+   denyut "klik") -> bukan langsung terkunci. Ripple TUNGGAL (yg di
+   dalam dihapus) melebar terus-menerus & smooth. Scoped -> aman. */
+.fo-lock { display: none; }
+#fullOverlay[data-variant="logout"] #foIcon { display: none !important; }
+#fullOverlay[data-variant="logout"] .fo-lock {
+  display: grid; place-items: center; position: relative;
+  width: 140px; height: 140px; margin: 0 auto 28px;
+}
+#fullOverlay[data-variant="logout"] .fo-lock svg {
+  width: 100px; height: 100px; position: relative; z-index: 1;
+  overflow: visible;
+  filter: drop-shadow(0 5px 14px rgba(0,0,0,.5));
+}
+#fullOverlay[data-variant="logout"].show .fo-lock svg { animation: foLockClick .5s ease-out 1.15s 1; }
+@keyframes foLockClick { 0%,100% { transform: scale(1); } 45% { transform: scale(1.05); } }
+
+/* Body gembok — muncul halus (skala + fade) */
+#fullOverlay[data-variant="logout"] .fo-lock .fo-body,
+#fullOverlay[data-variant="logout"] .fo-lock .fo-keyhole,
+#fullOverlay[data-variant="logout"] .fo-lock .fo-shackle {
+  transform-box: fill-box;
+}
+#fullOverlay[data-variant="logout"] .fo-lock .fo-body { transform-origin: center; opacity: 0; }
+#fullOverlay[data-variant="logout"].show .fo-lock .fo-body {
+  animation: foBodyIn .55s cubic-bezier(.34,1.4,.5,1) .15s forwards;
+}
+@keyframes foBodyIn {
+  0%   { opacity: 0; transform: scale(.72) translateY(4px); }
+  100% { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+/* Shackle — terangkat & miring, lalu turun mengunci (smooth, sedikit pegas) */
+#fullOverlay[data-variant="logout"] .fo-lock .fo-shackle { transform-origin: bottom center; opacity: 0; }
+#fullOverlay[data-variant="logout"].show .fo-lock .fo-shackle {
+  animation: foShackleLock .9s cubic-bezier(.5,-0.3,.25,1.35) .5s forwards;
+}
+@keyframes foShackleLock {
+  0%   { opacity: 0; transform: translateY(-13px) rotate(-14deg); }
+  25%  { opacity: 1; }
+  70%  { transform: translateY(2px)  rotate(0deg); }
+  85%  { transform: translateY(-1.5px) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+/* Lubang kunci — muncul setelah terkunci */
+#fullOverlay[data-variant="logout"] .fo-lock .fo-keyhole { transform-origin: center; opacity: 0; }
+#fullOverlay[data-variant="logout"].show .fo-lock .fo-keyhole {
+  animation: foKeyholeIn .45s ease-out 1.15s forwards;
+}
+@keyframes foKeyholeIn {
+  0%   { opacity: 0; transform: scale(.4); }
+  60%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Ripple TUNGGAL — muncul JELAS dari awal, lalu lama-lama memudar */
+#fullOverlay[data-variant="logout"] .fo-lock::after {
+  content: ""; position: absolute; top: 50%; left: 50%;
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 3px solid rgba(248,250,252,.95);
+  box-shadow: 0 0 26px rgba(248,250,252,.45), 0 0 10px rgba(248,250,252,.30);
+  transform: translate(-50%,-50%) scale(.55); opacity: 0;
+  pointer-events: none;
+}
+#fullOverlay[data-variant="logout"].show .fo-lock::after {
+  animation: foLockRing 2.8s cubic-bezier(.22,.61,.36,1) 1s infinite;
+}
+@keyframes foLockRing {
+  0%   { opacity: 0;   transform: translate(-50%,-50%) scale(.55); border-width: 3.5px; }
+  7%   { opacity: 1;   }
+  45%  { opacity: .9;  }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.95); border-width: 1px; }
+}
+
+/* =========================================================
+   ADMIN HERO — redesign (request user 2026-05-18): kolom profil
+   dihapus; stat tiles juga dihapus, diganti kolom notifikasi
+   aktivitas di samping hero (lihat ADMIN HERO FEED di bawah).
+   Ikon SVG monokrom. Selaras tema admin (slate/krem).
+   ========================================================= */
+/* Bolt di sebelah sapaan — pengganti emoji ⚡ (di-inject via JS) */
+.admin-hero h2 .admin-hero-bolt {
+  width: 22px;
+  height: 22px;
+  vertical-align: -3px;
+  color: var(--admin-accent, #ADB5BD);
+}
+/* =========================================================
+   ADMIN HERO FEED — kolom notifikasi aktivitas di samping hero
+   (request user 2026-05-18). Sibling .hero-text di dalam
+   .hero-content (display:flex) → layout 2 kolom.
+
+   WARNA: persis tema dashboard admin (template unified 2026-05-08,
+   lihat baris ~45248) — sama dgn kartu hero kiri & semua kartu admin:
+     Dark  → surface rgba(28,40,60,.55) · border rgba(165,175,195,.18)
+     Light → surface #BFC9D1 · border #25343F
+   Aksen monokrom slate #ADB5BD (BUKAN hijau — request user
+   "warna kolom nya jelek ... pakai warna tema dashboard admin").
+   Selector di-scope [data-role="admin"] + !important supaya menang
+   dari override admin-theme high-specificity yg bikin bg transparan.
+   ========================================================= */
+body[data-role="admin"] .admin-hero .admin-hero-feed {
+  flex: 0 0 360px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  background: rgba(28, 40, 60, .55) !important;
+  border: 1px solid rgba(165, 175, 195, .18) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .40), 0 4px 18px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed {
+  background: #BFC9D1 !important;
+  border: 1px solid #25343F !important;
+  box-shadow: 0 1px 4px rgba(37, 52, 63, .14), 0 4px 14px rgba(37, 52, 63, .10);
+}
+/* Header notifikasi LEBIH TERANG dari body card (req user 2026-05-18).
+   Body card = rgba(28,40,60,.55) → header pakai slate-navy lebih terang.
+   .ahf-list (di bawah) TIDAK diubah, tetap seperti semula. */
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px 18px;
+  background: rgba(74, 95, 130, .45);
+  border-bottom: 1px solid rgba(165, 175, 195, .22);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-head {
+  background: #D6DCE4;
+  border-bottom-color: rgba(37, 52, 63, .20);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-ico {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(165, 175, 195, .12);
+  border: 1px solid rgba(165, 175, 195, .20);
+  color: #ADB5BD;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-ico {
+  background: rgba(37, 52, 63, .10);
+  border-color: rgba(37, 52, 63, .22);
+  color: #25343F;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-ico svg { width: 17px; height: 17px; }
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-txt strong {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.15;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-txt small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, .52);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-txt strong { color: #1A2530; }
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-txt small { color: rgba(37, 52, 63, .62); }
+/* "Live" pill — slate monokrom, senada aksen admin (bukan hijau) */
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #C7CDD4;
+  background: rgba(165, 175, 195, .12);
+  border: 1px solid rgba(165, 175, 195, .22);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-live {
+  color: #25343F;
+  background: rgba(37, 52, 63, .10);
+  border-color: rgba(37, 52, 63, .22);
+}
+/* Titik LIVE → HIJAU (req user 2026-05-18), tanda aktif/online. */
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: ahfPulse 1.8s var(--ease, ease) infinite;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-live i { background: #10B981; }
+@keyframes ahfPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .35; transform: scale(.7); }
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(165, 175, 195, .22) transparent;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-list::-webkit-scrollbar { width: 6px; }
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-list::-webkit-scrollbar-thumb {
+  background: rgba(165, 175, 195, .20);
+  border-radius: 3px;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  transition: background .18s var(--ease, ease);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row + .ahf-row {
+  border-top: 1px solid rgba(165, 175, 195, .10);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-row + .ahf-row {
+  border-top-color: rgba(37, 52, 63, .12);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-clickable { cursor: pointer; }
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-clickable:hover,
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-clickable:focus-visible {
+  background: rgba(165, 175, 195, .10);
+  outline: none;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-clickable:hover,
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-clickable:focus-visible {
+  background: rgba(37, 52, 63, .08);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: rgba(165, 175, 195, .55);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-dot { background: rgba(37, 52, 63, .45); }
+/* Event terbaru — dot lebih terang/solid, tetap monokrom (bukan warna lain) */
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-new .ahf-dot {
+  background: #ADB5BD;
+  box-shadow: 0 0 0 3px rgba(165, 175, 195, .20);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-row.is-new .ahf-dot {
+  background: #25343F;
+  box-shadow: 0 0 0 3px rgba(37, 52, 63, .16);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, .88);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-text strong { color: #FFFFFF; font-weight: 700; }
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-text { color: rgba(26, 37, 48, .82); }
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-text strong { color: #1A2530; }
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-who {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, .44);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-time {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, .44);
+  white-space: nowrap;
+  margin-top: 1px;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-who,
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-time { color: rgba(37, 52, 63, .55); }
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin: auto;
+  padding: 28px 18px;
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-empty strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, .80);
+}
+body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-empty small {
+  font-size: 11px;
+  color: rgba(255, 255, 255, .45);
+  line-height: 1.4;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-empty strong { color: rgba(26, 37, 48, .80); }
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-empty small { color: rgba(37, 52, 63, .55); }
+/* Ikut animasi stagger masuk hero (animasi lama tak diubah, hanya nambah) */
+.admin-hero.anim-enter .admin-hero-feed {
+  opacity: 0;
+  animation: ahStaggerIn .38s cubic-bezier(.22,.68,0,1.2) .50s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-hero.anim-enter .admin-hero-feed { animation: none; opacity: 1; }
+}
+/* Layar sempit — feed turun ke bawah hero, full width */
+@media (max-width: 1024px) {
+  body[data-role="admin"] .admin-hero .hero-content { flex-wrap: wrap; }
+  body[data-role="admin"] .admin-hero .admin-hero-feed { flex: 1 1 100%; }
+  body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-list { max-height: 280px; }
+}
+
+/* =========================================================
+   VIDEO PLAYER — popup Kecepatan + ikon feedback (req user
+   2026-05-18). Berlaku ketiga player: admin (ap), user (cpl),
+   library (lvc). Speed = POPUP pilihan (bukan auto-cycle).
+   Feedback play/pause & ±10s = ikon sekejap di tengah video,
+   baik dari tombol maupun double-click.
+   ========================================================= */
+/* Status aktif tombol CC / Kecepatan */
+#apCtrlCC.ap-ctrl-on, #apCtrlSpeed.ply-spd-on,
+#cplCCBtn.cpl-active, #cplSpeedBtn.ply-spd-on,
+#lvcCC.lvc-on, #lvcSpeed.ply-spd-on {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, .20) !important;
+}
+/* Angka "10" di ikon mundur/maju ikut warna ikon */
+.ap-ctrl-btn svg text, .cpl-ctrl-btn svg text, .lvc-btn svg text {
+  font-family: 'Inter', system-ui, sans-serif;
+  fill: currentColor;
+}
+
+/* ---- Popup Kecepatan (buka/tutup, anti-bug) ---- */
+.ply-spd-wrap { position: relative; display: inline-flex; align-items: center; }
+.ply-spd-pop {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 134px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  /* DEFAULT = tema user (samakan dgn .cpl-dots-menu / .lib-kebab-panel
+     di dashboard user — bukan navy admin). req user 2026-05-18 */
+  background: rgba(14, 6, 6, .93);
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  z-index: 30;
+}
+/* Dashboard admin → tema admin (navy/slate), samakan dgn
+   body[data-role="admin"] .lib-kebab-panel. Scope role = cara
+   aplikasi membedakan user vs admin (lihat .lib-kebab-panel). */
+body[data-role="admin"] .ply-spd-pop {
+  background: linear-gradient(135deg, rgba(24, 30, 44, .94) 0%, rgba(20, 30, 48, .90) 100%);
+  border-color: rgba(165, 175, 195, .22);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .60), 0 0 0 1px rgba(165, 175, 195, .08);
+}
+.ply-spd-pop[hidden] { display: none; }
+.ply-spd-title {
+  font: 700 10.5px/1 'Inter', system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .5);
+  padding: 5px 9px 7px;
+}
+.ply-spd-pop button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, .88);
+  font: 600 13px/1 'Inter', system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s;
+}
+.ply-spd-pop button:hover { background: rgba(255, 255, 255, .12); }
+.ply-spd-pop button.is-active { color: #FFFFFF; background: rgba(255, 255, 255, .16); }
+.ply-spd-pop button.is-active::after { content: "\2713"; font-size: 12px; color: #FFFFFF; }
+/* Hover/aktif versi admin = aksen slate (samakan dgn lib-kebab-row admin) */
+body[data-role="admin"] .ply-spd-pop button:hover { background: rgba(165, 175, 195, .16); }
+body[data-role="admin"] .ply-spd-pop button.is-active { background: rgba(165, 175, 195, .20); }
+
+/* ---- Ikon feedback (play/pause/±10s) — IKON SAJA, tanpa kotak.
+   maju 10s → kanan, mundur 10s → kiri, play/pause → tengah.
+   (req user 2026-05-18) ---- */
+.ap-stage, .lib-inline-screen, .player-screen { position: relative; }
+.ply-flash {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #FFFFFF;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 7;
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, .75));
+}
+.ply-flash svg { width: 46px; height: 46px; }
+.ply-flash b {
+  font: 800 14px/1 'Inter', system-ui, sans-serif;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .85);
+}
+/* Posisi */
+.ply-flash.ply-flash-center { left: 50%; }
+.ply-flash.ply-flash-fwd    { left: auto; right: 12%; }
+.ply-flash.ply-flash-bwd    { left: 12%; right: auto; }
+/* Animasi — tengah (pakai translateX -50%) vs samping (tanpa translateX) */
+.ply-flash.ply-flash-center.ply-flash-go { animation: plyFlashCtr .55s ease forwards; }
+.ply-flash.ply-flash-fwd.ply-flash-go,
+.ply-flash.ply-flash-bwd.ply-flash-go { animation: plyFlashSide .55s ease forwards; }
+@keyframes plyFlashCtr {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.08); }
+}
+@keyframes plyFlashSide {
+  0%   { opacity: 0; transform: translateY(-50%) scale(.6); }
+  22%  { opacity: 1; transform: translateY(-50%) scale(1); }
+  100% { opacity: 0; transform: translateY(-50%) scale(1.08); }
+}
+
+/* =========================================================
+   JUDUL VIDEO di pojok kiri atas — HANYA saat fullscreen
+   (req user 2026-05-18). Berlaku admin (ap-stage), user
+   (player-screen), library (lib-inline-screen). Default
+   disembunyikan; tampil saat container-nya :fullscreen.
+   Selector :fullscreen & :-webkit-full-screen DIPISAH
+   (kalau digabung 1 rule, browser yg gak kenal salah satu
+   akan drop seluruh rule).
+   ========================================================= */
+/* Judul fullscreen = TEKS saja, tanpa kotak/box (req user 2026-05-18).
+   Keterbacaan dijaga pakai text-shadow tebal, bukan background. */
+.ply-fs-title {
+  display: none;
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  z-index: 8;
+  max-width: 70%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: #FFFFFF;
+  font: 700 20px/1.3 'Inter', system-ui, sans-serif;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 2px 10px rgba(0,0,0,.7);
+  pointer-events: none;
+}
+/* cpl: turunkan sedikit supaya tidak nabrak brand banner kiri-atas */
+.player-screen .ply-fs-title { top: 70px; left: 24px; }
+/* Jangan tampilkan pill kosong kalau judul belum ke-set */
+.ply-fs-title:empty { display: none !important; }
+
+/* Tampil hanya saat fullscreen — unprefixed */
+.ap-stage:fullscreen .ply-fs-title { display: block; }
+.player-screen:fullscreen .ply-fs-title { display: block; }
+.lib-inline-screen:fullscreen .ply-fs-title { display: block; }
+/* Tampil hanya saat fullscreen — WebKit (Safari/old Chrome) */
+.ap-stage:-webkit-full-screen .ply-fs-title { display: block; }
+.player-screen:-webkit-full-screen .ply-fs-title { display: block; }
+.lib-inline-screen:-webkit-full-screen .ply-fs-title { display: block; }
+/* Fallback: kalau yg di-fullscreen-kan elemen video sendiri, body
+   diberi class .ply-fs-on oleh JS → tetap bisa tampil */
+body.ply-fs-on .ap-stage .ply-fs-title,
+body.ply-fs-on .player-screen .ply-fs-title,
+body.ply-fs-on .lib-inline-screen .ply-fs-title { display: block; }
+
+/* =========================================================
+   ADMIN HERO — WRAPPER tanpa border/box (request user 2026-05-18:
+   "ada garis yg menghubungkan hero card ke kolom notifikasi,
+   hapuskan"). .admin-hero hanyalah flex container, BUKAN kartu —
+   tapi rule admin-theme (styles.css ~31733) terlanjur memberi
+   border+bg ke wrapper shg tampak kotak yg "menyambung" 2 kartu.
+   Light theme sudah di-reset (~52600); ini padanan DARK theme.
+   Selector html body[...] (0,2,2) > body[data-role] (0,2,1) supaya
+   menang. HANYA target .admin-hero (wrapper) — .hero-text &
+   .admin-hero-feed tetap kartu bermborder masing-masing. */
+html body[data-role="admin"] .admin-hero {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   ADMIN HERO — PINTASAN CEPAT (request user 2026-05-18: hero card
+   terlalu kosong → shortcut fungsional ke section admin utama).
+   Warna persis tema dashboard admin (slate), monokrom, no-emoji.
+   ========================================================= */
+body[data-role="admin"] .admin-hero .hero-quick {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(165, 175, 195, .14);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick {
+  border-top-color: rgba(37, 52, 63, .16);
+}
+body[data-role="admin"] .admin-hero .hero-quick-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .50);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick-label {
+  color: rgba(37, 52, 63, .58);
+}
+body[data-role="admin"] .admin-hero .hero-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+body[data-role="admin"] .admin-hero .hero-quick .hq-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: rgba(165, 175, 195, .07);
+  border: 1px solid rgba(165, 175, 195, .16);
+  color: #FFFFFF;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background .16s var(--ease, ease), border-color .16s var(--ease, ease), transform .16s var(--ease, ease);
+}
+body[data-role="admin"] .admin-hero .hero-quick .hq-chip svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #ADB5BD;
+}
+body[data-role="admin"] .admin-hero .hero-quick .hq-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-role="admin"] .admin-hero .hero-quick .hq-chip:hover,
+body[data-role="admin"] .admin-hero .hero-quick .hq-chip:focus-visible {
+  background: rgba(165, 175, 195, .14);
+  border-color: rgba(165, 175, 195, .30);
+  transform: translateY(-2px);
+  outline: none;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick .hq-chip {
+  background: rgba(37, 52, 63, .05);
+  border-color: rgba(37, 52, 63, .16);
+  color: #1A2530;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick .hq-chip svg { color: #25343F; }
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick .hq-chip:hover,
+body[data-theme="light"][data-role="admin"] .admin-hero .hero-quick .hq-chip:focus-visible {
+  background: rgba(37, 52, 63, .10);
+  border-color: rgba(37, 52, 63, .28);
+}
+/* Ikut animasi stagger masuk hero (animasi lama tak diubah, hanya nambah) */
+.admin-hero.anim-enter .hero-quick {
+  opacity: 0;
+  animation: ahStaggerIn .38s cubic-bezier(.22,.68,0,1.2) .50s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-hero.anim-enter .hero-quick { animation: none; opacity: 1; }
+}
+/* Layar sempit — chip jadi 2 kolom */
+@media (max-width: 1024px) {
+  body[data-role="admin"] .admin-hero .hero-quick-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  body[data-role="admin"] .admin-hero .hero-quick-grid { grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   HERO ADMIN — kolom kiri = [kartu hero + RINGKASAN·KPI] ditumpuk,
+   kolom kanan = notifikasi (req user 2026-05-18). PINTASAN CEPAT
+   dihapus; KPI dipindah ke bawah kartu hero, di samping notifikasi.
+   ========================================================= */
+body[data-role="admin"] .admin-hero .admin-hero-left {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* hero-text jangan ikut meregang vertikal di dalam kolom — tinggi natural,
+   KPI menyusul di bawahnya. Menang atas rule flex:1 1 0 lama (lebih spesifik
+   + source order belakangan). */
+body[data-role="admin"] .admin-hero .admin-hero-left .hero-text {
+  flex: 0 0 auto !important;
+  width: 100%;
+}
+/* KPI grid di dalam kolom hero — buang margin-bottom section lama; spacing
+   diatur oleh gap kolom. */
+body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi {
+  margin: 0 !important;
+}
+/* Divider RINGKASAN·KPI di dalam kolom — rapat, bukan margin antar-section */
+body[data-role="admin"] .admin-hero .admin-hero-left .admin-section-divider {
+  margin: 0 !important;
+}
+@media (max-width: 1100px) {
+  body[data-role="admin"] .admin-hero .admin-hero-left { width: 100%; flex-basis: auto; }
+}
+
+/* =========================================================
+   KPI hero — bentuk kartu seperti stat-card dashboard user
+   (req user 2026-05-18): [ikon] [angka besar / LABEL UPPERCASE]
+   ............ [tren] di kanan. Scope .admin-kpi-stat → kartu KPI
+   admin di view lain TIDAK terpengaruh. !important utk menang dari
+   override admin high-specificity (lihat reference-admin-theme).
+   ========================================================= */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 16px 20px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+/* Angka besar di atas */
+body[data-role="admin"] .admin-kpi-stat .kpi-content strong {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  letter-spacing: -.01em !important;
+}
+/* Label UPPERCASE di bawah angka */
+body[data-role="admin"] .admin-kpi-stat .kpi-content small {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: #ADB5BD !important;
+  -webkit-text-fill-color: #ADB5BD !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Tren di KANAN, sejajar tengah (bukan di bawah angka) */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
+  margin: 0 0 0 auto !important;
+  align-self: center !important;
+  flex-shrink: 0;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+body[data-role="admin"] .admin-kpi-stat .kpi-trend.up { color: #10B981 !important; -webkit-text-fill-color: #10B981 !important; }
+
+/* =========================================================
+   KOLOM PENDAPATAN di beranda admin (req user 2026-05-18) —
+   ringkasan KPI pendapatan di samping PUSAT AKSI. Tema admin.
+   ========================================================= */
+body[data-role="admin"] .admin-rev-summary { display: flex; flex-direction: column; }
+body[data-role="admin"] .admin-rev-summary .ars-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+body[data-role="admin"] .admin-rev-summary .ars-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(165, 175, 195, .06);
+  border: 1px solid rgba(165, 175, 195, .14);
+  cursor: pointer;
+  transition: border-color .2s, background .2s, transform .15s;
+}
+body[data-role="admin"] .admin-rev-summary .ars-row:hover {
+  background: rgba(165, 175, 195, .1);
+  border-color: rgba(165, 175, 195, .3);
+  transform: translateY(-1px);
+}
+body[data-role="admin"] .admin-rev-summary .ars-row:focus-visible {
+  outline: 2px solid rgba(173, 181, 189, .7);
+  outline-offset: 2px;
+}
+body[data-role="admin"] .admin-rev-summary .ars-ico {
+  width: 40px; height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(165, 175, 195, .12);
+  border: 1px solid rgba(165, 175, 195, .2);
+  color: #ADB5BD;
+}
+body[data-role="admin"] .admin-rev-summary .ars-ico svg { width: 19px; height: 19px; }
+body[data-role="admin"] .admin-rev-summary .ars-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+body[data-role="admin"] .admin-rev-summary .ars-txt strong {
+  font-family: 'Inter', sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #FFFFFF;
+  -webkit-text-fill-color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-role="admin"] .admin-rev-summary .ars-txt small {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #ADB5BD;
+  -webkit-text-fill-color: #ADB5BD;
+}
+
+/* =========================================================
+   FIX layout dashboard admin (req user 2026-05-18):
+   1) KPI cards isi penuh kolom kiri → rata/sejajar dgn kolom
+      notifikasi (3 kolom sama lebar, mentok ke tepi).
+   2) PUSAT AKSI = grid 2x2 (premium|moderasi / inbox|bug).
+   ========================================================= */
+body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+/* PUSAT AKSI · BUTUH PERHATIAN — 2 kolom × 2 baris */
+body[data-role="admin"] #adminActionCenter {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin-bottom: 0 !important;
+}
+/* Empty-state ("Semua aman") tetap full-width melintang 2 kolom */
+body[data-role="admin"] #adminActionCenter .admin-action-empty {
+  grid-column: 1 / -1;
+}
+
+/* PUSAT AKSI & PENDAPATAN sejajar atas-bawah-kiri-kanan (req user
+   2026-05-18). PUSAT AKSI = ukuran natural (kartu TIDAK di-stretch);
+   PENDAPATAN dipadatkan + mengisi kolom supaya bottom-nya rata.
+   align-items:stretch → kedua kolom selalu sama tinggi. */
+body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col {
+  align-items: stretch !important;
+}
+body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* PENDAPATAN mengisi tinggi kolom (grow) TAPI tidak pernah menyusut di
+   bawah kontennya (flex-shrink 0) → tidak ada konten ke-clip saat PUSAT
+   AKSI pendek (empty-state "Semua aman"). align-items:stretch + natural
+   PENDAPATAN dipadatkan ~= 6 kartu → saat ada kartu keduanya rata; saat
+   empty-state PENDAPATAN tetap utuh (tak terpotong). */
+body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > .admin-rev-summary {
+  flex: 1 0 auto;
+}
+body[data-role="admin"] .admin-rev-summary .ars-grid { flex: 1 0 auto; gap: 8px !important; }
+body[data-role="admin"] .admin-rev-summary .ars-row { flex: 1 0 auto; }
+/* PENDAPATAN dipadatkan ("kecilkan sedikit") supaya natural-height-nya
+   <= PUSAT AKSI → PUSAT AKSI jadi acuan tinggi. */
+body[data-role="admin"] .admin-rev-summary .ars-row { padding: 10px 14px !important; }
+body[data-role="admin"] .admin-rev-summary .ars-ico { width: 36px !important; height: 36px !important; }
+body[data-role="admin"] .admin-rev-summary .ars-ico svg { width: 17px !important; height: 17px !important; }
+body[data-role="admin"] .admin-rev-summary .ars-txt strong { font-size: 18px !important; }
+body[data-role="admin"] .admin-rev-summary .ars-txt small { font-size: 10px !important; }
+/* SEJAJAR BETUL: saat ADA kartu, action-center JUGA mengisi tinggi
+   kolom (sama seperti PENDAPATAN) → bottom keduanya rata persis.
+   Guard :has(.admin-action-card) → empty-state "Semua aman" TIDAK
+   di-stretch (tetap natural, PENDAPATAN tak terpotong). */
+body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter:has(.admin-action-card) {
+  flex: 1 0 auto;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+}
+body[data-role="admin"] #adminActionCenter:has(.admin-action-card) .admin-action-card {
+  height: 100%;
+}
+/* Empty-state: action-center natural di atas (tidak grow) */
+body[data-role="admin"] #adminActionCenter { align-content: start; }
+/* Tanpa kolom ikon di kartu aksi — konten saja */
+body[data-role="admin"] #adminActionCenter .admin-action-card.aac-noicon { gap: 0; }
+body[data-role="admin"] #adminActionCenter .admin-action-card .aac-icon { display: none !important; }
+
+/* Divider judul PUSAT AKSI = seragam dgn judul kolom lain (PENDAPATAN
+   dll). Tanpa emoji + ukuran font sama. */
+body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col .admin-section-divider span {
+  font-size: 11px !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+/* Ikon pendapatan (banknote) di judul panel — rapi & sejajar teks,
+   ganti emoji 💰/$ lama. (req user 2026-05-18) */
+body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: #E8EBEF;
+}
+
+/* =========================================================
+   ADMIN HERO — penyelarasan kolom kiri & polish (req user
+   2026-05-18):
+   (1) Kolom KIRI (hero-text + KPI) sejajar bawah dgn kolom
+       notifikasi → KPI "lebarkan ke bawah" mengisi sisa tinggi.
+   (2) Badge "Panel Kontrol Admin" warna lebih solid/nyata.
+   (3) Status "Semua Sistem Beroperasi" di pojok kanan atas.
+   (4) Tombol Broadcast lebih hidup (Bug Reports dihapus di markup).
+   ========================================================= */
+
+/* (1) admin-hero-left = flex column, isi penuh tinggi (= tinggi
+   kolom notifikasi karena .hero-content align-items:stretch). */
+body[data-role="admin"] .admin-hero .admin-hero-left {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* hero-text TINGGI NATURAL (jangan ikut grow → biar tak ada lagi
+   ruang kosong besar). Override flex:1 lama (~baris 40722). */
+body[data-role="admin"] .admin-hero .admin-hero-left .hero-text {
+  flex: 0 0 auto !important;
+}
+/* KPI grow mengisi sisa tinggi → bottom-nya sejajar feed. */
+body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi {
+  flex: 1 1 auto;
+  margin-bottom: 0 !important;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+}
+body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi .admin-kpi-card {
+  height: 100%;
+  min-height: 92px;
+}
+@media (max-width: 1100px) {
+  /* Hero stack vertikal di layar sempit — KPI kembali tinggi natural */
+  body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi {
+    flex: 0 0 auto;
+    grid-auto-rows: auto;
+  }
+  body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi .admin-kpi-card {
+    height: auto;
+  }
+}
+
+/* (2) Badge "Panel Kontrol Admin" — solid/nyata, senada tema admin
+   (navy-slate). Sebelumnya translucent .14 → kurang terlihat. */
+body[data-role="admin"] .admin-hero .admin-hero-badge {
+  background: linear-gradient(135deg, #2C3B54 0%, #1C283C 100%);
+  border: 1px solid rgba(165, 175, 195, .32);
+  color: #E6EBF2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .06);
+  /* Font diganti ke JetBrains Mono (req user 2026-05-18) — sudah
+     di-load di <head>; kesan "control panel" teknis, beda dari Inter.
+     JBM maks 700 (bukan 800), tracking dikecilkan krn mono lebar. */
+  font-family: 'JetBrains Mono', ui-monospace, 'Consolas', monospace;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+/* Ikon badge dibesarkan & dipertegas (req user 2026-05-18: "pastikan
+   ikon nya jelas dan besar"). Base .admin-hero-badge svg = 14px. */
+body[data-role="admin"] .admin-hero .admin-hero-badge svg {
+  color: #C7CEDB;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-badge {
+  background: linear-gradient(135deg, #D6DCE4 0%, #BFC9D1 100%);
+  border-color: rgba(37, 52, 63, .30);
+  color: #25343F;
+  box-shadow: 0 1px 3px rgba(37, 52, 63, .12);
+}
+body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-badge svg { color: #25343F; }
+
+/* (3) Status sistem → pojok kanan ATAS kartu hero (.hero-text
+   sudah position:relative). */
+body[data-role="admin"] .admin-hero .hero-text .admin-hero-status-corner {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 2;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  /* Layar kecil: jangan absolute (hindari tabrakan teks), balik inline */
+  body[data-role="admin"] .admin-hero .hero-text .admin-hero-status-corner {
+    position: static;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+}
+
+/* (4) Tombol Broadcast — lebih hidup/nyata (solid slate-blue
+   gradient), bukan flat dark. */
+/* !important — kalah dari rule lama `.hero-actions .btn.primary
+   { background: var(--primary) !important }` kalau tanpa !important. */
+body[data-role="admin"] .admin-hero #adminBroadcastBtn {
+  background: linear-gradient(135deg, #3C5278 0%, #243349 100%) !important;
+  border: 1px solid rgba(165, 175, 195, .35) !important;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  box-shadow: 0 2px 10px -2px rgba(20, 30, 48, .55), inset 0 1px 0 rgba(255, 255, 255, .08);
+  transition: background .18s var(--ease, ease), box-shadow .18s var(--ease, ease), transform .18s var(--ease, ease);
+}
+body[data-role="admin"] .admin-hero #adminBroadcastBtn:hover {
+  background: linear-gradient(135deg, #46608C 0%, #2B3E59 100%) !important;
+  box-shadow: 0 6px 18px -4px rgba(60, 82, 120, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
+  transform: translateY(-2px);
+}
+body[data-role="admin"] .admin-hero #adminBroadcastBtn svg { color: #FFFFFF !important; }
+body[data-theme="light"][data-role="admin"] .admin-hero #adminBroadcastBtn {
+  background: linear-gradient(135deg, #45688A 0%, #2E4A66 100%) !important;
+  border-color: rgba(37, 52, 63, .30) !important;
+  color: #FFFFFF !important;
+}
+/* Hilangkan focus-ring putih (req user 2026-05-18). Rule lama
+   `.hero-actions .btn:focus-visible { outline:2px solid var(--text)
+   !important }` (var(--text)=#FFF di admin) → cincin putih. Tombol
+   tetap punya highlight halus on-theme (border slate sedikit terang),
+   tanpa outline putih. */
+body[data-role="admin"] .admin-hero #adminBroadcastBtn:focus,
+body[data-role="admin"] .admin-hero #adminBroadcastBtn:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  border-color: rgba(165, 175, 195, .55) !important;
+  box-shadow: 0 2px 10px -2px rgba(20, 30, 48, .55), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+}
+
+/* (5) Titik "live" di pill jam → HIJAU (req user 2026-05-18).
+   Sebelumnya var(--success) ter-resolve slate/abu di tema admin.
+   Specificity (0,3,1)+!important > .hero-pill .live-dot (0,2,0). */
+body[data-role="admin"] .admin-hero .hero-pill.live .live-dot,
+body[data-role="admin"] .admin-hero .hero-pill .live-dot {
+  background: #10B981 !important;
+}
+body[data-role="admin"] .admin-hero .hero-pill .live-dot::after {
+  background: #10B981 !important;
+}
+
+/* Font hari & tanggal di hero pill = SAMA dgn jam (JetBrains Mono).
+   Hari di-Indonesia-kan via ID_DAYS_SHORT. (req user 2026-05-18) */
+#adminHeroDate, #heroDate {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* =========================================================
+   MANAJEMEN AKUN — polish batch (req user 2026-05-18).
+   Selector html body[data-role="admin"] + !important supaya
+   menang dari rule lama high-specificity (a.l. blok "FORCE ALL
+   TEXT TO SNOW #FFFFFF" ~42927 yg bikin semua status sewarna —
+   itu juga glitch yg dimaksud).
+   ========================================================= */
+
+/* (2a) Tombol Buat User / Buat Admin — hapus efek focus ring putih
+   (outline + glow box-shadow dreams-on). */
+html body[data-role="admin"] #adminCreateUserBtn:focus,
+html body[data-role="admin"] #adminCreateUserBtn:focus-visible,
+html body[data-role="admin"] #adminCreateUserBtn:active {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* (3) Ikon chip filter User / Admin — rapi & jelas (SVG monokrom). */
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* (2b) Ikon tier di popup Buat User (🏷 → picon svg) — minimalist. */
+html body[data-role="admin"] .cu-tier-icon svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+}
+html body[data-role="admin"] .cu-tier-card { align-items: flex-start; }
+
+/* (5) Bintang tier = SAMA warna dgn font badge-nya (pakai currentColor,
+   inherit dari .tier-badge.premium color). */
+html body[data-role="admin"] .tier-badge .tier-star {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: inherit !important;
+  fill: currentColor !important;
+}
+
+/* (6) Badge ROLE — buang warna & efek (gradient/text-shadow/box-shadow).
+   Jadi pill netral datar, tetap kebaca di admin dark. */
+html body[data-role="admin"] .role-tag,
+html body[data-role="admin"] .role-tag.user,
+html body[data-role="admin"] .role-tag.admin,
+html body[data-role="admin"] .role-tag.creator {
+  background: rgba(165, 175, 195, .10) !important;
+  color: rgba(255, 255, 255, .78) !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+html body[data-theme="light"][data-role="admin"] .role-tag,
+html body[data-theme="light"][data-role="admin"] .role-tag.user,
+html body[data-theme="light"][data-role="admin"] .role-tag.admin,
+html body[data-theme="light"][data-role="admin"] .role-tag.creator {
+  background: rgba(37, 52, 63, .07) !important;
+  color: #25343F !important;
+  border: 1px solid rgba(37, 52, 63, .22) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+/* (4 + 7-glitch) Status dot/teks — warna BEDA per status (sebelumnya
+   semua dipaksa #FFFFFF → tak bisa dibedakan = glitch).
+   online → HIJAU · active → KUNING · inactive/suspended → ABU-ABU. */
+html body[data-role="admin"] .admin-table .row-status.status-online,
+html body[data-role="admin"] .row-status.status-online {
+  color: #22C55E !important;
+}
+html body[data-role="admin"] .admin-table .row-status.status-online::before,
+html body[data-role="admin"] .row-status.status-online::before {
+  background: #22C55E !important;
+  box-shadow: 0 0 7px rgba(34, 197, 94, .6) !important;
+}
+html body[data-role="admin"] .admin-table .row-status.status-active,
+html body[data-role="admin"] .row-status.status-active {
+  color: #EAB308 !important;
+}
+html body[data-role="admin"] .admin-table .row-status.status-active::before,
+html body[data-role="admin"] .row-status.status-active::before {
+  background: #EAB308 !important;
+  box-shadow: 0 0 7px rgba(234, 179, 8, .55) !important;
+}
+html body[data-role="admin"] .admin-table .row-status.status-inactive,
+html body[data-role="admin"] .row-status.status-inactive,
+html body[data-role="admin"] .admin-table .row-status.status-suspended,
+html body[data-role="admin"] .row-status.status-suspended {
+  color: #9CA3AF !important;
+}
+html body[data-role="admin"] .admin-table .row-status.status-inactive::before,
+html body[data-role="admin"] .row-status.status-inactive::before,
+html body[data-role="admin"] .admin-table .row-status.status-suspended::before,
+html body[data-role="admin"] .row-status.status-suspended::before {
+  background: #9CA3AF !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   Ikon judul section (pengganti emoji 📈📊🎯💰 — req user
+   2026-05-18): rapi, kecil, sejajar teks, monokrom slate.
+   ========================================================= */
+h2:has(> .hdr-ico), h3:has(> .hdr-ico) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+/* !important + selector chain — menang dari override admin yg
+   nge-size <svg> di dalam card/heading jadi besar (lihat
+   reference-admin-theme-palette: high-specificity gotcha). */
+h1 > svg.hdr-ico, h2 > svg.hdr-ico, h3 > svg.hdr-ico, svg.hdr-ico,
+body[data-role="admin"] h2 > svg.hdr-ico,
+body[data-role="admin"] h3 > svg.hdr-ico {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  flex: 0 0 18px !important;
+  color: #ADB5BD;
+}
+h2 > svg.hdr-ico.hdr-ico-lg, svg.hdr-ico.hdr-ico-lg,
+body[data-role="admin"] h2 > svg.hdr-ico.hdr-ico-lg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  flex: 0 0 24px !important;
+}
+body[data-role="admin"] svg.hdr-ico { color: #C7CDD4; }
+
+/* Hapus efek fokus ring di kartu Verifikasi Pembayaran Premium
+   (req user 2026-05-18) — jelek. Spesifisitas tinggi + !important
+   supaya menang dari semua rule focus pq-row (dark & light). */
+html body[data-role="admin"] .pq-row:focus,
+html body[data-role="admin"] .pq-row:focus-visible,
+html body[data-role="admin"] .pq-row:focus-within,
+html body[data-role="admin"] .pq-row.pq-row:focus,
+html body[data-role="admin"] .pq-row.pq-row:focus-visible,
+html body[data-role="admin"] .pq-row.pq-row:focus-within,
+html body[data-theme="light"][data-role="admin"] .pq-row.pq-row:focus,
+html body[data-theme="light"][data-role="admin"] .pq-row.pq-row:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}

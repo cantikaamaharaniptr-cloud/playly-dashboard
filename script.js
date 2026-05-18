@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    PLAYLY. — Dashboard Logic (auth + multi-view)
    ========================================================= */
 
@@ -1669,7 +1669,7 @@ const VIEW_TITLES = {
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email",
   "premium-insights": "Premium Insights",
-  "admin-dashboard": "Beranda", "admin-users": "Manajemen User",
+  "admin-dashboard": "Beranda", "admin-users": "Manajemen Akun",
   "admin-videos": "Kontrol Konten",
   "admin-comms": "Percakapan",
   "admin-comms-broadcasts": "Riwayat Broadcast",
@@ -2015,7 +2015,7 @@ function setupApPlayerControls(vid) {
   if (!stage) return;
 
   // Clone elements FIRST to strip stale listeners, then re-resolve all refs
-  ["apCtrlPlay","apCtrlMute","apCtrlVol","apCtrlProgress","apCtrlFS","apCtrlBack","apCtrlSkip"].forEach(id => {
+  ["apCtrlPlay","apCtrlMute","apCtrlVol","apCtrlProgress","apCtrlFS","apCtrlBack","apCtrlSkip","apCtrlCC","apCtrlSpeed"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.replaceWith(el.cloneNode(true));
   });
@@ -2030,6 +2030,8 @@ function setupApPlayerControls(vid) {
   const fsBtn   = document.getElementById("apCtrlFS");
   const backBtn = document.getElementById("apCtrlBack");
   const skipBtn = document.getElementById("apCtrlSkip");
+  const ccBtn2  = document.getElementById("apCtrlCC");
+  const spdBtn2 = document.getElementById("apCtrlSpeed");
   if (!playBtn) return;
 
   const fmtT = s => {
@@ -2045,14 +2047,14 @@ function setupApPlayerControls(vid) {
     const paused = vid.paused;
     stage.classList.toggle("ap-paused", paused);
     playBtn.innerHTML = paused
-      ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`;
+      ? `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`;
   };
   const syncMute = () => {
     if (!muteBtn) return;
     muteBtn.innerHTML = vid.muted || vid.volume === 0
-      ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
   };
   const syncTime = () => {
     const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
@@ -2066,8 +2068,8 @@ function setupApPlayerControls(vid) {
   _apCtrlRaf = requestAnimationFrame(tick);
 
   playBtn.addEventListener("click", () => { vid.paused ? vid.play() : vid.pause(); });
-  backBtn?.addEventListener("click", () => { vid.currentTime = Math.max(vid.currentTime - 10, 0); });
-  skipBtn?.addEventListener("click", () => { vid.currentTime = Math.min(vid.currentTime + 10, vid.duration || 0); });
+  backBtn?.addEventListener("click", () => { vid.currentTime = Math.max(vid.currentTime - 10, 0); plyActionFlash(stage, "bwd"); });
+  skipBtn?.addEventListener("click", () => { vid.currentTime = Math.min(vid.currentTime + 10, vid.duration || 0); plyActionFlash(stage, "fwd"); });
   muteBtn?.addEventListener("click", () => { vid.muted = !vid.muted; syncMute(); });
   volEl?.addEventListener("input", () => { vid.volume = parseFloat(volEl.value); syncMute(); });
   progEl?.addEventListener("click", e => {
@@ -2078,19 +2080,171 @@ function setupApPlayerControls(vid) {
     document.fullscreenElement ? document.exitFullscreen?.() : stage.requestFullscreen?.();
   });
 
-  // Click on video area = toggle play/pause (guard: ignore ctrl-bar clicks)
+  // Subtitle (CC) bar button — reuse existing CC menu handler (delegated on
+  // document). Toggle: kalau overlay mati → pilih Bahasa Indonesia, kalau
+  // nyala → Mati. Tetap berfungsi sesuai setup kebab yang sudah ada.
+  ccBtn2?.addEventListener("click", () => {
+    const ov = document.getElementById("apCcOverlay");
+    const on = ov && !ov.hidden;
+    const target = document.querySelector(on ? '[data-ap-cc="off"]' : '[data-ap-cc="id"]');
+    target?.click();
+    ccBtn2.classList.toggle("ap-ctrl-on", !on);
+  });
+  // Kecepatan bar button → buka POPUP pilihan (bukan auto-cycle).
+  // Toggle/handler ditangani initPlySpeedPopups (delegasi di .ply-spd-wrap).
+  if (typeof initPlySpeedPopups === "function") initPlySpeedPopups();
+
+  // Click di area video = toggle play/pause; DOUBLE-click di paruh kanan =
+  // maju 10s, paruh kiri = mundur 10s. Single-click ditunda 250ms supaya
+  // tidak ikut toggle saat user maksudnya double-click. (req user 2026-05-18)
   if (stage._apClickHandler) stage.removeEventListener("click", stage._apClickHandler);
+  if (stage._apDblHandler) stage.removeEventListener("dblclick", stage._apDblHandler);
+  stage._apClickTimer = null;
   stage._apClickHandler = e => {
     if (e.target.closest(".ap-ctrl-bar")) return;
-    vid.paused ? vid.play() : vid.pause();
+    clearTimeout(stage._apClickTimer);
+    stage._apClickTimer = setTimeout(() => {
+      vid.paused ? vid.play() : vid.pause();
+    }, 250);
+  };
+  stage._apDblHandler = e => {
+    if (e.target.closest(".ap-ctrl-bar")) return;
+    clearTimeout(stage._apClickTimer);
+    const r = stage.getBoundingClientRect();
+    const right = (e.clientX - r.left) > r.width / 2;
+    vid.currentTime = right
+      ? Math.min(vid.currentTime + 10, vid.duration || 0)
+      : Math.max(vid.currentTime - 10, 0);
+    plyActionFlash(stage, right ? "fwd" : "bwd");
   };
   stage.addEventListener("click", stage._apClickHandler);
+  stage.addEventListener("dblclick", stage._apDblHandler);
 
   vid.addEventListener("play",  syncPlay);
   vid.addEventListener("pause", syncPlay);
+  if (!vid._apFlashBound) {
+    vid._apFlashBound = true;
+    vid.addEventListener("play",  () => plyActionFlash(stage, "play"));
+    vid.addEventListener("pause", () => plyActionFlash(stage, "pause"));
+  }
   vid.addEventListener("volumechange", syncMute);
   syncPlay(); syncMute(); syncTime();
 }
+
+/* ===================================================================
+   SHARED PLAYER UX (req user 2026-05-18) — berlaku semua dashboard:
+   1) plyActionFlash: ikon feedback sekejap di tengah video untuk
+      play / pause / maju-10 / mundur-10 (tombol & double-click).
+   2) initPlySpeedPopups: tombol Kecepatan = buka POPUP pilihan
+      (bukan auto-cycle). Pilihan mereuse menu speed lama yg sudah
+      ada → konsisten + tanpa bug saat buka/tutup.
+   =================================================================== */
+function plyActionFlash(container, kind) {
+  if (!container) return;
+  try { if (getComputedStyle(container).position === "static") container.style.position = "relative"; } catch {}
+  let f = container.__plyFlash;
+  if (!f || !f.isConnected) {
+    f = document.createElement("div");
+    f.className = "ply-flash";
+    f.setAttribute("aria-hidden", "true");
+    container.appendChild(f);
+    container.__plyFlash = f;
+  }
+  const I = {
+    play:  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>',
+    fwd:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.3-5.4"/><polyline points="21 3.4 20.3 8.1 15.6 7.4"/></svg><b>10</b>',
+    bwd:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4"/><polyline points="3 3.4 3.7 8.1 8.4 7.4"/></svg><b>10</b>'
+  };
+  // Posisi: maju 10s → kanan, mundur 10s → kiri, play/pause → tengah
+  const pos = kind === "fwd" ? "ply-flash-fwd"
+            : kind === "bwd" ? "ply-flash-bwd"
+            : "ply-flash-center";
+  f.classList.remove("ply-flash-go", "ply-flash-fwd", "ply-flash-bwd", "ply-flash-center");
+  f.classList.add(pos);
+  f.innerHTML = I[kind] || "";
+  void f.offsetWidth; // restart animasi
+  f.classList.add("ply-flash-go");
+}
+
+function initPlySpeedPopups() {
+  document.querySelectorAll(".ply-spd-wrap").forEach(wrap => {
+    if (wrap.__plyInit) return;
+    wrap.__plyInit = true;
+    const pop = wrap.querySelector(".ply-spd-pop");
+    if (!pop) return;
+    const kind = pop.dataset.plyKind; // 'ap' | 'cpl' | 'lvc'
+    const selFor = sp =>
+      kind === "ap"  ? `[data-ap-speed="${sp}"]` :
+      kind === "lvc" ? `[data-lib-speed="${sp}"]` :
+                       `#speedMenu [data-speed="${sp}"]`;
+    // Delegasi di wrap (bertahan walau tombol di-clone ulang oleh setup player)
+    wrap.addEventListener("click", e => {
+      const opt = e.target.closest("[data-ply-speed]");
+      if (opt) {
+        const sp = opt.dataset.plySpeed;
+        document.querySelector(selFor(sp))?.click(); // reuse menu speed lama
+        pop.querySelectorAll("[data-ply-speed]").forEach(o => o.classList.toggle("is-active", o === opt));
+        const tb = wrap.querySelector("button");
+        tb && tb.classList.toggle("ply-spd-on", parseFloat(sp) !== 1);
+        pop.hidden = true;
+        return;
+      }
+      const btn = e.target.closest("button");
+      if (!btn || e.target.closest(".ply-spd-pop")) return;
+      e.stopPropagation();
+      const willOpen = pop.hidden;
+      document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+      pop.hidden = !willOpen;
+    });
+  });
+  if (!window.__plySpdDocBound) {
+    window.__plySpdDocBound = true;
+    document.addEventListener("click", e => {
+      if (e.target.closest(".ply-spd-wrap")) return;
+      document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+    });
+  }
+}
+window.initPlySpeedPopups = initPlySpeedPopups;
+document.addEventListener("DOMContentLoaded", initPlySpeedPopups);
+setTimeout(() => { try { initPlySpeedPopups(); } catch {} }, 0);
+
+/* Judul video di pojok kiri atas — HANYA saat fullscreen (req user
+   2026-05-18). Isi teks judul dari sumber tiap player, lalu CSS yg
+   memutuskan tampil/tidak (pakai :fullscreen). Berlaku semua dashboard. */
+function plySyncFsTitle() {
+  const map = [
+    { box: "#apStage",                              src: "#apTitle" },
+    { box: ".player-screen",                        src: "#playerTitle" },
+    { box: "#libInlinePlayer .lib-inline-screen",   src: "#libInlineTitle" }
+  ];
+  map.forEach(({ box, src }) => {
+    const b = document.querySelector(box);
+    if (!b) return;
+    const t = b.querySelector(".ply-fs-title");
+    const s = document.querySelector(src);
+    if (t && s) t.textContent = (s.textContent || "").trim();
+  });
+  const fs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  document.body.classList.toggle("ply-fs-on", fs);
+
+  // Tombol fullscreen player ADMIN (#apCtrlFS) — request user 2026-05-18:
+  // saat SUDAH fullscreen, ikon berubah jadi ikon "keluar fullscreen"
+  // (corner bracket mengarah ke DALAM), balik lagi saat keluar. Scope
+  // admin saja (user dashboard tidak diubah). svg attr disamakan persis
+  // dgn markup tombol asli (index.html ~2819).
+  const apFs = document.getElementById("apCtrlFS");
+  if (apFs) {
+    const AP_FS_ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+    const AP_FS_EXIT  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5"/></svg>';
+    apFs.innerHTML = fs ? AP_FS_EXIT : AP_FS_ENTER;
+    apFs.title = fs ? "Keluar layar penuh" : "Layar penuh";
+  }
+}
+document.addEventListener("fullscreenchange", plySyncFsTitle);
+document.addEventListener("webkitfullscreenchange", plySyncFsTitle);
+window.plySyncFsTitle = plySyncFsTitle;
 
 // AP Kebab panel — close helper (restores panels to original parent)
 function closeApKebabPanels() {
@@ -4240,7 +4394,7 @@ const I18N = {
     "plans.free.name":           "Free",
     "plans.free.tagline":        "Perfect for hobbyists & casual creators just getting started.",
     "plans.free.cta":            "Sign Up Free",
-    "plans.premium.badge":       "⭐ Recommended",
+    "plans.premium.badge":       "Recommended",
     "plans.premium.name":        "Premium",
     "plans.premium.tagline":     "For serious creators who want zero limits & extra reach.",
     "plans.premium.cta":         "Get Premium",
@@ -4265,17 +4419,17 @@ const I18N = {
     "pm.quota.storage":          "Storage this month",
     "pm.tile.totalvideos":       "Total Videos",
     "pm.tile.views":             "Views",
-    "pm.ad.label":                "📢 Sponsored",
+    "pm.ad.label":                "Sponsored",
     "pm.ad.text":                 "Try Playly Premium → Ad-free experience",
     "pm.upgrade.bold":            "Upgrade to Premium",
     "pm.upgrade.tail":            "— Unlock unlimited everything",
-    "pm.insights.head":           "✨ Premium Insights",
+    "pm.insights.head":           "Premium Insights",
     "pm.insights.engagement":     "Engagement rate",
     "pm.insights.watch":          "Avg watch time",
     "pm.insights.region":         "Top region",
-    "pm.feature.thumb":           "🎨 Custom thumb",
-    "pm.feature.live":            "🔴 Live",
-    "pm.feature.priority":        "⚡ Priority",
+    "pm.feature.thumb":           "Custom thumb",
+    "pm.feature.live":            "Live",
+    "pm.feature.priority":        "Priority",
     // FREE features bullets
     "pf.free.1":                 "\"Free\" tier badge in profile",
     "pf.free.2":                 "Monthly quota meter (60 videos / 1 GB)",
@@ -5378,7 +5532,7 @@ const I18N = {
     "common.justnow":            "baru saja",
     // ===== ADMIN DASHBOARD ID =====
     "admin.nav.home":            "Beranda",
-    "admin.nav.users":           "Manajemen User",
+    "admin.nav.users":           "Manajemen Akun",
     "admin.nav.videos":          "Kontrol Konten",
     "admin.nav.analytics":       "Analitik & Monitoring",
     "admin.nav.ads":             "Kelola Iklan",
@@ -5410,7 +5564,7 @@ const I18N = {
     "admin.recent.today":        "TERKINI · HARI INI",
     "admin.live.activity":       "Aktivitas User Live",
     "admin.live.activity.desc":  "Event signup, upload, like real-time dari seluruh user",
-    "admin.recent.videos":       "Video Baru Di-upload",
+    "admin.recent.videos":       "Video baru di upload",
     "admin.recent.users":        "User Baru",
     "admin.allusers":            "Semua User",
     "admin.no.videos":           "Belum ada video.",
@@ -5744,7 +5898,7 @@ const I18N = {
     "plans.free.name":           "Gratis",
     "plans.free.tagline":        "Cocok untuk hobi & kreator pemula yang baru mulai.",
     "plans.free.cta":            "Daftar Gratis",
-    "plans.premium.badge":       "⭐ Direkomendasikan",
+    "plans.premium.badge":       "Direkomendasikan",
     "plans.premium.name":        "Premium",
     "plans.premium.tagline":     "Untuk kreator serius yang ingin tanpa batas & jangkauan ekstra.",
     "plans.premium.cta":         "Dapatkan Premium",
@@ -5769,17 +5923,17 @@ const I18N = {
     "pm.quota.storage":          "Penyimpanan bulan ini",
     "pm.tile.totalvideos":       "Total Video",
     "pm.tile.views":             "Tayangan",
-    "pm.ad.label":                "📢 Bersponsor",
+    "pm.ad.label":                "Bersponsor",
     "pm.ad.text":                 "Coba Playly Premium → Tanpa iklan",
     "pm.upgrade.bold":            "Upgrade ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa batas",
-    "pm.insights.head":           "✨ Insight Premium",
+    "pm.insights.head":           "Insight Premium",
     "pm.insights.engagement":     "Tingkat engagement",
     "pm.insights.watch":          "Rata-rata waktu tonton",
     "pm.insights.region":         "Wilayah teratas",
-    "pm.feature.thumb":           "🎨 Thumb kustom",
-    "pm.feature.live":            "🔴 Live",
-    "pm.feature.priority":        "⚡ Prioritas",
+    "pm.feature.thumb":           "Thumb kustom",
+    "pm.feature.live":            "Live",
+    "pm.feature.priority":        "Prioritas",
     // FREE features bullets
     "pf.free.1":                 "Badge \"Gratis\" di profil",
     "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
@@ -5980,7 +6134,7 @@ const I18N = {
     "lp.faq.a11":                 "Subscription premium diproses via payment gateway eksternal. Admin approve pembayaran di Premium Queue setelah verifikasi bukti. Payout creator jalan mingguan tiap Senin berdasarkan revenue share. Semua transaksi tercatat dengan reconciliation report tersedia di Settings → Finance.",
     "lp.faq.a6":                  "Sebagian besar aksi reversible: user yang di-suspend bisa dipulihkan, video yang di-takedown bisa dikembalikan, peran bisa di-reassign. Audit log menyimpan aksi asli dan pembalikan keduanya, jadi sejarah penuh tetap utuh.",
     "lp.restricted.title":        "Akses dibatasi — hanya administrator",
-    "lp.restricted.desc":         "Panel ini mengelola data user live dan pendapatan platform. Percobaan sign-in di‑rate‑limit dan dicatat. Jika kamu tidak punya akun admin, kembali ke",
+    "lp.restricted.desc":         "Panel ini mengelola data user live dan pendapatan platform. Percobaan sign-in di‑rate‑limit dan dicatat.\nJika kamu tidak punya akun admin, kembali ke",
     // ===== ADMIN VIEW PAGES =====
     "admin.premium.verify":       "Verifikasi Premium",
     "admin.premium.verify.title": "⭐ Verifikasi Pembayaran Premium",
@@ -6983,7 +7137,7 @@ const I18N = {
     "plans.free.name":           "Percuma",
     "plans.free.tagline":        "Sesuai untuk hobi & pencipta santai yang baru bermula.",
     "plans.free.cta":            "Daftar Percuma",
-    "plans.premium.badge":       "⭐ Disyorkan",
+    "plans.premium.badge":       "Disyorkan",
     "plans.premium.name":        "Premium",
     "plans.premium.tagline":     "Untuk pencipta serius yang mahu tanpa had & jangkauan tambahan.",
     "plans.premium.cta":         "Dapatkan Premium",
@@ -7006,17 +7160,17 @@ const I18N = {
     "pm.quota.storage":          "Storan bulan ini",
     "pm.tile.totalvideos":       "Jumlah Video",
     "pm.tile.views":             "Tontonan",
-    "pm.ad.label":                "📢 Tajaan",
+    "pm.ad.label":                "Tajaan",
     "pm.ad.text":                 "Cuba Playly Premium → Pengalaman bebas iklan",
     "pm.upgrade.bold":            "Naik taraf ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa had",
-    "pm.insights.head":           "✨ Wawasan Premium",
+    "pm.insights.head":           "Wawasan Premium",
     "pm.insights.engagement":     "Kadar penglibatan",
     "pm.insights.watch":          "Purata masa tontonan",
     "pm.insights.region":         "Wilayah teratas",
-    "pm.feature.thumb":           "🎨 Lakaran kustom",
-    "pm.feature.live":            "🔴 Langsung",
-    "pm.feature.priority":        "⚡ Keutamaan",
+    "pm.feature.thumb":           "Lakaran kustom",
+    "pm.feature.live":            "Langsung",
+    "pm.feature.priority":        "Keutamaan",
     "pf.free.1":                 "Lencana tahap \"Percuma\" dalam profil",
     "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
     "pf.free.3":                 "Iklan tajaan kelihatan ketika menonton",
@@ -8187,7 +8341,7 @@ const I18N = {
     "plans.free.name":           "無料",
     "plans.free.tagline":        "趣味やカジュアルクリエイターに最適。",
     "plans.free.cta":            "無料登録",
-    "plans.premium.badge":       "⭐ 推奨",
+    "plans.premium.badge":       "推奨",
     "plans.premium.name":        "プレミアム",
     "plans.premium.tagline":     "ゼロ制限と追加リーチを求める本格派クリエイター向け。",
     "plans.premium.cta":         "プレミアムを取得",
@@ -8210,17 +8364,17 @@ const I18N = {
     "pm.quota.storage":          "今月のストレージ",
     "pm.tile.totalvideos":       "総動画数",
     "pm.tile.views":             "視聴",
-    "pm.ad.label":                "📢 スポンサー",
+    "pm.ad.label":                "スポンサー",
     "pm.ad.text":                 "Playlyプレミアムを試す → 広告なし体験",
     "pm.upgrade.bold":            "プレミアムにアップグレード",
     "pm.upgrade.tail":            "— すべてを無制限に",
-    "pm.insights.head":           "✨ プレミアムインサイト",
+    "pm.insights.head":           "プレミアムインサイト",
     "pm.insights.engagement":     "エンゲージメント率",
     "pm.insights.watch":          "平均視聴時間",
     "pm.insights.region":         "トップ地域",
-    "pm.feature.thumb":           "🎨 カスタムサムネ",
-    "pm.feature.live":            "🔴 ライブ",
-    "pm.feature.priority":        "⚡ 優先",
+    "pm.feature.thumb":           "カスタムサムネ",
+    "pm.feature.live":            "ライブ",
+    "pm.feature.priority":        "優先",
     "pf.free.1":                 "プロフィールに「無料」ティアバッジ",
     "pf.free.2":                 "月次クォータメーター（60動画 / 1 GB）",
     "pf.free.3":                 "視聴中にスポンサー広告表示",
@@ -9391,7 +9545,7 @@ const I18N = {
     "plans.free.name":           "مجاني",
     "plans.free.tagline":        "مثالي للهواة والمنشئين العاديين الذين بدأوا للتو.",
     "plans.free.cta":            "تسجيل مجاني",
-    "plans.premium.badge":       "⭐ موصى به",
+    "plans.premium.badge":       "موصى به",
     "plans.premium.name":        "مميز",
     "plans.premium.tagline":     "للمنشئين الجادين الذين يريدون صفر قيود ووصولاً إضافيًا.",
     "plans.premium.cta":         "احصل على المميز",
@@ -9414,17 +9568,17 @@ const I18N = {
     "pm.quota.storage":          "تخزين هذا الشهر",
     "pm.tile.totalvideos":       "إجمالي الفيديوهات",
     "pm.tile.views":             "المشاهدات",
-    "pm.ad.label":                "📢 برعاية",
+    "pm.ad.label":                "برعاية",
     "pm.ad.text":                 "جرب Playly المميز ← تجربة بدون إعلانات",
     "pm.upgrade.bold":            "الترقية إلى المميز",
     "pm.upgrade.tail":            "— افتح كل شيء بلا حدود",
-    "pm.insights.head":           "✨ رؤى المميز",
+    "pm.insights.head":           "رؤى المميز",
     "pm.insights.engagement":     "معدل التفاعل",
     "pm.insights.watch":          "متوسط وقت المشاهدة",
     "pm.insights.region":         "المنطقة الأعلى",
-    "pm.feature.thumb":           "🎨 صورة مصغرة مخصصة",
-    "pm.feature.live":            "🔴 مباشر",
-    "pm.feature.priority":        "⚡ أولوية",
+    "pm.feature.thumb":           "صورة مصغرة مخصصة",
+    "pm.feature.live":            "مباشر",
+    "pm.feature.priority":        "أولوية",
     "pf.free.1":                 "شارة فئة \"مجاني\" في الملف الشخصي",
     "pf.free.2":                 "عداد الحصة الشهرية (60 فيديو / 1 جيجا)",
     "pf.free.3":                 "إعلانات برعاية مرئية أثناء المشاهدة",
@@ -10595,7 +10749,7 @@ const I18N = {
     "plans.free.name":           "免费",
     "plans.free.tagline":        "适合刚开始的爱好者和休闲创作者。",
     "plans.free.cta":            "免费注册",
-    "plans.premium.badge":       "⭐ 推荐",
+    "plans.premium.badge":       "推荐",
     "plans.premium.name":        "高级",
     "plans.premium.tagline":     "适合追求零限制和更广覆盖的认真创作者。",
     "plans.premium.cta":         "获取高级版",
@@ -10618,17 +10772,17 @@ const I18N = {
     "pm.quota.storage":          "本月存储",
     "pm.tile.totalvideos":       "视频总数",
     "pm.tile.views":             "观看",
-    "pm.ad.label":                "📢 赞助",
+    "pm.ad.label":                "赞助",
     "pm.ad.text":                 "试用 Playly 高级版 → 无广告体验",
     "pm.upgrade.bold":            "升级到高级版",
     "pm.upgrade.tail":            "— 解锁无限一切",
-    "pm.insights.head":           "✨ 高级洞察",
+    "pm.insights.head":           "高级洞察",
     "pm.insights.engagement":     "互动率",
     "pm.insights.watch":          "平均观看时长",
     "pm.insights.region":         "热门地区",
-    "pm.feature.thumb":           "🎨 自定义封面",
-    "pm.feature.live":            "🔴 直播",
-    "pm.feature.priority":        "⚡ 优先级",
+    "pm.feature.thumb":           "自定义封面",
+    "pm.feature.live":            "直播",
+    "pm.feature.priority":        "优先级",
     "pf.free.1":                 "资料中的\"免费\"等级标识",
     "pf.free.2":                 "每月配额表（60 视频 / 1 GB）",
     "pf.free.3":                 "观看时显示赞助广告",
@@ -11799,7 +11953,7 @@ const I18N = {
     "plans.free.name":           "무료",
     "plans.free.tagline":        "취미 및 캐주얼 크리에이터에게 적합.",
     "plans.free.cta":            "무료 등록",
-    "plans.premium.badge":       "⭐ 추천",
+    "plans.premium.badge":       "추천",
     "plans.premium.name":        "프리미엄",
     "plans.premium.tagline":     "제로 제한과 추가 도달을 원하는 진지한 크리에이터를 위한 것.",
     "plans.premium.cta":         "프리미엄 받기",
@@ -11822,17 +11976,17 @@ const I18N = {
     "pm.quota.storage":          "이번 달 저장소",
     "pm.tile.totalvideos":       "총 동영상",
     "pm.tile.views":             "조회수",
-    "pm.ad.label":                "📢 후원",
+    "pm.ad.label":                "후원",
     "pm.ad.text":                 "Playly Premium 시도 → 광고 없는 경험",
     "pm.upgrade.bold":            "프리미엄으로 업그레이드",
     "pm.upgrade.tail":            "— 모든 것을 무제한으로 잠금 해제",
-    "pm.insights.head":           "✨ 프리미엄 인사이트",
+    "pm.insights.head":           "프리미엄 인사이트",
     "pm.insights.engagement":     "참여율",
     "pm.insights.watch":          "평균 시청 시간",
     "pm.insights.region":         "최고 지역",
-    "pm.feature.thumb":           "🎨 맞춤 썸네일",
-    "pm.feature.live":            "🔴 라이브",
-    "pm.feature.priority":        "⚡ 우선순위",
+    "pm.feature.thumb":           "맞춤 썸네일",
+    "pm.feature.live":            "라이브",
+    "pm.feature.priority":        "우선순위",
     "pf.free.1":                 "프로필의 \"무료\" 등급 배지",
     "pf.free.2":                 "월간 할당량 미터 (60 동영상 / 1 GB)",
     "pf.free.3":                 "시청 중 후원 광고 표시",
@@ -13003,7 +13157,7 @@ const I18N = {
     "plans.free.name":           "Gratis",
     "plans.free.tagline":        "Perfecto para aficionados y creadores casuales que recién comienzan.",
     "plans.free.cta":            "Registro Gratis",
-    "plans.premium.badge":       "⭐ Recomendado",
+    "plans.premium.badge":       "Recomendado",
     "plans.premium.name":        "Premium",
     "plans.premium.tagline":     "Para creadores serios que quieren cero límites y alcance extra.",
     "plans.premium.cta":         "Obtener Premium",
@@ -13026,17 +13180,17 @@ const I18N = {
     "pm.quota.storage":          "Almacenamiento este mes",
     "pm.tile.totalvideos":       "Total Videos",
     "pm.tile.views":             "Vistas",
-    "pm.ad.label":                "📢 Patrocinado",
+    "pm.ad.label":                "Patrocinado",
     "pm.ad.text":                 "Prueba Playly Premium → Experiencia sin anuncios",
     "pm.upgrade.bold":            "Mejora a Premium",
     "pm.upgrade.tail":            "— Desbloquea todo ilimitado",
-    "pm.insights.head":           "✨ Premium Insights",
+    "pm.insights.head":           "Premium Insights",
     "pm.insights.engagement":     "Tasa de engagement",
     "pm.insights.watch":          "Tiempo de visualización promedio",
     "pm.insights.region":         "Región principal",
-    "pm.feature.thumb":           "🎨 Miniatura personal",
-    "pm.feature.live":            "🔴 En Vivo",
-    "pm.feature.priority":        "⚡ Prioridad",
+    "pm.feature.thumb":           "Miniatura personal",
+    "pm.feature.live":            "En Vivo",
+    "pm.feature.priority":        "Prioridad",
     "pf.free.1":                 "Insignia de nivel \"Gratis\" en el perfil",
     "pf.free.2":                 "Medidor de cuota mensual (60 videos / 1 GB)",
     "pf.free.3":                 "Anuncios patrocinados visibles al ver",
@@ -21881,7 +22035,7 @@ function drawRevLiveChart() {
   if (empty) empty.hidden = true;
   if (liveTick) liveTick.hidden = false;
 
-  const W = 700, H = 180, PAD_L = 56, PAD_R = 14, PAD_T = 14, PAD_B = 22;
+  const W = 700, H = 180, PAD_L = 64, PAD_R = 16, PAD_T = 16, PAD_B = 30;
   const minT = buf[0].t, maxT = buf[buf.length - 1].t;
   const minV = Math.min(...buf.map(b => b.total));
   const maxV = Math.max(...buf.map(b => b.total));
@@ -21890,13 +22044,17 @@ function drawRevLiveChart() {
   // scale 0 → max supaya Y-axis labels distinct (0, max/3, 2max/3, max).
   // Sebelumnya pakai 5% padding dari max yang bikin 4 label semua round ke
   // nilai yang sama (e.g. semua "Rp 6.7jt").
+  // Skala Y supaya garis JELAS arahnya (req user 2026-05-18). Saat data
+  // flat (tidak ada transaksi baru), 0 → maxV*1.7 → garis horizontal di
+  // ~60% tinggi (bukan slab mepet atas yg bikin bingung). Saat ada
+  // variasi, beri headroom cukup biar tren kebaca.
   let yMin, yMax;
   if (variance < maxV * 0.02) {
     yMin = 0;
-    yMax = maxV * 1.1;
+    yMax = (maxV || 1) * 1.7;
   } else {
-    yMin = Math.max(0, minV - variance * 0.1);
-    yMax = maxV + variance * 0.1;
+    yMin = Math.max(0, minV - variance * 0.35);
+    yMax = maxV + variance * 0.35;
   }
   const tRange = (maxT - minT) || 1;
 
@@ -21906,36 +22064,47 @@ function drawRevLiveChart() {
   ]);
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(" ");
   const area = `${path} L ${points[points.length-1][0]} ${H - PAD_B} L ${points[0][0]} ${H - PAD_B} Z`;
+  let _rLen = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0]-points[i-1][0], dy = points[i][1]-points[i-1][1];
+    _rLen += Math.sqrt(dx*dx + dy*dy);
+  }
 
   let grid = "";
   for (let i = 0; i <= 3; i++) {
     const y = PAD_T + (i * (H - PAD_T - PAD_B) / 3);
     const val = yMax - (i * (yMax - yMin) / 3);
-    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(140,150,180,.1)" stroke-dasharray="2,4"/>`;
-    grid += `<text x="${PAD_L - 6}" y="${y + 3}" fill="rgba(140,150,180,.6)" font-size="9" text-anchor="end" font-family="Inter">${fmtRpShort(val)}</text>`;
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(160,172,196,.18)" stroke-dasharray="3,5"/>`;
+    grid += `<text x="${PAD_L - 10}" y="${y + 4}" fill="rgba(205,213,228,.92)" font-size="12" font-weight="600" text-anchor="end" font-family="Inter">${fmtRpShort(val)}</text>`;
   }
 
+  // Label waktu jelas (Bahasa Indonesia) — sumbu = 5 menit terakhir
   const lblTimes = [
-    { t: minT, label: "-5m", anchor: "start" },
-    { t: (minT + maxT) / 2, label: "-2:30", anchor: "middle" },
-    { t: maxT, label: "now", anchor: "end" }
+    { t: minT, label: "5 mnt lalu", anchor: "start" },
+    { t: (minT + maxT) / 2, label: "2,5 mnt lalu", anchor: "middle" },
+    { t: maxT, label: "Sekarang", anchor: "end" }
   ];
   let xLabels = "";
   lblTimes.forEach(({ t, label, anchor }) => {
     const x = PAD_L + (t - minT) / tRange * (W - PAD_L - PAD_R);
-    xLabels += `<text x="${x}" y="${H - PAD_B + 14}" fill="rgba(140,150,180,.6)" font-size="9" text-anchor="${anchor}" font-family="Inter">${label}</text>`;
+    xLabels += `<text x="${x}" y="${H - PAD_B + 20}" fill="rgba(205,213,228,.88)" font-size="12" font-weight="600" text-anchor="${anchor}" font-family="Inter">${label}</text>`;
   });
 
   const last = points[points.length - 1];
+  // Modern + selaras chart admin lain (req user 2026-05-18): palet
+  // navy→slate-blue, animasi draw-in + titik ujung berdenyut real-time.
   svg.innerHTML = `
     <defs>
-      <linearGradient id="revG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#561C24"/></linearGradient>
-      <linearGradient id="revGFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity=".3"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+      <linearGradient id="revG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3C5078"/><stop offset="100%" stop-color="#9DB4DA"/></linearGradient>
+      <linearGradient id="revGFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5B7BB4" stop-opacity=".34"/><stop offset="100%" stop-color="#5B7BB4" stop-opacity="0"/></linearGradient>
     </defs>
     ${grid}
-    <path d="${area}" fill="url(#revGFill)"/>
-    <path d="${path}" fill="none" stroke="url(#revG)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${last[0]}" cy="${last[1]}" r="4" fill="#10b981"><animate attributeName="r" values="4;7;4" dur="1.4s" repeatCount="indefinite"/></circle>
+    <path class="chart-area-anim" d="${area}" fill="url(#revGFill)"/>
+    <path class="chart-line-anim" d="${path}" fill="none" stroke="url(#revG)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${_rLen.toFixed(0)};stroke-dashoffset:${_rLen.toFixed(0)};--chart-len:${_rLen.toFixed(0)}"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="4" fill="url(#revG)">
+      <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;.45;1" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
     ${xLabels}
   `;
 }
@@ -22267,6 +22436,19 @@ function renderAdminKPI() {
 
   // Avatar stack — preview cepat creator/user di tiap panel (sparkline tetap dihapus)
   renderAdminAvatarStacks(m);
+
+  // Ringkasan PENDAPATAN di beranda (req user 2026-05-18) — data REAL sama
+  // dgn halaman Pendapatan (computeRevenueFromLedger). Dipanggil tiap render
+  // KPI (nav + live-refresh loop) jadi tetap sinkron.
+  try {
+    if ($("#dashRevTotal") && typeof computeRevenueFromLedger === "function") {
+      const rv = computeRevenueFromLedger();
+      const rp = typeof fmtRp === "function" ? fmtRp : (n => "Rp " + fmtNum(n));
+      $("#dashRevTotal").textContent = rp(rv.total || 0);
+      $("#dashRevToday").textContent = rp(rv.today || 0);
+      $("#dashRevRate").textContent  = `${rp(rv.rate || 0)}/menit`;
+    }
+  } catch (_) {}
 }
 
 /* ---------- Komunitas Aktif avatar stack (user home) ---------- */
@@ -22407,8 +22589,46 @@ function inferAdminEventJump(e) {
   return null;
 }
 
+// Kolom notifikasi aktivitas di samping hero card (request user 2026-05-18).
+// Sumber data sama dengan live feed: getAdminData("events") — mencakup SEMUA
+// aktivitas admin (termasuk admin cadangan, lihat actorEmail/actorTier) &
+// seluruh user. Tanpa emoji (indikator dot CSS, konsisten no-emoji).
+let lastHeroFeedTopId = null;
+function renderAdminHeroFeed() {
+  const list = $("#adminHeroFeed"); if (!list) return;
+  const events = getAdminData("events").slice(0, 14);
+  if (!events.length) {
+    list.innerHTML = `<li class="ahf-empty">
+      <strong>Belum ada aktivitas</strong>
+      <small>Aktivitas admin &amp; user akan muncul di sini secara real-time.</small>
+    </li>`;
+    lastHeroFeedTopId = null;
+    return;
+  }
+  const newTop = events[0].id;
+  const isNew = lastHeroFeedTopId !== null && newTop !== lastHeroFeedTopId;
+  list.innerHTML = events.map((e, i) => {
+    const jump = inferAdminEventJump(e);
+    const cls = `ahf-row${i === 0 && isNew ? " is-new" : ""}${jump ? " is-clickable" : ""}`;
+    const attrs = jump ? ` data-jump="${jump}" role="button" tabindex="0"` : "";
+    const who = e.actorEmail
+      ? `<small class="ahf-who">${e.actorTier === "super-admin" ? "Admin" : e.actorTier === "admin" ? "Admin cadangan" : "User"} · ${e.actorEmail}</small>`
+      : "";
+    return `<li class="${cls}"${attrs}>
+      <span class="ahf-dot"></span>
+      <span class="ahf-body">
+        <span class="ahf-text">${e.text}</span>
+        ${who}
+      </span>
+      <span class="ahf-time">${relTime(e.ts)}</span>
+    </li>`;
+  }).join("");
+  lastHeroFeedTopId = newTop;
+}
+
 let lastFeedTopId = null;
 function renderAdminLiveFeed() {
+  try { renderAdminHeroFeed(); } catch (_) {}
   const list = $("#adminLiveFeed"); if (!list) return;
   const events = getAdminData("events").slice(0, 10);
   if (!events.length) {
@@ -22564,7 +22784,7 @@ function renderAdminActionCenter() {
     },
     {
       key: "tickets", icon: "💬",
-      label: "Tiket Baru",
+      label: "Inbox",
       desc: "Pesan/keluhan user belum ditangani",
       count: m.tickets || 0,
       view: "admin-inbox",
@@ -22577,27 +22797,36 @@ function renderAdminActionCenter() {
       count: m.bugsCritical || 0,
       view: "admin-inbox",
       cls: "amber"
+    },
+    {
+      // req user 2026-05-18 — video baru menunggu approval/verifikasi
+      // admin (adminStatus "pending"). Beda dari Moderasi (video dilaporkan).
+      key: "vidPending", icon: "🎬",
+      label: "Video Butuh Verifikasi",
+      desc: "Video baru menunggu approval admin",
+      count: (typeof countAdminPendingVideos === "function") ? countAdminPendingVideos() : 0,
+      view: "admin-videos",
+      cls: "warn"
+    },
+    {
+      // req user 2026-05-18 — video yang sudah di-takedown; perlu
+      // audit/tinjau ulang (restore bila salah takedown).
+      key: "vidTakedown", icon: "🚫",
+      label: "Video Di-takedown",
+      desc: "Video dihapus — tinjau/restore bila perlu",
+      count: ((typeof getAllAdminVideos === "function" ? getAllAdminVideos() : []) || [])
+               .filter(v => v && v.adminStatus === "takedown").length,
+      view: "admin-videos",
+      cls: "amber"
     }
   ];
 
-  const totalActive = items.reduce((s, it) => s + (it.count > 0 ? 1 : 0), 0);
-  if (totalActive === 0) {
-    wrap.innerHTML = `
-      <div class="admin-action-empty">
-        <span class="aac-empty-icon">✅</span>
-        <div>
-          <strong>Semua aman</strong>
-          <small>Tidak ada aksi tertunda — admin bisa fokus monitoring &amp; ringkasan.</small>
-        </div>
-      </div>`;
-    return;
-  }
-
+  // PUSAT AKSI SELALU TAMPIL (req user 2026-05-18): 6 kartu permanen,
+  // count 0 di-dim (aac-zero) — TIDAK diganti empty-state "Semua aman".
   wrap.innerHTML = items.map(it => {
     const stateCls = it.count > 0 ? "aac-active" : "aac-zero";
     return `
-      <button type="button" class="admin-action-card aac-${it.cls} ${stateCls}" data-jump="${it.view}" title="${escapeHtml(it.desc)}">
-        <span class="aac-icon">${it.icon}</span>
+      <button type="button" class="admin-action-card aac-noicon aac-${it.cls} ${stateCls}" data-jump="${it.view}" title="${escapeHtml(it.desc)}">
         <div class="aac-content">
           <span class="aac-label">${escapeHtml(it.label)}</span>
           <strong class="aac-count">${it.count}</strong>
@@ -22723,7 +22952,7 @@ function renderAdminUsers() {
       <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
       <td>${r.email}</td>
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
-      <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? "⭐ " : ""}${tierLabel}</span></td>
+      <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? `<svg class="tier-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.6 6.8 19.3l1-5.9L3.5 9.3l5.9-.9Z"/></svg>` : ""}${tierLabel}</span></td>
       <td class="col-videos">${r.videos}</td>
       <td>${r.joinedAt}</td>
       <td><span class="row-status status-${r.status}" title="${r.lastActivity ? `Last activity: ${relTime(r.lastActivity)}` : "No activity recorded"}">${statusLabel}</span></td>
@@ -23929,15 +24158,26 @@ function drawMiniLineChart(svg, values, color) {
     const dy = points[i][1] - points[i-1][1];
     pathLen += Math.sqrt(dx*dx + dy*dy);
   }
+  // Disamakan dgn Grafik Trafik (req user 2026-05-18): palet admin
+  // navy→slate-blue, animasi draw-in + titik ujung berdenyut real-time.
+  const lp = points[n - 1];
   svg.innerHTML = `
     <defs>
+      <linearGradient id="${gradId}L" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3C5078"/>
+        <stop offset="100%" stop-color="#9DB4DA"/>
+      </linearGradient>
       <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.4"/>
-        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        <stop offset="0%" stop-color="#5B7BB4" stop-opacity="0.34"/>
+        <stop offset="100%" stop-color="#5B7BB4" stop-opacity="0"/>
       </linearGradient>
     </defs>
     <path class="chart-area-anim" d="${area}" fill="url(#${gradId})"/>
-    <path class="chart-line-anim" d="${path}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
+    <path class="chart-line-anim" d="${path}" fill="none" stroke="url(#${gradId}L)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
+    <circle cx="${lp[0].toFixed(1)}" cy="${lp[1].toFixed(1)}" r="2.6" fill="url(#${gradId}L)">
+      <animate attributeName="r" values="2.6;4.6;2.6" dur="1.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;.4;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
   `;
 }
 
@@ -23983,7 +24223,7 @@ function anDrawAreaChart(svg, values, labels, opts = {}) {
   const wrap = svg.parentElement;
   const containerW = Math.max(600, Math.round(wrap?.offsetWidth || svg.clientWidth || 700));
   const W = containerW, H = 240;
-  const PAD_L = opts.padL ?? 44, PAD_R = 18, PAD_T = 20, PAD_B = 32;
+  const PAD_L = opts.padL ?? 52, PAD_R = 20, PAD_T = 22, PAD_B = 40;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
   const rawMax = Math.max(...values, 1);
@@ -23998,22 +24238,30 @@ function anDrawAreaChart(svg, values, labels, opts = {}) {
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(" ");
   const lastX = points[n - 1][0];
   const firstX = points[0][0];
+  const lastPt = points[n - 1];
   const area = `${path} L ${lastX} ${H - PAD_B} L ${firstX} ${H - PAD_B} Z`;
+  // Panjang garis untuk animasi draw-in (real-time feel)
+  let _pLen = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i-1][0], dy = points[i][1] - points[i-1][1];
+    _pLen += Math.sqrt(dx*dx + dy*dy);
+  }
   const fmt = opts.yFmt || (v => fmtNum(Math.round(v)));
 
   let grid = "";
   for (let i = 0; i < nice.ticks.length; i++) {
     const tickVal = nice.ticks[i];
     const y = H - PAD_B - (tickVal / max) * innerH;
-    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(140,150,180,.12)" stroke-dasharray="2,4"/>`;
-    grid += `<text x="${PAD_L - 8}" y="${y + 3.5}" fill="rgba(140,150,180,.7)" font-size="10" text-anchor="end" font-family="Inter">${fmt(tickVal)}</text>`;
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(160,172,196,.18)" stroke-dasharray="3,5"/>`;
+    grid += `<text x="${PAD_L - 10}" y="${y + 4.5}" fill="rgba(205,213,228,.92)" font-size="13" font-weight="600" text-anchor="end" font-family="Inter">${fmt(tickVal)}</text>`;
   }
 
+  // Label X — lebih besar & jelas, tidak terlalu rapat (≤7 label)
   let xLabels = "";
-  const labelStep = n > 14 ? Math.ceil(n / 8) : 1;
+  const labelStep = Math.max(1, Math.ceil(n / 7));
   labels.forEach((l, i) => {
     if (i % labelStep !== 0 && i !== n - 1) return;
-    xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 18}" fill="rgba(140,150,180,.65)" font-size="10.5" text-anchor="middle" font-family="Inter">${l}</text>`;
+    xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 22}" fill="rgba(205,213,228,.88)" font-size="12.5" font-weight="600" text-anchor="middle" font-family="Inter">${l}</text>`;
   });
 
   // ALL dots — sama persis kayak user chart, bukan cuma peak.
@@ -24025,20 +24273,25 @@ function anDrawAreaChart(svg, values, labels, opts = {}) {
   });
 
   // Wine→cream gradient (match user chart)
+  // Palet admin (navy → slate-blue), modern + animasi draw-in real-time
   svg.innerHTML = `
     <defs>
       <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#561C24"/>
-        <stop offset="100%" stop-color="#E8D8C4"/>
+        <stop offset="0%" stop-color="#3C5078"/>
+        <stop offset="100%" stop-color="#9DB4DA"/>
       </linearGradient>
       <linearGradient id="${gradId}Fill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#6D2932" stop-opacity=".35"/>
-        <stop offset="100%" stop-color="#E8D8C4" stop-opacity="0"/>
+        <stop offset="0%" stop-color="#5B7BB4" stop-opacity=".34"/>
+        <stop offset="100%" stop-color="#5B7BB4" stop-opacity="0"/>
       </linearGradient>
     </defs>
     ${grid}
-    <path d="${area}" fill="url(#${gradId}Fill)"/>
-    <path d="${path}" fill="none" stroke="url(#${gradId})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path class="chart-area-anim" d="${area}" fill="url(#${gradId}Fill)"/>
+    <path class="chart-line-anim" d="${path}" fill="none" stroke="url(#${gradId})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${_pLen.toFixed(0)};stroke-dashoffset:${_pLen.toFixed(0)};--chart-len:${_pLen.toFixed(0)}"/>
+    <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="4" fill="url(#${gradId})">
+      <animate attributeName="r" values="4;7;4" dur="1.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;.45;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
     ${dots}
     ${xLabels}
   `;
@@ -27124,7 +27377,7 @@ function renderUserStats() {
 
 // ----------------------- LIVE CLOCK & GREETING -----------------------
 const ID_DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-const ID_DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const ID_DAYS_SHORT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 const ID_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const ID_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
 
@@ -27362,7 +27615,18 @@ function refreshHeroGreeting() {
     const adminGreet = $("#adminHeroGreeting");
     if (adminGreet) {
       const firstName = user.name.split(" ")[0];
-      adminGreet.innerHTML = `${t("hero.hi")}, ${firstName} <span class="wave">⚡</span>`;
+      // Sapaan ikut waktu (Selamat pagi/siang/sore/malam) — req user
+      // 2026-05-18, samakan pola dgn hero user (~27439). Ikon bolt tetap.
+      const _agH = new Date().getHours();
+      const _agK = _agH < 5 ? "greet.night" : _agH < 11 ? "greet.morning"
+        : _agH < 15 ? "greet.afternoon" : _agH < 19 ? "greet.evening" : "greet.night";
+      // Ikon sapaan ikut waktu (req user 2026-05-18): bulan utk malam,
+      // matahari utk pagi/siang/sore — lebih cocok drpd petir. Class
+      // .admin-hero-bolt dipertahankan (styling ukuran/warna sudah ada).
+      const _greetIco = (_agK === "greet.night")
+        ? `<svg class="admin-hero-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`
+        : `<svg class="admin-hero-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+      adminGreet.innerHTML = `${t(_agK)}, ${firstName} ${_greetIco}`;
     }
     const heroTier = document.getElementById("adminHeroTier");
     if (heroTier) {
@@ -40329,7 +40593,7 @@ function closeLibInlinePlayer() {
       document.querySelectorAll('[data-lib-cc]').forEach(b => b.classList.toggle("active", b === ccBtn));
       const labelMap = LIB_CC_LANG_LABELS;
       const label = document.getElementById("libCcLabel");
-      if (label) label.textContent = labelMap[cc] || "Off";
+      if (label) label.textContent = labelMap[cc] || (cc === "off" ? "Mati" : cc);
       // User explicitly picked → remember choice (jangan auto-override lagi)
       window.__libCcUserOverride = true;
       if (cc === "off") {
@@ -40931,15 +41195,53 @@ function setupCustomPlayer() {
     if (v.paused || v.ended) v.play().catch(() => {});
     else v.pause();
   }
-  center?.addEventListener("click", togglePlay);
   playBtn?.addEventListener("click", togglePlay);
 
-  // Skip +10s
-  skipBtn?.addEventListener("click", () => { v.currentTime = Math.min(v.currentTime + 10, v.duration || 0); });
-  $("#cplBackBtn")?.addEventListener("click", () => { v.currentTime = Math.max(v.currentTime - 10, 0); });
+  // Container utk ikon feedback (selalu terlihat, beda dgn overlay yg
+  // opacity:0 saat kontrol disembunyikan).
+  const screenEl = v.closest(".player-screen") || overlay;
+
+  // Single-click area video = play/pause (ditunda 250ms); DOUBLE-click di
+  // paruh kanan = maju 10s, paruh kiri = mundur 10s. (req user 2026-05-18)
+  let _cplClickTimer = null;
+  center?.addEventListener("click", () => {
+    clearTimeout(_cplClickTimer);
+    _cplClickTimer = setTimeout(togglePlay, 250);
+  });
+  center?.addEventListener("dblclick", (e) => {
+    clearTimeout(_cplClickTimer);
+    const r = center.getBoundingClientRect();
+    const right = (e.clientX - r.left) > r.width / 2;
+    v.currentTime = right
+      ? Math.min(v.currentTime + 10, v.duration || 0)
+      : Math.max(v.currentTime - 10, 0);
+    plyActionFlash(screenEl, right ? "fwd" : "bwd");
+  });
+
+  // Skip +10s / -10s (tombol ikon) — ikut munculkan ikon feedback
+  skipBtn?.addEventListener("click", () => { v.currentTime = Math.min(v.currentTime + 10, v.duration || 0); plyActionFlash(screenEl, "fwd"); });
+  $("#cplBackBtn")?.addEventListener("click", () => { v.currentTime = Math.max(v.currentTime - 10, 0); plyActionFlash(screenEl, "bwd"); });
+  if (!v._cplFlashBound) {
+    v._cplFlashBound = true;
+    v.addEventListener("play",  () => plyActionFlash(screenEl, "play"));
+    v.addEventListener("pause", () => plyActionFlash(screenEl, "pause"));
+  }
 
   // Mute toggle
   muteBtn?.addEventListener("click", () => { v.muted = !v.muted; });
+
+  // Subtitle (CC) bar button — reuse tombol #subBtn lama (sudah toggle
+  // on/off + auto-VTT). Tetap berfungsi sesuai setup sebelumnya.
+  $("#cplCCBtn")?.addEventListener("click", () => {
+    $("#subBtn")?.click();
+    setTimeout(() => {
+      const on = $("#subBtn")?.classList.contains("active");
+      $("#cplCCBtn")?.classList.toggle("cpl-active", !!on);
+    }, 30);
+  });
+  // Kecepatan bar button → buka POPUP pilihan (bukan auto-cycle).
+  // Ditangani initPlySpeedPopups (delegasi di .ply-spd-wrap).
+  if (typeof initPlySpeedPopups === "function") initPlySpeedPopups();
 
   // Progress bar seek
   if (progress) {
@@ -42203,12 +42505,13 @@ function doLogout() {
 
 function confirmLogout() {
   openConfirm({
-    icon: "🚪", iconClass: "warn", title: "Logout from Playly?",
-    desc: `You will be signed out of <b>@${user.username}</b>. Your data is saved and accessible after sign-in.`,
-    btnText: "🚪 Logout", btnClass: "warn",
+    icon: "🚪", iconClass: "warn", title: "Keluar dari Playly?",
+    desc: `Kamu akan keluar dari <b>@${user.username}</b>. Data kamu tetap tersimpan dan bisa diakses lagi setelah login.`,
+    btnText: "🚪 Keluar", btnClass: "warn",
     onConfirm: () => showFullOverlay({
-      icon: "👋", title: `See you again, ${user.name.split(" ")[0]}!`, desc: "Logging out...",
-      duration: 1600, onClose: () => { doLogout(); toast("✓ Logged out.", "success"); }
+      variant: "logout",
+      icon: "", title: `Sampai jumpa lagi, ${user.name.split(" ")[0]}!`, desc: "Mengakhiri sesi...",
+      duration: 3000, onClose: () => { doLogout(); toast("✓ Berhasil logout.", "success"); }
     })
   });
 }
@@ -42243,11 +42546,12 @@ function confirmDelete() {
   });
 }
 
-function showFullOverlay({ icon, title, desc, duration = 2000, onClose }) {
+function showFullOverlay({ icon, title, desc, duration = 2000, onClose, variant }) {
   $("#foIcon").textContent = icon;
   $("#foTitle").textContent = title;
   $("#foDesc").textContent = desc;
   const overlay = $("#fullOverlay");
+  overlay.dataset.variant = variant || "";
   overlay.classList.add("show");
   setTimeout(() => { overlay.classList.remove("show"); onClose && onClose(); }, duration);
 }
@@ -43341,12 +43645,12 @@ function initLibCustomControls() {
   vidEl.controls = false;
   vidEl.removeAttribute("controls");
 
-  const PLAY_ICO  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-  const PAUSE_ICO = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-  const VOL_ICO   = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-  const MUTE_ICO  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
-  const FS_ENTER  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`;
-  const FS_EXIT   = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`;
+  const PLAY_ICO  = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`;
+  const PAUSE_ICO = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`;
+  const VOL_ICO   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+  const MUTE_ICO  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+  const FS_ENTER  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`;
+  const FS_EXIT   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>`;
 
   function fmt(s) {
     if (!isFinite(s) || s < 0) return "0:00";
@@ -43380,13 +43684,38 @@ function initLibCustomControls() {
 
     vidEl.addEventListener("play",           syncPlay);
     vidEl.addEventListener("pause",          syncPlay);
+    vidEl.addEventListener("play",           () => plyActionFlash(screen, "play"));
+    vidEl.addEventListener("pause",          () => plyActionFlash(screen, "pause"));
     vidEl.addEventListener("timeupdate",     syncProg);
     vidEl.addEventListener("durationchange", syncProg);
     vidEl.addEventListener("volumechange",   syncMute);
 
-    // Click on video → toggle play
+    // Click video = play/pause (ditunda 250ms); DOUBLE-click paruh kanan =
+    // maju 10s, paruh kiri = mundur 10s. (req user 2026-05-18)
+    let _lvcClickTimer = null;
+    const _lvcSeek = (delta) => {
+      if (window.__lvcYTPlayer) {
+        const cur = window.__lvcYTPlayer.getCurrentTime?.() || 0;
+        const dur = window.__lvcYTPlayer.getDuration?.() || 0;
+        window.__lvcYTPlayer.seekTo?.(Math.max(0, Math.min(cur + delta, dur || cur + delta)), true);
+        return;
+      }
+      vidEl.currentTime = delta < 0
+        ? Math.max(vidEl.currentTime - 10, 0)
+        : Math.min(vidEl.currentTime + 10, vidEl.duration || 0);
+    };
     vidEl.addEventListener("click", e => {
-      if (e.target === vidEl) { vidEl.paused ? vidEl.play() : vidEl.pause(); }
+      if (e.target !== vidEl) return;
+      clearTimeout(_lvcClickTimer);
+      _lvcClickTimer = setTimeout(() => { vidEl.paused ? vidEl.play() : vidEl.pause(); }, 250);
+    });
+    vidEl.addEventListener("dblclick", e => {
+      if (e.target !== vidEl) return;
+      clearTimeout(_lvcClickTimer);
+      const r = (screen || vidEl).getBoundingClientRect();
+      const right = (e.clientX - r.left) > r.width / 2;
+      _lvcSeek(right ? 10 : -10);
+      plyActionFlash(screen, right ? "fwd" : "bwd");
     });
 
     // Control buttons
@@ -43399,8 +43728,9 @@ function initLibCustomControls() {
       }
       vidEl.paused ? vidEl.play() : vidEl.pause();
     });
-    // Skip back/forward 10 detik (per user 2026-05-08)
+    // Skip back/forward 10 detik (per user 2026-05-08) — + ikon feedback
     document.getElementById("lvcBack")?.addEventListener("click", () => {
+      plyActionFlash(screen, "bwd");
       if (window.__lvcYTPlayer) {
         const cur = window.__lvcYTPlayer.getCurrentTime?.() || 0;
         window.__lvcYTPlayer.seekTo?.(Math.max(cur - 10, 0), true);
@@ -43409,6 +43739,7 @@ function initLibCustomControls() {
       vidEl.currentTime = Math.max(vidEl.currentTime - 10, 0);
     });
     document.getElementById("lvcSkip")?.addEventListener("click", () => {
+      plyActionFlash(screen, "fwd");
       if (window.__lvcYTPlayer) {
         const cur = window.__lvcYTPlayer.getCurrentTime?.() || 0;
         const dur = window.__lvcYTPlayer.getDuration?.() || 0;
@@ -43438,6 +43769,19 @@ function initLibCustomControls() {
       }
       vidEl.volume = parseFloat(volSl.value); vidEl.muted = false;
     });
+
+    // Subtitle (CC) bar button — reuse handler [data-lib-cc] (delegated di
+    // document). Toggle: nyala→Mati, mati→Bahasa Indonesia. Tetap berfungsi
+    // sesuai setup submenu yang sudah ada.
+    document.getElementById("lvcCC")?.addEventListener("click", () => {
+      const active = document.querySelector('[data-lib-cc].active:not([data-lib-cc="off"])');
+      const target = document.querySelector(active ? '[data-lib-cc="off"]' : '[data-lib-cc="id"]');
+      target?.click();
+      document.getElementById("lvcCC")?.classList.toggle("lvc-on", !active);
+    });
+    // Kecepatan bar button → buka POPUP pilihan (bukan auto-cycle).
+    // Ditangani initPlySpeedPopups (delegasi di .ply-spd-wrap).
+    if (typeof initPlySpeedPopups === "function") initPlySpeedPopups();
 
     // Proxy kebab — handled directly by document-level toggle below (no .click() indirection to avoid double-fire)
 
