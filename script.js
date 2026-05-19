@@ -19773,7 +19773,15 @@ function renderAdminAll() {
 
 // =================== ADMIN: TOP INSIGHTS (dashboard panel) ===================
 function renderAdminTopInsights() {
-  if (!$("#adminTopVideosLive")) return;
+  // FIX 2026-05-19: dulu early-return kalau #adminTopVideosLive tidak ada.
+  // Panel "Top Performing Videos" sudah dihapus dari markup dashboard,
+  // sehingga guard ini membuat SELURUH fungsi bail → kolom TERKINI
+  // (Video baru di upload / User Baru / Kreator Teratas) tidak pernah
+  // ke-render. Sekarang bail HANYA kalau semua panel TERKINI juga tidak
+  // ada (mis. bukan di halaman admin dashboard). Blok Top Videos
+  // di-guard null sendiri di bawah.
+  if (!$("#adminTopVideosLive") && !$("#adminRecentVideosLive") &&
+      !$("#adminTopCreatorsLive") && !$("#adminRecentUsersLive")) return;
   const m = getAdminMetrics();
   // Filter admin dari pool — dashboard fokus pada aktivitas USER, bukan akun admin
   const accounts = (m.accounts || []).filter(a => a.role !== "admin");
@@ -19785,7 +19793,9 @@ function renderAdminTopInsights() {
     .map(v => ({ ...v, _score: (v.viewsNum || 0) + (v.likes || 0) * 5 }))
     .sort((a, b) => b._score - a._score)
     .slice(0, 5);
-  $("#adminTopVideosLive").innerHTML = topVids.length ? topVids.map((v, i) => `
+  const tvEl = $("#adminTopVideosLive");
+  if (tvEl) {
+    tvEl.innerHTML = topVids.length ? topVids.map((v, i) => `
     <div class="admin-list-row admin-list-row-playable" data-open-video="${v.id}" title="Play video">
       <span class="rank">#${i + 1}</span>
       <div>
@@ -19801,12 +19811,13 @@ function renderAdminTopInsights() {
       </button>
     </div>
   `).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No videos yet.</div>`;
-  $$("[data-open-video]", $("#adminTopVideosLive")).forEach(b => {
-    b.addEventListener("click", () => {
-      const vid = Number(b.dataset.openVideo);
-      if (vid && typeof openPlayer === "function") openPlayer(vid);
+    $$("[data-open-video]", tvEl).forEach(b => {
+      b.addEventListener("click", () => {
+        const vid = Number(b.dataset.openVideo);
+        if (vid && typeof openPlayer === "function") openPlayer(vid);
+      });
     });
-  });
+  }
 
   // Recent Uploads (video baru di-upload) — sort by id (=Date.now() saat upload)
   const recentVids = [...videos].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 5);
@@ -19859,16 +19870,22 @@ function renderAdminTopInsights() {
     creatorMap[v.creator].views += v.viewsNum || 0;
   });
   const topCreators = Object.values(creatorMap).sort((a, b) => b.views - a.views).slice(0, 5);
-  $("#adminTopCreatorsLive").innerHTML = topCreators.length ? topCreators.map((c, i) => `
+  $("#adminTopCreatorsLive").innerHTML = topCreators.length ? topCreators.map((c, i) => {
+    // Avatar = profil kreator sendiri (gambar yg di-set user, atau
+    // avatar generatif per-username) — BUKAN tema admin slate.
+    const av = _findAvatarByUsername(c.name, accounts)
+      || ("https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(c.name || "user"));
+    return `
     <div class="admin-list-row" style="cursor:pointer" data-open-user="${escapeHtml(c.name)}">
-      <span class="rank">#${i + 1}</span>
+      <span class="admin-row-av"><img src="${escapeHtml(av)}" alt="" loading="lazy" referrerpolicy="no-referrer"/></span>
       <div>
         <strong>@${escapeHtml(c.name)}</strong>
-        <small>${c.videos} video</small>
+        <small>#${i + 1} • ${c.videos} video</small>
       </div>
       <b>${fmtNum(c.views)} views</b>
     </div>
-  `).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Belum ada kreator aktif.</div>`;
+  `;
+  }).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Belum ada kreator aktif.</div>`;
   $$("[data-open-user]", $("#adminTopCreatorsLive")).forEach(b => {
     b.addEventListener("click", () => openUserDetail(b.dataset.openUser));
   });
@@ -19878,11 +19895,14 @@ function renderAdminTopInsights() {
     .sort((a, b) => new Date(b.joinedAt || 0) - new Date(a.joinedAt || 0))
     .slice(0, 5);
   $("#adminRecentUsersLive").innerHTML = recentUsers.length ? recentUsers.map(a => {
-    const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
     const joined = a.joinedAt ? relTime(new Date(a.joinedAt).getTime()) : "—";
+    // Avatar = gambar profil yg di-set user, atau avatar generatif
+    // per-username (identitas user) — BUKAN inisial "U" / tema admin.
+    const av = a.avatar
+      || ("https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(a.username || a.name || "user"));
     return `
       <div class="admin-list-row" style="cursor:pointer" data-open-user="${escapeHtml(a.username)}">
-        <span class="rank" style="font-size:11px">${init}</span>
+        <span class="admin-row-av"><img src="${escapeHtml(av)}" alt="" loading="lazy" referrerpolicy="no-referrer"/></span>
         <div>
           <strong>${escapeHtml(a.name || a.username)}</strong>
           <small>@${escapeHtml(a.username)} • ${joined}</small>
@@ -20203,13 +20223,45 @@ function saveAdConfig(cfg) {
   }
 }
 
-// ----------------------- DEMO AD SEED (jalan sekali per browser) -----------------------
-// Mengisi config dengan iklan contoh supaya admin & user bisa langsung lihat
-// pre-roll, banner, dan running text di video player. Hanya jalan kalau:
-//   1. Belum pernah di-seed (flag localStorage), DAN
-//   2. Config saat ini benar-benar kosong di semua section (admin tidak hilang
-//      kontrol kalau sudah pernah set ad sendiri).
-const AD_SEED_FLAG = "playly-ads-seeded-v1";
+// ----------------------- PURGE IKLAN DUMMY (clean-slate) -----------------------
+// req user 2026-05-19: iklan dummy yang dulu ter-seed (commit 3d8061e) sudah
+// terlanjur tertanam di localStorage & ter-propagate ke Supabase. Menghapus
+// kode seed saja tidak cukup — data lama akan "resurrect" dari cloud.
+// purgeDummyAds() membuang HANYA item dgn nama dummy yang dikenal (iklan asli
+// yang di-set admin TIDAK tersentuh), idempotent, jalan tiap load + tiap
+// cloud-applied → kalau device lain mem-propagate dummy lagi, auto bersih
+// lagi; saveAdConfig juga mem-propagate state bersih ke cloud.
+const AD_DUMMY_NAMES = new Set([
+  "Promo Bulanan", "Follow Sosmed",
+  "Playly Premium", "Sponsor BrandX",
+  "Sponsor 15 detik", "Sponsor 15 detik (alt)",
+  "Playly Premium SB", "Sponsor BrandX SB"
+]);
+function purgeDummyAds() {
+  try {
+    const raw = localStorage.getItem(AD_CONFIG_KEY);
+    if (!raw) return;
+    const c = JSON.parse(raw);
+    if (!c) return;
+    let changed = false;
+    ["runningText", "banner", "preroll", "sideBanner"].forEach(sec => {
+      if (c[sec] && Array.isArray(c[sec].items)) {
+        const before = c[sec].items.length;
+        c[sec].items = c[sec].items.filter(it => !AD_DUMMY_NAMES.has((it && it.name) || ""));
+        if (c[sec].items.length !== before) changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(AD_CONFIG_KEY, JSON.stringify(c));
+      window.dispatchEvent(new CustomEvent("playly:ads-updated"));
+      try { if (typeof refreshLiveAds === "function") refreshLiveAds(); } catch (_) {}
+    }
+  } catch (_) {}
+}
+purgeDummyAds();
+window.addEventListener("playly:cloud-applied", () => { try { purgeDummyAds(); } catch (_) {} });
+
+const AD_SEED_FLAG = "playly-ads-seeded-v1"; // legacy (tidak dipakai lagi)
 
 // Banner SVG inline — pakai data URI URL-encoded standar (tanpa ;utf8 yang
 // non-standard). Reliable di Chrome/Edge/Firefox/Safari.
@@ -20253,91 +20305,16 @@ const DEMO_BANNER_SPONSOR = svgDataUri(`
   <text x="140" y="165" font-family="Inter, sans-serif" font-size="12" fill="#93c5fd">brandx.example.com</text>
 </svg>`);
 
-function seedDefaultAds() {
-  if (localStorage.getItem(AD_SEED_FLAG)) return;
-  const cur = getAdConfig();
-  const isEmpty =
-    cur.runningText.items.length === 0 &&
-    cur.banner.items.length === 0 &&
-    cur.preroll.items.length === 0;
-  if (!isEmpty) {
-    // Admin sudah set sendiri — set flag tapi jangan timpa
-    localStorage.setItem(AD_SEED_FLAG, "1");
-    return;
-  }
+// Dihapus per req user 2026-05-19 (clean-slate / no-dummy). Dulu
+// mengisi config dengan 4 jenis iklan contoh; kini NO-OP — tidak
+// pernah dipanggil & tidak pernah menanam dummy. Shell dipertahankan
+// supaya pemanggilan tak-terduga (mis. cloud-sync lama) tetap aman.
+function seedDefaultAds() { /* no-op: clean-slate, tidak seed dummy */ }
 
-  const seeded = {
-    runningText: {
-      rotation: "random",
-      items: [
-        { ...defaultRtItem(), name: "Promo Bulanan",
-          text: "🎉 Promo Spesial Bulan Ini — Diskon 50% untuk Playly Premium! Klik banner untuk info →",
-          position: "bottom", speed: 90, textColor: "#ffffff", bgColor: "#561C24", bgOpacity: 75 },
-        { ...defaultRtItem(), name: "Follow Sosmed",
-          text: "📲 Follow @playlyofficial di Instagram & TikTok untuk update video viral terbaru!",
-          position: "top", speed: 75, textColor: "#1a0c10", bgColor: "#c8965a", bgOpacity: 90 }
-      ]
-    },
-    banner: {
-      rotation: "random",
-      items: [
-        { ...defaultBnItem(), name: "Playly Premium",
-          imageUrl: DEMO_BANNER_PROMO, linkUrl: "https://playly.app/premium",
-          position: "bottom-right", showAfterSec: 3, closable: true },
-        { ...defaultBnItem(), name: "Sponsor BrandX",
-          imageUrl: DEMO_BANNER_SPONSOR, linkUrl: "https://brandx.example.com",
-          position: "top-right", showAfterSec: 8, closable: true }
-      ]
-    },
-    preroll: {
-      rotation: "random",
-      items: [
-        { ...defaultPrItem(), name: "Sponsor 15 detik",
-          videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-          skippable: true, skipAfterSec: 5 },
-        { ...defaultPrItem(), name: "Sponsor 15 detik (alt)",
-          videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-          skippable: true, skipAfterSec: 3 }
-      ]
-    },
-    sideBanner: {
-      rotation: "random",
-      items: [
-        { ...defaultSbItem(), name: "Playly Premium SB",
-          badge: "PROMO", label: "Penawaran Terbatas",
-          title: "Upgrade ke Playly Premium",
-          subtitle: "Bebas iklan · Kualitas 4K · Upload tanpa batas.",
-          ctaText: "Upgrade", ctaUrl: "https://playly.app/premium",
-          gradient: "blue" },
-        { ...defaultSbItem(), name: "Sponsor BrandX SB",
-          badge: "SPONSOR", label: "Dipersembahkan BrandX",
-          title: "BrandX Studio",
-          subtitle: "Solusi kreatif untuk konten video kamu.",
-          ctaText: "Pelajari", ctaUrl: "https://brandx.example.com",
-          gradient: "wine" }
-      ]
-    }
-  };
-
-  saveAdConfig(seeded);
-  localStorage.setItem(AD_SEED_FLAG, "1");
-}
-
-// Re-seed iklan DUMMY sekali per browser (req user 2026-05-18: user FREE
-// harus lihat semua iklan jalan saat play video & saat buka link share).
-// Override clean-slate lama yang meng-kosongkan config. seedDefaultAds()
-// hanya mengisi kalau config benar-benar kosong → admin yang sudah set
-// iklan sendiri TIDAK ketimpa. playly-ad-config ikut cloud-sync, jadi
-// satu run mem-propagate dummy ads ke semua device.
-const AD_SEED_DUMMY_FLAG = "playly-ad-seed-dummy-v20260518";
-if (!localStorage.getItem(AD_SEED_DUMMY_FLAG)) {
-  try {
-    // Bypass legacy guard yang di-set clean-slate lama supaya seed jalan.
-    localStorage.removeItem(AD_SEED_FLAG);
-    seedDefaultAds();
-  } catch (_) {}
-  localStorage.setItem(AD_SEED_DUMMY_FLAG, "1");
-}
+// SEED IKLAN DUMMY DIHAPUS TOTAL (req user 2026-05-19, prinsip
+// clean-slate / no-dummy). Tidak ada lagi auto-inject iklan contoh
+// per-browser maupun propagasi dummy via cloud-sync. Iklan hanya
+// muncul kalau admin meng-set sendiri di halaman Kelola Iklan.
 
 function adSection(cfg, type) {
   if (type === "rt") return cfg.runningText;
@@ -22479,12 +22456,17 @@ function renderAdminKPI() {
     countUp($("#kpiViews"),  m.totalViews,         fmtNum);
   }, 120);
 
+  // Tren Total Pengguna → format PERSEN, konsisten dgn kartu lain
+  // (↑ X%), bukan "N baru 24j". (req user 2026-05-19). Hitung % real:
+  // kontribusi user baru 24 jam terhadap total user.
   const trendEls = $$(".admin-kpi-card .kpi-trend");
-  const trendTxt = m.newUsers24h > 0 ? `↑ ${m.newUsers24h} baru 24j` : `0 baru 24j`;
-  if (trendEls[0]) trendEls[0].textContent = trendTxt;
+  const usersPct = userCount > 0
+    ? Math.round((m.newUsers24h / userCount) * 1000) / 10
+    : 0;
+  if (trendEls[0]) trendEls[0].textContent = `↑ ${usersPct}%`;
 
-  // Avatar stack — preview cepat creator/user di tiap panel
-  renderAdminAvatarStacks(m);
+  // Avatar-stack melayang dihapus (req user 2026-05-19) — avatar
+  // sekarang di DALAM row daftar, pakai profil user masing-masing.
 
   // Mini-sparkline tren 7 hari di tiap kartu KPI (req user 2026-05-19 —
   // isi ruang kosong, data-rich, monokrom slate konsisten chart lain).
@@ -22860,9 +22842,22 @@ function renderAdminActionCenter() {
     ? getPremiumPayments().filter(p => p && p.status === "pending").length
     : 0;
 
+  // Ikon monokrom (Lucide-style, stroke=currentColor) — konsisten dgn
+  // ikon Ringkasan Pendapatan (.ars-ico). NO emoji, flat slate.
+  const SVG = {
+    open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+    close: '</svg>'
+  };
+  const icoShieldCheck = SVG.open + '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>' + SVG.close;
+  const icoFlag        = SVG.open + '<path d="M4 21V4"/><path d="M4 4h13l-2 4 2 4H4"/>' + SVG.close;
+  const icoMail        = SVG.open + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>' + SVG.close;
+  const icoAlertTri    = SVG.open + '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>' + SVG.close;
+  const icoVideo       = SVG.open + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/>' + SVG.close;
+  const icoBan         = SVG.open + '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>' + SVG.close;
+
   const items = [
     {
-      key: "premium", icon: "⭐",
+      key: "premium", svg: icoShieldCheck,
       label: "Verifikasi Premium",
       desc: "Pembayaran menunggu approval",
       count: premiumPending,
@@ -22870,7 +22865,7 @@ function renderAdminActionCenter() {
       cls: "warn"
     },
     {
-      key: "mod", icon: "🚩",
+      key: "mod", svg: icoFlag,
       label: "Moderasi Laporan",
       desc: "Video dilaporkan menunggu review",
       count: m.mod || 0,
@@ -22878,7 +22873,7 @@ function renderAdminActionCenter() {
       cls: "danger"
     },
     {
-      key: "tickets", icon: "💬",
+      key: "tickets", svg: icoMail,
       label: "Inbox",
       desc: "Pesan/keluhan user belum ditangani",
       count: m.tickets || 0,
@@ -22886,7 +22881,7 @@ function renderAdminActionCenter() {
       cls: "info"
     },
     {
-      key: "bugs", icon: "🐞",
+      key: "bugs", svg: icoAlertTri,
       label: "Bug Critical/High",
       desc: "Bug severity tinggi belum ditutup",
       count: m.bugsCritical || 0,
@@ -22896,7 +22891,7 @@ function renderAdminActionCenter() {
     {
       // req user 2026-05-18 — video baru menunggu approval/verifikasi
       // admin (adminStatus "pending"). Beda dari Moderasi (video dilaporkan).
-      key: "vidPending", icon: "🎬",
+      key: "vidPending", svg: icoVideo,
       label: "Video Butuh Verifikasi",
       desc: "Video baru menunggu approval admin",
       count: (typeof countAdminPendingVideos === "function") ? countAdminPendingVideos() : 0,
@@ -22906,7 +22901,7 @@ function renderAdminActionCenter() {
     {
       // req user 2026-05-18 — video yang sudah di-takedown; perlu
       // audit/tinjau ulang (restore bila salah takedown).
-      key: "vidTakedown", icon: "🚫",
+      key: "vidTakedown", svg: icoBan,
       label: "Video Di-takedown",
       desc: "Video dihapus — tinjau/restore bila perlu",
       count: ((typeof getAllAdminVideos === "function" ? getAllAdminVideos() : []) || [])
@@ -22918,16 +22913,17 @@ function renderAdminActionCenter() {
 
   // PUSAT AKSI SELALU TAMPIL (req user 2026-05-18): 6 kartu permanen,
   // count 0 di-dim (aac-zero) — TIDAK diganti empty-state "Semua aman".
+  // Layout: ikon chip slate | label + desc | count pill di kanan.
   wrap.innerHTML = items.map(it => {
     const stateCls = it.count > 0 ? "aac-active" : "aac-zero";
     return `
-      <button type="button" class="admin-action-card aac-noicon aac-${it.cls} ${stateCls}" data-jump="${it.view}" title="${escapeHtml(it.desc)}">
+      <button type="button" class="admin-action-card aac-${it.cls} ${stateCls}" data-key="${it.key}" data-jump="${it.view}" title="${escapeHtml(it.desc)}">
+        <span class="aac-icon">${it.svg}</span>
         <div class="aac-content">
           <span class="aac-label">${escapeHtml(it.label)}</span>
-          <strong class="aac-count">${it.count}</strong>
           <span class="aac-desc">${escapeHtml(it.desc)}</span>
         </div>
-        ${it.count > 0 ? `<span class="aac-badge">${it.count}</span>` : ""}
+        <span class="aac-badge">${it.count}</span>
       </button>
     `;
   }).join("");
@@ -22961,17 +22957,19 @@ function renderAdminUsers() {
       const hist = Array.isArray(s.history) ? s.history : [];
       hist.forEach(h => { if (h.ts && h.ts > lastActivity) lastActivity = h.ts; });
     } catch {}
-    // Compute real-time status. Threshold lebih realistis:
-    // suspended → suspended | <5m → online | <7d → active | else → inactive.
-    // Sebelumnya 24h jadi user yang signup 2 hari lalu langsung "inactive"
-    // meskipun account baru — fix per user complaint 2026-05-02.
+    // Status real-time (req user 2026-05-19) — 4 nilai:
+    //   suspend  → akun di-suspend admin (merah)
+    //   online   → aktivitas < 5 menit (hijau)
+    //   offline  → aktivitas < 7 hari, tapi tidak online sekarang (abu-abu)
+    //   deactive → tidak ada aktivitas >= 7 hari / belum pernah (biru terang)
     let status;
-    if (a.suspended) status = "suspended";
+    if (a.suspended) status = "suspend";
+    else if (a.deactivated) status = "deactive";   // di-deactive manual oleh admin
     else {
       const diff = now - lastActivity;
       if (lastActivity && diff < 5 * 60 * 1000) status = "online";
-      else if (lastActivity && diff < 7 * 24 * 60 * 60 * 1000) status = "active";
-      else status = "inactive";
+      else if (lastActivity && diff < 7 * 24 * 60 * 60 * 1000) status = "offline";
+      else status = "deactive";
     }
     return {
       name: a.name, username: a.username, email: a.email,
@@ -22979,6 +22977,7 @@ function renderAdminUsers() {
       tier: a.tier || "free",
       premiumPlan: a.premiumPlan || null,
       premiumExpiresAt: a.premiumExpiresAt || null,
+      avatar: a.avatar || "",
       videos: videoCount,
       joinedAt: (a.joinedAt || "").split("T")[0] || "—",
       lastActivity, status
@@ -23020,7 +23019,7 @@ function renderAdminUsers() {
   }
 
   const STATUS_LABEL = {
-    online: "Online", active: "Aktif", inactive: "Tidak Aktif", suspended: "Disuspend"
+    online: "Online", offline: "Offline", deactive: "Deactive", suspend: "Suspend"
   };
   tbody.innerHTML = filtered.map(r => {
     const init = (r.name || r.username).split(" ").map(p => p[0]).slice(0,2).join("").toUpperCase();
@@ -23044,7 +23043,7 @@ function renderAdminUsers() {
     const userCellAction = isAdminRow ? "" : `data-action="detail"`;
     const tierBadgeAction = isAdminRow ? "" : `data-action="set-tier"`;
     return `<tr data-username="${r.username}">
-      <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
+      <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="" referrerpolicy="no-referrer"/>` : init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
       <td>${r.email}</td>
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
       <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? `<svg class="tier-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.6 6.8 19.3l1-5.9L3.5 9.3l5.9-.9Z"/></svg>` : ""}${tierLabel}</span></td>
@@ -23353,6 +23352,30 @@ function toggleUserSuspend(username) {
   return acc;
 }
 
+// Toggle DEACTIVE status (req user 2026-05-19) — berlaku utk akun
+// USER maupun ADMIN. Hanya super admin resmi yg dilindungi supaya
+// root tidak bisa mengunci diri sendiri. Beda dari suspend:
+// deactive = nonaktifkan akun (status biru), bukan blokir/ban.
+function toggleUserDeactivate(username) {
+  const accountKey = Object.keys(localStorage).find(k => {
+    if (!k.startsWith("playly-account-")) return false;
+    try { return JSON.parse(localStorage.getItem(k))?.username === username; } catch { return false; }
+  });
+  if (!accountKey) return null;
+  const acc = JSON.parse(localStorage.getItem(accountKey));
+  if (typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(acc.email)) {
+    toast("🔒 Super Admin tidak bisa di-deactive", "warning");
+    return acc;
+  }
+  acc.deactivated = !acc.deactivated;
+  localStorage.setItem(accountKey, JSON.stringify(acc));
+  pushAdminEvent(acc.deactivated ? "🔵" : "✓", `${acc.deactivated ? "Deactivated" : "Reactivated"} account <b>@${username}</b>`);
+  toast(acc.deactivated ? `🔵 Akun <b>@${username}</b> di-deactive` : `✓ Akun <b>@${username}</b> diaktifkan kembali`, acc.deactivated ? "warning" : "success");
+  renderAdminUsers();
+  renderAdminLiveFeed();
+  return acc;
+}
+
 // =================== ADMIN: USER DETAIL MODAL ===================
 let currentUserDetail = null;
 
@@ -23453,11 +23476,35 @@ function fillUserDetailModal(acc) {
   }
   // Sembunyikan suspend untuk akun admin (super + admin tambahan)
   suspendBtn.style.display = isAllowedAdminEmail(acc.email) ? "none" : "";
+
+  // Deactivate button (req user 2026-05-19) — berlaku utk user & admin.
+  const deactBtn = $("#audDeactivateBtn");
+  if (deactBtn) {
+    if (acc.deactivated) {
+      deactBtn.innerHTML = "✓ Aktifkan Akun";
+      deactBtn.className = "btn success";
+    } else {
+      deactBtn.innerHTML = "🔵 Deactive Akun";
+      deactBtn.className = "btn";
+    }
+    // Hanya super admin resmi yg disembunyikan (tidak bisa di-deactive)
+    const isSuper = typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(acc.email);
+    deactBtn.style.display = isSuper ? "none" : "";
+  }
 }
 
 $("#audSuspendBtn")?.addEventListener("click", () => {
   if (!currentUserDetail) return;
   const updated = toggleUserSuspend(currentUserDetail.username);
+  if (updated) {
+    currentUserDetail = updated;
+    fillUserDetailModal(updated);
+  }
+});
+
+$("#audDeactivateBtn")?.addEventListener("click", () => {
+  if (!currentUserDetail) return;
+  const updated = toggleUserDeactivate(currentUserDetail.username);
   if (updated) {
     currentUserDetail = updated;
     fillUserDetailModal(updated);

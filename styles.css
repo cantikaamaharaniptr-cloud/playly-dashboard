@@ -60408,7 +60408,9 @@ body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-list {
   padding: 8px;
   flex: 1;
   min-height: 0;
-  max-height: 340px;
+  /* COMPACT (req user 2026-05-19): 340 → 210, sisanya scroll. Bikin
+     kolom notifikasi & seluruh baris hero jauh lebih ringkas. */
+  max-height: 210px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -60874,9 +60876,11 @@ body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
 /* Angka besar di atas */
 body[data-role="admin"] .admin-kpi-stat .kpi-content strong {
   font-family: 'Inter', sans-serif !important;
-  font-size: 26px !important;
+  /* COMPACT (req user 2026-05-19): 26px → 20 → 18.5 → 16.5px (req user)
+     proporsional utk kartu ringkas, "Rp 1.4jt" tidak overflow. */
+  font-size: 16.5px !important;
   font-weight: 800 !important;
-  line-height: 1.05 !important;
+  line-height: 1.1 !important;
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
   letter-spacing: -.01em !important;
@@ -61037,9 +61041,8 @@ body[data-role="admin"] #adminActionCenter:has(.admin-action-card) .admin-action
 }
 /* Empty-state: action-center natural di atas (tidak grow) */
 body[data-role="admin"] #adminActionCenter { align-content: start; }
-/* Tanpa kolom ikon di kartu aksi — konten saja */
-body[data-role="admin"] #adminActionCenter .admin-action-card.aac-noicon { gap: 0; }
-body[data-role="admin"] #adminActionCenter .admin-action-card .aac-icon { display: none !important; }
+/* (Ikon chip kartu aksi diaktifkan kembali — lihat blok REWORK PUSAT
+   AKSI di akhir file. Override .aac-noicon lama dihapus.) */
 
 /* Divider judul PUSAT AKSI = seragam dgn judul kolom lain (PENDAPATAN
    dll). Tanpa emoji + ukuran font sama. */
@@ -61087,16 +61090,18 @@ body[data-role="admin"] .admin-hero .admin-hero-left {
 body[data-role="admin"] .admin-hero .admin-hero-left .hero-text {
   flex: 0 0 auto !important;
 }
-/* KPI grow mengisi sisa tinggi → bottom-nya sejajar feed. */
+/* COMPACT (req user 2026-05-19): KPI JANGAN grow ngisi tinggi feed —
+   sebelumnya flex:1 + height:100% bikin card 185px (banyak ruang
+   kosong). Sekarang tinggi natural & ringkas. */
 body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   margin-bottom: 0 !important;
-  grid-auto-rows: 1fr;
-  align-content: stretch;
+  grid-auto-rows: auto;
 }
 body[data-role="admin"] .admin-hero .admin-hero-left .admin-kpi .admin-kpi-card {
-  height: 100%;
-  min-height: 92px;
+  height: auto;
+  min-height: 0;
+  padding: 12px 14px;
 }
 @media (max-width: 1100px) {
   /* Hero stack vertikal di layar sempit — KPI kembali tinggi natural */
@@ -61606,3 +61611,1051 @@ body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
   }
 }
 /* ================== END FINAL B+D ================================= */
+
+/* =========================================================
+   TERKINI · HARI INI (req user 2026-05-19):
+   - avatar-stack melayang di atas kolom DIHAPUS.
+   - avatar pindah ke DALAM row (kolom 28px pertama grid
+     .admin-list-row), pakai gambar profil user sendiri /
+     avatar generatif per-username — BUKAN tema admin slate
+     (ini <img>, jadi tidak kena rule "force text snow").
+   ========================================================= */
+body[data-role="admin"] .admin-avatar-stack { display: none !important; }
+body[data-role="admin"] .admin-list-row .admin-row-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(165, 175, 195, .22);
+  flex: 0 0 28px;
+}
+body[data-role="admin"] .admin-list-row .admin-row-av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+/* =========================================================
+   COMPACT — PUSAT AKSI + RINGKASAN PENDAPATAN + TERKINI
+   (req user 2026-05-19): kartu jangan melar isi tinggi kolom
+   (banyak ruang kosong), angka Ringkasan Pendapatan 16.5px.
+   Selector html body[data-role="admin"] + !important supaya
+   menang dari rule stretch lama (~61034) & font 18px (~61028).
+   ========================================================= */
+/* (1) PUSAT AKSI — kartu tinggi NATURAL, jangan height:100%/stretch */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter,
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter:has(.admin-action-card) {
+  flex: 0 0 auto !important;
+  grid-auto-rows: auto !important;
+  align-content: start !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card,
+html body[data-role="admin"] #adminActionCenter:has(.admin-action-card) .admin-action-card {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 11px 14px 11px 16px !important;
+}
+html body[data-role="admin"] .admin-action-center { gap: 10px !important; margin-bottom: 16px !important; }
+
+/* (2) RINGKASAN PENDAPATAN — panel & baris jangan grow; ringkas */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > .admin-rev-summary {
+  flex: 0 0 auto !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-grid { flex: 0 0 auto !important; gap: 8px !important; }
+html body[data-role="admin"] .admin-rev-summary .ars-row {
+  flex: 0 0 auto !important;
+  padding: 9px 13px !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-ico { width: 34px !important; height: 34px !important; }
+html body[data-role="admin"] .admin-rev-summary .ars-ico svg { width: 16px !important; height: 16px !important; }
+/* Angka Rp → 16.5px (req user) */
+html body[data-role="admin"] .admin-rev-summary .ars-txt strong { font-size: 16.5px !important; line-height: 1.15 !important; }
+html body[data-role="admin"] .admin-rev-summary .ars-txt small { font-size: 10px !important; }
+
+/* (3) TERKINI · HARI INI — panel lebih ringkas (padding 20 → 14) */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel {
+  padding: 14px 16px !important;
+}
+
+/* =========================================================
+   HEADER LEBIH TERANG — Ringkasan Pendapatan + 3 kartu
+   TERKINI · HARI INI, disamakan dgn header kolom Notifikasi
+   (.ahf-head: rgba(74,95,130,.45) + divider). req user 2026-05-19.
+   Full-bleed: padding panel diseragamkan 16px + overflow:hidden,
+   .admin-panel-head ditarik negatif -16px → band rata tepi kartu.
+   ========================================================= */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-rev-summary,
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel {
+  padding: 16px !important;
+  overflow: hidden;
+}
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-rev-summary > .admin-panel-head,
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel > .admin-panel-head {
+  background: rgba(74, 95, 130, .45) !important;
+  margin: -16px -16px 14px !important;
+  padding: 11px 16px !important;
+  border-bottom: 1px solid rgba(165, 175, 195, .22) !important;
+}
+html body[data-theme="light"][data-role="admin"] section[data-view="admin-dashboard"] .admin-rev-summary > .admin-panel-head,
+html body[data-theme="light"][data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel > .admin-panel-head {
+  background: #D6DCE4 !important;
+  border-bottom-color: rgba(37, 52, 63, .20) !important;
+}
+
+/* =========================================================
+   REWORK PUSAT AKSI · BUTUH PERHATIAN (req user 2026-05-19,
+   "kerjakan satu per satu"):
+   (1) ikon chip SVG monokrom slate per kartu (NO emoji),
+   (2) count jadi badge pill flat di kanan (angka besar dibuang),
+   (3) FLAT — tanpa glow/pulse/aksen warna (lihat
+       [[feedback-admin-flat-no-fx]]): aksen strictly slate,
+   (4) state aktif vs nol dibedakan tegas (sliver slate +
+       chip/pill terang saat aktif, redup saat nol).
+   html body[data-role="admin"] + !important → menang dari
+   override warna lama (~21531-21560) & FORCE-SNOW block.
+   ========================================================= */
+/* Layout kartu: ikon | konten | pill kanan, ringkas */
+html body[data-role="admin"] #adminActionCenter .admin-action-card {
+  gap: 12px !important;
+  align-items: center !important;
+}
+/* (1) Ikon chip — slate flat, kompak, samakan rasa dgn .ars-ico */
+html body[data-role="admin"] #adminActionCenter .aac-icon {
+  display: grid !important;
+  width: 34px !important; height: 34px !important;
+  border-radius: 9px !important;
+  background: rgba(165, 175, 195, .10) !important;
+  color: #ADB5BD !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-icon svg {
+  width: 17px !important; height: 17px !important;
+  display: block !important;
+}
+/* Konten: label + desc (angka besar lama dibuang) */
+html body[data-role="admin"] #adminActionCenter .aac-count { display: none !important; }
+html body[data-role="admin"] #adminActionCenter .aac-content { gap: 3px !important; }
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-label {
+  font-size: 10px !important;
+  letter-spacing: .07em !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-desc {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+}
+/* (2) Count → badge pill: ikut flow flex (bukan absolute), flat */
+html body[data-role="admin"] #adminActionCenter .aac-badge {
+  position: static !important;
+  margin-left: auto !important;
+  align-self: center !important;
+  min-width: 26px !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  background: rgba(165, 175, 195, .10) !important;
+  color: #ADB5BD !important;
+  border: 1px solid rgba(165, 175, 195, .18) !important;
+  box-shadow: none !important;
+  animation: none !important;
+  flex-shrink: 0 !important;
+}
+/* (3)+(4) STATE AKTIF — slate terang, BUKAN merah/kuning/biru.
+   Sliver kiri slate, chip & pill diterangkan, nol diredupkan. */
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active::before {
+  background: rgba(173, 181, 189, .55) !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon {
+  background: rgba(165, 175, 195, .18) !important;
+  color: #CED4DA !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+  background: #CDD4DC !important;
+  color: #1A2530 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+/* state NOL — kartu, chip & pill diredupkan (tak ada yg dikerjakan) */
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero::before {
+  background: transparent !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: rgba(165, 175, 195, .06) !important;
+  color: rgba(173, 181, 189, .45) !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-badge {
+  background: rgba(165, 175, 195, .06) !important;
+  color: rgba(173, 181, 189, .50) !important;
+  border-color: rgba(165, 175, 195, .12) !important;
+}
+/* Light theme — chip/pill tetap kebaca di kartu terang admin */
+html body[data-theme="light"][data-role="admin"] #adminActionCenter .aac-icon {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #3A4A57 !important;
+}
+html body[data-theme="light"][data-role="admin"] #adminActionCenter .aac-badge {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #3A4A57 !important;
+  border-color: rgba(37, 52, 63, .18) !important;
+}
+html body[data-theme="light"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+  background: #2E3F4B !important;
+  color: #EAEEF2 !important;
+  border-color: transparent !important;
+}
+/* Light admin pakai selector double-attribute super-specific di
+   ~55842/56115 ([data-theme="light"][data-theme="light"][data-role=
+   "admin"][data-role="admin"]). Cocokkan polanya supaya chip/pill
+   aktif & nol di tema terang TETAP kebaca (kontras), tetap monokrom. */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-icon {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #44545F !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon {
+  background: rgba(37, 52, 63, .16) !important;
+  color: #1F2C36 !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: rgba(37, 52, 63, .05) !important;
+  color: rgba(58, 74, 87, .42) !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-badge {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #3A4A57 !important;
+  border-color: rgba(37, 52, 63, .18) !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+  background: #2E3F4B !important;
+  color: #EAEEF2 !important;
+  border-color: transparent !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-badge {
+  background: rgba(37, 52, 63, .05) !important;
+  color: rgba(58, 74, 87, .50) !important;
+  border-color: rgba(37, 52, 63, .12) !important;
+}
+
+/* =========================================================
+   PUSAT AKSI — DIBESARKAN + SEJAJAR PENDAPATAN (req user
+   2026-05-19): "kolomnya terlalu kecil, font juga, besarkan
+   lagi, ratakan dgn kolom pendapatan sejajar atas-bawah".
+   → font/ikon/pill diperbesar, kartu STRETCH mengisi tinggi
+   kolom = bottom sejajar dgn panel PENDAPATAN. Menang dari
+   blok COMPACT (~61623) krn lebih akhir + specificity sama
+   + !important.
+   ========================================================= */
+/* (A) SEJAJAR ATAS-BAWAH: kedua kolom row di-stretch sama
+   tinggi; wrapper kolom jadi flex-col → action-center &
+   rev-summary mengisi sisa tinggi setelah divider. */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col {
+  align-items: stretch !important;
+}
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div {
+  display: flex !important;
+  flex-direction: column !important;
+}
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > .admin-rev-summary {
+  flex: 1 1 auto !important;
+}
+/* action-center isi sisa tinggi kolom; 3 baris dibagi rata
+   (grid-auto-rows:1fr) + kartu height:100% → tinggi seragam,
+   bottom rata dgn PENDAPATAN. */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter,
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter:has(.admin-action-card) {
+  flex: 1 1 auto !important;
+  grid-auto-rows: 1fr !important;
+  align-content: stretch !important;
+  gap: 14px !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card,
+html body[data-role="admin"] #adminActionCenter:has(.admin-action-card) .admin-action-card {
+  height: 100% !important;
+  min-height: 84px !important;
+  padding: 16px 18px !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+/* (B) FONT & IKON & PILL DIBESARKAN */
+html body[data-role="admin"] #adminActionCenter .aac-icon {
+  width: 42px !important; height: 42px !important;
+  border-radius: 11px !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-icon svg {
+  width: 20px !important; height: 20px !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-content { gap: 5px !important; }
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-label {
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-desc {
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-badge {
+  min-width: 30px !important;
+  padding: 5px 12px !important;
+  font-size: 14px !important;
+}
+
+/* =========================================================
+   PUSAT AKSI — WARNA SERAGAM, TAK BERUBAH per state (req user
+   2026-05-19): "warna kolomnya buat stay, jangan terang waktu
+   ada tindakan saja, jadi seperti kolom biasanya".
+   → SEMUA kartu tampil identik (flat slate) baik count>0
+   maupun 0: tanpa brighten saat aktif, tanpa dim saat nol,
+   tanpa sliver. Pembeda HANYA angka di pill. Konsisten dgn
+   [[feedback-admin-flat-no-fx]]. Blok ini PALING akhir →
+   menang dari rule aac-active/aac-zero sebelumnya (specificity
+   sama, source-order terakhir + !important).
+   ========================================================= */
+/* Opacity kartu seragam — nol TIDAK diredupkan (override base
+   .aac-zero{opacity:.55} & :hover .85). */
+html body[data-role="admin"] #adminActionCenter .admin-action-card,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero:hover {
+  opacity: 1 !important;
+}
+/* Sliver kiri dimatikan untuk semua (tak ada hint state) */
+html body[data-role="admin"] #adminActionCenter .admin-action-card::before,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active::before,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero::before {
+  background: transparent !important;
+}
+/* Ikon chip — satu warna slate untuk semua state */
+html body[data-role="admin"] #adminActionCenter .admin-action-card .aac-icon,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: rgba(165, 175, 195, .12) !important;
+  color: #ADB5BD !important;
+}
+/* Pill count — satu warna slate untuk semua state */
+html body[data-role="admin"] #adminActionCenter .admin-action-card .aac-badge,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-badge {
+  background: rgba(165, 175, 195, .10) !important;
+  color: #CED4DA !important;
+  border: 1px solid rgba(165, 175, 195, .18) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+/* LIGHT — cocokkan pola double-attribute super-specific supaya
+   menang dari rule light aac-active/aac-zero sebelumnya. */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero:hover {
+  opacity: 1 !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-icon,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #44545F !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-badge,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-badge {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #2E3F4B !important;
+  border: 1px solid rgba(37, 52, 63, .18) !important;
+}
+
+/* =========================================================
+   PUSAT AKSI — IKON CHIP DI-CUSTOM (req user 2026-05-19:
+   "warna kolom ikonnya coba kamu customkan"). Pilihan saya:
+   chip pakai navy-slate yg sama dgn band judul yg user sudah
+   suka (rgba(74,95,130,…)) + border slate halus + glyph slate
+   terang biar kontras & terbaca. Tetap FLAT, monokrom, dan
+   SERAGAM semua state (lihat [[feedback-admin-flat-no-fx]]).
+   Blok terakhir → menang dari rule .aac-icon seragam di atas.
+   ========================================================= */
+html body[data-role="admin"] #adminActionCenter .admin-action-card .aac-icon,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon,
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: rgba(74, 95, 130, .42) !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  color: #D4D9E0 !important;
+}
+/* LIGHT — selaras dgn band judul terang (#D6DCE4) tapi sedikit
+   lebih pekat utk chip; glyph gelap biar tajam di kartu terang. */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-icon,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon,
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-icon {
+  background: #C2CCD6 !important;
+  border: 1px solid rgba(37, 52, 63, .20) !important;
+  color: #2E3F4B !important;
+}
+
+/* =========================================================
+   RINGKASAN PENDAPATAN — BARIS JADI LIST POLOS (req user
+   2026-05-19): "hapus kotak tiap baris jadi list polos,
+   ikon tetap di dalam panel". → buang chrome box .ars-row
+   (bg/border/radius); ikon + angka tetap, dipisah garis
+   tipis antar baris, di dalam SATU panel. Scoped admin
+   only (user dashboard tak tersentuh). Blok terakhir +
+   !important → menang dari rule .ars-row sebelumnya.
+   ========================================================= */
+html body[data-role="admin"] .admin-rev-summary .ars-grid {
+  gap: 0 !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(165, 175, 195, .12) !important;
+  padding: 14px 4px !important;
+  transform: none !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row:last-child {
+  border-bottom: 0 !important;
+  padding-bottom: 2px !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row:first-child {
+  padding-top: 2px !important;
+}
+/* Hover: highlight halus tanpa kotak/gerak (flat) */
+html body[data-role="admin"] .admin-rev-summary .ars-row:hover {
+  background: rgba(165, 175, 195, .055) !important;
+  border-color: transparent !important;
+  border-bottom-color: rgba(165, 175, 195, .12) !important;
+  transform: none !important;
+}
+/* LIGHT — garis pemisah versi gelap-slate */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .ars-row {
+  border-bottom: 1px solid rgba(37, 52, 63, .14) !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .ars-row:last-child {
+  border-bottom: 0 !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .ars-row:hover {
+  background: rgba(37, 52, 63, .045) !important;
+  border-bottom-color: rgba(37, 52, 63, .14) !important;
+}
+
+/* =========================================================
+   RINGKASAN PENDAPATAN — IKON HEADER PAKAI CHIP, IKON BARIS
+   TANPA CHIP (req user 2026-05-19): "ikon ringkasan
+   pendapatannya tambah kolom, ikon di bawahnya tidak perlu
+   pakai kolom". → (A) .ars-head-ico dibungkus chip box;
+   (B) .ars-ico (3 baris) buang chip jadi glyph polos.
+   Scoped admin only. Blok terakhir + !important.
+   ========================================================= */
+/* (A) Ikon header → chip. Fill lebih gelap dari band judul
+   (rgba(74,95,130,.45)) biar chip-nya kontras & kelihatan. */
+html body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 7px !important;
+  box-sizing: border-box !important;
+  border-radius: 9px !important;
+  background: rgba(11, 19, 29, .40) !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  color: #E8EBEF !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  background: rgba(37, 52, 63, .10) !important;
+  border: 1px solid rgba(37, 52, 63, .22) !important;
+  color: #25343F !important;
+}
+/* (B) Ikon baris → tanpa chip: glyph polos, tak ada box */
+html body[data-role="admin"] .admin-rev-summary .ars-ico {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  width: 26px !important;
+  height: 26px !important;
+  color: #ADB5BD !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-ico svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .ars-ico {
+  background: transparent !important;
+  border: 0 !important;
+  color: #3A4A57 !important;
+}
+
+/* =========================================================
+   IKON 17x17 + CHIP (req user 2026-05-19):
+   (1) ikon header Ringkasan Pendapatan → glyph 17x17 (chip
+       tetap, padding disesuaikan: 34 box − 17 = 8.5 tiap sisi).
+   (2) ikon 3 panel TERKINI · HARI INI (Video baru di upload,
+       User Baru, Kreator Teratas) → dibungkus chip (sama gaya
+       dgn chip header Ringkasan Pendapatan) + glyph 17x17.
+   picon di-inject picons.js sbg .picon-w>.picon dgn ukuran
+   global h3 .picon (1.45em/min23). Override !important +
+   scoped admin-dashboard saja (tdk merembet ke picon lain).
+   ========================================================= */
+/* (1) Ringkasan Pendapatan — glyph 17 di dalam chip 34 */
+html body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  padding: 8.5px !important;
+}
+
+/* (2) TERKINI 3 panel — h3 jadi flex biar chip+teks center rapi */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+/* chip pembungkus ikon (picon-w) — gaya = chip header Ringkasan */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 .picon-w {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+  background: rgba(11, 19, 29, .40) !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  color: #E8EBEF !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  top: 0 !important;
+}
+/* glyph 17x17 (override ukuran global picons h3 .picon) */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 .picon-w .picon {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+}
+/* LIGHT — chip versi terang, glyph gelap */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 .picon-w {
+  background: rgba(37, 52, 63, .10) !important;
+  border: 1px solid rgba(37, 52, 63, .22) !important;
+  color: #25343F !important;
+}
+
+/* =========================================================
+   IKON CHIP — GLYPH 18.5 + WARNA = TOMBOL "LIHAT SEMUA/
+   DETAIL" (req user 2026-05-19):
+   (1) ikon header Ringkasan Pendapatan → glyph 18.5x18.5
+       (chip 34 box, padding (34−18.5)/2 = 7.75).
+   (2) chip ikon header Ringkasan + 3 panel TERKINI →
+       di-"terangkan", warna disamakan dgn .btn.ghost.sm
+       admin: bg & border rgba(173,181,189,.13) (sama di
+       dark & light). Glyph tetap kontras per tema.
+   Blok terakhir + !important → menang dari rule chip lama.
+   ========================================================= */
+/* (1) glyph 18.5 di chip 34 */
+html body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  padding: 7.75px !important;
+}
+/* (2) chip Ringkasan header → warna tombol lihat detail */
+html body[data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  background: rgba(173, 181, 189, .13) !important;
+  border: 1px solid rgba(173, 181, 189, .13) !important;
+}
+/* (2) chip 3 panel TERKINI → warna tombol lihat semua */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 .picon-w {
+  background: rgba(173, 181, 189, .13) !important;
+  border: 1px solid rgba(173, 181, 189, .13) !important;
+}
+/* Warna chip sama di tema terang (tombolnya pun sama) — glyph
+   tetap gelap di light biar kebaca di chip terang. */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-rev-summary .admin-panel-head h3 .ars-head-ico {
+  background: rgba(173, 181, 189, .13) !important;
+  border: 1px solid rgba(173, 181, 189, .13) !important;
+  color: #25343F !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel .admin-panel-head h3 .picon-w {
+  background: rgba(173, 181, 189, .13) !important;
+  border: 1px solid rgba(173, 181, 189, .13) !important;
+  color: #25343F !important;
+}
+
+/* =========================================================
+   RINGKASAN PENDAPATAN — COMPACT (req user 2026-05-19:
+   "masih kelebaran, buat compact"). Panel di-stretch oleh
+   blok "sejajar" (flex:1 1 auto) → sisa ruang kosong besar
+   di bawah. Override → panel hug konten (natural height),
+   tidak melar; padding baris ditekan biar ringkas. Ukuran
+   angka/ikon TIDAK diubah (sudah disetel user). Blok
+   terakhir + !important → menang dari flex:1 1 auto.
+   ========================================================= */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > .admin-rev-summary {
+  flex: 0 0 auto !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-grid {
+  flex: 0 0 auto !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row {
+  flex: 0 0 auto !important;
+  padding: 10px 4px !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row:first-child {
+  padding-top: 2px !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-row:last-child {
+  padding-bottom: 2px !important;
+}
+
+/* =========================================================
+   RINGKASAN PENDAPATAN — SEJAJAR ATAS-BAWAH dgn PUSAT AKSI,
+   TANPA RUANG KOSONG (req user 2026-05-19: "sejajarkan
+   kolom pusat aksi & pendapatan sejajar atas bawah").
+   Beda dgn percobaan sejajar lama: dulu panel di-stretch
+   tapi baris flex:0 0 auto → slack numpuk jadi VOID di
+   bawah ("kelebaran"). Sekarang slack DIBAGI RATA ke 3
+   baris (.ars-row flex:1) → panel terisi penuh, bottom
+   rata dgn PUSAT AKSI, tanpa void. Blok terakhir +
+   !important → menang dari blok COMPACT (flex:0 0 auto).
+   ========================================================= */
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > .admin-rev-summary {
+  flex: 1 1 auto !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-grid {
+  flex: 1 1 auto !important;
+  justify-content: stretch !important;
+}
+/* 3 baris berbagi tinggi grid sama rata → tidak ada void;
+   konten tiap baris tetap center vertikal. */
+html body[data-role="admin"] .admin-rev-summary .ars-row {
+  flex: 1 1 0 !important;
+  align-items: center !important;
+}
+
+/* =========================================================
+   COMPACT KOLOM PUSAT AKSI + PENDAPATAN + KECILKAN FONT
+   RINGKASAN PENDAPATAN (req user 2026-05-19). Mekanisme
+   sejajar (flex stretch) DIPERTAHANKAN — hanya size-driver
+   PUSAT AKSI yg dikecilkan → kolom jadi pendek, PENDAPATAN
+   ikut (tetap rata atas-bawah). + font Rp/label diperkecil.
+   Blok terakhir + selector sama → menang.
+   ========================================================= */
+/* PUSAT AKSI — kartu compact */
+html body[data-role="admin"] #adminActionCenter .admin-action-card,
+html body[data-role="admin"] #adminActionCenter:has(.admin-action-card) .admin-action-card {
+  min-height: 58px !important;
+  padding: 10px 14px !important;
+  gap: 11px !important;
+}
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter,
+html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-row-2col > div > #adminActionCenter:has(.admin-action-card) {
+  gap: 10px !important;
+}
+html body[data-role="admin"] .admin-action-center { gap: 10px !important; }
+html body[data-role="admin"] #adminActionCenter .aac-icon {
+  width: 32px !important; height: 32px !important;
+  border-radius: 9px !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-icon svg {
+  width: 16px !important; height: 16px !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-content { gap: 2px !important; }
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-label {
+  font-size: 10.5px !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-content .aac-desc {
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+html body[data-role="admin"] #adminActionCenter .aac-badge {
+  min-width: 26px !important;
+  padding: 4px 10px !important;
+  font-size: 12.5px !important;
+}
+/* PENDAPATAN — kecilkan font teks ringkasan */
+html body[data-role="admin"] .admin-rev-summary .ars-txt strong {
+  font-size: 13.5px !important;
+  line-height: 1.15 !important;
+}
+html body[data-role="admin"] .admin-rev-summary .ars-txt small {
+  font-size: 9px !important;
+}
+
+/* =========================================================
+   PUSAT AKSI — WARNA KOTAK/CHIP IKON PER-KARTU + PILL DGN
+   ANIMASI AKTIF (req user 2026-05-19, koreksi: "bukan warna
+   ikonnya, tapi warna KOLOM ikonnya"; "kolom angka jangan
+   putih — tambahkan animasi aktif tiap ada aksi yg perlu
+   ditindak").
+   → (1) chip BOX tiap kartu diberi tint warna sendiri
+   (translucent, jalan di dark & light), glyph netral.
+   (2) pill TIDAK solid putih; saat aac-active diberi animasi
+   denyut halus (user minta animasi). Tanpa glow norak —
+   denyut lembut + reduced-motion fallback.
+   ========================================================= */
+/* --- (1) BALIK NORMAL (req user 2026-05-19: "stop, balikin ke
+   warna normal sebelumnya"). Semua eksperimen warna per-kartu
+   DIBATALKAN. Box = chip tema admin UNIFORM, glyph NETRAL.
+   Theme-aware: dark = navy-slate rgba(74,95,130,.42); light =
+   slate terang #C2CCD6. Selector double → menang dari blok
+   chip lama. --- */
+html body[data-role="admin"][data-role="admin"] section[data-view="admin-dashboard"] #adminActionCenter .admin-action-card .aac-icon {
+  background: rgba(74, 95, 130, .42) !important;
+  background-image: none !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  box-shadow: none !important;
+  color: #E6E9EF !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] section[data-view="admin-dashboard"] #adminActionCenter .admin-action-card .aac-icon {
+  background: #C2CCD6 !important;
+  border: 1px solid rgba(37, 52, 63, .20) !important;
+  color: #2E3F4B !important;
+}
+
+/* --- (2) PILL: TIDAK solid putih; aac-active → animasi denyut --- */
+html body[data-role="admin"] #adminActionCenter .admin-action-card .aac-badge {
+  background: rgba(165, 175, 195, .12) !important;
+  color: #CED4DA !important;
+  border: 1px solid rgba(165, 175, 195, .20) !important;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+  background: rgba(165, 175, 195, .16) !important;
+  color: #EDEFF3 !important;
+  border: 1px solid rgba(165, 175, 195, .34) !important;
+  animation: aacPillBreath 1.9s ease-in-out infinite !important;
+  will-change: box-shadow, transform;
+}
+html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac-badge {
+  background: rgba(165, 175, 195, .06) !important;
+  color: rgba(173, 181, 189, .50) !important;
+  border: 1px solid rgba(165, 175, 195, .14) !important;
+  animation: none !important;
+}
+@keyframes aacPillBreath {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(173,181,189,.30); transform: scale(1); }
+  50%      { box-shadow: 0 0 0 5px rgba(173,181,189,0); transform: scale(1.06); }
+}
+/* LIGHT — pill netral gelap; animasi denyut sama */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-badge {
+  background: rgba(37, 52, 63, .08) !important;
+  color: #2E3F4B !important;
+  border: 1px solid rgba(37, 52, 63, .20) !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+  background: rgba(37, 52, 63, .12) !important;
+  color: #1F2C36 !important;
+  border: 1px solid rgba(37, 52, 63, .34) !important;
+  animation: aacPillBreathLight 1.9s ease-in-out infinite !important;
+}
+@keyframes aacPillBreathLight {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,63,75,.28); transform: scale(1); }
+  50%      { box-shadow: 0 0 0 5px rgba(46,63,75,0); transform: scale(1.06); }
+}
+/* Aksesibilitas: hormati reduced-motion — animasi mati, tapi
+   pill aktif tetap dibedakan (border lebih tegas). */
+@media (prefers-reduced-motion: reduce) {
+  html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-badge {
+    animation: none !important;
+    border-color: rgba(173, 181, 189, .55) !important;
+  }
+}
+
+/* =========================================================
+   MANAJEMEN AKUN — TAB USER/ADMIN (req user 2026-05-19):
+   "ada fokus ring tidak rapi, perbesar sedikit, ubah bentuk".
+   → hapus focus-ring berantakan (outline/box-shadow), tab
+   lebih besar, bentuk pill → rounded-rect, count jadi badge
+   rapi. Flat slate (tema admin, no FX).
+   ========================================================= */
+/* SIZING — COMPACT (req user 2026-05-19: "gak suka, buat
+   compact"): kartu tab User/Admin dirapatkan/kecil. */
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab {
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  gap: 6px !important;
+  border: 1px solid rgba(165, 175, 195, .18) !important;
+  background: rgba(165, 175, 195, .06) !important;
+  color: rgba(255, 255, 255, .72) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab svg {
+  width: 14px !important;
+  height: 14px !important;
+  stroke-width: 2 !important;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab:hover {
+  background: rgba(165, 175, 195, .12) !important;
+  color: #FFFFFF !important;
+}
+/* focus-ring berantakan dihapus; keyboard focus tetap aksesibel
+   tapi RAPI (ring tipis konsisten, hanya saat :focus-visible) */
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(165, 175, 195, .45) !important;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab.active {
+  background: rgba(165, 175, 195, .20) !important;
+  border-color: rgba(165, 175, 195, .32) !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+}
+/* count → angka polos TANPA kolom/badge (req user 2026-05-19) */
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab .ssc-count {
+  display: inline !important;
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  margin-left: 4px !important;
+  line-height: inherit !important;
+  color: rgba(255, 255, 255, .55) !important;
+}
+html body[data-role="admin"] #adminUserRoleTabs .gv-tab.active .ssc-count {
+  color: #FFFFFF !important;
+}
+/* LIGHT admin — tab & badge tetap kebaca */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminUserRoleTabs .gv-tab {
+  background: rgba(37, 52, 63, .06) !important;
+  border-color: rgba(37, 52, 63, .20) !important;
+  color: #2E3F4B !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminUserRoleTabs .gv-tab.active {
+  background: rgba(37, 52, 63, .16) !important;
+  border-color: rgba(37, 52, 63, .32) !important;
+  color: #1F2C36 !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminUserRoleTabs .gv-tab .ssc-count {
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  border-radius: 0 !important;
+  color: rgba(37, 52, 63, .55) !important;
+}
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminUserRoleTabs .gv-tab.active .ssc-count {
+  color: #1F2C36 !important;
+}
+
+/* POSISI (req user 2026-05-19, revisi): aksi Cari user / Buat
+   User / Reset Data DIPINDAH ke baris toolbar (markup) → satu
+   baris dgn tab User/Admin, SEJAJAR, di bawah judul (tidak
+   menimpa teks "kelola semua akun"). CSS tinggal rapikan jarak
+   + alignment. Scoped admin-users. */
+html body[data-role="admin"] section[data-view="admin-users"] .page-head {
+  margin-bottom: 0 !important;
+}
+html body[data-role="admin"] section[data-view="admin-users"] .gv-toolbar {
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: -16px !important;   /* dempet ke teks "kelola semua akun" */
+  margin-bottom: 16px !important;
+}
+html body[data-role="admin"] section[data-view="admin-users"] .gv-toolbar .page-head-actions {
+  margin-left: auto !important;
+}
+
+/* =========================================================
+   PROFIL USER (modal admin #adminUserDetailModal) — TAMPIL
+   SESUAI PROFIL USER, BUKAN TEMA ADMIN (req user 2026-05-19:
+   "profil user mengikuti tema dashboard admin, ganti").
+   Admin meng-override .aud-avatar dgn var(--admin-grad) navy.
+   Override: avatar pakai identitas profil USER (wine/cream) —
+   foto user tetap menimpa kalau ada. ID #adminUserDetailModal
+   → spesifisitas menang dari rule admin lama. var(--primary)
+   di admin = slate, jadi nilai user wine HARD-CODED.
+   ========================================================= */
+html body[data-role="admin"] #adminUserDetailModal .aud-avatar {
+  background: linear-gradient(135deg, rgba(109, 41, 50, .55), rgba(199, 183, 163, .30)) !important;
+  color: #F0E4D4 !important;
+  border: 2px solid rgba(199, 183, 163, .34) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+html body[data-role="admin"] #adminUserDetailModal .aud-avatar img {
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   KPI ADMIN — HAPUS SUB-LINE (req user 2026-05-19: "font
+   text '0 baru 24 jam' dan lainnya itu hapuskan saja").
+   Sembunyikan .kpi-sub di semua kartu KPI admin (Users/
+   Videos/Views/Revenue). Scoped admin → user dashboard
+   tak tersentuh.
+   ========================================================= */
+html body[data-role="admin"] .admin-kpi-stat .kpi-content .kpi-sub {
+  display: none !important;
+}
+
+/* =========================================================
+   MANAJEMEN AKUN — AVATAR BARIS TABEL = PROFIL USER, BUKAN
+   TEMA ADMIN (req user 2026-05-19: "warna profile user masih
+   pakai tema dashboard admin, harus sesuai profil user
+   sendiri"). Admin meng-override .avatar-sm dgn var(--admin-
+   grad)/navy. → foto user (acc.avatar) tampil mengisi
+   lingkaran; fallback inisial pakai identitas profil USER
+   (wine/cream), bukan navy admin. Selector doubled +
+   section[data-view] → menang dari rule navy lama (dark &
+   light), theme-agnostic.
+   ========================================================= */
+html body[data-role="admin"][data-role="admin"] section[data-view="admin-users"] .admin-table .avatar-sm.avatar-sm {
+  background: linear-gradient(135deg, rgba(109, 41, 50, .60), rgba(199, 183, 163, .32)) !important;
+  background-image: linear-gradient(135deg, rgba(109, 41, 50, .60), rgba(199, 183, 163, .32)) !important;
+  color: #F0E4D4 !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+html body[data-role="admin"][data-role="admin"] section[data-view="admin-users"] .admin-table .avatar-sm.avatar-sm img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block !important;
+}
+
+/* =========================================================
+   STATUS USER MANAGEMENT — 4 status real-time + warna (req
+   user 2026-05-19): online=hijau, offline=abu-abu,
+   deactive=biru terang, suspend=merah. Teks + titik (::before)
+   sewarna. !important + specificity tinggi → menang dari blok
+   "FORCE ALL TEXT TO SNOW #FFFFFF" (~42927) & rule status lama.
+   Flat (tanpa pulse/glow) sesuai tema admin.
+   ========================================================= */
+/* ---- DARK (default) ---- */
+html body[data-role="admin"] .admin-table .row-status.status-online { color: #34D399 !important; }
+html body[data-role="admin"] .admin-table .row-status.status-online::before { background: #34D399 !important; box-shadow: none !important; animation: none !important; }
+html body[data-role="admin"] .admin-table .row-status.status-offline { color: #9AA4B2 !important; }
+html body[data-role="admin"] .admin-table .row-status.status-offline::before { background: #9AA4B2 !important; box-shadow: none !important; animation: none !important; }
+html body[data-role="admin"] .admin-table .row-status.status-deactive { color: #FAFFCB !important; }
+html body[data-role="admin"] .admin-table .row-status.status-deactive::before { background: #FAFFCB !important; box-shadow: none !important; animation: none !important; }
+html body[data-role="admin"] .admin-table .row-status.status-suspend { color: #F26D6D !important; }
+html body[data-role="admin"] .admin-table .row-status.status-suspend::before { background: #F26D6D !important; box-shadow: none !important; animation: none !important; }
+/* ---- LIGHT admin (kontras di bg terang) ---- */
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-online { color: #047857 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-online::before { background: #047857 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-offline { color: #6B7280 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-offline::before { background: #6B7280 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-deactive { color: #8A8210 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-deactive::before { background: #8A8210 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-suspend { color: #DC2626 !important; }
+html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table .row-status.status-suspend::before { background: #DC2626 !important; }
+
+/* =========================================================
+   ADMIN WELCOME SPLASH — RIPPLE/RADAR CIRCLE DIPERBESAR
+   (req user 2026-05-19). Skala ~1.4x proporsional: stage,
+   ring+node SVG, core logo, ripple rings. !important supaya
+   menang dari base rule (~17318+).
+   ========================================================= */
+.admin-welcome-overlay .awo-net-stage {
+  width: 320px !important;
+  height: 320px !important;
+  margin-bottom: 20px !important;
+}
+.admin-welcome-overlay .awo-net-svg {
+  inset: 20px !important;
+  width: 280px !important;
+  height: 280px !important;
+}
+.admin-welcome-overlay .awo-core {
+  width: 96px !important;
+  height: 96px !important;
+}
+.admin-welcome-overlay .awo-core::before,
+.admin-welcome-overlay .awo-core::after {
+  width: 224px !important;
+  height: 224px !important;
+}
+
+/* =========================================================
+   LOGOUT SPLASH (#fullOverlay variant=logout) — PERBAIKI
+   "kolom circle gelap" (req user 2026-05-19). Penyebab:
+   ripple ring putih TERANG di atas bg near-black → area di
+   dalam ring KEBACA seperti cakram gelap keras. Fix:
+   (1) tambah halo radial lembut di belakang gembok (bukan
+       lubang hitam keras), (2) lembutkan ripple (opacity &
+       glow turun, lebih halus). !important → menang dari
+       base (~60254).
+   ========================================================= */
+#fullOverlay[data-variant="logout"] .fo-lock::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important; left: 50% !important;
+  width: 200px !important; height: 200px !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: radial-gradient(circle,
+    rgba(150,175,225,.16) 0%,
+    rgba(150,175,225,.07) 42%,
+    rgba(150,175,225,.02) 64%,
+    transparent 78%) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+/* RIPPLE CIRCLE DIHAPUS TOTAL (req user 2026-05-19: "ripple
+   circle splash nya hapus saja"). content:none → pseudo tidak
+   di-generate sama sekali (tak ada ring, tak ada animasi).
+   Halo lembut .fo-lock::before tetap supaya gembok tidak
+   "telanjang" di void (sesuai feedback dark-box sebelumnya). */
+#fullOverlay[data-variant="logout"] .fo-lock::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+/* =========================================================
+   ADMIN AUTH RADAR (.auth-illus-admin) — perbaiki (req user
+   2026-05-19): (1) buang warna BEIGE pada cincin orb (#E8D8C4
+   / shadow wine) → slate-blue sesuai tema admin; (2) radar
+   sweep, ripple (scan rings) & titik node WAJIB bergerak
+   terus — sebelumnya di-freeze oleh @media reduced-motion
+   (~17958 → animation:none !important). Override di-restate
+   dgn !important + source-order terakhir supaya menang.
+   ========================================================= */
+/* (1) Warna: cincin orb & shadow → slate-blue, BUKAN beige/wine */
+.auth-illus-admin .auth-orb {
+  box-shadow:
+    0 16px 40px rgba(16, 24, 38, .55),
+    0 0 60px rgba(150, 175, 225, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .22) !important;
+}
+.auth-illus-admin .auth-orb::before,
+.auth-illus-admin .auth-orb::after {
+  border-color: rgba(150, 175, 225, .45) !important;
+}
+body[data-theme="light"] .auth-illus-admin .auth-orb::before,
+body[data-theme="light"] .auth-illus-admin .auth-orb::after {
+  border-color: rgba(80, 110, 165, .45) !important;
+}
+/* (2) Paksa animasi radar/ripple/titik tetap jalan (anti-freeze) */
+@media (prefers-reduced-motion: reduce) {
+  .auth-illus-admin .admin-radar {
+    animation: adminRadarSweep 4.8s linear infinite !important;
+  }
+  .auth-illus-admin .admin-scan-rings .asr {
+    animation: adminScanRing 3.2s ease-out infinite !important;
+  }
+  .auth-illus-admin .admin-scan-rings .asr-2 { animation-delay: 1.06s !important; }
+  .auth-illus-admin .admin-scan-rings .asr-3 { animation-delay: 2.13s !important; }
+  .auth-illus-admin .admin-nodes .adn {
+    animation: adminNodePulse 2.4s ease-in-out infinite !important;
+  }
+  .auth-illus-admin .admin-nodes .adn-1 { animation-delay: 0s !important; }
+  .auth-illus-admin .admin-nodes .adn-2 { animation-delay: .25s !important; }
+  .auth-illus-admin .admin-nodes .adn-3 { animation-delay: .50s !important; }
+  .auth-illus-admin .admin-nodes .adn-4 { animation-delay: .75s !important; }
+  .auth-illus-admin .admin-nodes .adn-5 { animation-delay: 1s !important; }
+  .auth-illus-admin .admin-nodes .adn-6 { animation-delay: 1.25s !important; }
+  .auth-illus-admin .admin-nodes .adn-7 { animation-delay: 1.5s !important; }
+  .auth-illus-admin .admin-nodes .adn-8 { animation-delay: 1.75s !important; }
+  .auth-illus-admin .auth-orb::before,
+  .auth-illus-admin .auth-orb::after {
+    animation: authOrbPulse 2.4s ease-out infinite !important;
+  }
+  .auth-illus-admin .auth-orb::after { animation-delay: 1.2s !important; }
+}

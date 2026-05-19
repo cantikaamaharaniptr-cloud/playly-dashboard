@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260518-admin-ui-v328" />
+  <link rel="stylesheet" href="styles.css?v=20260518-admin-ui-v329" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -2639,7 +2639,6 @@
               <h3>🎬 New Videos Uploaded</h3>
               <button class="btn ghost sm" data-jump="admin-videos">View all</button>
             </div>
-            <div class="admin-avatar-stack" id="adminRecentVideosStack" aria-hidden="true"></div>
             <div id="adminRecentVideosLive" class="admin-list-rows"></div>
           </div>
           <div class="admin-panel">
@@ -2647,7 +2646,6 @@
               <h3>👤 New Users</h3>
               <button class="btn ghost sm" data-jump="admin-users">View all</button>
             </div>
-            <div class="admin-avatar-stack" id="adminRecentUsersStack" aria-hidden="true"></div>
             <div id="adminRecentUsersLive" class="admin-list-rows"></div>
           </div>
           <div class="admin-panel">
@@ -2655,7 +2653,6 @@
               <h3>👑 Top Creators</h3>
               <button class="btn ghost sm" data-jump="admin-users">View all</button>
             </div>
-            <div class="admin-avatar-stack" id="adminTopCreatorsStack" aria-hidden="true"></div>
             <div id="adminTopCreatorsLive" class="admin-list-rows"></div>
           </div>
         </div>
@@ -2667,6 +2664,20 @@
           <div>
             <h2>Manajemen Akun</h2>
             <p class="muted">Kelola semua akun terdaftar di platform.</p>
+          </div>
+        </div>
+        <!-- req user 2026-05-19: tab User/Admin + aksi (Cari user / Buat
+             User / Reset Data) SATU BARIS sejajar, di bawah judul. -->
+        <div class="gv-toolbar">
+          <div class="gv-tabs" id="adminUserRoleTabs">
+            <button type="button" class="gv-tab active" data-user-role-tab="user">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><circle cx="17.6" cy="9" r="2.5"/><path d="M16.2 14.4a4.4 4.4 0 0 1 5.4 4.3"/></svg>
+              <span>User</span> <span class="ssc-count" id="adminUserCntUser">0</span>
+            </button>
+            <button type="button" class="gv-tab" data-user-role-tab="admin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              <span>Admin</span> <span class="ssc-count" id="adminUserCntAdmin">0</span>
+            </button>
           </div>
           <div class="page-head-actions">
             <input type="search" class="search-mini" id="adminUserSearch" placeholder="Cari user..."/>
@@ -2682,18 +2693,6 @@
               <span class="inbox-refresh-icon">↻</span>
               <span class="inbox-refresh-label">Refresh</span>
               <span class="inbox-refresh-time" id="adminUserRefreshTime">—</span>
-            </button>
-          </div>
-        </div>
-        <div class="gv-toolbar">
-          <div class="gv-tabs" id="adminUserRoleTabs">
-            <button type="button" class="gv-tab active" data-user-role-tab="user">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><circle cx="17.6" cy="9" r="2.5"/><path d="M16.2 14.4a4.4 4.4 0 0 1 5.4 4.3"/></svg>
-              <span>User</span> <span class="ssc-count" id="adminUserCntUser">0</span>
-            </button>
-            <button type="button" class="gv-tab" data-user-role-tab="admin">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v6c0 4.6 3 7.6 7 9 4-1.4 7-4.4 7-9V6l-7-3Z"/></svg>
-              <span>Admin</span> <span class="ssc-count" id="adminUserCntAdmin">0</span>
             </button>
           </div>
         </div>
@@ -7965,6 +7964,7 @@
         <button class="btn ghost" id="audMessageBtn">💬 Send Message</button>
         <button class="btn ghost" id="audViewVideosBtn">🎞️ View All Videos</button>
         <button class="btn ghost" id="audResetPwBtn">🔑 Reset Password</button>
+        <button class="btn" id="audDeactivateBtn">🔵 Deactive</button>
         <button class="btn" id="audSuspendBtn">⛔ Suspend</button>
       </div>
     </div>
@@ -8657,7 +8657,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="script.js?v=20260518-admin-ui-v328" data-playly-main="1"></script>
+  <script src="script.js?v=20260518-admin-ui-v329" data-playly-main="1"></script>
   <script src="picons.js?v=20260516-settings-ico-v188"></script>
   <script src="particles-bg.js?v=20260516-particles-v2"></script>
   <script>
