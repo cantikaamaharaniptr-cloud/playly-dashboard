@@ -61495,59 +61495,33 @@ body[data-role="admin"] .admin-hero .hero-actions {
 /* ====================== END TRIAL (hero compact) ==================== */
 
 /* =========================================================
-   KPI card — mini-sparkline tren 7 hari mengisi ruang kosong
-   (req user 2026-05-19, opsi A). Flat, monokrom slate (gradient
-   chart admin via drawMiniLineChart), TANPA glow/box. Scoped
-   .admin-kpi-stat → kartu KPI di view lain tidak terpengaruh.
+   KPI hero — konfigurasi FINAL B+D (pilihan user 2026-05-19):
+   4 kartu sejajar (+ kartu Pendapatan) + baris sub-statistik.
+   KOTAK card dipadatkan; teks/angka/ikon ukuran NORMAL. Sparkline
+   (opsi A) sudah dihapus total. Scoped .admin-kpi-stat → kartu
+   KPI di view lain tidak terpengaruh.
    ========================================================= */
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
-  flex: 0 1 auto !important;   /* jgn melar — beri ruang utk sparkline */
+/* 4 kolom sejajar + tampilkan kartu Pendapatan (selalu) */
+body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
 }
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
-  flex: 1 1 auto !important;
-  min-width: 56px;
-  height: 36px;
-  align-self: center;
-  display: block;
-  margin: 0 6px;
-  opacity: .95;
-  pointer-events: none;
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
+  display: flex !important;
 }
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
-  margin: 0 0 0 0 !important;   /* sparkline sudah dorong; tren nempel kanan */
-  flex: 0 0 auto !important;
-  align-self: center !important;
-}
-/* layar sempit — sembunyikan sparkline biar angka/label tetap lega */
-@media (max-width: 1180px) {
-  body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark { display: none; }
-  body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content { flex: 1 1 auto !important; }
-}
-
-/* =========================================================
-   [TRIAL B] KPI card — baris SUB-STATISTIK (req user 2026-05-19,
-   opsi B). Sparkline (opsi A) di-nonaktifkan sementara biar
-   perbandingan bersih. REVERT/SWITCH = hapus blok [TRIAL B] ini
-   (opsi A otomatis aktif lagi). Kalau pilih B permanen → hapus
-   blok opsi A + HTML/JS sparkline.
-   ========================================================= */
-/* Matikan sparkline (opsi A) sementara */
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
-  display: none !important;
-}
-/* Konten balik melar penuh (krn spark hilang), tren tetap kanan */
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
   flex: 1 1 auto !important;
+  gap: 2px !important;            /* rapatkan stack teks → kotak lbh pendek */
 }
-/* Baris sub-statistik — kecil, kalem, flat (tanpa FX).
-   Spesifisitas tinggi + !important utk menang dari blok admin
-   "FORCE ALL TEXT TO SNOW" (lihat reference-admin-theme-palette). */
+/* KOTAK CARD compact: padding & gap ditekan, footprint kecil —
+   TANPA mengubah ukuran angka/label/sub/ikon (default normal). */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
+  padding: 11px 15px !important;
+  gap: 12px !important;
+}
+/* Baris sub-statistik — kecil, kalem, flat. Spesifisitas tinggi
+   + !important utk menang dari blok admin "FORCE ALL TEXT TO
+   SNOW" (lihat reference-admin-theme-palette). */
 html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content .kpi-sub,
 html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub {
   display: block;
@@ -61564,53 +61538,13 @@ html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub {
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub:empty {
   display: none;
 }
-/* ====================== END TRIAL B ================================ */
-
-/* Kartu KPI ke-4 (Pendapatan) — DEFAULT tersembunyi. Hanya tampil
-   saat blok [TRIAL D] aktif (di bawah). */
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
-  display: none;
-}
-
-/* =========================================================
-   [FINAL B+D] KPI — pilihan user 2026-05-19:
-   4 kartu sejajar (D, + kartu Pendapatan) + baris sub-stat (B).
-   KOTAK card-nya yang DIPADATKAN (padding/tinggi kotak ditekan),
-   TEKS & isi TETAP ukuran normal (revisi user: compact kotak,
-   bukan kecilin teks). Sparkline (A) OFF. [TRIAL B] di atas
-   tetap dipakai utk styling warna .kpi-sub.
-   ========================================================= */
-/* D: 4 kolom sejajar + tampilkan kartu Pendapatan */
-body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
-  display: flex !important;
-}
-/* A off (sparkline disembunyikan); B tetap ON (sub-stat tampil
-   ukuran NORMAL — tidak dikecilkan) */
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
-  display: none !important;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
-  flex: 1 1 auto !important;
-  gap: 2px !important;            /* rapatkan stack teks → kotak lbh pendek */
-}
-/* KOTAK CARD compact: padding (terutama vertikal) & gap kotak
-   ditekan supaya footprint card lebih kecil — TANPA mengubah
-   ukuran angka/label/sub/ikon (biarkan default admin-kpi-stat). */
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
-  padding: 11px 15px !important;
-  gap: 12px !important;
-}
 /* layar sempit → 2 kolom biar tidak gepeng */
 @media (max-width: 1320px) {
   body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-/* ================== END FINAL B+D ================================= */
+/* ================== END KPI FINAL B+D ============================= */
 
 /* =========================================================
    TERKINI · HARI INI (req user 2026-05-19):
@@ -62658,4 +62592,27 @@ body[data-theme="light"] .auth-illus-admin .auth-orb::after {
     animation: authOrbPulse 2.4s ease-out infinite !important;
   }
   .auth-illus-admin .auth-orb::after { animation-delay: 1.2s !important; }
+}
+
+/* =========================================================
+   RIPPLE SPLASH (scan rings .asr) — warna putih → PUTIH
+   KE-ABU-ABU-AN (req user 2026-05-19). Warna ripple di-drive
+   keyframe adminScanRing (border-color putih). Redefine
+   keyframe + base border ke grey-white lembut. Source-order
+   terakhir → keyframe ini menang.
+   ========================================================= */
+.auth-illus-admin .admin-scan-rings .asr {
+  border-color: rgba(199, 207, 219, .32) !important;
+}
+/* Ripple di-drive 2 keyframe: adminScanRing (reduced-motion
+   fallback) & adminScanRingBright (auth-screen aktif). Redefine
+   keduanya ke grey-white supaya konsisten, source-order terakhir
+   → menang dari definisi putih lama (~16557/43496). */
+@keyframes adminScanRing {
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(199, 207, 219, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(199, 207, 219, 0); }
+}
+@keyframes adminScanRingBright {
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(199, 207, 219, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(199, 207, 219, 0); }
 }

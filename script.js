@@ -20261,55 +20261,9 @@ function purgeDummyAds() {
 purgeDummyAds();
 window.addEventListener("playly:cloud-applied", () => { try { purgeDummyAds(); } catch (_) {} });
 
-const AD_SEED_FLAG = "playly-ads-seeded-v1"; // legacy (tidak dipakai lagi)
-
-// Banner SVG inline — pakai data URI URL-encoded standar (tanpa ;utf8 yang
-// non-standard). Reliable di Chrome/Edge/Firefox/Safari.
-function svgDataUri(svg) {
-  // Hapus whitespace berlebih untuk URL lebih pendek
-  const cleaned = svg.trim().replace(/\s+/g, " ").replace(/>\s+</g, "><");
-  return "data:image/svg+xml," + encodeURIComponent(cleaned);
-}
-
-const DEMO_BANNER_PROMO = svgDataUri(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#561C24"/>
-      <stop offset="100%" stop-color="#1a0c10"/>
-    </linearGradient>
-  </defs>
-  <rect width="600" height="200" fill="url(#g1)"/>
-  <circle cx="540" cy="40" r="80" fill="#c8965a" opacity="0.18"/>
-  <circle cx="60" cy="170" r="60" fill="#6D2932" opacity="0.10"/>
-  <text x="40" y="70" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#c8965a" letter-spacing="3">PROMO SPESIAL</text>
-  <text x="40" y="118" font-family="Inter, sans-serif" font-size="40" font-weight="900" fill="#fff">PLAYLY PREMIUM</text>
-  <text x="40" y="148" font-family="Inter, sans-serif" font-size="22" font-weight="700" fill="#6D2932">Diskon 50% - Bulan Ini Saja</text>
-  <text x="40" y="178" font-family="Inter, sans-serif" font-size="13" fill="#E8D8C4">Klik untuk upgrade</text>
-</svg>`);
-
-const DEMO_BANNER_SPONSOR = svgDataUri(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1e3a8a"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="600" height="200" fill="url(#g2)"/>
-  <rect x="40" y="40" width="80" height="80" rx="16" fill="#3b82f6"/>
-  <text x="80" y="93" font-family="Inter, sans-serif" font-size="36" font-weight="900" fill="#fff" text-anchor="middle">B</text>
-  <text x="140" y="78" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#93c5fd" letter-spacing="2">SPONSORED</text>
-  <text x="140" y="108" font-family="Inter, sans-serif" font-size="26" font-weight="800" fill="#fff">BrandX Studio</text>
-  <text x="140" y="135" font-family="Inter, sans-serif" font-size="13" fill="#cbd5e1">Solusi kreatif untuk konten kamu</text>
-  <text x="140" y="165" font-family="Inter, sans-serif" font-size="12" fill="#93c5fd">brandx.example.com</text>
-</svg>`);
-
-// Dihapus per req user 2026-05-19 (clean-slate / no-dummy). Dulu
-// mengisi config dengan 4 jenis iklan contoh; kini NO-OP — tidak
-// pernah dipanggil & tidak pernah menanam dummy. Shell dipertahankan
-// supaya pemanggilan tak-terduga (mis. cloud-sync lama) tetap aman.
-function seedDefaultAds() { /* no-op: clean-slate, tidak seed dummy */ }
+// Konstanta seed iklan dummy (AD_SEED_FLAG, svgDataUri, DEMO_BANNER_*,
+// seedDefaultAds) DIHAPUS TOTAL 2026-05-19 — sudah tidak dirujuk siapa
+// pun. Pembersihan iklan dummy ditangani purgeDummyAds() di atas.
 
 // SEED IKLAN DUMMY DIHAPUS TOTAL (req user 2026-05-19, prinsip
 // clean-slate / no-dummy). Tidak ada lagi auto-inject iklan contoh
@@ -22468,18 +22422,7 @@ function renderAdminKPI() {
   // Avatar-stack melayang dihapus (req user 2026-05-19) — avatar
   // sekarang di DALAM row daftar, pakai profil user masing-masing.
 
-  // Mini-sparkline tren 7 hari di tiap kartu KPI (req user 2026-05-19 —
-  // isi ruang kosong, data-rich, monokrom slate konsisten chart lain).
-  try {
-    if (typeof drawMiniLineChart === "function") {
-      const sU = document.getElementById("kpiSparkUsers");
-      const sV = document.getElementById("kpiSparkVideos");
-      const sW = document.getElementById("kpiSparkViews");
-      if (sU) drawMiniLineChart(sU, kpiSpark7("users",  m));
-      if (sV) drawMiniLineChart(sV, kpiSpark7("videos", m));
-      if (sW) drawMiniLineChart(sW, kpiSpark7("views",  m));
-    }
-  } catch (_) {}
+  // (Sparkline opsi A dihapus 2026-05-19 — user pilih opsi B+D.)
 
   // Baris sub-statistik per kartu KPI (req user 2026-05-19, opsi B) —
   // breakdown ringkas data REAL, mengisi kartu secara vertikal.
@@ -24279,38 +24222,8 @@ function renderAnPerUserCharts(series, periodTotal) {
 }
 
 // Draw a simple mini line chart (no axes, no labels, no tooltip) for per-user
-// panels. svg viewBox 200x80, padding 4px.
-// Bangun array 7 titik tren untuk sparkline KPI.
-// users/videos = kumulatif REAL berdasarkan timestamp (joinedAt / tanggal
-// upload) selama 7 hari terakhir. views = ramp halus ke total (tidak ada
-// log harian per-tayangan). Selalu kembalikan >=2 angka agar chart valid.
-function kpiSpark7(kind, m) {
-  const DAY = 86400000, now = Date.now();
-  if (kind === "users" || kind === "videos") {
-    const list = kind === "users" ? (m.userAccounts || []) : (m.videos || []);
-    const tof = kind === "users"
-      ? a => (a && a.joinedAt) ? new Date(a.joinedAt).getTime() : 0
-      : v => {
-          const t = v && (v.createdAt || v.uploadedAt || v.publishedAt || v.date || v.ts);
-          return t ? new Date(t).getTime() : 0;
-        };
-    const arr = [];
-    for (let i = 6; i >= 0; i--) {
-      const cutoff = now - i * DAY;
-      arr.push(list.filter(x => { const t = tof(x); return t > 0 && t <= cutoff; }).length);
-    }
-    // Semua timestamp hilang → tampilkan ramp lembut ke jumlah akhir.
-    if (arr.every(v => v === 0)) {
-      const c = list.length;
-      return [0, c * 0.2, c * 0.35, c * 0.55, c * 0.72, c * 0.88, c].map(n => Math.round(n));
-    }
-    return arr;
-  }
-  // views: belum ada data harian → ramp monoton ke total tayangan
-  const tv = Math.max(0, m.totalViews || 0);
-  return [0.50, 0.58, 0.65, 0.72, 0.81, 0.91, 1].map(f => Math.round(tv * f));
-}
-
+// panels. svg viewBox 200x80, padding 4px. (kpiSpark7 dihapus 2026-05-19 —
+// sparkline opsi A tidak dipakai; drawMiniLineChart tetap utk Grafik Per User.)
 function drawMiniLineChart(svg, values, color) {
   if (!svg || !values || !values.length) return;
   const W = 200, H = 80, PAD = 4;
