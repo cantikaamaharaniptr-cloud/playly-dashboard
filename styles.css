@@ -46548,10 +46548,12 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-c
    Captcha modal — rapatkan isi kolom (less vertical spacing)
    ========================================================= */
 #captchaModal .modal-panel.captcha-panel {
-  padding: 22px 22px 14px !important;
+  padding: 16px 22px 20px !important;
+  width: min(92vw, 396px) !important;
+  max-width: 396px !important;
 }
 #captchaModal .cap-head {
-  margin-bottom: 14px !important;
+  margin-bottom: 8px !important;
   padding: 0 !important;
 }
 #captchaModal .cap-brand {
@@ -46571,6 +46573,194 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-c
 #captchaModal .cap-foot {
   margin-top: 10px !important;
   padding-top: 6px !important;
+}
+
+/* =========================================================
+   Captcha modal — hierarki teks: eyebrow → tujuan → aksi → cara
+   (req user 2026-05-19: rapikan susunan, ukuran, kejelasan teks)
+   ========================================================= */
+/* Eyebrow "VERIFIKASI KEAMANAN" — teks 13.5px, ikon 15px, rapat ke teks */
+#captchaModal .cap-brand {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  padding: 4px 11px !important;
+  margin-bottom: 4px !important;
+  gap: 5px !important;
+}
+#captchaModal .cap-brand svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+/* Baris tujuan — paksa SATU baris (jangan wrap) */
+#captchaModal .cap-sub {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  color: var(--text-2) !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  margin: 4px auto 0 !important;
+}
+/* Panggung press-hold — compact */
+#captchaModal .cap-stage[data-cap-stage="press-hold"] {
+  gap: 0 !important;
+  padding: 2px 0 0 !important;
+}
+/* Tombol lingkaran — diperkecil agar kolom compact */
+#captchaModal .cap-press-btn {
+  width: 104px !important;
+  height: 104px !important;
+}
+#captchaModal .cap-press-icon {
+  width: 30px !important;
+  height: 30px !important;
+}
+/* Label aksi utama — menonjol, dekat ke tombol */
+#captchaModal .cap-press-label {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  letter-spacing: -0.1px !important;
+  margin: 12px 0 0 !important;
+}
+/* Petunjuk mekanik — paksa SATU baris (jangan wrap) */
+#captchaModal .cap-press-label + .cap-hint,
+#captchaModal .cap-hint {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  color: var(--text-2) !important;
+  opacity: 0.72 !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  margin: 5px auto 0 !important;
+}
+/* Footer (tombol "Batal") dihapus — req user 2026-05-19.
+   Batal tetap bisa via klik backdrop di luar panel. */
+#captchaModal .cap-foot {
+  display: none !important;
+}
+
+/* Animasi verifikasi — buat LEBIH TERANG (req user 2026-05-19).
+   Ring progress putih cerah + glow; makin terang saat ditahan. */
+#captchaModal .cap-press-ring-fill {
+  stroke: #FFFFFF !important;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55)) !important;
+}
+#captchaModal .cap-press-btn.pressing .cap-press-ring-fill {
+  stroke: #FFFFFF !important;
+  filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.8)) !important;
+}
+#captchaModal .cap-press-btn.pressing .cap-press-icon {
+  color: #FFFFFF !important;
+}
+/* State selesai — hijau lebih cerah biar konsisten "terang" */
+#captchaModal .cap-press-btn.done .cap-press-ring-fill {
+  stroke: #34D399 !important;
+  filter: drop-shadow(0 0 9px rgba(52, 211, 153, 0.7)) !important;
+}
+#captchaModal .cap-press-btn.done .cap-press-icon {
+  color: #34D399 !important;
+}
+
+/* =========================================================
+   Captcha — varian checkbox "Saya bukan robot":
+   ikon Playly Verify diperjelas + kolom centang LEBIH TERANG
+   (req user 2026-05-19)
+   ========================================================= */
+/* Kotak komponen — bg & border lebih terang biar menonjol */
+#captchaModal .cap-checkbox-wrap {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+}
+#captchaModal .cap-checkbox-btn:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+/* Kotak centang — outline & isi lebih terang, jelas terlihat kosong */
+#captchaModal .cap-checkbox-box {
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+#captchaModal .cap-checkbox-btn:hover .cap-checkbox-box {
+  border-color: #FFFFFF !important;
+}
+#captchaModal .cap-checkbox-btn.verifying .cap-checkbox-box {
+  border-color: #FFFFFF !important;
+}
+#captchaModal .cap-checkbox-spinner {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  border-top-color: #FFFFFF !important;
+}
+#captchaModal .cap-checkbox-btn.done .cap-checkbox-box {
+  border-color: #34D399 !important;
+  background: #34D399 !important;
+}
+/* Teks "Saya bukan robot" — terang & tegas */
+#captchaModal .cap-checkbox-text {
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+}
+/* Panel brand — divider & bg lebih terang, label lebih terbaca */
+#captchaModal .cap-checkbox-brand {
+  border-left-color: rgba(255, 255, 255, 0.20) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+/* Ikon Playly Verify — shield solid + centang, terang + sedikit glow */
+#captchaModal .cap-checkbox-brand svg.cap-cb-shield,
+#captchaModal .cap-checkbox-brand svg {
+  width: 22px !important;
+  height: 22px !important;
+  color: #F2F5FA !important;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.35)) !important;
+}
+
+/* =========================================================
+   Captcha — varian slide "Geser ke kanan": animasi verif
+   LEBIH TERANG (req user 2026-05-19)
+   ========================================================= */
+/* Track sedikit lebih terang biar kontras dgn isian */
+#captchaModal .cap-slide-track {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+/* Isian progress — putih cerah + glow saat digeser */
+#captchaModal .cap-slide-fill {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), #FFFFFF) !important;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.55) !important;
+}
+/* Handle — terang, menonjol, glow saat ditarik */
+#captchaModal .cap-slide-handle {
+  background: #F2F5FA !important;
+  color: #1C283C !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.45), 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+}
+#captchaModal .cap-slide-handle:active,
+#captchaModal .cap-slide-track.dragging .cap-slide-handle {
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.75), 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+}
+/* State selesai — hijau cerah konsisten dgn varian lain */
+#captchaModal .cap-slide-track.done .cap-slide-fill {
+  background: linear-gradient(90deg, #34D399, #6EE7B7) !important;
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.6) !important;
+}
+#captchaModal .cap-slide-track.done .cap-slide-handle {
+  background: #34D399 !important;
+  color: #08110C !important;
+}
+/* Teks label — jadi NAVY saat animasi bergerak (digeser) biar
+   tetap terbaca di atas isian putih cerah (req user 2026-05-19).
+   Halo tipis biar tetap kebaca di sisi track yg belum keisi. */
+#captchaModal .cap-slide-track.dragging .cap-slide-label {
+  color: #1C283C !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.45) !important;
+}
+#captchaModal .cap-slide-track.done .cap-slide-label {
+  color: #08110C !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
 }
 
 /* =========================================================
@@ -49285,16 +49475,15 @@ body[data-role="admin"]:not(.auth-mode) .ad-section .ad-form-image-row .dz-pro-e
   display: block !important;
   margin: auto !important;
 }
-/* Super admin: crown gold */
+/* Super admin: crown — SLATE monokrom (bukan emas), flat sesuai
+   tema admin + konsisten dgn crown badge (req user 2026-05-19) */
 .avatar-role-super {
-  color: #FFD27A;
-  filter:
-    drop-shadow(0 0 4px rgba(255, 210, 122, .55))
-    drop-shadow(0 1px 2px rgba(0, 0, 0, .45));
+  color: #C7CDD4;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45));
 }
 .avatar.avatar-has-icon:has(.avatar-role-super) {
-  background: linear-gradient(140deg, #4a3820 0%, #322312 55%, #1d1208 100%) !important;
-  border: 1px solid rgba(255, 210, 122, .35) !important;
+  background: rgba(28, 40, 60, .85) !important;
+  border: 1px solid rgba(165, 175, 195, .28) !important;
 }
 /* Regular admin: shield slate-blue */
 .avatar-role-admin {
@@ -59821,6 +60010,7 @@ body[data-role="admin"] #authCard button[type="submit"].btn.primary,
 body[data-role="admin"] #authCard .btn.primary.auth-submit {
   text-transform: none !important;
   letter-spacing: .2px !important;
+  font-size: 14.5px !important;
 }
 
 
@@ -59836,6 +60026,8 @@ body[data-role="admin"] #authCard .amb-text b {
 body[data-role="admin"] #authCard .admin-mode-banner small,
 body[data-role="admin"] #authCard .amb-text small {
   font-size: 12.5px !important;
+  font-weight: 300 !important;
+  letter-spacing: .1px !important;
   white-space: nowrap !important;
   text-transform: none !important;
   text-align: center !important;
@@ -59848,14 +60040,21 @@ body[data-role="admin"] #authModalWrap.show #authCard {
   padding: 24px 26px 22px !important;
   max-width: 430px !important;
 }
+/* Logo login admin: HAPUS kolom/box (req user 2026-05-18), logo 60x60.
+   Blok terakhir → menang dari background/border/box-shadow blok ~48804. */
 body[data-role="admin"] #authCard .amb-icon {
-  width: 54px !important;
-  height: 54px !important;
-  margin: 0 auto 10px !important;
+  width: 60px !important;
+  height: 60px !important;
+  margin: 0 auto 12px !important;
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 body[data-role="admin"] #authCard .amb-icon svg {
-  width: 30px !important;
-  height: 30px !important;
+  width: 60px !important;
+  height: 60px !important;
 }
 body[data-role="admin"] #authCard .admin-mode-banner {
   margin-bottom: 16px !important;
@@ -60078,9 +60277,9 @@ body[data-role="admin"] .admin-foot-section .afc-text p {
    ========================================================= */
 /* Bolt di sebelah sapaan — pengganti emoji ⚡ (di-inject via JS) */
 .admin-hero h2 .admin-hero-bolt {
-  width: 22px;
-  height: 22px;
-  vertical-align: -3px;
+  width: 25px;
+  height: 25px;
+  vertical-align: -4px;
   color: var(--admin-accent, #ADB5BD);
 }
 /* =========================================================
@@ -60958,28 +61157,50 @@ body[data-role="admin"] .admin-hero .hero-text .admin-hero-status-corner {
   }
 }
 
-/* (4) Tombol Broadcast — lebih hidup/nyata (solid slate-blue
-   gradient), bukan flat dark. */
-/* !important — kalah dari rule lama `.hero-actions .btn.primary
-   { background: var(--primary) !important }` kalau tanpa !important. */
+/* (4) Tombol Broadcast — bentuk PILL sama dgn .admin-hero-badge
+   ("Panel Kontrol Admin") & .hero-pill (tanggal/jam): radius 999px,
+   surface slate translucent yg sama, FLAT (tanpa glass/gradient/
+   glow/lift). req user 2026-05-19. !important — kalah dari rule
+   lama `.hero-actions .btn.primary` tanpa !important. */
 body[data-role="admin"] .admin-hero #adminBroadcastBtn {
-  background: linear-gradient(135deg, #3C5278 0%, #243349 100%) !important;
-  border: 1px solid rgba(165, 175, 195, .35) !important;
-  color: #FFFFFF !important;
-  font-weight: 700;
-  box-shadow: 0 2px 10px -2px rgba(20, 30, 48, .55), inset 0 1px 0 rgba(255, 255, 255, .08);
-  transition: background .18s var(--ease, ease), box-shadow .18s var(--ease, ease), transform .18s var(--ease, ease);
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 7px 15px !important;
+  border-radius: 999px !important;
+  /* Warna senada "Panel Kontrol Admin" (navy-slate #2C3B54→#1C283C),
+     dibuat FLAT (solid, tanpa glass/gradient/glow) — req user. */
+  background: #22304A !important;
+  background-image: none !important;
+  border: 1px solid rgba(165, 175, 195, .32) !important;
+  color: #E6EBF2 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: background .15s ease, border-color .15s ease !important;
 }
 body[data-role="admin"] .admin-hero #adminBroadcastBtn:hover {
-  background: linear-gradient(135deg, #46608C 0%, #2B3E59 100%) !important;
-  box-shadow: 0 6px 18px -4px rgba(60, 82, 120, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
-  transform: translateY(-2px);
+  background: #2A3A56 !important;
+  background-image: none !important;
+  border-color: rgba(165, 175, 195, .48) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
-body[data-role="admin"] .admin-hero #adminBroadcastBtn svg { color: #FFFFFF !important; }
+body[data-role="admin"] .admin-hero #adminBroadcastBtn svg {
+  color: #C7CEDB !important;
+  width: 12.5px !important;
+  height: 12.5px !important;
+  flex: 0 0 12.5px !important;
+}
 body[data-theme="light"][data-role="admin"] .admin-hero #adminBroadcastBtn {
-  background: linear-gradient(135deg, #45688A 0%, #2E4A66 100%) !important;
+  background: #2E4A66 !important;
+  background-image: none !important;
   border-color: rgba(37, 52, 63, .30) !important;
   color: #FFFFFF !important;
+  box-shadow: none !important;
 }
 /* Hilangkan focus-ring putih (req user 2026-05-18). Rule lama
    `.hero-actions .btn:focus-visible { outline:2px solid var(--text)
@@ -60991,7 +61212,7 @@ body[data-role="admin"] .admin-hero #adminBroadcastBtn:focus-visible {
   outline: none !important;
   outline-offset: 0 !important;
   border-color: rgba(165, 175, 195, .55) !important;
-  box-shadow: 0 2px 10px -2px rgba(20, 30, 48, .55), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+  box-shadow: none !important;
 }
 
 /* (5) Titik "live" di pill jam → HIJAU (req user 2026-05-18).
@@ -61166,3 +61387,240 @@ html body[data-theme="light"][data-role="admin"] .pq-row.pq-row:focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Ikon tameng di samping "Akses dibatasi" (req user 2026-05-18).
+   !important + chain → menang dari override admin yg nge-size <svg>. */
+html body[data-role="admin"] #authCard .amb-text small > svg.amb-shield,
+html body[data-role="admin"] #authCard .admin-mode-banner small > svg.amb-shield,
+svg.amb-shield {
+  width: 13.5px !important;
+  height: 13.5px !important;
+  min-width: 13.5px !important;
+  max-width: 13.5px !important;
+  display: inline-block !important;
+  vertical-align: -2px !important;
+  margin-left: 3px !important;
+  color: #ADB5BD !important;
+  flex: 0 0 13.5px !important;
+}
+
+/* =========================================================
+   Profile dropdown — warna profil ADMIN: flat slate monokrom
+   (req user 2026-05-19). Badge tanpa gradient, crown SVG slate,
+   status dot slate (bukan hijau) — konsisten tema admin flat.
+   Scoped body[data-role="admin"] → dashboard user TIDAK kena.
+   ========================================================= */
+/* Badge "Super Admin" — font MONO (sama dgn dashboard admin),
+   bentuk chip rapi: inline-flex, crown + teks rata tengah. */
+html body[data-role="admin"] .profile-dropdown .pd-role-badge,
+html body[data-role="admin"] .profile-dropdown .pd-role-badge[data-role="admin"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(173, 181, 189, 0.16) !important;
+  background-image: none !important;
+  color: #E8EDF6 !important;
+  border: 1px solid rgba(165, 175, 195, 0.30) !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', 'Consolas', monospace !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1 !important;
+  margin-top: 5px !important;
+  vertical-align: middle !important;
+}
+/* Ikon crown di dalam badge — slate, rata tengah (flex child) */
+html body[data-role="admin"] .profile-dropdown .pd-role-badge svg.pd-rb-ico,
+.pd-role-badge svg.pd-rb-ico {
+  width: 11px !important;
+  height: 11px !important;
+  min-width: 11px !important;
+  max-width: 11px !important;
+  margin: 0 !important;
+  color: #C7CDD4 !important;
+  display: block !important;
+  flex: 0 0 11px !important;
+}
+/* Status dot di avatar — slate monokrom (bukan hijau) di admin */
+html body[data-role="admin"] .profile-dropdown .avatar .status,
+html body[data-role="admin"] .profile-dropdown .avatar i.status {
+  background: #9DB4DA !important;
+  box-shadow: none !important;
+}
+/* Rapatkan jarak header (avatar/badge) ↔ daftar menu — req user
+   2026-05-19. Header bottom dipangkas → semua item ngikut naik. */
+html body[data-role="admin"] .profile-dropdown .pd-header {
+  padding-bottom: 8px !important;
+  margin-bottom: 2px !important;
+}
+
+/* ===================================================================
+   [TRIAL] HERO CARD ADMIN — teks lebih COMPACT (req user 2026-05-19,
+   "mau lihat dulu"). REVERT = HAPUS SELURUH BLOK INI (sampai penanda
+   END TRIAL). Nilai versi-sebelumnya untuk restore:
+     .admin-hero .hero-text  → gap:12px; padding:26px 28px
+     .admin-hero h2          → font-size:30px
+     .admin-hero p           → margin-top:4px
+     .admin-hero-badge       → margin-bottom:12px
+   =================================================================== */
+body[data-role="admin"] .admin-hero .hero-text {
+  gap: 7px !important;
+  padding: 18px 24px !important;
+}
+body[data-role="admin"] .admin-hero .hero-text > h2#adminHeroGreeting,
+body[data-role="admin"] .admin-hero h2#adminHeroGreeting {
+  font-size: 23px !important;
+  line-height: 1.15 !important;
+}
+body[data-role="admin"] .admin-hero .hero-text > p#adminHeroSubtitle,
+body[data-role="admin"] .admin-hero p#adminHeroSubtitle {
+  font-size: 12.5px !important;
+  margin-top: 0 !important;
+  line-height: 1.35 !important;
+}
+body[data-role="admin"] .admin-hero .admin-hero-badge {
+  margin-bottom: 0 !important;
+}
+body[data-role="admin"] .admin-hero .hero-actions {
+  margin-top: 2px !important;
+}
+/* ====================== END TRIAL (hero compact) ==================== */
+
+/* =========================================================
+   KPI card — mini-sparkline tren 7 hari mengisi ruang kosong
+   (req user 2026-05-19, opsi A). Flat, monokrom slate (gradient
+   chart admin via drawMiniLineChart), TANPA glow/box. Scoped
+   .admin-kpi-stat → kartu KPI di view lain tidak terpengaruh.
+   ========================================================= */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
+  flex: 0 1 auto !important;   /* jgn melar — beri ruang utk sparkline */
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
+  flex: 1 1 auto !important;
+  min-width: 56px;
+  height: 36px;
+  align-self: center;
+  display: block;
+  margin: 0 6px;
+  opacity: .95;
+  pointer-events: none;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
+  margin: 0 0 0 0 !important;   /* sparkline sudah dorong; tren nempel kanan */
+  flex: 0 0 auto !important;
+  align-self: center !important;
+}
+/* layar sempit — sembunyikan sparkline biar angka/label tetap lega */
+@media (max-width: 1180px) {
+  body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark { display: none; }
+  body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content { flex: 1 1 auto !important; }
+}
+
+/* =========================================================
+   [TRIAL B] KPI card — baris SUB-STATISTIK (req user 2026-05-19,
+   opsi B). Sparkline (opsi A) di-nonaktifkan sementara biar
+   perbandingan bersih. REVERT/SWITCH = hapus blok [TRIAL B] ini
+   (opsi A otomatis aktif lagi). Kalau pilih B permanen → hapus
+   blok opsi A + HTML/JS sparkline.
+   ========================================================= */
+/* Matikan sparkline (opsi A) sementara */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
+  display: none !important;
+}
+/* Konten balik melar penuh (krn spark hilang), tren tetap kanan */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
+  flex: 1 1 auto !important;
+}
+/* Baris sub-statistik — kecil, kalem, flat (tanpa FX).
+   Spesifisitas tinggi + !important utk menang dari blok admin
+   "FORCE ALL TEXT TO SNOW" (lihat reference-admin-theme-palette). */
+html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content .kpi-sub,
+html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: #8C97A6 !important;
+  -webkit-text-fill-color: #8C97A6 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub:empty {
+  display: none;
+}
+/* ====================== END TRIAL B ================================ */
+
+/* Kartu KPI ke-4 (Pendapatan) — DEFAULT tersembunyi. Hanya tampil
+   saat blok [TRIAL D] aktif (di bawah). */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
+  display: none;
+}
+
+/* =========================================================
+   [FINAL B+D COMPACT] KPI — pilihan user 2026-05-19:
+   4 kartu sejajar (D, + kartu Pendapatan) + baris sub-stat (B)
+   + kartu DIPADATKAN (compact). Sparkline (A) tetap OFF.
+   Blok [TRIAL B] di atas tetap dipakai utk styling .kpi-sub.
+   ========================================================= */
+/* D: 4 kolom sejajar + tampilkan kartu Pendapatan */
+body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
+  display: flex !important;
+}
+/* A off (sparkline disembunyikan); B tetap ON (sub-stat tampil) */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
+  display: none !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
+  flex: 1 1 auto !important;
+  gap: 1px !important;
+}
+/* COMPACT: padding, ikon, angka, label, sub semua dirapatkan */
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
+  padding: 12px 13px !important;
+  gap: 9px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-icon {
+  width: 34px !important;
+  height: 34px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-icon svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .kpi-content strong {
+  font-size: 20px !important;
+  margin-top: 0 !important;
+}
+body[data-role="admin"] .admin-kpi-stat .kpi-content small {
+  font-size: 9.5px !important;
+  letter-spacing: .04em !important;
+}
+html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub {
+  font-size: 9.5px !important;
+  margin-top: 2px !important;
+}
+body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
+  font-size: 10px !important;
+}
+/* layar sempit → 2 kolom biar tidak gepeng */
+@media (max-width: 1320px) {
+  body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+/* ================== END FINAL B+D COMPACT ========================= */

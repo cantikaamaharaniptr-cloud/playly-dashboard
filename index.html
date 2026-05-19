@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260518-admin-ui-v302" />
+  <link rel="stylesheet" href="styles.css?v=20260518-admin-ui-v327" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -817,7 +817,7 @@
             </div>
             <div class="amb-text">
               <b>Admin Panel Login</b>
-              <small>Platform administrators only · Restricted access</small>
+              <small>Platform administrators only · Restricted access<svg class="amb-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V5z"/><path d="m9 12 2 2 4-4"/></svg></small>
             </div>
           </div>
 
@@ -2511,7 +2511,7 @@
               <p id="adminHeroSubtitle">Monitor platform performance &amp; moderate content in real-time.</p>
 
               <div class="hero-actions">
-                <button class="btn primary" id="adminBroadcastBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> Broadcast</button>
+                <button class="btn primary" id="adminBroadcastBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M7.76 7.76a6 6 0 0 0 0 8.48"/><path d="M16.24 16.24a6 6 0 0 0 0-8.48"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M19.07 19.07a10 10 0 0 0 0-14.14"/></svg> Broadcast</button>
               </div>
 
             </div>
@@ -2526,7 +2526,9 @@
                   <div class="kpi-content">
                     <strong id="kpiUsers" data-kpi-num="0">0</strong>
                     <small>Total Users</small>
+                    <span class="kpi-sub" id="kpiSubUsers"></span>
                   </div>
+                  <span class="kpi-spark" aria-hidden="true"><svg id="kpiSparkUsers" viewBox="0 0 200 80" preserveAspectRatio="none"></svg></span>
                   <span class="kpi-trend up">↑ 12.4%</span>
                 </div>
                 <div class="admin-kpi-card" data-popup="kpi-videos" role="button" tabindex="0" title="Total Videos detail" data-kpi="videos">
@@ -2534,7 +2536,9 @@
                   <div class="kpi-content">
                     <strong id="kpiVideos" data-kpi-num="0">0</strong>
                     <small>Total Videos</small>
+                    <span class="kpi-sub" id="kpiSubVideos"></span>
                   </div>
+                  <span class="kpi-spark" aria-hidden="true"><svg id="kpiSparkVideos" viewBox="0 0 200 80" preserveAspectRatio="none"></svg></span>
                   <span class="kpi-trend up">↑ 8.7%</span>
                 </div>
                 <div class="admin-kpi-card" data-popup="kpi-views" role="button" tabindex="0" title="Views This Month detail" data-kpi="views">
@@ -2542,8 +2546,23 @@
                   <div class="kpi-content">
                     <strong id="kpiViews" data-kpi-num="2400000">2.4M</strong>
                     <small>Views This Month</small>
+                    <span class="kpi-sub" id="kpiSubViews"></span>
                   </div>
+                  <span class="kpi-spark" aria-hidden="true"><svg id="kpiSparkViews" viewBox="0 0 200 80" preserveAspectRatio="none"></svg></span>
                   <span class="kpi-trend up">↑ 23.1%</span>
+                </div>
+                <!-- Kartu KPI ke-4: Pendapatan (req user 2026-05-19, opsi D).
+                     #kpiRevenue sudah di-isi renderAdminKPI (fmtIDR). Default
+                     ter-sembunyi; aktif hanya saat blok [TRIAL D]. -->
+                <div class="admin-kpi-card kpi-card-rev" data-jump="admin-revenue" role="button" tabindex="0" title="Pendapatan detail" data-kpi="revenue">
+                  <div class="admin-kpi-icon revenue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M16 13h3"/></svg></div>
+                  <div class="kpi-content">
+                    <strong id="kpiRevenue" data-kpi-num="0">Rp 0</strong>
+                    <small>Revenue This Month</small>
+                    <span class="kpi-sub" id="kpiSubRevenue"></span>
+                  </div>
+                  <span class="kpi-spark" aria-hidden="true"><svg id="kpiSparkRevenue" viewBox="0 0 200 80" preserveAspectRatio="none"></svg></span>
+                  <span class="kpi-trend up">↑ 0%</span>
                 </div>
               </div>
             </div><!-- /.admin-hero-left -->
@@ -6678,6 +6697,24 @@
       </span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
+    <!-- Aksi admin dipindah ke ATAS + diurutkan (req user 2026-05-19):
+         Manajemen User → Broadcast → Log Audit. data-pd-admin-only →
+         disembunyikan total di dashboard user (urutan user tak berubah). -->
+    <div class="pd-section" data-pd-admin-only>
+      <button class="pd-item" data-jump="admin-users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><circle cx="17.6" cy="9" r="2.5"/><path d="M16.2 14.4a4.4 4.4 0 0 1 5.4 4.3"/></svg>
+        <span>Manajemen User</span>
+      </button>
+      <button class="pd-item" data-jump="admin-comms">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M17 8.5a4 4 0 0 1 0 7M19.6 5.5a8 8 0 0 1 0 13"/></svg>
+        <span>Broadcast</span>
+      </button>
+      <button class="pd-item" data-jump="admin-audit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.5l2 2 4.5-4.5"/><path d="M12 3 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-3Z"/></svg>
+        <span>Log Audit</span>
+      </button>
+    </div>
+    <div class="pd-divider" data-pd-admin-only></div>
     <div class="pd-section">
       <!-- Edit Profil & Ganti Tema disembunyikan KHUSUS dashboard admin
            (request user 2026-05-18) via data-pd-admin-hide — dashboard
@@ -6698,25 +6735,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
         <span>Email</span>
         <i class="pd-item-badge" id="pdEmailBadge" hidden></i>
-      </button>
-    </div>
-    <!-- Aksi cepat KHUSUS dashboard admin (request user 2026-05-18):
-         pengganti Edit Profil & Ganti Tema yg dihapus. data-pd-admin-only
-         → disembunyikan total di dashboard user. Navigasi pakai data-jump
-         (handler global switchView). -->
-    <div class="pd-divider" data-pd-admin-only></div>
-    <div class="pd-section" data-pd-admin-only>
-      <button class="pd-item" data-jump="admin-audit">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.5l2 2 4.5-4.5"/><path d="M12 3 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-3Z"/></svg>
-        <span>Log Audit</span>
-      </button>
-      <button class="pd-item" data-jump="admin-comms">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M17 8.5a4 4 0 0 1 0 7M19.6 5.5a8 8 0 0 1 0 13"/></svg>
-        <span>Broadcast</span>
-      </button>
-      <button class="pd-item" data-jump="admin-users">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><circle cx="17.6" cy="9" r="2.5"/><path d="M16.2 14.4a4.4 4.4 0 0 1 5.4 4.3"/></svg>
-        <span>Manajemen User</span>
       </button>
     </div>
     <div class="pd-divider" data-pd-user-only></div>
@@ -7094,12 +7112,12 @@
           </svg>
           <span>Verifikasi Keamanan</span>
         </span>
-        <p class="cap-sub" id="capSub" data-no-i18n>Konfirmasi kamu manusia untuk lanjut.</p>
+        <p class="cap-sub" id="capSub" data-no-i18n>Konfirmasi bahwa kamu manusia untuk melanjutkan</p>
       </header>
 
       <!-- VARIANT A: PRESS & HOLD -->
       <div class="cap-stage" data-cap-stage="press-hold" hidden>
-        <button type="button" class="cap-press-btn" id="capPressBtn" aria-label="Tahan untuk verifikasi">
+        <button type="button" class="cap-press-btn" id="capPressBtn" aria-label="Tekan dan tahan untuk verifikasi">
           <svg class="cap-press-ring" viewBox="0 0 100 100" aria-hidden="true">
             <circle class="cap-press-ring-bg"   cx="50" cy="50" r="44"/>
             <circle class="cap-press-ring-fill" cx="50" cy="50" r="44" id="capPressFill"/>
@@ -7111,8 +7129,8 @@
             </svg>
           </span>
         </button>
-        <p class="cap-press-label" id="capPressLabel" data-no-i18n>Tahan untuk verifikasi</p>
-        <small class="cap-hint" data-no-i18n>Tekan &amp; tahan tombol di atas — jangan lepas sampai penuh.</small>
+        <p class="cap-press-label" id="capPressLabel" data-no-i18n>Tekan &amp; tahan tombol</p>
+        <small class="cap-hint" data-no-i18n>Tahan sampai lingkaran terisi penuh, lalu lepas</small>
       </div>
 
       <!-- VARIANT B: SLIDE TO VERIFY -->
@@ -7152,7 +7170,7 @@
             <span class="cap-checkbox-text" id="capCheckboxText" data-no-i18n>Saya bukan robot</span>
           </button>
           <span class="cap-checkbox-brand" data-no-i18n>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+            <svg class="cap-cb-shield" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1 3 5v6c0 5.6 3.8 10.4 9 12 5.2-1.6 9-6.4 9-12V5L12 1zm-1.6 15.4-3.9-3.9 1.5-1.5 2.4 2.4 4.9-4.9 1.5 1.5-6.4 6.4z"/></svg>
             <span>Playly Verify</span>
           </span>
         </div>
@@ -8639,7 +8657,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="script.js?v=20260518-admin-ui-v302" data-playly-main="1"></script>
+  <script src="script.js?v=20260518-admin-ui-v327" data-playly-main="1"></script>
   <script src="picons.js?v=20260516-settings-ico-v188"></script>
   <script src="particles-bg.js?v=20260516-particles-v2"></script>
   <script>

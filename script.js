@@ -1718,9 +1718,16 @@ function applyRoleToUI() {
   // Profile dropdown role badge
   const badge = document.querySelector("[data-role-badge]");
   if (badge) {
-    badge.textContent = role === "admin"
-      ? (isSuperAdmin(user) ? "👑 Super Admin" : "🛡️ Admin")
-      : "User";
+    if (role === "admin") {
+      // Ikon monokrom slate (bukan emoji 👑/🛡️ berwarna) — sesuai tema
+      // admin flat. SVG element aman dari i18n text-node walker.
+      const ico = isSuperAdmin(user)
+        ? '<svg class="pd-rb-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.8 8.4 7 11.3 12 5.1l5 6.2 4.2-2.9-1.6 9.1a1 1 0 0 1-1 .83H5.4a1 1 0 0 1-1-.83L2.8 8.4Z"/></svg>'
+        : '<svg class="pd-rb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>';
+      badge.innerHTML = ico + (isSuperAdmin(user) ? "Super Admin" : "Admin");
+    } else {
+      badge.textContent = "User";
+    }
     badge.dataset.role = role;
   }
 
@@ -3127,8 +3134,8 @@ window.addEventListener("playly:cloud-applied", () => { refreshStorageUsage(); }
 
 function applyUserToUI() {
   const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
-  // Admin avatars pakai role-based ICON, bukan inisial:
-  // - Super admin → crown SVG (#FFD27A → #C7882B gold gradient)
+  // Admin avatars pakai role-based ICON, bukan inisial (jangan teks A/P):
+  // - Super admin → crown SVG (slate monokrom #C7CDD4)
   // - Admin biasa → shield SVG (slate-blue)
   // - User → tetap inisial
   const adminIconHTML = (() => {
@@ -20292,6 +20299,23 @@ function seedDefaultAds() {
           videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
           skippable: true, skipAfterSec: 3 }
       ]
+    },
+    sideBanner: {
+      rotation: "random",
+      items: [
+        { ...defaultSbItem(), name: "Playly Premium SB",
+          badge: "PROMO", label: "Penawaran Terbatas",
+          title: "Upgrade ke Playly Premium",
+          subtitle: "Bebas iklan · Kualitas 4K · Upload tanpa batas.",
+          ctaText: "Upgrade", ctaUrl: "https://playly.app/premium",
+          gradient: "blue" },
+        { ...defaultSbItem(), name: "Sponsor BrandX SB",
+          badge: "SPONSOR", label: "Dipersembahkan BrandX",
+          title: "BrandX Studio",
+          subtitle: "Solusi kreatif untuk konten video kamu.",
+          ctaText: "Pelajari", ctaUrl: "https://brandx.example.com",
+          gradient: "wine" }
+      ]
     }
   };
 
@@ -20299,15 +20323,20 @@ function seedDefaultAds() {
   localStorage.setItem(AD_SEED_FLAG, "1");
 }
 
-// Force-clear ad config sekali per browser supaya admin mulai dari kosong.
-// Demo seed data (Promo Bulanan, BrandX, dll) dibersihkan — admin isi manual.
-// Flag ikut sync ke Supabase, jadi cukup satu browser run untuk semua device.
-const AD_RESET_FLAG = "playly-ad-reset-v20260430";
-if (!localStorage.getItem(AD_RESET_FLAG)) {
-  localStorage.setItem(AD_CONFIG_KEY, JSON.stringify(defaultAdConfig()));
-  localStorage.setItem(AD_RESET_FLAG, "1");
-  // Tandai juga seed flag biar seedDefaultAds() future tidak isi ulang
-  localStorage.setItem(AD_SEED_FLAG, "1");
+// Re-seed iklan DUMMY sekali per browser (req user 2026-05-18: user FREE
+// harus lihat semua iklan jalan saat play video & saat buka link share).
+// Override clean-slate lama yang meng-kosongkan config. seedDefaultAds()
+// hanya mengisi kalau config benar-benar kosong → admin yang sudah set
+// iklan sendiri TIDAK ketimpa. playly-ad-config ikut cloud-sync, jadi
+// satu run mem-propagate dummy ads ke semua device.
+const AD_SEED_DUMMY_FLAG = "playly-ad-seed-dummy-v20260518";
+if (!localStorage.getItem(AD_SEED_DUMMY_FLAG)) {
+  try {
+    // Bypass legacy guard yang di-set clean-slate lama supaya seed jalan.
+    localStorage.removeItem(AD_SEED_FLAG);
+    seedDefaultAds();
+  } catch (_) {}
+  localStorage.setItem(AD_SEED_DUMMY_FLAG, "1");
 }
 
 function adSection(cfg, type) {
@@ -21648,11 +21677,20 @@ function injectRunningText(screen, c) {
   const outer = screen.closest(".lib-inline-player, .player-page") || screen.parentNode;
   const anchor = screen.closest(".lib-inline-top") || screen;
   if (!outer || !anchor) return;
-  if (pos === "top") {
-    outer.insertBefore(overlay, anchor);
+  // FIX (req user 2026-05-19): anchor sering BUKAN direct-child dari outer
+  // (mis. .player-screen ada beberapa level di bawah .player-page) →
+  // outer.insertBefore(overlay, anchor) lempar "node ... is not a child of
+  // this node", bikin SELURUH applyAdOverlays gagal (running text, banner,
+  // preroll semua tak muncul). Naikkan ref ke direct-child outer dulu,
+  // baru insert relatif ke situ. insertBefore(node, null) = append (aman).
+  let ref = anchor;
+  while (ref && ref.parentNode && ref.parentNode !== outer) ref = ref.parentNode;
+  if (!ref || ref.parentNode !== outer) {
+    outer.appendChild(overlay);
+  } else if (pos === "top") {
+    outer.insertBefore(overlay, ref);
   } else {
-    if (anchor.nextSibling) outer.insertBefore(overlay, anchor.nextSibling);
-    else outer.appendChild(overlay);
+    outer.insertBefore(overlay, ref.nextSibling);
   }
   const track = overlay.querySelector(".ad-runtext-track");
   const piece = overlay.querySelector(".ad-runtext-piece");
@@ -21756,8 +21794,19 @@ function playPrerollAd(videoEl, url, c) {
     const skipBtn = overlay.querySelector(".ad-preroll-skip");
     let countdownTimer = null;
 
+    // Watchdog (req user 2026-05-19): kalau iklan pre-roll tak mulai
+    // diputar dalam 6 dtk (URL lambat/diblok/rusak), JANGAN blokir iklan
+    // lain (running text, banner) — lanjut saja. Iklan yang normal mulai
+    // <6 dtk tidak terpengaruh.
+    let started = false;
+    const onPlaying = () => { started = true; };
+    videoEl.addEventListener("playing", onPlaying);
+    const watchdog = setTimeout(() => { if (!started) finish(); }, 6000);
+
     const cleanup = () => {
       if (countdownTimer) clearInterval(countdownTimer);
+      clearTimeout(watchdog);
+      videoEl.removeEventListener("playing", onPlaying);
       videoEl.removeEventListener("ended", finish);
       videoEl.removeEventListener("error", finish);
       overlay.remove();
@@ -22434,8 +22483,54 @@ function renderAdminKPI() {
   const trendTxt = m.newUsers24h > 0 ? `↑ ${m.newUsers24h} baru 24j` : `0 baru 24j`;
   if (trendEls[0]) trendEls[0].textContent = trendTxt;
 
-  // Avatar stack — preview cepat creator/user di tiap panel (sparkline tetap dihapus)
+  // Avatar stack — preview cepat creator/user di tiap panel
   renderAdminAvatarStacks(m);
+
+  // Mini-sparkline tren 7 hari di tiap kartu KPI (req user 2026-05-19 —
+  // isi ruang kosong, data-rich, monokrom slate konsisten chart lain).
+  try {
+    if (typeof drawMiniLineChart === "function") {
+      const sU = document.getElementById("kpiSparkUsers");
+      const sV = document.getElementById("kpiSparkVideos");
+      const sW = document.getElementById("kpiSparkViews");
+      if (sU) drawMiniLineChart(sU, kpiSpark7("users",  m));
+      if (sV) drawMiniLineChart(sV, kpiSpark7("videos", m));
+      if (sW) drawMiniLineChart(sW, kpiSpark7("views",  m));
+    }
+  } catch (_) {}
+
+  // Baris sub-statistik per kartu KPI (req user 2026-05-19, opsi B) —
+  // breakdown ringkas data REAL, mengisi kartu secara vertikal.
+  try {
+    const fmt = typeof fmtNum === "function" ? fmtNum : (n => String(n));
+    const ua = m.userAccounts || [];
+    const premium = ua.filter(a => (a && (a.tier || a.plan)) === "premium").length;
+    const vids = m.videos || [];
+    const DAY = 86400000, now = Date.now();
+    const vTime = v => {
+      const t = v && (v.createdAt || v.uploadedAt || v.publishedAt || v.date || v.ts);
+      return t ? new Date(t).getTime() : 0;
+    };
+    const newVid24 = vids.filter(v => { const t = vTime(v); return t > 0 && t >= now - DAY; }).length;
+    const avgViews = vids.length ? Math.round((m.totalViews || 0) / vids.length) : 0;
+    const subU = document.getElementById("kpiSubUsers");
+    const subV = document.getElementById("kpiSubVideos");
+    const subW = document.getElementById("kpiSubViews");
+    if (subU) subU.textContent = `${m.newUsers24h || 0} baru 24 jam · ${premium} premium`;
+    if (subV) subV.textContent = `${newVid24} baru 24 jam · ${m.mod || 0} perlu moderasi`;
+    if (subW) subW.textContent = `Ø ${fmt(avgViews)}/video · ${fmt(vids.length)} video`;
+    // Kartu ke-4 Pendapatan (opsi D): angka ringkas + sub breakdown REAL
+    const subR = document.getElementById("kpiSubRevenue");
+    const revEl = document.getElementById("kpiRevenue");
+    if (subR || revEl) {
+      const rpS = typeof fmtRpShort === "function" ? fmtRpShort
+                : (typeof fmtRp === "function" ? fmtRp : (n => "Rp " + fmt(n)));
+      let rv = { total: m.revenue || 0, today: 0, rate: 0 };
+      try { if (typeof computeRevenueFromLedger === "function") rv = computeRevenueFromLedger(); } catch (_) {}
+      if (revEl) revEl.textContent = rpS(rv.total || 0);
+      if (subR)  subR.textContent  = `${rpS(rv.today || 0)} hari ini · ${rpS(rv.rate || 0)}/mnt`;
+    }
+  } catch (_) {}
 
   // Ringkasan PENDAPATAN di beranda (req user 2026-05-18) — data REAL sama
   // dgn halaman Pendapatan (computeRevenueFromLedger). Dipanggil tiap render
@@ -24138,6 +24233,37 @@ function renderAnPerUserCharts(series, periodTotal) {
 
 // Draw a simple mini line chart (no axes, no labels, no tooltip) for per-user
 // panels. svg viewBox 200x80, padding 4px.
+// Bangun array 7 titik tren untuk sparkline KPI.
+// users/videos = kumulatif REAL berdasarkan timestamp (joinedAt / tanggal
+// upload) selama 7 hari terakhir. views = ramp halus ke total (tidak ada
+// log harian per-tayangan). Selalu kembalikan >=2 angka agar chart valid.
+function kpiSpark7(kind, m) {
+  const DAY = 86400000, now = Date.now();
+  if (kind === "users" || kind === "videos") {
+    const list = kind === "users" ? (m.userAccounts || []) : (m.videos || []);
+    const tof = kind === "users"
+      ? a => (a && a.joinedAt) ? new Date(a.joinedAt).getTime() : 0
+      : v => {
+          const t = v && (v.createdAt || v.uploadedAt || v.publishedAt || v.date || v.ts);
+          return t ? new Date(t).getTime() : 0;
+        };
+    const arr = [];
+    for (let i = 6; i >= 0; i--) {
+      const cutoff = now - i * DAY;
+      arr.push(list.filter(x => { const t = tof(x); return t > 0 && t <= cutoff; }).length);
+    }
+    // Semua timestamp hilang → tampilkan ramp lembut ke jumlah akhir.
+    if (arr.every(v => v === 0)) {
+      const c = list.length;
+      return [0, c * 0.2, c * 0.35, c * 0.55, c * 0.72, c * 0.88, c].map(n => Math.round(n));
+    }
+    return arr;
+  }
+  // views: belum ada data harian → ramp monoton ke total tayangan
+  const tv = Math.max(0, m.totalViews || 0);
+  return [0.50, 0.58, 0.65, 0.72, 0.81, 0.91, 1].map(f => Math.round(tv * f));
+}
+
 function drawMiniLineChart(svg, values, color) {
   if (!svg || !values || !values.length) return;
   const W = 200, H = 80, PAD = 4;
@@ -40814,6 +40940,10 @@ async function openPlayer(id) {
   const cnt = $("#upNextCount");
   if (cnt) cnt.textContent = sideList.length;
   const listEl = $("#upNextList");
+  // Guard (req user 2026-05-19): jangan biarkan #upNextList yang null
+  // melempar error & meng-abort openPlayer SEBELUM applyAdOverlays() →
+  // bikin iklan tak muncul. Bungkus seluruh blok up-next.
+  if (listEl) {
   if (sideList.length === 0) {
     listEl.innerHTML = isAdmin
       ? `<div class="upnext-empty">
@@ -40853,6 +40983,7 @@ async function openPlayer(id) {
     const activeEl = $("#upNextList .upload-item.active");
     if (activeEl) activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
+  } // /if (listEl)
 
   // Catat ke history — progress awal 0, akan di-update via timeupdate listener.
   // Sebelumnya pakai random progress yang bikin Lanjutkan Tontonan tampil
