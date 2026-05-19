@@ -20225,29 +20225,50 @@ function saveAdConfig(cfg) {
 
 // ----------------------- PURGE IKLAN DUMMY (clean-slate) -----------------------
 // req user 2026-05-19: iklan dummy yang dulu ter-seed (commit 3d8061e) sudah
-// terlanjur tertanam di localStorage & ter-propagate ke Supabase. Menghapus
-// kode seed saja tidak cukup — data lama akan "resurrect" dari cloud.
-// purgeDummyAds() membuang HANYA item dgn nama dummy yang dikenal (iklan asli
-// yang di-set admin TIDAK tersentuh), idempotent, jalan tiap load + tiap
-// cloud-applied → kalau device lain mem-propagate dummy lagi, auto bersih
-// lagi; saveAdConfig juga mem-propagate state bersih ke cloud.
+// terlanjur tertanam di localStorage & ter-propagate ke Supabase. Hardened
+// opsi 3 (user): hanya hapus item yang nama-nya dummy DAN konten-nya cocok
+// SIDIK-JARI seed (URL/teks unik) — iklan ASLI bernama sama (mis. "Playly
+// Premium" tapi link/gambar sendiri) TIDAK tersentuh. SEKALI-JALAN: setelah
+// pembersihan historis selesai (flag), purge tidak pernah menyentuh config
+// lagi (load berikutnya & cloud-applied jadi no-op).
+const AD_DUMMY_PURGE_FLAG = "playly-ad-dummy-purged-v2";
 const AD_DUMMY_NAMES = new Set([
   "Promo Bulanan", "Follow Sosmed",
   "Playly Premium", "Sponsor BrandX",
   "Sponsor 15 detik", "Sponsor 15 detik (alt)",
   "Playly Premium SB", "Sponsor BrandX SB"
 ]);
+// Substring unik milik SEED dummy (tidak akan ada di iklan asli admin
+// kecuali kebetulan pakai URL/teks dummy yang sama persis).
+const AD_DUMMY_FINGERPRINTS = [
+  "playly.app/premium",
+  "brandx.example.com",
+  "commondatastorage.googleapis.com/gtv-videos-bucket/sample/",
+  "Diskon 50% untuk Playly Premium",
+  "@playlyofficial di Instagram",
+  "Bebas iklan · Kualitas 4K · Upload tanpa batas.",
+  "Solusi kreatif untuk konten video kamu.",
+  "Dipersembahkan BrandX",
+  "PROMO%20SPESIAL", "BrandX%20Studio"
+];
+function _isSeedDummyAd(it) {
+  if (!it || !AD_DUMMY_NAMES.has(it.name || "")) return false;
+  let blob = "";
+  try { blob = JSON.stringify(it); } catch (_) { return false; }
+  return AD_DUMMY_FINGERPRINTS.some(fp => blob.indexOf(fp) !== -1);
+}
 function purgeDummyAds() {
   try {
+    if (localStorage.getItem(AD_DUMMY_PURGE_FLAG)) return; // sekali-jalan: sudah beres
     const raw = localStorage.getItem(AD_CONFIG_KEY);
-    if (!raw) return;
+    if (!raw) return;                                       // config belum ada → coba lagi load berikutnya
     const c = JSON.parse(raw);
-    if (!c) return;
+    if (!c) { localStorage.setItem(AD_DUMMY_PURGE_FLAG, "1"); return; }
     let changed = false;
     ["runningText", "banner", "preroll", "sideBanner"].forEach(sec => {
       if (c[sec] && Array.isArray(c[sec].items)) {
         const before = c[sec].items.length;
-        c[sec].items = c[sec].items.filter(it => !AD_DUMMY_NAMES.has((it && it.name) || ""));
+        c[sec].items = c[sec].items.filter(it => !_isSeedDummyAd(it));
         if (c[sec].items.length !== before) changed = true;
       }
     });
@@ -20256,9 +20277,14 @@ function purgeDummyAds() {
       window.dispatchEvent(new CustomEvent("playly:ads-updated"));
       try { if (typeof refreshLiveAds === "function") refreshLiveAds(); } catch (_) {}
     }
+    // Pembersihan historis selesai → jangan pernah sentuh config lagi.
+    localStorage.setItem(AD_DUMMY_PURGE_FLAG, "1");
   } catch (_) {}
 }
 purgeDummyAds();
+// cloud-applied: tetap dipasang, tapi self-gated via flag (sekali-jalan).
+// Kalau cloud baru membawa config SEBELUM purge sempat jalan, ini yang
+// menangkapnya; setelah flag set → no-op.
 window.addEventListener("playly:cloud-applied", () => { try { purgeDummyAds(); } catch (_) {} });
 
 // Konstanta seed iklan dummy (AD_SEED_FLAG, svgDataUri, DEMO_BANNER_*,

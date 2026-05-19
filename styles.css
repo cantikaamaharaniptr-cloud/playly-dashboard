@@ -62555,16 +62555,16 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .auth-illus-admin .auth-orb {
   box-shadow:
     0 16px 40px rgba(16, 24, 38, .55),
-    0 0 60px rgba(150, 175, 225, .16),
+    0 0 60px rgba(220, 222, 226, .16),
     inset 0 1px 0 rgba(255, 255, 255, .22) !important;
 }
 .auth-illus-admin .auth-orb::before,
 .auth-illus-admin .auth-orb::after {
-  border-color: rgba(150, 175, 225, .45) !important;
+  border-color: rgba(220, 222, 226, .45) !important;
 }
 body[data-theme="light"] .auth-illus-admin .auth-orb::before,
 body[data-theme="light"] .auth-illus-admin .auth-orb::after {
-  border-color: rgba(80, 110, 165, .45) !important;
+  border-color: rgba(120, 124, 132, .45) !important;
 }
 /* (2) Paksa animasi radar/ripple/titik tetap jalan (anti-freeze) */
 @media (prefers-reduced-motion: reduce) {
@@ -62602,17 +62602,17 @@ body[data-theme="light"] .auth-illus-admin .auth-orb::after {
    terakhir → keyframe ini menang.
    ========================================================= */
 .auth-illus-admin .admin-scan-rings .asr {
-  border-color: rgba(199, 207, 219, .32) !important;
+  border-color: rgba(220, 222, 226, .32) !important;
 }
 /* Ripple di-drive 2 keyframe: adminScanRing (reduced-motion
    fallback) & adminScanRingBright (auth-screen aktif). Redefine
    keduanya ke grey-white supaya konsisten, source-order terakhir
    → menang dari definisi putih lama (~16557/43496). */
 @keyframes adminScanRing {
-  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(199, 207, 219, .50); }
-  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(199, 207, 219, 0); }
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(220, 222, 226, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(220, 222, 226, 0); }
 }
 @keyframes adminScanRingBright {
-  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(199, 207, 219, .50); }
-  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(199, 207, 219, 0); }
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(220, 222, 226, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(220, 222, 226, 0); }
 }
