@@ -61568,10 +61568,12 @@ body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
 }
 
 /* =========================================================
-   [FINAL B+D COMPACT] KPI — pilihan user 2026-05-19:
-   4 kartu sejajar (D, + kartu Pendapatan) + baris sub-stat (B)
-   + kartu DIPADATKAN (compact). Sparkline (A) tetap OFF.
-   Blok [TRIAL B] di atas tetap dipakai utk styling .kpi-sub.
+   [FINAL B+D] KPI — pilihan user 2026-05-19:
+   4 kartu sejajar (D, + kartu Pendapatan) + baris sub-stat (B).
+   KOTAK card-nya yang DIPADATKAN (padding/tinggi kotak ditekan),
+   TEKS & isi TETAP ukuran normal (revisi user: compact kotak,
+   bukan kecilin teks). Sparkline (A) OFF. [TRIAL B] di atas
+   tetap dipakai utk styling warna .kpi-sub.
    ========================================================= */
 /* D: 4 kolom sejajar + tampilkan kartu Pendapatan */
 body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
@@ -61581,41 +61583,21 @@ body[data-role="admin"] .admin-hero-left .admin-kpi-stat {
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card.kpi-card-rev {
   display: flex !important;
 }
-/* A off (sparkline disembunyikan); B tetap ON (sub-stat tampil) */
+/* A off (sparkline disembunyikan); B tetap ON (sub-stat tampil
+   ukuran NORMAL — tidak dikecilkan) */
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-spark {
   display: none !important;
 }
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-content {
   flex: 1 1 auto !important;
-  gap: 1px !important;
+  gap: 2px !important;            /* rapatkan stack teks → kotak lbh pendek */
 }
-/* COMPACT: padding, ikon, angka, label, sub semua dirapatkan */
+/* KOTAK CARD compact: padding (terutama vertikal) & gap kotak
+   ditekan supaya footprint card lebih kecil — TANPA mengubah
+   ukuran angka/label/sub/ikon (biarkan default admin-kpi-stat). */
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card {
-  padding: 12px 13px !important;
-  gap: 9px !important;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-icon {
-  width: 34px !important;
-  height: 34px !important;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-icon svg {
-  width: 17px !important;
-  height: 17px !important;
-}
-body[data-role="admin"] .admin-kpi-stat .kpi-content strong {
-  font-size: 20px !important;
-  margin-top: 0 !important;
-}
-body[data-role="admin"] .admin-kpi-stat .kpi-content small {
-  font-size: 9.5px !important;
-  letter-spacing: .04em !important;
-}
-html body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-sub {
-  font-size: 9.5px !important;
-  margin-top: 2px !important;
-}
-body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
-  font-size: 10px !important;
+  padding: 11px 15px !important;
+  gap: 12px !important;
 }
 /* layar sempit → 2 kolom biar tidak gepeng */
 @media (max-width: 1320px) {
@@ -61623,4 +61605,4 @@ body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-/* ================== END FINAL B+D COMPACT ========================= */
+/* ================== END FINAL B+D ================================= */
