@@ -62555,12 +62555,12 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .auth-illus-admin .auth-orb {
   box-shadow:
     0 16px 40px rgba(16, 24, 38, .55),
-    0 0 60px rgba(220, 222, 226, .16),
+    0 0 60px rgba(255, 255, 255, .16),
     inset 0 1px 0 rgba(255, 255, 255, .22) !important;
 }
 .auth-illus-admin .auth-orb::before,
 .auth-illus-admin .auth-orb::after {
-  border-color: rgba(220, 222, 226, .45) !important;
+  border-color: rgba(255, 255, 255, .45) !important;
 }
 body[data-theme="light"] .auth-illus-admin .auth-orb::before,
 body[data-theme="light"] .auth-illus-admin .auth-orb::after {
@@ -62602,17 +62602,297 @@ body[data-theme="light"] .auth-illus-admin .auth-orb::after {
    terakhir → keyframe ini menang.
    ========================================================= */
 .auth-illus-admin .admin-scan-rings .asr {
-  border-color: rgba(220, 222, 226, .32) !important;
+  border-color: rgba(255, 255, 255, .32) !important;
 }
 /* Ripple di-drive 2 keyframe: adminScanRing (reduced-motion
    fallback) & adminScanRingBright (auth-screen aktif). Redefine
    keduanya ke grey-white supaya konsisten, source-order terakhir
    → menang dari definisi putih lama (~16557/43496). */
 @keyframes adminScanRing {
-  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(220, 222, 226, .50); }
-  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(220, 222, 226, 0); }
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(255, 255, 255, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(255, 255, 255, 0); }
 }
 @keyframes adminScanRingBright {
-  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(220, 222, 226, .50); }
-  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(220, 222, 226, 0); }
+  0%   { transform: scale(.6);  opacity: .8; border-color: rgba(255, 255, 255, .50); }
+  100% { transform: scale(3.4); opacity: 0;  border-color: rgba(255, 255, 255, 0); }
+}
+
+/* =========================================================
+   STATUS CHIPS POPUP (req user 2026-05-20: alternatif keempat
+   setelah blip ping / tick marks / compass labels ditolak —
+   "tambah animasi popup di sekitaran radar biar lebih hidup").
+   4 chip pill di 4 pojok box radar: ACTIVE / SECURE / SYNC / OK.
+   Fade in/hold/fade out 4s, staggered 1s → di setiap saat
+   rata-rata ~1 chip terlihat (tidak menumpuk). Pakai 4 dari
+   8 .adn yg sudah ada di markup; 4 sisanya disembunyikan.
+   ========================================================= */
+body[data-role="admin"] .auth-illus-admin .admin-nodes {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important; top: 0 !important;
+  width: auto !important; height: auto !important;
+  margin: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+/* Base .adn → chip pill kecil (BUKAN titik / huruf). */
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn {
+  position: absolute !important;
+  width: auto !important; height: auto !important;
+  padding: 4px 9px !important;
+  margin: 0 !important;
+  background: rgba(28,40,60,.82) !important;          /* navy fill on-theme */
+  border: 1px solid rgba(206,214,228,.32) !important; /* slate border tipis */
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font: 700 9px/1 'JetBrains Mono', monospace !important;
+  letter-spacing: 1.4px !important;
+  color: rgba(206,214,228,.85) !important;
+  white-space: nowrap !important;
+  /* opacity default 0 TANPA !important supaya keyframe menang
+     (animation kalah dari author !important — pelajaran blip ping). */
+  opacity: 0;
+  animation: adminChipPulse 4s ease-in-out infinite !important;
+}
+/* 4 .adn lainnya disembunyikan */
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-2,
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-4,
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-6,
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-8 {
+  display: none !important;
+}
+/* Posisi 4 pojok box (inset 14px dari tepi) + delay bertahap */
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1 {
+  top: 14px !important; left: 14px !important;
+  right: auto !important; bottom: auto !important;
+  transform: none !important;
+  animation-delay: 0s !important;
+}
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3 {
+  top: 14px !important; right: 14px !important;
+  left: auto !important; bottom: auto !important;
+  transform: none !important;
+  animation-delay: 1s !important;
+}
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5 {
+  bottom: 14px !important; right: 14px !important;
+  top: auto !important; left: auto !important;
+  transform: none !important;
+  animation-delay: 2s !important;
+}
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7 {
+  bottom: 14px !important; left: 14px !important;
+  top: auto !important; right: auto !important;
+  transform: none !important;
+  animation-delay: 3s !important;
+}
+/* Content teks via ::before — beat FORCE-SNOW dgn html prefix */
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before { content: "ACTIVE" !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before { content: "SECURE" !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before { content: "SYNC"   !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before { content: "OK"     !important; }
+html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn,
+html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before,
+html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before,
+html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before,
+html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before {
+  color: rgba(206,214,228,.85) !important;
+}
+@keyframes adminChipPulse {
+  0%, 10%   { opacity: 0; }
+  20%       { opacity: .95; }
+  35%       { opacity: .95; }
+  45%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+
+/* =========================================================
+   RADAR ADMIN — REDESIGN dgn pola radar baru (req user
+   2026-05-19): grid + cincin konsentris + sapuan beam +
+   pusat berpijar + cincin denyut. RECOLOR ke tema dashboard
+   admin (slate/navy, BUKAN ungu/hijau snippet). Container
+   diperbesar tapi overflow:hidden → semua efek terkurung,
+   TIDAK mengganggu form/teks/kolom lain. Scoped admin-only.
+   ========================================================= */
+/* Container = panggung radar, diperbesar & terkurung.
+   Grid kotak-kotak DIHAPUS sepenuhnya (req user 2026-05-20:
+   "hapus aja kotak kotak itu") → bg polos navy, tanpa
+   linear-gradient grid sama sekali. Radar/sweep/orb tetap. */
+body[data-role="admin"] .auth-left-admin .auth-illus.auth-illus-admin {
+  width: 320px !important;
+  height: 320px !important;          /* persegi → lingkaran radar UTUH */
+  /* Req user 2026-05-20: "naikkan posisi animasi radar mendekati
+     teks akses kontrol" → margin-top dari 8px → -22px (radar naik
+     ~30px). Gap ~14px ke baris stats, tidak overlap. */
+  margin: -22px auto 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  background-color: #0B131D !important;
+  background-image: none !important;
+}
+/* "Kolom di bawahnya" = pill MONITORING (.admin-ticker) ikut naik
+   biar mendempet radar. margin-top 14px → 4px (naik ~10px, masih
+   ada gap kecil ke bawah radar — tidak nempel/overlap). */
+body[data-role="admin"] .auth-left-admin .admin-ticker {
+  margin-top: 4px !important;
+}
+/* halo admin (slate) tetap, sedikit diperkuat */
+body[data-role="admin"] .auth-left-admin .auth-illus.auth-illus-admin::before {
+  inset: -10% !important;
+  background: radial-gradient(circle, rgba(173,181,189,.16) 0%, rgba(40,60,92,.12) 45%, transparent 72%) !important;
+  filter: blur(26px) !important;
+}
+/* (A) Field cincin konsentris (repeating-radial) DIHAPUS — req
+   user 2026-05-20: "circle splash sisakan 3 saja, 2 bergerak,
+   1 paling luar stay". 3 lingkaran kini dari .asr (lihat C).
+   .admin-radar tinggal jadi host sapuan beam (::after) saja. */
+body[data-role="admin"] .auth-illus-admin .admin-radar {
+  position: absolute !important;
+  left: 50% !important; top: 50% !important;
+  width: 300px !important; height: 300px !important;
+  margin: -150px 0 0 -150px !important;
+  border-radius: 50% !important;
+  -webkit-mask: none !important; mask: none !important;
+  background: none !important;
+  border: 0 !important;
+  animation: none !important;
+  opacity: 1 !important;
+  z-index: 0 !important;
+}
+/* (B) Sapuan beam berputar — slate konik CERAH, muat lingkaran */
+body[data-role="admin"] .auth-illus-admin .admin-radar::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important; top: 50% !important;
+  width: 300px !important; height: 300px !important;
+  margin: -150px 0 0 -150px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: conic-gradient(from 0deg,
+    transparent 68%,
+    rgba(198,208,224,.45) 90%,
+    rgba(232,236,242,.70) 100%) !important;
+  animation: adminRadarSweep 4s linear infinite !important;
+  z-index: 1 !important;
+}
+/* Tick marks (alternatif sebelumnya) DIHAPUS — user: "masih
+   kurang cocok, coba alternatif selanjutnya". Diganti label
+   kompas N/E/S/W via .adn (admin-nodes) di bawah. */
+/* (C) Circle splash = TEPAT 3 lingkaran (req user 2026-05-20:
+   "sisakan 3 saja, 2 yang bergerak, 1 paling luar stay").
+   .asr-2 = lingkaran DALAM (gerak/breathe),
+   .asr-1 = lingkaran TENGAH (gerak/breathe, offset),
+   .asr-3 = lingkaran PALING LUAR → STAY (tanpa animasi). */
+body[data-role="admin"] .auth-illus-admin .admin-scan-rings {
+  display: block !important;
+  position: absolute !important;
+  left: 50% !important; top: 50% !important;
+  width: 0 !important; height: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr {
+  position: absolute !important;
+  left: 50% !important; top: 50% !important;
+  border-radius: 50% !important;
+  background: none !important;
+  opacity: 1 !important;
+}
+/* lingkaran DALAM — bergerak (mengelilingi shield) */
+body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-2 {
+  display: block !important;
+  width: 152px !important; height: 152px !important;
+  margin: -76px 0 0 -76px !important;
+  border: 1.5px solid rgba(206,214,228,.42) !important;
+  animation: adminRingBreathe 3.6s ease-in-out infinite !important;
+}
+/* lingkaran TENGAH — bergerak (offset waktu beda) */
+body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-1 {
+  display: block !important;
+  width: 222px !important; height: 222px !important;
+  margin: -111px 0 0 -111px !important;
+  border: 1.5px solid rgba(206,214,228,.40) !important;
+  animation: adminRingBreathe 3.6s ease-in-out infinite !important;
+  animation-delay: -1.8s !important;
+}
+/* lingkaran PALING LUAR — STAY (statis, tanpa animasi) */
+body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-3 {
+  display: block !important;
+  width: 292px !important; height: 292px !important;
+  margin: -146px 0 0 -146px !important;
+  border: 1.5px solid rgba(198,208,224,.30) !important;
+  animation: none !important;
+}
+@keyframes adminRingBreathe {
+  0%, 100% { transform: scale(1);    opacity: .55; }
+  50%      { transform: scale(1.06); opacity: 1; }
+}
+/* (D) Pusat berpijar = shield orb. Req user 2026-05-20:
+   awalnya transparan, lalu "gak jadi, balikin lagi kolom
+   ikonnya dan perbesar" → kotak ikon DIKEMBALIKAN (fill navy
+   #1C283C + border slate) TAPI tetap DIPERBESAR (90→128px).
+   SVG shield ikut diperbesar. Glow slate denyut tetap. */
+body[data-role="admin"] .auth-illus-admin .play-orb,
+body[data-role="admin"] .auth-illus-admin .auth-orb {
+  width: 128px !important;
+  height: 128px !important;
+  margin-top: -64px !important;
+  margin-left: -64px !important;
+  background: #1C283C !important;
+  border: 1px solid rgba(255,255,255,.25) !important;
+  z-index: 3 !important;
+  box-shadow:
+    0 10px 30px rgba(8,12,20,.55),
+    0 0 30px rgba(173,181,189,.28) !important;
+  animation: adminOrbGlow 2.4s ease-in-out infinite !important;
+}
+body[data-role="admin"] .auth-illus-admin .auth-orb svg,
+body[data-role="admin"] .auth-illus-admin .play-orb svg {
+  width: 58px !important;
+  height: 58px !important;
+  /* Req user 2026-05-20: "warna ikonnya jangan putih gitu" →
+     shield ke slate aksen admin (#ADB5BD), bukan #FFFFFF.
+     stroke!important mengalahkan FORCE-SNOW color:#FFF. */
+  color: #ADB5BD !important;
+  stroke: #ADB5BD !important;
+}
+body[data-role="admin"] .auth-illus-admin .auth-orb svg path,
+body[data-role="admin"] .auth-illus-admin .play-orb svg path {
+  stroke: #ADB5BD !important;
+}
+@keyframes adminOrbGlow {
+  0%, 100% { box-shadow: 0 10px 30px rgba(8,12,20,.55), 0 0 18px rgba(173,181,189,.22); }
+  50%      { box-shadow: 0 10px 30px rgba(8,12,20,.55), 0 0 40px rgba(206,212,218,.55); }
+}
+/* Cincin denyut pseudo di orb (::before/::after, authOrbPulse)
+   DIHAPUS — itu lingkaran ekstra di sekitar shield; req user
+   "circle splash sisakan 3 saja" → cukup 3 .asr, pseudo orb
+   tidak boleh nambah lingkaran. */
+body[data-role="admin"] .auth-illus-admin .auth-orb::before,
+body[data-role="admin"] .auth-illus-admin .auth-orb::after {
+  display: none !important;
+  animation: none !important;
+}
+/* Anti-freeze: tetap jalan walau prefers-reduced-motion.
+   2 cincin gerak (asr-1/asr-2) tetap breathe; asr-3 (paling
+   luar) DIPAKSA statis — override blok anti-freeze lama
+   (~62574) yg memaksa adminScanRing ke SEMUA .asr. */
+@media (prefers-reduced-motion: reduce) {
+  body[data-role="admin"] .auth-illus-admin .admin-radar::after {
+    animation: adminRadarSweep 4s linear infinite !important;
+  }
+  body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-1,
+  body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-2 {
+    animation: adminRingBreathe 3.6s ease-in-out infinite !important;
+  }
+  body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-1 {
+    animation-delay: -1.8s !important;
+  }
+  body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-3 {
+    animation: none !important;
+  }
+  body[data-role="admin"] .auth-illus-admin .auth-orb {
+    animation: adminOrbGlow 2.4s ease-in-out infinite !important;
+  }
 }
