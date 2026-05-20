@@ -34488,7 +34488,14 @@ html body[data-theme="light"]:not([data-role="admin"]) #paymentSuccessCta:disabl
   font-weight: 800;
 }
 .pq-stat small { color: var(--muted); font-size: 11.5px; }
-.premium-queue-toolbar { margin-bottom: 14px; }
+.premium-queue-toolbar {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .pq-tabs {
   display: flex;
   gap: 6px;
@@ -34497,6 +34504,37 @@ html body[data-theme="light"]:not([data-role="admin"]) #paymentSuccessCta:disabl
   border-radius: 10px;
   padding: 4px;
   width: fit-content;
+}
+/* "Sync dari Cloud" button — force pull dari Supabase (req user 2026-05-20). */
+.pq-cloud-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.pq-cloud-sync-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.pq-cloud-sync-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--text-2);
+}
+.pq-cloud-sync-btn.pq-syncing svg {
+  animation: pqCloudSpin 1s linear infinite;
+}
+@keyframes pqCloudSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 .pq-tab {
   padding: 7px 14px;

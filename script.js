@@ -17561,6 +17561,43 @@ document.addEventListener("click", e => {
   renderAdminPremiumQueue();
 });
 
+// "Sync dari Cloud" button — force pull terbaru dari Supabase (req user
+// 2026-05-20: queue admin kadang kosong padahal user sudah submit
+// pembayaran karena cloud-sync belum catch up; admin butuh 1-klik refresh
+// tanpa harus buka DevTools).
+document.addEventListener("click", async e => {
+  const btn = e.target.closest("#pqCloudSyncBtn");
+  if (!btn) return;
+  e.preventDefault();
+  if (btn.dataset.busy === "1") return;
+  btn.dataset.busy = "1";
+  const labelEl = btn.querySelector("span");
+  const origLabel = labelEl?.textContent || "Sync dari Cloud";
+  if (labelEl) labelEl.textContent = "Menyinkron...";
+  btn.classList.add("pq-syncing");
+  try {
+    if (window.cloudSync?.softResync) {
+      await Promise.resolve(window.cloudSync.softResync());
+    }
+    renderAdminPremiumQueue();
+    if (typeof renderAdminActionCenter === "function") renderAdminActionCenter();
+    if (labelEl) labelEl.textContent = "Berhasil sync ✓";
+    setTimeout(() => {
+      if (labelEl) labelEl.textContent = origLabel;
+      btn.classList.remove("pq-syncing");
+      btn.dataset.busy = "0";
+    }, 1400);
+  } catch (err) {
+    console.warn("[pq] cloud sync failed:", err);
+    if (labelEl) labelEl.textContent = "Gagal sync ✗";
+    setTimeout(() => {
+      if (labelEl) labelEl.textContent = origLabel;
+      btn.classList.remove("pq-syncing");
+      btn.dataset.busy = "0";
+    }, 1800);
+  }
+});
+
 // Cross-tab sync — listen storage event to refresh queue
 window.addEventListener("storage", e => {
   if (e.key === PREMIUM_PAYMENTS_KEY) {

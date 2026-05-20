@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="styles.css?v=20260520-badge-col-v387" />
+  <link rel="stylesheet" href="styles.css?v=20260520-cloud-sync-btn-v388" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -3091,6 +3091,12 @@
             <button class="pq-tab" data-pq-filter="rejected">Ditolak</button>
             <button class="pq-tab" data-pq-filter="all">Semua</button>
           </div>
+          <button type="button" class="pq-cloud-sync-btn" id="pqCloudSyncBtn" title="Force pull data terbaru dari Supabase">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 1-15.36 6.36L3 21"/><path d="M3 12a9 9 0 0 1 15.36-6.36L21 3"/><path d="M21 3v6h-6"/><path d="M3 21v-6h6"/>
+            </svg>
+            <span>Sync dari Cloud</span>
+          </button>
         </div>
         <div class="premium-queue-list" id="premiumQueueList">
           <div class="pq-empty">Belum ada pembayaran premium.</div>
@@ -8653,7 +8659,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="script.js?v=20260520-badge-col-v387" data-playly-main="1"></script>
+  <script src="script.js?v=20260520-cloud-sync-btn-v388" data-playly-main="1"></script>
   <script src="picons.js?v=20260516-settings-ico-v188"></script>
   <script src="particles-bg.js?v=20260516-particles-v2"></script>
   <script>
