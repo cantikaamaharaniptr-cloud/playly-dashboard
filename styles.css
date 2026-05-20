@@ -62991,15 +62991,15 @@ body[data-role="admin"] .auth-illus-admin .auth-orb svg,
 body[data-role="admin"] .auth-illus-admin .play-orb svg {
   width: 58px !important;
   height: 58px !important;
-  /* Req user 2026-05-20: "warna ikonnya jangan putih gitu" →
-     shield ke slate aksen admin (#ADB5BD), bukan #FFFFFF.
+  /* Req user 2026-05-20: "warna ikon di dalam radar juga ya" →
+     ganti slate #ADB5BD → #E8EDF2 supaya seragam dgn chip & ring.
      stroke!important mengalahkan FORCE-SNOW color:#FFF. */
-  color: #ADB5BD !important;
-  stroke: #ADB5BD !important;
+  color: #E8EDF2 !important;
+  stroke: #E8EDF2 !important;
 }
 body[data-role="admin"] .auth-illus-admin .auth-orb svg path,
 body[data-role="admin"] .auth-illus-admin .play-orb svg path {
-  stroke: #ADB5BD !important;
+  stroke: #E8EDF2 !important;
 }
 @keyframes adminOrbGlow {
   0%, 100% { box-shadow: 0 10px 30px rgba(8,12,20,.55), 0 0 18px rgba(173,181,189,.22); }
