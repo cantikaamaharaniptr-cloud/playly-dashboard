@@ -60252,12 +60252,15 @@ html body[data-role="admin"].auth-mode #adminPreviewSection {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  /* Per user 2026-05-20: "slide masih terlalu mepet ke bawah, naikkan
-     sedikit". Padding-top dikecilkan lagi + bottom diperbesar supaya
-     konten terangkat signifikan dari bottom edge. Section tetap 100vh
-     & tidak ganggu slide lain. */
-  padding-top: clamp(8px, 1vw, 16px) !important;
-  padding-bottom: clamp(70px, 8vw, 130px) !important;
+  /* Per user 2026-05-20: balanced setelah 3x iterasi.
+     v382: top 44 / bot 44 → "mepet ke bawah"
+     v384: top 16 / bot 130 → "kepotong"
+     v385: top 72 / bot 90 → content overflow 909>893, frame kena clip
+     v386: top 32 / bot 96 → fit 893 dgn slack 18px, tilt sedikit ke
+     atas (bottom > top supaya konten tetap visually tertarik ke atas).
+     Section tetap 100vh, slide lain tidak terganggu. */
+  padding-top: clamp(20px, 2.5vw, 32px) !important;
+  padding-bottom: clamp(50px, 6vw, 96px) !important;
   scroll-margin-top: 64px !important;
 }
 html body[data-role="admin"].auth-mode #adminPreviewSection .admin-landing-head {
