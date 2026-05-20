@@ -63120,7 +63120,11 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars3 {
 }
 html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
   display: block !important;
-  animation: starryAnimStar 70s linear infinite !important;
+  /* v375 (user: "particle nya hanya stay di tempatnya, buat bergerak"):
+     Ganti dari starryAnimStar (translateY linear) ke starsDriftWavy
+     (S-curve diagonal), 70s → 35s. Motion lebih cepat + lateral
+     sway → benar-benar terlihat bergerak, tidak hanya "naik diam". */
+  animation: starsDriftWavy 35s linear infinite !important;
   /* ~42 titik kurasi tersebar merata di 2000×2000 area (subset
      dari list asli, dipilih supaya distribusi tetap natural). */
   box-shadow:
@@ -63139,10 +63143,21 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
 }
 /* ::after layer juga butuh box-shadow yg sama (inherit dari parent)
    utk seamless loop di top:2000px — auto inherit, OK. */
+/* Keyframe drift wavy — S-curve diagonal supaya motion benar-benar
+   terlihat (vs starryAnimStar yg pure vertikal). Tetap berakhir di
+   translateY(-2000px) dgn X=0 → seamless dgn ::after duplikat di
+   top:2000px (lihat ~36768). Wave horizontal ±30px di tengah cycle. */
+@keyframes starsDriftWavy {
+  0%   { transform: translate(0px,      0px); }
+  25%  { transform: translate(30px,  -500px); }
+  50%  { transform: translate(0px,  -1000px); }
+  75%  { transform: translate(-30px,-1500px); }
+  100% { transform: translate(0px,  -2000px); }
+}
 /* Anti-freeze: tetap drift di prefers-reduced-motion (chrome-devtools
    emulate; per feedback-overlay-anim-qa). */
 @media (prefers-reduced-motion: reduce) {
   html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
-    animation: starryAnimStar 70s linear infinite !important;
+    animation: starsDriftWavy 35s linear infinite !important;
   }
 }
