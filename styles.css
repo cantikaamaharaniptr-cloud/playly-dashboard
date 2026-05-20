@@ -63079,34 +63079,47 @@ body[data-role="admin"] .auth-illus-admin .auth-orb::after {
    ADMIN BACKDROP — AURORA BLOB DRIFT (req user 2026-05-20:
    "background/backdrop dashboard belum ada animasi, sarankan
    calm rapi menarik dgn tetap mempertahankan UI/UX admin").
-   Opsi 1 dipilih: aurora blob drift. 3 blob slate/navy super
-   lembut yang gerak diagonal ~55s alternate (≈110s loop).
-   Mengalahkan override sebelumnya yg memaksa blob:transparent
-   & background:#0B131D solid (lihat ~144 & ~42832). Admin
-   DARK only — admin light tetap pakai palette light di ~147.
+   Opsi 1 dipilih: aurora blob drift.
+
+   IMPLEMENTASI v369: paint langsung di body background (bukan
+   ::before). Alasan: ::before di-display:none oleh body[data-theme=
+   "dark"]::before di ~36835, dan body bg di-lock #0B131D oleh
+   selektor specificity 31 (`body[data-theme="dark"][data-role=
+   "admin"].auth-mode`). Cara paling bersih: skip ::before entirely
+   & paint aurora directly on body. Specificity terbesar:
+   `html body[data-role="admin"][data-theme="dark"].auth-mode`
+   (0,0,3,2 = 32) → menang dari .auth-mode lock (0,0,3,1 = 31).
+   Untuk inner pages (tanpa .auth-mode): selector lain.
+
+   3 blob slate/navy yang gerak diagonal ~40s alternate
+   (≈80s loop). Admin DARK only — admin light tetap di ~147.
    ========================================================= */
-body[data-role="admin"]:not([data-theme="light"]) {
-  --blob-1: rgba(40,  60,  92, .42) !important;   /* navy mid */
-  --blob-2: rgba(80, 100, 130, .26) !important;   /* slate */
-  --blob-3: rgba(50,  75, 110, .22) !important;   /* navy soft */
-  --blob-4: transparent !important;
+@keyframes adminAuroraDrift {
+  0%   { background-position:   0%   0%, 100% 100%,  50%   0%, 0 0; }
+  100% { background-position:  55%  50%,  45%  40%,  10%  55%, 0 0; }
 }
-/* Re-enable gradient stack & drift animation on ::before.
-   Override 42832 yg memaksa background:#0B131D + animation:none. */
-body[data-role="admin"]:not([data-theme="light"])::before {
+
+/* Landing/auth-mode (specificity 0,0,3,2 = 32 → beat .auth-mode 31) */
+html body[data-role="admin"][data-theme="dark"].auth-mode,
+html body[data-role="admin"][data-theme="dark"][data-auth-modal-open="true"],
+/* Inner pages (specificity 0,0,2,2 → cukup utk role=admin) */
+html body[data-role="admin"][data-theme="dark"] {
   background:
-    radial-gradient(ellipse 55% 45% at 25% 30%, var(--blob-1), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 75% 70%, var(--blob-2), transparent 65%),
-    radial-gradient(ellipse 45% 35% at 60% 15%, var(--blob-3), transparent 70%),
-    var(--bg) !important;
-  background-size: 180% 180%, 200% 200%, 220% 220%, auto !important;
+    radial-gradient(ellipse 70% 55% at 25% 30%, rgba(60,  95, 145, .85), transparent 72%),
+    radial-gradient(ellipse 65% 50% at 75% 70%, rgba(115, 145, 180, .62), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 60% 15%, rgba(75, 110, 150, .55), transparent 72%),
+    #0B131D !important;
+  background-size: 200% 200%, 220% 220%, 240% 240%, auto !important;
   background-position: 0% 0%, 100% 100%, 50% 0%, 0 0 !important;
-  animation: playlyBgDrift 55s ease-in-out infinite alternate !important;
+  background-attachment: fixed !important;
+  animation: adminAuroraDrift 40s ease-in-out infinite alternate !important;
 }
 /* Anti-freeze: pastikan animasi tetap jalan walau prefers-reduced-motion
    (per feedback-overlay-anim-qa: "pastikan animasi nya jalan"). */
 @media (prefers-reduced-motion: reduce) {
-  body[data-role="admin"]:not([data-theme="light"])::before {
-    animation: playlyBgDrift 55s ease-in-out infinite alternate !important;
+  html body[data-role="admin"][data-theme="dark"].auth-mode,
+  html body[data-role="admin"][data-theme="dark"][data-auth-modal-open="true"],
+  html body[data-role="admin"][data-theme="dark"] {
+    animation: adminAuroraDrift 40s ease-in-out infinite alternate !important;
   }
 }
