@@ -63105,11 +63105,44 @@ html body[data-role="admin"][data-theme="dark"] {
 html body[data-role="admin"][data-theme="dark"] .starry-sky {
   background: #0B131D !important;
 }
-/* v373 SWITCH ke OPSI 3 (constellation network): hide pixel stars
-   layer, ganti dgn canvas constellation-bg.js (dots + connecting
-   lines). Starry-sky bg #0B131D dipertahankan sebagai base color. */
+/* v374 BACK TO PIXEL STARS (user: "saya suka animasi yang pertama
+   tapi terlalu ramai dan pergerakannya terlalu sedikit, smoothkan
+   dan particle dikurangkan"). Solusi:
+   - Hide #stars (1px ~hundreds) & #stars3 (3px ~100) entirely
+   - Override #stars2 box-shadow → ~42 titik kurasi (vs ~200 ori)
+     untuk density jauh lebih lega
+   - Speed up 100s → 70s untuk motion lebih terasa (linear tetap
+     supaya smooth/no jerk di loop boundary)
+   constellation-bg.js script tag sudah dihapus dari index.html. */
 html body[data-role="admin"][data-theme="dark"] .starry-sky #stars,
-html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2,
 html body[data-role="admin"][data-theme="dark"] .starry-sky #stars3 {
   display: none !important;
+}
+html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
+  display: block !important;
+  animation: starryAnimStar 70s linear infinite !important;
+  /* ~42 titik kurasi tersebar merata di 2000×2000 area (subset
+     dari list asli, dipilih supaya distribusi tetap natural). */
+  box-shadow:
+    1925px 1320px #fff,  693px 1778px #fff, 1016px 711px #fff, 1171px 563px #fff,
+     270px 279px  #fff,  258px 1404px #fff,  417px 1188px #fff,  286px 561px #fff,
+    1425px 1278px #fff,  806px 156px  #fff, 1252px 561px #fff,  218px 52px  #fff,
+    1371px 1980px #fff,  171px 745px  #fff, 1424px 89px  #fff,  137px 244px #fff,
+     939px 1922px #fff,  137px 1080px #fff, 1757px 50px  #fff,  904px 536px #fff,
+     820px 286px  #fff, 1389px 1169px #fff,  644px 841px #fff, 1286px 522px #fff,
+     955px 659px  #fff,  428px 1805px #fff,  237px 557px #fff, 1689px 1058px #fff,
+     636px 1882px #fff, 1349px 1664px #fff, 1548px 432px #fff, 1841px 504px #fff,
+    1454px 1234px #fff, 1967px 1790px #fff,  542px 33px  #fff,  742px 1214px #fff,
+    1409px 1263px #fff, 1627px 995px  #fff,  969px 710px #fff, 1674px 676px #fff,
+    1832px 759px  #fff, 1623px 563px  #fff
+    !important;
+}
+/* ::after layer juga butuh box-shadow yg sama (inherit dari parent)
+   utk seamless loop di top:2000px — auto inherit, OK. */
+/* Anti-freeze: tetap drift di prefers-reduced-motion (chrome-devtools
+   emulate; per feedback-overlay-anim-qa). */
+@media (prefers-reduced-motion: reduce) {
+  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
+    animation: starryAnimStar 70s linear infinite !important;
+  }
 }
