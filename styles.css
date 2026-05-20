@@ -41633,13 +41633,21 @@ body[data-role="admin"].auth-mode .admin-preview-frame .apf-log-list {
 }
 body[data-role="admin"].auth-mode .admin-preview-frame .apf-log-row {
   padding: 4px 7px;
-  grid-template-columns: 38px 70px 1fr;
+  /* Per user 2026-05-20: badge column diperlebar 70→96 supaya label
+     panjang spt "AKTIFKAN 2FA" / "TANGGUHKAN" / "VERIFIKASI" tidak
+     wrap ke 2 baris (bikin row tinggi inconsistent). */
+  grid-template-columns: 38px 96px 1fr;
   gap: 6px;
 }
 body[data-role="admin"].auth-mode .admin-preview-frame .apf-log-action {
   font-size: 9px;
   padding: 1px 5px;
   letter-spacing: .8px;
+  /* Defense-in-depth: paksa single line + center walau label panjang. */
+  white-space: nowrap !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 body[data-role="admin"].auth-mode .admin-preview-frame .apf-queue-list {
