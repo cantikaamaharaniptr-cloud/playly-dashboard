@@ -63076,50 +63076,46 @@ body[data-role="admin"] .auth-illus-admin .auth-orb::after {
 }
 
 /* =========================================================
-   ADMIN BACKDROP — AURORA BLOB DRIFT (req user 2026-05-20:
-   "background/backdrop dashboard belum ada animasi, sarankan
-   calm rapi menarik dgn tetap mempertahankan UI/UX admin").
-   Opsi 1 dipilih: aurora blob drift.
+   ADMIN BACKDROP — CONSTELLATION DRIFT (req user 2026-05-20:
+   v367-v370 aurora ditolak: "kenapa jadi ganti warna, aku
+   bukan minta ganti warna tapi tambahkan animasi". Switch
+   ke opsi 3 — titik konstelasi drift parallax di atas bg
+   yg WARNANYA TIDAK BERUBAH.
 
-   IMPLEMENTASI v369: paint langsung di body background (bukan
-   ::before). Alasan: ::before di-display:none oleh body[data-theme=
-   "dark"]::before di ~36835, dan body bg di-lock #0B131D oleh
-   selektor specificity 31 (`body[data-theme="dark"][data-role=
-   "admin"].auth-mode`). Cara paling bersih: skip ::before entirely
-   & paint aurora directly on body. Specificity terbesar:
-   `html body[data-role="admin"][data-theme="dark"].auth-mode`
-   (0,0,3,2 = 32) → menang dari .auth-mode lock (0,0,3,1 = 31).
-   Untuk inner pages (tanpa .auth-mode): selector lain.
-
-   3 blob slate/navy yang gerak diagonal ~40s alternate
-   (≈80s loop). Admin DARK only — admin light tetap di ~147.
+   Strategi: aktifkan .starry-sky yang SUDAH ADA di HTML
+   (3 layer star parallax 50s/100s/150s) tapi sebelumnya
+   tertutup body bg solid #0B131D. Cara:
+   1. Body bg → transparent (specificity 32 utk beat lock 31)
+   2. .starry-sky bg → flat #0B131D (override radial gradient
+      yg sebelumnya bikin warna sedikit berubah)
+   3. html bg tetap #0B131D dari var(--bg) admin → fallback
+      kalau .starry-sky hidden.
+   Net: warna persis sama, animasi titik konstelasi parallax
+   muncul. Tidak ada keyframe baru — pakai punya .starry-sky.
    ========================================================= */
-@keyframes adminAuroraDrift {
-  0%   { background-position:   0%   0%, 100% 100%,  50%   0%, 0 0; }
-  100% { background-position:  55%  50%,  45%  40%,  10%  55%, 0 0; }
-}
-
-/* Landing/auth-mode (specificity 0,0,3,2 = 32 → beat .auth-mode 31) */
+/* Body bg transparent — selector specificity 0,0,3,2 = 32
+   menang dari .auth-mode lock 31. */
 html body[data-role="admin"][data-theme="dark"].auth-mode,
 html body[data-role="admin"][data-theme="dark"][data-auth-modal-open="true"],
-/* Inner pages (specificity 0,0,2,2 → cukup utk role=admin) */
 html body[data-role="admin"][data-theme="dark"] {
-  background:
-    radial-gradient(ellipse 70% 55% at 25% 30%, rgba(60,  95, 145, .85), transparent 72%),
-    radial-gradient(ellipse 65% 50% at 75% 70%, rgba(115, 145, 180, .62), transparent 70%),
-    radial-gradient(ellipse 60% 45% at 60% 15%, rgba(75, 110, 150, .55), transparent 72%),
-    #0B131D !important;
-  background-size: 200% 200%, 220% 220%, 240% 240%, auto !important;
-  background-position: 0% 0%, 100% 100%, 50% 0%, 0 0 !important;
-  background-attachment: fixed !important;
-  animation: adminAuroraDrift 40s ease-in-out infinite alternate !important;
+  background: transparent !important;
 }
-/* Anti-freeze: pastikan animasi tetap jalan walau prefers-reduced-motion
-   (per feedback-overlay-anim-qa: "pastikan animasi nya jalan"). */
+/* .starry-sky bg → flat #0B131D (match existing). Beat radial
+   gradient di ~36505. Specificity sini 0,0,3,2 vs sana 0,0,2,2. */
+html body[data-role="admin"][data-theme="dark"] .starry-sky {
+  background: #0B131D !important;
+}
+/* Anti-freeze: stars layers harus tetap drift walau prefers-reduced-motion
+   (chrome-devtools emulate ini → tanpa override, stars freeze).
+   Per feedback-overlay-anim-qa: "pastikan animasi nya jalan". */
 @media (prefers-reduced-motion: reduce) {
-  html body[data-role="admin"][data-theme="dark"].auth-mode,
-  html body[data-role="admin"][data-theme="dark"][data-auth-modal-open="true"],
-  html body[data-role="admin"][data-theme="dark"] {
-    animation: adminAuroraDrift 40s ease-in-out infinite alternate !important;
+  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars {
+    animation: starryAnimStar 50s linear infinite !important;
+  }
+  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
+    animation: starryAnimStar 100s linear infinite !important;
+  }
+  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars3 {
+    animation: starryAnimStar 150s linear infinite !important;
   }
 }
