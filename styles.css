@@ -62754,30 +62754,36 @@ body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7 {
   display: block !important;
   transform-origin: center !important;
 }
-/* ACTIVE — top-left (anchor -45°, sweep -60° → -30°) */
+/* CHIP SWEEP — durasi DISAMAKAN 4.5s untuk semua chip (req user
+   2026-05-20: "lebih teratur sedikit cepat tapi smooth"). Stagger
+   visual lewat animation-delay di interval ¼ siklus (0, -1.125s,
+   -2.25s, -3.375s) → tetap teratur, tidak serempak. */
+/* AKTIF — top-left (anchor -45°, sweep -60° → -30°) */
 body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1 {
-  animation: chipSweepActive 6.5s ease-in-out infinite !important;
+  animation: chipSweepActive 4.5s ease-in-out infinite !important;
+  animation-delay: 0s !important;
 }
-/* SECURE — bottom-right (anchor 135°, sweep 120° → 150°) */
+/* AMAN — bottom-right (anchor 135°, sweep 120° → 150°) */
 body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3 {
-  animation: chipSweepSecure 7.2s ease-in-out infinite !important;
-  animation-delay: -2.5s !important;
+  animation: chipSweepSecure 4.5s ease-in-out infinite !important;
+  animation-delay: -1.125s !important;
 }
-/* SYNC — bottom-left (anchor -135°/225°, sweep -150° → -120°) */
+/* SINKRON — bottom-left (anchor -135°/225°, sweep -150° → -120°) */
 body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5 {
-  animation: chipSweepSync 6.8s ease-in-out infinite !important;
-  animation-delay: -4s !important;
+  animation: chipSweepSync 4.5s ease-in-out infinite !important;
+  animation-delay: -2.25s !important;
 }
-/* CONTROL — right side (anchor 90°, sweep 75° → 105°) */
+/* KONTROL — right side (anchor 90°, sweep 75° → 105°) */
 body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7 {
-  animation: chipSweepControl 7s ease-in-out infinite !important;
-  animation-delay: -1.2s !important;
+  animation: chipSweepControl 4.5s ease-in-out infinite !important;
+  animation-delay: -3.375s !important;
 }
-/* Content teks via ::before — beat FORCE-SNOW dgn html prefix */
-body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before { content: "ACTIVE"  !important; }
-body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before { content: "SECURE"  !important; }
-body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before { content: "SYNC"    !important; }
-body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before { content: "CONTROL" !important; }
+/* Content teks via ::before — beat FORCE-SNOW dgn html prefix.
+   2026-05-20: terjemahkan ke Bahasa Indonesia per req user. */
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before { content: "AKTIF"   !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before { content: "AMAN"    !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before { content: "SINKRON" !important; }
+body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before { content: "KONTROL" !important; }
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn,
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before,
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before,
@@ -63067,4 +63073,40 @@ body[data-role="admin"] .auth-illus-admin .auth-orb::after {
    req user 2026-05-19. */
 .auth-illus .floating-card {
   height: 36px !important;
+}
+
+/* =========================================================
+   ADMIN BACKDROP — AURORA BLOB DRIFT (req user 2026-05-20:
+   "background/backdrop dashboard belum ada animasi, sarankan
+   calm rapi menarik dgn tetap mempertahankan UI/UX admin").
+   Opsi 1 dipilih: aurora blob drift. 3 blob slate/navy super
+   lembut yang gerak diagonal ~55s alternate (≈110s loop).
+   Mengalahkan override sebelumnya yg memaksa blob:transparent
+   & background:#0B131D solid (lihat ~144 & ~42832). Admin
+   DARK only — admin light tetap pakai palette light di ~147.
+   ========================================================= */
+body[data-role="admin"]:not([data-theme="light"]) {
+  --blob-1: rgba(40,  60,  92, .42) !important;   /* navy mid */
+  --blob-2: rgba(80, 100, 130, .26) !important;   /* slate */
+  --blob-3: rgba(50,  75, 110, .22) !important;   /* navy soft */
+  --blob-4: transparent !important;
+}
+/* Re-enable gradient stack & drift animation on ::before.
+   Override 42832 yg memaksa background:#0B131D + animation:none. */
+body[data-role="admin"]:not([data-theme="light"])::before {
+  background:
+    radial-gradient(ellipse 55% 45% at 25% 30%, var(--blob-1), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 75% 70%, var(--blob-2), transparent 65%),
+    radial-gradient(ellipse 45% 35% at 60% 15%, var(--blob-3), transparent 70%),
+    var(--bg) !important;
+  background-size: 180% 180%, 200% 200%, 220% 220%, auto !important;
+  background-position: 0% 0%, 100% 100%, 50% 0%, 0 0 !important;
+  animation: playlyBgDrift 55s ease-in-out infinite alternate !important;
+}
+/* Anti-freeze: pastikan animasi tetap jalan walau prefers-reduced-motion
+   (per feedback-overlay-anim-qa: "pastikan animasi nya jalan"). */
+@media (prefers-reduced-motion: reduce) {
+  body[data-role="admin"]:not([data-theme="light"])::before {
+    animation: playlyBgDrift 55s ease-in-out infinite alternate !important;
+  }
 }
