@@ -21,6 +21,9 @@
     "playly-user",            // session marker — wajib device-local, jangan
                               // di-sync dari cloud (kalau di-sync, device lain
                               // bisa "auto-login" dari session orang lain)
+    "playly-cloud-retry",     // Bug #9 (2026-05-20): retry queue lokal,
+                              // jangan di-sync (akan loop / overwrite cross-
+                              // device dgn antrian device lain).
   ]);
   function shouldSync(key) {
     if (typeof key !== "string") return false;
@@ -81,19 +84,139 @@
     return _client;
   }
 
+  // Bug #7 fix (2026-05-20): keys yg di-store sebagai array of records butuh
+  // MERGE on write (bukan overwrite) supaya konflik cross-device tidak
+  // clobber entry yg di-tulis device lain. Mis. user A submit pending +
+  // admin B approve simultaneously → last upsert wins = salah satu hilang.
+  // Strategi merge: union by `code`/`id`, pick higher status priority +
+  // latest paidAt sebagai tie-break.
+  const MERGE_KEYS_ARRAY = {
+    "playly-premium-payments": {
+      idField: "code",
+      rank: (e) => {
+        const s = e && e.status;
+        if (s === "activated") return 4;
+        if (s === "approved") return 3;
+        if (s === "rejected") return 2;
+        if (s === "pending") return 1;
+        return 0;
+      },
+      tieBreak: (e) => Number(e && (e.updatedAt || e.paidAt)) || 0,
+    },
+  };
+
+  function mergeArrayRecords(local, cloud, cfg) {
+    if (!Array.isArray(local)) local = [];
+    if (!Array.isArray(cloud)) cloud = [];
+    const byId = new Map();
+    const upsert = (e) => {
+      if (!e) return;
+      const id = e[cfg.idField];
+      if (id == null) return;
+      const prev = byId.get(id);
+      if (!prev) { byId.set(id, e); return; }
+      const rankP = cfg.rank(prev);
+      const rankE = cfg.rank(e);
+      if (rankE > rankP) { byId.set(id, e); return; }
+      if (rankE < rankP) return;
+      // Equal rank → pick newer tieBreak (updatedAt > paidAt)
+      if (cfg.tieBreak(e) >= cfg.tieBreak(prev)) byId.set(id, e);
+    };
+    // Cloud first (server state), then local (our recent edits) → local wins
+    // for ties because Map preserves insertion order but we overwrite via set.
+    cloud.forEach(upsert);
+    local.forEach(upsert);
+    return Array.from(byId.values());
+  }
+
+  // Fetch cloud row for a single key (untuk merge logic).
+  async function fetchOneRow(key) {
+    const sb = client();
+    if (!sb) return null;
+    try {
+      const { data, error } = await sb.from("kv").select("value").eq("key", key).maybeSingle();
+      if (error) { console.warn("[cloud] fetchOne", key, error.message); return null; }
+      return data ? data.value : null;
+    } catch (err) { console.warn("[cloud] fetchOne exception", key, err); return null; }
+  }
+
+  // Bug #9 fix (2026-05-20): retry queue untuk pushes yg gagal (Supabase
+  // down, network error, RLS reject). Sebelumnya fire-and-forget hanya
+  // console.warn → data user nyangkut di localStorage saja, admin tidak
+  // pernah lihat. Sekarang failed pushes di-enqueue ke retry list +
+  // di-coba ulang otomatis pada interval / online event / next softResync.
+  const RETRY_QUEUE_KEY = "playly-cloud-retry";
+  function loadRetryQueue() {
+    try { return JSON.parse(window.localStorage.getItem(RETRY_QUEUE_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function saveRetryQueue(arr) {
+    try { origSet.call(window.localStorage, RETRY_QUEUE_KEY, JSON.stringify(arr.slice(-50))); } catch {}
+  }
+  function enqueueRetry(key, value) {
+    const q = loadRetryQueue();
+    // Dedupe by key — keep latest value only
+    const filtered = q.filter(e => e.key !== key);
+    filtered.push({ key, value, queuedAt: Date.now() });
+    saveRetryQueue(filtered);
+  }
+  let _retryFlushing = false;
+  async function flushRetryQueue() {
+    if (_retryFlushing) return;
+    const sb = client();
+    if (!sb) return;
+    const q = loadRetryQueue();
+    if (!q.length) return;
+    _retryFlushing = true;
+    const remaining = [];
+    for (const entry of q) {
+      try {
+        const { error } = await sb.from("kv")
+          .upsert({ key: entry.key, value: entry.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        if (error) { remaining.push(entry); console.warn("[cloud] retry still failing:", entry.key, error.message); }
+      } catch (err) { remaining.push(entry); console.warn("[cloud] retry exception:", entry.key, err); }
+    }
+    saveRetryQueue(remaining);
+    _retryFlushing = false;
+  }
+
   // === push (fire-and-forget) ============================================
   function pushToCloud(key, raw) {
     const sb = client();
     if (!sb) return;
     if (!shouldSync(key)) return;
+    if (key === RETRY_QUEUE_KEY) return; // jangan loop the retry queue itself
     let value;
     try { value = JSON.parse(raw); } catch { value = raw; }
+    // Merge-on-write untuk array-of-records keys yg rentan stomp.
+    const mergeCfg = MERGE_KEYS_ARRAY[key];
+    if (mergeCfg && Array.isArray(value)) {
+      // Async path: pull cloud → merge → upsert. Fire-and-forget tetap.
+      (async () => {
+        try {
+          const cloudValue = await fetchOneRow(key);
+          const cloudArr = Array.isArray(cloudValue) ? cloudValue : [];
+          const merged = mergeArrayRecords(value, cloudArr, mergeCfg);
+          try {
+            const newRaw = JSON.stringify(merged);
+            if (newRaw !== raw) origSet.call(window.localStorage, key, newRaw);
+          } catch {}
+          const { error } = await sb.from("kv")
+            .upsert({ key, value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
+          if (error) { enqueueRetry(key, merged); console.warn("[cloud] merge-push failed, queued retry:", error.message); }
+        } catch (err) { enqueueRetry(key, value); console.warn("[cloud] merge-push exception, queued retry:", err); }
+      })();
+      return;
+    }
     sb.from("kv")
       .upsert(
         { key, value, updated_at: new Date().toISOString() },
         { onConflict: "key" }
       )
-      .then(({ error }) => { if (error) console.warn("[cloud]", error.message); });
+      .then(({ error }) => {
+        if (error) { enqueueRetry(key, value); console.warn("[cloud] push failed, queued retry:", error.message); }
+      })
+      .catch((err) => { enqueueRetry(key, value); console.warn("[cloud] push exception, queued retry:", err); });
   }
   function deleteFromCloud(key) {
     const sb = client();
@@ -286,8 +409,10 @@
     const now = Date.now();
     if (now - lastSync < 3000) return;
     lastSync = now;
-    // Soft refresh: cuma pull cloud (tab aktif tidak butuh push, hijack
-    // setItem sudah handle write berikutnya secara real-time).
+    // Bug #9: coba flush retry queue dulu — kalau Supabase recover, push
+    // yg sempat gagal akan sukses sebelum kita pull (jadi local state
+    // konsisten dgn cloud).
+    try { await flushRetryQueue(); } catch {}
     const rows = await fetchAllRows();
     applyToLocal(rows);
   }
@@ -297,6 +422,11 @@
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") void softResync();
     });
+    // Bug #9: retry pada `online` event — koneksi kembali setelah offline
+    window.addEventListener("online", () => { void flushRetryQueue(); });
+    // Periodic flush tiap 30s sebagai safety net (kalau push gagal tanpa
+    // network event yang clear, mis. RLS sementara reject).
+    setInterval(() => { void flushRetryQueue(); }, 30000);
   }
 
   // === expose helpers ====================================================

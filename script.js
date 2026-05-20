@@ -3132,6 +3132,48 @@ document.addEventListener("visibilitychange", () => {
 // Re-hitung saat cloud-sync apply data baru dari Supabase
 window.addEventListener("playly:cloud-applied", () => { refreshStorageUsage(); });
 
+// Bug #2 fix (2026-05-20): force-logout user yang baru di-suspend admin di
+// device lain. Cek tiap cloud-applied + focus + storage event — kalau akun
+// user yg sedang aktif di-mark suspended, langsung kick-out.
+function forceLogoutIfSuspended() {
+  try {
+    if (!user || !user.email) return;
+    if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(user.email)) {
+      return; // jangan auto-logout admin (admin handle suspended via UI sendiri)
+    }
+    const acc = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "null");
+    if (!acc || acc.suspended !== true) return;
+    // Suspend detected — force logout immediately.
+    try { saveState(); } catch {}
+    try { stopLiveClock?.(); } catch {}
+    try { stopAdminLiveRefresh?.(); } catch {}
+    try { localStorage.removeItem("playly-user"); } catch {}
+    user = null;
+    state = null;
+    delete document.body.dataset.role;
+    if (typeof showAuth === "function") showAuth();
+    if (typeof openAlert === "function") {
+      openAlert({
+        icon: "⛔",
+        iconClass: "danger",
+        title: "Akun Di-suspend",
+        desc: acc.suspendedReason
+          ? `Akun kamu baru saja di-suspend oleh admin. Alasan: ${acc.suspendedReason}. Sesi otomatis berakhir.`
+          : "Akun kamu baru saja di-suspend oleh admin. Sesi otomatis berakhir. Hubungi support.",
+        btnText: "Mengerti",
+        btnClass: "danger"
+      });
+    }
+  } catch (err) {
+    console.warn("[suspend-check] failed:", err);
+  }
+}
+window.addEventListener("playly:cloud-applied", forceLogoutIfSuspended);
+window.addEventListener("focus", forceLogoutIfSuspended);
+window.addEventListener("storage", e => {
+  if (e.key && e.key.startsWith("playly-account-")) forceLogoutIfSuspended();
+});
+
 function applyUserToUI() {
   const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
   // Admin avatars pakai role-based ICON, bukan inisial (jangan teks A/P):
@@ -14662,6 +14704,15 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
   e.preventDefault();
   const modal = document.getElementById("createUserModal");
   const isAdminMode = modal?.dataset.createMode === "admin";
+  // Bug #3 fix (2026-05-20): GATE admin-mode creation behind super-admin.
+  // Sebelumnya handler ini honor createMode="admin" tanpa cek role aktif →
+  // admin biasa bisa mint admin baru = self-escalate platform.
+  if (isAdminMode) {
+    const isSuper = (typeof isSuperAdmin === "function") ? isSuperAdmin(user) : false;
+    if (!isSuper) {
+      return toast("🔒 Hanya super-admin yang bisa membuat akun admin baru", "warning");
+    }
+  }
   const fd = new FormData(e.target);
   const name     = String(fd.get("name")        || "").trim();
   const username = String(fd.get("username")    || "").trim().toLowerCase();
@@ -15934,6 +15985,9 @@ function setPremiumPaymentStatus(code, status, processedBy) {
   const payment = arr[idx];
   payment.status = status;
   payment.processedAt = Date.now();
+  // Bug #7 fix (2026-05-20): set updatedAt supaya cross-device merge bisa
+  // tie-break dgn benar (lihat cloud-sync.js MERGE_KEYS_ARRAY).
+  payment.updatedAt = Date.now();
   if (processedBy) payment.processedBy = processedBy;
   savePremiumPayments(arr);
 
@@ -17443,7 +17497,12 @@ function openPremiumDetailModal(code) {
   const actionsEl = document.getElementById("pqdmActions");
   if (actionsEl) {
     if (p.status === "pending") {
-      const canApprove = matches && codeSent;
+      // Bug #10 fix (2026-05-20): admin-grant flow tidak punya user yang
+      // ketik kode (admin bikinkan akun + langsung approve). Sebelumnya
+      // canApprove butuh matches && codeSent → tombol disabled selamanya
+      // untuk admin-grant. Sekarang admin-grant auto-bypass typed-code req.
+      const isAdminGrant = p.flowContext === "admin-grant";
+      const canApprove = isAdminGrant ? true : (matches && codeSent);
       const rejectLbl = isID ? "✕ Tolak" : "✕ Reject";
       const approveLbl = isID ? "✓ Approve" : "✓ Approve";
       const sendCodeLbl = isID ? "📤 Kirim Kode ke User" : "📤 Send Code to User";
@@ -17560,6 +17619,27 @@ document.addEventListener("click", e => {
   document.querySelectorAll(".pq-tab").forEach(t => t.classList.toggle("active", t === tab));
   renderAdminPremiumQueue();
 });
+
+// Bug #8 fix (2026-05-20): periodic auto-resync saat admin queue view aktif.
+// softResync internal rate-limit 3s; interval 8s aman + memastikan admin
+// lihat pending baru tanpa harus klik tombol manual. Auto-stop saat view
+// tidak aktif (pakai requestAnimationFrame-style check tiap interval).
+let _adminPqAutoSyncTimer = null;
+function _adminPqStartAutoSync() {
+  if (_adminPqAutoSyncTimer) return;
+  _adminPqAutoSyncTimer = setInterval(async () => {
+    const sectionActive = document.querySelector('section.view[data-view="admin-premium-queue"].active');
+    if (!sectionActive) return; // stop syncing if user left view
+    if (document.hidden) return; // hemat saat tab hidden
+    try {
+      if (window.cloudSync?.softResync) await Promise.resolve(window.cloudSync.softResync());
+      if (typeof renderAdminPremiumQueue === "function") renderAdminPremiumQueue();
+      if (typeof renderAdminActionCenter === "function") renderAdminActionCenter();
+    } catch (err) { console.warn("[pq] auto-sync:", err); }
+  }, 8000);
+}
+// Start the timer once script.js loads — it's idle until queue view is active.
+try { _adminPqStartAutoSync(); } catch {}
 
 // "Sync dari Cloud" button — force pull terbaru dari Supabase (req user
 // 2026-05-20: queue admin kadang kosong padahal user sudah submit
@@ -18100,7 +18180,12 @@ function closePaymentModal() {
       //   - status: pending → approved → enable Continue + onSuccess
       //   - status: pending → rejected → show rejected, disable Continue
       if (_premiumStatusPoller) clearInterval(_premiumStatusPoller);
-      _premiumStatusPoller = setInterval(() => {
+      _premiumStatusPoller = setInterval(async () => {
+        // Bug #8 fix (2026-05-20): pull dari Supabase tiap iterasi supaya
+        // user yg staring di modal langsung lihat admin approve dari device
+        // lain (tanpa harus tab away/back). softResync internal rate-limit
+        // 3s → call aman tiap 4s.
+        try { if (window.cloudSync?.softResync) await Promise.resolve(window.cloudSync.softResync()); } catch {}
         const p = getPremiumPaymentByCode(code);
         if (!p) return;
         // Code-sent transition (sebelum status final)
@@ -18554,6 +18639,24 @@ $("#signinForm").addEventListener("submit", async e => {
   console.log("[Auth] password check", passwordOk);
   if (!passwordOk) {
     return onFail("password", "Password salah", "❌ Password salah");
+  }
+
+  // Bug #1 fix (2026-05-20): cek suspended SETELAH password OK. tryAutoBoot
+  // sudah cek ini, tapi handler login utama bypass — celah keamanan: user
+  // di-suspend admin tetap bisa login normal di device lain. Sekarang block
+  // login pada level handler.
+  if (existing.suspended === true) {
+    btn.classList.remove("loading");
+    return openAlert({
+      icon: "⛔",
+      iconClass: "danger",
+      title: "Akun Di-suspend",
+      desc: existing.suspendedReason
+        ? `Akun kamu di-suspend oleh admin. Alasan: ${existing.suspendedReason}. Hubungi support.`
+        : "Akun kamu di-suspend oleh admin. Hubungi support untuk informasi lebih lanjut.",
+      btnText: "Mengerti",
+      btnClass: "danger"
+    });
   }
 
   // Guard: akun admin (super admin / admin tambahan) tidak boleh login lewat halaman User (/).
@@ -24920,7 +25023,11 @@ function deleteAdminVideo(id) {
 }
 
 function countAdminPendingVideos() {
-  return getAllAdminVideos().filter(v => (v.adminStatus || "pending") === "pending").length;
+  // Bug #6 fix (2026-05-20): selaras dgn getAdminVideoStatus yg default
+  // ke "published" untuk missing adminStatus. Sebelumnya helper ini default
+  // ke "pending" → badge stuck counting legacy videos yg admin tidak bisa
+  // clear karena tab Pending tidak menampilkan mereka.
+  return getAllAdminVideos().filter(v => v.adminStatus === "pending").length;
 }
 
 function getAdminVideoStatus(v) {
@@ -25315,9 +25422,32 @@ function renderAdminModeration() {
       const idx = list.findIndex(x => x.id === id);
       if (idx === -1) return;
       const item = list[idx];
-      if (action === "approve") { item.status = "approved"; pushAdminEvent("✓", `Video <i>"${item.title}"</i> di-approve`); }
-      if (action === "remove") { item.status = "removed"; pushAdminEvent("🗑️", `Video <i>"${item.title}"</i> dihapus`); }
-      if (action === "restore") { item.status = "pending"; pushAdminEvent("↻", `Video <i>"${item.title}"</i> dikembalikan ke pending`); }
+      // Bug #5 fix (2026-05-20): aksi moderasi WAJIB juga mengubah
+      // adminStatus video aslinya. Sebelumnya hanya update record laporan
+      // → tombol "Hapus" tidak benar-benar takedown video, admin kira sudah
+      // di-hapus padahal video tetap published di feed. "Approve" pun tidak
+      // publish video yg masih pending.
+      if (action === "approve") {
+        item.status = "approved";
+        if (item.videoId && typeof patchAdminVideo === "function") {
+          try { patchAdminVideo(item.videoId, { adminStatus: "published" }); } catch (err) { console.warn("[mod] approve patch failed:", err); }
+        }
+        pushAdminEvent("✓", `Video <i>"${item.title}"</i> di-approve`);
+      }
+      if (action === "remove") {
+        item.status = "removed";
+        if (item.videoId && typeof patchAdminVideo === "function") {
+          try { patchAdminVideo(item.videoId, { adminStatus: "takedown" }); } catch (err) { console.warn("[mod] remove patch failed:", err); }
+        }
+        pushAdminEvent("🗑️", `Video <i>"${item.title}"</i> dihapus`);
+      }
+      if (action === "restore") {
+        item.status = "pending";
+        if (item.videoId && typeof patchAdminVideo === "function") {
+          try { patchAdminVideo(item.videoId, { adminStatus: "pending" }); } catch (err) { console.warn("[mod] restore patch failed:", err); }
+        }
+        pushAdminEvent("↻", `Video <i>"${item.title}"</i> dikembalikan ke pending`);
+      }
       saveAdminData("mod", list);
       toast(action === "approve" ? "✓ Video disetujui" : action === "remove" ? "🗑️ Video dihapus" : "↻ Restored", action === "remove" ? "error" : "success");
       renderAdminModeration();
@@ -33532,11 +33662,26 @@ $("#fypShareModal")?.querySelectorAll("[data-share-act]").forEach(btn => {
         btnText: "Laporkan", btnClass: "danger",
         onConfirm: () => {
           try {
+            // Bug #4 fix (2026-05-20): tambah field yg dibutuhkan reader
+            // (renderAdminModeration). Sebelumnya writer hanya save
+            // {id, videoId, title, creator, reportedBy, reason, at} → reader
+            // filter status==="pending" + render i.thumb/i.flag/relTime(i.reportedAt)
+            // → laporan tertelan diam-diam. Sekarang lengkapi schema.
             const KEY = "playly-admin-mod";
             const list = JSON.parse(localStorage.getItem(KEY) || "[]");
             list.unshift({
-              id: Date.now(), videoId: id, title: v.title, creator: v.creator,
-              reportedBy: user.username, reason: "Dilaporkan dari FYP", at: new Date().toISOString()
+              id: Date.now(),
+              videoId: id,
+              title: v.title,
+              creator: v.creator,
+              reportedBy: user.username,
+              reason: "Dilaporkan dari FYP",
+              at: new Date().toISOString(),
+              // Fields baru untuk reader:
+              status: "pending",
+              reportedAt: Date.now(),
+              flag: "🚩",
+              thumb: v.thumb || v.poster || "🎬"
             });
             localStorage.setItem(KEY, JSON.stringify(list.slice(0, 200)));
           } catch {}
