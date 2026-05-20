@@ -63105,17 +63105,11 @@ html body[data-role="admin"][data-theme="dark"] {
 html body[data-role="admin"][data-theme="dark"] .starry-sky {
   background: #0B131D !important;
 }
-/* Anti-freeze: stars layers harus tetap drift walau prefers-reduced-motion
-   (chrome-devtools emulate ini → tanpa override, stars freeze).
-   Per feedback-overlay-anim-qa: "pastikan animasi nya jalan". */
-@media (prefers-reduced-motion: reduce) {
-  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars {
-    animation: starryAnimStar 50s linear infinite !important;
-  }
-  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
-    animation: starryAnimStar 100s linear infinite !important;
-  }
-  html body[data-role="admin"][data-theme="dark"] .starry-sky #stars3 {
-    animation: starryAnimStar 150s linear infinite !important;
-  }
+/* v373 SWITCH ke OPSI 3 (constellation network): hide pixel stars
+   layer, ganti dgn canvas constellation-bg.js (dots + connecting
+   lines). Starry-sky bg #0B131D dipertahankan sebagai base color. */
+html body[data-role="admin"][data-theme="dark"] .starry-sky #stars,
+html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2,
+html body[data-role="admin"][data-theme="dark"] .starry-sky #stars3 {
+  display: none !important;
 }
