@@ -41561,10 +41561,12 @@ body[data-role="admin"].auth-mode .admin-preview-section {
   min-height: 100vh !important;
   display: flex;
   flex-direction: column;
-  /* Per user 2026-05-11: center vertical + padding-top clamp(30px, 4vw, 80px)
-     — naikkan sedikit posisi pratinjau dari sebelumnya 40px/5vw/110px. */
+  /* Per user 2026-05-20: konten terlalu mepet ke bawah → naikkan sedikit.
+     Cara: kurangi padding-top + perbesar padding-bottom signifikan, supaya
+     dgn justify-content:center, titik tengah konten geser ke atas.
+     Sebelumnya: top 30-80, bottom 20-36 → top 20-50, bottom 60-100. */
   justify-content: center !important;
-  padding: clamp(30px, 4vw, 80px) clamp(20px, 4vw, 80px) clamp(20px, 2.5vw, 36px) !important;
+  padding: clamp(20px, 3vw, 50px) clamp(20px, 4vw, 80px) clamp(60px, 7vw, 100px) !important;
 }
 body[data-role="admin"].auth-mode .admin-preview-section .admin-landing-head {
   margin: 0 auto 14px;
@@ -60250,8 +60252,12 @@ html body[data-role="admin"].auth-mode #adminPreviewSection {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  padding-top: clamp(24px, 3vw, 44px) !important;
-  padding-bottom: clamp(24px, 3vw, 44px) !important;
+  /* Per user 2026-05-20: "slide masih terlalu mepet ke bawah, naikkan
+     sedikit". Padding-top dikecilkan lagi + bottom diperbesar supaya
+     konten terangkat signifikan dari bottom edge. Section tetap 100vh
+     & tidak ganggu slide lain. */
+  padding-top: clamp(8px, 1vw, 16px) !important;
+  padding-bottom: clamp(70px, 8vw, 130px) !important;
   scroll-margin-top: 64px !important;
 }
 html body[data-role="admin"].auth-mode #adminPreviewSection .admin-landing-head {
