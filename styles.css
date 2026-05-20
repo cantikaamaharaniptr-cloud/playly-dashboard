@@ -48449,32 +48449,49 @@ html body[data-role="admin"] .admin-security-grid {
   gap: 12px !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-front {
-  padding: 18px 18px !important;
-  min-height: 160px !important;
+  padding: 22px 22px !important;
+  min-height: 180px !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-back {
-  padding: 18px 18px !important;
+  padding: 24px 22px !important;
+  gap: 12px !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-front h3 {
-  font-size: 14px !important;
-  margin-bottom: 4px !important;
+  font-size: 16px !important;
+  margin-bottom: 6px !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-front p {
-  font-size: 12px !important;
-  line-height: 1.5 !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-num {
-  margin-bottom: 6px !important;
-  font-size: 11px !important;
+  margin-bottom: 8px !important;
+  font-size: 12px !important;
 }
+/* Flip-back (req user 2026-05-20: "ikon & font terlalu kecil,
+   rapikan"). Naikkan: icon 32→48, caption 14→18, sub 11→13.
+   Tambah spacing antara icon dan caption supaya napas. */
 html body[data-role="admin"] .admin-security-card .asc-flip-back .ascb-icon {
-  font-size: 32px !important;
+  font-size: 48px !important;
+  line-height: 1 !important;
+  margin-bottom: 4px !important;
+  filter: drop-shadow(0 0 14px rgba(168, 186, 200, .55)) !important;
+}
+html body[data-role="admin"] .admin-security-card .asc-flip-back .ascb-icon svg {
+  width: 48px !important;
+  height: 48px !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-back .ascb-caption {
-  font-size: 14px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: .3px !important;
+  line-height: 1.25 !important;
 }
 html body[data-role="admin"] .admin-security-card .asc-flip-back .ascb-sub {
-  font-size: 11px !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  max-width: 92% !important;
+  color: rgba(168, 186, 200, .85) !important;
 }
 
 /* =========================================================
