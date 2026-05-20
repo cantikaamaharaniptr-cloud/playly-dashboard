@@ -62806,7 +62806,7 @@ html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before,
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before,
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before,
 html body[data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before {
-  color: rgba(206,214,228,.85) !important;
+  color: #E8EDF2 !important;
 }
 /* SWEEP keyframes — chip mengayun ±15° di ring luar sambil sedikit
    bob radial (±4px), teks tetap tegak (counter-rotate match frame
@@ -62944,7 +62944,7 @@ body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-2 {
   display: block !important;
   width: 152px !important; height: 152px !important;
   margin: -76px 0 0 -76px !important;
-  border: 1.5px solid rgba(206,214,228,.42) !important;
+  border: 1.5px solid rgba(232,237,242,.42) !important;
   animation: adminRingBreathe 2.8s ease-in-out infinite !important;
 }
 /* lingkaran TENGAH — bergerak (offset waktu beda) */
@@ -62952,7 +62952,7 @@ body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-1 {
   display: block !important;
   width: 222px !important; height: 222px !important;
   margin: -111px 0 0 -111px !important;
-  border: 1.5px solid rgba(206,214,228,.40) !important;
+  border: 1.5px solid rgba(232,237,242,.40) !important;
   animation: adminRingBreathe 2.8s ease-in-out infinite !important;
   animation-delay: -1.4s !important;
 }
@@ -62961,7 +62961,7 @@ body[data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-3 {
   display: block !important;
   width: 292px !important; height: 292px !important;
   margin: -146px 0 0 -146px !important;
-  border: 1.5px solid rgba(198,208,224,.30) !important;
+  border: 1.5px solid rgba(232,237,242,.32) !important;
   animation: none !important;
 }
 @keyframes adminRingBreathe {
