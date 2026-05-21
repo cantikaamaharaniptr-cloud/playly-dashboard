@@ -63365,7 +63365,13 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
   /* Mobile layout per user 2026-05-21 v5: SINGLE ROW
      Urutan: hamburger | Home pill | search (flex grow) | bell | CM avatar
      Override existing rule space-between (line 26872) + display:none di
-     search (line 26873) + flex-wrap. */
+     search (line 26873) + flex-wrap.
+     CATATAN: tier pill DISEMBUNYIKAN di mobile (≤480) karena no space —
+     user akses upgrade dari profile menu / sidebar drawer. */
+  html body:not(.auth-mode) .topbar #dashboardTierPill,
+  html body:not(.auth-mode) .topbar #dashboardPaymentPill {
+    display: none !important;
+  }
   html body:not(.auth-mode) .topbar {
     flex-wrap: nowrap !important;
     justify-content: flex-start !important;
@@ -63401,24 +63407,34 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
      via rule di atas. */
 }
 
-/* (R-7) Sembunyikan kolom Progres kreator yang KOSONG (kotak hantu
-   di kiri Pencapaian). `.home-level` (renderHomeCreatorLevel) cuma
-   berisi HTML comment placeholder — tidak pernah populated oleh
-   user baru, jadi tampil sebagai dark box bingung. Solusi: hide
-   `.home-col-left` unconditionally + paksa Pencapaian (col-right)
-   full-width. Catatan teknis: selector `:has(:not(:has()))` INVALID
-   di Chromium (nesting :has dalam :not forbidden), jadi pakai
-   unconditional hide. Kalau di masa depan renderHomeCreatorLevel
-   actually populated, balikin rule ini ke conditional via
-   `:has(.hlv-sub)` (valid form). */
-.home-2col .home-col-left {
-  display: none !important;
+/* (R-7) home-2col responsive FLEXIBLE per user 2026-05-21 v7.
+   PREV WRONG: saya unconditional hide .home-col-left karena assume
+   renderHomeCreatorLevel tidak populate. ACTUALLY populate fine —
+   cuma butuh defensive call (sama seperti tier pill di index.html).
+   Sekarang: 2-col di tablet/laptop/desktop (≥768), 1-col stack di
+   mobile (≤767). Level di kiri, Pencapaian di kanan. */
+@media (min-width: 768px) {
+  .home-2col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+  }
+  .home-2col .home-col-left,
+  .home-2col .home-col-right {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+  }
 }
-.home-2col {
-  display: block !important;
-}
-.home-2col .home-col-right {
-  width: 100% !important;
-  max-width: none !important;
-  flex: 1 1 100% !important;
+@media (max-width: 767px) {
+  .home-2col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .home-2col .home-col-left,
+  .home-2col .home-col-right {
+    width: 100% !important;
+  }
 }
