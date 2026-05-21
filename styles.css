@@ -63255,20 +63255,25 @@ html body:not([data-role="admin"]):not(.auth-mode) .topbar,
 html body[data-role="admin"]:not(.auth-mode) .topbar {
   background-color: var(--bg-elev) !important;
   background-image: none !important;
+  /* Per user v14: width explicit calc 100% + 48px supaya topbar
+     mengisi penuh sampai ke viewport right edge. Margin negative
+     shift posisi, width extension bikin box actually melebar. */
+  width: calc(100% + 48px) !important;
+  max-width: none !important;
   margin-left: -24px !important;
   margin-right: -24px !important;
   margin-top: -16px !important;
-  /* Per user v13: kurangi padding-left/right supaya Beranda dempet
-     ke sidebar edge (sebelumnya 24px bikin gap "kosong" di kiri). */
   padding-left: 10px !important;
   padding-right: 10px !important;
   padding-top: 16px !important;
   padding-bottom: 12px !important;
+  box-sizing: border-box !important;
 }
 @media (max-width: 768px) {
   html body:not([data-role="admin"]):not(.auth-mode) .topbar,
   html body[data-role="admin"]:not(.auth-mode) .topbar {
     /* .main di mobile padding berubah (line 26807: padding 12px 12px 22px) */
+    width: calc(100% + 24px) !important;
     margin-left: -12px !important;
     margin-right: -12px !important;
     margin-top: -12px !important;
