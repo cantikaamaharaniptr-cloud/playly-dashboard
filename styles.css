@@ -63241,20 +63241,16 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
    diganggu. Append-only block: menang cascade.
    ========================================================= */
 
-/* (R-1) Topbar sticky transparent → solid background di mobile.
-   Issue: tombol Edit Profil / Unggah Video dari Hero Profile
-   Card peek through sticky topbar saat scroll, karena rule
-   ~line 47169 set bg transparent + tanpa backdrop-filter.
-   Fix: solid bg pakai var(--bg) di ≤768px supaya obscure
-   konten saat scroll. Selector mirror specificity rule lama
-   (`html body:not([data-role="admin"]):not(.auth-mode) .topbar`
-   = 014) supaya menang. Apply ke user DAN admin role. */
-@media (max-width: 768px) {
-  html body:not([data-role="admin"]):not(.auth-mode) .topbar,
-  html body[data-role="admin"]:not(.auth-mode) .topbar {
-    background-color: var(--bg) !important;
-    background-image: none !important;
-  }
+/* (R-1) Topbar sticky transparent → solid background di SEMUA viewport
+   (per user 2026-05-21 v8: desktop juga harus solid, sebelumnya cuma
+   fix mobile). Issue: konten scroll (hero greeting, profile card,
+   tombol) peek through sticky topbar karena rule ~line 47169 set
+   bg transparent + tanpa backdrop-filter. Fix: solid bg pakai
+   var(--bg) di ALL widths supaya obscure konten saat scroll. */
+html body:not([data-role="admin"]):not(.auth-mode) .topbar,
+html body[data-role="admin"]:not(.auth-mode) .topbar {
+  background-color: var(--bg) !important;
+  background-image: none !important;
 }
 
 /* (R-2) Admin KPI 4-card label terpotong di mobile ≤480px.
