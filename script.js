@@ -16359,10 +16359,19 @@ let _authPaymentPollTimer = null;
 
 function findAuthScreenPayment() {
   // Most recent non-consumed payment for any device-tracked account.
+  // C-4 P-L15 fix (2026-05-21): kalau device-emails kosong (mis. user clear
+  // device-accounts), fallback ke email yg sedang diketik di sign-in form.
+  // Sebelumnya return null → user yg punya pending payment tidak lihat
+  // banner-nya, padahal mungkin sedang di flow sign-in setelah signup.
   const deviceEmails = (typeof getDeviceAccountEmails === "function")
     ? getDeviceAccountEmails().map(e => String(e).toLowerCase())
     : [];
-  if (!deviceEmails.length) return null;
+  if (!deviceEmails.length) {
+    // Fallback: try email currently in sign-in form
+    const signinEmail = String(document.querySelector('#signinForm input[name="email"]')?.value || "").trim().toLowerCase();
+    if (signinEmail) deviceEmails.push(signinEmail);
+    else return null;
+  }
   const all = getPremiumPayments();
 
   // Auto-cleanup: kalau akun untuk payment email sudah premium tier,
@@ -18928,7 +18937,17 @@ $("#signinForm").addEventListener("submit", async e => {
   }
   // Force role berdasarkan allowlist admin — bukan dari data lama yang mungkin sudah dimanipulasi
   const correctRole = isAllowedAdminEmail(existing.email) ? "admin" : "user";
-  user = { name: existing.name, username: existing.username, email: existing.email, joinedAt: existing.joinedAt, role: correctRole, tier: existing.tier || "free", premiumPlan: existing.premiumPlan || null, premiumStartedAt: existing.premiumStartedAt || null, premiumExpiresAt: existing.premiumExpiresAt || null };
+  user = { name: existing.name, username: existing.username, email: existing.email, joinedAt: existing.joinedAt, role: correctRole, tier: existing.tier || "free", premiumPlan: existing.premiumPlan || null, premiumStartedAt: existing.premiumStartedAt || null, premiumExpiresAt: existing.premiumExpiresAt || null, loggedInAt: Date.now() /* C-4 U-L1: session expiry stamp */ };
+
+  // C-4 U-L3 fix (2026-05-21): kalau admin reset password user, mustChangePassword
+  // di-set true. Warn user supaya ganti via Settings → Account.
+  if (existing.mustChangePassword) {
+    setTimeout(() => {
+      if (typeof toast === "function") {
+        toast("🔑 Admin meng-reset password kamu. <b>Segera ganti password</b> via Settings → Akun.", "warning");
+      }
+    }, 1500);
+  }
 
   // Login berhasil → reset rate limit counter & sembunyikan banner kalau masih ada
   clearLoginAttempts(identifier);
@@ -20117,14 +20136,27 @@ function saveAdminData(key, arr) {
   localStorage.setItem(ADMIN_KEYS[key], JSON.stringify(arr));
 }
 
-function pushAdminEvent(ico, text) {
+// C-4 U-L4 fix (2026-05-21): pushAdminEvent sekarang accept structured fields
+// untuk easier filtering/query. Signature backward-compatible:
+//   pushAdminEvent(ico, text) → legacy
+//   pushAdminEvent(ico, text, { action, target, reason }) → structured
+function pushAdminEvent(ico, text, meta) {
   const events = getAdminData("events");
-  // Dedupe: kalau event teratas teks-nya sama persis & baru < 2 menit lalu, skip.
-  // Cegah flood karena re-render / reload berulang.
+  // C-4 U-L2 fix (2026-05-21): dedupe pakai action+target stable identity
+  // (kalau ada), bukan rendered text. Kalau action/target tidak di-pass,
+  // tetap pakai text fallback. Tetap window 120s tapi action+target lebih
+  // robust (mis. suspend user X 2x dalam 2 menit = 2 events, bukan 1).
+  const action = meta?.action || null;
+  const target = meta?.target || null;
+  const reason = meta?.reason || null;
   const top = events[0];
-  if (top && top.text === text && (Date.now() - top.ts) < 120000) return;
-  // Capture actor email + role tier supaya Audit Log bisa di-filter
-  // "Super Admin" vs "Admin" via sidebar sub-item.
+  if (top && (Date.now() - top.ts) < 120000) {
+    // Stable id match: kalau action+target SAMA, skip (mis. accidental
+    // double-click). Kalau action atau target beda, treat as separate.
+    if (action && target && top.action === action && top.target === target) return;
+    // Legacy text match (kalau tidak structured)
+    if (!action && top.text === text) return;
+  }
   const actorEmail = (user?.email || "").toLowerCase();
   const actorTier = (typeof OFFICIAL_ADMIN_EMAIL !== "undefined" && actorEmail === OFFICIAL_ADMIN_EMAIL)
     ? "super-admin" : "admin";
@@ -20133,12 +20165,12 @@ function pushAdminEvent(ico, text) {
     ico, text,
     ts: Date.now(),
     actorEmail,
-    actorTier
+    actorTier,
+    // C-4 U-L4: structured fields for filtering
+    action,
+    target,
+    reason,
   });
-  // C-2 H5 fix (2026-05-21): cap dinaikkan 50 → 500. Sebelumnya satu hari
-  // padat (suspend + tier change + ticket + delete) bisa habiskan 50 slot
-  // dlm 1-2 jam → bukti audit security-sensitive hilang. 500 entries =
-  // beberapa hari history minimum untuk compliance review.
   saveAdminData("events", events.slice(0, 500));
 }
 
@@ -24113,10 +24145,21 @@ $("#audResetPwBtn")?.addEventListener("click", () => {
       const acc = JSON.parse(localStorage.getItem(accKey) || "null");
       if (!acc) return toast("❌ Akun tidak ditemukan", "error");
       acc.password = DEFAULT_RESET_PASSWORD_HASH;
+      // C-4 U-L3 fix (2026-05-21): set mustChangePassword flag supaya user
+      // dipaksa ganti password saat login pertama setelah reset.
+      // Sebelumnya: default "playly1234" hash dipasang tanpa flag → user
+      // bisa terus pakai default forever (publicly known credential).
+      acc.mustChangePassword = true;
+      acc.passwordResetByAdminAt = Date.now();
+      acc.passwordResetBy = (typeof user === "object" && user?.username) || "admin";
       localStorage.setItem(accKey, JSON.stringify(acc));
-      pushAdminEvent("🔑", `Reset password <b>@${currentUserDetail.username}</b>`);
+      pushAdminEvent("🔑", `Reset password <b>@${escapeHtml(currentUserDetail.username)}</b>`, {
+        action: "password-reset",
+        target: currentUserDetail.username,
+        reason: "admin-initiated",
+      });
       renderAdminLiveFeed();
-      toast(`✓ Password <b>@${currentUserDetail.username}</b> di-reset ke <code>playly1234</code>`, "success");
+      toast(`✓ Password <b>@${escapeHtml(currentUserDetail.username)}</b> di-reset ke <code>playly1234</code>. User wajib ganti saat login pertama.`, "success");
     }
   });
 });
@@ -25418,6 +25461,11 @@ function getAllAdminVideos() {
     try { s = JSON.parse(localStorage.getItem(key)); } catch { continue; }
     if (!s || !Array.isArray(s.myVideos)) continue;
     s.myVideos.forEach(v => {
+      // C-4 V-L4 fix (2026-05-21): defensive — skip null/non-object entries
+      // dan yang tidak punya id valid. Render template assume v.id exist;
+      // tanpa guard ini, corrupt entry bisa muncul sebagai "undefined"
+      // row + bikin patchAdminVideo find() return mismatched target.
+      if (!v || typeof v !== "object" || v.id == null) return;
       out.push({ ...v, _ownerKey: key, _owner: username });
     });
   }
@@ -25449,21 +25497,33 @@ function patchAdminVideo(id, patch) {
 }
 
 // Force-delete a video across all stores (state + IndexedDB blob + Supabase Storage).
-function deleteAdminVideo(id) {
+// C-4 V-L3 fix (2026-05-21): function jadi async, IDB delete + cloud blob
+// delete bisa di-await caller kalau perlu memastikan delete commit sebelum
+// reload page (jika tidak di-await, masih fire-and-forget compatible).
+async function deleteAdminVideo(id) {
   const all = getAllAdminVideos();
   const target = all.find(v => v.id === id);
   if (!target) return false;
-  const s = JSON.parse(localStorage.getItem(target._ownerKey));
+  let s;
+  try { s = JSON.parse(localStorage.getItem(target._ownerKey)); } catch { return false; }
+  if (!s) return false;
   s.myVideos = (s.myVideos || []).filter(v => v.id !== id);
   localStorage.setItem(target._ownerKey, JSON.stringify(s));
   if (user && target._owner === user.username && Array.isArray(state?.myVideos)) {
     state.myVideos = state.myVideos.filter(v => v.id !== id);
   }
-  // Remove blob from IndexedDB (best-effort)
-  openVideoDB().then(db => {
-    const tx = db.transaction(VIDEO_STORE, "readwrite");
-    tx.objectStore(VIDEO_STORE).delete(id);
-  }).catch(() => {});
+  // Remove blob from IndexedDB — await supaya delete commit
+  try {
+    const db = await openVideoDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(VIDEO_STORE, "readwrite");
+      const req = tx.objectStore(VIDEO_STORE).delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+      // Safety timeout — jangan block forever
+      setTimeout(() => resolve(), 3000);
+    });
+  } catch (err) { console.warn("[deleteAdminVideo] IDB delete failed:", err); }
   // CR-5 fix (2026-05-21): juga hapus video blob di Supabase Storage.
   // Sebelumnya bucket leak forever — egress drain + storage growth.
   // Fire-and-forget OK karena admin sudah dapat feedback dari UI yg lain.
@@ -25981,19 +26041,25 @@ function renderAdminModeration() {
     </div>
   </div>`).join("");
 
-  grid.querySelectorAll("[data-mod-action]").forEach(b => {
-    b.addEventListener("click", e => {
-      const id = Number(e.currentTarget.closest(".mod-card").dataset.modId);
-      const action = e.currentTarget.dataset.modAction;
+  // C-4 V-L5 fix (2026-05-21): pakai event delegation (1x bind) instead of
+  // attach handler per button per render. Sebelumnya tiap re-render bikin
+  // handler baru → fast clicks trigger multiple actions + memory leak.
+  // Guard via window flag supaya bind hanya 1x.
+  if (!window.__adminModHandlerBound) {
+    window.__adminModHandlerBound = true;
+    document.addEventListener("click", e => {
+      const btn = e.target.closest("[data-mod-action]");
+      if (!btn) return;
+      const card = btn.closest(".mod-card");
+      if (!card) return;
+      const id = Number(card.dataset.modId);
+      const action = btn.dataset.modAction;
       const list = getAdminData("mod");
       const idx = list.findIndex(x => x.id === id);
       if (idx === -1) return;
       const item = list[idx];
       // Bug #5 fix (2026-05-20): aksi moderasi WAJIB juga mengubah
-      // adminStatus video aslinya. Sebelumnya hanya update record laporan
-      // → tombol "Hapus" tidak benar-benar takedown video, admin kira sudah
-      // di-hapus padahal video tetap published di feed. "Approve" pun tidak
-      // publish video yg masih pending.
+      // adminStatus video aslinya.
       if (action === "approve") {
         item.status = "approved";
         // C-2 H1 fix (2026-05-21): JANGAN auto-republish kalau video sudah
@@ -26014,7 +26080,10 @@ function renderAdminModeration() {
             }
           } catch (err) { console.warn("[mod] approve patch failed:", err); }
         }
-        pushAdminEvent("✓", `Laporan video <i>"${escapeHtml(item.title)}"</i> di-approve`);
+        // C-4 V-L1 fix (2026-05-21): include reporter info di audit log untuk
+        // visibility — admin lain bisa lihat siapa yg laporkan + alasannya
+        const reporterInfo = item.reportedBy ? ` (dilaporkan @${escapeHtml(item.reportedBy)}${item.reason ? `, alasan: ${escapeHtml(item.reason)}` : ""})` : "";
+        pushAdminEvent("✓", `Laporan video <i>"${escapeHtml(item.title)}"</i> di-approve${reporterInfo}`);
       }
       if (action === "remove") {
         item.status = "removed";
@@ -26024,11 +26093,17 @@ function renderAdminModeration() {
         pushAdminEvent("🗑️", `Video <i>"${item.title}"</i> dihapus`);
       }
       if (action === "restore") {
-        item.status = "pending";
+        // C-4 V-L2 fix (2026-05-21): semantic alignment dgn video-row restore.
+        // Sebelumnya: mod queue restore → "pending" (re-review), video-row
+        // restore → "published" (langsung live). Inconsistent — admin
+        // confused mana yg ngapain. Pilih: keduanya → "published" (klik
+        // restore = video LIVE lagi). Mod queue restore artinya admin
+        // overturn laporan/takedown sebelumnya.
+        item.status = "pending"; // status RECORD laporan tetap "pending" (akan re-review-able)
         if (item.videoId && typeof patchAdminVideo === "function") {
-          try { patchAdminVideo(item.videoId, { adminStatus: "pending" }); } catch (err) { console.warn("[mod] restore patch failed:", err); }
+          try { patchAdminVideo(item.videoId, { adminStatus: "published" }); } catch (err) { console.warn("[mod] restore patch failed:", err); }
         }
-        pushAdminEvent("↻", `Video <i>"${item.title}"</i> dikembalikan ke pending`);
+        pushAdminEvent("↻", `Video <i>"${escapeHtml(item.title)}"</i> di-restore (LIVE lagi)`);
       }
       saveAdminData("mod", list);
       toast(action === "approve" ? "✓ Video disetujui" : action === "remove" ? "🗑️ Video dihapus" : "↻ Restored", action === "remove" ? "error" : "success");
@@ -26037,7 +26112,7 @@ function renderAdminModeration() {
       renderAdminLiveFeed();
       syncAdminNavBadges();
     });
-  });
+  }
 }
 
 // =========== ADMIN: Pusat Komunikasi (admin-comms) ===========
@@ -43953,6 +44028,16 @@ document.addEventListener("click", (e) => {
 function tryAutoBoot() {
   const saved = loadUser();
   if (!saved?.email) return false;
+  // C-4 U-L1 fix (2026-05-21): enforce session expiry — kalau loggedInAt
+  // > 30 hari, force re-auth. Sebelumnya session marker hidup forever
+  // sampai manual logout / suspend. FAQ janjikan 30 hari di lp.faq.q7
+  // tapi tidak diterapkan. Sekarang real.
+  const SESSION_MAX_MS = 30 * 24 * 60 * 60 * 1000; // 30 hari
+  if (saved.loggedInAt && (Date.now() - Number(saved.loggedInAt)) > SESSION_MAX_MS) {
+    try { localStorage.removeItem("playly-user"); } catch {}
+    console.info("[session] expired after 30 days — re-auth required");
+    return false;
+  }
   const acc = JSON.parse(localStorage.getItem(`playly-account-${saved.email}`) || "null");
   // Defensive: kalau cloud sync belum selesai propagate `playly-account-...`
   // (mis. user reload di network lambat), pakai data dari `playly-user` sebagai
