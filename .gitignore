@@ -6,6 +6,7 @@
 
 # Logs
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -31,10 +32,17 @@ desktop.ini
 .env.local
 .env.*.local
 
-# Build artifacts (kalau suatu saat ada)
+# Build artifacts
 node_modules/
 dist/
 build/
+
+# Next.js
+.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
 
 # Playwright/MCP browser snapshots (ephemeral test artifacts)
 .playwright-mcp/
