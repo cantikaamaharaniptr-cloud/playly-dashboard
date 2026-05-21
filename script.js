@@ -14741,6 +14741,14 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
     if (isAllowedAdminEmail(email))
       return toast("⚠ Email itu terdaftar sebagai email admin", "warning");
   }
+  // CR-3 fix (2026-05-21): force pull versi cloud terbaru sebelum cek duplikat.
+  // Mencegah race: admin di device A buat akun yg sebenarnya sudah ada di
+  // cloud (user signup di device lain belum sync).
+  try {
+    if (window.cloudSync?.syncSingleKey) {
+      await Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${email}`));
+    }
+  } catch {}
   if (findAccountByEmail(email))
     return toast("⚠ Email sudah terdaftar", "warning");
   if (findAccountByUsername(username))
@@ -14833,6 +14841,12 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
       return toast("⚠ Username itu direservasi sistem", "warning");
     if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email))
       return toast("⚠ Email itu terdaftar sebagai email admin", "warning");
+    // CR-3 fix (2026-05-21): force pull cloud sebelum cek dup (inline create form).
+    try {
+      if (window.cloudSync?.syncSingleKey) {
+        await Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${email}`));
+      }
+    } catch {}
     if (typeof findAccountByEmail === "function" && findAccountByEmail(email))
       return toast("⚠ Email sudah terdaftar", "warning");
     if (typeof findAccountByUsername === "function" && findAccountByUsername(username))
@@ -18334,7 +18348,13 @@ function hashPin(pin) {
   return "h:" + (h >>> 0).toString(16);
 }
 function verifyPin(plainPin, storedHash) {
-  if (!storedHash) return true; // akun lama tanpa PIN → skip 2FA (backward compat)
+  // CR-2 fix (2026-05-21): SECURITY — sebelumnya return true kalau storedHash
+  // falsy. Pattern "akun lama tanpa PIN → skip" disalahgunakan kalau
+  // acc.pin pernah ke-clear (race condition / cloud collision / tampering).
+  // Caller (login flow `if (existing.pin) { open2FAModal(...) }`) sudah cek
+  // existence dulu — verifyPin TIDAK seharusnya pernah dipanggil dgn hash
+  // kosong. Kalau dipanggil, perlakukan sebagai INVALID (fail-secure).
+  if (!storedHash) return false;
   return hashPin(plainPin) === storedHash;
 }
 
@@ -19484,6 +19504,17 @@ $("#signupForm").addEventListener("submit", async e => {
       return;
     }
 
+    // CR-3 fix (2026-05-21): SECURITY — force pull versi cloud terbaru
+    // sebelum cek dup. Tanpa ini, attacker bisa exploit cross-device race:
+    // Device A signup pakai email victim's yg belum sync ke Device A →
+    // local check "not exist" → write new password → cloud-sync push →
+    // victim account overwritten di device B.
+    try {
+      if (window.cloudSync?.syncSingleKey) {
+        await Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${email}`));
+      }
+    } catch {}
+
     // Cek duplikat
     if (localStorage.getItem(`playly-account-${email}`)) {
       showFieldError(form, "email", "Email sudah terdaftar — coba login atau gunakan email lain");
@@ -19675,6 +19706,25 @@ $("#forgotPwModal")?.addEventListener("click", e => {
   if (e.target.matches("[data-close]")) closeForgotPwModal();
 });
 
+// CR-1 fix (2026-05-21): SECURITY CRITICAL — sebelumnya handler ini overwrite
+// password TANPA verifikasi identitas SAMA SEKALI. Siapapun yg tau email/
+// username target bisa take-over akun (termasuk super-admin). Sekarang:
+//   1. Block OFFICIAL_ADMIN_EMAIL entirely (super-admin recovery via manual process)
+//   2. Force cloud sync sebelum cek → pull versi terbaru account (CR-3 prevention)
+//   3. Kalau account punya PIN (2FA), wajib PIN verification dulu
+//   4. Rate limit: max 3 reset attempts per email per hour
+//   5. Audit log entry untuk admin visibility
+const _forgotPwAttempts = new Map(); // email → [timestamp, ...]
+const FORGOT_PW_MAX_PER_HOUR = 3;
+function checkForgotPwRateLimit(email) {
+  const now = Date.now();
+  const hourAgo = now - 3600000;
+  const arr = (_forgotPwAttempts.get(email) || []).filter(t => t > hourAgo);
+  arr.push(now);
+  _forgotPwAttempts.set(email, arr);
+  return arr.length <= FORGOT_PW_MAX_PER_HOUR;
+}
+
 $("#forgotPwForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const form = e.target;
@@ -19692,6 +19742,29 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
   else if (pw1 && pw1 !== pw2) { showFieldError(form, "password2", "Konfirmasi password tidak cocok"); hasError = true; }
   if (hasError) return;
 
+  // CR-1: block reset untuk super-admin email
+  if (isOfficialAdminEmail(id)) {
+    showFieldError(form, "email", "Akun super-admin tidak bisa reset via form ini. Hubungi support.");
+    return toast("🔒 Reset password super-admin tidak diizinkan via form. Hubungi support.", "error");
+  }
+
+  // CR-1: rate limit
+  if (!checkForgotPwRateLimit(id)) {
+    return toast(`⚠️ Terlalu banyak percobaan reset. Coba lagi dalam 1 jam.`, "warning");
+  }
+
+  // CR-1 + CR-3: force pull versi terbaru account dari cloud sebelum cek.
+  // Tanpa ini, attacker bisa exploit timing window di mana victim's account
+  // belum sync ke device attacker → reset terpasang lokal → cloud-sync push
+  // ke kolam → victim ke-takeover di device lain.
+  if (id.includes("@")) {
+    try {
+      if (window.cloudSync?.syncSingleKey) {
+        await Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${id}`));
+      }
+    } catch {}
+  }
+
   // Resolve identifier → existing account
   let existing = null;
   let email = id;
@@ -19706,17 +19779,41 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     return;
   }
 
+  // CR-1: kalau account email == email super-admin (resolve via username), tetap blok
+  if (isOfficialAdminEmail(email)) {
+    showFieldError(form, "email", "Akun super-admin tidak bisa reset via form ini.");
+    return toast("🔒 Reset password super-admin tidak diizinkan.", "error");
+  }
+
+  // CR-1: kalau punya PIN 2FA, wajib verifikasi dulu sebelum lanjut reset
+  if (existing.pin) {
+    if (typeof open2FAModal !== "function") {
+      return toast("⚠️ 2FA verification tidak tersedia. Hubungi support.", "error");
+    }
+    const enteredPin = await open2FAModal(pin => verifyPin(pin, existing.pin));
+    if (enteredPin === null) {
+      return toast("⚠️ Verifikasi 2FA dibatalkan — password tidak di-reset.", "warning");
+    }
+    // sampai sini valid karena modal verify internal.
+  }
+
   // Hash password baru & simpan
   try {
     existing.password = await hashPassword(pw1);
+    existing.passwordResetAt = Date.now();
     localStorage.setItem(`playly-account-${email}`, JSON.stringify(existing));
     // Reset rate limit & banner — supaya user langsung bisa login pakai password baru
     clearLoginAttempts(id);
     clearLoginAttempts(email);
     hideLockBanner();
     closeForgotPwModal();
+    // CR-1: audit log — admin bisa lihat reset history
+    try {
+      if (typeof pushAdminEvent === "function") {
+        pushAdminEvent("🔑", `Password reset via self-service untuk <b>${escapeHtml(existing.username || email)}</b>`);
+      }
+    } catch {}
     toast("🔑 Password berhasil di-reset. Silakan login dengan password baru.", "success");
-    // Pre-fill identifier di form login supaya user langsung bisa login
     const loginInput = $("#signinForm")?.querySelector('input[name="email"]');
     if (loginInput) loginInput.value = id;
   } catch (err) {
@@ -25015,7 +25112,7 @@ function patchAdminVideo(id, patch) {
   return s.myVideos[idx];
 }
 
-// Force-delete a video across all stores (state + IndexedDB blob).
+// Force-delete a video across all stores (state + IndexedDB blob + Supabase Storage).
 function deleteAdminVideo(id) {
   const all = getAllAdminVideos();
   const target = all.find(v => v.id === id);
@@ -25031,6 +25128,14 @@ function deleteAdminVideo(id) {
     const tx = db.transaction(VIDEO_STORE, "readwrite");
     tx.objectStore(VIDEO_STORE).delete(id);
   }).catch(() => {});
+  // CR-5 fix (2026-05-21): juga hapus video blob di Supabase Storage.
+  // Sebelumnya bucket leak forever — egress drain + storage growth.
+  // Fire-and-forget OK karena admin sudah dapat feedback dari UI yg lain.
+  try {
+    if (window.cloudSync?.deleteVideoBlob) {
+      Promise.resolve(window.cloudSync.deleteVideoBlob(id)).catch(() => {});
+    }
+  } catch {}
   return true;
 }
 
@@ -25413,12 +25518,17 @@ function renderAdminModeration() {
     return;
   }
 
-  grid.innerHTML = items.map(i => `<div class="mod-card" data-mod-id="${i.id}">
-    <div class="mod-thumb">${i.thumb}<span class="mod-flag-pill">${i.flag}</span></div>
+  // CR-4 fix (2026-05-21): SECURITY — semua field user-controlled HARUS
+  // di-escapeHtml sebelum di-interpolate ke innerHTML. Sebelumnya i.title,
+  // i.creator, i.reason, i.thumb di-render mentah → stored XSS via judul
+  // video. Attacker upload judul `<img src=x onerror=...>` lalu ada yg
+  // report → admin buka Moderasi → JS jalan di session admin.
+  grid.innerHTML = items.map(i => `<div class="mod-card" data-mod-id="${escapeHtml(String(i.id || ""))}">
+    <div class="mod-thumb">${escapeHtml(String(i.thumb || "🎬"))}<span class="mod-flag-pill">${escapeHtml(String(i.flag || "🚩"))}</span></div>
     <div class="mod-card-body">
-      <h4>${i.title}</h4>
-      <small>${i.creator} • ${relTime(i.reportedAt)}</small>
-      <div class="mod-reason">⚠️ ${i.reason}</div>
+      <h4>${escapeHtml(String(i.title || "(tanpa judul)"))}</h4>
+      <small>${escapeHtml(String(i.creator || "anonim"))} • ${escapeHtml(String(relTime(i.reportedAt) || ""))}</small>
+      <div class="mod-reason">⚠️ ${escapeHtml(String(i.reason || ""))}</div>
       ${i.status === "pending" ? `<div class="mod-actions">
         <button class="approve" data-mod-action="approve">✓ Approve</button>
         <button class="remove" data-mod-action="remove">✕ Hapus</button>

@@ -105,6 +105,21 @@
       },
       tieBreak: (e) => Number(e && (e.updatedAt || e.paidAt)) || 0,
     },
+    // CR-6 fix (2026-05-21): SECURITY — report queue rentan race-stomp. User
+    // A & B report video bersamaan → last-write-wins di cloud-sync → salah
+    // satu laporan hilang. Merge by report id, status sebagai rank
+    // (removed/approved overrides pending; pending > undefined).
+    "playly-admin-mod": {
+      idField: "id",
+      rank: (e) => {
+        const s = e && e.status;
+        if (s === "removed") return 3;
+        if (s === "approved") return 2;
+        if (s === "pending") return 1;
+        return 0;
+      },
+      tieBreak: (e) => Number(e && (e.updatedAt || e.reportedAt)) || 0,
+    },
   };
 
   function mergeArrayRecords(local, cloud, cfg) {
@@ -372,6 +387,30 @@
     } catch { return null; }
   }
 
+  // CR-5 fix (2026-05-21): SECURITY/COST — delete video blob dari Supabase
+  // Storage. Sebelumnya deleteAdminVideo hanya hapus localStorage + IDB blob,
+  // file MP4 di Supabase Storage dibiarkan → bucket grows forever, egress
+  // drain (relevan kita lagi krisis egress quota). Caller bisa await
+  // (rekomendasi) atau fire-and-forget; return promise resolves dgn
+  // {ok, error?}.
+  async function deleteVideoBlob(id) {
+    const sb = client();
+    if (!sb) return { ok: false, error: "cloud_disabled" };
+    try {
+      const filename = await findVideoFilename(id);
+      if (!filename) return { ok: true, skipped: "not_found" };
+      const { error } = await sb.storage.from(BUCKET).remove([filename]);
+      if (error) {
+        console.warn("[cloud] delete blob failed:", error.message);
+        return { ok: false, error: error.message };
+      }
+      return { ok: true };
+    } catch (err) {
+      console.warn("[cloud] delete blob exception:", err);
+      return { ok: false, error: err?.message || "exception" };
+    }
+  }
+
   async function getVideoUrl(id) {
     const sb = client();
     if (!sb) return null;
@@ -476,6 +515,7 @@
   window.cloudSync = {
     enabled,
     uploadVideoBlob,
+    deleteVideoBlob,
     getVideoUrl,
     getSignedVideoUrl,
     fetchAllRows,
