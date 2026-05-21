@@ -54,11 +54,7 @@ export function SignInForm() {
   const submitting = state.kind === 'submitting';
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-[20px] border border-cream/15 bg-ink-elev/70 p-7 shadow-playly-md"
-      noValidate
-    >
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4" noValidate>
       <header>
         <h2 className="m-0 text-xl font-extrabold text-cream">Sign In</h2>
         <p className="mt-1 text-sm text-cream-soft">
