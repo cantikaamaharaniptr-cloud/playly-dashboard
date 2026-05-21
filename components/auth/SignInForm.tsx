@@ -10,7 +10,7 @@ type SubmitState =
   | { kind: 'error'; message: string }
   | { kind: 'success' };
 
-export function SignInForm() {
+export function SignInForm({ onForgotPassword }: { onForgotPassword?: () => void }) {
   const { ready } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -168,13 +168,13 @@ export function SignInForm() {
           />
           <span>Remember me</span>
         </label>
-        <a
-          href="#"
-          onClick={(e) => e.preventDefault()}
+        <button
+          type="button"
+          onClick={() => onForgotPassword?.()}
           className="font-semibold text-cream-soft hover:text-cream hover:underline"
         >
           Forgot password?
-        </a>
+        </button>
       </div>
 
       {state.kind === 'error' ? (
