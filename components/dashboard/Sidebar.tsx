@@ -2,11 +2,13 @@
 
 // Dashboard sidebar — nav items per i18n key. Section labels + items
 // di-port dari legacy public/legacy/script.js I18N constant.
-// Phase 7b: minimum viable — pakai Next.js Link, no submenu expansion yet.
+// Phase 7b polish: desktop sticky aside + mobile drawer (slide-in,
+// overlay, auto-close on route change/escape).
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/components/providers/i18n-provider';
+import { useChrome } from './ChromeContext';
 
 type NavItem = {
   href: string;
@@ -148,60 +150,103 @@ const SECTIONS: NavSection[] = [
 ];
 
 export function Sidebar() {
+  const { drawerOpen, closeDrawer } = useChrome();
+
+  return (
+    <>
+      {/* Desktop: sticky aside, hidden mobile */}
+      <aside className="hidden w-60 flex-shrink-0 border-r border-cream/10 bg-ink-elev/40 lg:block">
+        <div className="sticky top-0 flex h-screen flex-col gap-1 overflow-y-auto p-4">
+          <SidebarContent />
+        </div>
+      </aside>
+
+      {/* Mobile: drawer overlay */}
+      <div
+        className={`fixed inset-0 z-40 lg:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}
+        aria-hidden={!drawerOpen}
+      >
+        {/* Backdrop */}
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={closeDrawer}
+          className={`absolute inset-0 cursor-default bg-ink/70 backdrop-blur-sm transition-opacity duration-200 ${
+            drawerOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+        {/* Drawer panel */}
+        <aside
+          className={`relative h-full w-72 max-w-[85%] flex-shrink-0 border-r border-cream/10 bg-ink-elev shadow-playly-lg transition-transform duration-200 ease-out ${
+            drawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex h-full flex-col gap-1 overflow-y-auto p-4">
+            <SidebarContent onLinkClick={closeDrawer} />
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}
+
+function SidebarContent({ onLinkClick }: { onLinkClick?: () => void } = {}) {
   const { t } = useI18n();
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 flex-shrink-0 border-r border-cream/10 bg-ink-elev/40 lg:block">
-      <div className="sticky top-0 flex h-screen flex-col gap-1 overflow-y-auto p-4">
-        {/* Brand */}
-        <Link href="/dashboard" className="mb-4 flex items-center gap-2 px-2">
-          <svg
-            viewBox="0 0 100 100"
-            className="h-7 w-7"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z"
-            />
-          </svg>
-          <span className="text-xl font-extrabold text-cream">
-            Playly<span className="text-wine">.</span>
-          </span>
-        </Link>
+    <>
+      {/* Brand */}
+      <Link
+        href="/dashboard"
+        onClick={onLinkClick}
+        className="mb-4 flex items-center gap-2 px-2"
+      >
+        <svg
+          viewBox="0 0 100 100"
+          className="h-7 w-7 text-cream"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z"
+          />
+        </svg>
+        <span className="text-xl font-extrabold text-cream">
+          Playly<span className="text-wine">.</span>
+        </span>
+      </Link>
 
-        {/* Nav sections */}
-        {SECTIONS.map((section) => (
-          <div key={section.i18nKey} className="mt-3 first:mt-0">
-            <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[1.5px] text-cream-muted">
-              {t(section.i18nKey, section.fallback)}
-            </div>
-            {section.items.map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? 'bg-wine/15 text-cream'
-                      : 'text-cream-soft hover:bg-cream/5 hover:text-cream'
-                  }`}
-                >
-                  <span className="h-4 w-4 flex-shrink-0">{item.icon}</span>
-                  <span className="truncate">
-                    {t(item.i18nKey, item.fallback)}
-                  </span>
-                </Link>
-              );
-            })}
+      {SECTIONS.map((section) => (
+        <div key={section.i18nKey} className="mt-3 first:mt-0">
+          <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[1.5px] text-cream-muted">
+            {t(section.i18nKey, section.fallback)}
           </div>
-        ))}
-      </div>
-    </aside>
+          {section.items.map((item) => {
+            const active =
+              pathname === item.href ||
+              (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onLinkClick}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  active
+                    ? 'bg-wine/15 text-cream'
+                    : 'text-cream-soft hover:bg-cream/5 hover:text-cream'
+                }`}
+              >
+                <span className="h-4 w-4 flex-shrink-0">{item.icon}</span>
+                <span className="truncate">
+                  {t(item.i18nKey, item.fallback)}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </>
   );
 }
