@@ -27,14 +27,22 @@ const ThemeContext = createContext<ThemeState>({
   setTheme: () => {},
 });
 
-// Path/query-based role detection — port dari legacy script.js (~line 1937)
+// Path/query-based role detection — port dari legacy script.js (~line 1937),
+// diperluas untuk Phase 4 supaya /admin-preview, /admin/*, dan /admin-* (preview
+// routes selama migrasi) juga ter-detect sebagai admin.
 // Catatan: ini cek path SECARA CLIENT-SIDE. Untuk SSR-safe role detection,
 // future migration ke Server Components akan baca route segment via headers().
 function detectRoleFromLocation(): Role {
   if (typeof window === 'undefined') return 'user';
   const path = window.location.pathname.toLowerCase();
   const search = new URLSearchParams(window.location.search);
-  if (path === '/admin' || path.endsWith('/admin') || search.get('admin') === '1') {
+  if (search.get('admin') === '1') return 'admin';
+  if (
+    path === '/admin' ||
+    path.endsWith('/admin') ||
+    path.startsWith('/admin/') ||
+    path.startsWith('/admin-')
+  ) {
     return 'admin';
   }
   return 'user';
