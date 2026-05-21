@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { createClient } from '@/lib/supabase/client';
@@ -16,6 +17,7 @@ type SubmitState =
 
 export function SignUpForm() {
   const { ready } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,6 +58,11 @@ export function SignUpForm() {
       // Supabase returns session=null when email-confirmation is enabled.
       const needsConfirm = !data.session;
       setState({ kind: 'success', needsConfirm });
+      if (!needsConfirm) {
+        // Logged in immediately — go to dashboard.
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err) {
       setState({
         kind: 'error',

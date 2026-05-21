@@ -3,10 +3,8 @@
 // landing marketing sections di bawah (Plans, Preview, How it works, FAQ,
 // Final CTA).
 //
-// Phase 7 cutover (2026-05-21): rewrite `/` → /legacy/index.html dihapus,
-// page ini sekarang yang serve di /. Legacy bundle masih ada di public/legacy/
-// untuk /watch, /embed, /id/*. Hapus folder legacy saat dashboard fully
-// migrated (Phase 7 dashboard).
+// Phase 7b (2026-05-21): Server Component — kalau user sudah authenticated,
+// redirect ke /dashboard sebelum render. Logged-out user lihat landing+auth.
 
 import { AuthCard } from '@/components/auth/AuthCard';
 import { AuthShowcase } from '@/components/auth/AuthShowcase';
@@ -15,11 +13,13 @@ import { UserFaq } from '@/components/user/landing/UserFaq';
 import { UserFinalCta } from '@/components/user/landing/UserFinalCta';
 import { UserHowItWorks } from '@/components/user/landing/UserHowItWorks';
 import { UserPlans } from '@/components/user/landing/UserPlans';
+import { requireAnon } from '@/lib/auth/guard';
 
-export default function HomePage() {
+export default async function HomePage() {
+  await requireAnon('/dashboard');
+
   return (
     <main className="min-h-screen bg-ink text-cream">
-      {/* Auth screen: showcase + signin/signup card */}
       <section className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.2fr_1fr]">
         <AuthShowcase />
         <div className="grid place-items-center bg-ink-elev/30 p-6 sm:p-10">
@@ -29,7 +29,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Landing marketing sections (shown alongside auth in legacy auth-mode) */}
       <UserPlans />
       <UserDashboardPreview />
       <UserHowItWorks />

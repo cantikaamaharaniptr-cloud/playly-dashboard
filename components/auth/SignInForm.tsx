@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { createClient } from '@/lib/supabase/client';
@@ -12,6 +13,7 @@ type SubmitState =
 
 export function SignInForm({ onForgotPassword }: { onForgotPassword?: () => void }) {
   const { ready } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -43,6 +45,8 @@ export function SignInForm({ onForgotPassword }: { onForgotPassword?: () => void
         return;
       }
       setState({ kind: 'success' });
+      router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       setState({
         kind: 'error',
@@ -191,8 +195,7 @@ export function SignInForm({ onForgotPassword }: { onForgotPassword?: () => void
           role="status"
           className="rounded-md border border-status-success/40 bg-status-success/10 px-3 py-2 text-xs text-status-success"
         >
-          ✓ Sign-in sukses. Redirect ke dashboard nanti diaktifin saat dashboard
-          route ready.
+          ✓ Sign-in sukses. Redirecting to dashboard…
         </div>
       ) : null}
 

@@ -1,15 +1,18 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-// PHASE 1: legacy bundle still uses localStorage auth, so the Supabase SSR
-// session refresh isn't needed yet. Middleware is a no-op until Phase 3
-// (Core providers) — at that point swap the body for `updateSession(request)`
-// from `@/lib/supabase/middleware` and ensure NEXT_PUBLIC_SUPABASE_URL +
-// NEXT_PUBLIC_SUPABASE_ANON_KEY are set in Vercel.
-export function middleware(_request: NextRequest) {
-  return NextResponse.next();
+// Phase 7b (2026-05-21): middleware aktif untuk refresh Supabase auth cookie
+// pada setiap request ke route React (kecuali static assets dan legacy bundle).
+// Server Components (mis. app/dashboard/page.tsx) baca session via
+// lib/supabase/server.ts — kalau cookie tidak fresh, baca = anonim.
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
 }
 
 export const config = {
-  // Empty matcher so middleware never runs in Phase 1.
-  matcher: [],
+  matcher: [
+    // Skip _next internals, static images, dan legacy bundle (legacy auth
+    // pakai localStorage, nggak butuh Supabase cookie refresh).
+    '/((?!_next/static|_next/image|favicon.ico|legacy/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 };
