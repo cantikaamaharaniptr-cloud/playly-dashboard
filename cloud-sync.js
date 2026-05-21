@@ -24,6 +24,8 @@
     "playly-cloud-retry",     // Bug #9 (2026-05-20): retry queue lokal,
                               // jangan di-sync (akan loop / overwrite cross-
                               // device dgn antrian device lain).
+    "playly-cloud-last-sync", // EGRESS OPT (2026-05-21): timestamp delta fetch.
+                              // Per device, jangan di-sync.
   ]);
   function shouldSync(key) {
     if (typeof key !== "string") return false;
@@ -227,18 +229,37 @@
   }
 
   // === fetch all =========================================================
-  async function fetchAllRows() {
+  // EGRESS OPTIMIZATION (2026-05-21): support delta fetch via `since` arg.
+  // Tanpa since → full fetch (dipakai di boot). Dengan since → cuma rows
+  // yg updated_at > since → drastis kurangi egress (90%+ saving).
+  async function fetchAllRows(opts) {
     const sb = client();
     if (!sb) return [];
-    const { data, error } = await sb
-      .from("kv")
-      .select("key,value")
-      .like("key", `${PREFIX}%`);
+    const since = opts && opts.since ? opts.since : null;
+    let q = sb.from("kv").select("key,value,updated_at").like("key", `${PREFIX}%`);
+    if (since) q = q.gt("updated_at", since);
+    const { data, error } = await q;
     if (error) {
       console.warn("[cloud] fetch failed:", error.message);
       return [];
     }
     return data || [];
+  }
+  // Track latest updated_at yg sudah kita pull — untuk delta selanjutnya.
+  const LAST_SYNC_KEY = "playly-cloud-last-sync";
+  function getLastSync() {
+    try { return window.localStorage.getItem(LAST_SYNC_KEY) || null; }
+    catch { return null; }
+  }
+  function setLastSync(ts) {
+    try { origSet.call(window.localStorage, LAST_SYNC_KEY, ts); } catch {}
+  }
+  function updateLastSyncFromRows(rows) {
+    let maxTs = getLastSync();
+    for (const r of rows) {
+      if (r.updated_at && (!maxTs || r.updated_at > maxTs)) maxTs = r.updated_at;
+    }
+    if (maxTs) setLastSync(maxTs);
   }
 
   function applyToLocal(rows) {
@@ -284,10 +305,12 @@
     const sb = client();
     if (!sb) return;
     const localBefore = snapshotLocalKeys();
+    // EGRESS OPT (2026-05-21): boot/full sync ambil semua, tapi simpan
+    // lastSync timestamp setelahnya supaya softResync berikutnya delta saja.
     const cloudRows = await fetchAllRows();
     const cloudKeys = new Set(cloudRows.map((r) => r.key));
     applyToLocal(cloudRows);
-    // Push key yang ada di local TAPI belum ada di cloud
+    updateLastSyncFromRows(cloudRows);
     for (const [k, raw] of localBefore.entries()) {
       if (cloudKeys.has(k)) continue;
       pushToCloud(k, raw);
@@ -404,17 +427,37 @@
   }
 
   // === auto-refresh saat tab dapat focus ================================
-  let lastSync = 0;
-  async function softResync() {
+  let lastSyncCallAt = 0;
+  // EGRESS OPT (2026-05-21): rate-limit dari 3s → 60s (was burning quota dgn
+  // pull tiap focus). Delta fetch via updated_at > lastSync → 90%+ saving.
+  async function softResync(opts) {
+    const force = opts && opts.force === true;
     const now = Date.now();
-    if (now - lastSync < 3000) return;
-    lastSync = now;
-    // Bug #9: coba flush retry queue dulu — kalau Supabase recover, push
-    // yg sempat gagal akan sukses sebelum kita pull (jadi local state
-    // konsisten dgn cloud).
+    if (!force && now - lastSyncCallAt < 60000) return;
+    lastSyncCallAt = now;
     try { await flushRetryQueue(); } catch {}
-    const rows = await fetchAllRows();
-    applyToLocal(rows);
+    const since = getLastSync();
+    const rows = await fetchAllRows({ since });
+    if (rows.length > 0) {
+      applyToLocal(rows);
+      updateLastSyncFromRows(rows);
+    }
+  }
+  // EGRESS OPT (2026-05-21): force selective key sync — pull SATU key saja.
+  // Dipakai oleh admin queue auto-sync supaya nggak narik 200+ keys cuma
+  // untuk cek premium-payments updates.
+  async function syncSingleKey(key) {
+    const sb = client();
+    if (!sb) return;
+    try {
+      const { data, error } = await sb.from("kv")
+        .select("key,value,updated_at")
+        .eq("key", key)
+        .maybeSingle();
+      if (error || !data) return;
+      applyToLocal([data]);
+      updateLastSyncFromRows([data]);
+    } catch (err) { console.warn("[cloud] syncSingleKey:", err); }
   }
   function attachAutoRefresh() {
     if (!enabled) return;
@@ -437,6 +480,7 @@
     getSignedVideoUrl,
     fetchAllRows,
     softResync,
+    syncSingleKey,
     computeBucketBytes,
     // pushKey: explicit force-push specific localStorage key ke Supabase kv.
     // Dipakai DM/notification code untuk push ke peer state immediately

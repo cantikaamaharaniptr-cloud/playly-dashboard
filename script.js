@@ -17621,9 +17621,9 @@ document.addEventListener("click", e => {
 });
 
 // Bug #8 fix (2026-05-20): periodic auto-resync saat admin queue view aktif.
-// softResync internal rate-limit 3s; interval 8s aman + memastikan admin
-// lihat pending baru tanpa harus klik tombol manual. Auto-stop saat view
-// tidak aktif (pakai requestAnimationFrame-style check tiap interval).
+// EGRESS OPT (2026-05-21): pakai syncSingleKey untuk pull HANYA
+// playly-premium-payments (~10 KB) instead of softResync (~5-10 MB full
+// table). Interval naik 8s → 15s. Saving signifikan tanpa kehilangan UX.
 let _adminPqAutoSyncTimer = null;
 function _adminPqStartAutoSync() {
   if (_adminPqAutoSyncTimer) return;
@@ -17632,11 +17632,15 @@ function _adminPqStartAutoSync() {
     if (!sectionActive) return; // stop syncing if user left view
     if (document.hidden) return; // hemat saat tab hidden
     try {
-      if (window.cloudSync?.softResync) await Promise.resolve(window.cloudSync.softResync());
+      if (window.cloudSync?.syncSingleKey) {
+        await Promise.resolve(window.cloudSync.syncSingleKey("playly-premium-payments"));
+      } else if (window.cloudSync?.softResync) {
+        await Promise.resolve(window.cloudSync.softResync());
+      }
       if (typeof renderAdminPremiumQueue === "function") renderAdminPremiumQueue();
       if (typeof renderAdminActionCenter === "function") renderAdminActionCenter();
     } catch (err) { console.warn("[pq] auto-sync:", err); }
-  }, 8000);
+  }, 15000);
 }
 // Start the timer once script.js loads — it's idle until queue view is active.
 try { _adminPqStartAutoSync(); } catch {}
@@ -18183,9 +18187,17 @@ function closePaymentModal() {
       _premiumStatusPoller = setInterval(async () => {
         // Bug #8 fix (2026-05-20): pull dari Supabase tiap iterasi supaya
         // user yg staring di modal langsung lihat admin approve dari device
-        // lain (tanpa harus tab away/back). softResync internal rate-limit
-        // 3s → call aman tiap 4s.
-        try { if (window.cloudSync?.softResync) await Promise.resolve(window.cloudSync.softResync()); } catch {}
+        // lain (tanpa harus tab away/back).
+        // EGRESS OPT (2026-05-21): pakai syncSingleKey supaya hemat egress
+        // (~10 KB vs ~5 MB full table). User cuma butuh tau status premium
+        // payment-nya, nggak butuh kv lainnya.
+        try {
+          if (window.cloudSync?.syncSingleKey) {
+            await Promise.resolve(window.cloudSync.syncSingleKey("playly-premium-payments"));
+          } else if (window.cloudSync?.softResync) {
+            await Promise.resolve(window.cloudSync.softResync());
+          }
+        } catch {}
         const p = getPremiumPaymentByCode(code);
         if (!p) return;
         // Code-sent transition (sebelum status final)
