@@ -4,15 +4,17 @@
 // next.config.mjs and pointing this page at app/admin/page.tsx.
 //
 // Sections plan (Phase 4 multi-session):
-//   1. Activity ticker          [pending]
+//   1. Activity ticker          ✅ done (session 2)
 //   2. Modules (8 cards)        [pending]
 //   3. Preview console          [pending]
 //   4. Security badges          [pending]
 //   5. Workflow steps           [pending]
-//   6. FAQ (10 questions)       ✅ done (this session)
-//   7. Restricted access footer [pending]
+//   6. FAQ (10 questions)       ✅ done (session 1)
+//   7. Restricted access footer ✅ done (session 2)
 
+import { AdminActivityTicker } from '@/components/admin/landing/AdminActivityTicker';
 import { AdminFaq } from '@/components/admin/landing/AdminFaq';
+import { AdminFoot } from '@/components/admin/landing/AdminFoot';
 
 export const metadata = {
   title: 'Playly Admin — Landing Preview',
@@ -33,16 +35,19 @@ export default function AdminPreviewPage() {
         </p>
       </header>
 
-      <SectionPlaceholder index={1} title="Activity ticker" />
+      {/* ✅ Migrated session 2 */}
+      <AdminActivityTicker />
+
       <SectionPlaceholder index={2} title="Modules · 8 capability cards" />
       <SectionPlaceholder index={3} title="Preview console" />
       <SectionPlaceholder index={4} title="Security badges" />
       <SectionPlaceholder index={5} title="Workflow steps" />
 
-      {/* ✅ Migrated this session */}
+      {/* ✅ Migrated session 1 */}
       <AdminFaq />
 
-      <SectionPlaceholder index={7} title="Restricted access footer" />
+      {/* ✅ Migrated session 2 */}
+      <AdminFoot />
     </main>
   );
 }
