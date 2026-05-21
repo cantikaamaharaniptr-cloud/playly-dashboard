@@ -63354,27 +63354,43 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
   }
 }
 @media (max-width: 480px) {
-  /* Mobile layout per user 2026-05-21 v4:
-     - Row 1 (atas): search bar full-width
-     - Row 2 (bawah): hamburger | Home pill (kiri) | ... | bell+CM (kanan)
-     Override existing rule space-between (line ~26872) → flex-start
-     supaya Home tidak center, lalu margin-left:auto di topbar-actions
-     untuk push bell+CM ke kanan. */
+  /* Mobile layout per user 2026-05-21 v5: SINGLE ROW
+     Urutan: hamburger | Home pill | search (flex grow) | bell | CM avatar
+     Override existing rule space-between (line 26872) + display:none di
+     search (line 26873) + flex-wrap. */
   html body:not(.auth-mode) .topbar {
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     justify-content: flex-start !important;
+    gap: 6px !important;
   }
+  /* Search bar: natural source order (index 3), flex grow ambil sisa space.
+     Override R-6 sebelumnya yg set order:-1 + flex:1 1 100%. */
   html body:not(.auth-mode) .topbar .topbar-search {
     display: flex !important;
-    order: -1 !important;                /* paling depan = row 1 atas */
-    flex: 1 1 100% !important;
-    width: 100% !important;
+    order: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
     max-width: none !important;
-    margin: 0 0 6px 0 !important;
+    margin: 0 !important;
+    padding: 8px 12px !important;        /* slimmer untuk fit */
   }
+  html body:not(.auth-mode) .topbar .topbar-search input {
+    font-size: 12.5px !important;
+  }
+  /* Hamburger + Home + actions: fixed width, no shrink */
+  html body:not(.auth-mode) .topbar > #toggleSidebar,
+  html body:not(.auth-mode) .topbar > .breadcrumb,
+  html body:not(.auth-mode) .topbar > .topbar-actions {
+    flex-shrink: 0 !important;
+  }
+  /* Override R-6 prev: margin-left:auto tidak diperlukan di nowrap layout */
   html body:not(.auth-mode) .topbar .topbar-actions {
-    margin-left: auto !important;        /* push bell+CM ke kanan */
+    margin-left: 0 !important;
   }
+  /* Home pill (.breadcrumb): keep default size — kurangin font bikin
+     home icon overlap text. Cuma pastikan flex-shrink:0 sudah handle
+     via rule di atas. */
 }
 
 /* (R-7) Sembunyikan kolom Progres kreator yang KOSONG (kotak hantu
