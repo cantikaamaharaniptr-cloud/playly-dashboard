@@ -1,6 +1,9 @@
-// Phase 2 smoke-test route. Not linked from anywhere — visit /playground
-// manually to verify Tailwind tokens, Inter font, and CSS variables work.
+// Smoke-test route. Not linked from anywhere — visit /playground manually
+// to verify foundation pieces: Tailwind tokens, fonts, CSS vars (Phase 2),
+// and Auth + I18n + Theme providers (Phase 3).
 // Safe to keep around during migration; remove at Phase 7 cutover.
+
+import { ProvidersDemo } from './providers-demo';
 
 export const metadata = {
   title: 'Playly — Design Playground',
@@ -96,6 +99,8 @@ export default function PlaygroundPage() {
             </div>
           </div>
         </section>
+
+        <ProvidersDemo />
 
         <footer className="border-t border-cream/10 pt-6 text-xs text-cream-muted">
           Built on Next.js 15 · React 19 · Tailwind 3.4 · TypeScript strict.
