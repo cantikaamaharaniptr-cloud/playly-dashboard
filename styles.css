@@ -63233,3 +63233,168 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
     animation: starsDriftWavy 35s linear infinite !important;
   }
 }
+
+/* =========================================================
+   RESPONSIVE FIXES — mobile/tablet specific (2026-05-21)
+   Per user 2026-05-21: setiap fix DIBUNGKUS @media yang sesuai
+   breakpoint target — desktop/laptop yang sudah OK tidak boleh
+   diganggu. Append-only block: menang cascade.
+   ========================================================= */
+
+/* (R-1) Topbar sticky transparent → solid background di mobile.
+   Issue: tombol Edit Profil / Unggah Video dari Hero Profile
+   Card peek through sticky topbar saat scroll, karena rule
+   ~line 47169 set bg transparent + tanpa backdrop-filter.
+   Fix: solid bg pakai var(--bg) di ≤768px supaya obscure
+   konten saat scroll. Selector mirror specificity rule lama
+   (`html body:not([data-role="admin"]):not(.auth-mode) .topbar`
+   = 014) supaya menang. Apply ke user DAN admin role. */
+@media (max-width: 768px) {
+  html body:not([data-role="admin"]):not(.auth-mode) .topbar,
+  html body[data-role="admin"]:not(.auth-mode) .topbar {
+    background-color: var(--bg) !important;
+    background-image: none !important;
+  }
+}
+
+/* (R-2) Admin KPI 4-card label terpotong di mobile ≤480px.
+   "TOTAL PENGGUNA" → "TOTA..." karena layout 2-col tight.
+   Fix: kurangi font-size + letter-spacing supaya muat. */
+@media (max-width: 480px) {
+  body[data-role="admin"] .admin-kpi-card .kpi-label,
+  body[data-role="admin"] .live-metric-card .live-metric-label,
+  body[data-role="admin"] .apf-kpi-label {
+    font-size: 9px !important;
+    letter-spacing: 0.6px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+/* (R-3) Calendar 7-col grid (.cd-bar-row, .udp-dow, .udp-grid)
+   tanpa breakpoint mobile → 7 hari super rapat di ≤480px.
+   Tetap 7-col (struktur DOW), reduce gap/padding/font. */
+@media (max-width: 480px) {
+  .cd-bar-row, .udp-dow, .udp-grid {
+    gap: 2px !important;
+    font-size: 10px !important;
+  }
+  .cd-bar-row > *, .udp-dow > *, .udp-grid > * {
+    padding: 4px 2px !important;
+    min-width: 0 !important;
+  }
+}
+
+/* (R-4) Audit modal stats grid 4-col → 2-col di mobile.
+   `.aud-stats` tanpa breakpoint mobile sama sekali. */
+@media (max-width: 540px) {
+  .aud-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* (R-5) Hero greeting card "Halo, ..." kebesaran dengan banyak
+   space kosong (per user 2026-05-21) + tablet+ harus side-by-side
+   dgn profile card (per user feedback 2026-05-21 v2). Strategi:
+   - ≥768px: paksa side-by-side row (nowrap), hero stretch ngambil
+     sisa space, profile fix-width kanan, align-items flex-start
+     supaya hero hug content tinggi (no empty space).
+   - ≤767px: biarkan stack vertikal (mobile default fine).        */
+@media (min-width: 768px) {
+  html body:not([data-role="admin"]):not(.auth-mode) .hero-content {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;  /* keduanya sejajar tinggi per user 2026-05-21 v3 */
+    gap: 16px !important;
+  }
+  html body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  html body:not([data-role="admin"]):not(.auth-mode) .hero .hero-clock {
+    flex: 0 0 340px !important;
+    align-self: stretch !important;  /* sejajar dgn hero, bukan flex-start */
+  }
+}
+@media (max-width: 767px) {
+  /* Di mobile, parent .hero-content jadi flex-direction: column
+     (rule existing line 4866). `flex: 1 1 360px` di hero-text →
+     flex-basis 360px jadi HEIGHT di column direction → paksa 360px.
+     Override flex-basis ke auto supaya hero hug content height. */
+  html body:not([data-role="admin"]):not(.auth-mode) .hero .hero-text {
+    flex: 1 1 auto !important;
+    flex-basis: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
+
+/* (R-6) Search bar di topbar mobile/tablet di-hide oleh existing
+   rule ~line 26799 (≤900px) & 26873 (≤640px). Per user 2026-05-21
+   v3: harus tampil di topbar row 1 (bukan turun ke row 2) di tablet.
+   Strategi:
+   - Tablet 481-900: search masuk row 1, flex-grow ambil sisa space.
+   - Mobile ≤480: search wrap ke row 2 (gak muat di row 1 utk phone). */
+@media (min-width: 481px) and (max-width: 900px) {
+  html body:not(.auth-mode) .topbar {
+    flex-wrap: nowrap !important;
+  }
+  html body:not(.auth-mode) .topbar .topbar-search {
+    display: flex !important;
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+}
+@media (max-width: 480px) {
+  /* Mobile layout per user 2026-05-21 v4:
+     - Row 1 (atas): search bar full-width
+     - Row 2 (bawah): hamburger | Home pill (kiri) | ... | bell+CM (kanan)
+     Override existing rule space-between (line ~26872) → flex-start
+     supaya Home tidak center, lalu margin-left:auto di topbar-actions
+     untuk push bell+CM ke kanan. */
+  html body:not(.auth-mode) .topbar {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+  html body:not(.auth-mode) .topbar .topbar-search {
+    display: flex !important;
+    order: -1 !important;                /* paling depan = row 1 atas */
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 6px 0 !important;
+  }
+  html body:not(.auth-mode) .topbar .topbar-actions {
+    margin-left: auto !important;        /* push bell+CM ke kanan */
+  }
+}
+
+/* (R-7) Sembunyikan kolom Progres kreator yang KOSONG (kotak hantu
+   di kiri Pencapaian). `.home-level` (renderHomeCreatorLevel) cuma
+   berisi HTML comment placeholder — tidak pernah populated oleh
+   user baru, jadi tampil sebagai dark box bingung. Solusi: hide
+   `.home-col-left` unconditionally + paksa Pencapaian (col-right)
+   full-width. Catatan teknis: selector `:has(:not(:has()))` INVALID
+   di Chromium (nesting :has dalam :not forbidden), jadi pakai
+   unconditional hide. Kalau di masa depan renderHomeCreatorLevel
+   actually populated, balikin rule ini ke conditional via
+   `:has(.hlv-sub)` (valid form). */
+.home-2col .home-col-left {
+  display: none !important;
+}
+.home-2col {
+  display: block !important;
+}
+.home-2col .home-col-right {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 100% !important;
+}
