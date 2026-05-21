@@ -7,8 +7,10 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        { source: '/', destination: '/legacy/index.html' },
-        { source: '/admin', destination: '/legacy/index.html' },
+        // / and /admin: cutover 2026-05-21 — sekarang served oleh app/page.tsx
+        // & app/admin/page.tsx (Next.js React). Legacy bundle masih ada di
+        // public/legacy/* untuk /watch, /embed, /id/* sampai Phase 7 dashboard
+        // build complete.
         { source: '/watch', destination: '/legacy/watch.html' },
         { source: '/embed', destination: '/legacy/embed.html' },
         { source: '/id/:videoId/embed', destination: '/legacy/embed.html?v=:videoId' },
