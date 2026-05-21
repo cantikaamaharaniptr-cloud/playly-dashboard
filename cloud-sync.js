@@ -353,6 +353,11 @@
       const { error } = await sb.storage.from(BUCKET).upload(path, blob, {
         upsert: true,
         contentType: blob.type || "video/mp4",
+        // EGRESS OPT 2026-05-21: cacheControl 7 hari supaya browser cache
+        // video setelah first play → repeat plays serve dari memory/disk
+        // cache, NOL egress. Storage public URL otomatis include
+        // Cache-Control header sesuai value ini.
+        cacheControl: "604800",  // 7 days in seconds
       });
       if (error) {
         console.warn("[cloud] upload error:", error);
@@ -375,15 +380,35 @@
     }
   }
 
+  // EGRESS OPT 2026-05-21: cache videoId → filename mapping di localStorage
+  // supaya repeat call skip Storage list API. Tanpa cache, tiap getVideoUrl
+  // panggil .list() → Storage API egress. Cache invalid kalau file di-delete
+  // (caller handle dgn fallback ke null return).
+  const FILENAME_CACHE_KEY = "playly-cloud-filename-cache";
+  function _loadFilenameCache() {
+    try { return JSON.parse(window.localStorage.getItem(FILENAME_CACHE_KEY) || "{}"); }
+    catch { return {}; }
+  }
+  function _saveFilenameCache(map) {
+    try { origSet.call(window.localStorage, FILENAME_CACHE_KEY, JSON.stringify(map)); } catch {}
+  }
   async function findVideoFilename(id) {
     const sb = client();
     if (!sb) return null;
+    // Cache hit → skip Storage API call
+    const cache = _loadFilenameCache();
+    if (cache[id]) return cache[id];
     try {
       const { data } = await sb.storage.from(BUCKET).list("", {
         search: `${id}.`,
       });
       const f = (data || []).find((x) => x.name.startsWith(`${id}.`));
-      return f?.name || null;
+      const filename = f?.name || null;
+      if (filename) {
+        cache[id] = filename;
+        _saveFilenameCache(cache);
+      }
+      return filename;
     } catch { return null; }
   }
 
@@ -404,6 +429,10 @@
         console.warn("[cloud] delete blob failed:", error.message);
         return { ok: false, error: error.message };
       }
+      // Invalidate filename cache so future getVideoUrl returns null
+      const cache = _loadFilenameCache();
+      delete cache[id];
+      _saveFilenameCache(cache);
       return { ok: true };
     } catch (err) {
       console.warn("[cloud] delete blob exception:", err);

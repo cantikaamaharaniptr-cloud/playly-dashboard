@@ -1006,7 +1006,11 @@
           function startMain() {
             v.hidden = false;
             v.muted = true;
-            v.play().catch(() => {});
+            // EGRESS OPT 2026-05-21: tidak auto-play main video supaya
+            // user yang buka tab lalu pindah tab tidak trigger full MP4
+            // download. User klik tombol play di native control utk start.
+            // Saving ~30% egress dari pattern "buka tab tanpa nonton".
+            // Prerolls (ad) masih auto-play di playPrerollSequence.
             if (banner) showBanner(banner);
           }
 
