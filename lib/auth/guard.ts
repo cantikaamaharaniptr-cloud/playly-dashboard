@@ -1,15 +1,16 @@
 // Server-side auth helpers. Use in Server Components / Route Handlers /
 // Server Actions untuk gate akses & redirect.
+//
+// Defensive: kalau Supabase client init gagal (env missing, dst), treat
+// sebagai logged-out — no crash.
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 
 // Hardcoded admin allowlist — mirror dari components/providers/auth-provider.tsx.
-// Sync saat allowlist berubah.
 const ADMIN_EMAILS: ReadonlySet<string> = new Set([
-  // Phase 7b starter: empty. Port dari legacy script.js (ADMIN_EMAILS_PROTECTED
-  // ~L380-420) saat first admin migration touch.
+  // Phase 7b starter: empty. Port dari legacy ADMIN_EMAILS_PROTECTED nanti.
 ]);
 
 export function detectAdmin(user: User | null | undefined): boolean {
@@ -21,24 +22,27 @@ export function detectAdmin(user: User | null | undefined): boolean {
   return meta?.role === 'admin' || appMeta?.role === 'admin';
 }
 
-// Get current Supabase user from Server Component / Route Handler.
-// Returns null if no session.
+// Get current Supabase user. Returns null kalau no session OR Supabase
+// client gagal init (mis. env missing).
 export async function getUser(): Promise<User | null> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  return data.user;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    return data.user;
+  } catch (err) {
+    console.error('[guard] getUser failed:', err);
+    return null;
+  }
 }
 
-// Require authenticated user. Redirect to /redirectTo (default `/`) if no
-// session. Use as the first line in Server Components that need auth.
+// Require authenticated user. Redirect kalau no session.
 export async function requireUser(redirectTo = '/'): Promise<User> {
   const user = await getUser();
   if (!user) redirect(redirectTo);
   return user;
 }
 
-// Require user NOT authenticated (use on public landing/auth pages — redirect
-// logged-in users to their dashboard).
+// Require user NOT authenticated.
 export async function requireAnon(redirectTo = '/dashboard'): Promise<void> {
   const user = await getUser();
   if (user) redirect(redirectTo);
