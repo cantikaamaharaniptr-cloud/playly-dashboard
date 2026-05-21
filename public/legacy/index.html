@@ -13,6 +13,47 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Phase 7b cutover: tombol "Coba versi baru ↗" di auth-topbar →
+       link ke /signin (user) atau /signin/admin (admin). Styled subtle
+       supaya nggak compete dengan primary CTA. Hidden di mobile sempit. -->
+  <style>
+    .auth-topbar-btn-newver {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      padding: 8px 14px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(232, 216, 196, 0.35) !important;
+      background: rgba(109, 41, 50, 0.18) !important;
+      color: #E8D8C4 !important;
+      text-decoration: none !important;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .auth-topbar-btn-newver:hover {
+      background: rgba(109, 41, 50, 0.32) !important;
+      border-color: rgba(232, 216, 196, 0.60) !important;
+    }
+    body[data-role="admin"] .auth-topbar-btn-newver {
+      border-color: rgba(173, 181, 189, 0.40) !important;
+      background: rgba(60, 80, 120, 0.22) !important;
+      color: #FFFFFF !important;
+    }
+    body[data-role="admin"] .auth-topbar-btn-newver:hover {
+      background: rgba(60, 80, 120, 0.40) !important;
+      border-color: rgba(173, 181, 189, 0.65) !important;
+    }
+    body[data-theme="light"] .auth-topbar-btn-newver {
+      border-color: rgba(132, 42, 59, 0.30) !important;
+      background: rgba(132, 42, 59, 0.08) !important;
+      color: #662222 !important;
+    }
+    @media (max-width: 640px) {
+      .auth-topbar-btn-newver { display: none !important; }
+    }
+  </style>
 </head>
 <body data-theme="dark" class="auth-mode">
 
@@ -233,6 +274,10 @@
         <a href="#authFaqSection" class="auth-topbar-link" data-scroll-target="authFaqSection" data-i18n="faq.eyebrow">FAQ</a>
       </nav>
       <div class="auth-topbar-cta">
+        <!-- Phase 7b cutover entry: link ke Next.js auth (/signin) — JS di bawah
+             swap ke /signin/admin saat body[data-role="admin"]. Style sengaja
+             distinct (border accent + arrow) supaya jelas "new". -->
+        <a href="/signin" id="newVersionLink" class="btn ghost auth-topbar-btn auth-topbar-btn-newver" data-no-i18n>Coba versi baru ↗</a>
         <button type="button" class="btn ghost auth-topbar-btn" data-topbar-cta="signin">Sign In</button>
         <button type="button" class="btn primary auth-topbar-btn auth-topbar-btn-primary" data-topbar-cta="signup">Sign Up Free</button>
         <!-- Payment status quick pill — visible saat ada pending/approved/rejected
@@ -329,6 +374,8 @@
         <a href="#adminFaqSection" class="auth-topbar-link" data-scroll-target="adminFaqSection" data-i18n="faq.eyebrow">FAQ</a>
       </nav>
       <div class="auth-topbar-cta">
+        <!-- Phase 7b cutover entry: link ke Next.js admin auth -->
+        <a href="/signin/admin" class="btn ghost auth-topbar-btn auth-topbar-btn-newver" data-no-i18n>Coba versi baru ↗</a>
         <button type="button" class="btn primary auth-topbar-btn auth-topbar-btn-primary auth-topbar-signin" data-topbar-cta="signin">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           <span>Sign In</span>
