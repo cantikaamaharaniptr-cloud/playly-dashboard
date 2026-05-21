@@ -63358,26 +63358,33 @@ html body[data-role="admin"]:not(.auth-mode) .topbar {
    Strategi:
    - Tablet 481-900: search masuk row 1, flex-grow ambil sisa space.
    - Mobile ≤480: search wrap ke row 2 (gak muat di row 1 utk phone). */
-@media (min-width: 481px) and (max-width: 1200px) {
+/* (R-6 v12) Topbar layout per user 2026-05-21 v12: distribusi
+   rata kiri-kanan — items pile dgn gap konsisten kecil 8px, search
+   grow ambil sisa space (no max-width) supaya items mengisi penuh
+   topbar (Beranda left, user dropdown right), no big gaps. */
+@media (min-width: 481px) {
   html body:not(.auth-mode) .topbar {
     flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
   }
-  /* Natural source order: hamburger, breadcrumb (Home), topbar-search,
-     topbar-actions (tier/theme/bell/CM). Per user 2026-05-21 v5/v6:
-     urutan Home → Search → Premium → Theme → Bell → Profile.
-     Search COMPACT max-width 240px supaya tidak dominan + items fit. */
   html body:not(.auth-mode) .topbar .topbar-search {
     display: flex !important;
     order: 0 !important;
-    flex: 0 1 240px !important;
+    flex: 1 1 auto !important;
     width: auto !important;
-    max-width: 240px !important;
+    max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
-    padding: 8px 12px !important;
+    padding: 8px 14px !important;
   }
   html body:not(.auth-mode) .topbar .topbar-search input {
     font-size: 13px !important;
+  }
+  /* topbar-actions gap konsisten antara Premium/theme/bell/user */
+  html body:not(.auth-mode) .topbar .topbar-actions {
+    gap: 8px !important;
+    margin-left: 0 !important;
   }
 }
 @media (max-width: 480px) {
