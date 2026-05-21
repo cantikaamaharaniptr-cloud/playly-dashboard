@@ -63339,18 +63339,26 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
    Strategi:
    - Tablet 481-900: search masuk row 1, flex-grow ambil sisa space.
    - Mobile ≤480: search wrap ke row 2 (gak muat di row 1 utk phone). */
-@media (min-width: 481px) and (max-width: 900px) {
+@media (min-width: 481px) and (max-width: 1200px) {
   html body:not(.auth-mode) .topbar {
     flex-wrap: nowrap !important;
   }
+  /* Natural source order: hamburger, breadcrumb (Home), topbar-search,
+     topbar-actions (tier/theme/bell/CM). Per user 2026-05-21 v5/v6:
+     urutan Home → Search → Premium → Theme → Bell → Profile.
+     Search COMPACT max-width 240px supaya tidak dominan + items fit. */
   html body:not(.auth-mode) .topbar .topbar-search {
     display: flex !important;
-    order: 2 !important;
-    flex: 1 1 auto !important;
+    order: 0 !important;
+    flex: 0 1 240px !important;
     width: auto !important;
-    max-width: none !important;
+    max-width: 240px !important;
     min-width: 0 !important;
     margin: 0 !important;
+    padding: 8px 12px !important;
+  }
+  html body:not(.auth-mode) .topbar .topbar-search input {
+    font-size: 13px !important;
   }
 }
 @media (max-width: 480px) {
