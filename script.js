@@ -3189,6 +3189,24 @@ function forceLogoutIfSuspended() {
   }
 }
 window.addEventListener("playly:cloud-applied", forceLogoutIfSuspended);
+
+// C-3 P-M11 fix (2026-05-21): refresh payment queue + pill saat cloud-sync
+// apply data baru dari Supabase. Sebelumnya cloud pull berisi premium-payments
+// update tapi UI admin queue + auth payment banner stale sampai user
+// trigger render manual. Listener selektif by `keys` in detail event.
+window.addEventListener("playly:cloud-applied", (e) => {
+  try {
+    const keys = (e?.detail?.keys) || [];
+    const touchedPayments = keys.includes("playly-premium-payments");
+    if (!touchedPayments) return;
+    // Re-render: admin queue (if on queue view), action center badge,
+    // dashboard pill, auth banner — semua bisa stale.
+    try { if (typeof renderAdminPremiumQueue === "function") renderAdminPremiumQueue(); } catch {}
+    try { if (typeof renderAdminActionCenter === "function") renderAdminActionCenter(); } catch {}
+    try { if (typeof renderDashboardPaymentPill === "function") renderDashboardPaymentPill(); } catch {}
+    try { if (typeof renderAuthPaymentBanner === "function") renderAuthPaymentBanner(); } catch {}
+  } catch (err) { console.warn("[cloud-applied payment refresh] failed:", err); }
+});
 window.addEventListener("focus", forceLogoutIfSuspended);
 window.addEventListener("storage", e => {
   if (e.key && e.key.startsWith("playly-account-")) forceLogoutIfSuspended();
@@ -14793,14 +14811,6 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
     acc.premiumExpiresAt = computePremiumExpiry(plan);
     if (plan === "trial") acc.trialUsed = true;
   }
-  // Mode admin: tambahkan email ke allowlist supaya admin lock recognize akun ini sbg admin
-  if (isAdminMode) {
-    const extras = getExtraAdminEmails();
-    if (!extras.includes(email)) {
-      extras.push(email);
-      setExtraAdminEmails(extras);
-    }
-  }
   // Cabut email dari banned list (kalau ada) — admin authoritative, kalau
   // admin re-create akun dengan email yang dulu dibanned, anggap unban.
   if (typeof removeBannedEmail === "function") removeBannedEmail(email);
@@ -14811,6 +14821,18 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
   if (typeof purgeUserDataByUsername === "function") purgeUserDataByUsername(username);
   try { localStorage.removeItem(`playly-prefs-${email}`); } catch {} // prefs dikey-by-email
   localStorage.setItem(`playly-account-${email}`, JSON.stringify(acc));
+  // C-3 U-M2 fix (2026-05-21): allowlist push HANYA setelah account write
+  // sukses. Sebelumnya push sebelum setItem → kalau setItem gagal (quota
+  // exceeded, dll), allowlist updated tapi no account = inconsistent state.
+  if (isAdminMode) {
+    try {
+      const extras = getExtraAdminEmails();
+      if (!extras.includes(email)) {
+        extras.push(email);
+        setExtraAdminEmails(extras);
+      }
+    } catch (err) { console.warn("[create-user] allowlist push failed:", err); }
+  }
 
   const tl = isAdminMode
     ? "Admin"
@@ -14842,6 +14864,13 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
   });
   form.addEventListener("submit", async e => {
     e.preventDefault();
+    // C-3 U-M3 fix (2026-05-21): SECURITY — gate inline create form ke admin.
+    // Sebelumnya tidak ada cek role → kalau DOM form ke-expose ke non-admin
+    // (stale cache, dev tools, dll) → mereka bisa create akun. Bahkan kalau
+    // tier=premium mereka bisa self-grant premium tanpa bayar.
+    if (!user || user.role !== "admin") {
+      return toast("🔒 Hanya admin yang bisa membuat akun via form ini", "warning");
+    }
     const fd = new FormData(form);
     const name     = String(fd.get("name")        || "").trim();
     const username = String(fd.get("username")    || "").trim().toLowerCase();
@@ -14995,12 +15024,29 @@ document.getElementById("setTierForm")?.addEventListener("submit", e => {
     closeSetTierModal();
     return toast(`User <b>@${escapeHtml(username)}</b> sudah Premium`, "info");
   }
-  // Cek kalau sudah ada payment pending untuk user ini → jangan duplikat
-  const existing = (typeof getPremiumPayments === "function" ? getPremiumPayments() : [])
-    .find(p => p.email === acc.email && p.status === "pending");
-  if (existing) {
+  // C-3 U-M5 fix (2026-05-21): cek duplikat existing payment lebih ketat.
+  // Sebelumnya hanya block pending → kalau race window approval→activation
+  // belum selesai (status approved tapi acc.tier belum premium), admin
+  // bisa grant lagi → dua premium records. Sekarang block kalau:
+  //   - ada pending untuk email ini, ATAU
+  //   - ada admin-grant approved/activated < 60 detik (mencegah double-click
+  //     atau retry burst)
+  const accEmailLc = String(acc.email || "").toLowerCase();
+  const allPayments = (typeof getPremiumPayments === "function" ? getPremiumPayments() : []);
+  const existingPending = allPayments.find(p => String(p.email || "").toLowerCase() === accEmailLc && p.status === "pending");
+  if (existingPending) {
     closeSetTierModal();
     return toast(`Sudah ada permintaan Premium pending untuk <b>@${escapeHtml(username)}</b>`, "warning");
+  }
+  const recentGrant = allPayments.find(p =>
+    String(p.email || "").toLowerCase() === accEmailLc &&
+    p.flowContext === "admin-grant" &&
+    (p.status === "approved" || p.status === "activated") &&
+    (Date.now() - (p.paidAt || 0)) < 60000
+  );
+  if (recentGrant) {
+    closeSetTierModal();
+    return toast(`Premium grant baru saja dibuat (< 1 menit lalu). Tunggu sebentar.`, "warning");
   }
   const code = (typeof generatePremiumCode === "function") ? generatePremiumCode() : ("PLY-" + Date.now().toString(36).toUpperCase());
   const orderId = String(Date.now()).slice(-8);
@@ -16336,10 +16382,36 @@ function findAuthScreenPayment() {
     if (premiumEmails.has(String(p.email).toLowerCase())) {
       p.activated = true;
       p.activatedAt = p.activatedAt || Date.now();
+      p.updatedAt = Date.now();
       dirty = true;
     }
   }
-  if (dirty) { try { savePremiumPayments(all); } catch {} }
+  // C-3 P-M10 fix (2026-05-21): re-fetch fresh array sebelum save supaya
+  // cloud-applied event yg fire BETWEEN getPremiumPayments() di line 16320
+  // dan save sini tidak ke-wipe. Pattern: read-modify-write race. Sekarang
+  // pakai indexed update via setPremiumPaymentStatus-style: re-read, merge
+  // hanya entry yg kita modify, save merged result.
+  if (dirty) {
+    try {
+      const fresh = getPremiumPayments();
+      const byCode = new Map(fresh.map(p => [p.code, p]));
+      for (const p of all) {
+        if (p.activated && p.code) {
+          const cur = byCode.get(p.code);
+          if (cur) {
+            // Apply our changes to the fresh copy
+            cur.activated = true;
+            cur.activatedAt = p.activatedAt;
+            cur.updatedAt = p.updatedAt;
+          } else {
+            // Entry didn't exist in fresh (cloud-applied removed it?) — re-add
+            byCode.set(p.code, p);
+          }
+        }
+      }
+      savePremiumPayments(Array.from(byCode.values()));
+    } catch {}
+  }
 
   return all
     .filter(p => p && p.email && deviceEmails.includes(String(p.email).toLowerCase()))
@@ -17177,7 +17249,7 @@ function renderPaymentStatusModal() {
         <div style="display:flex;flex-direction:column;gap:8px;width:100%">
           <small class="muted" style="text-align:center">${promptLabel}</small>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <input type="text" data-psm-code-input data-psm-code="${p.code}" placeholder="${escapeHtml(p.code)}" maxlength="16" autocomplete="off" spellcheck="false" style="flex:1;min-width:140px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:monospace;font-size:14px;letter-spacing:1.5px;text-transform:uppercase"/>
+            <input type="text" data-psm-code-input data-psm-code="${p.code}" placeholder="PLY-XXXXXXXX" maxlength="16" autocomplete="off" spellcheck="false" style="flex:1;min-width:140px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:monospace;font-size:14px;letter-spacing:1.5px;text-transform:uppercase"/>
             <button type="button" class="psm-action-success" data-psm-action="submit-code" data-psm-code="${p.code}">${sendLabel}</button>
           </div>
         </div>`;
@@ -18126,6 +18198,25 @@ function closePaymentModal() {
         console.warn("[payment] receipt generation failed:", err);
       }
       const arr = getPremiumPayments();
+      // C-3 P-M9 fix (2026-05-21): cek duplikat pending untuk email yg sama
+      // sebelum unshift. Sebelumnya user-side submit tidak ada guard →
+      // user spam-click pay = N payment records muncul, admin pusing
+      // verify. Guard 60s window aman utk handle double-click race +
+      // network retry, tapi tidak block payment yg legit (mis. user
+      // bayar tier lain dlm interval > 1 menit).
+      const userEmailLc = String(user?.email || "").toLowerCase();
+      if (userEmailLc) {
+        const recentDup = arr.find(p =>
+          p && String(p.email || "").toLowerCase() === userEmailLc &&
+          p.status === "pending" &&
+          (Date.now() - (p.paidAt || 0)) < 60000
+        );
+        if (recentDup) {
+          console.warn("[payment] duplicate detected, skipping:", recentDup.code);
+          if (typeof toast === "function") toast("⚠ Pembayaran sebelumnya masih diproses. Tunggu konfirmasi admin sebelum submit ulang.", "warning");
+          return;
+        }
+      }
       arr.unshift(payment);
       savePremiumPayments(arr);
 
@@ -22778,11 +22869,28 @@ function setupAdminCrossTabSync() {
 // Badge sidebar dimatikan total — user minta menu bersih tanpa indikator
 // number/dot di sidebar. Counter aktivitas baru tetap ada di dalam view
 // (Inbox, Audit Log, KPI, dll) supaya tidak duplikat dengan sidebar.
-function setBadgeMode(el) {
+// C-3 V-M3 fix (2026-05-21): signature mismatch. Sebelumnya hanya terima
+// `el` (1 arg) tapi callers pass `(el, count, hasItems)` (3 args). Body
+// hide-semua → sidebar badges utk users/inbox/videos/comms/audit selalu
+// kosong meskipun ada data. Sekarang implement properly:
+//   - count > 0 → tampilkan angka
+//   - count === 0 && hasItems → tampilkan dot (glow indicator)
+//   - count === 0 && !hasItems → hide
+function setBadgeMode(el, count, hasItems) {
   if (!el) return;
   el.className = el.className.replace(/\bglow-dot\b/g, "").trim();
-  el.textContent = "";
-  el.style.display = "none";
+  const n = Number(count) || 0;
+  if (n > 0) {
+    el.textContent = n > 99 ? "99+" : String(n);
+    el.style.display = "";
+  } else if (hasItems) {
+    el.textContent = "";
+    el.style.display = "";
+    el.className = (el.className + " glow-dot").trim();
+  } else {
+    el.textContent = "";
+    el.style.display = "none";
+  }
 }
 
 function syncAdminNavBadges() {
@@ -23821,14 +23929,35 @@ function toggleUserDeactivate(username) {
   });
   if (!accountKey) return null;
   const acc = JSON.parse(localStorage.getItem(accountKey));
+  // C-3 U-M4 fix (2026-05-21): SECURITY — block super-admin, block self,
+  // block deactivating other admin accounts (yg jadi backup admin).
+  // Sebelumnya extra-admin bisa deactivate extra-admin lain (atau diri sendiri)
+  // → admin pool habis = platform locked out.
   if (typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(acc.email)) {
     toast("🔒 Super Admin tidak bisa di-deactive", "warning");
     return acc;
   }
+  // Self-deactivate block
+  if (typeof user === "object" && user && (acc.email === user.email || acc.username === user.username)) {
+    toast("🔒 Kamu tidak bisa men-deactive akunmu sendiri", "warning");
+    return acc;
+  }
+  // Block deactivate admin lain (mirror suspend behavior)
+  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(acc.email)) {
+    toast("🔒 Akun admin lain tidak bisa di-deactive — minta super-admin", "warning");
+    return acc;
+  }
   acc.deactivated = !acc.deactivated;
+  if (acc.deactivated) {
+    acc.deactivatedAt = Date.now();
+    acc.deactivatedBy = (typeof user === "object" && user?.username) || "admin";
+  } else {
+    delete acc.deactivatedAt;
+    delete acc.deactivatedBy;
+  }
   localStorage.setItem(accountKey, JSON.stringify(acc));
-  pushAdminEvent(acc.deactivated ? "🔵" : "✓", `${acc.deactivated ? "Deactivated" : "Reactivated"} account <b>@${username}</b>`);
-  toast(acc.deactivated ? `🔵 Akun <b>@${username}</b> di-deactive` : `✓ Akun <b>@${username}</b> diaktifkan kembali`, acc.deactivated ? "warning" : "success");
+  pushAdminEvent(acc.deactivated ? "🔵" : "✓", `${acc.deactivated ? "Deactivated" : "Reactivated"} account <b>@${escapeHtml(username)}</b>`);
+  toast(acc.deactivated ? `🔵 Akun <b>@${escapeHtml(username)}</b> di-deactive` : `✓ Akun <b>@${escapeHtml(username)}</b> diaktifkan kembali`, acc.deactivated ? "warning" : "success");
   renderAdminUsers();
   renderAdminLiveFeed();
   return acc;
@@ -25241,11 +25370,39 @@ function renderAdminAnalytics() {
 // Aggregates videos from all `playly-state-{username}` records, lets admin
 // approve/reject/edit/takedown/delete and bulk-act on them.
 
+// C-3 V-M6 fix (2026-05-21): persist filter/search/sort ke sessionStorage
+// supaya admin tidak kehilangan context saat reload / pindah view.
+// `selected` (Set) dan `selectMode` tetap ephemeral (logical UI state).
+const _ADMIN_VIDEO_STATE_KEY = "playly-admin-video-state";
+function _loadAdminVideoState() {
+  try {
+    const raw = sessionStorage.getItem(_ADMIN_VIDEO_STATE_KEY);
+    if (!raw) return null;
+    const j = JSON.parse(raw);
+    return {
+      filter: j.filter || "all",
+      search: j.search || "",
+      category: j.category || "",
+      sort: j.sort || "newest",
+    };
+  } catch { return null; }
+}
+function _saveAdminVideoState() {
+  try {
+    sessionStorage.setItem(_ADMIN_VIDEO_STATE_KEY, JSON.stringify({
+      filter: adminVideoState.filter,
+      search: adminVideoState.search,
+      category: adminVideoState.category,
+      sort: adminVideoState.sort,
+    }));
+  } catch {}
+}
+const _persistedAvs = _loadAdminVideoState();
 const adminVideoState = {
-  filter: "all",      // all | pending | published | rejected | takedown
-  search: "",
-  category: "",
-  sort: "newest",
+  filter: _persistedAvs?.filter || "all",      // all | pending | published | rejected | takedown
+  search: _persistedAvs?.search || "",
+  category: _persistedAvs?.category || "",
+  sort: _persistedAvs?.sort || "newest",
   selectMode: false,  // checkbox column hidden until admin opts in
   selected: new Set() // ids of selected videos
 };
@@ -25275,12 +25432,18 @@ function patchAdminVideo(id, patch) {
   const s = JSON.parse(localStorage.getItem(target._ownerKey));
   const idx = (s.myVideos || []).findIndex(v => v.id === id);
   if (idx === -1) return null;
-  Object.assign(s.myVideos[idx], patch);
+  // C-3 V-M2 fix (2026-05-21): set updatedAt timestamp di setiap patch
+  // supaya cross-device merge bisa tie-break dgn benar (nanti kalau kita
+  // tambah merge config utk playly-state-*). Sebelumnya tidak ada timestamp
+  // → race condition antara admin device + user device meng-edit video
+  // bersamaan = last-write-wins.
+  const patchWithTs = { ...patch, updatedAt: Date.now() };
+  Object.assign(s.myVideos[idx], patchWithTs);
   localStorage.setItem(target._ownerKey, JSON.stringify(s));
   // Also keep current session's in-memory state in sync if it's the logged-in user
   if (user && target._owner === user.username && Array.isArray(state?.myVideos)) {
     const liveIdx = state.myVideos.findIndex(v => v.id === id);
-    if (liveIdx !== -1) Object.assign(state.myVideos[liveIdx], patch);
+    if (liveIdx !== -1) Object.assign(state.myVideos[liveIdx], patchWithTs);
   }
   return s.myVideos[idx];
 }
@@ -25538,6 +25701,40 @@ function applyGvRowAction(id, action) {
     restore:  { patch: { adminStatus: "published" }, icon: "↻",  msg: "dikembalikan",    tone: "" },
     publish:  { patch: { adminStatus: "published" }, icon: "✅", msg: "dipublikasikan",  tone: "success" }
   };
+  // C-3 V-M1 fix (2026-05-21): takedown prompt reason supaya creator dapat
+  // info kenapa video dihapus. Sebelumnya notif cuma "Your video was taken
+  // down" tanpa konteks. Restore/publish nggak butuh reason.
+  if (action === "takedown") {
+    if (typeof openConfirm === "function") {
+      openConfirm({
+        icon: "⛔", iconClass: "warning",
+        title: `Takedown video?`,
+        desc: `Video <b>${titleEsc}</b> akan di-takedown dari platform. Mohon isi alasan supaya creator dapat info yg jelas dan ada audit trail.`,
+        btnText: "Takedown", btnClass: "danger",
+        typeText: "Alasan takedown (wajib)",
+        onConfirm: (reason) => {
+          const reasonText = String(reason || "").trim() || "Tidak ada alasan spesifik";
+          const c = simple.takedown;
+          patchAdminVideo(id, { ...c.patch, takedownReason: reasonText, takedownAt: Date.now() });
+          pushAdminEvent(c.icon, `Video <i>"${titleEsc}"</i> ${c.msg} — alasan: ${escapeHtml(reasonText)}`);
+          toast(`${c.icon} <b>${titleEsc}</b> ${c.msg}`, c.tone);
+          if (typeof deliverNotification === "function" && v.creator) {
+            try {
+              deliverNotification(v.creator, {
+                type: "video-takedown",
+                text: `⛔ Video kamu <b>"${titleEsc}"</b> di-takedown oleh admin. Alasan: ${escapeHtml(reasonText)}`,
+                init: "📨", videoId: id, fromUsername: "admin"
+              });
+            } catch (err) { console.warn("[admin] notify creator failed:", err); }
+          }
+          renderAdminVideos();
+          renderAdminLiveFeed();
+        }
+      });
+      return;
+    }
+    // Fallback (no openConfirm)
+  }
   if (simple[action]) {
     const c = simple[action];
     patchAdminVideo(id, c.patch);
@@ -25678,16 +25875,19 @@ function setupAdminVideoEvents() {
     $$(".gv-tab").forEach(t => t.classList.toggle("active", t === tab));
     adminVideoState.filter = tab.dataset.gvFilter;
     adminVideoState.selected.clear();
+    _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
 
   // Search & dropdowns
   $("#adminVideoSearch")?.addEventListener("input", e => {
     adminVideoState.search = e.target.value;
+    _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
   $("#gvSortBy")?.addEventListener("change", e => {
     adminVideoState.sort = e.target.value;
+    _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
   // Toggle select mode — checkbox column tampil hanya saat dibutuhkan
@@ -34051,7 +34251,22 @@ $("#fypShareModal")?.querySelectorAll("[data-share-act]").forEach(btn => {
             // → laporan tertelan diam-diam. Sekarang lengkapi schema.
             const KEY = "playly-admin-mod";
             const list = JSON.parse(localStorage.getItem(KEY) || "[]");
-            list.unshift({
+            // C-3 V-M5 fix (2026-05-21): dedupe — kalau user ini sudah report
+            // video ini & masih pending, jangan tambah duplikat report.
+            // Spam prevention.
+            const existingDup = list.find(r =>
+              r && r.videoId === id &&
+              r.reportedBy === user.username &&
+              r.status === "pending"
+            );
+            if (existingDup) {
+              toast("⚠ Kamu sudah melaporkan video ini. Admin sedang menangani.", "warning");
+              return;
+            }
+            // C-3 V-M4 fix (2026-05-21): kalau queue penuh (200), archive
+            // oldest non-pending ke playly-admin-mod-archive instead of
+            // silent drop. Pending tidak dievict — selalu dipertahankan.
+            const newEntry = {
               id: Date.now(),
               videoId: id,
               title: v.title,
@@ -34059,12 +34274,33 @@ $("#fypShareModal")?.querySelectorAll("[data-share-act]").forEach(btn => {
               reportedBy: user.username,
               reason: "Dilaporkan dari FYP",
               at: new Date().toISOString(),
-              // Fields baru untuk reader:
               status: "pending",
               reportedAt: Date.now(),
+              updatedAt: Date.now(),
               flag: "🚩",
               thumb: v.thumb || v.poster || "🎬"
-            });
+            };
+            list.unshift(newEntry);
+            if (list.length > 200) {
+              // Find oldest NON-pending to evict
+              const evictIdx = (() => {
+                for (let i = list.length - 1; i > 0; i--) {
+                  if (list[i].status !== "pending") return i;
+                }
+                return -1;
+              })();
+              if (evictIdx > 0) {
+                const evicted = list.splice(evictIdx, 1)[0];
+                try {
+                  const ARCHIVE = "playly-admin-mod-archive";
+                  const arch = JSON.parse(localStorage.getItem(ARCHIVE) || "[]");
+                  arch.unshift(evicted);
+                  localStorage.setItem(ARCHIVE, JSON.stringify(arch.slice(0, 500)));
+                } catch {}
+              }
+              // Kalau semua pending, slice tetap (200 pending terbaru), oldest pending evicted
+              // (tradeoff: butuh raise cap kalau ini sering kejadian)
+            }
             localStorage.setItem(KEY, JSON.stringify(list.slice(0, 200)));
           } catch {}
           toast("🚩 Laporan terkirim ke admin", "success");
