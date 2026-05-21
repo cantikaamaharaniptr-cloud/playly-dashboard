@@ -1,14 +1,12 @@
-// Left panel for admin sign-in page (replaces user AuthShowcase). Different
-// branding (chrome silver gradient), restricted-access pill, admin-specific
-// hero copy, and ops-focused stats.
+// Left panel for admin sign-in page — chrome silver brand, restricted-access
+// pill, ops-focused hero, monitoring ticker, play orb + floating cards.
 // Source: public/legacy/index.html .auth-left-admin (lines 704-783).
-//
-// Simplified: skip the admin-illus radar/scan-rings/nodes/ticker
-// (lines 747-780, complex CSS animations) — add later if visual gap matters.
+
+import styles from './AuthShowcase.module.css';
 
 export function AdminAuthShowcase() {
   return (
-    <div className="flex flex-col gap-7 p-8 sm:p-12 lg:p-16">
+    <div className="relative flex flex-col gap-7 overflow-hidden p-8 sm:p-12 lg:p-16">
       {/* Brand */}
       <div className="flex items-center gap-3">
         <div className="grid h-14 w-14 flex-shrink-0 place-items-center">
@@ -77,7 +75,7 @@ export function AdminAuthShowcase() {
         <Stat value="Real" label="Time analytics" />
       </div>
 
-      {/* Monitoring ticker pill */}
+      {/* Monitoring ticker */}
       <div className="inline-flex items-center gap-2 self-start rounded-md border border-slate-accent/20 bg-slate-elev/40 px-3 py-2 font-mono text-xs">
         <span className="relative inline-flex h-1.5 w-1.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-success opacity-75" />
@@ -86,6 +84,28 @@ export function AdminAuthShowcase() {
         <span className="font-bold tracking-wider text-slate-accent">MONITORING</span>
         <b className="text-white">12,408</b>
         <span className="text-slate-accent/70">sessions</span>
+      </div>
+
+      {/* Animated illustration — shield orb + floating cards */}
+      <div className={`${styles.illus} hidden lg:block`} aria-hidden="true">
+        <div className={`${styles.card} ${styles.adminCard} ${styles.f1}`}>
+          <span>🛡</span>
+          <b>Active moderation</b>
+        </div>
+        <div className={`${styles.card} ${styles.adminCard} ${styles.f2}`}>
+          <span>📊</span>
+          <b>+12.4% growth</b>
+        </div>
+        <div className={`${styles.card} ${styles.adminCard} ${styles.f3}`}>
+          <span>💰</span>
+          <b>Revenue tracker</b>
+        </div>
+        <div className={`${styles.orb} ${styles.adminOrb}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-4Z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        </div>
       </div>
     </div>
   );

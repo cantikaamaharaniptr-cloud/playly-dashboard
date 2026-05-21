@@ -1,0 +1,129 @@
+/* Auth showcase enhancements — floating cards + play orb animation.
+   Match legacy public/legacy/styles.css patterns (.floating-card, .play-orb,
+   .auth-illus). Pure CSS animation, no JS. */
+
+.illus {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  margin-top: 8px;
+}
+
+.orb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #6D2932 0%, #8c3a45 50%, #C7B7A3 100%);
+  box-shadow:
+    0 0 0 1px rgba(232, 216, 196, 0.18),
+    0 20px 50px rgba(86, 28, 36, 0.45),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  animation: orbPulse 4s ease-in-out infinite;
+  z-index: 2;
+}
+
+.orb svg {
+  width: 36px;
+  height: 36px;
+  fill: #E8D8C4;
+  margin-left: 4px;
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px rgba(232, 216, 196, 0.18),
+      0 20px 50px rgba(86, 28, 36, 0.45),
+      0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 0 0 1px rgba(232, 216, 196, 0.30),
+      0 24px 60px rgba(86, 28, 36, 0.55),
+      0 8px 24px rgba(0, 0, 0, 0.40);
+  }
+}
+
+.card {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(37, 20, 25, 0.85);
+  border: 1px solid rgba(232, 216, 196, 0.18);
+  backdrop-filter: blur(12px) saturate(120%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #E8D8C4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.card span {
+  font-size: 14px;
+}
+
+.f1 {
+  top: 10%;
+  left: 8%;
+  animation: floatA 6s ease-in-out infinite;
+}
+.f2 {
+  top: 18%;
+  right: 6%;
+  animation: floatB 7s ease-in-out infinite;
+}
+.f3 {
+  bottom: 14%;
+  left: 14%;
+  animation: floatC 6.5s ease-in-out infinite;
+}
+
+@keyframes floatA {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}
+@keyframes floatC {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .f1,
+  .f2,
+  .f3 {
+    animation: none;
+  }
+}
+
+/* Admin variant — chrome/slate palette */
+.adminOrb {
+  background: linear-gradient(135deg, #FFFFFF 0%, #3C5078 50%, #1C283C 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 20px 50px rgba(28, 40, 60, 0.55),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.adminOrb svg { fill: #FFFFFF; }
+
+.adminCard {
+  background: rgba(28, 40, 60, 0.85);
+  border-color: rgba(173, 181, 189, 0.20);
+  color: #FFFFFF;
+}

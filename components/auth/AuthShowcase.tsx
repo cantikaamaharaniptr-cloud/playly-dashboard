@@ -1,14 +1,12 @@
-// Left panel of the 2-column auth screen: brand, hero copy, live pill, stats.
-// Server Component, static content. Source: public/legacy/index.html
-// .auth-left section (lines 383-444).
-//
-// Phase 6 session 2: simplified — skip the animated dashboard preview frame
-// + floating cards (auth-hero-preview, lines 446-700). Add those in a later
-// session if visual gap matters.
+// Left panel of the 2-column auth screen: brand, hero, live pill, stats,
+// + animated play orb with floating notification cards (legacy parity).
+// Source: public/legacy/index.html .auth-left (lines 383-444).
+
+import styles from './AuthShowcase.module.css';
 
 export function AuthShowcase() {
   return (
-    <div className="flex flex-col gap-7 p-8 sm:p-12 lg:p-16">
+    <div className="relative flex flex-col gap-7 overflow-hidden p-8 sm:p-12 lg:p-16">
       {/* Brand */}
       <div className="flex items-center gap-3">
         <div className="grid h-14 w-14 flex-shrink-0 place-items-center">
@@ -72,6 +70,27 @@ export function AuthShowcase() {
         <Stat value="12k+" label="Active creators" />
         <Stat value="2.4M" label="Videos" />
         <Stat value="89M" label="Views/month" />
+      </div>
+
+      {/* Animated illustration — play orb + floating cards */}
+      <div className={`${styles.illus} hidden lg:block`} aria-hidden="true">
+        <div className={`${styles.card} ${styles.f1}`}>
+          <span>▶</span>
+          <b>Trending now</b>
+        </div>
+        <div className={`${styles.card} ${styles.f2}`}>
+          <span>♥</span>
+          <b>+1.2k likes</b>
+        </div>
+        <div className={`${styles.card} ${styles.f3}`}>
+          <span>👁</span>
+          <b>24.8k views</b>
+        </div>
+        <div className={styles.orb}>
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
       </div>
     </div>
   );
