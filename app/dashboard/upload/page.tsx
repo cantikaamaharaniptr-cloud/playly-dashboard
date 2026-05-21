@@ -1,26 +1,30 @@
-import { NavIcon, PagePlaceholder } from '@/components/dashboard/PagePlaceholder';
+// Upload page — drag-drop video + metadata form + Supabase Storage wire.
+// Phase 7b session 4: MVP scope. Future: thumbnail picker, AI subtitle,
+// quota meter, post-upload edit flow.
+
+import { UploadForm } from '@/components/dashboard/upload/UploadForm';
 
 export const metadata = { title: 'Playly — Unggah Video' };
 
 export default function UploadPage() {
   return (
-    <PagePlaceholder
-      eyebrow="Upload"
-      title="Unggah Video Baru"
-      description="Pilih video file, isi metadata, atur visibility, terus publish."
-      icon={
-        <NavIcon>
-          <path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-        </NavIcon>
-      }
-      features={[
-        'Drag & drop video file ke upload zone',
-        'Info section: judul, deskripsi, kategori, tag (AI-assist Premium)',
-        'Frame section: thumbnail picker — auto-generate 3 candidate atau upload custom',
-        'AI auto-subtitle (Premium) via Whisper + DeepL translation',
-        'Visibility: public / unlisted / private',
-        'Quota meter (Free: 60 videos/bulan, 1 GB storage)',
-      ]}
-    />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header>
+        <p className="text-xs uppercase tracking-widest text-cream-muted">
+          Upload
+        </p>
+        <h1 className="mt-1 text-3xl font-bold text-cream">Unggah Video Baru</h1>
+        <p className="mt-1 text-sm text-cream-soft">
+          Pilih file, isi metadata, atur visibility, terus publish.
+        </p>
+      </header>
+
+      <UploadForm />
+
+      <p className="text-center text-[11px] text-cream-muted">
+        Storage: Supabase Storage (1 GB free tier). Migrate ke Cloudflare R2
+        untuk 10 GB + zero egress saat siap scale.
+      </p>
+    </div>
   );
 }
