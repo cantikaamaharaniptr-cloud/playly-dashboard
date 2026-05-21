@@ -3135,6 +3135,9 @@ window.addEventListener("playly:cloud-applied", () => { refreshStorageUsage(); }
 // Bug #2 fix (2026-05-20): force-logout user yang baru di-suspend admin di
 // device lain. Cek tiap cloud-applied + focus + storage event — kalau akun
 // user yg sedang aktif di-mark suspended, langsung kick-out.
+// C-2 H7 fix (2026-05-21): broadcast event sebelum wipe supaya feature
+// modules (upload, chat, dll) bisa abort in-flight work. Plus C-2 H6:
+// audit log entry untuk visibility cross-device force-logout.
 function forceLogoutIfSuspended() {
   try {
     if (!user || !user.email) return;
@@ -3143,6 +3146,23 @@ function forceLogoutIfSuspended() {
     }
     const acc = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "null");
     if (!acc || acc.suspended !== true) return;
+    // C-2 H7: broadcast event ke seluruh feature modules supaya bisa
+    // abort in-flight work (upload, fetch, chat send) sebelum user nulled.
+    try {
+      window.dispatchEvent(new CustomEvent("playly:force-logout", {
+        detail: { reason: "suspended", email: user.email, username: user.username }
+      }));
+    } catch {}
+    // C-2 H6: mark acc dgn forceLoggedOutAt + push audit event SEBELUM wipe
+    try {
+      acc.forceLoggedOutAt = Date.now();
+      localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acc));
+    } catch {}
+    try {
+      if (typeof pushAdminEvent === "function") {
+        pushAdminEvent("⚡", `Sesi <b>@${escapeHtml(user.username || user.email)}</b> force-terminated (suspended dari device lain)`);
+      }
+    } catch {}
     // Suspend detected — force logout immediately.
     try { saveState(); } catch {}
     try { stopLiveClock?.(); } catch {}
@@ -3158,7 +3178,7 @@ function forceLogoutIfSuspended() {
         iconClass: "danger",
         title: "Akun Di-suspend",
         desc: acc.suspendedReason
-          ? `Akun kamu baru saja di-suspend oleh admin. Alasan: ${acc.suspendedReason}. Sesi otomatis berakhir.`
+          ? `Akun kamu baru saja di-suspend oleh admin. Alasan: ${escapeHtml(acc.suspendedReason)}. Sesi otomatis berakhir.`
           : "Akun kamu baru saja di-suspend oleh admin. Sesi otomatis berakhir. Hubungi support.",
         btnText: "Mengerti",
         btnClass: "danger"
@@ -14927,8 +14947,40 @@ document.getElementById("setTierForm")?.addEventListener("submit", e => {
       localStorage.setItem("playly-user", JSON.stringify(window.user));
       document.body.dataset.tier = "free";
     }
+    // C-2 H3 fix (2026-05-21): mark matching premium payment records sebagai
+    // revoked supaya revenue widgets tidak terus count user ini, dan ada
+    // audit trail tier-strip. Plus notify user.
+    try {
+      const accEmail = String(acc.email || "").toLowerCase();
+      if (accEmail && typeof getPremiumPayments === "function") {
+        const payments = getPremiumPayments();
+        let modified = false;
+        for (const p of payments) {
+          if (!p || !p.email) continue;
+          if (String(p.email).toLowerCase() !== accEmail) continue;
+          if (p.status === "approved" || p.status === "activated") {
+            p.status = "revoked";
+            p.revokedAt = Date.now();
+            p.revokedBy = (typeof user === "object" && user?.username) ? user.username : "admin";
+            p.updatedAt = Date.now();
+            modified = true;
+          }
+        }
+        if (modified && typeof savePremiumPayments === "function") savePremiumPayments(payments);
+      }
+    } catch (err) { console.warn("[tier-downgrade] revoke payments failed:", err); }
+    // Notify user
+    if (typeof deliverNotification === "function") {
+      try {
+        deliverNotification(username, {
+          type: "tier-downgrade",
+          text: "⭐ Tier Premium kamu dicabut oleh admin. Akun sekarang Free. Hubungi support untuk informasi lebih lanjut.",
+          init: "⭐", fromUsername: "admin",
+        });
+      } catch (err) { console.warn("[tier-downgrade] notify failed:", err); }
+    }
     if (typeof pushAdminEvent === "function")
-      pushAdminEvent("⭐", `Tier @${escapeHtml(username)} → <b>Free</b>`);
+      pushAdminEvent("⭐", `Tier @${escapeHtml(username)} → <b>Free</b> (premium payment di-revoke)`);
     closeSetTierModal();
     if (typeof renderAdminUsers === "function") renderAdminUsers();
     toast(`✓ Tier <b>@${escapeHtml(username)}</b> → Free`, "success");
@@ -16005,32 +16057,39 @@ function setPremiumPaymentStatus(code, status, processedBy) {
   if (processedBy) payment.processedBy = processedBy;
   savePremiumPayments(arr);
 
+  // C-2 H#5 fix (2026-05-21): lowercase email untuk perbandingan supaya
+  // mismatch case (Adi@Gmail.com vs adi@gmail.com) tidak gagal upgrade.
+  const paymentEmailLc = String(payment.email || "").toLowerCase();
+  const userEmailLc = String((typeof user === "object" && user && user.email) || "").toLowerCase();
+
   // Track if this transition affects the active session (used to fire celebration)
   const activeSessionAffected =
-    status === "approved" && payment.email &&
-    typeof user === "object" && user && user.email === payment.email;
+    status === "approved" && paymentEmailLc &&
+    userEmailLc && userEmailLc === paymentEmailLc;
   // Upgrade the user account when admin approves — fix 2026-05-05.
-  // Previously the upgrade was only done by the in-modal poller (`_paymentOnSuccess`),
-  // which never ran if the user closed the payment modal before admin approval.
-  // Result: payment marked approved but user stuck on Free tier indefinitely.
-  if (status === "approved" && payment.email) {
+  if (status === "approved" && paymentEmailLc) {
     try {
-      const accKey = `playly-account-${payment.email}`;
+      const accKey = `playly-account-${paymentEmailLc}`;
       const accRaw = localStorage.getItem(accKey);
       if (accRaw) {
         const acc = JSON.parse(accRaw);
         const planKey = payment.plan || "monthly";
         acc.tier = "premium";
         acc.premiumPlan = planKey;
-        acc.premiumStartedAt = Date.now();
-        acc.premiumExpiresAt = (typeof computePremiumExpiry === "function")
-          ? computePremiumExpiry(planKey)
-          : null;
+        // C-2 H#6 fix (2026-05-21): guard double-write — premiumStartedAt
+        // hanya set kalau belum ada. Sebelumnya setiap call (admin approve
+        // + user activate modal) overwrite dgn Date.now() baru → drift
+        // hours/days dari aktual approval time, distort expiry math.
+        if (!acc.premiumStartedAt) {
+          acc.premiumStartedAt = Date.now();
+          acc.premiumExpiresAt = (typeof computePremiumExpiry === "function")
+            ? computePremiumExpiry(planKey)
+            : null;
+        }
         localStorage.setItem(accKey, JSON.stringify(acc));
         // If the upgraded account is the currently signed-in session, sync the
-        // live user object + body data attribute so the UI reflects the change
-        // without requiring a manual reload.
-        if (typeof user === "object" && user && user.email === payment.email) {
+        // live user object + body data attribute so the UI reflects the change.
+        if (userEmailLc && userEmailLc === paymentEmailLc) {
           user.tier = "premium";
           user.premiumPlan = planKey;
           user.premiumStartedAt = acc.premiumStartedAt;
@@ -16708,7 +16767,8 @@ function openPremiumStatusPopup() {
 function activateAuthScreenPayment(code) {
   const payment = getPremiumPaymentByCode(code);
   if (!payment || payment.status !== "approved") return;
-  const email = payment.email;
+  // C-2 H#5 fix (2026-05-21): lowercase email untuk consistency
+  const email = String(payment.email || "").toLowerCase();
   if (!email) return;
   const accRaw = localStorage.getItem(`playly-account-${email}`);
   if (!accRaw) {
@@ -16718,9 +16778,12 @@ function activateAuthScreenPayment(code) {
   const acc = JSON.parse(accRaw);
   acc.tier = "premium";
   acc.premiumPlan = payment.plan;
-  acc.premiumStartedAt = Date.now();
-  acc.premiumExpiresAt = (typeof computePremiumExpiry === "function")
-    ? computePremiumExpiry(payment.plan) : null;
+  // C-2 H#6 fix (2026-05-21): guard double-write — set hanya kalau belum ada
+  if (!acc.premiumStartedAt) {
+    acc.premiumStartedAt = Date.now();
+    acc.premiumExpiresAt = (typeof computePremiumExpiry === "function")
+      ? computePremiumExpiry(payment.plan) : null;
+  }
   if (payment.plan === "trial") acc.trialUsed = true;
   localStorage.setItem(`playly-account-${email}`, JSON.stringify(acc));
 
@@ -17593,7 +17656,23 @@ document.addEventListener("click", e => {
         arr[idx].codeSentToUser = true;
         arr[idx].codeSentAt = Date.now();
         arr[idx].codeSentCount = cur + 1;
+        arr[idx].updatedAt = Date.now();
         savePremiumPayments(arr);
+        // C-2 H#8 fix (2026-05-21): kirim notifikasi ke user supaya mereka
+        // tau kode sudah dikirim TANPA harus polling modal. Tanpa ini,
+        // mobile user / user yg sudah tutup modal harus kebetulan buka
+        // dashboard untuk lihat. Notif masuk via deliverNotification →
+        // tampil di topbar bell + masuk ke list notif user.
+        try {
+          const username = arr[idx].username || null;
+          if (username && typeof deliverNotification === "function") {
+            deliverNotification(username, {
+              type: "premium-code-sent",
+              text: "🔑 Admin sudah mengirim kode verifikasi pembayaran Premium kamu. Buka dashboard untuk lihat kode.",
+              init: "🔑",
+            });
+          }
+        } catch (err) { console.warn("[send-code] notif failed:", err); }
       }
       // Re-render modal with updated state (button → "sent")
       openPremiumDetailModal(code);
@@ -19965,8 +20044,11 @@ function pushAdminEvent(ico, text) {
     actorEmail,
     actorTier
   });
-  // Keep last 50
-  saveAdminData("events", events.slice(0, 50));
+  // C-2 H5 fix (2026-05-21): cap dinaikkan 50 → 500. Sebelumnya satu hari
+  // padat (suspend + tier change + ticket + delete) bisa habiskan 50 slot
+  // dlm 1-2 jam → bukti audit security-sensitive hilang. 500 entries =
+  // beberapa hari history minimum untuk compliance review.
+  saveAdminData("events", events.slice(0, 500));
 }
 
 // Hapus key lama dari versi sebelumnya (tidak dipakai sejak revenue pakai ledger).
@@ -23585,29 +23667,81 @@ function deleteUserAccount(username) {
     title: "Delete Account Permanently?",
     desc: `<b style="color:var(--danger)">This action cannot be undone.</b><br>Account <b>@${escapeHtml(username)}</b> along with all videos, messages, and related data will be permanently removed from the platform.`,
     btnText: "🗑 Delete Permanently", btnClass: "danger", typeText: "DELETE",
-    onConfirm: () => {
+    onConfirm: async () => {
+      // C-2 H4 fix (2026-05-21): EXTEND cleanup list + AWAIT cloud removal.
+      // Sebelumnya leak: playly-prefs-*, playly-2fa-*, playly-premium-payments
+      // entries dgn email user ini, IndexedDB video blobs, Supabase Storage
+      // blobs. AND removeKeys was fire-and-forget → race condition memungkinkan
+      // bidirectionalSync di boot berikutnya pull row stale & "resurrect"
+      // akun.
+      const email = String(acc.email || "").toLowerCase();
+      // 1. Hapus playly-premium-payments entries milik user ini
+      try {
+        if (email && typeof getPremiumPayments === "function") {
+          const payments = getPremiumPayments();
+          const filtered = payments.filter(p => String(p.email || "").toLowerCase() !== email);
+          if (filtered.length !== payments.length && typeof savePremiumPayments === "function") {
+            savePremiumPayments(filtered);
+          }
+        }
+      } catch (err) { console.warn("[deleteUser] cleanup payments failed:", err); }
+      // 2. Hapus IndexedDB video blobs milik user ini
+      try {
+        const stateRaw = localStorage.getItem(`playly-state-${username}`);
+        if (stateRaw) {
+          const s = JSON.parse(stateRaw);
+          if (Array.isArray(s.myVideos)) {
+            for (const v of s.myVideos) {
+              if (typeof openVideoDB === "function" && v.id) {
+                try {
+                  openVideoDB().then(db => {
+                    const tx = db.transaction(VIDEO_STORE, "readwrite");
+                    tx.objectStore(VIDEO_STORE).delete(v.id);
+                  }).catch(() => {});
+                } catch {}
+              }
+              // 3. Hapus Supabase Storage blob (CR-5 helper)
+              if (window.cloudSync?.deleteVideoBlob && v.id) {
+                try { window.cloudSync.deleteVideoBlob(v.id); } catch {}
+              }
+            }
+          }
+        }
+      } catch (err) { console.warn("[deleteUser] cleanup blobs failed:", err); }
+      // 4. localStorage cleanup — extended list (prefs, 2fa, dll)
       localStorage.removeItem(accountKey);
       localStorage.removeItem(`playly-state-${username}`);
       localStorage.removeItem(`playly-welcomed-${username}`);
       localStorage.removeItem(`playly-welcome-${username}`);
       localStorage.removeItem(`playly-onboarding-${username}`);
       localStorage.removeItem(`playly-notif-${username}`);
-      // Cloud-side cleanup — tanpa ini, sync akan re-pull akun yang udah
-      // dihapus pas user reload/login berikutnya, jadi user "balik" sendiri.
+      localStorage.removeItem(`playly-prefs-${username}`);
+      localStorage.removeItem(`playly-prefs-${email}`);
+      localStorage.removeItem(`playly-2fa-${username}`);
+      localStorage.removeItem(`playly-2fa-${email}`);
+      // 5. Cloud-side cleanup — AWAIT supaya tidak ada race dgn next boot sync
       try {
         if (window.cloudSync?.removeKeys) {
-          window.cloudSync.removeKeys([
-            accountKey,
-            `playly-account-${username}`,
-            `playly-state-${username}`,
-            `playly-welcomed-${username}`,
-            `playly-welcome-${username}`,
-            `playly-onboarding-${username}`,
-            `playly-notif-${username}`,
+          await Promise.race([
+            window.cloudSync.removeKeys([
+              accountKey,
+              `playly-account-${username}`,
+              `playly-account-${email}`,
+              `playly-state-${username}`,
+              `playly-welcomed-${username}`,
+              `playly-welcome-${username}`,
+              `playly-onboarding-${username}`,
+              `playly-notif-${username}`,
+              `playly-prefs-${username}`,
+              `playly-prefs-${email}`,
+              `playly-2fa-${username}`,
+              `playly-2fa-${email}`,
+            ]),
+            new Promise(r => setTimeout(r, 8000)),
           ]);
         }
-      } catch {}
-      pushAdminEvent("🗑️", `Akun <b>@${escapeHtml(username)}</b> dihapus permanen`);
+      } catch (err) { console.warn("[deleteUser] cloud cleanup failed:", err); }
+      pushAdminEvent("🗑️", `Akun <b>@${escapeHtml(username)}</b> (${escapeHtml(email)}) dihapus permanen`);
       toast(`🗑️ Akun <b>@${escapeHtml(username)}</b> berhasil dihapus`, "success");
       renderAdminUsers();
       renderAdminLiveFeed?.();
@@ -23628,10 +23762,49 @@ function toggleUserSuspend(username) {
     toast("🔒 Akun Admin tidak bisa di-suspend", "warning");
     return acc;
   }
-  acc.suspended = !acc.suspended;
+  // C-2 H1+H2 fix (2026-05-21): suspend → prompt reason, simpan field;
+  // unsuspend → clear stale reason fields.
+  const willSuspend = !acc.suspended;
+  if (willSuspend) {
+    // Prompt reason via confirm modal w/ text input
+    if (typeof openConfirm === "function") {
+      openConfirm({
+        icon: "⛔", iconClass: "warning",
+        title: `Suspend user @${username}?`,
+        desc: `Akun <b>@${escapeHtml(username)}</b> akan di-suspend dari platform. Mohon isi alasan singkat di bawah supaya user dapat informasi yg jelas dan admin lain bisa lihat di audit log.`,
+        btnText: "Suspend", btnClass: "danger",
+        typeText: "Alasan suspend (wajib)",
+        onConfirm: (reason) => {
+          const reasonText = String(reason || "").trim() || "Tidak ada alasan spesifik";
+          acc.suspended = true;
+          acc.suspendedAt = Date.now();
+          acc.suspendedBy = (typeof user === "object" && user?.username) ? user.username : "admin";
+          acc.suspendedReason = reasonText;
+          localStorage.setItem(accountKey, JSON.stringify(acc));
+          pushAdminEvent("⛔", `Suspended user <b>@${escapeHtml(username)}</b> — alasan: ${escapeHtml(reasonText)}`);
+          toast(`⛔ User <b>@${escapeHtml(username)}</b> di-suspend`, "warning");
+          renderAdminUsers();
+          renderAdminLiveFeed();
+        }
+      });
+      return acc; // optimistic; actual update happens onConfirm
+    } else {
+      // Fallback (no confirm modal available)
+      acc.suspended = true;
+      acc.suspendedAt = Date.now();
+      acc.suspendedReason = "Tidak ada alasan spesifik";
+    }
+  } else {
+    // Unsuspend → clear stale reason
+    acc.suspended = false;
+    delete acc.suspendedReason;
+    delete acc.suspendedAt;
+    delete acc.suspendedBy;
+    acc.reactivatedAt = Date.now();
+  }
   localStorage.setItem(accountKey, JSON.stringify(acc));
-  pushAdminEvent(acc.suspended ? "⛔" : "✓", `${acc.suspended ? "Suspended" : "Reactivated"} user <b>@${username}</b>`);
-  toast(acc.suspended ? `⛔ User <b>@${username}</b> di-suspend` : `✓ User <b>@${username}</b> diaktifkan`, acc.suspended ? "warning" : "success");
+  pushAdminEvent(acc.suspended ? "⛔" : "✓", `${acc.suspended ? "Suspended" : "Reactivated"} user <b>@${escapeHtml(username)}</b>`);
+  toast(acc.suspended ? `⛔ User <b>@${escapeHtml(username)}</b> di-suspend` : `✓ User <b>@${escapeHtml(username)}</b> diaktifkan`, acc.suspended ? "warning" : "success");
   renderAdminUsers();
   renderAdminLiveFeed();
   return acc;
@@ -25148,10 +25321,14 @@ function countAdminPendingVideos() {
 }
 
 function getAdminVideoStatus(v) {
-  // Status: pending (review) | published | takedown.
-  // Per user request 2026-05-06: pending dipulihkan sbg tab tersendiri.
-  if (v.adminStatus === "takedown") return "takedown";
+  // Status: pending (review) | published | takedown | draft.
+  // C-2 H2 fix (2026-05-21): treat "rejected" as takedown (user library
+  // alias), recognize "draft" sebagai bucket terpisah. Sebelumnya
+  // anything non-pending/non-takedown jadi "published" → draft videos
+  // muncul di Published tab + counted di KPI.
+  if (v.adminStatus === "takedown" || v.adminStatus === "rejected") return "takedown";
   if (v.adminStatus === "pending") return "pending";
+  if (v.adminStatus === "draft") return "draft";
   return "published";
 }
 
@@ -25289,6 +25466,12 @@ function applyGvBulkAction(action) {
   const map = {
     takedown: { patch: { adminStatus: "takedown"  }, icon: "⛔", msg: "di-takedown" }
   };
+  // C-2 H3 fix (2026-05-21): cache video records sebelum bulk action supaya
+  // bisa notify creator per-video setelah mutasi. Sebelumnya bulk hanya
+  // pushAdminEvent aggregate, creator tidak di-notify.
+  const allVideos = (typeof getAllAdminVideos === "function") ? getAllAdminVideos() : [];
+  const videoById = new Map(allVideos.map(v => [v.id, v]));
+
   if (action === "delete") {
     openConfirm({
       icon: "🗑️", iconClass: "danger",
@@ -25296,8 +25479,23 @@ function applyGvBulkAction(action) {
       desc: `<b>${ids.length}</b> video akan dihapus permanen dari platform. Aksi ini tidak bisa dibatalkan.`,
       btnText: "Clear All", btnClass: "danger",
       onConfirm: () => {
-        ids.forEach(id => deleteAdminVideo(id));
-        pushAdminEvent("🗑️", `Force delete <b>${ids.length} video</b> via bulk action`);
+        // C-2 H3: notify SEBELUM delete supaya creator info masih tersedia
+        ids.forEach(id => {
+          const v = videoById.get(id);
+          if (v && v.creator && typeof deliverNotification === "function") {
+            try {
+              deliverNotification(v.creator, {
+                type: "video-takedown",
+                text: `🗑️ Video kamu <b>"${escapeHtml(v.title || "(tanpa judul)")}"</b> dihapus permanen oleh admin.`,
+                init: "🗑️", videoId: id, fromUsername: "admin",
+              });
+            } catch (err) { console.warn("[bulk] notif failed for", id, err); }
+          }
+          // C-2 H3: per-video audit entry
+          if (v) pushAdminEvent("🗑️", `Force delete video <i>"${escapeHtml(v.title || "(no title)")}"</i> dari <b>@${escapeHtml(v.creator || v._owner || "?")}</b>`);
+          deleteAdminVideo(id);
+        });
+        pushAdminEvent("🗑️", `Bulk: ${ids.length} video deleted`);
         adminVideoState.selected.clear();
         toast(`🗑️ ${ids.length} video dihapus`, "error");
         renderAdminVideos();
@@ -25307,8 +25505,24 @@ function applyGvBulkAction(action) {
     return;
   }
   const cfg = map[action]; if (!cfg) return;
-  ids.forEach(id => patchAdminVideo(id, cfg.patch));
-  pushAdminEvent(cfg.icon, `${ids.length} video ${cfg.msg} via bulk action`);
+  ids.forEach(id => {
+    patchAdminVideo(id, cfg.patch);
+    // C-2 H3: notify creator + per-video audit
+    const v = videoById.get(id);
+    if (v && v.creator && typeof deliverNotification === "function") {
+      try {
+        const notifMap = {
+          takedown: { type: "video-takedown", text: `⛔ Video kamu <b>"${escapeHtml(v.title || "(tanpa judul)")}"</b> di-takedown oleh admin.` },
+        };
+        const n = notifMap[action];
+        if (n) {
+          deliverNotification(v.creator, { type: n.type, text: n.text, init: cfg.icon, videoId: id, fromUsername: "admin" });
+        }
+      } catch (err) { console.warn("[bulk] notif failed:", err); }
+    }
+    if (v) pushAdminEvent(cfg.icon, `Video <i>"${escapeHtml(v.title || "(no title)")}"</i> ${cfg.msg}`);
+  });
+  pushAdminEvent(cfg.icon, `Bulk: ${ids.length} video ${cfg.msg}`);
   adminVideoState.selected.clear();
   toast(`${cfg.icon} ${ids.length} video ${cfg.msg}`, action === "takedown" ? "warning" : "success");
   renderAdminVideos();
@@ -25355,6 +25569,17 @@ function applyGvRowAction(id, action) {
       desc: `Video <b>${titleEsc}</b> akan dihapus permanen dari akun <b>@${escapeHtml(v.creator || v._owner)}</b>. Aksi ini tidak bisa dibatalkan.`,
       btnText: "Delete Permanently", btnClass: "danger",
       onConfirm: () => {
+        // C-2 H4 fix (2026-05-21): notify creator SEBELUM delete supaya
+        // record masih ada saat notify
+        if (typeof deliverNotification === "function" && v.creator) {
+          try {
+            deliverNotification(v.creator, {
+              type: "video-takedown",
+              text: `🗑️ Video kamu <b>${titleEsc}</b> dihapus permanen oleh admin.`,
+              init: "🗑️", videoId: id, fromUsername: "admin",
+            });
+          } catch (err) { console.warn("[delete] notify failed:", err); }
+        }
         deleteAdminVideo(id);
         pushAdminEvent("🗑️", `Force delete video <i>"${titleEsc}"</i> dari <b>@${escapeHtml(v.creator || v._owner)}</b>`);
         toast(`🗑️ <b>${titleEsc}</b> dihapus permanen`, "error");
@@ -25405,6 +25630,7 @@ function openAdminVideoEdit(v) {
 
 $("#aveSaveBtn")?.addEventListener("click", () => {
   if (!__aveCurrent) return;
+  const before = __aveCurrent;
   const patch = {
     title:      $("#aveTitle").value.trim() || __aveCurrent.title,
     desc:       $("#aveDesc").value.trim(),
@@ -25413,7 +25639,26 @@ $("#aveSaveBtn")?.addEventListener("click", () => {
     visibility: $("#aveVisibility").value
   };
   patchAdminVideo(__aveCurrent.id, patch);
-  pushAdminEvent("✏️", `Metadata video <i>"${escapeHtml(patch.title)}"</i> diupdate`);
+  // C-2 H5 fix (2026-05-21): audit log dgn DIFF per-field (sebelumnya hanya
+  // title baru, tidak ada track changes). Plus C-2 H4: notify creator.
+  const diffs = [];
+  if ((before.title || "") !== patch.title) diffs.push(`title: "${before.title || ""}" → "${patch.title}"`);
+  if ((before.desc || "") !== patch.desc) diffs.push("desc changed");
+  if ((before.tags || "") !== patch.tags) diffs.push("tags changed");
+  if ((before.category || "") !== patch.category) diffs.push(`category: "${before.category || ""}" → "${patch.category}"`);
+  if ((before.visibility || "") !== patch.visibility) diffs.push(`visibility: "${before.visibility || ""}" → "${patch.visibility}"`);
+  const diffSummary = diffs.length ? ` [${diffs.map(d => escapeHtml(d)).join(", ")}]` : "";
+  pushAdminEvent("✏️", `Metadata video <i>"${escapeHtml(patch.title)}"</i> diupdate${diffSummary}`);
+  // C-2 H4 fix (2026-05-21): notify creator kalau metadata diubah
+  if (diffs.length && typeof deliverNotification === "function" && before.creator) {
+    try {
+      deliverNotification(before.creator, {
+        type: "video-edited",
+        text: `✏️ Admin mengedit metadata video kamu <b>"${escapeHtml(patch.title)}"</b>.`,
+        init: "✏️", videoId: before.id, fromUsername: "admin",
+      });
+    } catch (err) { console.warn("[edit] notify failed:", err); }
+  }
   toast(`💾 <b>${escapeHtml(patch.title)}</b> berhasil diupdate`, "success");
   $("#adminVideoEditModal").classList.remove("show");
   __aveCurrent = null;
@@ -25551,10 +25796,25 @@ function renderAdminModeration() {
       // publish video yg masih pending.
       if (action === "approve") {
         item.status = "approved";
+        // C-2 H1 fix (2026-05-21): JANGAN auto-republish kalau video sudah
+        // takedown via path lain. Approve di mod queue artinya laporan
+        // ditolak — tapi kalau admin sudah explicit takedown via tabel
+        // video, status takedown harus stay. Hanya bump dari "pending"
+        // → "published".
         if (item.videoId && typeof patchAdminVideo === "function") {
-          try { patchAdminVideo(item.videoId, { adminStatus: "published" }); } catch (err) { console.warn("[mod] approve patch failed:", err); }
+          try {
+            const all = (typeof getAllAdminVideos === "function") ? getAllAdminVideos() : [];
+            const target = all.find(v => v.id === item.videoId);
+            const curStatus = target && target.adminStatus;
+            if (curStatus === "pending" || !curStatus) {
+              patchAdminVideo(item.videoId, { adminStatus: "published" });
+            } else {
+              // already published or takedown — leave alone, just close the report
+              console.info(`[mod] approve report only — video adminStatus stays "${curStatus}"`);
+            }
+          } catch (err) { console.warn("[mod] approve patch failed:", err); }
         }
-        pushAdminEvent("✓", `Video <i>"${item.title}"</i> di-approve`);
+        pushAdminEvent("✓", `Laporan video <i>"${escapeHtml(item.title)}"</i> di-approve`);
       }
       if (action === "remove") {
         item.status = "removed";
