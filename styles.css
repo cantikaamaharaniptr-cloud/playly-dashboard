@@ -63242,14 +63242,14 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
    ========================================================= */
 
 /* (R-1) Topbar sticky transparent → solid background di SEMUA viewport
-   (per user 2026-05-21 v8: desktop juga harus solid, sebelumnya cuma
-   fix mobile). Issue: konten scroll (hero greeting, profile card,
-   tombol) peek through sticky topbar karena rule ~line 47169 set
-   bg transparent + tanpa backdrop-filter. Fix: solid bg pakai
-   var(--bg) di ALL widths supaya obscure konten saat scroll. */
+   (per user 2026-05-21 v8: desktop juga harus solid). Issue: konten
+   scroll (hero greeting, profile card, tombol) peek through sticky
+   topbar karena rule ~line 47169 set bg transparent + tanpa backdrop.
+   Per user v9: warna samakan dgn sidebar → pakai var(--bg-elev)
+   (#251419) bukan var(--bg). Apply ke user DAN admin role. */
 html body:not([data-role="admin"]):not(.auth-mode) .topbar,
 html body[data-role="admin"]:not(.auth-mode) .topbar {
-  background-color: var(--bg) !important;
+  background-color: var(--bg-elev) !important;
   background-image: none !important;
 }
 
