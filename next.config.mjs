@@ -7,10 +7,18 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        // / and /admin: cutover 2026-05-21 — sekarang served oleh app/page.tsx
-        // & app/admin/page.tsx (Next.js React). Legacy bundle masih ada di
-        // public/legacy/* untuk /watch, /embed, /id/* sampai Phase 7 dashboard
-        // build complete.
+        // Reverted 2026-05-21: user prefer legacy landing (auth-mode + landing
+        // sections sudah di-setup dengan visual + animasi yang nggak ke-rebuild
+        // di Next.js version). React landing & admin pages di app/page.tsx +
+        // app/admin/page.tsx jadi dead code sementara — sengaja dibiarkan untuk
+        // future restore atau referensi.
+        //
+        // Next.js dashboard tetap accessible:
+        //   /dashboard, /dashboard/*  (Supabase auth-gated)
+        //   /auth/reset               (forgot password destination)
+        //   /api/translate-subtitle   (DeepL proxy)
+        { source: '/', destination: '/legacy/index.html' },
+        { source: '/admin', destination: '/legacy/index.html' },
         { source: '/watch', destination: '/legacy/watch.html' },
         { source: '/embed', destination: '/legacy/embed.html' },
         { source: '/id/:videoId/embed', destination: '/legacy/embed.html?v=:videoId' },
