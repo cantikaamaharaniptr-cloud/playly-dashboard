@@ -19,7 +19,7 @@
  */
 
 // ===== CONFIG =====
-const SUPABASE_URL = "https://ocsonstwwdnwjmhojntf.supabase.co";
+const SUPABASE_URL = "https://gwafnhioootttnudktbr.supabase.co";
 
 // ⚠️ ISI INI DENGAN SERVICE ROLE KEY (BUKAN anon key).
 // Ambil di: Supabase Dashboard → Settings → API → service_role secret.
