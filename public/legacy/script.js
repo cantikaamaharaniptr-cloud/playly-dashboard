@@ -18939,13 +18939,6 @@ $("#signinForm").addEventListener("submit", async e => {
   const correctRole = isAllowedAdminEmail(existing.email) ? "admin" : "user";
   user = { name: existing.name, username: existing.username, email: existing.email, joinedAt: existing.joinedAt, role: correctRole, tier: existing.tier || "free", premiumPlan: existing.premiumPlan || null, premiumStartedAt: existing.premiumStartedAt || null, premiumExpiresAt: existing.premiumExpiresAt || null, loggedInAt: Date.now() /* C-4 U-L1: session expiry stamp */ };
 
-  // === SUPABASE AUTH BRIDGE (Phase 7b, 2026-05-21) ===
-  // Sync legacy signin → Supabase Auth supaya /dashboard Next.js (yang baca
-  // Supabase cookie) accessible. Silent fail kalau bridge unavailable.
-  try {
-    await window.supabaseAuthBridge?.syncSignin?.(email, password, user);
-  } catch (_) {}
-
   // C-4 U-L3 fix (2026-05-21): kalau admin reset password user, mustChangePassword
   // di-set true. Warn user supaya ganti via Settings → Account.
   if (existing.mustChangePassword) {
@@ -19798,13 +19791,6 @@ $("#signupForm").addEventListener("submit", async e => {
     localStorage.setItem("playly-user", JSON.stringify(user));
     // Track akun ini di device-list — signup dianggap sebagai login pertama.
     addDeviceAccount(user.email);
-
-    // === SUPABASE AUTH BRIDGE (Phase 7b, 2026-05-21) ===
-    // Sync legacy signup → Supabase Auth supaya akun ke-mirror di cloud +
-    // /dashboard Next.js accessible. Silent fail kalau bridge unavailable.
-    try {
-      await window.supabaseAuthBridge?.syncSignup?.(email, password, user);
-    } catch (_) {}
     state = defaultState();
     saveState();
 
