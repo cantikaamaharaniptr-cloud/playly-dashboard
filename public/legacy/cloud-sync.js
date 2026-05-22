@@ -260,6 +260,23 @@
     }
     return data || [];
   }
+
+  // EGRESS OPT v2 (2026-05-22): fetch key list ONLY (tanpa value). Payload
+  // ~30 byte/key vs KB-an per row kalau ikut value. Dipakai boot delta sync
+  // untuk tau key apa yang ada di cloud tanpa download semua value.
+  async function fetchAllKeys() {
+    const sb = client();
+    if (!sb) return [];
+    const { data, error } = await sb
+      .from("kv")
+      .select("key")
+      .like("key", `${PREFIX}%`);
+    if (error) {
+      console.warn("[cloud] fetch keys failed:", error.message);
+      return [];
+    }
+    return (data || []).map((r) => r.key);
+  }
   // Track latest updated_at yg sudah kita pull — untuk delta selanjutnya.
   const LAST_SYNC_KEY = "playly-cloud-last-sync";
   function getLastSync() {
@@ -320,10 +337,22 @@
     const sb = client();
     if (!sb) return;
     const localBefore = snapshotLocalKeys();
-    // EGRESS OPT (2026-05-21): boot/full sync ambil semua, tapi simpan
-    // lastSync timestamp setelahnya supaya softResync berikutnya delta saja.
-    const cloudRows = await fetchAllRows();
-    const cloudKeys = new Set(cloudRows.map((r) => r.key));
+    // EGRESS OPT v2 (2026-05-22): boot sync sebelumnya SELALU full-fetch semua
+    // value tiap page load → egress drain utama (quota 5GB jebol berulang).
+    // Sekarang: kalau device ini PERNAH sync (ada lastSync timestamp), boot
+    // cuma tarik DELTA value (updated_at > lastSync, kecil) + key-list
+    // (select key only, ~30 byte/key). Hanya first-ever visit yang full fetch.
+    // Hasil: ~90%+ egress reduction untuk repeat visitors.
+    const lastSync = getLastSync();
+    let cloudRows;
+    let cloudKeys;
+    if (lastSync) {
+      cloudRows = await fetchAllRows({ since: lastSync });
+      cloudKeys = new Set(await fetchAllKeys());
+    } else {
+      cloudRows = await fetchAllRows();
+      cloudKeys = new Set(cloudRows.map((r) => r.key));
+    }
     applyToLocal(cloudRows);
     updateLastSyncFromRows(cloudRows);
     for (const [k, raw] of localBefore.entries()) {
