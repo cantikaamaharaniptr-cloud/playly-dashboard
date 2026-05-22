@@ -1,174 +1,85 @@
-/* Playly Supabase Auth Bridge — Phase 7b (2026-05-21).
- * Legacy signin/signup → ALSO sync ke Supabase Auth supaya:
- *   - User bisa akses Next.js /dashboard (auth-gated via Supabase cookie)
- *   - Account ke-mirror di cloud (cross-device, beyond localStorage)
+/* Playly Supabase Auth Bridge — Phase 7b (2026-05-22, v2 cookie-based).
  *
- * Dipanggil dari script.js setelah legacy auth flow success. Silent
- * fail kalau Supabase CDN / config missing — legacy tetep jalan.
+ * Legacy signin/signup → POST kredensial ke /api/auth/bridge (Next.js
+ * route handler). Route itu sign-in ke Supabase via @supabase/ssr →
+ * session ter-tulis ke COOKIE. Karena same-origin, cookie ke-set di
+ * browser → Next.js /dashboard (auth-gated via cookie) accessible.
  *
- * EMAIL CONFIRMATION NOTE: Supabase project default mengirim email
- * konfirmasi saat signUp. User TIDAK akan langsung login ke /dashboard
- * sampai mereka klik link di email. Untuk skip langkah ini:
- *   Supabase Dashboard → Authentication → Providers → Email →
- *   "Confirm email" → OFF
- * Setelah disable, signup langsung dapat session + /dashboard accessible.
+ * v1 (deprecated) pakai CDN supabase-js langsung → session ke localStorage,
+ * yang TIDAK kebaca @supabase/ssr (cookie-based). v2 ini fix gap itu.
+ *
+ * Silent fail kalau endpoint unreachable — legacy auth tetap jalan.
  */
 (function () {
   "use strict";
 
-  function getClient() {
-    const cfg = window.PLAYLY_SUPABASE;
-    if (!cfg || !cfg.url || !cfg.key) return null;
-    if (!window.supabase || !window.supabase.createClient) return null;
-    // Reuse single client per page-load. Persist session ke localStorage
-    // supaya saat user navigate ke /dashboard, cookie sudah ter-set.
-    if (!window.__playlySupabaseAuthClient) {
-      window.__playlySupabaseAuthClient = window.supabase.createClient(
-        cfg.url,
-        cfg.key,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: false,
-          },
-        }
-      );
-    }
-    return window.__playlySupabaseAuthClient;
+  var ENDPOINT = "/api/auth/bridge";
+
+  // Sync legacy signin → Supabase cookie session.
+  async function syncSignin(email, password, profile) {
+    return postBridge(email, password, profile, "signin");
   }
 
-  // Sync existing-account signin. Akun di Supabase mungkin sudah ada
-  // (kalau user pernah login sebelumnya post-patch) atau belum. Strategy:
-  //   1. Try signInWithPassword
-  //   2. Kalau "Invalid login credentials", akun belum ada → signUp + signin lagi
-  //   3. Kalau "Email not confirmed", log warning (user perlu disable email
-  //      confirm di Supabase Dashboard)
-  async function syncSignin(email, password, profile) {
-    const sb = getClient();
-    if (!sb) {
-      console.log("[supabase-bridge] Supabase client unavailable; skip sync");
-      return { synced: false, reason: "no_client" };
+  // Sync legacy signup → Supabase cookie session.
+  async function syncSignup(email, password, profile) {
+    return postBridge(email, password, profile, "signup");
+  }
+
+  async function postBridge(email, password, profile, kind) {
+    if (!email || !password) {
+      return { synced: false, reason: "missing_credentials" };
     }
     try {
-      const { error: signinErr } = await sb.auth.signInWithPassword({
-        email,
-        password,
+      const resp = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          name: profile && profile.name ? profile.name : "",
+        }),
       });
-      if (!signinErr) {
-        console.log("[supabase-bridge] ✓ signin synced to Supabase");
+      let data;
+      try {
+        data = await resp.json();
+      } catch {
+        data = null;
+      }
+      if (resp.ok && data && data.ok) {
+        console.log(
+          "[supabase-bridge] ✓ " +
+            kind +
+            " synced to Supabase (cookie set, action=" +
+            (data.action || "?") +
+            ")"
+        );
         return { synced: true };
       }
-      // Account belum ada di Supabase → buat
-      console.log("[supabase-bridge] signin failed, trying signup:", signinErr.message);
-      const { error: signupErr } = await sb.auth.signUp({
-        email,
-        password,
-        options: {
-          data: cleanProfileData(profile),
-        },
-      });
-      if (signupErr) {
-        console.warn("[supabase-bridge] signup also failed:", signupErr.message);
-        return { synced: false, reason: signupErr.message };
-      }
-      // Try signin lagi (works kalau email confirmation disabled)
-      const { error: retry } = await sb.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (retry) {
-        if (/confirm/i.test(retry.message)) {
-          console.warn(
-            "[supabase-bridge] account created tapi butuh email confirm. " +
-              "Disable di Supabase Dashboard → Auth → Providers → Email → Confirm email = OFF."
-          );
-          return { synced: false, reason: "needs_email_confirm" };
-        }
-        console.warn("[supabase-bridge] retry signin failed:", retry.message);
-        return { synced: false, reason: retry.message };
-      }
-      console.log("[supabase-bridge] ✓ account created + signed in to Supabase");
-      return { synced: true };
+      const reason = (data && data.error) || "http_" + resp.status;
+      console.warn("[supabase-bridge] " + kind + " sync failed:", reason);
+      return { synced: false, reason: reason };
     } catch (err) {
-      console.warn("[supabase-bridge] sync exception:", err);
+      console.warn("[supabase-bridge] " + kind + " sync exception:", err);
       return { synced: false, reason: String(err) };
     }
   }
 
-  // Sync signup. User baru daftar legacy → also create Supabase account.
-  async function syncSignup(email, password, profile) {
-    const sb = getClient();
-    if (!sb) return { synced: false, reason: "no_client" };
-    try {
-      const { error: signupErr } = await sb.auth.signUp({
-        email,
-        password,
-        options: {
-          data: cleanProfileData(profile),
-        },
-      });
-      if (signupErr) {
-        // "User already registered" — bukan error fatal, mungkin user signup
-        // legacy ulang. Try signin instead.
-        if (/already/i.test(signupErr.message)) {
-          const { error: signinErr } = await sb.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (!signinErr) return { synced: true };
-          return { synced: false, reason: signinErr.message };
-        }
-        console.warn("[supabase-bridge] signup failed:", signupErr.message);
-        return { synced: false, reason: signupErr.message };
-      }
-      // Try signin to get session set (kalau email confirm disabled)
-      const { error: signinErr } = await sb.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signinErr && /confirm/i.test(signinErr.message)) {
-        console.warn(
-          "[supabase-bridge] account created tapi butuh email confirm. " +
-            "Disable di Supabase Dashboard."
-        );
-        return { synced: false, reason: "needs_email_confirm" };
-      }
-      console.log("[supabase-bridge] ✓ signup synced to Supabase");
-      return { synced: true };
-    } catch (err) {
-      console.warn("[supabase-bridge] signup sync exception:", err);
-      return { synced: false, reason: String(err) };
-    }
-  }
-
-  // Sign out dari Supabase (called saat legacy logout).
+  // Sign out dari Supabase (clear cookie). Dipanggil saat legacy logout.
   async function syncSignout() {
-    const sb = getClient();
-    if (!sb) return;
     try {
-      await sb.auth.signOut();
+      await fetch(ENDPOINT, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
     } catch (err) {
       console.warn("[supabase-bridge] signout exception:", err);
     }
   }
 
-  // Strip fields yang sensitif/large dari profile object sebelum ke
-  // user_metadata. Hanya kirim yang berguna untuk dashboard rendering.
-  function cleanProfileData(profile) {
-    if (!profile || typeof profile !== "object") return {};
-    const out = {};
-    ["name", "username", "role", "tier"].forEach((k) => {
-      if (typeof profile[k] === "string" || typeof profile[k] === "boolean") {
-        out[k] = profile[k];
-      }
-    });
-    return out;
-  }
-
   window.supabaseAuthBridge = {
-    syncSignin,
-    syncSignup,
-    syncSignout,
+    syncSignin: syncSignin,
+    syncSignup: syncSignup,
+    syncSignout: syncSignout,
   };
 })();

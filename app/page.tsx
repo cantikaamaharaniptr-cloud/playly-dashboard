@@ -15,6 +15,9 @@ import { UserHowItWorks } from '@/components/user/landing/UserHowItWorks';
 import { UserPlans } from '@/components/user/landing/UserPlans';
 import { requireAnon } from '@/lib/auth/guard';
 
+// Baca cookie session (requireAnon) — selalu dynamic.
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   await requireAnon('/dashboard');
 

@@ -6,6 +6,10 @@ import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Topbar } from '@/components/dashboard/Topbar';
 import { requireUser } from '@/lib/auth/guard';
 
+// Auth-gated — selalu dynamic (baca cookie session). Cegah Next.js coba
+// static-prerender yang gagal di cookies().
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

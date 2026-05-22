@@ -16,6 +16,9 @@ import { AdminAuthShowcase } from '@/components/auth/AdminAuthShowcase';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { requireAnon } from '@/lib/auth/guard';
 
+// Baca cookie session (requireAnon) — selalu dynamic.
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Playly. — Admin Login',
 };
