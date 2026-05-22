@@ -2919,6 +2919,69 @@ function initLandingAnimations() {
     window.addEventListener("resize", onScrollOrResize, { passive: true });
     computeScroll();
   }
+
+  // 7. Pratinjau section quick-win animations (2026-05-22).
+  // Saat .preview-card masuk viewport → add class .pm-in (CSS pakai ini
+  // utk bar fill + staggered list reveal) + jalankan count-up angka tile.
+  // Isolated dari sistem [data-reveal] global supaya tidak konflik.
+  const _pmReduceMotion =
+    (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+    document.body.classList.contains("reduced-motion");
+
+  // Count-up yg PRESERVE format asli ("1.2k", "89.4k", "12", "247").
+  const pmCountUp = (el) => {
+    if (el.dataset._pmCounted === "1") return;
+    el.dataset._pmCounted = "1";
+    const raw = (el.textContent || "").trim();
+    // Parse: angka (boleh desimal) + suffix opsional k/M + opsional "+"
+    const m = raw.match(/^([\d.]+)\s*([kKmM]?)(\+?)$/);
+    if (!m) return;
+    const num = parseFloat(m[1]);
+    const suffix = (m[2] || "") + (m[3] || "");
+    const decimals = (m[1].split(".")[1] || "").length;
+    if (!Number.isFinite(num)) return;
+    if (_pmReduceMotion) { el.textContent = raw; return; }
+    const dur = 1500;
+    const startT = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - startT) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = (num * eased).toFixed(decimals) + suffix;
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = raw;
+        el.classList.add("pm-count-done");
+        setTimeout(() => el.classList.remove("pm-count-done"), 260);
+      }
+    };
+    el.textContent = (0).toFixed(decimals) + suffix;
+    requestAnimationFrame(tick);
+  };
+
+  const pmCards = document.querySelectorAll("#authPreviewSection .preview-card");
+  if (pmCards.length) {
+    if (!("IntersectionObserver" in window)) {
+      // Fallback — langsung tampilkan state akhir
+      pmCards.forEach(c => {
+        c.classList.add("pm-in");
+        c.querySelectorAll("[data-pm-counter]").forEach(el => {
+          el.dataset._pmCounted = "1";
+        });
+      });
+    } else {
+      const pmIO = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          const card = e.target;
+          card.classList.add("pm-in");
+          card.querySelectorAll("[data-pm-counter]").forEach(pmCountUp);
+          pmIO.unobserve(card);
+        });
+      }, { threshold: 0.25, rootMargin: "0px 0px -40px 0px" });
+      pmCards.forEach(c => pmIO.observe(c));
+    }
+  }
 }
 
 function hideAuth() {

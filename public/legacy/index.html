@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260522-supabase-v3-v408" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260522-pratinjau-anim-v409" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -1226,19 +1226,19 @@
             <!-- FREE-only: quota meter -->
             <div class="pm-quota">
               <div class="pm-quota-row"><span>Videos this month</span><b>42 / 60</b></div>
-              <div class="pm-bar"><i style="width:70%"></i></div>
+              <div class="pm-bar"><i style="--pm-fill:70%"></i></div>
               <div class="pm-quota-row"><span>Storage this month</span><b>720 MB / 1 GB</b></div>
-              <div class="pm-bar"><i style="width:70%"></i></div>
+              <div class="pm-bar"><i style="--pm-fill:70%"></i></div>
             </div>
             <div class="pm-row-2col">
               <div class="pm-tile">
                 <span class="pm-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10l5-2.5v9l-5-2.5z"/></svg></span>
-                <strong>12</strong>
+                <strong data-pm-counter>12</strong>
                 <small>Total Videos</small>
               </div>
               <div class="pm-tile">
                 <span class="pm-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                <strong>1.2k</strong>
+                <strong data-pm-counter>1.2k</strong>
                 <small>Views</small>
               </div>
             </div>
@@ -1285,12 +1285,12 @@
             <div class="pm-row-2col">
               <div class="pm-tile">
                 <span class="pm-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10l5-2.5v9l-5-2.5z"/></svg></span>
-                <strong>247</strong>
+                <strong data-pm-counter>247</strong>
                 <small>Total Videos</small>
               </div>
               <div class="pm-tile">
                 <span class="pm-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                <strong>89.4k</strong>
+                <strong data-pm-counter>89.4k</strong>
                 <small>Views</small>
               </div>
             </div>
@@ -8279,7 +8279,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260522-supabase-v3-v408"></script>
+  <script src="/legacy/cloud-sync.js?v=20260522-pratinjau-anim-v409"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8659,7 +8659,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260522-supabase-v3-v408" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260522-pratinjau-anim-v409" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

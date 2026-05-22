@@ -63471,3 +63471,86 @@ html body[data-role="admin"]:not(.auth-mode) .topbar {
     width: 100% !important;
   }
 }
+
+/* =========================================================
+   PRATINJAU QUICK-WIN ANIMATIONS (2026-05-22)
+   Per user request — UI/UX polish section Pratinjau:
+   (1) card hover lift, (2) quota bar fill on reveal,
+   (3) staggered feature-list reveal, (4) count-up trigger.
+   Pakai class isolated `.pm-in` (di-add oleh IntersectionObserver
+   di initLandingAnimations item #7) supaya tidak konflik dgn
+   sistem [data-reveal] global. Reduced-motion dihormati di blok
+   @media paling bawah.
+   ========================================================= */
+
+/* (1) Card hover lift — feedback responsif saat hover */
+.auth-preview-grid .preview-card {
+  transition:
+    transform .3s cubic-bezier(.22, 1, .36, 1),
+    box-shadow .3s ease,
+    border-color .3s ease;
+}
+.auth-preview-grid .preview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .34);
+}
+.auth-preview-grid .preview-card.preview-premium:hover {
+  box-shadow: 0 16px 42px rgba(212, 166, 74, .18);
+  border-color: rgba(212, 166, 74, .5);
+}
+
+/* (2) Quota bar fill — width 0 → target saat card masuk viewport.
+   HTML inline diubah dari width:70% → --pm-fill:70%. */
+.preview-card .pm-bar i {
+  width: 0;
+  transition: width 1.1s cubic-bezier(.22, 1, .36, 1) .2s;
+}
+.preview-card.pm-in .pm-bar i {
+  width: var(--pm-fill, 70%);
+}
+
+/* (3) Staggered feature-list reveal — 7 item fade+slide satu per satu */
+.preview-card .preview-features li {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity .5s ease,
+    transform .5s cubic-bezier(.22, 1, .36, 1);
+}
+.preview-card.pm-in .preview-features li { opacity: 1; transform: translateY(0); }
+.preview-card.pm-in .preview-features li:nth-child(1) { transition-delay: .12s; }
+.preview-card.pm-in .preview-features li:nth-child(2) { transition-delay: .19s; }
+.preview-card.pm-in .preview-features li:nth-child(3) { transition-delay: .26s; }
+.preview-card.pm-in .preview-features li:nth-child(4) { transition-delay: .33s; }
+.preview-card.pm-in .preview-features li:nth-child(5) { transition-delay: .40s; }
+.preview-card.pm-in .preview-features li:nth-child(6) { transition-delay: .47s; }
+.preview-card.pm-in .preview-features li:nth-child(7) { transition-delay: .54s; }
+
+/* (4) Count-up tile — subtle scale pop saat angka selesai berhitung */
+.preview-card .pm-tile strong[data-pm-counter] {
+  transition: transform .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+.preview-card .pm-tile strong.pm-count-done {
+  transform: scale(1.12);
+}
+
+/* Reduced-motion — semua animasi Pratinjau di-nonaktifkan,
+   state akhir langsung ditampilkan (bar penuh, list tampil). */
+@media (prefers-reduced-motion: reduce) {
+  .auth-preview-grid .preview-card,
+  .preview-card .pm-bar i,
+  .preview-card .preview-features li,
+  .preview-card .pm-tile strong[data-pm-counter] {
+    transition: none !important;
+  }
+  .auth-preview-grid .preview-card:hover { transform: none; }
+  .preview-card .pm-bar i { width: var(--pm-fill, 70%); }
+  .preview-card .preview-features li { opacity: 1; transform: none; }
+}
+body.reduced-motion .auth-preview-grid .preview-card,
+body.reduced-motion .preview-card .pm-bar i,
+body.reduced-motion .preview-card .preview-features li {
+  transition: none !important;
+}
+body.reduced-motion .preview-card .pm-bar i { width: var(--pm-fill, 70%); }
+body.reduced-motion .preview-card .preview-features li { opacity: 1; transform: none; }
