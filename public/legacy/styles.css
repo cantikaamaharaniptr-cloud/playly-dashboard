@@ -11643,11 +11643,20 @@ body[data-theme="light"] .auth-orb::after { border-color: rgba(109, 41, 50, .4);
 }
 .auth-illus .floating-card span { font-size: 13px; }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-card {
-  /* was pure white gradient — now cream surface so it sits on the cream page */
-  background: linear-gradient(135deg, #FAEAC7 0%, #F5E8C9 100%) !important;
-  border-color: rgba(102, 34, 34, .18) !important;
+  /* was pure white gradient — now SOLID cream card surface, sedikit lebih
+     terang dari --bg (#F5E8C9) supaya jelas terpisah dari halaman. Blur
+     dimatikan supaya tidak washed-out / kelihatan putih. */
+  background: #FAEAC7 !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(132, 42, 59, .32) !important;
   color: var(--text) !important;
-  box-shadow: 0 6px 20px rgba(102, 34, 34, .12) !important;
+  box-shadow: 0 6px 18px rgba(102, 34, 34, .15) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-card span,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-card b {
+  color: var(--text) !important;
 }
 /* Cards di tiga sudut auth-illus, mengelilingi orb pusat secara rapat & seimbang.
    Hindari transform-based centering — keyframe `float` pakai transform:translateY. */
@@ -11789,12 +11798,12 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-car
 .auth-card[data-auth-state="signup-form"] #signupTierPill {
   display: inline-flex !important;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 3px 9px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 10px;
   color: var(--text-2);
   margin-bottom: 14px;
 }
@@ -33489,24 +33498,60 @@ body[data-theme="light"] .user-bg-grid {
   display: none !important;
 }
 
-/* Orbs (.orb-1, .orb-2, .orb-3) — DIHAPUS untuk user role per 2026-05-07.
-   3 large blur radial gradient (800/720/520px) dengan orbFloat animation
-   bikin "patch warna" yang bergerak — user complain backdrop ngeblok &
-   ngebentuk petak. Hapus supaya bg user 100% flat seragam. */
-body:not([data-role="admin"]) .orb-1,
-body:not([data-role="admin"]) .orb-2,
+/* Orbs (.orb-1, .orb-2, .orb-3) — DIAKTIFKAN untuk user dashboard per
+   2026-05-22: backdrop user kini match motion admin (3 floating orbs +
+   aurora bar). Hanya MOTION yang dicopy (orbFloat 14s, transform-only);
+   warna tetap wine/cream theme user — BUKAN slate admin.
+   `.orb` base sudah kasih blur(160px) + opacity .32 + mix-blend:screen +
+   orbFloat animation. Di sini cuma override radial-gradient ke wine/cream. */
+body:not([data-role="admin"]) .orb-1 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(140, 58, 69, .50) 0%,
+    rgba(140, 58, 69, .20) 38%,
+    rgba(140, 58, 69, 0) 72%);
+}
+body:not([data-role="admin"]) .orb-2 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(232, 216, 196, .40) 0%,
+    rgba(232, 216, 196, .15) 38%,
+    rgba(232, 216, 196, 0) 72%);
+}
 body:not([data-role="admin"]) .orb-3 {
-  display: none !important;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(199, 183, 163, .26) 0%,
+    rgba(199, 183, 163, .10) 40%,
+    rgba(199, 183, 163, 0) 75%);
+}
+/* Light theme — bg cream pucat, butuh warna lebih saturated supaya orb
+   kebaca sebagai glow halus di atas bg terang (bukan ngeblok). */
+body[data-theme="light"]:not([data-role="admin"]) .orb-1 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(132, 42, 59, .42) 0%,
+    rgba(132, 42, 59, .18) 38%,
+    rgba(132, 42, 59, 0) 72%);
+}
+body[data-theme="light"]:not([data-role="admin"]) .orb-2 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(220, 169, 109, .40) 0%,
+    rgba(220, 169, 109, .16) 38%,
+    rgba(220, 169, 109, 0) 72%);
+}
+body[data-theme="light"]:not([data-role="admin"]) .orb-3 {
+  background: radial-gradient(circle at 50% 50%,
+    rgba(199, 183, 163, .30) 0%,
+    rgba(199, 183, 163, .12) 40%,
+    rgba(199, 183, 163, 0) 75%);
 }
 @keyframes userBgGridDrift {
   0%   { background-position: 0 0; }
   100% { background-position: 320px 320px; }
 }
 
-/* (2) Floating sparkle particles — 12 dots drifting upward (cream + wine glow).
-   position: fixed supaya partikel drift di seluruh viewport, ga ngilang saat
-   user scroll ke bagian Pricing/Preview/HowItWorks/FAQ. */
+/* (2) Floating sparkle particles — DIHAPUS per 2026-05-22 supaya backdrop
+   user benar-benar match admin dashboard (yang tidak punya partikel sama
+   sekali). Backdrop user sekarang = orbs + aurora bar saja. */
 .user-bg-particles {
+  display: none !important;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -33569,16 +33614,43 @@ body:not([data-role="admin"]) .orb-3 {
   100% { transform: translate(-20px, -105vh) scale(.5); opacity: 0;   }
 }
 
-/* (3) Aurora bar — DISABLED per user 2026-05-06 round 4.
-   Glow di body::before udah cukup, layer ini cuma nambah boundary
-   di area transisi yang bikin "box" keliatan. */
-.user-bg-aurora { display: none !important; }
+/* (3) Aurora bar — DIAKTIFKAN per 2026-05-22 supaya match admin dashboard
+   backdrop. Struktur identik dgn `.admin-bg-aurora`: bottom-anchored bar,
+   height 580px, blur(46px), mask linear-gradient supaya tepi atas fade
+   halus (bukan box keras), motion `adminAuroraShift` 12s (transform-only:
+   translateX + scaleX, TIDAK ada animasi warna). Warna wine khusus user. */
+.user-bg-aurora {
+  display: block;
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  height: 580px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(140, 58, 69, .06) 10%,
+    rgba(140, 58, 69, .18) 24%,
+    rgba(132, 42, 59, .30) 40%,
+    rgba(120, 38, 52, .38) 54%,
+    rgba(109, 41, 50, .46) 72%,
+    rgba(99, 36, 46, .54) 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, black 12%, black 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 12%, black 100%);
+  filter: blur(46px);
+  animation: adminAuroraShift 12s ease-in-out infinite;
+  opacity: 1;
+}
+/* Light theme — bg cream, butuh wine soft yang tetap kebaca tanpa
+   bikin area bawah jadi gelap pekat. */
 body[data-theme="light"] .user-bg-aurora {
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(109, 41, 50, .35) 35%,
-    rgba(232, 169, 110, .25) 65%,
-    rgba(217, 119, 6, .18) 100%);
+    rgba(132, 42, 59, .08) 10%,
+    rgba(132, 42, 59, .20) 30%,
+    rgba(132, 42, 59, .30) 55%,
+    rgba(120, 38, 52, .36) 80%,
+    rgba(109, 41, 50, .40) 100%);
   opacity: 1;
 }
 @keyframes userAuroraShift {
@@ -33586,11 +33658,24 @@ body[data-theme="light"] .user-bg-aurora {
   50%      { transform: translateX(20px); }
 }
 
-/* Reduced motion — stop animations + lower intensity */
+/* Reduced motion — stop animations + lower intensity. Termasuk orbs +
+   aurora baru (2026-05-22): kalau user prefers-reduced-motion, orb &
+   aurora tetap tampil tapi diam (animation: none). */
 body.reduced-motion .user-bg-grid,
 body.reduced-motion .user-bg-particles .ubp,
-body.reduced-motion .user-bg-aurora {
+body.reduced-motion .user-bg-aurora,
+body.reduced-motion:not([data-role="admin"]) .orb-1,
+body.reduced-motion:not([data-role="admin"]) .orb-2,
+body.reduced-motion:not([data-role="admin"]) .orb-3 {
   animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-role="admin"]) .orb-1,
+  body:not([data-role="admin"]) .orb-2,
+  body:not([data-role="admin"]) .orb-3,
+  body:not([data-role="admin"]) .user-bg-aurora {
+    animation: none !important;
+  }
 }
 body.reduced-motion .user-dashboard-bg { opacity: .55; }
 
@@ -52389,15 +52474,17 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .amb-icon svg path 
 /* Restore ikon line-art di auth-card light mode: SVG dgn atribut
    `fill="none"` (mata pw-toggle, picon leaf di tier-pill, ikon input)
    HARUS tetap fill:none — warna datang dari stroke=currentColor.
-   Tanpa ini ikon jadi blob wine gelap. */
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"],
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] path,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] circle,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] rect,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] line,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] ellipse,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] polyline,
-body[data-theme="light"]:not([data-role="admin"]) .auth-card svg[fill="none"] polygon,
+   Tanpa ini ikon jadi blob wine gelap.
+   PENTING: logo P (.umb-icon / .amb-icon) JUGA punya <svg fill="none">
+   tapi path-nya solid (fill=currentColor) → JANGAN kena reset ini, kalau
+   tidak logo jadi outline kosong (regresi). Maka di-exclude eksplisit. */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] path,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] circle,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] rect,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] line,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] ellipse,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] polyline,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card :not(.umb-icon):not(.amb-icon) > svg[fill="none"] polygon,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .picon,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .picon path,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .picon circle,
@@ -52405,6 +52492,21 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .picon rect,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .picon line {
   fill: none !important;
   stroke: currentColor !important;
+}
+/* Logo P di auth-card — paksa solid wine, menang atas reset di atas.
+   Selector dinaikkan spesifisitasnya (html + .auth-card + .umb-icon) supaya
+   tidak kalah dengan rule line-art apapun. Berlaku login/register/picker. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .umb-icon svg,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .amb-icon svg,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-brand-logo svg {
+  fill: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .umb-icon svg path,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .amb-icon svg path,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-brand-logo svg path,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-brand-logo path {
+  fill: var(--primary) !important;
+  stroke: none !important;
 }
 
 /* === LIGHT MODE FIX (2026-05-22 v453) — auth screens & landing visuals ===
@@ -52433,18 +52535,123 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .pw-toggle .pw-eye 
   stroke: currentColor !important;
 }
 
-/* (2a) Tier pill "Selected plan: Gratis" — chip krem terbaca, leaf icon
-   wine line-art jelas (bukan blob). */
-body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill {
-  background: rgba(245, 218, 167, 0.55) !important;
-  border: 1px solid rgba(102, 34, 34, 0.22) !important;
-  color: var(--text) !important;
-}
+/* (2a) Tier pill "Paket dipilih: Gratis" — chip krem solid (bukan washed-out
+   translucent), border wine halus, teks + ikon wine jelas terbaca. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupTierPill {
+  background: rgba(132, 42, 59, 0.07) !important;
+  border: 1px solid rgba(132, 42, 59, 0.28) !important;
+  color: var(--text-2) !important;
+}
+/* Ikon pill "Paket dipilih" diperbesar (per user 2026-05-22). Tidak
+   di-scope tema → ukuran konsisten di mode gelap & terang. */
+.auth-card .auth-tier-pill #signupTierPillIcon .picon,
+.auth-card .auth-tier-pill #signupTierPillIcon .picon-w {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+}
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill b,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill .picon {
   color: var(--primary) !important;
   -webkit-text-fill-color: var(--primary) !important;
+}
+/* Link "ubah" — wine, underline, jelas di krem */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill a,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupTierPill a {
+  color: var(--primary) !important;
+  -webkit-text-fill-color: var(--primary) !important;
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+}
+
+/* (5) Plan picker ("Pilih paket kamu") — light mode.
+   DULU: badge "Most popular" pakai --surface-3 abu-abu washed-out;
+   badge "Recommended" gradient emas→wine = muddy/tak terbaca; kartu
+   bg samar. FIX: kartu krem solid + border wine halus, badge jelas. */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card {
+  background: #FAEAC7 !important;
+  border: 1.5px solid rgba(132, 42, 59, 0.24) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card:hover {
+  border-color: var(--primary) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium {
+  border-color: rgba(184, 134, 47, 0.45) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium:hover {
+  border-color: #b8862f !important;
+}
+/* Badge "MOST POPULAR" — wine solid, teks krem terbaca */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-badge {
+  background: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
+  color: #F4E6D0 !important;
+  -webkit-text-fill-color: #F4E6D0 !important;
+}
+/* Badge "DIREKOMENDASIKAN" — krem solid + teks/bintang emas-bronze,
+   border bronze; bukan gradient muddy. */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-badge.apc-badge-premium {
+  background: #FAEAC7 !important;
+  border: 1px solid rgba(184, 134, 47, 0.65) !important;
+  color: #8a5a18 !important;
+  -webkit-text-fill-color: #8a5a18 !important;
+}
+/* Premium card accent (tanda centang ✓ & CTA) tetap bronze terbaca */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium ul li::before,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium .apc-cta {
+  color: #8a5a18 !important;
+}
+
+/* (6) Premium modal ("Buka Playly Premium" / #planPickerModal) — light mode.
+   DULU: eyebrow emas pucat #E8C88C low-contrast di krem; kartu .pp-card bg
+   nyaris transparan; badge "SAVE 25%"/"BEST DEAL" gradient emas muddy;
+   CTA "Choose plan" emas pucat tak terbaca. FIX: kartu krem solid, eyebrow
+   wine, badge bronze solid + teks krem, CTA wine. */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .plan-picker-eyebrow {
+  color: var(--primary) !important;
+  background: #FAEAC7 !important;
+  border: 1px solid rgba(132, 42, 59, 0.35) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card {
+  background: #FAEAC7 !important;
+  border: 1px solid rgba(132, 42, 59, 0.22) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card:hover:not(:disabled) {
+  border-color: var(--primary) !important;
+  box-shadow: 0 12px 30px -12px rgba(102, 34, 34, 0.30) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended {
+  background: #FAEAC7 !important;
+  border-color: rgba(184, 134, 47, 0.55) !important;
+  box-shadow: 0 8px 22px -10px rgba(102, 34, 34, 0.25) !important;
+}
+/* Badge "SAVE 25%" / "BEST DEAL" — bronze solid, teks krem terbaca */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-badge {
+  background: linear-gradient(135deg, #b8862f 0%, #8a5a18 100%) !important;
+  color: #F4E6D0 !important;
+  -webkit-text-fill-color: #F4E6D0 !important;
+  box-shadow: 0 4px 10px -2px rgba(102, 34, 34, 0.40) !important;
+}
+/* CTA "Choose plan →" / "Start trial →" — wine terbaca (bukan emas pucat) */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-cta {
+  color: var(--primary) !important;
+  -webkit-text-fill-color: var(--primary) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card:hover .pp-cta {
+  color: #8a3a2a !important;
+  -webkit-text-fill-color: #8a3a2a !important;
+}
+/* Harga IDR "≈ Rp..." — bronze gelap terbaca di krem */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-price-idr {
+  color: #8a5a18 !important;
+  -webkit-text-fill-color: #8a5a18 !important;
+}
+/* Ikon kartu (gift/star/flame/crown) — wine jelas */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg {
+  color: var(--primary) !important;
 }
 
 /* === ADMIN LANDING ID-SCOPED OVERRIDES ===
@@ -64044,6 +64251,32 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-ve
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-ad-label {
   color: #9a4a1e !important;
   -webkit-text-fill-color: #9a4a1e !important;
+}
+
+/* (3) Stat tiles Pratinjau (Free "12 / 1.2k", Premium "247 / 89.4k") —
+   DULU: tile bg translucent samar + accent bar ::before yang BERHENTI
+   mendadak di 12%/88% (top:0) → kelihatan "dua warna tumpuk" / pita
+   nyembul di tepi atas tile. FIX light mode: tile = krem solid bersih,
+   accent ::before jadi pita tipis rapi yang inset penuh & TIDAK nyembul
+   keluar dari sudut membulat tile. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-tile {
+  background: #FAEAC7 !important;
+  border: 1px solid rgba(132, 42, 59, 0.22) !important;
+  overflow: hidden !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-tile::before {
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  height: 3px !important;
+  border-radius: 0 !important;
+  opacity: 1 !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .preview-free .pm-tile::before {
+  background: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .preview-premium .pm-tile::before {
+  background: #b8862f !important;
 }
 
 /* Live badge — versi standalone (dipakai juga di header halaman Statistik,

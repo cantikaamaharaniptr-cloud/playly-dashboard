@@ -15297,7 +15297,7 @@ function setAuthState(state, opts = {}) {
       if (radio) radio.checked = true;
       const pillLabel = document.getElementById("signupTierPillLabel");
       const pillIcon = document.getElementById("signupTierPillIcon");
-      if (pillLabel) pillLabel.textContent = opts.tier === "premium" ? "Premium" : "Free";
+      if (pillLabel) pillLabel.textContent = opts.tier === "premium" ? "Premium" : "Gratis";
       if (pillIcon) pillIcon.textContent = opts.tier === "premium" ? "⭐" : "🌱";
     }
   }
