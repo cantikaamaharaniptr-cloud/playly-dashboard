@@ -4540,7 +4540,7 @@ const I18N = {
     "plans.subtitle":            "Start free. Upgrade anytime to unlock unlimited everything.",
     "plans.permonth":            "/month",
     "plans.foot":                "All plans include: cloud sync, encrypted storage, mobile-friendly playback, and access to community features.",
-    "plans.free.badge":          "Most popular",
+    "plans.free.badge":          "Basic plan",
     "plans.free.name":           "Free",
     "plans.free.tagline":        "Perfect for hobbyists & casual creators just getting started.",
     "plans.free.cta":            "Sign Up Free",
@@ -4559,7 +4559,7 @@ const I18N = {
     "pm.home":                   "🏠 Home",
     "pm.free":                   "🌱 Free",
     "pm.premium":                "⭐ Premium",
-    "pm.greet.creator":          "Hi, Creator 👋",
+    "pm.greet.creator":          "Hi, Creator",
     "pm.greet.welcome":          "Welcome back to your dashboard",
     "pm.greet.welcome.premium":  "Welcome back, Premium member",
     "pm.btn.upload":             "Upload",
@@ -4593,7 +4593,7 @@ const I18N = {
     "pf.premium.2":              "No quota meter — unlimited",
     "pf.premium.3":              "Ad-free — no banners or running text",
     "pf.premium.4":              "Full analytics + Premium Insights widget",
-    "pf.premium.5":              "Quick access: Live Stream, Custom Thumbnails",
+    "pf.premium.5":              "Quick access: Custom Thumbnails & Premium Insights",
     "pf.premium.6":              "Up to 4K playback quality",
     "pf.premium.7":              "Priority support button (live chat)",
     // ===== LANDING: HOW IT WORKS =====
@@ -6075,7 +6075,7 @@ const I18N = {
     "plans.subtitle":            "Mulai gratis. Upgrade kapan saja untuk unlock semua tanpa batas.",
     "plans.permonth":            "/bulan",
     "plans.foot":                "Semua paket termasuk: cloud sync, storage terenkripsi, playback mobile-friendly, dan akses fitur komunitas.",
-    "plans.free.badge":          "Paling populer",
+    "plans.free.badge":          "Paket Dasar",
     "plans.free.name":           "Gratis",
     "plans.free.tagline":        "Cocok untuk hobi & kreator pemula yang baru mulai.",
     "plans.free.cta":            "Daftar Gratis",
@@ -6094,7 +6094,7 @@ const I18N = {
     "pm.home":                   "🏠 Beranda",
     "pm.free":                   "🌱 Gratis",
     "pm.premium":                "⭐ Premium",
-    "pm.greet.creator":          "Hai, Kreator 👋",
+    "pm.greet.creator":          "Hai, Kreator",
     "pm.greet.welcome":          "Selamat datang kembali di dashboard kamu",
     "pm.greet.welcome.premium":  "Selamat datang kembali, member Premium",
     "pm.btn.upload":             "Unggah",
@@ -6119,16 +6119,16 @@ const I18N = {
     "pf.free.1":                 "Badge \"Gratis\" di profil",
     "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
     "pf.free.3":                 "Iklan sponsor saat menonton",
-    "pf.free.4":                 "Analytics dasar (7 hari terakhir saja)",
-    "pf.free.5":                 "Prompt \"Upgrade\" di dropdown & sidebar",
+    "pf.free.4":                 "Analitik dasar (7 hari terakhir saja)",
+    "pf.free.5":                 "Ajakan \"Upgrade\" di dropdown & sidebar",
     "pf.free.6":                 "Kualitas playback 720p",
     "pf.free.7":                 "Badge kreator standar",
     // PREMIUM features bullets
     "pf.premium.1":              "Badge terverifikasi \"Premium\" di mana-mana",
     "pf.premium.2":              "Tanpa meter kuota — tanpa batas",
     "pf.premium.3":              "Bebas iklan — tanpa banner atau running text",
-    "pf.premium.4":              "Analytics lengkap + widget Insight Premium",
-    "pf.premium.5":              "Akses cepat: Live Streaming, Thumbnail Kustom",
+    "pf.premium.4":              "Analitik lengkap + widget Premium Insights",
+    "pf.premium.5":              "Akses cepat: Thumbnail kustom & Premium Insights",
     "pf.premium.6":              "Kualitas playback hingga 4K",
     "pf.premium.7":              "Tombol dukungan prioritas (live chat)",
     // ===== LANDING: HOW IT WORKS =====
@@ -6138,15 +6138,15 @@ const I18N = {
     "howit.step1.title":         "Daftar gratis",
     "howit.step1.desc":          "Buat akun kamu dalam 30 detik. Gratis selamanya, tanpa kartu kredit. Upgrade Premium tinggal satu klik kapan kamu siap.",
     "howit.step2.title":         "Atur profil kamu",
-    "howit.step2.desc":          "Tambah avatar, banner, bio, dan link ke socials lainnya. Bangun brand yang bikin fans inget kamu.",
+    "howit.step2.desc":          "Tambah avatar, banner, bio, dan link ke media sosial lainmu. Bangun brand yang bikin fans ingat kamu.",
     "howit.step3.title":         "Unggah video kamu",
-    "howit.step3.desc":          "Drag & drop file video apa saja. Auto-thumbnail, auto-encode, preview instan. Gratis hingga 1 GB/bulan, Premium tanpa batas.",
+    "howit.step3.desc":          "Tarik & lepas file video apa saja. Thumbnail & encode otomatis, preview instan. Gratis hingga 1 GB/bulan, Premium tanpa batas.",
     "howit.step4.title":         "Bagikan & berinteraksi",
     "howit.step4.desc":          "Bagikan ke media sosial dengan satu klik. Balas komentar, DM fans, bangun komunitas langsung dari dashboard.",
     "howit.step5.title":         "Tumbuh dengan insight",
-    "howit.step5.desc":          "Lacak views, likes, waktu tonton, wilayah teratas. Premium membuka metrik engagement lanjutan & tren prediktif.",
+    "howit.step5.desc":          "Lacak tayangan, suka, waktu tonton, wilayah teratas. Premium membuka metrik engagement lanjutan & tren prediktif.",
     "howit.step6.title":         "Upgrade & monetisasi",
-    "howit.step6.desc":          "Buka 4K, bebas iklan, custom thumbnails, dan priority support dengan Premium. Earn dari badge kreator & status verified.",
+    "howit.step6.desc":          "Buka 4K, bebas iklan, thumbnail kustom, dan dukungan prioritas dengan Premium. Raih penghasilan dari badge kreator & status terverifikasi.",
     // ===== LANDING: FAQ =====
     "faq.eyebrow":               "FAQ",
     "faq.title":                 "Punya pertanyaan? Kami punya jawabannya",
@@ -7345,7 +7345,7 @@ const I18N = {
     "plans.subtitle":            "Mula percuma. Naik taraf bila-bila masa untuk membuka semua tanpa had.",
     "plans.permonth":            "/bulan",
     "plans.foot":                "Semua pelan termasuk: segerak awan, storan disulitkan, main balik mesra mudah alih, dan akses ciri komuniti.",
-    "plans.free.badge":          "Paling popular",
+    "plans.free.badge":          "Pelan Asas",
     "plans.free.name":           "Percuma",
     "plans.free.tagline":        "Sesuai untuk hobi & pencipta santai yang baru bermula.",
     "plans.free.cta":            "Daftar Percuma",
@@ -7394,7 +7394,7 @@ const I18N = {
     "pf.premium.2":              "Tiada meter kuota — tanpa had",
     "pf.premium.3":              "Bebas iklan — tiada sepanduk atau teks berjalan",
     "pf.premium.4":              "Analitik penuh + widget Wawasan Premium",
-    "pf.premium.5":              "Akses pantas: Siaran Langsung, Lakaran Kustom",
+    "pf.premium.5":              "Akses pantas: Lakaran Kustom & Premium Insights",
     "pf.premium.6":              "Kualiti main balik sehingga 4K",
     "pf.premium.7":              "Butang sokongan keutamaan (sembang langsung)",
     "howit.eyebrow":             "CARA KERJA",
@@ -8549,7 +8549,7 @@ const I18N = {
     "plans.subtitle":            "無料で開始。いつでもアップグレードしてすべてを無制限に。",
     "plans.permonth":            "/月",
     "plans.foot":                "全プランに含まれる：クラウド同期、暗号化ストレージ、モバイル対応再生、コミュニティ機能へのアクセス。",
-    "plans.free.badge":          "最も人気",
+    "plans.free.badge":          "ベーシック",
     "plans.free.name":           "無料",
     "plans.free.tagline":        "趣味やカジュアルクリエイターに最適。",
     "plans.free.cta":            "無料登録",
@@ -8598,7 +8598,7 @@ const I18N = {
     "pf.premium.2":              "クォータメーターなし — 無制限",
     "pf.premium.3":              "広告なし — バナーやランニングテキストなし",
     "pf.premium.4":              "完全分析 + プレミアムインサイトウィジェット",
-    "pf.premium.5":              "クイックアクセス：ライブ配信、カスタムサムネイル",
+    "pf.premium.5":              "クイックアクセス：カスタムサムネイル & Premium Insights",
     "pf.premium.6":              "最大4K再生品質",
     "pf.premium.7":              "優先サポートボタン（ライブチャット）",
     "howit.eyebrow":             "仕組み",
@@ -9753,7 +9753,7 @@ const I18N = {
     "plans.subtitle":            "ابدأ مجانًا. ارقَ في أي وقت لفتح كل شيء بلا حدود.",
     "plans.permonth":            "/شهر",
     "plans.foot":                "تشمل جميع الخطط: مزامنة سحابية، تخزين مشفر، تشغيل متوافق مع الجوال، وميزات المجتمع.",
-    "plans.free.badge":          "الأكثر شعبية",
+    "plans.free.badge":          "الخطة الأساسية",
     "plans.free.name":           "مجاني",
     "plans.free.tagline":        "مثالي للهواة والمنشئين العاديين الذين بدأوا للتو.",
     "plans.free.cta":            "تسجيل مجاني",
@@ -9802,7 +9802,7 @@ const I18N = {
     "pf.premium.2":              "بدون عداد حصة — بلا حدود",
     "pf.premium.3":              "بدون إعلانات — لا لافتات أو نص متحرك",
     "pf.premium.4":              "تحليلات كاملة + ودجت رؤى المميز",
-    "pf.premium.5":              "وصول سريع: بث مباشر، صور مصغرة مخصصة",
+    "pf.premium.5":              "وصول سريع: صور مصغرة مخصصة و Premium Insights",
     "pf.premium.6":              "جودة تشغيل تصل إلى 4K",
     "pf.premium.7":              "زر دعم ذو أولوية (محادثة مباشرة)",
     "howit.eyebrow":             "كيف يعمل",
@@ -10957,7 +10957,7 @@ const I18N = {
     "plans.subtitle":            "免费开始。随时升级解锁无限一切。",
     "plans.permonth":             "/月",
     "plans.foot":                "所有套餐均包含：云同步、加密存储、移动端友好播放，以及社区功能。",
-    "plans.free.badge":          "最受欢迎",
+    "plans.free.badge":          "基础版",
     "plans.free.name":           "免费",
     "plans.free.tagline":        "适合刚开始的爱好者和休闲创作者。",
     "plans.free.cta":            "免费注册",
@@ -11006,7 +11006,7 @@ const I18N = {
     "pf.premium.2":              "无配额表 — 无限制",
     "pf.premium.3":              "无广告 — 没有横幅或滚动文字",
     "pf.premium.4":              "完整分析 + 高级洞察小组件",
-    "pf.premium.5":              "快速访问：直播、自定义封面",
+    "pf.premium.5":              "快速访问：自定义封面和 Premium Insights",
     "pf.premium.6":              "最高 4K 播放质量",
     "pf.premium.7":              "优先支持按钮（在线客服）",
     "howit.eyebrow":             "工作原理",
@@ -12161,7 +12161,7 @@ const I18N = {
     "plans.subtitle":            "무료로 시작하세요. 언제든 업그레이드하여 모든 것을 무제한으로 잠금 해제하세요.",
     "plans.permonth":            "/월",
     "plans.foot":                "모든 요금제 포함: 클라우드 동기화, 암호화 저장, 모바일 친화적 재생, 커뮤니티 기능 액세스.",
-    "plans.free.badge":          "가장 인기",
+    "plans.free.badge":          "베이직",
     "plans.free.name":           "무료",
     "plans.free.tagline":        "취미 및 캐주얼 크리에이터에게 적합.",
     "plans.free.cta":            "무료 등록",
@@ -12210,7 +12210,7 @@ const I18N = {
     "pf.premium.2":              "할당량 미터 없음 — 무제한",
     "pf.premium.3":              "광고 없음 — 배너나 흐르는 텍스트 없음",
     "pf.premium.4":              "전체 분석 + 프리미엄 인사이트 위젯",
-    "pf.premium.5":              "빠른 액세스: 라이브 스트림, 맞춤 썸네일",
+    "pf.premium.5":              "빠른 액세스: 맞춤 썸네일 및 Premium Insights",
     "pf.premium.6":              "최대 4K 재생 품질",
     "pf.premium.7":              "우선 지원 버튼 (라이브 채팅)",
     "howit.eyebrow":             "작동 방식",
@@ -13365,7 +13365,7 @@ const I18N = {
     "plans.subtitle":            "Empieza gratis. Mejora en cualquier momento para desbloquear todo ilimitado.",
     "plans.permonth":            "/mes",
     "plans.foot":                "Todos los planes incluyen: sincronización en la nube, almacenamiento cifrado, reproducción adaptada a móviles y acceso a funciones de comunidad.",
-    "plans.free.badge":          "Más popular",
+    "plans.free.badge":          "Plan básico",
     "plans.free.name":           "Gratis",
     "plans.free.tagline":        "Perfecto para aficionados y creadores casuales que recién comienzan.",
     "plans.free.cta":            "Registro Gratis",
@@ -13414,7 +13414,7 @@ const I18N = {
     "pf.premium.2":              "Sin medidor de cuota — ilimitado",
     "pf.premium.3":              "Sin anuncios — sin banners ni texto corriente",
     "pf.premium.4":              "Analítica completa + widget Premium Insights",
-    "pf.premium.5":              "Acceso rápido: En Vivo, Miniaturas Personalizadas",
+    "pf.premium.5":              "Acceso rápido: Miniaturas Personalizadas y Premium Insights",
     "pf.premium.6":              "Calidad de reproducción hasta 4K",
     "pf.premium.7":              "Botón de soporte prioritario (chat en vivo)",
     "howit.eyebrow":             "CÓMO FUNCIONA",
@@ -15416,6 +15416,15 @@ document.addEventListener("click", e => {
     pickLandingPlanAsGuest(tier);
     return;
   }
+  // Toggle periode penagihan Premium (Bulanan / Tahunan) — section Harga.
+  // Cosmetic: ganti harga yg ditampilkan di kartu; checkout tetap lewat
+  // plan picker (PREMIUM_PLANS) saat user klik "Dapatkan Premium".
+  const billingOpt = e.target.closest("[data-billing]");
+  if (billingOpt) {
+    e.preventDefault();
+    applyPlanBilling(billingOpt.dataset.billing === "yearly" ? "yearly" : "monthly");
+    return;
+  }
   // Final CTA: data-final-cta
   const finalCta = e.target.closest("[data-final-cta]");
   if (finalCta) {
@@ -15980,6 +15989,48 @@ function _showGuestPlanAuthCheck(key) {
 // Per request user 2026-05-10: setiap pilih plan dari landing WAJIB lewat auth
 // (signup/login form). Kalau ada session lama yang ke-auto-restore, sign-out
 // dulu supaya user explicitly mengisi email & password sebelum masuk dashboard.
+// Toggle harga Bulanan/Tahunan di section Harga (2026-05-22).
+// Cosmetic — ganti angka harga + note yg ditampilkan di kartu Premium.
+// Harga riil (PREMIUM_PLANS): monthly $9.99, yearly $89.99/thn
+// (= $7.50/bln ekuivalen, hemat 25%). Checkout tetap lewat plan picker.
+function applyPlanBilling(mode) {
+  const yearly = mode === "yearly";
+  document.querySelectorAll(".plan-billing-toggle .pbt-opt").forEach(btn => {
+    const on = btn.dataset.billing === mode;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  // Class is-yearly di toggle → thumb wine meluncur ke segmen kanan +
+  // hentikan pulse badge HEMAT (CSS handle animasi & transform).
+  document.querySelectorAll(".plan-billing-toggle").forEach(tg => {
+    tg.classList.toggle("is-yearly", yearly);
+  });
+  document.querySelectorAll(".plan-amount[data-amount-monthly]").forEach(el => {
+    const v = yearly ? el.dataset.amountYearly : el.dataset.amountMonthly;
+    if (v) el.textContent = v;
+  });
+  // Periode label Premium — selalu cocok dgn angka besar supaya tidak
+  // rancu (Bulanan: $9.99/bulan · Tahunan: $89.99/tahun + note /bln).
+  // Teks TANPA slash ("bulan"/"tahun"); garis miring "/" di-render via
+  // CSS ::before — bulletproof dari kode lain di click-cycle yg strip "/".
+  document.querySelectorAll(".plan-per-toggle").forEach(el => {
+    el.textContent = yearly ? "tahun" : "bulan";
+  });
+  // Badge Premium — teks beda per mode: Bulanan "Direkomendasikan",
+  // Tahunan "Paling Hemat" (sinyal yearly = pilihan terbaik value).
+  document.querySelectorAll(".plan-badge-text[data-badge-monthly]").forEach(el => {
+    el.textContent = yearly ? (el.dataset.badgeYearly || el.textContent)
+                            : (el.dataset.badgeMonthly || el.textContent);
+  });
+  // Class billing-yearly di section → CSS pakai utk warna harga
+  // Premium beda Bulanan (emas solid) vs Tahunan (emas gradient+glow).
+  const _plansSec = document.getElementById("authPlansSection");
+  if (_plansSec) _plansSec.classList.toggle("billing-yearly", yearly);
+  document.querySelectorAll("[data-billing-note]").forEach(note => {
+    note.hidden = !yearly;
+  });
+}
+
 function pickLandingPlanAsGuest(tier) {
   // Force-clear session — user harus auth ulang untuk plan baru ini.
   try {
@@ -29456,8 +29507,19 @@ function renderHomeQuickStatsCards() {
 
 // Soft tick — refresh quick stats tiap 5 detik kalau home view aktif.
 // Cheap karena cuma baca state in-memory + DOM update kalau value berubah.
+// Stage 2 (real-time): tiap tick juga "ping" badge LIVE supaya user
+// lihat bukti dashboard memperbarui dirinya sendiri secara otomatis.
+function hqsPingLive() {
+  const badge = document.getElementById("hqsLiveBadge");
+  if (!badge) return;
+  badge.classList.remove("ping");
+  void badge.offsetWidth; // restart animasi
+  badge.classList.add("ping");
+}
 setInterval(() => {
-  try { renderHomeQuickStatsCards(); } catch {}
+  const homeView = document.querySelector('section.view[data-view="home"]');
+  if (document.hidden || !homeView || !homeView.classList.contains("active")) return;
+  try { renderHomeQuickStatsCards(); hqsPingLive(); } catch {}
 }, 5000);
 
 // ============================================================================
