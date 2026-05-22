@@ -33542,6 +33542,30 @@ body[data-theme="light"]:not([data-role="admin"]) .orb-3 {
     rgba(199, 183, 163, .12) 40%,
     rgba(199, 183, 163, 0) 75%);
 }
+/* Orb user dibuat JELAS TERLIHAT bergerak (per user 2026-05-22: animasi
+   backdrop belum kelihatan). orbFloat admin cuma geser ~30px → tak terasa.
+   userOrbDrift menggeser ~7vw/8vh → drift halus tapi PERSEPTIBEL. Opacity
+   naik, blur sedikit turun. Transform-only → tidak menggeser warna bg. */
+body:not([data-role="admin"]) .orb {
+  opacity: .6 !important;
+  filter: blur(120px) !important;
+  animation: userOrbDrift 22s ease-in-out infinite !important;
+}
+body:not([data-role="admin"]) .orb-2 { animation-delay: -8s !important; }
+body:not([data-role="admin"]) .orb-3 { animation-delay: -14s !important; }
+/* Light mode: mix-blend screen nyaris invisible di atas bg cream →
+   pakai normal blend supaya orb wine/amber kebaca sbg glow lembut. */
+body[data-theme="light"]:not([data-role="admin"]) .orb {
+  mix-blend-mode: normal !important;
+  opacity: .4 !important;
+}
+@keyframes userOrbDrift {
+  0%   { transform: translate(0, 0)       scale(1);    }
+  25%  { transform: translate(7vw, -5vh)  scale(1.14); }
+  50%  { transform: translate(-5vw, 6vh)  scale(.9);   }
+  75%  { transform: translate(6vw, 8vh)   scale(1.08); }
+  100% { transform: translate(0, 0)       scale(1);    }
+}
 @keyframes userBgGridDrift {
   0%   { background-position: 0 0; }
   100% { background-position: 320px 320px; }
@@ -47040,6 +47064,45 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-c
   font-weight: 700 !important;
   text-shadow: none !important;
 }
+/* === SLIDE CAPTCHA — warna per tema dashboard USER (per user 2026-05-22:
+   handle putih tidak cocok dgn modal wine). Rule putih/navy di atas =
+   tema ADMIN; di bawah override untuk user (non-admin) dark & light. === */
+/* User DARK — track cream-tint, fill wine, handle cream */
+body[data-theme="dark"]:not([data-role="admin"]) #captchaModal .cap-slide-track {
+  background: rgba(232, 216, 196, .07) !important;
+  border-color: rgba(232, 216, 196, .22) !important;
+}
+body[data-theme="dark"]:not([data-role="admin"]) #captchaModal .cap-slide-fill {
+  background: linear-gradient(90deg, #6D2932, #8c3a45) !important;
+  box-shadow: 0 0 16px rgba(140, 58, 69, .5) !important;
+}
+body[data-theme="dark"]:not([data-role="admin"]) #captchaModal .cap-slide-handle {
+  background: #E8D8C4 !important;
+  color: #5a222a !important;
+  box-shadow: 0 0 10px rgba(232, 216, 196, .3), 0 4px 10px rgba(0, 0, 0, .35) !important;
+}
+body[data-theme="dark"]:not([data-role="admin"]) #captchaModal .cap-slide-track.dragging .cap-slide-label {
+  color: #E8D8C4 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .5) !important;
+}
+/* User LIGHT — track wine-tint di cream, fill + handle wine */
+body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-track {
+  background: rgba(132, 42, 59, .08) !important;
+  border-color: rgba(132, 42, 59, .28) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-fill {
+  background: linear-gradient(90deg, #842A3B, #A3485A) !important;
+  box-shadow: 0 0 14px rgba(132, 42, 59, .35) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-handle {
+  background: #842A3B !important;
+  color: #FAEAC7 !important;
+  box-shadow: 0 3px 9px rgba(132, 42, 59, .4) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-track.dragging .cap-slide-label {
+  color: #FAEAC7 !important;
+  text-shadow: 0 1px 2px rgba(132, 42, 59, .5) !important;
+}
 
 /* =========================================================
    FYP card (feed video item) — no card chrome, transparent
@@ -53015,6 +53078,20 @@ body[data-theme="light"] .atsm {
   border: 1px solid rgba(27, 60, 83, 0.16) !important;
   box-shadow: 0 8px 32px rgba(27, 60, 83, .12), 0 24px 60px rgba(27, 60, 83, .08) !important;
   color: var(--text) !important;
+}
+/* Popup pengaturan — mode terang USER: surface CREAM + aksen wine (per
+   user 2026-05-22; rule generic di atas pakai #FFF putih + bayangan slate
+   yg tidak cocok dgn tema user cream/wine). Scope :not(admin). */
+body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu {
+  background: #FAEAC7 !important;
+  border: 1px solid rgba(102, 34, 34, .24) !important;
+  box-shadow: 0 8px 30px rgba(102, 34, 34, .16), 0 22px 56px rgba(102, 34, 34, .10) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu .atsm-row:hover {
+  background: rgba(132, 42, 59, .09) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu .atsm-divider {
+  background: rgba(102, 34, 34, .15) !important;
 }
 body[data-theme="light"] .auth-topbar-settings-menu *,
 body[data-theme="light"] .atsm-section-label,
@@ -64296,4 +64373,27 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .previ
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* =========================================================================
+   TOPBAR DASHBOARD USER — background BAR transparan, tiap kolom SOLID/pekat
+   (per user 2026-05-22). Sebelumnya kebalik: bar solid #251419 + tiap kolom
+   var(--surface) wash 6% (nyaris transparan). Sekarang: bar = transparan,
+   kolom (Beranda, search, theme, bell, profil) = var(--bg-elev) solid.
+   Ditaruh di akhir file + selector `header.topbar` → pasti menang cascade.
+   ========================================================================= */
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar {
+  background: transparent !important;
+  background-image: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar .breadcrumb,
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar .topbar-search,
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar .theme-switch,
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar .icon-btn,
+html body:not([data-role="admin"]):not(.auth-mode) header.topbar .user-chip {
+  background: var(--bg-elev) !important;
 }
