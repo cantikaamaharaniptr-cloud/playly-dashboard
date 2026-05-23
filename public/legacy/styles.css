@@ -64478,3 +64478,146 @@ html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-v
     right: auto;
   }
 }
+
+/* =========================================================
+   EDIT VIDEO MODAL — layout rapi + fitur baru (2026-05-23)
+   Sebelumnya 3 section pakai .ve-ctrl-row/.ve-ctrl-block —
+   spacing & alignment tidak konsisten. Bangun ulang dengan
+   grid 2-kolom uniform + slider range + pills baru.
+   ========================================================= */
+.video-editor-panel .ve-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.video-editor-panel .ve-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.video-editor-panel .ve-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 640px) {
+  .video-editor-panel .ve-grid-2 { grid-template-columns: 1fr; }
+}
+.video-editor-panel .ve-ctrl-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+/* Slider row (volume + filter brightness/contrast/saturation) */
+.video-editor-panel .ve-slider-row {
+  display: grid;
+  grid-template-columns: auto 1fr 48px;
+  align-items: center;
+  gap: 10px;
+}
+.video-editor-panel .ve-slider-ico,
+.video-editor-panel .ve-slider-label {
+  font-size: 12.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  min-width: 70px;
+}
+.video-editor-panel .ve-slider-ico svg { width: 16px; height: 16px; vertical-align: middle; }
+.video-editor-panel .ve-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.video-editor-panel .ve-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-elev);
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+.video-editor-panel .ve-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.video-editor-panel .ve-range::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--primary); border: 2px solid var(--bg-elev);
+  cursor: pointer;
+}
+.video-editor-panel .ve-range-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+}
+
+/* Pill groups generic (rotate / flip / preset) */
+.video-editor-panel .ve-rot-pills,
+.video-editor-panel .ve-flip-pills,
+.video-editor-panel .ve-preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.video-editor-panel .ve-rot,
+.video-editor-panel .ve-flip,
+.video-editor-panel .ve-preset {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.video-editor-panel .ve-rot:hover,
+.video-editor-panel .ve-flip:hover,
+.video-editor-panel .ve-preset:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.video-editor-panel .ve-rot.active,
+.video-editor-panel .ve-flip.active,
+.video-editor-panel .ve-preset.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--cream);
+}
+
+/* Filter sliders compact stack */
+.video-editor-panel .ve-filter-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Preview section — separator + center button */
+.video-editor-panel .ve-preview-section {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  align-items: stretch;
+}
+.video-editor-panel .ve-preview-btn { width: 100%; justify-content: center; }
+.video-editor-panel .ve-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Video element — siap untuk transform + filter */
+.video-editor-panel #veVideo {
+  transition: transform .25s ease, filter .25s ease;
+  transform-origin: center;
+}

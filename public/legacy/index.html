@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-sesi-greeting-card-v465" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v466" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8294,7 +8294,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-sesi-greeting-card-v465"></script>
+  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v466"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8463,7 +8463,7 @@
         <div class="ve-head-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></div>
         <div>
           <h3>Edit Video</h3>
-          <p class="muted">Trim mulai/akhir, atur kecepatan, dan mute audio. Tidak mengubah file asli.</p>
+          <p class="muted">Trim, kecepatan, volume, rotasi, flip & filter visual — semua non-destruktif, file asli tidak diubah.</p>
         </div>
       </div>
       <div class="ve-stage">
@@ -8477,7 +8477,9 @@
         </div>
       </div>
       <div class="ve-controls">
-        <div class="ve-ctrl-block">
+
+        <!-- 1. TRIM -->
+        <div class="ve-section">
           <div class="ve-ctrl-label">Trim Video</div>
           <div class="ve-trim-wrap">
             <div class="ve-trim-track" id="veTrimTrack">
@@ -8493,8 +8495,10 @@
             </div>
           </div>
         </div>
-        <div class="ve-ctrl-row">
-          <div class="ve-ctrl-block ve-ctrl-half">
+
+        <!-- 2. PEMUTARAN + AUDIO (2-kolom) -->
+        <div class="ve-grid-2">
+          <div class="ve-section">
             <div class="ve-ctrl-label">Kecepatan</div>
             <div class="ve-speed-pills" role="radiogroup" aria-label="Kecepatan video">
               <button type="button" class="ve-speed" data-speed="0.5">0.5×</button>
@@ -8505,18 +8509,80 @@
               <button type="button" class="ve-speed" data-speed="2">2×</button>
             </div>
           </div>
-          <div class="ve-ctrl-block ve-ctrl-half">
+          <div class="ve-section">
             <div class="ve-ctrl-label">Audio</div>
+            <div class="ve-slider-row">
+              <span class="ve-slider-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+              <input type="range" id="veVolume" min="0" max="100" value="100" class="ve-range" aria-label="Volume audio"/>
+              <span class="ve-range-val" id="veVolumeVal">100%</span>
+            </div>
             <label class="ve-mute-toggle">
               <input type="checkbox" id="veMute"/>
               <span class="ve-mute-track"><span class="ve-mute-knob"></span></span>
-              <span class="ve-mute-label"><span class="ve-mute-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></span> Mute audio video</span>
+              <span class="ve-mute-label">Mute audio</span>
             </label>
           </div>
         </div>
-        <div class="ve-ctrl-block">
-          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">▶ Putar Preview (trim + speed)</button>
-          <small class="ve-hint">Preview memutar dari "Mulai" sampai "Akhir" dengan kecepatan yang dipilih.</small>
+
+        <!-- 3. ROTASI + FLIP (2-kolom) -->
+        <div class="ve-grid-2">
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Rotasi</div>
+            <div class="ve-rot-pills" role="radiogroup" aria-label="Rotasi video">
+              <button type="button" class="ve-rot active" data-rot="0">0°</button>
+              <button type="button" class="ve-rot" data-rot="90">90°</button>
+              <button type="button" class="ve-rot" data-rot="180">180°</button>
+              <button type="button" class="ve-rot" data-rot="270">270°</button>
+            </div>
+          </div>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Flip / Cermin</div>
+            <div class="ve-flip-pills">
+              <button type="button" class="ve-flip" data-flip="h" aria-pressed="false">↔ Horizontal</button>
+              <button type="button" class="ve-flip" data-flip="v" aria-pressed="false">↕ Vertikal</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. FILTER VISUAL (3 slider) -->
+        <div class="ve-section">
+          <div class="ve-ctrl-label">Filter Visual</div>
+          <div class="ve-filter-grid">
+            <div class="ve-slider-row">
+              <span class="ve-slider-label">Brightness</span>
+              <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
+              <span class="ve-range-val" id="veBrightnessVal">100%</span>
+            </div>
+            <div class="ve-slider-row">
+              <span class="ve-slider-label">Contrast</span>
+              <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
+              <span class="ve-range-val" id="veContrastVal">100%</span>
+            </div>
+            <div class="ve-slider-row">
+              <span class="ve-slider-label">Saturation</span>
+              <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
+              <span class="ve-range-val" id="veSaturationVal">100%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. PRESET FILTER -->
+        <div class="ve-section">
+          <div class="ve-ctrl-label">Preset</div>
+          <div class="ve-preset-pills" role="radiogroup" aria-label="Preset filter">
+            <button type="button" class="ve-preset active" data-preset="none">Original</button>
+            <button type="button" class="ve-preset" data-preset="vivid">Vivid</button>
+            <button type="button" class="ve-preset" data-preset="vintage">Vintage</button>
+            <button type="button" class="ve-preset" data-preset="bw">B&amp;W</button>
+            <button type="button" class="ve-preset" data-preset="cool">Cool</button>
+            <button type="button" class="ve-preset" data-preset="warm">Warm</button>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="ve-section ve-preview-section">
+          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">▶ Putar Preview</button>
+          <small class="ve-hint">Preview memutar dari "Mulai" sampai "Akhir" dengan semua efek aktif.</small>
         </div>
       </div>
       <div class="ve-actions">
@@ -8674,7 +8740,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-sesi-greeting-card-v465" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260523-edit-video-pro-v466" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

@@ -47989,3 +47989,155 @@ function getNotifList() {
     });
   }
 })();
+
+// =====================================================================
+// EDIT VIDEO — Effects Extension (2026-05-23): Volume slider, Rotasi,
+// Flip H/V, Brightness/Contrast/Saturation, Preset filter.
+// Standalone IIFE — wire kontrol baru, terapkan via CSS transform+filter
+// di element #veVideo (non-destruktif, sesuai prinsip modal). Tidak
+// menyentuh kode wireVideoEditor lama: hook Reset/Apply lewat addEventListener,
+// extend pendingUpload.videoEdit dgn field baru.
+// =====================================================================
+(function wireVideoEditorEffects() {
+  const modal = document.getElementById("videoEditorModal");
+  if (!modal) return;
+  const video = document.getElementById("veVideo");
+  const volume = document.getElementById("veVolume");
+  const volumeVal = document.getElementById("veVolumeVal");
+  const muteCb = document.getElementById("veMute");
+  const rotPills = modal.querySelectorAll(".ve-rot");
+  const flipPills = modal.querySelectorAll(".ve-flip");
+  const bright = document.getElementById("veBrightness");
+  const brightVal = document.getElementById("veBrightnessVal");
+  const contrast = document.getElementById("veContrast");
+  const contrastVal = document.getElementById("veContrastVal");
+  const satur = document.getElementById("veSaturation");
+  const saturVal = document.getElementById("veSaturationVal");
+  const presetPills = modal.querySelectorAll(".ve-preset");
+  const resetBtn = document.getElementById("veReset");
+  const applyBtn = document.getElementById("veApply");
+  if (!video || !volume || !bright || !rotPills.length) return;
+
+  const state = {
+    volume: 100, rotate: 0, flipH: false, flipV: false,
+    brightness: 100, contrast: 100, saturation: 100, preset: "none"
+  };
+
+  function applyEffects() {
+    const sx = state.flipH ? -1 : 1;
+    const sy = state.flipV ? -1 : 1;
+    video.style.transform = "rotate(" + state.rotate + "deg) scaleX(" + sx + ") scaleY(" + sy + ")";
+    let f = "brightness(" + state.brightness + "%) contrast(" + state.contrast + "%) saturate(" + state.saturation + "%)";
+    switch (state.preset) {
+      case "vintage": f += " sepia(.4) contrast(1.05)"; break;
+      case "bw":      f += " grayscale(1)"; break;
+      case "cool":    f += " hue-rotate(-12deg) saturate(1.1)"; break;
+      case "warm":    f += " sepia(.18) saturate(1.18)"; break;
+      case "vivid":   f += " saturate(1.3) contrast(1.1)"; break;
+    }
+    video.style.filter = f;
+    video.volume = Math.max(0, Math.min(1, state.volume / 100));
+  }
+
+  function syncUI() {
+    if (volume)     volume.value = state.volume;
+    if (volumeVal)  volumeVal.textContent = state.volume + "%";
+    if (bright)     bright.value = state.brightness;
+    if (brightVal)  brightVal.textContent = state.brightness + "%";
+    if (contrast)   contrast.value = state.contrast;
+    if (contrastVal) contrastVal.textContent = state.contrast + "%";
+    if (satur)      satur.value = state.saturation;
+    if (saturVal)   saturVal.textContent = state.saturation + "%";
+    rotPills.forEach(function (p) { p.classList.toggle("active", Number(p.dataset.rot) === state.rotate); });
+    flipPills.forEach(function (p) {
+      const f = p.dataset.flip;
+      const on = (f === "h" && state.flipH) || (f === "v" && state.flipV);
+      p.classList.toggle("active", on);
+      p.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    presetPills.forEach(function (p) { p.classList.toggle("active", p.dataset.preset === state.preset); });
+  }
+
+  function resetState() {
+    state.volume = 100;
+    state.rotate = 0; state.flipH = false; state.flipV = false;
+    state.brightness = 100; state.contrast = 100; state.saturation = 100;
+    state.preset = "none";
+    syncUI(); applyEffects();
+  }
+
+  if (volume) volume.addEventListener("input", function () {
+    state.volume = Number(volume.value);
+    if (volumeVal) volumeVal.textContent = state.volume + "%";
+    applyEffects();
+  });
+  function wireRange(input, valEl, key) {
+    if (!input) return;
+    input.addEventListener("input", function () {
+      state[key] = Number(input.value);
+      if (valEl) valEl.textContent = state[key] + "%";
+      applyEffects();
+    });
+  }
+  wireRange(bright, brightVal, "brightness");
+  wireRange(contrast, contrastVal, "contrast");
+  wireRange(satur, saturVal, "saturation");
+
+  rotPills.forEach(function (p) { p.addEventListener("click", function () {
+    state.rotate = Number(p.dataset.rot) || 0;
+    rotPills.forEach(function (x) { x.classList.toggle("active", x === p); });
+    applyEffects();
+  }); });
+
+  flipPills.forEach(function (p) { p.addEventListener("click", function () {
+    const f = p.dataset.flip;
+    if (f === "h") state.flipH = !state.flipH;
+    if (f === "v") state.flipV = !state.flipV;
+    const on = (f === "h" && state.flipH) || (f === "v" && state.flipV);
+    p.classList.toggle("active", on);
+    p.setAttribute("aria-pressed", on ? "true" : "false");
+    applyEffects();
+  }); });
+
+  presetPills.forEach(function (p) { p.addEventListener("click", function () {
+    state.preset = p.dataset.preset || "none";
+    presetPills.forEach(function (x) { x.classList.toggle("active", x === p); });
+    applyEffects();
+  }); });
+
+  if (resetBtn) resetBtn.addEventListener("click", resetState);
+
+  if (applyBtn) applyBtn.addEventListener("click", function () {
+    const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
+    if (!pu) return;
+    pu.videoEdit = Object.assign(pu.videoEdit || {}, {
+      volume: state.volume,
+      rotate: state.rotate,
+      flipH: state.flipH,
+      flipV: state.flipV,
+      brightness: state.brightness,
+      contrast: state.contrast,
+      saturation: state.saturation,
+      preset: state.preset
+    });
+  });
+
+  // Restore saved values saat modal dibuka — wrap _openVideoEditor
+  const origOpen = window._openVideoEditor;
+  if (typeof origOpen === "function") {
+    window._openVideoEditor = function () {
+      origOpen.apply(this, arguments);
+      const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
+      const prev = (pu && pu.videoEdit) || {};
+      state.volume     = prev.volume     != null ? prev.volume     : 100;
+      state.rotate     = prev.rotate     != null ? prev.rotate     : 0;
+      state.flipH      = !!prev.flipH;
+      state.flipV      = !!prev.flipV;
+      state.brightness = prev.brightness != null ? prev.brightness : 100;
+      state.contrast   = prev.contrast   != null ? prev.contrast   : 100;
+      state.saturation = prev.saturation != null ? prev.saturation : 100;
+      state.preset     = prev.preset     || "none";
+      syncUI(); applyEffects();
+    };
+  }
+})();
