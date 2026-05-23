@@ -64397,3 +64397,29 @@ html body:not([data-role="admin"]):not(.auth-mode) header.topbar .icon-btn,
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar .user-chip {
   background: var(--bg-elev) !important;
 }
+
+/* =========================================================
+   USER FIX 2026-05-22 (v456)
+   1) Topbar dashboard: NON-STICKY (scroll bersama konten)
+      + gap konsisten 6px di topbar utama & .topbar-actions.
+   2) Lv badge (.hlv-badge): pindah dari hardcode #251419
+      (near-black, kebanting di kartu wine) ke var(--primary)
+      = aksen brand wine. Senada tema di dark & light.
+   3) .hlv-note ("XP: tontonan + suka + video + pengikut")
+      DISEMBUNYIKAN — info sama persis sudah ada di 4 chip
+      Tontonan/Suka/Video/Pengikut di bawah → redundant clutter.
+   ========================================================= */
+html body:not([data-role="admin"]):not(.auth-mode) .topbar {
+  position: static !important;
+  top: auto !important;
+  gap: 6px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-actions {
+  gap: 6px !important;
+}
+/* Lv badge: aksen wine brand, bukan kotak gelap */
+.hlv-badge {
+  background: var(--primary) !important;
+}
+/* Hilangkan helper text redundan di header Level Kreator */
+.hlv-note { display: none !important; }
