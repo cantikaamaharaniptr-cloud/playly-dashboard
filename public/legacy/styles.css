@@ -41353,11 +41353,12 @@ body[data-theme="light"]:not([data-role="admin"]) .signup-stepper .step-line[dat
    main content, kurang separasi visual. Tambah subtle wine-tinted gradient
    + border kanan yg lebih kuat supaya sidebar punya identitas sendiri.
    Mirror treatment admin light (~line 48674), tapi pakai palette wine. */
+/* Sidebar — CREAM bersih sesuai tema dashboard user light (per user
+   2026-05-22). Gradient lama pakai overlay wine 10% di atas cream →
+   blend jadi PINK. Sekarang cream rata #FAEAC7 = var(--bg-elev) light. */
 body[data-theme="light"]:not([data-role="admin"]) .sidebar {
-  background:
-    linear-gradient(180deg, rgba(132, 42, 59, .10) 0%, rgba(255, 248, 232, .96) 38%, rgba(245, 218, 167, .25) 100%),
-    #FFF8E8 !important;
-  border-right: 1px solid rgba(109, 41, 50, .18) !important;
+  background: #FAEAC7 !important;
+  border-right: 1px solid rgba(102, 34, 34, .18) !important;
 }
 /* Brand title + tagline */
 body[data-theme="light"]:not([data-role="admin"]) .sidebar .brand-text h1 {
