@@ -64458,3 +64458,23 @@ html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-v
 .hero-pill.hero-pill-session #heroSessionDuration {
   font-variant-numeric: tabular-nums;
 }
+
+/* Session pill di pojok kanan atas kartu .hero (per user 2026-05-23).
+   Pakai absolute supaya keluar dari flow .hero-meta — date+time pills
+   tetap inline; sesi pill float ke corner kartu hero. */
+.hero { position: relative; }
+.hero .hero-pill.hero-pill-session {
+  position: absolute !important;
+  top: 16px;
+  right: 16px;
+  margin: 0 !important;
+  z-index: 3;
+}
+/* Mobile: kembalikan inline supaya tidak menutupi greeting / tombol */
+@media (max-width: 640px) {
+  .hero .hero-pill.hero-pill-session {
+    position: static !important;
+    top: auto;
+    right: auto;
+  }
+}
