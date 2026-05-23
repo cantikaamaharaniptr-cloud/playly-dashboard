@@ -29393,14 +29393,22 @@ function hqsRenderSpark(statKey, series, current) {
     : [];
   const c = Number(current);
   const curVal = isFinite(c) ? c : (arr.length ? arr[arr.length - 1] : 0);
-  let pct;
+  // Real data only: hitung delta dari history asli. Kalau nilai 0 / belum
+  // ada history nyata → JANGAN bikin angka palsu (sebelumnya 3..12 hardcode
+  // bikin user melihat "↑ 3%" padahal value 0 — keliatan tidak real).
+  let pct = null;
   if (arr.length >= 2 && arr[0] > 0) {
     pct = Math.round(((curVal - arr[0]) / arr[0]) * 100);
-  } else {
-    pct = 3 + (Math.abs(Math.round(curVal)) % 10);   // 3..12 deterministik
+    if (pct > 999) pct = 999;
+    if (pct < -99) pct = -99;
   }
-  if (pct > 999) pct = 999;
-  if (pct < -99) pct = -99;
+  if (pct === null || curVal === 0) {
+    // Empty / no real delta — tampilkan bar minimum + dash, tanpa persen palsu
+    el.innerHTML =
+      '<div class="hqs-prog"><i style="width:8%"></i></div>' +
+      '<span class="hqs-delta flat">—</span>';
+    return;
+  }
   const up = pct >= 0;
   const barW = Math.max(8, Math.min(100, Math.abs(pct) * 6));
   el.innerHTML =
@@ -29510,12 +29518,35 @@ function renderHomeQuickStatsCards() {
 // Stage 2 (real-time): tiap tick juga "ping" badge LIVE supaya user
 // lihat bukti dashboard memperbarui dirinya sendiri secara otomatis.
 function hqsPingLive() {
-  const badge = document.getElementById("hqsLiveBadge");
-  if (!badge) return;
-  badge.classList.remove("ping");
-  void badge.offsetWidth; // restart animasi
-  badge.classList.add("ping");
+  // Dot live sekarang inline di pill RINGKASAN STATISTIK (merged per
+  // user 2026-05-23). Fallback ke #hqsLiveBadge kalau markup lama masih.
+  const dot = document.getElementById("hqsLiveDotInline") || document.getElementById("hqsLiveBadge");
+  if (!dot) return;
+  dot.classList.remove("ping");
+  void dot.offsetWidth; // restart animasi
+  dot.classList.add("ping");
 }
+// Session duration ticker — tampilkan lama user login di hero pill.
+// Pakai sessionStorage supaya per-tab; nilai di-reset saat tab ditutup
+// atau saat logout (lihat handler logout). Format MM:SS / HH:MM:SS.
+function updateHeroSessionDuration() {
+  const el = document.getElementById("heroSessionDuration");
+  if (!el) return;
+  let start;
+  try { start = parseInt(sessionStorage.getItem("playlySessionStart") || "0", 10); } catch (e) { start = 0; }
+  if (!start) {
+    start = Date.now();
+    try { sessionStorage.setItem("playlySessionStart", String(start)); } catch (e) {}
+  }
+  const sec = Math.max(0, Math.floor((Date.now() - start) / 1000));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+  el.textContent = "Sesi " + (h > 0 ? (pad(h) + ":" + pad(m) + ":" + pad(s)) : (pad(m) + ":" + pad(s)));
+}
+setInterval(updateHeroSessionDuration, 1000);
+updateHeroSessionDuration();
 setInterval(() => {
   const homeView = document.querySelector('section.view[data-view="home"]');
   if (document.hidden || !homeView || !homeView.classList.contains("active")) return;
@@ -43675,6 +43706,7 @@ function openAlert({ icon = "ℹ️", iconClass = "info", title, desc, btnText =
 function doLogout() {
   stopLiveClock();
   stopAdminLiveRefresh();
+  try { sessionStorage.removeItem("playlySessionStart"); } catch (e) {}
   localStorage.removeItem("playly-user");
   user = null;
   state = null;

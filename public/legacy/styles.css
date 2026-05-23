@@ -64423,3 +64423,38 @@ html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-actions {
 }
 /* Hilangkan helper text redundan di header Level Kreator */
 .hlv-note { display: none !important; }
+
+/* =========================================================
+   USER FIX 2026-05-23 (v463)
+   1) Hero session pill — pill ke-3 di hero-meta, tampilkan
+      durasi sesi sejak user login (live, update tiap detik).
+   2) Pill RINGKASAN STATISTIK + LIVE digabung jadi 1 pill:
+      titik hijau berdenyut INLINE di kiri teks. Span LIVE
+      terpisah dihapus dari markup.
+   3) Angka di kartu Ringkasan Statistik dikecilkan 24->20px
+      supaya hierarki "judul kartu" tidak terlalu dominan.
+   4) Tambah .hqs-live-dot.ping → flash hijau saat tick refresh.
+   ========================================================= */
+/* Dot live inline di divider pill — alignment & spacing */
+.home-divider-stats span .hqs-live-dot {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 7px;
+  margin-bottom: 1px;
+}
+/* Ping flash khusus dot (tick refresh) — restart-able */
+.hqs-live-dot.ping { animation: hqsLivePulse 1.8s ease-in-out infinite, hqsDotPing .55s ease-out; }
+@keyframes hqsDotPing {
+  0%   { transform: scale(1);   background: #25b56a; }
+  35%  { transform: scale(1.5); background: #34d97e; }
+  100% { transform: scale(1);   background: #25b56a; }
+}
+/* Angka statistik dikecilkan (per user 2026-05-23) — naikkan
+   specificity supaya menang dari rule 60538 (24px). */
+html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-value {
+  font-size: 20px !important;
+}
+/* Session pill — minor adjust supaya teks rapat & tidak terlalu lebar */
+.hero-pill.hero-pill-session #heroSessionDuration {
+  font-variant-numeric: tabular-nums;
+}
