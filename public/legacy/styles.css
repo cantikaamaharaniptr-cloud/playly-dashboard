@@ -70,13 +70,14 @@ body:not([data-role="admin"]):not([data-theme="light"]):not(.auth-mode) {
 }
 
 body[data-theme="light"] {
-  /* USER LIGHT PALETTE 2026-05-10 — 4 warna:
-     #662222 (deepest wine) / #842A3B (wine) / #A3485A (light wine) / #F5DAA7 (cream)
-     Per request user 2026-05-10: card bg ganti dari pure white → cream-tinted
-     supaya menyatu dgn palette warm, bukan kontras putih klinis. */
-  --bg: #F5E8C9;          /* Page bg — cream lembut (sedikit lebih saturated dari card) */
-  --bg-elev: #FAEAC7;     /* Card surface — warm cream-peach (BUKAN near-white). User komplain 2x bahwa #FFF8E8 masih kelihatan putih krn R=255 max */
-  --bg-elev-2: #FCE9C0;   /* Accent surface — peach lebih hangat antara bg & elev */
+  /* USER LIGHT PALETTE 2026-05-23 — clean white surfaces + wine brand colors.
+     Migrated dari cream (#F5E8C9 / #FAEAC7) ke putih bersih supaya tampilan
+     light mode standar/profesional. Wine text & accents tetap = brand identity.
+     2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
+     nested chip slightly grey (#F5F5F5). */
+  --bg: #FAFAFA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
+  --bg-elev: #FFFFFF;     /* Card surface — pure white */
+  --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
   --surface: rgba(102, 34, 34, 0.04);
   --surface-2: rgba(102, 34, 34, 0.07);
   --surface-3: rgba(102, 34, 34, 0.12);
@@ -91,14 +92,14 @@ body[data-theme="light"] {
   --primary-soft: rgba(132, 42, 59, 0.10);
   --accent: #A3485A;      /* Light wine — accents */
   --accent-soft: rgba(163, 72, 90, 0.18);
-  --cream: #F5DAA7;       /* Warm cream — highlight chips */
+  --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
   --shadow-sm: 0 1px 2px rgba(102,34,34,.06), 0 2px 6px rgba(102,34,34,.05);
   --shadow-md: 0 4px 12px rgba(102,34,34,.08), 0 12px 32px rgba(102,34,34,.07);
   --shadow-lg: 0 8px 24px rgba(102,34,34,.10), 0 24px 60px rgba(102,34,34,.12);
-  --grad-soft:  linear-gradient(135deg, rgba(132, 42, 59, 0.08), rgba(245, 218, 167, 0.20));
-  --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #F5DAA7 100%);
-  --grad-card:  linear-gradient(140deg, rgba(245, 218, 167, .35) 0%, rgba(163, 72, 90, .15) 55%, rgba(132, 42, 59, .08) 100%);
-  --grad-cream: linear-gradient(135deg, #F5DAA7 0%, #E8C68A 100%);
+  --grad-soft:  linear-gradient(135deg, rgba(132, 42, 59, 0.08), rgba(132, 42, 59, 0.02));
+  --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #FFFFFF 100%);
+  --grad-card:  linear-gradient(140deg, rgba(255, 255, 255, 1) 0%, rgba(163, 72, 90, .06) 55%, rgba(132, 42, 59, .04) 100%);
+  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
   --glow-soft:        none;
   --glow-soft-hover:  none;
   --glow-soft-cream:  none;
@@ -131,10 +132,12 @@ body {
   --blob-3: rgba(109, 41, 50, .22);
 }
 body[data-theme="light"] {
-  /* USER LIGHT — wine/cream blobs match new palette */
-  --blob-1: rgba(245, 218, 167, .40);  /* cream */
-  --blob-2: rgba(163, 72, 90, .14);    /* light wine */
-  --blob-3: rgba(132, 42, 59, .10);    /* wine */
+  /* USER LIGHT — ambient blobs fully transparent (2026-05-23 migration ke
+     white). Page tetap clean white tanpa wine wash di background. Wine
+     accents tetap di card border/shadow + text. */
+  --blob-1: transparent;
+  --blob-2: transparent;
+  --blob-3: transparent;
 }
 body[data-role="admin"] {
   --blob-1: transparent;
@@ -2232,7 +2235,7 @@ body[data-role="admin"] .lib-tool-submenu button:not(.lib-submenu-back):hover {
    krn putih on cream. */
 body[data-theme="light"]:not([data-role="admin"]) .lib-kebab-panel,
 body[data-theme="light"]:not([data-role="admin"]) .lib-tool-submenu {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8E8 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(109, 41, 50, .22) !important;
   box-shadow:
     0 8px 24px rgba(109, 41, 50, .12),
@@ -11643,10 +11646,9 @@ body[data-theme="light"] .auth-orb::after { border-color: rgba(109, 41, 50, .4);
 }
 .auth-illus .floating-card span { font-size: 13px; }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-card {
-  /* was pure white gradient — now SOLID cream card surface, sedikit lebih
-     terang dari --bg (#F5E8C9) supaya jelas terpisah dari halaman. Blur
-     dimatikan supaya tidak washed-out / kelihatan putih. */
-  background: #FAEAC7 !important;
+  /* Pure white card di atas page off-white (2026-05-23 white migration).
+     Blur dimatikan supaya tidak washed-out. */
+  background: #FFFFFF !important;
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -20352,43 +20354,46 @@ body[data-role="admin"] .admin-feed li {
 
 /* ADMIN LIGHT PALETTE 2026-05-10 — 4 warna:
    #1B3C53 (deep navy) / #234C6A (navy) / #456882 (slate) / #E3E3E3 (light gray)
-   Update 2026-05-10g: --bg pakai #ACBAC4 per user request. */
+   Update 2026-05-23: --bg flipped from slate-grey (#ACBAC4) to PURE WHITE per
+   user request (samakan dengan user-light migration). Surface = pure white,
+   navy/slate text & accents tetap utuh (admin brand identity). */
 body[data-theme="light"][data-role="admin"] {
-  --bg: #ACBAC4;          /* User-requested soft slate-gray base */
-  --bg-elev: #FFFFFF;     /* Card surface */
-  --bg-elev-2: #98A8B3;   /* Darker slate elevated */
-  --surface: rgba(27, 60, 83, 0.06);
-  --surface-2: rgba(27, 60, 83, 0.10);
-  --surface-3: rgba(27, 60, 83, 0.14);
-  --border: rgba(27, 60, 83, 0.16);
-  --border-strong: rgba(27, 60, 83, 0.32);
-  --text: #25343F;        /* Deep slate — palette user 2026-05-10 */
-  --text-2: #25343F;      /* Deep slate — secondary text */
-  --muted: #25343F;       /* Deep slate — meta/muted */
-  --primary: #234C6A;     /* Navy — primary actions */
-  --primary-hover: #1B3C53; /* Deep navy — hover */
-  --primary-deep: #122A3D;  /* Darkest navy */
-  --primary-soft: rgba(35, 76, 106, 0.12);
-  --accent: #456882;      /* Slate — accents */
-  --accent-soft: rgba(69, 104, 130, 0.20);
-  --grad-hero: linear-gradient(135deg, #1B3C53 0%, #234C6A 45%, #456882 100%);
+  --bg: #FFFFFF;          /* Pure white page */
+  --bg-elev: #FFFFFF;     /* Card surface — pure white */
+  --bg-elev-2: #F5F5F5;   /* Recessed/nested surface */
+  /* Aksen NEUTRAL CHARCOAL (per user 2026-05-23: warna biru/navy lama
+     terlalu mencolok). Pakai keluarga slate Tailwind-ish yg dominan
+     abu-charcoal, bukan biru. Tetap pro look untuk admin. */
+  --surface: rgba(31, 41, 55, 0.04);
+  --surface-2: rgba(31, 41, 55, 0.08);
+  --surface-3: rgba(31, 41, 55, 0.12);
+  --border: rgba(31, 41, 55, 0.16);
+  --border-strong: rgba(31, 41, 55, 0.32);
+  --text: #1F2937;        /* Charcoal slate — readable, mostly neutral */
+  --text-2: #1F2937;
+  --muted: #4B5563;       /* Mid grey-slate */
+  --primary: #1F2937;     /* Charcoal — primary actions (was #234C6A navy) */
+  --primary-hover: #111827; /* Deeper charcoal hover */
+  --primary-deep: #0F1419;  /* Near-black */
+  --primary-soft: rgba(31, 41, 55, 0.12);
+  --accent: #475569;      /* Neutral slate — accents (was #456882 slate-blue) */
+  --accent-soft: rgba(71, 85, 105, 0.20);
+  --grad-hero: linear-gradient(135deg, #111827 0%, #1F2937 45%, #475569 100%);
 }
-/* Ambient body::before — soft slate-gray #ACBAC4 dominant per user request 2026-05-10g.
-   Subtle radial blobs di atas warna utama supaya ada depth. */
+/* Ambient body::before — PURE WHITE base per user 2026-05-23. Buang gradient
+   slate-grey lama (#25343F → #879197 → #EAEFEF) supaya page benar-benar putih
+   bersih. Subtle radial highlights tetap untuk depth tapi minimal. */
 body[data-theme="light"][data-role="admin"]::before {
   background:
-    radial-gradient(60% 50% at 0% 0%, rgba(255, 255, 255, .15), transparent 70%),
-    radial-gradient(55% 45% at 100% 0%, rgba(35, 76, 106, .12), transparent 72%),
-    radial-gradient(45% 40% at 100% 100%, rgba(27, 60, 83, .10), transparent 70%),
-    radial-gradient(35% 30% at 0% 100%, rgba(255, 255, 255, .10), transparent 70%),
-    linear-gradient(170deg, #25343F 0%, #879197 50%, #EAEFEF 100%) !important;
+    radial-gradient(60% 50% at 0% 0%, rgba(35, 76, 106, .03), transparent 70%),
+    radial-gradient(55% 45% at 100% 100%, rgba(27, 60, 83, .03), transparent 70%),
+    #FFFFFF !important;
 }
-/* Body bg gradient — Soft slate-gray #ACBAC4 per user request 2026-05-10g.
-   Pakai !important untuk menang lawan force dari auth-mode rule. */
+/* Body bg — PURE WHITE per user 2026-05-23. !important supaya menang lawan
+   force dari auth-mode rule. */
 body[data-theme="light"][data-role="admin"],
 body[data-theme="light"][data-role="admin"].auth-mode {
-  background:
-    linear-gradient(170deg, #25343F 0%, #879197 50%, #EAEFEF 100%) !important;
+  background: #FFFFFF !important;
   background-attachment: fixed !important;
 }
 
@@ -20397,16 +20402,13 @@ body[data-role="admin"] .sidebar {
   background: linear-gradient(180deg, #212529 0%, #212529 55%, #212529 100%);
   border-right: 1px solid rgba(173, 181, 189, .12);
 }
-/* LIGHT mode — sidebar pakai gradient slate→cream agar lebih biru-dominan */
+/* LIGHT mode — sidebar PURE WHITE per user 2026-05-23 (was slate→cream gradient) */
 body[data-theme="light"][data-role="admin"] .sidebar {
-  background:
-    linear-gradient(180deg, rgba(173, 181, 189, .35) 0%, rgba(255, 255, 255, .85) 35%, rgba(220, 211, 169, .15) 100%),
-    var(--bg-elev);
-  border-right: 1px solid rgba(52, 58, 64, .15);
+  background: #FFFFFF;
+  border-right: 1px solid rgba(27, 60, 83, .12);
 }
 body[data-theme="light"][data-role="admin"] .topbar {
-  background:
-    linear-gradient(90deg, rgba(173, 181, 189, .22) 0%, rgba(255, 255, 255, .60) 50%, rgba(220, 211, 169, .15) 100%);
+  background: #FFFFFF;
 }
 
 /* === Admin LIGHT — COMPREHENSIVE primary button sweep ===
@@ -23098,13 +23100,13 @@ body[data-role="admin"] .row-actions button.danger:hover {
   padding: 6px 0;
 }
 .audit-section-body .audit-row { background: transparent; }
-/* Light theme override — bg #BFC9D1 match palette setup user 2026-05-11 */
+/* Light theme override — bg #FFFFFF match palette setup user 2026-05-11 */
 body[data-theme="light"][data-role="admin"] .audit-section {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border-color: #25343F !important;
 }
 body[data-theme="light"][data-role="admin"] .audit-section-head {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border-bottom-color: #25343F !important;
 }
 .audit-actor-meta {
@@ -27517,35 +27519,29 @@ body[data-role="admin"] .hc-update-item {
     var(--surface);
   border-color: rgba(173, 181, 189, .22);
 }
-/* LIGHT mode — slate-BLUE dominant gradient, cream cuma accent kecil */
+/* LIGHT mode — PURE WHITE per user 2026-05-23 (was slate-blue dominant gradient) */
 body[data-theme="light"][data-role="admin"] .admin-kpi-card {
-  background:
-    linear-gradient(135deg, rgba(173, 181, 189, .25) 0%, rgba(255, 255, 255, .85) 60%, rgba(220, 211, 169, .22) 100%),
-    var(--bg-elev);
-  border-color: rgba(52, 58, 64, .14);
+  background: #FFFFFF;
+  border-color: rgba(27, 60, 83, .14);
 }
 body[data-theme="light"][data-role="admin"] .admin-panel {
-  background:
-    linear-gradient(150deg, rgba(173, 181, 189, .18) 0%, rgba(255, 255, 255, .92) 70%, rgba(220, 211, 169, .12) 100%),
-    var(--bg-elev);
-  border-color: rgba(52, 58, 64, .12);
+  background: #FFFFFF;
+  border-color: rgba(27, 60, 83, .12);
 }
 body[data-theme="light"][data-role="admin"] .hc-update-item {
-  background:
-    linear-gradient(135deg, rgba(173, 181, 189, .32) 0%, rgba(52, 58, 64, .10) 100%),
-    var(--surface);
-  border-color: rgba(52, 58, 64, .18);
+  background: #FAFAFA;
+  border-color: rgba(27, 60, 83, .12);
 }
-/* Hero text + clock — solid #BFC9D1 match palette user 2026-05-11 (was gradient white-ish) */
+/* Hero text + clock — PURE WHITE per user 2026-05-23 (was #FFFFFF slate-grey) */
 body[data-theme="light"][data-role="admin"] .admin-hero .hero-text {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
-  border-color: #25343F !important;
+  border-color: rgba(27, 60, 83, 0.18) !important;
 }
 body[data-theme="light"][data-role="admin"] .hero-clock.admin {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
-  border-color: #25343F !important;
+  border-color: rgba(27, 60, 83, 0.18) !important;
 }
 
 /* KPI card icon — soft ocean glow halo (dipisah dari hover transform) */
@@ -34488,7 +34484,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-label {
   -webkit-text-fill-color: #561C24 !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-input {
-  background: #F5DAA7 !important;        /* cream warm — BUKAN putih */
+  background: #F5F5F5 !important;        /* light grey — neutral chip on white */
   border: 1.5px solid rgba(109, 41, 50, .30) !important;
   color: #561C24 !important;
   -webkit-text-fill-color: #561C24 !important;
@@ -35252,10 +35248,18 @@ body[data-theme="light"][data-role="admin"].auth-mode .amc-tag {
   background: rgba(52, 58, 64, .10) !important;
   font-weight: 800;
 }
-body[data-theme="light"][data-role="admin"].auth-mode .amc-tag-live {
-  color: #6b4d0e !important;
-  border-color: rgba(138, 109, 42, .55) !important;
-  background: rgba(220, 211, 169, .55) !important;
+/* Specificity 0,7,3 — beats the sweep `body[data-theme][data-role] span:not()...`
+   at L51991 (0,6,2). Repeat .amc-tag-live + add .amc-tag-live.amc-tag-live trick. */
+html body[data-theme="light"][data-role="admin"] span.amc-tag.amc-tag-live.amc-tag-live,
+html body[data-theme="light"][data-role="admin"].auth-mode span.amc-tag.amc-tag-live.amc-tag-live,
+html body[data-theme="light"][data-role="admin"] .admin-module-card span.amc-tag.amc-tag-live,
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-module-card span.amc-tag.amc-tag-live {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border-color: rgba(31, 41, 55, .35) !important;
+  background: #1F2937 !important;
+  background-color: #1F2937 !important;
+  font-weight: 700 !important;
 }
 
 /* Security cards */
@@ -35326,15 +35330,16 @@ body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar {
   box-shadow: none !important;
 }
 body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-link {
-  color: #EAEFEF !important;
+  color: #1F2937 !important;
   font-weight: 600;
 }
 body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-link:hover {
-  color: #FFFFFF !important;
+  color: #0F1419 !important;
+  background: rgba(31, 41, 55, .08) !important;
 }
 body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-name,
 body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-suffix {
-  color: #EAEFEF !important;
+  color: #1F2937 !important;
 }
 
 /* Hero / showcase area */
@@ -35343,7 +35348,7 @@ body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-sho
   text-shadow: none !important;
 }
 body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-showcase p {
-  color: #EAEFEF !important;
+  color: #475569 !important;
 }
 body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-stats {
   color: #212529 !important;
@@ -35380,18 +35385,18 @@ body[data-theme="light"][data-role="admin"].auth-mode .admin-bg-aurora {
   opacity: .65 !important;
 }
 
-/* Body bg — soft slate-gray #ACBAC4 per user request 2026-05-10g. */
+/* Body bg — PURE WHITE per user 2026-05-23 (was slate gradient #25343F→#879197→#EAEFEF). */
 body[data-theme="light"][data-role="admin"].auth-mode {
-  background: linear-gradient(170deg, #25343F 0%, #879197 50%, #EAEFEF 100%) !important;
+  background: #FFFFFF !important;
 }
 body[data-theme="light"][data-role="admin"].auth-mode::before,
 body[data-theme="light"][data-role="admin"].auth-mode::after {
   opacity: 0.3 !important;
 }
 
-/* Light theme admin auth-screen — match body bg (#ACBAC4). */
+/* Light theme admin auth-screen — PURE WHITE (was slate gradient). */
 body[data-theme="light"][data-role="admin"].auth-mode .auth-screen {
-  background: linear-gradient(170deg, #25343F 0%, #879197 50%, #EAEFEF 100%) !important;
+  background: #FFFFFF !important;
 }
 
 /* Per user 2026-05-11: H2 hero "Kelola platform, jaga komunitas" pakai
@@ -35447,8 +35452,8 @@ body[data-theme="light"][data-role="admin"].auth-mode .admin-restricted-pill {
   box-shadow: 0 2px 8px -2px rgba(52, 58, 64, .25);
 }
 body[data-theme="light"][data-role="admin"].auth-mode .admin-restricted-pill .arp-dot {
-  background: #c5a44e !important;
-  box-shadow: 0 0 8px rgba(197, 164, 78, .55) !important;
+  background: #1F2937 !important;
+  box-shadow: 0 0 8px rgba(31, 41, 55, .45) !important;
 }
 
 /* Admin ticker (MONITORING 12,435 sessions counter) */
@@ -40310,15 +40315,14 @@ body[data-role="admin"] [data-counter].counter-done {
    for darker counterparts so the preview reads correctly on light bg.
    ========================================================================= */
 /* -------------------------------------------------------------------------
-   HERO mockup + floats — LIGHT MODE (cream + wine).
-   Dark rules use cream-on-dark rgba (rgba(231,215,196,..)) / near-black
-   (rgba(28,16,22,..)) which render WHITE / washed-out PINK on the cream
-   page. Override to real cream surfaces (#FAEAC7 / #FFF8E8 / #F5E8C9) and
-   wine accents (#842A3B / #6D2932). High specificity (html + :not(admin))
-   + !important to beat the dark rules.
+   HERO mockup + floats — LIGHT MODE (white + wine).
+   Dark rules use cream-on-dark rgba which render WHITE / washed-out PINK on
+   the white page. Override to pure white surfaces + wine accents (#842A3B /
+   #6D2932). High specificity (html + :not(admin)) + !important to beat the
+   dark rules.
    ------------------------------------------------------------------------- */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-frame {
-  background: linear-gradient(135deg, #FAEAC7, #F5E8C9) !important;
+  background: #FFFFFF !important;
   border-color: rgba(102, 34, 34, .18) !important;
   box-shadow:
     0 30px 60px rgba(102, 34, 34, .14),
@@ -40363,7 +40367,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-greet span {
 }
 /* Stat cards inside preview */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-stat-card {
-  background: #FFF8E8 !important;
+  background: #FFFFFF !important;
   border-color: rgba(102, 34, 34, .16) !important;
   color: var(--text) !important;
 }
@@ -40375,7 +40379,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-stat-lbl {
 }
 /* Trending panel + its thumbnails */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending {
-  background: #FFF8E8 !important;
+  background: #FFFFFF !important;
   border-color: rgba(102, 34, 34, .16) !important;
   color: var(--text) !important;
 }
@@ -40392,7 +40396,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb {
 /* Analytics: chart card + KPI tiles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart,
 html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi {
-  background: #FFF8E8 !important;
+  background: #FFFFFF !important;
   border-color: rgba(102, 34, 34, .16) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi span {
@@ -40414,7 +40418,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-list {
   border-color: rgba(102, 34, 34, .16) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-row {
-  background: #FFF8E8 !important;
+  background: #FFFFFF !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-l1 strong {
   color: var(--text) !important;
@@ -40431,7 +40435,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-bubble.in {
 }
 /* Floating cards (Trending / +1.2k / 24.8k / +58 new) below preview */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border-color: rgba(102, 34, 34, .18) !important;
   color: var(--text) !important;
   box-shadow: 0 6px 16px rgba(102, 34, 34, .1) !important;
@@ -41353,11 +41357,10 @@ body[data-theme="light"]:not([data-role="admin"]) .signup-stepper .step-line[dat
    main content, kurang separasi visual. Tambah subtle wine-tinted gradient
    + border kanan yg lebih kuat supaya sidebar punya identitas sendiri.
    Mirror treatment admin light (~line 48674), tapi pakai palette wine. */
-/* Sidebar — CREAM bersih sesuai tema dashboard user light (per user
-   2026-05-22). Gradient lama pakai overlay wine 10% di atas cream →
-   blend jadi PINK. Sekarang cream rata #FAEAC7 = var(--bg-elev) light. */
+/* Sidebar — PUTIH bersih sesuai tema dashboard user light (2026-05-23
+   migration ke white). Pakai #FFFFFF = var(--bg-elev) light. */
 body[data-theme="light"]:not([data-role="admin"]) .sidebar {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border-right: 1px solid rgba(102, 34, 34, .18) !important;
 }
 /* Brand title + tagline */
@@ -41437,10 +41440,9 @@ body[data-theme="light"]:not([data-role="admin"]) .sidebar-footer .profile-card 
 body[data-theme="light"]:not([data-role="admin"]) .sidebar .profile-card small {
   color: rgba(86, 28, 36, .65) !important;
 }
-/* Cards di light user mode — warm cream-peach (BUKAN white/near-white).
-   User komplain 2x bahwa `#FFF8E8` masih kelihatan putih — `R=255` max bikin
-   brightness terlalu tinggi vs page bg `#F5E8C9`. Pakai `#FAEAC7` (cream
-   peach) yang clearly distinct dari putih sambil tetap lighter dari page.
+/* Cards di light user mode — pure white surface (2026-05-23 migrated dari
+   cream-peach #FAEAC7 ke #FFFFFF untuk look standar light mode profesional).
+   Wine border + wine-tinted shadow tetap dipertahankan = brand identity.
    Plus catch all home dashboard cards (.home-*-card) supaya konsisten. */
 body[data-theme="light"]:not([data-role="admin"]) .hs-card,
 body[data-theme="light"]:not([data-role="admin"]) .lib-card:not(.lib-card-bare),
@@ -41455,7 +41457,7 @@ body[data-theme="light"]:not([data-role="admin"]) .home-activity-ticker,
 body[data-theme="light"]:not([data-role="admin"]) .home-trending-card,
 body[data-theme="light"]:not([data-role="admin"]) .home-tier-widget .tier-widget,
 body[data-theme="light"]:not([data-role="admin"]) section.view:not([data-view^="admin-"]) > .card {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border-color: rgba(109, 41, 50, 0.22) !important;
   box-shadow:
     0 1px 3px rgba(109, 41, 50, .10),
@@ -41465,7 +41467,7 @@ body[data-theme="light"]:not([data-role="admin"]) .hs-card:hover,
 body[data-theme="light"]:not([data-role="admin"]) .lib-card:not(.lib-card-bare):hover,
 body[data-theme="light"]:not([data-role="admin"]) .video-card:hover,
 body[data-theme="light"]:not([data-role="admin"]) section.view:not([data-view^="admin-"]) > .card:hover {
-  background: #FDF1D5 !important;
+  background: #FAFAFA !important;
   border-color: rgba(109, 41, 50, 0.42) !important;
   box-shadow:
     0 4px 10px rgba(109, 41, 50, .14),
@@ -47097,11 +47099,11 @@ body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-fill 
 }
 body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-handle {
   background: #842A3B !important;
-  color: #FAEAC7 !important;
+  color: #FFFFFF !important;
   box-shadow: 0 3px 9px rgba(132, 42, 59, .4) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-track.dragging .cap-slide-label {
-  color: #FAEAC7 !important;
+  color: #FFFFFF !important;
   text-shadow: 0 1px 2px rgba(132, 42, 59, .5) !important;
 }
 
@@ -48426,8 +48428,8 @@ html body:not([data-role="admin"]).auth-mode #authHowitSection .howit-num {
   /* Badge nomor — warna TEMA dashboard user: gradient WINE + teks
      cream (per user 2026-05-22). Halo glow wine senada. */
   background: linear-gradient(135deg, #C44A5A 0%, #6D2932 100%) !important;
-  color: #F4E6D0 !important;
-  -webkit-text-fill-color: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
   border: 2px solid var(--bg-elev) !important;
   box-shadow: inset 0 1px 0 rgba(255, 230, 230, .22),
     0 0 12px rgba(196, 74, 90, .6) !important;
@@ -48517,15 +48519,15 @@ html body:not([data-role="admin"]):not([data-theme="light"]).auth-mode #authFaqS
   background: rgba(80, 30, 38, .65) !important;
   box-shadow: -3px 0 0 0 rgba(232, 200, 140, .95) !important;
 }
-/* LIGHT mode FAQ open/hover — cream bg + dark wine text (high specificity) */
+/* LIGHT mode FAQ open/hover — white bg + dark wine text (high specificity) */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item:hover {
   border-color: rgba(132, 42, 59, .35) !important;
-  background: #FAEFD3 !important;
+  background: #FAFAFA !important;
   box-shadow: -3px 0 0 0 rgba(132, 42, 59, .55) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] {
   border-color: rgba(132, 42, 59, .45) !important;
-  background: #FAEFD3 !important;
+  background: #FAFAFA !important;
   box-shadow: -3px 0 0 0 rgba(132, 42, 59, .75) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary,
@@ -48554,12 +48556,12 @@ html body:not([data-role="admin"]):not([data-theme="light"]).auth-mode #authFaqS
   padding-top: 14px !important;
   border-top: 1px solid rgba(232, 200, 140, .20) !important;
 }
-/* Light mode — Pertanyaan cream lebih dalam, Jawaban cream lebih terang */
+/* Light mode — Pertanyaan slightly grey (recessed), Jawaban pure white */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] summary {
-  background: #F1E1BB !important;
+  background: #F2F2F2 !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] > p {
-  background: #FCF6E4 !important;
+  background: #FFFFFF !important;
   padding-top: 14px !important;
   border-top: 1px solid rgba(132, 42, 59, .18) !important;
 }
@@ -50347,10 +50349,10 @@ body:not([data-role="admin"]) .discover-layout .discover-col-suggest,
   overflow: hidden;
   position: relative;
 }
-/* Light theme override — warm cream-peach (BUKAN white) match wine palette */
+/* Light theme override — pure white surface match clean light palette */
 body[data-theme="light"]:not([data-role="admin"]) .discover-layout .discover-col-trending,
 body[data-theme="light"]:not([data-role="admin"]) .discover-layout .discover-col-suggest {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(109, 41, 50, 0.22) !important;
   box-shadow: 0 2px 8px rgba(109, 41, 50, .10) !important;
 }
@@ -51002,7 +51004,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .dz-pro-empty small#dropz
    Ganti ke dark wine + outline wine untuk kontras. Icon gradient juga di-flip
    ke wine palette supaya visible. */
 body[data-theme="light"]:not([data-role="admin"]) .batal-btn-anim {
-  background-color: #F5E8C9 !important;
+  background-color: #FFFFFF !important;
   outline-color: rgba(109, 41, 50, .55) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .batal-btn-anim .bba-text {
@@ -51970,12 +51972,13 @@ body[data-theme="light"][data-role="admin"] .auth-topbar-btn:hover {
    body[data-role="admin"] a:not(.role-tag):not([class*="badge"]):not([class*="status"])
    yang specificity 0,4,2. Selector dibawah specificity 0,6,2 + defined later. */
 body[data-theme="light"][data-role="admin"] a.auth-topbar-link:not(.role-tag):not([class*="badge"]):not([class*="status"]) {
-  color: #EAEFEF !important;
-  -webkit-text-fill-color: #EAEFEF !important;
-  opacity: .92;
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  opacity: 1;
 }
 body[data-theme="light"][data-role="admin"] a.auth-topbar-link:hover:not(.role-tag):not([class*="badge"]):not([class*="status"]) {
-  color: #FFFFFF !important;
+  color: #0F1419 !important;
+  -webkit-text-fill-color: #0F1419 !important;
   opacity: 1;
 }
 
@@ -52150,53 +52153,51 @@ html body[data-theme="light"][data-role="admin"] .admin-landing-head small {
    regardless of theme. Light mode butuh gradient cream/slate yg lebih terang.
    ======================================================================== */
 
-/* Body bg — Soft slate-gray #ACBAC4 per user request 2026-05-10g. */
+/* Body bg — PURE WHITE per user 2026-05-23 (was slate gradient). */
 body[data-theme="light"][data-role="admin"]:not(.auth-mode),
 body[data-theme="light"][data-role="admin"].authed {
-  background: linear-gradient(170deg, #25343F 0%, #879197 50%, #EAEFEF 100%) !important;
+  background: #FFFFFF !important;
 }
 
-/* KPI cards + panels — slate-tinted light gradient */
+/* KPI cards + panels — PURE WHITE per user 2026-05-23 (was slate-tinted gradient) */
 body[data-theme="light"][data-role="admin"] .admin-kpi-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F0F2F4 50%, #E3E3E3 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.14) !important;
   box-shadow: 0 1px 3px rgba(27, 60, 83, .06), 0 4px 12px rgba(27, 60, 83, .05) !important;
 }
 body[data-theme="light"][data-role="admin"] .admin-kpi-card:hover {
-  background: linear-gradient(135deg, #FFFFFF 0%, #E8EBEF 50%, #D5DCE3 100%) !important;
+  background: #FAFAFA !important;
   border-color: rgba(27, 60, 83, 0.26) !important;
 }
 body[data-theme="light"][data-role="admin"] .admin-panel {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F0F2F4 50%, #E3E3E3 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.12) !important;
   box-shadow: 0 1px 3px rgba(27, 60, 83, .05), 0 4px 14px rgba(27, 60, 83, .04) !important;
 }
 body[data-theme="light"][data-role="admin"] .admin-panel:hover {
-  background: linear-gradient(135deg, #FFFFFF 0%, #E8EBEF 50%, #D5DCE3 100%) !important;
+  background: #FAFAFA !important;
   border-color: rgba(27, 60, 83, 0.24) !important;
 }
 body[data-theme="light"][data-role="admin"] .admin-feed li {
   background: rgba(27, 60, 83, 0.04) !important;
   border-color: rgba(27, 60, 83, 0.10) !important;
 }
-/* Admin hero (Hi Admin card) */
+/* Admin hero (Hi Admin card) — PURE WHITE */
 body[data-theme="light"][data-role="admin"] .admin-hero {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F0F2F4 50%, #E3E3E3 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.14) !important;
   box-shadow: 0 2px 6px rgba(27, 60, 83, .06), 0 8px 24px rgba(27, 60, 83, .05) !important;
 }
 /* Generic .card di admin dashboard (bukan inside admin-preview-frame/apf-*) */
 body[data-theme="light"][data-role="admin"] .card:not(.admin-preview-frame .card):not([class*="apf-"]) {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F5F6F8 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.10) !important;
 }
 
-/* Sidebar — light gray dengan slate accent */
+/* Sidebar — PURE WHITE per user 2026-05-23 (was slate-tinted gradient) */
 body[data-theme="light"][data-role="admin"] .sidebar {
-  background:
-    linear-gradient(180deg, rgba(69, 104, 130, .15) 0%, rgba(255, 255, 255, .92) 35%, rgba(227, 227, 227, .25) 100%),
-    #FFFFFF !important;
-  border-right: 1px solid rgba(27, 60, 83, .15) !important;
+  background: #FFFFFF !important;
+  border-right: 1px solid rgba(27, 60, 83, .12) !important;
 }
 /* Sidebar nav items — bump kontras */
 body[data-theme="light"][data-role="admin"] .sidebar .nav-item:not(.active),
@@ -52222,11 +52223,9 @@ body[data-theme="light"][data-role="admin"] .sidebar .nav-item.active {
 body[data-theme="light"][data-role="admin"] .sidebar .nav-item.active svg {
   color: #1B3C53 !important;
 }
-/* Topbar */
+/* Topbar — PURE WHITE per user 2026-05-23 (was slate-tinted gradient) */
 body[data-theme="light"][data-role="admin"] .topbar {
-  background:
-    linear-gradient(90deg, rgba(69, 104, 130, .12) 0%, rgba(255, 255, 255, .85) 50%, rgba(227, 227, 227, .25) 100%),
-    rgba(255, 255, 255, .65) !important;
+  background: #FFFFFF !important;
   border-bottom: 1px solid rgba(27, 60, 83, 0.10) !important;
 }
 
@@ -52240,14 +52239,14 @@ body[data-theme="light"][data-role="admin"] .ad-section-pill {
   color: var(--text) !important;
 }
 body[data-theme="light"][data-role="admin"] a.auth-topbar-link:hover:not(.role-tag):not([class*="badge"]):not([class*="status"]) {
-  color: #0B131D !important;
+  color: #0F1419 !important;
   opacity: 1;
 }
-/* Logo "Playly" + "Admin" — light text #EAEFEF */
+/* Logo "Playly" + "Admin" — charcoal text di latar putih 2026-05-23 */
 body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-name,
 body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-suffix {
-  color: #EAEFEF !important;
-  -webkit-text-fill-color: #EAEFEF !important;
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
 }
 /* === Masuk button + Settings gear button — high specificity override ===
    Rule lain `body[data-theme="light"][data-role="admin"] button:not(.btn.danger)
@@ -52326,9 +52325,9 @@ body[data-theme="light"]:not([data-role="admin"]) [class*="live-pill"] {
 
 /* === USER AUTH TOPBAR LIGHT MODE — fix dark wine bg ===
    `.auth-topbar` di-set bg `rgba(42,24,32,.85)` (dark wine) untuk dark mode.
-   Light mode butuh light cream bg supaya nav text kontras. */
+   Light mode pakai white translucent (2026-05-23 migration). */
 body[data-theme="light"]:not([data-role="admin"]) .auth-topbar {
-  background: rgba(255, 245, 229, 0.92) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
   border-bottom: 1px solid rgba(102, 34, 34, 0.12) !important;
   -webkit-backdrop-filter: blur(12px) saturate(140%);
   backdrop-filter: blur(12px) saturate(140%);
@@ -52348,9 +52347,9 @@ body[data-theme="light"][data-role="admin"] .auth-topbar {
 
 /* === AUTH MODAL (Login/Register popup) LIGHT MODE ===
    `.auth-card` hardcoded dark wine gradient untuk dark mode. Light mode
-   butuh light cream gradient + dark text + light input bg. */
+   sekarang pure white surface (2026-05-23 migration) + dark wine text. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF5E5 50%, #F5DAA7 100%) !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(102, 34, 34, 0.18) !important;
   box-shadow: 0 8px 32px rgba(102, 34, 34, .12), 0 24px 60px rgba(102, 34, 34, .08) !important;
   color: var(--text) !important;
@@ -52371,7 +52370,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .input-wrap input,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card input[type="text"],
 body[data-theme="light"]:not([data-role="admin"]) .auth-card input[type="email"],
 body[data-theme="light"]:not([data-role="admin"]) .auth-card input[type="password"] {
-  background: #FFF8E8 !important;  /* cream tipis match --bg-elev */
+  background: #F5F5F5 !important;  /* light grey input pada white card */
   border: 1px solid rgba(102, 34, 34, 0.20) !important;
   color: #662222 !important;
   -webkit-text-fill-color: #662222 !important;
@@ -52424,8 +52423,8 @@ html body[data-theme="light"]:not([data-role="admin"]) #authCard input:-webkit-a
 html body[data-theme="light"]:not([data-role="admin"]) #authCard input:-webkit-autofill:hover,
 html body[data-theme="light"]:not([data-role="admin"]) #authCard input:-webkit-autofill:focus,
 html body[data-theme="light"]:not([data-role="admin"]) #authCard input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #FFF8E8 inset !important;
-  box-shadow: 0 0 0 1000px #FFF8E8 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #F5F5F5 inset !important;
+  box-shadow: 0 0 0 1000px #F5F5F5 inset !important;
   -webkit-text-fill-color: #662222 !important;
   caret-color: #662222 !important;
 }
@@ -52447,7 +52446,7 @@ body[data-theme="light"]:not([data-role="admin"]) [class*="auth-tab"].active {
 /* Plan badge "Selected plan: Gratis" */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card [class*="plan-pill"],
 body[data-theme="light"]:not([data-role="admin"]) .auth-card [class*="selected-plan"] {
-  background: rgba(245, 218, 167, 0.40) !important;
+  background: rgba(132, 42, 59, 0.06) !important;
   border-color: rgba(102, 34, 34, 0.20) !important;
   color: var(--text) !important;
 }
@@ -52505,11 +52504,11 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .btn.primary * {
    tetap baik baik state closed maupun open. Tanpa ini, beberapa cascade rule
    bikin opened FAQ tampak wine-tinted dengan text faint. === */
 body[data-theme="light"]:not([data-role="admin"]) .faq-item {
-  background: #FFF8E8 !important;  /* cream tint match --bg-elev */
+  background: #FFFFFF !important;  /* pure white match --bg-elev */
   border: 1px solid rgba(102, 34, 34, 0.14) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .faq-item[open] {
-  background: #FAEFD3 !important;  /* slightly more saturated cream utk distinguish open */
+  background: #FAFAFA !important;  /* slightly off-white utk distinguish open */
   border-color: rgba(132, 42, 59, 0.40) !important;
   box-shadow: 0 4px 14px rgba(102, 34, 34, 0.08);
 }
@@ -52631,11 +52630,9 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card[data-auth-state="si
 }
 
 /* (5) Plan picker ("Pilih paket kamu") — light mode.
-   DULU: badge "Most popular" pakai --surface-3 abu-abu washed-out;
-   badge "Recommended" gradient emas→wine = muddy/tak terbaca; kartu
-   bg samar. FIX: kartu krem solid + border wine halus, badge jelas. */
+   Kartu pure white solid + border wine halus, badge jelas. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1.5px solid rgba(132, 42, 59, 0.24) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card:hover {
@@ -52647,17 +52644,17 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-pre
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium:hover {
   border-color: #b8862f !important;
 }
-/* Badge "MOST POPULAR" — wine solid, teks krem terbaca */
+/* Badge "MOST POPULAR" — wine solid, teks putih */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-badge {
   background: var(--primary) !important;
   border: 1px solid var(--primary) !important;
-  color: #F4E6D0 !important;
-  -webkit-text-fill-color: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }
-/* Badge "DIREKOMENDASIKAN" — krem solid + teks/bintang emas-bronze,
-   border bronze; bukan gradient muddy. */
+/* Badge "DIREKOMENDASIKAN" — putih solid + teks/bintang emas-bronze,
+   border bronze. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-badge.apc-badge-premium {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(184, 134, 47, 0.65) !important;
   color: #8a5a18 !important;
   -webkit-text-fill-color: #8a5a18 !important;
@@ -52675,11 +52672,11 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-pre
    wine, badge bronze solid + teks krem, CTA wine. */
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .plan-picker-eyebrow {
   color: var(--primary) !important;
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(132, 42, 59, 0.35) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(132, 42, 59, 0.22) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card:hover:not(:disabled) {
@@ -52687,15 +52684,15 @@ body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card:hove
   box-shadow: 0 12px 30px -12px rgba(102, 34, 34, 0.30) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border-color: rgba(184, 134, 47, 0.55) !important;
   box-shadow: 0 8px 22px -10px rgba(102, 34, 34, 0.25) !important;
 }
-/* Badge "SAVE 25%" / "BEST DEAL" — bronze solid, teks krem terbaca */
+/* Badge "SAVE 25%" / "BEST DEAL" — bronze solid, teks putih terbaca */
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-badge {
   background: linear-gradient(135deg, #b8862f 0%, #8a5a18 100%) !important;
-  color: #F4E6D0 !important;
-  -webkit-text-fill-color: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
   box-shadow: 0 4px 10px -2px rgba(102, 34, 34, 0.40) !important;
 }
 /* CTA "Choose plan →" / "Start trial →" — wine terbaca (bukan emas pucat) */
@@ -53080,11 +53077,10 @@ body[data-theme="light"] .atsm {
   box-shadow: 0 8px 32px rgba(27, 60, 83, .12), 0 24px 60px rgba(27, 60, 83, .08) !important;
   color: var(--text) !important;
 }
-/* Popup pengaturan — mode terang USER: surface CREAM + aksen wine (per
-   user 2026-05-22; rule generic di atas pakai #FFF putih + bayangan slate
-   yg tidak cocok dgn tema user cream/wine). Scope :not(admin). */
+/* Popup pengaturan — mode terang USER: surface PUTIH + aksen wine
+   (2026-05-23 migration ke white). Scope :not(admin). */
 body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(102, 34, 34, .24) !important;
   box-shadow: 0 8px 30px rgba(102, 34, 34, .16), 0 22px 56px rgba(102, 34, 34, .10) !important;
 }
@@ -53645,7 +53641,7 @@ html body[data-theme="light"][data-role="admin"] .admin-action-empty div {
   -webkit-text-fill-color: #25343F !important;
 }
 html body[data-theme="light"][data-role="admin"] .admin-action-empty {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   border-radius: 14px !important;
@@ -53657,7 +53653,7 @@ html body[data-theme="light"][data-role="admin"] .admin-action-empty {
 /* === ADMIN LIGHT FINAL SWEEP — semua surface yg masih putih ===
    User komplain 2026-05-11 banyak kolom card warna putih. Fix: target SEMUA
    .card / settings-card / input / textarea / select / search-bar / tabs /
-   audit rows / empty state cards di admin light supaya pakai #BFC9D1 + ring
+   audit rows / empty state cards di admin light supaya pakai #FFFFFF + ring
    #25343F + text #25343F (dark slate). */
 
 /* Settings cards (Kontrol Platform, Audit&Konfirmasi, Notifikasi Admin,
@@ -53668,7 +53664,7 @@ html body[data-theme="light"][data-role="admin"] .settings-card-security,
 html body[data-theme="light"][data-role="admin"] .card.settings-card-security,
 html body[data-theme="light"][data-role="admin"] section.view[data-view="settings"] .card,
 html body[data-theme="light"][data-role="admin"] section.view[data-view="settings"] [class*="card"] {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
@@ -53679,7 +53675,7 @@ html body[data-theme="light"][data-role="admin"] .audit-filter-tab,
 html body[data-theme="light"][data-role="admin"] [data-audit-filter],
 html body[data-theme="light"][data-role="admin"] [data-audit-period],
 html body[data-theme="light"][data-role="admin"] .filter-pill {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
 }
@@ -53697,7 +53693,7 @@ html body[data-theme="light"][data-role="admin"] .audit-list-item,
 html body[data-theme="light"][data-role="admin"] [class*="audit-row"],
 html body[data-theme="light"][data-role="admin"] [class*="audit-item"],
 html body[data-theme="light"][data-role="admin"] .audit-section .audit-card {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   border-bottom: 1px solid rgba(32, 41, 64, .18) !important;
   color: #25343F !important;
@@ -53707,7 +53703,7 @@ html body[data-theme="light"][data-role="admin"] .audit-section .audit-card {
 html body[data-theme="light"][data-role="admin"] .pq-empty,
 html body[data-theme="light"][data-role="admin"] [class*="pq-empty"],
 html body[data-theme="light"][data-role="admin"] .premium-queue-empty {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
 }
@@ -53723,8 +53719,8 @@ html body[data-theme="light"][data-role="admin"] section.view[data-view^="admin-
 html body[data-theme="light"][data-role="admin"] section.view[data-view="settings"] input,
 html body[data-theme="light"][data-role="admin"] section.view[data-view="settings"] textarea,
 html body[data-theme="light"][data-role="admin"] section.view[data-view="settings"] select {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
   -webkit-text-fill-color: #25343F !important;
@@ -53746,8 +53742,8 @@ html body[data-theme="light"][data-role="admin"] .modal-panel textarea,
 html body[data-theme="light"][data-role="admin"] .modal-panel select,
 html body[data-theme="light"][data-role="admin"] .support-compose-panel input,
 html body[data-theme="light"][data-role="admin"] .support-compose-panel textarea {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
   -webkit-text-fill-color: #25343F !important;
@@ -53773,7 +53769,7 @@ html body[data-theme="light"][data-role="admin"] .inbox-section,
 html body[data-theme="light"][data-role="admin"] .inbox-card,
 html body[data-theme="light"][data-role="admin"] [class*="inbox-section"],
 html body[data-theme="light"][data-role="admin"] [class*="inbox-card"] {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
 }
@@ -53793,7 +53789,7 @@ html body[data-theme="light"][data-role="admin"] [class*="inbox-card"] *:not(.bt
 /* === SPECIFIC TARGETED OVERRIDES per screenshot user 2026-05-11 === */
 
 /* "Buat Akun Admin" / "Buat Akun User" modal — inputs inside `.cu-label`
-   pakai `background: var(--surface)` yang light. Force #BFC9D1. */
+   pakai `background: var(--surface)` yang light. Force #FFFFFF. */
 html body[data-theme="light"][data-role="admin"] .cu-label input,
 html body[data-theme="light"][data-role="admin"] .cu-panel input,
 html body[data-theme="light"][data-role="admin"] #createUserModal input,
@@ -53801,8 +53797,8 @@ html body[data-theme="light"][data-role="admin"] .cu-grid input,
 html body[data-theme="light"][data-role="admin"] .cu-label input:focus,
 html body[data-theme="light"][data-role="admin"] .cu-panel input:focus,
 html body[data-theme="light"][data-role="admin"] #createUserModal input:focus {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
   -webkit-text-fill-color: #25343F !important;
@@ -53822,8 +53818,8 @@ html body[data-theme="light"][data-role="admin"] #supportComposeModal input,
 html body[data-theme="light"][data-role="admin"] #supportComposeModal textarea,
 html body[data-theme="light"][data-role="admin"] #bugReportModal input,
 html body[data-theme="light"][data-role="admin"] #bugReportModal textarea {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
   -webkit-text-fill-color: #25343F !important;
@@ -53836,7 +53832,7 @@ html body[data-theme="light"][data-role="admin"] [class*="analytics-tabs"],
 html body[data-theme="light"][data-role="admin"] .chart-card .chart-tabs,
 html body[data-theme="light"][data-role="admin"] [data-analytics-period],
 html body[data-theme="light"][data-role="admin"] [data-period-tab] {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
 }
 html body[data-theme="light"][data-role="admin"] [data-analytics-period]:not(.active),
@@ -53846,7 +53842,7 @@ html body[data-theme="light"][data-role="admin"] [data-period-tab]:not(.active) 
   color: #25343F !important;
 }
 
-/* Log Audit row striping — section bg + semua row varieties force #BFC9D1
+/* Log Audit row striping — section bg + semua row varieties force #FFFFFF
    supaya tidak ada white-ish stripe yg lolos. */
 html body[data-theme="light"][data-role="admin"] .audit-section,
 html body[data-theme="light"][data-role="admin"] .audit-section-body,
@@ -53860,8 +53856,8 @@ html body[data-theme="light"][data-role="admin"] [class*="audit-item"]:nth-child
 html body[data-theme="light"][data-role="admin"] .audit-list-row,
 html body[data-theme="light"][data-role="admin"] .audit-list-row:nth-child(odd),
 html body[data-theme="light"][data-role="admin"] .audit-list-row:nth-child(even) {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
 }
 
 /* Pengaturan Platform — semua input/textarea/select dlm setting card */
@@ -53887,8 +53883,8 @@ html body[data-theme="light"][data-role="admin"] .settings-card-security .upload
 html body[data-theme="light"][data-role="admin"] .settings-card-security .upload-form select,
 html body[data-theme="light"][data-role="admin"] .settings-card-security label input,
 html body[data-theme="light"][data-role="admin"] .settings-card-security label input:focus {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
   -webkit-text-fill-color: #25343F !important;
@@ -53925,9 +53921,7 @@ html body[data-theme="light"][data-role="admin"] .admin-action-center .alert-row
    Original dark di line ~15994 pakai #0B131D solid + white text.
    ========================================================= */
 html body[data-theme="light"] .admin-welcome-overlay {
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, .55), transparent 60%),
-    linear-gradient(180deg, #25343F 0%, #879197 45%, #EAEFEF 100%) !important;
+  background: #FFFFFF !important;
 }
 html body[data-theme="light"] .admin-welcome-overlay .awo-orb-1 {
   background: radial-gradient(circle, rgba(35, 76, 106, .35) 0%, transparent 68%) !important;
@@ -54107,10 +54101,10 @@ html body[data-theme="light"][data-role="admin"] .admin-kpi-card .kpi-content * 
   -webkit-text-fill-color: #25343F !important;
 }
 
-/* --- Sidebar — solid #BFC9D1 slate-gray per user 2026-05-11 --- */
+/* --- Sidebar — solid #FFFFFF slate-gray per user 2026-05-11 --- */
 html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .sidebar,
 html body[data-theme="light"][data-role="admin"].authed .sidebar {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border-right: 1px solid rgba(27, 60, 83, 0.22) !important;
   box-shadow: 0 1px 3px rgba(27, 60, 83, .06) !important;
@@ -54612,7 +54606,7 @@ html body[data-theme="light"][data-role="admin"].authed .page-head p {
 /* Action center alert "Semua aman" — text `#EAEFEF` per user 2026-05-11 */
 html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .admin-action-center .alert-empty,
 html body[data-theme="light"][data-role="admin"].authed .admin-action-center .alert-empty {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   border-radius: 14px !important;
@@ -55650,8 +55644,8 @@ html body[data-theme="light"][data-role="admin"] .profile-dropdown .pd-divider {
    (lihat ~baris 6866). Dashboard user tidak terpengaruh. */
 
 /* =========================================================
-   ADMIN DASHBOARD LIGHT — PASS 12: card surface unify ke #BFC9D1
-   Per user 2026-05-11: SEMUA kolom card admin light → slate-gray #BFC9D1
+   ADMIN DASHBOARD LIGHT — PASS 12: card surface unify ke #FFFFFF
+   Per user 2026-05-11: SEMUA kolom card admin light → slate-gray #FFFFFF
    (sama dgn sidebar). Pakai class repetition `.x.x` untuk bump spec di atas
    semua scattered `#FFFFFF !important` Pass 1-11 (0,6,N).
    Form inputs + search bars TETAP #FFFFFF (kontras dgn card slate).
@@ -55662,7 +55656,7 @@ html body[data-theme="light"][data-role="admin"] .admin-hero .hero-text.hero-tex
 html body[data-theme="light"][data-role="admin"] .admin-hero .hero-clock.hero-clock,
 html body[data-theme="light"][data-role="admin"] .admin-hero .hero-clock.admin.admin,
 html body[data-theme="light"][data-role="admin"] .hero-clock.hero-clock.admin.admin {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55679,26 +55673,26 @@ html body[data-theme="light"][data-role="admin"] .admin-kpi-card.admin-kpi-card,
 html body[data-theme="light"][data-role="admin"] .admin-kpi-card.admin-kpi-card:hover,
 html body[data-theme="light"][data-role="admin"] .admin-panel.admin-panel,
 html body[data-theme="light"][data-role="admin"] .admin-panel.admin-panel:hover {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
 
 /* Activity feed + Leaderboard side-panels (Aktivitas User Live, Video Berkinerja Terbaik) */
 html body[data-theme="light"][data-role="admin"] .admin-row-2col .admin-panel.admin-panel {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
 
 /* Action center alert "Semua aman" + alert rows */
 html body[data-theme="light"][data-role="admin"] .admin-action-center .alert-empty.alert-empty {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
 html body[data-theme="light"][data-role="admin"] .admin-action-center .alert-row.alert-row {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
@@ -55706,14 +55700,14 @@ html body[data-theme="light"][data-role="admin"] .admin-action-center .alert-row
 /* Premium queue stats + rows */
 html body[data-theme="light"][data-role="admin"] .pq-stat.pq-stat,
 html body[data-theme="light"][data-role="admin"] .pq-row.pq-row {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
 
 /* Premium detail modal card */
 html body[data-theme="light"][data-role="admin"] .pq-detail-card.pq-detail-card {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
@@ -55728,7 +55722,7 @@ html body[data-theme="light"][data-role="admin"] .pq-detail-card .pqdm-code-bloc
 html body[data-theme="light"][data-role="admin"] .audit-stat.audit-stat,
 html body[data-theme="light"][data-role="admin"] .audit-row.audit-row,
 html body[data-theme="light"][data-role="admin"] .audit-card.audit-card {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55736,7 +55730,7 @@ html body[data-theme="light"][data-role="admin"] .audit-card.audit-card {
 /* Inbox columns + picker popover */
 html body[data-theme="light"][data-role="admin"] .inbox-column.inbox-column,
 html body[data-theme="light"][data-role="admin"] .inbox-picker-popover.inbox-picker-popover {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55744,7 +55738,7 @@ html body[data-theme="light"][data-role="admin"] .inbox-picker-popover.inbox-pic
 /* View cards (Edit Profil: Identitas/Tautan Sosial/Info Akun, Settings cards, dll) */
 html body[data-theme="light"][data-role="admin"] .view .card.card,
 html body[data-theme="light"][data-role="admin"] .view.admin-only .card.card {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55752,7 +55746,7 @@ html body[data-theme="light"][data-role="admin"] .view.admin-only .card.card {
 /* Modal panels (Buat User, Buat Admin, dll) */
 html body[data-theme="light"][data-role="admin"] .modal-panel.modal-panel,
 html body[data-theme="light"][data-role="admin"] .modal-panel.cu-panel.cu-panel {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55761,18 +55755,18 @@ html body[data-theme="light"][data-role="admin"] .modal-panel.cu-panel.cu-panel 
 html body[data-theme="light"][data-role="admin"] .notif-dropdown.notif-dropdown,
 html body[data-theme="light"][data-role="admin"] .side-panel.side-panel,
 html body[data-theme="light"][data-role="admin"] #notifPanel.side-panel {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
 html body[data-theme="light"][data-role="admin"] .notif-dropdown .ndd-arrow.ndd-arrow {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
 
 /* Profile dropdown */
 html body[data-theme="light"][data-role="admin"] .profile-dropdown.profile-dropdown {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55780,7 +55774,7 @@ html body[data-theme="light"][data-role="admin"] .profile-dropdown.profile-dropd
 /* Lib kebab panel + submenu (video player popup) */
 html body[data-theme="light"][data-role="admin"] .lib-kebab-panel.lib-kebab-panel,
 html body[data-theme="light"][data-role="admin"] .lib-kebab-submenu.lib-kebab-submenu {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55789,7 +55783,7 @@ html body[data-theme="light"][data-role="admin"] .lib-kebab-submenu.lib-kebab-su
 html body[data-theme="light"][data-role="admin"] .admin-table-wrap.admin-table-wrap,
 html body[data-theme="light"][data-role="admin"] .gv-empty.gv-empty,
 html body[data-theme="light"][data-role="admin"] .audit-empty.audit-empty {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
@@ -55809,7 +55803,7 @@ html body[data-theme="light"][data-role="admin"] .profile-avatar-row.profile-ava
 
 /* Admin welcome overlay shield + eyebrow (loading overlay) */
 html body[data-theme="light"] .admin-welcome-overlay .awo-eyebrow.awo-eyebrow {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(27, 60, 83, 0.22) !important;
 }
 
@@ -56545,16 +56539,16 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 
 /* =========================================================
-   FINAL UNIFY — ADMIN LIGHT SURFACE = SOLID #BFC9D1
+   FINAL UNIFY — ADMIN LIGHT SURFACE = SOLID #FFFFFF
    Per user request 2026-05-11: warna kolom card sama dgn
-   sidebar/topbar. Sidebar sudah `#BFC9D1`. Topbar dan SEMUA
-   modal/dropdown/pill/card juga harus `#BFC9D1`. Plus ring
+   sidebar/topbar. Sidebar sudah `#FFFFFF`. Topbar dan SEMUA
+   modal/dropdown/pill/card juga harus `#FFFFFF`. Plus ring
    uniform 1px #25343F di semua tempat (no box-shadow ring).
    ========================================================= */
 
 /* === Topbar bg → TRANSPARENT supaya menyatu dgn body backdrop ===
    Per user 2026-05-11: topbar JANGAN punya kotak/card bg. Pills tetap solid
-   #BFC9D1 dgn ring, tapi container topbar transparent merging ke backdrop. */
+   #FFFFFF dgn ring, tapi container topbar transparent merging ke backdrop. */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .topbar {
   background: transparent !important;
   background-image: none !important;
@@ -56563,13 +56557,13 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 
 /* === Topbar pills (search, theme switch, bell, profile pill, breadcrumb) ===
-   Tetap solid #BFC9D1 dgn ring 1px #25343F + text/icon `#25343F`. */
+   Tetap solid #FFFFFF dgn ring 1px #25343F + text/icon `#25343F`. */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .topbar-search,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .theme-switch,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .topbar .icon-btn,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .topbar-profile-pill,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .breadcrumb {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
@@ -56602,7 +56596,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   background: transparent !important;
 }
 
-/* === Modals & dropdowns → #BFC9D1 === */
+/* === Modals & dropdowns → #FFFFFF === */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .modal-panel,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .confirm-panel,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .bell-dropdown,
@@ -56616,17 +56610,17 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .help-channel-card,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] [class*="dropdown-panel"],
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] [class*="popover"]:not(.cs-popup) {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
 }
 
-/* === Help FAQ items + collapsibles → #BFC9D1 === */
+/* === Help FAQ items + collapsibles → #FFFFFF === */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .help-modal .help-faq-item,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] details.help-faq,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .help-modal details {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
 }
 
@@ -56635,7 +56629,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .status-sub-tab,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] button[data-people-tab],
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .chip-tabs button {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
 }
@@ -56662,7 +56656,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table-wrap:focus,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table-wrap:focus-visible,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .admin-table-wrap:focus-within {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   border-radius: 14px !important;
   outline: none !important;
@@ -56708,7 +56702,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   color: rgba(32, 41, 64, .65) !important;
 }
 
-/* === Text readability — navy ink di semua surface #BFC9D1 === */
+/* === Text readability — navy ink di semua surface #FFFFFF === */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .modal-panel,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .modal-panel *:not(.btn):not(.btn *),
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .bell-dropdown *:not(.btn):not(.btn *),
@@ -56737,7 +56731,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .inbox-column,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .gv-stat,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .comms-kpi {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   box-shadow: none !important;
@@ -56775,7 +56769,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex: initial !important;
   margin: 0 !important;
   border-radius: 14px !important;
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   outline: none !important;
@@ -56788,7 +56782,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   padding: 24px 22px !important;
   min-height: 90px !important;
   border-radius: 18px !important;
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   box-shadow: none !important;
@@ -56822,8 +56816,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    3. `.audit-section-head` — header "AKTIVITAS ADMIN BIASA" */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .an-tab-row,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .an-tab-row.an-tab-row {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
@@ -56836,8 +56830,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminNotifLangCard.card,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] section.view[data-view="settings"] .card,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] section.view[data-view="settings"] .card.settings-card-security {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
@@ -56845,8 +56839,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .audit-section-head,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .audit-section-head.audit-section-head {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border-bottom: 1px solid #25343F !important;
   color: #25343F !important;
@@ -56854,8 +56848,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .audit-section,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .audit-section.audit-section {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
 }
@@ -56863,8 +56857,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* `.settings-session-info` (Akses & Sesi → "Browser ini · Chrome · Windows · aktif sekarang") */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .settings-session-info,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] .settings-card-security .settings-session-info {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
@@ -56874,8 +56868,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    ([script.js:14276]). Inline style win pakai !important + ID specificity. */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #extraAdminList li,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #extraAdminList ul li {
-  background: #BFC9D1 !important;
-  background-color: #BFC9D1 !important;
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
   background-image: none !important;
   border: 1px solid #25343F !important;
   color: #25343F !important;
@@ -60907,7 +60901,7 @@ body[data-role="admin"] .admin-foot-section .afc-text p {
    WARNA: persis tema dashboard admin (template unified 2026-05-08,
    lihat baris ~45248) — sama dgn kartu hero kiri & semua kartu admin:
      Dark  → surface rgba(28,40,60,.55) · border rgba(165,175,195,.18)
-     Light → surface #BFC9D1 · border #25343F
+     Light → surface #FFFFFF · border #25343F
    Aksen monokrom slate #ADB5BD (BUKAN hijau — request user
    "warna kolom nya jelek ... pakai warna tema dashboard admin").
    Selector di-scope [data-role="admin"] + !important supaya menang
@@ -60925,7 +60919,7 @@ body[data-role="admin"] .admin-hero .admin-hero-feed {
   overflow: hidden;
 }
 body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed {
-  background: #BFC9D1 !important;
+  background: #FFFFFF !important;
   border: 1px solid #25343F !important;
   box-shadow: 0 1px 4px rgba(37, 52, 63, .14), 0 4px 14px rgba(37, 52, 63, .10);
 }
@@ -60941,7 +60935,7 @@ body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head {
   border-bottom: 1px solid rgba(165, 175, 195, .22);
 }
 body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-feed .ahf-head {
-  background: #D6DCE4;
+  background: #FAFAFA;
   border-bottom-color: rgba(37, 52, 63, .20);
 }
 body[data-role="admin"] .admin-hero .admin-hero-feed .ahf-head-ico {
@@ -61754,7 +61748,7 @@ body[data-role="admin"] .admin-hero .admin-hero-badge svg {
   flex-shrink: 0;
 }
 body[data-theme="light"][data-role="admin"] .admin-hero .admin-hero-badge {
-  background: linear-gradient(135deg, #D6DCE4 0%, #BFC9D1 100%);
+  background: linear-gradient(135deg, #FAFAFA 0%, #FFFFFF 100%);
   border-color: rgba(37, 52, 63, .30);
   color: #25343F;
   box-shadow: 0 1px 3px rgba(37, 52, 63, .12);
@@ -62255,7 +62249,7 @@ html body[data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .a
 }
 html body[data-theme="light"][data-role="admin"] section[data-view="admin-dashboard"] .admin-rev-summary > .admin-panel-head,
 html body[data-theme="light"][data-role="admin"] section[data-view="admin-dashboard"] .admin-grid .admin-panel > .admin-panel-head {
-  background: #D6DCE4 !important;
+  background: #FAFAFA !important;
   border-bottom-color: rgba(37, 52, 63, .20) !important;
 }
 
@@ -62542,7 +62536,7 @@ html body[data-role="admin"] #adminActionCenter .admin-action-card.aac-zero .aac
   border: 1px solid rgba(165, 175, 195, .22) !important;
   color: #D4D9E0 !important;
 }
-/* LIGHT — selaras dgn band judul terang (#D6DCE4) tapi sedikit
+/* LIGHT — selaras dgn band judul terang (#FAFAFA) tapi sedikit
    lebih pekat utk chip; glyph gelap biar tajam di kartu terang. */
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card .aac-icon,
 html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="admin"] #adminActionCenter .admin-action-card.aac-active .aac-icon,
@@ -64212,12 +64206,12 @@ body.reduced-motion .hqs-live-badge.ping { animation: none !important; }
    wine gelap → invisible di chip wine. Number badge tetap krem (sudah
    hardcode #F4E6D0 → aman). */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon {
-  color: #F4E6D0 !important;
+  color: #FFFFFF !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon svg,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon .picon {
-  color: #F4E6D0 !important;
-  stroke: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
   fill: none !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon .picon path,
@@ -64226,7 +64220,7 @@ html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSecti
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon .picon line,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon svg path,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authHowitSection .howit-icon svg circle {
-  stroke: #F4E6D0 !important;
+  stroke: #FFFFFF !important;
   fill: none !important;
 }
 
@@ -64238,13 +64232,13 @@ html body[data-theme="light"]:not([data-role="admin"]) .plan-premium .pf-ico,
 html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico {
   background: linear-gradient(135deg, #9c4450 0%, #6D2932 100%) !important;
   border: 1px solid rgba(102, 34, 34, 0.55) !important;
-  color: #F4E6D0 !important;
+  color: #FFFFFF !important;
   box-shadow: 0 2px 6px rgba(102, 34, 34, 0.22) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .plan-premium .pf-ico svg,
 html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico svg {
-  color: #F4E6D0 !important;
-  stroke: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
   fill: none !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .plan-premium .pf-ico svg path,
@@ -64259,7 +64253,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico 
 html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico svg line,
 html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico svg polyline,
 html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .pf-ico svg ellipse {
-  stroke: #F4E6D0 !important;
+  stroke: #FFFFFF !important;
   fill: none !important;
 }
 /* Hover chip Premium tetap wine (override hover dark emas) */
@@ -64274,8 +64268,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .preview-premium .preview
 html body[data-theme="light"]:not([data-role="admin"]) .plan-badge-premium {
   background: linear-gradient(135deg, #9c4450 0%, #6D2932 100%) !important;
   border-color: rgba(102, 34, 34, 0.55) !important;
-  color: #F4E6D0 !important;
-  -webkit-text-fill-color: #F4E6D0 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .plan-badge-premium .pb-star {
   color: #F2C76A !important;
@@ -64338,7 +64332,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-ad
    accent ::before jadi pita tipis rapi yang inset penuh & TIDAK nyembul
    keluar dari sudut membulat tile. */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-tile {
-  background: #FAEAC7 !important;
+  background: #FFFFFF !important;
   border: 1px solid rgba(132, 42, 59, 0.22) !important;
   overflow: hidden !important;
 }
@@ -64374,6 +64368,29 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .previ
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Pure-white light mode (per user 2026-05-23): SEMUA orbs + aurora user
+   DIMATIKAN supaya page tetap putih bersih. Orb wine/amber bikin pink
+   wash di atas putih → dimatikan total di light mode (di mana saja:
+   .user-dashboard-bg, .auth-screen, dst). Mode gelap tetap pakai
+   orb+aurora seperti biasa. */
+body[data-theme="light"]:not([data-role="admin"]) .orb,
+body[data-theme="light"]:not([data-role="admin"]) .user-bg-aurora,
+body[data-theme="light"]:not([data-role="admin"]) .user-bg-aurora-auth {
+  display: none !important;
+}
+
+/* Pure-white admin light mode (per user 2026-05-23, mirror of user-light
+   migration): SEMUA orbs (navy/slate) + aurora + grid + particles ADMIN
+   DIMATIKAN supaya admin light page tetap putih bersih. Tanpa ini, orb
+   navy/slate bikin wash kebiruan di atas surface putih. Mode admin DARK
+   tetap pakai orb/aurora seperti biasa. */
+body[data-theme="light"][data-role="admin"] .orb,
+body[data-theme="light"][data-role="admin"] .admin-bg-aurora,
+body[data-theme="light"][data-role="admin"] .admin-bg-grid,
+body[data-theme="light"][data-role="admin"] .admin-bg-particles {
+  display: none !important;
 }
 
 /* =========================================================================
@@ -64621,4 +64638,648 @@ html body:not([data-role="admin"]) section[data-view="home"] .hqs-minimal .hqs-v
 .video-editor-panel #veVideo {
   transition: transform .25s ease, filter .25s ease;
   transform-origin: center;
+}
+
+/* =========================================================
+   ADMIN LIGHT — WHITE-ON-WHITE / LOW-CONTRAST FIX (v472)
+   Setelah migrasi admin-light dari slate-grey ke pure white
+   (2026-05-23), banyak rule lama yang masih hardcoded `#EAEFEF`
+   / `#FFFFFF` / `rgba(255,255,255,...)` jadi invisible di atas
+   bg putih. Block ini override warna teks + icon ke navy/slate
+   (#25343F / #234C6A / #456882) sesuai token admin light.
+
+   Scope KETAT: body[data-theme="light"][data-role="admin"]
+   → admin DARK & user theme (light/dark) TIDAK terpengaruh.
+
+   Ditaruh paling akhir biar menang specificity & cascade.
+   ========================================================= */
+
+/* --- HERO BRAND ("Playly." + "ADMIN CONTROL CENTER" eyebrow) --- */
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-brand h1,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-brand h2,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-brand b,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-brand strong,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-brand h1,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-brand b,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-brand strong {
+  color: #25343F !important;
+  -webkit-text-fill-color: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-brand h1 span,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-brand h1 span {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+
+/* --- HERO STATS (24/7 / 100% / Real + labels) --- */
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-stats b,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-stats b {
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+          background-clip: initial !important;
+  color: #25343F !important;
+  -webkit-text-fill-color: #25343F !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-stats span,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-stats span {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+
+/* --- SECTION EYEBROW (paragraph di .admin-landing-head) --- */
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-landing-head p,
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-landing-head small,
+html body[data-theme="light"][data-role="admin"] .admin-landing-head p,
+html body[data-theme="light"][data-role="admin"] .admin-landing-head small {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+
+/* --- HERO SHOWCASE BODY COPY --- */
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-left-admin .auth-showcase p {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+
+/* --- FOOTER (admin-foot-section: links, separator, copyright) --- */
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-link {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-link:hover {
+  color: #234C6A !important;
+  -webkit-text-fill-color: #234C6A !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-link-sep {
+  color: rgba(27, 60, 83, 0.30) !important;
+  -webkit-text-fill-color: rgba(27, 60, 83, 0.30) !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-copy {
+  color: rgba(37, 52, 63, 0.65) !important;
+  -webkit-text-fill-color: rgba(37, 52, 63, 0.65) !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-wordmark {
+  color: #25343F !important;
+  -webkit-text-fill-color: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-wordmark-sep,
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-status-sep {
+  color: rgba(27, 60, 83, 0.30) !important;
+  -webkit-text-fill-color: rgba(27, 60, 83, 0.30) !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .afs-status {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+/* "Akses dibatasi" headline + body — keep navy on white */
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-text strong {
+  color: #25343F !important;
+  -webkit-text-fill-color: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-text p {
+  color: #456882 !important;
+  -webkit-text-fill-color: #456882 !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc-text a {
+  color: #234C6A !important;
+  -webkit-text-fill-color: #234C6A !important;
+}
+
+/* --- REMOVE bogus #FFFFFF from list-of-exceptions for .auth-stats b --- */
+/* Originally rule line ~52037 used `color: #FFFFFF !important` on a long
+   list of "dark-bg" exceptions and incorrectly included `.auth-stats b`.
+   The override above already wins, but we also explicitly drop the white
+   fill for the `b` text inside `.auth-stats` to be safe. */
+html body[data-theme="light"][data-role="admin"] .auth-left-admin .auth-stats b {
+  color: #25343F !important;
+  -webkit-text-fill-color: #25343F !important;
+}
+
+/* =========================================================
+   DASHBOARD TOPBAR (admin authed) — theme-switch + icon-btn
+   Sebelumnya pakai #EAEFEF (near-white) untuk text/icon stroke
+   — invisible di atas bg topbar putih. Fix ke navy slate.
+   ========================================================= */
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .theme-switch,
+html body[data-theme="light"][data-role="admin"].authed .topbar .theme-switch {
+  background: rgba(27, 60, 83, 0.06) !important;
+  background-image: none !important;
+  border: 1px solid rgba(27, 60, 83, 0.18) !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .theme-switch button,
+html body[data-theme="light"][data-role="admin"].authed .topbar .theme-switch button {
+  color: #25343F !important;
+  background: transparent !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .theme-switch button.active,
+html body[data-theme="light"][data-role="admin"].authed .topbar .theme-switch button.active {
+  background: rgba(27, 60, 83, 0.12) !important;
+  color: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .theme-switch button svg,
+html body[data-theme="light"][data-role="admin"].authed .topbar .theme-switch button svg {
+  color: #25343F !important;
+  stroke: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .icon-btn,
+html body[data-theme="light"][data-role="admin"].authed .topbar .icon-btn {
+  background: rgba(27, 60, 83, 0.06) !important;
+  background-image: none !important;
+  border: 1px solid rgba(27, 60, 83, 0.18) !important;
+  color: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .icon-btn svg,
+html body[data-theme="light"][data-role="admin"].authed .topbar .icon-btn svg {
+  color: #25343F !important;
+  stroke: #25343F !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) .topbar .icon-btn:hover,
+html body[data-theme="light"][data-role="admin"].authed .topbar .icon-btn:hover {
+  background: rgba(27, 60, 83, 0.12) !important;
+  border-color: rgba(27, 60, 83, 0.26) !important;
+}
+
+/* End ADMIN LIGHT contrast fix block (v472). */
+
+/* === ADMIN LIGHT — TOPBAR + LIVE TICKER + RADAR — LIGHT SLATE PANELS
+   (revisi 2026-05-23 v475: user revisi "jangan pure putih semua nya,
+   kombinasikan dgn warna mode dark admin" TAPI juga "jangan sama" dgn
+   dark mode. Solusi: panel LIGHT SLATE (slate-100 ~#F1F5F9) + text
+   charcoal #1F2937 → distinct dari page putih, distinct dari dark
+   navy admin dark. Border bawah subtle. === */
+
+/* Topbar admin landing (auth-mode) — light slate panel.
+   PENTING: pakai #authTopbarAdmin (ID) supaya menang dari rule
+   gradient navy di line ~44071. */
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar {
+  background: #F1F5F9 !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(31, 41, 55, .14) !important;
+  box-shadow: 0 1px 4px rgba(31, 41, 55, .06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin a,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-link,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-name,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-name i,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-suffix,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin a,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin .auth-topbar-link,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin .auth-topbar-name,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin .auth-topbar-name i,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-admin .auth-topbar-suffix,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar a,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-link,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .brand-text h1,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .brand-text span {
+  color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-link:hover,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-link:hover {
+  color: #1F2937 !important;
+  background: rgba(31, 41, 55, .08) !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin svg,
+body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar svg {
+  color: #1F2937 !important;
+  stroke: currentColor !important;
+}
+/* "Masuk" button di topbar — biarkan pakai surface var(--text) tetap charcoal,
+   tapi pastikan border visible di panel terang. */
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-signin,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .btn.primary.auth-topbar-btn {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(31, 41, 55, .22) !important;
+  color: #1F2937 !important;
+  box-shadow: 0 1px 3px rgba(31, 41, 55, .08) !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-signin svg,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .btn.primary.auth-topbar-btn svg {
+  color: #1F2937 !important;
+}
+/* Settings gear button di topbar */
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarSettingsBtnAdmin,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-settings-btn {
+  background: rgba(31, 41, 55, .06) !important;
+  border: 1px solid rgba(31, 41, 55, .18) !important;
+  color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarSettingsBtnAdmin svg,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-settings-btn svg {
+  color: #1F2937 !important;
+  stroke: currentColor !important;
+}
+
+/* Topbar dashboard (post-login) — sama treatment, light slate panel.
+   Pakai html prefix supaya specificity tinggi. */
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar,
+html body[data-theme="light"][data-role="admin"].authed header.topbar {
+  background: #F1F5F9 !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(31, 41, 55, .14) !important;
+}
+html body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar *,
+html body[data-theme="light"][data-role="admin"].authed header.topbar * {
+  color: #1F2937 !important;
+}
+body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar .topbar-search,
+body[data-theme="light"][data-role="admin"].authed header.topbar .topbar-search,
+body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar .breadcrumb,
+body[data-theme="light"][data-role="admin"].authed header.topbar .breadcrumb,
+body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar .icon-btn,
+body[data-theme="light"][data-role="admin"].authed header.topbar .icon-btn,
+body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar .theme-switch,
+body[data-theme="light"][data-role="admin"].authed header.topbar .theme-switch,
+body[data-theme="light"][data-role="admin"]:not(.auth-mode) header.topbar .user-chip,
+body[data-theme="light"][data-role="admin"].authed header.topbar .user-chip {
+  background: #FFFFFF !important;
+  border-color: rgba(31, 41, 55, .18) !important;
+}
+
+/* LIVE Activity Ticker bar — light slate band, charcoal text. LIVE dot
+   tetap (kontras pada light panel). Pakai html prefix supaya menang
+   dari rule navy di line ~44077 yg pakai body[data-role="admin"]. */
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar,
+html body[data-theme="light"][data-role="admin"] .admin-activity-section {
+  background: #F1F5F9 !important;
+  background-image: none !important;
+  border-top: 1px solid rgba(31, 41, 55, .12) !important;
+  border-bottom: 1px solid rgba(31, 41, 55, .12) !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-label {
+  background: rgba(31, 41, 55, .10) !important;
+  border-right: 1px solid rgba(31, 41, 55, .14) !important;
+  color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-item,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-item b,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-label b {
+  color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-sep {
+  color: rgba(31, 41, 55, .35) !important;
+}
+/* LIVE dot (.aab-dot) — tetap accent supaya status visual jelas;
+   pakai slate gelap (kontras pada panel terang), bukan putih. */
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-dot {
+  background: #1F2937 !important;
+  box-shadow: 0 0 0 4px rgba(31, 41, 55, .08), 0 0 6px rgba(31, 41, 55, .35) !important;
+}
+/* Item icons */
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-mod,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-user,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-vid,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-rev,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-comm {
+  background: rgba(31, 41, 55, .55) !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-i-2fa {
+  background: rgba(31, 41, 55, .30) !important;
+}
+
+/* === RADAR (admin LIGHT) — light slate panel + DARK SLATE animation
+   strokes/fills supaya motion VISIBLE di latar terang (user req:
+   "tambahkan juga animasi gerak seperti di halaman dashboard admin
+   di mode dark tapi ini buat warna animasi gerak nya di mode light
+   beda dan terlihat animasi nya ya"). === */
+
+/* Container radar (auth-illus-admin) — NO panel/box, blend ke backdrop putih
+   per user 2026-05-23: "kenapa ada kolom di animasi nya harusnya kan menyatu
+   dengan warna backdrop saja". Halo radial juga dihapus supaya radar duduk
+   langsung di atas backdrop tanpa kotak/glow. */
+html body[data-theme="light"][data-role="admin"] .auth-left-admin .auth-illus.auth-illus-admin,
+html body[data-theme="light"][data-role="admin"] .auth-illus.auth-illus-admin {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html body[data-theme="light"][data-role="admin"] .auth-left-admin .auth-illus.auth-illus-admin::before,
+html body[data-theme="light"][data-role="admin"] .auth-illus.auth-illus-admin::before {
+  background: transparent !important;
+  display: none !important;
+}
+
+/* .admin-radar host (host-only — beam ada di ::after) */
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-radar {
+  background: none !important;
+  border-color: transparent !important;
+}
+/* Sapuan beam (radar sweep) — DARK slate konik supaya visible di latar terang */
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-radar::after {
+  background: conic-gradient(from 0deg,
+    transparent 68%,
+    rgba(31, 41, 55, .35) 90%,
+    rgba(31, 41, 55, .55) 100%) !important;
+}
+
+/* Scan rings (.asr) — DARK slate border supaya visible */
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-1,
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-2 {
+  border-color: rgba(31, 41, 55, .42) !important;
+}
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-scan-rings .asr-3 {
+  border-color: rgba(31, 41, 55, .32) !important;
+}
+
+/* Status chip pills (AKTIF/SINKRON/KONTROL/AMAN) — DARK slate pill +
+   white text (status badge look on light panel). */
+html body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-nodes .adn {
+  background: rgba(31, 41, 55, .92) !important;
+  border: 1px solid rgba(31, 41, 55, .55) !important;
+  color: #FFFFFF !important;
+}
+html body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-nodes .adn-1::before,
+html body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-nodes .adn-3::before,
+html body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-nodes .adn-5::before,
+html body[data-theme="light"][data-role="admin"] .auth-illus-admin .admin-nodes .adn-7::before {
+  color: #FFFFFF !important;
+}
+
+/* Center shield orb — DARK slate orb dgn ikon putih (anchor visual
+   di tengah panel terang). */
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .play-orb,
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .auth-orb {
+  background: #1F2937 !important;
+  border: 1px solid rgba(31, 41, 55, .35) !important;
+  box-shadow:
+    0 10px 30px rgba(31, 41, 55, .25),
+    0 0 30px rgba(31, 41, 55, .18) !important;
+}
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .play-orb svg,
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .auth-orb svg {
+  color: #FFFFFF !important;
+  stroke: currentColor !important;
+}
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .auth-orb::before,
+body[data-theme="light"][data-role="admin"] .auth-illus-admin .auth-orb::after {
+  border-color: rgba(31, 41, 55, .45) !important;
+}
+
+/* === ADMIN LOGIN POPUP — password field FIX (admin LIGHT only) ===
+   Existing rule force `background: #0E1A2E` di password field bahkan
+   di light mode → field email putih, password jadi navy band. Override
+   ke putih + charcoal text, scoped admin LIGHT only. */
+html body[data-theme="light"][data-role="admin"] #authCard input[type="password"],
+html body[data-theme="light"][data-role="admin"] #authCard input[type="text"],
+html body[data-theme="light"][data-role="admin"] #authCard input[type="email"],
+html body[data-theme="light"][data-role="admin"] .auth-card input[type="password"],
+html body[data-theme="light"][data-role="admin"] .auth-card input[type="text"],
+html body[data-theme="light"][data-role="admin"] .auth-card input[type="email"],
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-card input[type="password"],
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-card input[type="text"],
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-card input[type="email"] {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(31, 41, 55, .22) !important;
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"] #authCard input[type="password"]::placeholder,
+html body[data-theme="light"][data-role="admin"] .auth-card input[type="password"]::placeholder,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-card input[type="password"]::placeholder,
+html body[data-theme="light"][data-role="admin"] #authCard input[type="text"]::placeholder,
+html body[data-theme="light"][data-role="admin"] #authCard input[type="email"]::placeholder {
+  color: rgba(31, 41, 55, .50) !important;
+  -webkit-text-fill-color: rgba(31, 41, 55, .50) !important;
+}
+html body[data-theme="light"][data-role="admin"] #authCard input[type="password"]:focus,
+html body[data-theme="light"][data-role="admin"] .auth-card input[type="password"]:focus,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-card input[type="password"]:focus {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border-color: rgba(31, 41, 55, .45) !important;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, .10) !important;
+}
+
+/* === MODULE CARDS — .amc-icon (admin LIGHT) ===
+   Per user 2026-05-23: "di slide landing page halaman modul ganti lagi warna
+   kolom ikon nya sesuaikan warna nya itu kenapa jadi warna abu, perbaiki".
+   Default rule (~L45436) pakai `rgba(20, 30, 48, .65)` — di latar putih jadi
+   gray-blue blob (abu). Ganti ke solid charcoal `#1F2937` supaya icon putih
+   kontras + senada dengan chip pills radar (AKTIF/SINKRON/dst). */
+html body[data-theme="light"][data-role="admin"] .admin-module-card .amc-icon,
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-module-card .amc-icon,
+html body[data-theme="light"][data-role="admin"] .admin-workflow-step .aws-num,
+html body[data-theme="light"][data-role="admin"] .admin-workflow-step .awf-num {
+  background: #1F2937 !important;
+  background-color: #1F2937 !important;
+  background-image: none !important;
+  border: 1px solid rgba(31, 41, 55, .25) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 10px rgba(31, 41, 55, .18) !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-module-card .amc-icon svg,
+html body[data-theme="light"][data-role="admin"].auth-mode .admin-module-card .amc-icon svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-module-card:hover .amc-icon {
+  background: #0F1419 !important;
+  background-color: #0F1419 !important;
+  border-color: rgba(31, 41, 55, .40) !important;
+  box-shadow: 0 6px 14px rgba(31, 41, 55, .28) !important;
+}
+
+/* === v477 (2026-05-23) — fixes per user: ticker, Masuk btn, login inputs,
+   duplicate shield icon, FAQ Q-vs-A differentiation === */
+
+/* 1. LIVE ticker text — bold + solid charcoal supaya jelas di slate panel.
+   Mask di .aab-marquee dipersempit fade-zone-nya supaya teks tidak pucat
+   sepanjang lebar bar. */
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-marquee,
+html body[data-theme="light"][data-role="admin"] .admin-activity-section .aab-marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%) !important;
+          mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%) !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-item,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-item *,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-track,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-label,
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-label * {
+  color: #0F1419 !important;
+  -webkit-text-fill-color: #0F1419 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+html body[data-theme="light"][data-role="admin"] .admin-activity-bar .aab-sep {
+  color: rgba(31, 41, 55, .55) !important;
+  -webkit-text-fill-color: rgba(31, 41, 55, .55) !important;
+}
+
+/* 2. "Masuk" button di topbar (.btn.ghost.auth-topbar-btn) — charcoal text
+   di latar putih supaya jelas. ID elemen aktualnya `authTopbar` (bukan
+   `authTopbarAdmin` yang sebelumnya di-target). */
+html body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-btn,
+html body[data-theme="light"][data-role="admin"] .auth-topbar button.auth-topbar-btn,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-btn,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar button.btn.ghost.auth-topbar-btn,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbar .auth-topbar-btn,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbar button.btn.ghost.auth-topbar-btn {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  border: 1px solid rgba(31, 41, 55, .28) !important;
+  box-shadow: 0 1px 3px rgba(31, 41, 55, .10) !important;
+  font-weight: 700 !important;
+}
+html body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-btn span,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-btn span {
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  font-weight: 700 !important;
+}
+html body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-btn:hover,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-btn:hover {
+  background: #1F2937 !important;
+  background-color: #1F2937 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border-color: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"] .auth-topbar .auth-topbar-btn:hover span,
+html body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar .auth-topbar-btn:hover span {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* 3. Login popup email + password fields — pastikan kedua field konsisten
+   putih. Email field tipe `text` (bukan `email`) — selector lama miss. */
+html body[data-theme="light"][data-role="admin"] #authCard input[type="text"],
+html body[data-theme="light"][data-role="admin"] #authCard input[type="email"],
+html body[data-theme="light"][data-role="admin"] #authCard input[type="password"],
+html body[data-theme="light"][data-role="admin"] #authCard input[name="email"],
+html body[data-theme="light"][data-role="admin"] #authCard input[name="loginEmail"],
+html body[data-theme="light"][data-role="admin"] #authCard .input-wrap input,
+html body[data-theme="light"][data-role="admin"] #authCard .auth-form input,
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input[type="text"],
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input[type="email"],
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input[type="password"],
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard .input-wrap input,
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard .auth-form input {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  border: 1px solid rgba(31, 41, 55, .22) !important;
+  box-shadow: none !important;
+}
+html body[data-theme="light"][data-role="admin"] #authCard input::placeholder,
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input::placeholder {
+  color: rgba(31, 41, 55, .50) !important;
+  -webkit-text-fill-color: rgba(31, 41, 55, .50) !important;
+}
+html body[data-theme="light"][data-role="admin"] #authCard input:focus,
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input:focus {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border-color: rgba(31, 41, 55, .45) !important;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, .10) !important;
+  outline: none !important;
+}
+/* Chrome autofill overlay — kalahkan dengan large inset shadow + transition */
+html body[data-theme="light"][data-role="admin"] #authCard input:-webkit-autofill,
+html body[data-theme="light"][data-role="admin"].auth-mode #authCard input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+          box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  caret-color: #1F2937 !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* 4. Ikon keamanan dupe — sisakan logo P (.amb-icon) saja, hide .amb-shield
+   (shield kecil di samping "Akses dibatasi"). Per user 2026-05-23:
+   "ikon keamanan nya kenapa 2, perbaiki ya sisakan 1".
+   Selector harus match (atau lebih spesifik dari) rule di L62001 yang
+   nge-set `display: inline-block !important`. */
+html body[data-role="admin"] #authCard .amb-text small > svg.amb-shield,
+html body[data-role="admin"] #authCard .admin-mode-banner small > svg.amb-shield,
+html body .admin-mode-banner small > svg.amb-shield,
+html body svg.amb-shield {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+}
+
+/* 5. FAQ Q vs A differentiation — Q tetap charcoal bold (heading look),
+   A jadi medium slate `#475569` (body text look). Apply ke LIGHT + DARK.
+   Per user 2026-05-23: "bedakan ya jangan sama rata, ini berlaku di mode
+   gelap/mode terang". */
+/* Admin LIGHT */
+html body[data-theme="light"][data-role="admin"] .faq-item summary,
+html body[data-theme="light"][data-role="admin"] details.faq-item summary,
+html body[data-theme="light"][data-role="admin"] .faq-q,
+html body[data-theme="light"][data-role="admin"] .faq-question {
+  color: #0F1419 !important;
+  -webkit-text-fill-color: #0F1419 !important;
+  font-weight: 800 !important;
+}
+html body[data-theme="light"][data-role="admin"] .faq-item p,
+html body[data-theme="light"][data-role="admin"] details.faq-item p,
+html body[data-theme="light"][data-role="admin"] details.faq-item[open] p,
+html body[data-theme="light"][data-role="admin"] .faq-a,
+html body[data-theme="light"][data-role="admin"] .faq-answer {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+  font-weight: 500 !important;
+}
+/* Admin DARK */
+html body[data-theme="dark"][data-role="admin"] .faq-item summary,
+html body[data-theme="dark"][data-role="admin"] details.faq-item summary,
+html body[data-theme="dark"][data-role="admin"] .faq-q,
+html body[data-theme="dark"][data-role="admin"] .faq-question {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+html body[data-theme="dark"][data-role="admin"] .faq-item p,
+html body[data-theme="dark"][data-role="admin"] details.faq-item p,
+html body[data-theme="dark"][data-role="admin"] details.faq-item[open] p,
+html body[data-theme="dark"][data-role="admin"] .faq-a,
+html body[data-theme="dark"][data-role="admin"] .faq-answer {
+  color: rgba(229, 235, 245, .72) !important;
+  -webkit-text-fill-color: rgba(229, 235, 245, .72) !important;
+  font-weight: 500 !important;
+}
+/* User LIGHT */
+html body[data-theme="light"]:not([data-role="admin"]) .faq-item summary,
+html body[data-theme="light"]:not([data-role="admin"]) details.faq-item summary,
+html body[data-theme="light"]:not([data-role="admin"]) .faq-q {
+  color: #2A1218 !important;
+  -webkit-text-fill-color: #2A1218 !important;
+  font-weight: 800 !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .faq-item p,
+html body[data-theme="light"]:not([data-role="admin"]) details.faq-item p,
+html body[data-theme="light"]:not([data-role="admin"]) .faq-a {
+  color: #7A4655 !important;
+  -webkit-text-fill-color: #7A4655 !important;
+  font-weight: 500 !important;
+}
+/* User DARK */
+html body[data-theme="dark"]:not([data-role="admin"]) .faq-item summary,
+html body[data-theme="dark"]:not([data-role="admin"]) details.faq-item summary,
+html body[data-theme="dark"]:not([data-role="admin"]) .faq-q {
+  color: #FFF8E8 !important;
+  -webkit-text-fill-color: #FFF8E8 !important;
+  font-weight: 800 !important;
+}
+html body[data-theme="dark"]:not([data-role="admin"]) .faq-item p,
+html body[data-theme="dark"]:not([data-role="admin"]) details.faq-item p,
+html body[data-theme="dark"]:not([data-role="admin"]) .faq-a {
+  color: rgba(232, 216, 196, .72) !important;
+  -webkit-text-fill-color: rgba(232, 216, 196, .72) !important;
+  font-weight: 500 !important;
 }
