@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v480" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v481" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -891,43 +891,60 @@
           </div>
 
           <!-- ============== STATE: SIGNUP PLAN PICKER ============== -->
-          <!-- User pilih dulu Free / Premium sebelum lihat form signup -->
+          <!-- User pilih dulu Gratis / Premium sebelum lihat form signup.
+               Semua teks Indonesia (produk Playly = Indonesian).
+               Ikon pakai inline SVG stroke-based supaya konsisten dgn ikon
+               nav/sidebar (bukan emoji raw). Harga USD dilengkapi ekuivalen
+               IDR via fmtUsdAsIdr() di script.js. -->
           <div class="auth-state auth-state-signup-pick">
             <button type="button" class="auth-back-btn" data-go-state="landing">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-              Back
+              Kembali
             </button>
-            <h3 class="auth-pick-title">Choose your plan</h3>
-            <p class="auth-pick-sub">Start free, upgrade anytime.</p>
+            <h3 class="auth-pick-title" data-i18n="auth.tier.choose">Pilih paket kamu</h3>
+            <p class="auth-pick-sub">Mulai gratis, upgrade kapan saja.</p>
             <div class="auth-pick-grid">
               <button type="button" class="auth-pick-card" data-pick-tier="free">
-                <span class="apc-badge">Most popular</span>
-                <span class="apc-icon">🌱</span>
-                <strong>Free</strong>
-                <span class="apc-price">$0<small>/month</small></span>
+                <span class="apc-icon" aria-hidden="true">
+                  <!-- Leaf icon — stroke-based, match nav-icon style -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 9-9h7v7c0 5-4 9-9 9z"/>
+                    <path d="M11 20c0-5 3-9 9-12"/>
+                  </svg>
+                </span>
+                <strong>Gratis</strong>
+                <span class="apc-price">$0<small>/bulan</small></span>
+                <span class="apc-price-idr">≈ Rp 0</span>
                 <ul>
-                  <li>60 video uploads/month</li>
-                  <li>1 GB storage/month</li>
-                  <li>720p quality</li>
-                  <li>With sponsored ads</li>
+                  <li>60 video unggah/bulan</li>
+                  <li>Penyimpanan 1 GB/bulan</li>
+                  <li>Kualitas 720p</li>
+                  <li>Dengan iklan sponsor</li>
                 </ul>
-                <span class="apc-cta">Continue with Free →</span>
+                <span class="apc-cta">Lanjut dengan Gratis →</span>
               </button>
               <button type="button" class="auth-pick-card auth-pick-card-premium" data-pick-tier="premium">
-                <span class="apc-badge apc-badge-premium">⭐ Recommended</span>
-                <span class="apc-icon">⭐</span>
+                <span class="apc-badge apc-badge-premium">Paling Disarankan</span>
+                <span class="apc-icon" aria-hidden="true">
+                  <!-- Crown icon — stroke-based, match nav-icon style -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7l4 5 5-7 5 7 4-5v11H3z"/>
+                    <path d="M3 18h18"/>
+                  </svg>
+                </span>
                 <strong>Premium</strong>
-                <span class="apc-price">$9<small>/month</small></span>
+                <span class="apc-price">$9<small>/bulan</small></span>
+                <span class="apc-price-idr">≈ Rp 148.500</span>
                 <ul>
-                  <li>Unlimited uploads</li>
-                  <li>Unlimited storage</li>
-                  <li>4K quality streaming</li>
-                  <li>Ad-free + Priority support</li>
+                  <li>Unggah tanpa batas</li>
+                  <li>Penyimpanan tanpa batas</li>
+                  <li>Streaming kualitas 4K</li>
+                  <li>Bebas iklan + dukungan prioritas</li>
                 </ul>
-                <span class="apc-cta">Continue with Premium →</span>
+                <span class="apc-cta">Lanjut dengan Premium →</span>
               </button>
             </div>
-            <a href="#authPlansSection" class="auth-pick-compare" data-scroll-plans>See full comparison ↓</a>
+            <a href="#authPlansSection" class="auth-pick-compare" data-scroll-plans>Lihat perbandingan lengkap ↓</a>
           </div>
 
           <!-- ============== STATE: PLAN-AUTH-CHECK ============== -->
@@ -7260,21 +7277,22 @@
   </div>
 
   <!-- =================== PREMIUM PLAN PICKER MODAL =================== -->
-  <!-- Step 1 of upgrade flow: user pilih plan (Trial / Monthly / Yearly / Lifetime).
-       Trial — instant tanpa payment. Selain itu → buka payment modal. -->
+  <!-- Step 1 of upgrade flow: user pilih plan (Uji Coba / Bulanan / Tahunan /
+       Selamanya). Uji Coba = instant tanpa payment. Selain itu → buka payment
+       modal. Teks Indonesia, ikon inline SVG stroke-based (di renderPlanPicker). -->
   <div class="modal" id="planPickerModal">
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel plan-picker-panel">
-      <button class="modal-close" type="button" data-close aria-label="Close">✕</button>
+      <button class="modal-close" type="button" data-close aria-label="Tutup">✕</button>
       <div class="plan-picker-head">
-        <span class="plan-picker-eyebrow">CHOOSE YOUR PLAN</span>
-        <h3>Unlock Playly Premium</h3>
-        <p class="muted">Start free for 7 days, upgrade anytime. Cancel whenever.</p>
+        <span class="plan-picker-eyebrow">PILIH PAKET KAMU</span>
+        <h3>Buka Playly Premium</h3>
+        <p class="muted">Mulai gratis 7 hari, upgrade kapan saja. Batal kapan pun.</p>
       </div>
       <div class="plan-picker-grid" id="planPickerGrid">
         <!-- Cards rendered by renderPlanPicker() -->
       </div>
-      <p class="plan-picker-foot muted">All plans include unlimited uploads, 4K quality, ad-free, priority support.</p>
+      <p class="plan-picker-foot muted">Semua paket termasuk unggah tanpa batas, kualitas 4K, bebas iklan, dukungan prioritas.</p>
     </div>
   </div>
 
@@ -8333,7 +8351,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v480"></script>
+  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v481"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8779,7 +8797,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-edit-video-pro-v480" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260523-edit-video-pro-v481" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

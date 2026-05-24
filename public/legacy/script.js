@@ -16089,7 +16089,8 @@ document.getElementById("pdUpgradeBtn")?.addEventListener("click", () => {
         } catch {}
         applyRoleToUI?.();
         const plan = PREMIUM_PLANS[planKey];
-        toast(`⭐ Premium ${plan.name} aktif! ${plan.durationLabel === "Forever" ? "Selamanya" : `Sampai ${new Date(expiry).toLocaleDateString("id-ID")}`}`, "success");
+        // planKey === "lifetime" → tampilkan "Selamanya" (durationLabel sudah Indonesia: "Selamanya").
+        toast(`⭐ Premium ${plan.name} aktif! ${planKey === "lifetime" ? "Selamanya" : `Sampai ${new Date(expiry).toLocaleDateString("id-ID")}`}`, "success");
       };
       if (planKey === "trial") {
         // Trial — instant aktif tanpa payment & admin verify
@@ -16116,32 +16117,46 @@ function fmtUsdAsIdr(usd) {
   return "Rp " + idr.toLocaleString("id-ID");
 }
 
+// Inline SVG icons (stroke-based, currentColor) menggantikan emoji raw
+// (🎁 ⭐ 🔥 👑) supaya konsisten dgn ikon nav/sidebar di seluruh app.
+// Ditulis sebagai HTML string krn langsung di-inject via innerHTML.
+const PP_ICON_SVG = {
+  // gift box
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18"/><path d="M12 8v13"/><path d="M12 8c-2 0-4-1-4-3s1.5-2.5 3-2 1 3 1 5z"/><path d="M12 8c2 0 4-1 4-3s-1.5-2.5-3-2-1 3-1 5z"/></svg>',
+  // sparkle / star (4-point)
+  sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z"/></svg>',
+  // flame
+  flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 5 5 11a5 5 0 0 1-10 0c0-3 2-5 2-5s1 2 3 2c0-3-2-5 0-8z"/></svg>',
+  // crown
+  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4 5 5-7 5 7 4-5v11H3z"/><path d="M3 18h18"/></svg>'
+};
+
 const PREMIUM_PLANS = {
   trial: {
-    key: "trial", name: "Free Trial", durationLabel: "7 days",
-    durationMs: 7 * 24 * 60 * 60 * 1000, price: 0, priceLabel: "Free",
-    icon: "🎁", desc: "Try Premium for 7 days, no credit card needed.",
-    features: ["All Premium features", "Auto downgrades after 7 days", "One-time per account"]
+    key: "trial", name: "Uji Coba Gratis", durationLabel: "7 hari",
+    durationMs: 7 * 24 * 60 * 60 * 1000, price: 0, priceLabel: "Gratis",
+    icon: "gift", desc: "Coba Premium 7 hari, tanpa kartu kredit.",
+    features: ["Semua fitur Premium", "Otomatis turun ke Gratis setelah 7 hari", "Sekali per akun"]
   },
   monthly: {
-    key: "monthly", name: "Monthly", durationLabel: "1 month",
-    durationMs: 30 * 24 * 60 * 60 * 1000, price: 9.99, priceLabel: "$9.99", suffix: "/month",
-    icon: "⭐", desc: "Full Premium access, billed monthly. Cancel anytime.",
-    features: ["Unlimited uploads", "4K quality", "Ad-free viewing", "Priority support"]
+    key: "monthly", name: "Bulanan", durationLabel: "1 bulan",
+    durationMs: 30 * 24 * 60 * 60 * 1000, price: 9.99, priceLabel: "$9.99", suffix: "/bulan",
+    icon: "sparkle", desc: "Akses Premium penuh, ditagih bulanan. Batal kapan saja.",
+    features: ["Unggah tanpa batas", "Kualitas 4K", "Bebas iklan", "Dukungan prioritas"]
   },
   yearly: {
-    key: "yearly", name: "Yearly", durationLabel: "1 year",
-    durationMs: 365 * 24 * 60 * 60 * 1000, price: 89.99, priceLabel: "$89.99", suffix: "/year",
-    badge: "Save 25%", recommended: true,
-    icon: "🔥", desc: "Best value — 12 months for the price of 9.",
-    features: ["All Monthly features", "Save $30 vs monthly", "Locked price 1 year", "Priority creator support"]
+    key: "yearly", name: "Tahunan", durationLabel: "1 tahun",
+    durationMs: 365 * 24 * 60 * 60 * 1000, price: 89.99, priceLabel: "$89.99", suffix: "/tahun",
+    badge: "HEMAT 25%", recommended: true,
+    icon: "flame", desc: "Nilai terbaik — 12 bulan dengan harga 9 bulan.",
+    features: ["Semua fitur Bulanan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun", "Dukungan kreator prioritas"]
   },
   lifetime: {
-    key: "lifetime", name: "Lifetime", durationLabel: "Forever",
-    durationMs: null, price: 199, priceLabel: "$199", suffix: "one-time",
-    badge: "Best deal",
-    icon: "👑", desc: "One-time payment. Premium forever, no renewal.",
-    features: ["All Yearly features", "No expiration ever", "All future features included", "Founders Club access"]
+    key: "lifetime", name: "Selamanya", durationLabel: "Selamanya",
+    durationMs: null, price: 199, priceLabel: "$199", suffix: "sekali bayar",
+    badge: "PALING UNTUNG",
+    icon: "crown", desc: "Sekali bayar. Premium selamanya, tanpa perpanjangan.",
+    features: ["Semua fitur Tahunan", "Tanpa batas waktu", "Semua fitur baru termasuk", "Akses Founders Club"]
   }
 };
 
@@ -16175,22 +16190,27 @@ function renderPlanPicker(context) {
     } catch { return false; }
   })();
   const order = ["trial", "monthly", "yearly", "lifetime"];
+  // Inline check icon untuk fitur list (gantikan ✓ teks supaya rapi + warna konsisten via stroke).
+  const checkSvg = '<svg class="pp-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>';
   grid.innerHTML = order.map(key => {
     const p = PREMIUM_PLANS[key];
     const disabled = key === "trial" && trialUsedByThisAcc;
     const badge = p.badge ? `<span class="pp-badge">${p.badge}</span>` : "";
     const recommended = p.recommended ? ' pp-card-recommended' : "";
-    const featuresHtml = (p.features || []).map(f => `<li>✓ ${f}</li>`).join("");
+    const featuresHtml = (p.features || []).map(f => `<li>${checkSvg}<span>${f}</span></li>`).join("");
+    // p.icon adalah key (gift/sparkle/flame/crown) → lookup ke PP_ICON_SVG.
+    // Fallback ke emoji raw kalau key tidak dikenali (backward compat).
+    const iconHtml = PP_ICON_SVG[p.icon] || p.icon || "";
     return `
       <button type="button" class="pp-card${recommended}${disabled ? ' pp-disabled' : ''}" data-plan-key="${p.key}"${disabled ? ' disabled' : ''}>
         ${badge}
-        <span class="pp-icon">${p.icon}</span>
+        <span class="pp-icon">${iconHtml}</span>
         <strong class="pp-name">${p.name}</strong>
         <span class="pp-price">${p.priceLabel}${p.suffix ? `<small>${p.suffix}</small>` : ""}</span>
         ${p.price > 0 ? `<span class="pp-price-idr">≈ ${fmtUsdAsIdr(p.price)}</span>` : ""}
         <span class="pp-duration">${p.durationLabel}</span>
         <ul class="pp-features">${featuresHtml}</ul>
-        <span class="pp-cta">${disabled ? "Trial used" : (key === "trial" ? "Start trial →" : "Choose plan →")}</span>
+        <span class="pp-cta">${disabled ? "Sudah dipakai" : (key === "trial" ? "Mulai uji coba →" : "Pilih paket →")}</span>
       </button>`;
   }).join("");
 }
@@ -16219,8 +16239,10 @@ document.addEventListener("click", e => {
 
 // Show account check state in auth modal after guest picks a plan
 function _showGuestPlanAuthCheck(key) {
+  // Untuk tier free pakai ikon leaf SVG (match signup-pick card).
+  const FREE_LEAF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 9-9h7v7c0 5-4 9-9 9z"/><path d="M11 20c0-5 3-9 9-12"/></svg>';
   const fallback = key === "free"
-    ? { name: "Gratis", priceLabel: "Free", icon: "🌱" }
+    ? { name: "Gratis", priceLabel: "Gratis", icon: "leaf" }
     : {};
   const plan = PREMIUM_PLANS[key] || fallback;
   const nameEl = document.getElementById("pacPlanName");
@@ -16228,7 +16250,11 @@ function _showGuestPlanAuthCheck(key) {
   const iconEl = document.getElementById("pacPlanIcon");
   if (nameEl) nameEl.textContent = plan.name || key;
   if (priceEl) priceEl.textContent = plan.priceLabel || "";
-  if (iconEl) iconEl.textContent = plan.icon || "⭐";
+  // Ikon sekarang berupa key (gift/sparkle/flame/crown/leaf) → render SVG, bukan textContent.
+  if (iconEl) {
+    const iconHtml = plan.icon === "leaf" ? FREE_LEAF_SVG : (PP_ICON_SVG[plan.icon] || "");
+    iconEl.innerHTML = iconHtml || '<span aria-hidden="true">★</span>';
+  }
   openAuthModal("plan-auth-check");
 }
 
@@ -16339,7 +16365,8 @@ function _openPostLoginPlanPopup(planKey) {
   const iconEl = document.getElementById("plpmPlanIcon");
   if (nameEl) nameEl.textContent = plan.name || planKey;
   if (priceEl) priceEl.textContent = plan.priceLabel || "";
-  if (iconEl) iconEl.textContent = plan.icon || "⭐";
+  // Ikon = key (gift/sparkle/flame/crown) → render SVG, bukan textContent.
+  if (iconEl) iconEl.innerHTML = PP_ICON_SVG[plan.icon] || '<span aria-hidden="true">★</span>';
   modal.dataset.planKey = planKey;
   modal.classList.add("show");
   document.body.style.overflow = "hidden";
@@ -17701,7 +17728,7 @@ function renderBillingHistory(opts = {}) {
     monthly:  isID ? "Bulanan"      : "Monthly",
     yearly:   isID ? "Tahunan"      : "Yearly",
     lifetime: isID ? "Seumur Hidup" : "Lifetime",
-    trial:    isID ? "Free Trial"   : "Free Trial",
+    trial:    isID ? "Uji Coba Gratis" : "Free Trial",
   };
   const statusText = {
     pending:  isID ? "Pending"   : "Pending",

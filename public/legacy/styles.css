@@ -11978,8 +11978,29 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-car
   text-transform: uppercase;
   color: var(--text-2);
 }
-.apc-badge-premium { background: linear-gradient(135deg, #d4a64a, #6D2932); color: #fff; border-color: transparent; }
-.apc-icon { font-size: 26px; line-height: 1; }
+.apc-badge-premium {
+  background: linear-gradient(135deg, #d4a64a, #6D2932);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px -4px rgba(212, 166, 74, .55);
+}
+/* Ikon kartu signup-pick: inline SVG (leaf/crown) — circle bg lembut +
+   warna accent (wine untuk Free, gold untuk Premium via override).
+   Sebelumnya emoji raw font-size:26px → diganti SVG 22px dalam pill 40px. */
+.apc-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(132, 42, 59, .12);
+  color: var(--primary);
+}
+.apc-icon svg { width: 22px; height: 22px; display: block; }
+.auth-pick-card-premium .apc-icon {
+  background: rgba(212, 166, 74, .14);
+  color: #d4a64a;
+}
 .auth-pick-card strong {
   font-family: 'Inter', sans-serif;
   font-size: 18px;
@@ -12007,17 +12028,32 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-car
 .auth-pick-card ul li {
   font-size: 11.5px;
   color: var(--text-2);
-  padding-left: 14px;
+  padding-left: 22px;
   position: relative;
+  line-height: 1.55;
 }
+/* Bullet check: pill kecil bg primary 18% + glyph ✓ putih.
+   Sebelumnya cuma karakter "✓" wine — kekecilan & low-contrast. */
 .auth-pick-card ul li::before {
   content: '✓';
   position: absolute;
   left: 0;
-  color: var(--primary);
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
   font-weight: 800;
+  line-height: 1;
 }
-.auth-pick-card-premium ul li::before { color: #d4a64a; }
+.auth-pick-card-premium ul li::before {
+  background: #d4a64a;
+  color: #2a1a02;
+}
 .apc-cta {
   margin-top: auto;
   font-size: 12px;
@@ -65438,4 +65474,119 @@ body.auth-mode .mpm-card::after {
 [data-view="analytics"] .view-header .pm-upgrade-banner,
 [data-view="analytics"] .view-header [class*="upgrade-banner"] {
   display: none !important;
+}
+
+/* =========================================================================
+   v481 — PLAN-PICKER POPUP POLISH (signup-pick + planPickerModal)
+   - Indonesia copy, inline SVG icons, IDR equivalent prices.
+   - Badge "Paling Disarankan" hanya di Premium (sebelumnya "Most Popular"
+     keliru di Free).
+   - SVG check (.pp-check) ganti karakter "✓" di plan picker premium modal.
+   - Light mode borders strengthened.
+   ========================================================================= */
+
+/* --- (A) Signup-pick popup --- */
+
+/* IDR ekuivalen di kartu Free/Premium signup-pick. Kecil, sub-color, di bawah USD. */
+.auth-pick-card .apc-price-idr {
+  display: block;
+  margin-top: -2px;
+  margin-bottom: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0;
+  opacity: .85;
+}
+.auth-pick-card-premium .apc-price-idr {
+  color: #d4a64a;
+  opacity: .95;
+}
+/* Light mode — bronze gelap supaya terbaca di krem solid. */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card .apc-price-idr {
+  color: rgba(102, 34, 34, .65) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium .apc-price-idr {
+  color: #8a5a18 !important;
+}
+
+/* Premium card icon — di light mode bronze gelap (gold #d4a64a low-contrast di krem). */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-premium .apc-icon {
+  background: rgba(184, 134, 47, .14) !important;
+  color: #8a5a18 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card .apc-icon {
+  background: rgba(132, 42, 59, .10) !important;
+  color: var(--primary) !important;
+}
+/* SVG icon di .apc-icon — paksa fill:none + stroke=currentColor walau global
+   light-mode reset coba unbalance (auth-card line-art reset di line ~52578). */
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-icon svg,
+body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-icon svg path {
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+/* --- (B) Plan picker modal (#planPickerModal) --- */
+
+/* Pp icon — inline SVG (gift/sparkle/flame/crown). Pill 48px gold-tinted,
+   icon 26px stroke currentColor. Sebelumnya emoji raw font-size:28px → kurang
+   konsisten dgn style ikon nav/sidebar di project. */
+.pp-card .pp-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(232, 200, 140, .10);
+  color: #E8C88C;
+  font-size: 0; /* reset font-size lama supaya gak ada extra space */
+}
+.pp-card .pp-icon svg { width: 26px; height: 26px; display: block; }
+.pp-card-recommended .pp-icon {
+  background: rgba(232, 200, 140, .18);
+  color: #FFE9C8;
+}
+
+/* SVG check (.pp-check) di li — gold accent, lebih jelas dari karakter "✓". */
+.pp-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.pp-features li .pp-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #E8C88C;
+}
+.pp-card-recommended .pp-features li .pp-check { color: #FFE9C8; }
+
+/* Light mode — ikon kartu wine/bronze terbaca di krem. */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card .pp-icon {
+  background: rgba(132, 42, 59, .10) !important;
+  color: var(--primary) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-icon {
+  background: rgba(184, 134, 47, .16) !important;
+  color: #8a5a18 !important;
+}
+/* Check SVG light mode — wine/bronze. */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-features li .pp-check {
+  color: var(--primary) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-features li .pp-check {
+  color: #8a5a18 !important;
+}
+/* Eyebrow "PILIH PAKET KAMU" sudah ada light override; pastikan pill bg
+   krem-solid + border wine medium (penampilan match screenshot baseline). */
+
+/* SVG inside icons — restore fill:none di light mode (global reset bisa kena). */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg path,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-check,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-check path {
+  fill: none !important;
+  stroke: currentColor !important;
 }
