@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v478" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v480" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -3775,7 +3775,7 @@
                    Sibling .hero-meta supaya absolute anchor ke .hero-text
                    — bukan ke .hero (yg mencakup kartu profile kanan juga)
                    atau ke .hero-meta (pill row kecil). -->
-              <span class="hero-pill hero-pill-session" title="Lama sesi sejak login" data-no-i18n>
+              <span class="hero-pill hero-pill-session" id="heroSessionPill" title="Auto-logout setelah 30 menit idle. Sesi diperpanjang otomatis saat ada aktivitas (klik, ketik, gerak mouse, scroll)." data-no-i18n>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span id="heroSessionDuration">Sesi 00:00</span>
               </span>
@@ -5457,6 +5457,33 @@
         <div class="activity-list large activity-list-bare" id="activityList"></div>
       </section>
 
+      <!-- ============== NOTIFICATIONS (full page, v479) ============== -->
+      <section class="view" data-view="notifications">
+        <div class="view-header">
+          <div>
+            <h2>🔔 Notifikasi</h2>
+            <p>Riwayat lengkap notifikasi kamu. Filter per kategori atau tandai semua sebagai dibaca.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn ghost sm" id="notifPageMarkAllRead" type="button">✓ Tandai semua dibaca</button>
+          </div>
+        </div>
+        <div class="notif-page">
+          <div class="chip-tabs notif-page-filters" id="notifPageFilters">
+            <button class="active" data-notif-filter="all">Semua</button>
+            <button data-notif-filter="unread">Belum dibaca</button>
+            <button data-notif-filter="comment">Komentar</button>
+            <button data-notif-filter="like">Like</button>
+            <button data-notif-filter="follow">Followers</button>
+            <button data-notif-filter="system">Sistem</button>
+          </div>
+          <div class="notif-page-list" id="notifPageList"></div>
+          <div class="notif-page-more" id="notifPageMore" hidden>
+            <button class="btn ghost" type="button" id="notifPageLoadMore">Muat lebih banyak</button>
+          </div>
+        </div>
+      </section>
+
       <!-- ============== DISCOVER ============== -->
       <section class="view fyp-view" data-view="discover">
         <div class="discover-layout">
@@ -6511,8 +6538,11 @@
     </div>
   </div>
 
-  <!-- =================== NOTIFICATIONS PANEL =================== -->
-  <div class="side-panel" id="notifPanel">
+  <!-- =================== NOTIFICATIONS PANEL (lazy-mounted v479) ===================
+       Body kosong saat boot — DOM diisi pada klik bell pertama (lihat
+       ensureLazyPanelMounted di script.js). Hemat ~50 node + listener startup. -->
+  <div class="side-panel" id="notifPanel" data-lazy-panel="notifPanel"></div>
+  <template id="tplNotifPanel">
     <div class="sp-head">
       <h3><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg></span> Notifications</h3>
       <button class="icon-btn" data-close-sp="notifPanel">✕</button>
@@ -6523,7 +6553,7 @@
       <div class="notif-section">
         <div class="notif-section-head">
           <h4>⚠️ Perlu Perhatian</h4>
-          <button class="btn ghost sm" data-jump="admin-videos" data-close-sp="notifPanel">Lihat semua</button>
+          <button class="btn ghost sm" data-notif-page-link data-close-sp="notifPanel">Lihat semua</button>
         </div>
         <ul class="admin-alerts"></ul>
       </div>
@@ -6545,7 +6575,7 @@
       <div class="notif-section">
         <div class="notif-section-head">
           <h4><span class="nh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span> Perlu Perhatian</h4>
-          <button class="btn ghost sm" data-jump="videos" data-close-sp="notifPanel">Lihat semua</button>
+          <button class="btn ghost sm" data-notif-page-link data-close-sp="notifPanel">Lihat semua</button>
         </div>
         <ul class="admin-alerts" id="userNotifAlerts"></ul>
       </div>
@@ -6563,10 +6593,13 @@
 
     <!-- User notifications (legacy flat list — fallback kalau section di atas kosong) -->
     <div class="notif-list" id="notifList"></div>
-  </div>
+  </template>
 
-  <!-- =================== HELP PANEL =================== -->
-  <div class="side-panel help-panel" id="helpPanel">
+  <!-- =================== HELP PANEL (lazy-mounted v479) ===================
+       Body kosong saat boot — DOM diisi pada klik tombol Help pertama.
+       Hemat ~150 node (FAQ tree besar) di initial render. -->
+  <div class="side-panel help-panel" id="helpPanel" data-lazy-panel="helpPanel"></div>
+  <template id="tplHelpPanel">
     <div class="sp-head">
       <h3 data-i18n="help.center">❓ Help Center</h3>
       <button class="icon-btn" data-close-sp="helpPanel">✕</button>
@@ -6692,7 +6725,7 @@
         <p class="muted-text">© 2026 Playly. Made with 💜 in Indonesia.</p>
       </div>
     </div>
-  </div>
+  </template>
 
   <!-- =================== PROFILE DROPDOWN =================== -->
   <div class="profile-dropdown" id="profileDropdown">
@@ -8300,7 +8333,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v478"></script>
+  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v480"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8746,7 +8779,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-edit-video-pro-v478" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260523-edit-video-pro-v480" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

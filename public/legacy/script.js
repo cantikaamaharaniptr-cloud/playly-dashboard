@@ -129,6 +129,152 @@
   window.location.replace(`${window.location.origin}/watch?v=${id}`);
 })();
 
+// ----------------------- HASH ROUTER (v479) -----------------------
+// Lightweight URL hash routing supaya user bisa share link / reload / back-fwd
+// preserve halaman aktif. Format: `#/section` atau `#/section/param`.
+// Contoh: `#/dashboard`, `#/watch/123`, `#/notifications`, `#/settings`.
+// Router defer eksekusi sampai `switchView` & `openPlayer` ter-define
+// (DOMContentLoaded). Public API: `window.playlyRouter.go(hash)` / `parse()`.
+(function installHashRouter() {
+  // Map hash section → view name yg dikenali switchView().
+  // User-facing aliases (lebih natural) → internal view IDs.
+  const ROUTE_TO_VIEW = {
+    "":              "__default",
+    "home":          "home",
+    "dashboard":     "__default",   // role-aware: admin → admin-dashboard, user → home
+    "library":       "videos",
+    "videos":        "videos",
+    "upload":        "upload",
+    "storage":       "storage",
+    "history":       "history",
+    "stats":         "stats",
+    "insight":       "stats",
+    "messages":      "messages",
+    "inbox":         "messages",
+    "activity":      "activity",
+    "discover":      "discover",
+    "search":        "people",
+    "people":        "people",
+    "profile":       "profile",
+    "myprofile":     "myprofile",
+    "settings":      "settings",
+    "notifications": "notifications",
+    "watch":         "player",
+    "player":        "player",
+    // admin
+    "admin":               "admin-dashboard",
+    "admin-dashboard":     "admin-dashboard",
+    "admin-users":         "admin-users",
+    "admin-videos":        "admin-videos",
+    "admin-comms":         "admin-comms",
+    "admin-inbox":         "admin-inbox",
+    "admin-audit":         "admin-audit",
+    "admin-analytics":     "admin-analytics",
+    "admin-ads":           "admin-ads",
+    "admin-revenue":       "admin-revenue",
+    "admin-premium-queue": "admin-premium-queue",
+  };
+
+  function parseHash(h) {
+    const raw = String(h || "").replace(/^#\/?/, "").trim();
+    if (!raw) return { section: "", param: "" };
+    // Drop query string (e.g. `#/watch/123?t=5`)
+    const noQuery = raw.split("?")[0];
+    const parts = noQuery.split("/").filter(Boolean);
+    return { section: parts[0] || "", param: parts.slice(1).join("/") };
+  }
+
+  // Apakah saat ini di auth landing? Kalau ya, JANGAN route ke view internal —
+  // user belum login. (Auth-mode landing diatur via .auth-mode di body.)
+  function isAuthMode() {
+    return document.body.classList.contains("auth-mode");
+  }
+
+  let _routeInFlight = false;
+  function routeFromHash() {
+    if (_routeInFlight) return;
+    if (isAuthMode()) return; // auth landing: skip routing
+    const { section, param } = parseHash(location.hash);
+    let viewName = ROUTE_TO_VIEW[section];
+    if (viewName === "__default" || viewName == null) {
+      // Default → role-aware home
+      const role = (typeof user === "object" && user && user.role) || document.body.dataset.role || "user";
+      viewName = role === "admin" ? "admin-dashboard" : "home";
+    }
+    _routeInFlight = true;
+    try {
+      // Special: watch/:videoId → openPlayer(id)
+      if ((section === "watch" || section === "player") && param) {
+        const vid = /^\d+$/.test(param) ? parseInt(param, 10) : param;
+        if (typeof window.openPlayer === "function") {
+          window.openPlayer(vid);
+        } else if (typeof openPlayer === "function") {
+          openPlayer(vid);
+        }
+        return;
+      }
+      if (typeof window.switchView === "function") {
+        window.switchView(viewName);
+      } else if (typeof switchView === "function") {
+        switchView(viewName);
+      }
+    } finally {
+      _routeInFlight = false;
+    }
+  }
+
+  // Push current view ke hash tanpa trigger routing loop. Dipanggil oleh
+  // switchView wrapper (lihat patch terpisah) supaya URL selalu sinkron.
+  function pushView(viewName) {
+    if (!viewName) return;
+    if (isAuthMode()) return;
+    // Map internal view → user-facing slug (reverse map). Pakai first-match.
+    let slug = viewName;
+    for (const [k, v] of Object.entries(ROUTE_TO_VIEW)) {
+      if (v === viewName && k && k !== "__default") { slug = k; break; }
+    }
+    const next = `#/${slug}`;
+    if (location.hash === next) return;
+    // Pakai history.replaceState supaya tidak banjirin back stack saat user
+    // klik sidebar berurutan. Back tetap jalan untuk navigasi sebenarnya
+    // (sidebar click → hashchange → switchView → replaceState).
+    try {
+      history.replaceState(null, "", next);
+    } catch {
+      location.hash = next;
+    }
+  }
+
+  function pushWatch(videoId) {
+    if (!videoId) return;
+    if (isAuthMode()) return;
+    const next = `#/watch/${videoId}`;
+    if (location.hash === next) return;
+    try { history.pushState(null, "", next); } catch { location.hash = next; }
+  }
+
+  window.addEventListener("hashchange", routeFromHash);
+  // Initial route — setelah dashboard boot. Listen ke event custom yg di-
+  // dispatch saat showApp/bootDashboard selesai, plus fallback DOMContentLoaded.
+  let _bootedOnce = false;
+  function bootRoute() {
+    if (_bootedOnce) return;
+    if (isAuthMode()) return;
+    _bootedOnce = true;
+    if (location.hash && location.hash !== "#") routeFromHash();
+  }
+  window.addEventListener("playly:app-booted", bootRoute);
+  document.addEventListener("DOMContentLoaded", () => setTimeout(bootRoute, 300));
+
+  window.playlyRouter = {
+    parse: parseHash,
+    go: routeFromHash,
+    pushView,
+    pushWatch,
+    isAuthMode,
+  };
+})();
+
 // ----------------------- HELPERS -----------------------
 const $ = (s, p = document) => p.querySelector(s);
 const $$ = (s, p = document) => [...p.querySelectorAll(s)];
@@ -1296,6 +1442,73 @@ function saveState() {
   localStorage.setItem(`playly-state-${user.username}`, JSON.stringify(state));
 }
 
+// === #8 QA seed (2026-05-23) — 3 video CC-licensed sample untuk test player ===
+// Aktifkan via: localStorage.setItem('PLAYLY_DEV','1') lalu reload, ATAU
+// URL `?seedDev=1`. Disable: localStorage.removeItem('PLAYLY_DEV').
+// Tidak otomatis aktif di prod — user harus opt-in. Untuk QA player saja.
+// Sumber video: Google's gtv-videos-bucket (Big Buck Bunny, Sintel,
+// Tears of Steel — semua Creative Commons / Open Movie Project).
+window.__playlySeedQA = function seedQAVideos() {
+  if (!user || !state) {
+    console.warn('[seedQA] no user/state — login first');
+    return;
+  }
+  const NOW = Date.now();
+  const samples = [
+    {
+      id: 'qa-bbb',
+      title: 'Big Buck Bunny (sample QA)',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      thumb: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+      duration: 596, views: 0, likes: 0, comments: 0,
+      uploadedAt: NOW - 3600_000, isDummy: true, isQASeed: true,
+    },
+    {
+      id: 'qa-sintel',
+      title: 'Sintel (sample QA)',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      thumb: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg',
+      duration: 888, views: 0, likes: 0, comments: 0,
+      uploadedAt: NOW - 7200_000, isDummy: true, isQASeed: true,
+    },
+    {
+      id: 'qa-tos',
+      title: 'Tears of Steel (sample QA)',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      thumb: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg',
+      duration: 734, views: 0, likes: 0, comments: 0,
+      uploadedAt: NOW - 10800_000, isDummy: true, isQASeed: true,
+    },
+  ];
+  state.myVideos = Array.isArray(state.myVideos) ? state.myVideos : [];
+  // Hindari duplicate kalau sudah pernah seed
+  const existingIds = new Set(state.myVideos.map(v => v.id));
+  const added = samples.filter(s => !existingIds.has(s.id));
+  state.myVideos.unshift(...added);
+  if (typeof saveState === 'function') saveState();
+  console.log(`[seedQA] added ${added.length} QA video(s). Reload or navigate to library to see.`);
+  // Trigger re-render kalau ada handler
+  if (typeof renderVideos === 'function') try { renderVideos(); } catch {}
+  if (typeof switchView === 'function' && state.currentView === 'library') try { switchView('library'); } catch {}
+  return state.myVideos;
+};
+// Auto-seed kalau dev flag aktif
+(function autoSeedQAIfDev() {
+  try {
+    const fromQuery = new URLSearchParams(location.search).get('seedDev') === '1';
+    const fromStorage = localStorage.getItem('PLAYLY_DEV') === '1';
+    if (!fromQuery && !fromStorage) return;
+    // Tunggu user login + state siap
+    const tick = setInterval(() => {
+      if (user && state) {
+        clearInterval(tick);
+        window.__playlySeedQA();
+      }
+    }, 500);
+    setTimeout(() => clearInterval(tick), 30_000);
+  } catch {}
+})();
+
 // Heartbeat — update lastActivityAt setiap 60s saat tab visible & user
 // belum logout. Bikin online dot di creator card / DM list akurat.
 let __heartbeatTimer = null;
@@ -1699,6 +1912,15 @@ function applyRoleToUI() {
   if (user) user.role = isAllowedAdminEmail(user.email) ? "admin" : "user";
   const role = user?.role || "user";
   document.body.dataset.role = role;
+  // v479 — JS teardown admin DOM saat role !== admin.
+  // CSS .admin-only sudah hide via display:none, tapi DOM tetap ke-load.
+  // User minta DOM bener-bener bersih untuk minimize attack surface (mis. kalau
+  // ada exploit JS yg flip CSS, admin tetap tidak kelihatan karena node hilang).
+  // Idempotent — kalau node sudah ke-remove, querySelectorAll return kosong.
+  // Note: arsitektur Next.js cuma thin server shell (lihat memory project-
+  // nextjs-migration); SSR guard tidak applicable karena legacy bundle render
+  // 100% di client. JS teardown = satu-satunya layer.
+  try { tearDownAdminDomIfNotAdmin(); } catch {}
   // Tier attribute (Free / Premium) — pakai untuk CSS-based UI differentiation
   document.body.dataset.tier = (user?.tier === "premium" ? "premium" : "free");
   // Sync storage display dengan tier change
@@ -1787,6 +2009,27 @@ function applyRoleToUI() {
   // Notification icon tooltip
   const notifBtn = $("#openNotif");
   if (notifBtn) notifBtn.title = role === "admin" ? "Admin Notifications" : "Notifications";
+}
+
+// v479 — Hapus semua node admin dari DOM saat current user bukan admin.
+// Selector cover 3 marker: .admin-only (legacy class), [data-role="admin"],
+// dan [data-admin-only]. Per role isolation memory ([memory: project-role-
+// isolation]): admin + user share satu codebase via body[data-role]; di sini
+// kita tambah layer kedua = JS DOM teardown untuk minimize leak risk.
+// Idempotent: aman dipanggil berkali (querySelectorAll skip yg sudah ke-remove).
+function tearDownAdminDomIfNotAdmin() {
+  const role = (typeof user === "object" && user && user.role) || document.body.dataset.role || "user";
+  if (role === "admin") return; // Admin: jangan teardown apapun
+  const sel = '[data-role="admin"], .admin-only, [data-admin-only]';
+  const nodes = document.querySelectorAll(sel);
+  nodes.forEach(el => {
+    // Skip kalau parent sudah marked admin-only — child akan ikut hilang
+    // saat parent di-remove (parent loop dulu). Optimization saja.
+    el.remove();
+  });
+  if (nodes.length) {
+    try { console.info("[role-guard] removed", nodes.length, "admin DOM nodes (role=" + role + ")"); } catch {}
+  }
 }
 
 // Inject admin-grad SVG defs + swap sidebar logo path ke modern P (admin only).
@@ -3076,6 +3319,10 @@ function bootDashboard() {
   if (window.cloudSync?.softResync) {
     window.cloudSync.softResync().catch(() => { /* gagal cloud, lanjut pakai data lokal */ });
   }
+
+  // Beritahu hash-router bahwa app sudah boot — kalau ada hash awal
+  // (mis. user reload di `#/insight`), router akan route sekarang.
+  try { window.dispatchEvent(new Event("playly:app-booted")); } catch {}
 
   // Auto-show payment status modal kalau user punya pending payment yang
   // belum di-dismiss. Per request user 2026-05-11: user yang sudah submit
@@ -27794,6 +28041,9 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
   }
   if (name === "history") renderHistory();
+  if (name === "notifications") {
+    if (typeof renderNotifPage === "function") renderNotifPage();
+  }
   if (name === "storage") renderStoragePage();
   if (name === "stats") setStatsTab("all"); // default tampil semua section
   if (name === "stats") setTimeout(drawChart, 50);
@@ -27895,6 +28145,13 @@ function switchView(name, { fromNav = false } = {}) {
 
   if (window.innerWidth <= 768) $("#sidebar").classList.remove("open");
   window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Sync URL hash supaya reload/share preserve view aktif (v479).
+  // pushView pakai replaceState (no back-stack flood). Skip kalau view=player
+  // — pushWatch dipanggil di openPlayer dengan videoId.
+  try {
+    if (window.playlyRouter && name !== "player") window.playlyRouter.pushView(name);
+  } catch {}
 
   // Beritahu observer scroll-reveal supaya re-scan element baru di view ini
   window.dispatchEvent(new CustomEvent("playly:view-changed", { detail: { view: name } }));
@@ -29526,11 +29783,23 @@ function hqsPingLive() {
   void dot.offsetWidth; // restart animasi
   dot.classList.add("ping");
 }
-// Session duration ticker — tampilkan lama user login di hero pill.
-// Pakai sessionStorage supaya per-tab; nilai di-reset saat tab ditutup
-// atau saat logout (lihat handler logout). Format MM:SS / HH:MM:SS.
+// Session duration ticker — tampilkan elapsed + countdown idle di hero pill.
+// v479: idle auto-logout setelah SESSION_IDLE_LIMIT_MS. Aktivitas user
+// (mouse, keyboard, scroll, touch) reset countdown. Pill berubah warna
+// kuning <5 menit, merah + pulse <1 menit. Toast saat auto-logout.
+const SESSION_IDLE_LIMIT_MS = 30 * 60 * 1000; // 30 menit
+let _lastActivityTs = Date.now();
+const _activityEvents = ["mousedown", "keydown", "touchstart", "scroll", "mousemove"];
+function _markActivity() {
+  _lastActivityTs = Date.now();
+}
+_activityEvents.forEach(ev => window.addEventListener(ev, _markActivity, { passive: true, capture: true }));
+
+// Test hook (Playwright/manual): set window.__sessionTestRemainingMs untuk
+// memaksa countdown ke nilai tertentu — handy buat verifikasi warning state.
 function updateHeroSessionDuration() {
   const el = document.getElementById("heroSessionDuration");
+  const pill = document.getElementById("heroSessionPill");
   if (!el) return;
   let start;
   try { start = parseInt(sessionStorage.getItem("playlySessionStart") || "0", 10); } catch (e) { start = 0; }
@@ -29543,7 +29812,45 @@ function updateHeroSessionDuration() {
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
   const pad = function (n) { return n < 10 ? "0" + n : "" + n; };
-  el.textContent = "Sesi " + (h > 0 ? (pad(h) + ":" + pad(m) + ":" + pad(s)) : (pad(m) + ":" + pad(s)));
+  const elapsedStr = (h > 0 ? (pad(h) + ":" + pad(m) + ":" + pad(s)) : (pad(m) + ":" + pad(s)));
+
+  // Hitung sisa countdown idle. Override via test hook kalau ada.
+  let remainingMs = SESSION_IDLE_LIMIT_MS - (Date.now() - _lastActivityTs);
+  if (typeof window.__sessionTestRemainingMs === "number") {
+    remainingMs = window.__sessionTestRemainingMs;
+  }
+  const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
+  const rm = Math.floor(remainingSec / 60);
+  const rs = remainingSec % 60;
+  const totalMin = Math.round(SESSION_IDLE_LIMIT_MS / 60000);
+  el.textContent = "Sesi " + elapsedStr + " / idle " + pad(rm) + ":" + pad(rs) + " / " + pad(totalMin) + ":00";
+
+  // Warning classes pada pill
+  if (pill) {
+    pill.classList.remove("session-warn", "session-danger");
+    if (remainingMs <= 60 * 1000) {
+      pill.classList.add("session-danger");
+    } else if (remainingMs <= 5 * 60 * 1000) {
+      pill.classList.add("session-warn");
+    }
+  }
+
+  // Auto-logout saat countdown habis. Guard supaya tidak double-fire.
+  if (remainingMs <= 0 && !window.__sessionAutoLoggedOut && typeof user !== "undefined" && user) {
+    window.__sessionAutoLoggedOut = true;
+    try {
+      if (typeof toast === "function") {
+        toast("⏱️ Sesi berakhir — silakan login kembali", "warning");
+      }
+    } catch {}
+    setTimeout(() => {
+      try {
+        if (typeof doLogout === "function") doLogout();
+        // Reset guard supaya next login bisa auto-logout lagi
+        setTimeout(() => { window.__sessionAutoLoggedOut = false; }, 2000);
+      } catch {}
+    }, 600);
+  }
 }
 setInterval(updateHeroSessionDuration, 1000);
 updateHeroSessionDuration();
@@ -41889,6 +42196,8 @@ async function openPlayer(id) {
   // dipanggil di line ~33222 setelah banyak DOM update, kalau ada error di
   // tengah jalan user nyangkut di profile/discover view.
   if (typeof switchView === "function") switchView("player");
+  // Update URL hash → #/watch/:id (v479 hash router)
+  try { window.playlyRouter?.pushWatch(id); } catch {}
 
   // Track view real-time — naik untuk SEMUA viewer (termasuk creator sendiri).
   // Sekali per session per video supaya tidak spam saat reopen di session yang sama.
@@ -43261,6 +43570,105 @@ function extractSenderFromText(text) {
   const m = String(text).match(/@([A-Za-z0-9_.-]+)/);
   return m ? m[1] : null;
 }
+
+// ----------------------- NOTIFICATIONS FULL PAGE (v479) -----------------------
+// Halaman penuh untuk riwayat notifikasi — diakses via `#/notifications`
+// atau tombol "Lihat semua" di slide-out panel. Sumber data sama dengan
+// #notifList (state.notifications) supaya tidak duplikasi state.
+const notifPageState = { filter: "all", limit: 30 };
+function _matchNotifFilter(n, filter) {
+  if (filter === "all") return true;
+  if (filter === "unread") return !!n.unread;
+  if (filter === "comment") return n.type === "comment" || n.type === "video-comment";
+  if (filter === "like") return n.type === "like" || n.type === "video-like";
+  if (filter === "follow") return n.type === "follow";
+  if (filter === "system") return n.type === "broadcast" || n.type === "admin-broadcast"
+    || n.type === "email-reply" || n.type === "admin-email" || n.type === "system";
+  return true;
+}
+function renderNotifPage() {
+  const list = document.getElementById("notifPageList");
+  if (!list) return;
+  const all = Array.isArray(state?.notifications) ? state.notifications : [];
+  const filtered = all.filter(n => _matchNotifFilter(n, notifPageState.filter));
+  const slice = filtered.slice(0, notifPageState.limit);
+  if (!slice.length) {
+    list.innerHTML = `<div class="notif-page-empty">
+      <div class="notif-empty-ico" style="opacity:.5">${typeof NI_BELL !== "undefined" ? NI_BELL : "🔔"}</div>
+      <h4>Tidak ada notifikasi</h4>
+      <p>Belum ada notifikasi untuk filter ini.</p>
+    </div>`;
+  } else {
+    list.innerHTML = slice.map(n => {
+      const sender = n.fromUsername || extractSenderFromText(n.text) || "—";
+      const init = n.init || (sender.slice(0, 2).toUpperCase());
+      const text = n.text || `@${sender}`;
+      const time = n.ts ? (typeof relTime === "function" ? relTime(n.ts) : new Date(n.ts).toLocaleString()) : "";
+      return `<div class="notif-page-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}">
+        <div class="avatar small"><span>${init}</span></div>
+        <div class="info">
+          <p>${text}</p>
+          <div class="time">${time}</div>
+        </div>
+        <button class="btn ghost sm notif-page-see" type="button">Lihat</button>
+      </div>`;
+    }).join("");
+  }
+  // More button
+  const moreBtn = document.getElementById("notifPageMore");
+  if (moreBtn) moreBtn.hidden = filtered.length <= notifPageState.limit;
+
+  // Click → reuse handleNotificationClick (mark read + navigate)
+  list.querySelectorAll(".notif-page-item").forEach(row => {
+    row.addEventListener("click", () => {
+      const id = row.dataset.notifId;
+      const n = all.find(x => String(x.id) === String(id));
+      if (!n) return;
+      if (n.unread) { n.unread = false; try { saveState(); } catch {} row.classList.remove("unread"); }
+      try { handleNotificationClick(n); } catch {}
+    });
+  });
+}
+function setNotifPageFilter(f) {
+  notifPageState.filter = f;
+  notifPageState.limit = 30;
+  document.querySelectorAll("#notifPageFilters [data-notif-filter]").forEach(b => {
+    b.classList.toggle("active", b.dataset.notifFilter === f);
+  });
+  renderNotifPage();
+}
+// Wire delegation for filter pills, mark-all, load-more, "Lihat semua" jumpers
+document.addEventListener("click", (e) => {
+  const f = e.target.closest("#notifPageFilters [data-notif-filter]");
+  if (f) { e.preventDefault(); setNotifPageFilter(f.dataset.notifFilter); return; }
+  if (e.target.closest("#notifPageMarkAllRead")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications.forEach(n => { n.unread = false; });
+      try { saveState(); } catch {}
+      renderNotifPage();
+      if (typeof renderNotifications === "function") renderNotifications();
+      if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
+    }
+    return;
+  }
+  if (e.target.closest("#notifPageLoadMore")) {
+    e.preventDefault();
+    notifPageState.limit += 30;
+    renderNotifPage();
+    return;
+  }
+  // "Lihat semua" di slide-out / dropdown footer → buka full page
+  const jump = e.target.closest("[data-notif-page-link]");
+  if (jump) {
+    e.preventDefault();
+    // Tutup slide-out / dropdown dulu
+    document.getElementById("notifPanel")?.classList.remove("open");
+    document.getElementById("notifDropdown")?.setAttribute("hidden", "");
+    if (typeof switchView === "function") switchView("notifications");
+  }
+});
+
 // Event delegation untuk bell + close side panel — robust di mobile
 document.addEventListener("click", (e) => {
   const t = e.target;
@@ -43276,6 +43684,8 @@ document.addEventListener("click", (e) => {
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
     closeNotifDropdown();
+    // Lazy-mount notif panel content on first open (v479).
+    if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
     const panel = $("#notifPanel");
     panel?.classList.add("open");
     if (document.body.dataset.role === "admin") {
@@ -43786,8 +44196,25 @@ function applyHelpRoleFilter() {
   if (empty) empty.style.display = "none";
 }
 
+// Lazy-mount panel content dari <template>. Idempotent — return true kalau
+// baru di-mount, false kalau sudah pernah. v479.
+function ensureLazyPanelMounted(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return false;
+  if (panel.dataset.lazyMounted === "1") return false;
+  const tplId = "tpl" + panelId.charAt(0).toUpperCase() + panelId.slice(1);
+  const tpl = document.getElementById(tplId);
+  if (!tpl) return false;
+  panel.appendChild(tpl.content.cloneNode(true));
+  panel.dataset.lazyMounted = "1";
+  return true;
+}
+
 $("#openHelp")?.addEventListener("click", () => {
   const panel = $("#helpPanel");
+  // First-open: inject template content + close handler delegation sudah jalan
+  // via global document listener (closest "[data-close-sp]").
+  ensureLazyPanelMounted("helpPanel");
   const willOpen = !panel.classList.contains("open");
   panel.classList.toggle("open");
   if (willOpen) {
@@ -47269,6 +47696,19 @@ function toggleNotifDropdown() {
   if (!dd.hidden) {
     closeNotifDropdown();
     return;
+  }
+  // Lazy-mount notif panel content sebelum populate dropdown — supaya
+  // getAdminAlerts/getAdminLiveFeed/getNotifList yg query #notifPanel
+  // dapat data (v479).
+  if (typeof ensureLazyPanelMounted === "function") {
+    if (ensureLazyPanelMounted("notifPanel")) {
+      // Baru di-mount — populate section dulu supaya dropdown ada datanya.
+      try { renderAdminAlerts?.(); } catch {}
+      try { renderAdminLiveFeed?.(); } catch {}
+      try { renderUserNotifAlerts?.(); } catch {}
+      try { renderUserLiveFeed?.(); } catch {}
+      try { renderNotifications?.(); } catch {}
+    }
   }
   renderNotifDropdownContent();
   dd.hidden = false;
