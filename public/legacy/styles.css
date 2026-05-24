@@ -65388,32 +65388,29 @@ body.auth-mode .mpm-card::after {
 }
 
 /* #4 — Polish raw unicode symbols pada landing/sponsor floating cards.
-   Symbols (▶ ♥ 👁 💬 📊 🛡 💰 🔥) di .floating-card span, .apf span,
-   dan .aps-mini-thumb span sebelumnya keliatan as raw text yg ngambang.
-   Solusi: bungkus dalam pill bulat dgn background subtle, ukuran
-   konsisten, dan vertical-align proper biar keliatan intentional
-   (mirip icon badge, bukan unicode bocor). */
+   Per user 2026-05-23: "ini ikon nya kenapa pakai kolom hapus kolom
+   di ikon nya ya". Pill bg circular DIHAPUS — icons sekarang inline
+   tanpa container. picons.js swap emoji raw -> SVG di runtime, jadi
+   tidak ada raw bleed lagi. */
 .floating-card span,
 .apf span {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(232, 216, 196, .14);
-  font-size: 12px;
+  background: transparent !important;
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
   line-height: 1;
   flex-shrink: 0;
-  /* Emoji rendering tetap pakai sistem font; non-emoji unicode
-     (▶ ♥) pakai stroke-style supaya keliatan crisp di pill. */
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', system-ui, sans-serif;
+}
+.floating-card span svg,
+.apf span svg {
+  width: 16px;
+  height: 16px;
 }
 .apf span {
-  width: 20px;
-  height: 20px;
-  font-size: 11px;
-  background: rgba(231, 215, 196, .18);
+  font-size: 12px;
 }
 .aps-mini-thumb span {
   display: inline-flex;
@@ -65589,4 +65586,347 @@ body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-check,
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-check path {
   fill: none !important;
   stroke: currentColor !important;
+}
+
+/* === Signup-pick (Pilih paket) — Kembali button reposition + remove
+   redundant title === Per user 2026-05-23 screenshot annotation. "Pilih
+   paket kamu" h3 + sub dihapus dari HTML (redundant dgn auth header
+   atas dan label kartu). Kembali button sekarang absolute top-left
+   pojok card, compact pill — tidak lagi sandwich antara header center
+   dan body left-align. Grid kartu naik supaya tidak ada gap kosong. */
+.auth-state-signup-pick {
+  position: relative;
+}
+.auth-back-btn.auth-back-btn-pick {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0 !important;
+  padding: 6px 10px 6px 8px !important;
+  font-size: 12.5px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .04) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  color: var(--text-2) !important;
+  z-index: 2;
+  transition: background .15s, border-color .15s, color .15s !important;
+}
+.auth-back-btn.auth-back-btn-pick:hover {
+  background: rgba(255, 255, 255, .08) !important;
+  border-color: rgba(255, 255, 255, .22) !important;
+  color: var(--text) !important;
+}
+.auth-back-btn.auth-back-btn-pick span {
+  font-weight: 600;
+}
+.auth-back-btn.auth-back-btn-pick svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+/* === Signup-pick + plan-auth-check: hide P logo banner + Kembali
+   button (user req 2026-05-23: "mulai dari logo sampai kolom kembali
+   itu hapuskan saja" untuk kedua state). Pakai data-auth-state di
+   .auth-card supaya scoped HANYA saat state ybs aktif — banner masih
+   muncul di state lain (login, signup form, dst). */
+.auth-card[data-auth-state="signup-pick"] #userModeBanner,
+.auth-card[data-auth-state="signup-pick"] #adminModeBanner,
+.auth-card[data-auth-state="signup-pick"] .auth-back-btn-pick,
+.auth-card[data-auth-state="plan-auth-check"] #userModeBanner,
+.auth-card[data-auth-state="plan-auth-check"] #adminModeBanner,
+.auth-card[data-auth-state="plan-auth-check"] #pacBackBtn {
+  display: none !important;
+}
+
+/* === Badges "HEMAT 25%" + "PALING UNTUNG" — match style "PALING
+   DISARANKAN" (.apc-badge-premium) per user req 2026-05-23: "gantu ya
+   sama kan dengan warna kolom paling disarankan". Gold->wine gradient,
+   white text, no border, soft gold shadow. */
+#planPickerModal .pp-badge,
+.pp-card .pp-badge {
+  background: linear-gradient(135deg, #d4a64a, #6D2932) !important;
+  background-image: linear-gradient(135deg, #d4a64a, #6D2932) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  padding: 4px 10px !important;
+  border: 1px solid transparent !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 12px -4px rgba(212, 166, 74, .55) !important;
+}
+/* Light mode: sama style — gold->wine gradient pakai existing tokens */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-badge {
+  background: linear-gradient(135deg, #d4a64a, #6D2932) !important;
+  background-image: linear-gradient(135deg, #d4a64a, #6D2932) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 12px -4px rgba(212, 166, 74, .55) !important;
+}
+
+/* === Rp price di kartu Tahunan + Lifetime — lebih hidup (user req
+   2026-05-23: "harga rupiah di kolom tahunan juga kurang hidup"). === */
+#planPickerModal .pp-card-recommended .pp-price-idr,
+#planPickerModal .pp-card-premium .pp-price-idr,
+.pp-card-recommended .pp-price-idr,
+.pp-card-premium .pp-price-idr {
+  color: #FFCC4D !important;
+  -webkit-text-fill-color: #FFCC4D !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: 0 0 8px rgba(255, 204, 77, .35);
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-price-idr,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-premium .pp-price-idr {
+  color: #B45309 !important;
+  -webkit-text-fill-color: #B45309 !important;
+  text-shadow: none;
+}
+
+/* === plan-auth-check screen — fix giant SVG icon (user req
+   2026-05-23: "kolom di gambar ketika perbaiki ya kenapa susunannya
+   berantakan dan tidak beraturan begitu"). Issue: pacPlanIcon dulu
+   emoji (font-size 2.75rem), agen replace ke innerHTML SVG yang ga
+   ada sizing CSS-nya -> SVG balloon ke 100% parent width. Fix:
+   constrain ke 56px pill match style .pp-icon. */
+.pac-plan-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 28px !important;
+  margin: 0 auto 16px !important;
+  background: linear-gradient(135deg, rgba(232, 200, 140, .15), rgba(109, 41, 50, .10));
+  border: 1px solid rgba(232, 200, 140, .35);
+  border-radius: 14px;
+  color: #FFE9C8;
+  box-shadow: 0 4px 12px -4px rgba(232, 200, 140, .25);
+}
+.pac-plan-icon svg {
+  width: 28px !important;
+  height: 28px !important;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+}
+.pac-plan-icon svg path { stroke: currentColor; fill: none; }
+body[data-theme="light"]:not([data-role="admin"]) .pac-plan-icon {
+  background: linear-gradient(135deg, rgba(184, 134, 47, .12), rgba(106, 31, 41, .08));
+  border-color: rgba(184, 134, 47, .35);
+  color: #8a5a18;
+}
+
+/* === plan-auth-check: text hierarchy + "Ya, masuk dulu" button fix
+   (user req 2026-05-23: "warna teks nya perbaiki ya yang teks krusial
+   buat jelas... warna kolom ya masuk dulu nya juga perbaiki ya").
+   Issue: "Ya, masuk dulu" punya wine text di wine border (invisible),
+   title kecil, plan-meta tidak prominent. === */
+
+/* Title "Sudah punya akun Playly?" — bigger + cream solid */
+html .auth-state-plan-auth-check .pac-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.01em !important;
+  color: #F5E8C9 !important;
+  -webkit-text-fill-color: #F5E8C9 !important;
+  margin: 0 0 10px !important;
+}
+/* Plan meta "Plan: Selamanya · $199" — SEMUA bagian: warna sama +
+   weight sama (cream #F5E8C9, weight 600) per user 2026-05-23: "bukan
+   pink ganti lagi ya dan itu weight nya samakan semua". Tidak ada
+   emphasis lagi — flat uniform style. */
+html .auth-state-plan-auth-check .pac-plan-meta,
+html .auth-state-plan-auth-check .pac-plan-meta strong,
+html .auth-state-plan-auth-check .pac-plan-meta #pacPlanName,
+html .auth-state-plan-auth-check .pac-plan-meta #pacPlanPrice,
+html .auth-state-plan-auth-check .pac-plan-meta span {
+  color: #F5E8C9 !important;
+  -webkit-text-fill-color: #F5E8C9 !important;
+  font-weight: 600 !important;
+}
+html .auth-state-plan-auth-check .pac-plan-meta {
+  font-size: 14px !important;
+  opacity: 1 !important;
+  margin: 0 0 12px !important;
+}
+/* Sub-text — sekarang DI ATAS plan meta (urutan baru: title -> sub ->
+   plan meta -> buttons). Margin-auto LR supaya block center horizontal
+   (max-width 320px butuh `margin: 0 auto` untuk benar-benar center).
+   text-align center juga di-set explicit (parent .pac-wrap udah
+   center, tapi rule lain bisa override). */
+html .auth-state-plan-auth-check .pac-sub {
+  font-size: 13px !important;
+  color: rgba(232, 216, 196, .80) !important;
+  -webkit-text-fill-color: rgba(232, 216, 196, .80) !important;
+  margin: 0 auto 16px !important;
+  max-width: none !important;
+  line-height: 1.55 !important;
+  text-align: center !important;
+  /* 1 line per user req 2026-05-23. white-space nowrap supaya kalimat
+     panjang tidak ke-wrap. Card di-expand di rule .auth-card[data-auth-state]. */
+  white-space: nowrap !important;
+}
+/* Auth card compact saat plan-auth-check — width tightly fit sub-text
+   1 line + sedikit padding. Per user 2026-05-23: "buat compact ya
+   kolom nya". Sub-text ~520px + padding card -> 560px total. */
+.auth-card[data-auth-state="plan-auth-check"] {
+  max-width: 560px !important;
+  width: 100% !important;
+  padding-top: 28px !important;
+  padding-bottom: 28px !important;
+}
+.auth-card[data-auth-state="plan-auth-check"] .pac-wrap,
+.auth-card[data-auth-state="plan-auth-check"] .auth-state-plan-auth-check {
+  overflow: visible !important;
+}
+/* Tighter vertical spacing untuk feel compact */
+.auth-card[data-auth-state="plan-auth-check"] .pac-plan-icon {
+  margin-bottom: 12px !important;
+}
+.auth-card[data-auth-state="plan-auth-check"] .pac-title {
+  margin-bottom: 6px !important;
+  font-size: 20px !important;
+}
+.auth-card[data-auth-state="plan-auth-check"] .pac-sub {
+  margin-bottom: 10px !important;
+}
+.auth-card[data-auth-state="plan-auth-check"] .pac-plan-meta {
+  margin-bottom: 14px !important;
+  font-size: 13px !important;
+}
+.auth-card[data-auth-state="plan-auth-check"] .pac-btns {
+  max-width: 460px !important;
+}
+/* Pastikan title + plan meta juga center (override sweep rule kalau ada) */
+html .auth-state-plan-auth-check .pac-title,
+html .auth-state-plan-auth-check .pac-plan-meta {
+  text-align: center !important;
+}
+/* Pac-wrap parent — pastikan flex-column center sehingga semua child
+   blok center (text-align cascade + horizontal block centering). */
+html .auth-state-plan-auth-check .pac-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Buttons side-by-side (row) per user req 2026-05-23: "trus kolom nya
+   buat di sisi kanan kiri saja ya jangan atas bawah". Sebelumnya
+   flex-column. Sekarang row dengan gap + max-width 420px supaya cukup
+   ruang untuk 2 button bersanding. */
+html .auth-state-plan-auth-check .pac-btns {
+  flex-direction: row !important;
+  max-width: 420px !important;
+  width: 100% !important;
+  gap: 10px !important;
+}
+html .auth-state-plan-auth-check .pac-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* "Ya, masuk dulu →" PRIMARY button — solid wine bg, white text
+   (sebelumnya wine text on wine border = invisible). */
+html .auth-state-plan-auth-check #pacBtnHasAccount,
+html .auth-state-plan-auth-check button.btn.primary.pac-btn {
+  background: linear-gradient(135deg, #6D2932 0%, #842A3B 100%) !important;
+  background-image: linear-gradient(135deg, #6D2932 0%, #842A3B 100%) !important;
+  background-color: #6D2932 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px -4px rgba(109, 41, 50, .55) !important;
+}
+html .auth-state-plan-auth-check #pacBtnHasAccount:hover,
+html .auth-state-plan-auth-check button.btn.primary.pac-btn:hover {
+  background: linear-gradient(135deg, #842A3B 0%, #9A3144 100%) !important;
+  background-image: linear-gradient(135deg, #842A3B 0%, #9A3144 100%) !important;
+  box-shadow: 0 6px 18px -4px rgba(132, 42, 59, .65) !important;
+  transform: translateY(-1px);
+}
+/* "Belum, daftar dulu →" GHOST button — cream text, subtle border */
+html .auth-state-plan-auth-check #pacBtnNoAccount,
+html .auth-state-plan-auth-check button.btn.ghost.pac-btn {
+  background: transparent !important;
+  color: #F5E8C9 !important;
+  -webkit-text-fill-color: #F5E8C9 !important;
+  border: 1px solid rgba(245, 232, 201, .25) !important;
+  font-weight: 600 !important;
+}
+html .auth-state-plan-auth-check #pacBtnNoAccount:hover,
+html .auth-state-plan-auth-check button.btn.ghost.pac-btn:hover {
+  background: rgba(245, 232, 201, .06) !important;
+  border-color: rgba(245, 232, 201, .45) !important;
+}
+
+/* Light mode — adjust untuk latar putih */
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-title {
+  color: #2A1218 !important;
+  -webkit-text-fill-color: #2A1218 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-plan-meta {
+  color: #7A4655 !important;
+  -webkit-text-fill-color: #7A4655 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-plan-meta strong,
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-plan-meta #pacPlanName {
+  color: #2A1218 !important;
+  -webkit-text-fill-color: #2A1218 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-plan-meta #pacPlanPrice {
+  color: #2A1218 !important;
+  -webkit-text-fill-color: #2A1218 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check .pac-sub {
+  color: rgba(122, 70, 85, .85) !important;
+  -webkit-text-fill-color: rgba(122, 70, 85, .85) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-state-plan-auth-check #pacBtnNoAccount {
+  color: #2A1218 !important;
+  -webkit-text-fill-color: #2A1218 !important;
+  border-color: rgba(106, 31, 41, .28) !important;
+}
+/* Tidak ada Kembali button lagi -> reset padding-top, biar title naik */
+.auth-state-signup-pick {
+  padding-top: 0 !important;
+}
+/* "Pilih paket kamu" title + sub — centered per user 2026-05-23.
+   Margin-top 0 karena padding-top sudah di parent. Title-sub punya
+   margin-bottom 22px untuk breathing room sebelum grid (user req:
+   "rapikan ya jangan terlalu mepet dengan kolom nya"). */
+.auth-pick-title.auth-pick-title-center {
+  text-align: center !important;
+  margin: 0 0 6px !important;
+}
+.auth-pick-sub.auth-pick-sub-center {
+  text-align: center !important;
+  margin: 0 0 22px !important;
+}
+.auth-state-signup-pick .auth-pick-grid {
+  margin-top: 0;
+}
+.auth-state-signup-pick .auth-pick-compare {
+  margin-top: 14px;
+}
+/* Kembali pill absolute — sesuaikan top supaya pas di dalam padding container */
+.auth-back-btn.auth-back-btn-pick {
+  top: 4px !important;
+  left: 4px !important;
+}
+/* Light mode: bg + border lebih subtle wine-tint */
+body[data-theme="light"]:not([data-role="admin"]) .auth-back-btn.auth-back-btn-pick {
+  background: rgba(106, 31, 41, .06) !important;
+  border-color: rgba(106, 31, 41, .18) !important;
+  color: var(--text-2) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .auth-back-btn.auth-back-btn-pick:hover {
+  background: rgba(106, 31, 41, .12) !important;
+  border-color: rgba(106, 31, 41, .30) !important;
 }

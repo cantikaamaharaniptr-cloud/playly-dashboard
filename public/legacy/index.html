@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v481" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v502" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -897,12 +897,17 @@
                nav/sidebar (bukan emoji raw). Harga USD dilengkapi ekuivalen
                IDR via fmtUsdAsIdr() di script.js. -->
           <div class="auth-state auth-state-signup-pick">
-            <button type="button" class="auth-back-btn" data-go-state="landing">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-              Kembali
+            <!-- Kembali button — pill compact di pojok kiri-atas card
+                 (absolute-positioned, lihat .auth-back-btn-pick di styles.css).
+                 "Pilih paket kamu" h3 dikembalikan + center per user
+                 2026-05-23. Sub-text "Mulai gratis, upgrade kapan saja."
+                 tetap dihapus (redundant dengan auth header). -->
+            <button type="button" class="auth-back-btn auth-back-btn-pick" data-go-state="landing" aria-label="Kembali">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+              <span>Kembali</span>
             </button>
-            <h3 class="auth-pick-title" data-i18n="auth.tier.choose">Pilih paket kamu</h3>
-            <p class="auth-pick-sub">Mulai gratis, upgrade kapan saja.</p>
+            <h3 class="auth-pick-title auth-pick-title-center" data-i18n="auth.tier.choose">Pilih paket kamu</h3>
+            <p class="auth-pick-sub auth-pick-sub-center">Mulai gratis, upgrade kapan saja.</p>
             <div class="auth-pick-grid">
               <button type="button" class="auth-pick-card" data-pick-tier="free">
                 <span class="apc-icon" aria-hidden="true">
@@ -952,13 +957,17 @@
           <div class="auth-state auth-state-plan-auth-check">
             <button type="button" class="auth-back-btn" id="pacBackBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-              Back
+              Kembali
             </button>
             <div class="pac-wrap">
-              <span class="pac-plan-icon" id="pacPlanIcon">⭐</span>
+              <span class="pac-plan-icon" id="pacPlanIcon" aria-hidden="true">⭐</span>
               <h3 class="pac-title" data-i18n="auth.pac.title">Sudah punya akun Playly?</h3>
+              <!-- Sub 1-line per user 2026-05-23: tidak ada <br>, full sentence. -->
+              <p class="pac-sub" data-no-i18n>Masuk untuk lanjut ke pembayaran, atau daftar dulu kalau belum punya akun.</p>
+              <!-- Plan meta dipindah dekat tombol per user 2026-05-23
+                   ("tukar susunan teks plan itu di dekat kolom") — context
+                   pembayaran muncul tepat sebelum CTA. -->
               <p class="pac-plan-meta">Plan: <strong id="pacPlanName">Monthly</strong> · <span id="pacPlanPrice">$9.99/mo</span></p>
-              <p class="pac-sub" data-i18n="auth.pac.sub">Masuk untuk lanjut ke pembayaran, atau daftar dulu kalau belum punya akun.</p>
               <div class="pac-btns">
                 <button type="button" class="btn primary pac-btn" id="pacBtnHasAccount" data-i18n="auth.pac.btn.yes">Ya, masuk dulu →</button>
                 <button type="button" class="btn ghost pac-btn" id="pacBtnNoAccount" data-i18n="auth.pac.btn.no">Belum, daftar dulu →</button>
@@ -8351,7 +8360,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v481"></script>
+  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v502"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8797,7 +8806,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-edit-video-pro-v481" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260523-edit-video-pro-v502" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
