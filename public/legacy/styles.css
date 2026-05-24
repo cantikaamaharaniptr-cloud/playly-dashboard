@@ -65283,3 +65283,105 @@ html body[data-theme="dark"]:not([data-role="admin"]) .faq-a {
   -webkit-text-fill-color: rgba(232, 216, 196, .72) !important;
   font-weight: 500 !important;
 }
+
+/* =========================================================
+   v478 — Round-1a fixes (2026-05-23)
+   ========================================================= */
+
+/* #3 — Hide "hover untuk preview" floating tag saat login modal open.
+   Source: .mpm-card::after di line 51143. body.auth-mode aktif pas
+   user belum login → preview card landing/sponsor masih ke-render di
+   background dan text-nya bocor di belakang login modal. */
+body.auth-mode .mpm-card::after {
+  content: "" !important;
+  display: none !important;
+}
+
+/* #4 — Polish raw unicode symbols pada landing/sponsor floating cards.
+   Symbols (▶ ♥ 👁 💬 📊 🛡 💰 🔥) di .floating-card span, .apf span,
+   dan .aps-mini-thumb span sebelumnya keliatan as raw text yg ngambang.
+   Solusi: bungkus dalam pill bulat dgn background subtle, ukuran
+   konsisten, dan vertical-align proper biar keliatan intentional
+   (mirip icon badge, bukan unicode bocor). */
+.floating-card span,
+.apf span {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(232, 216, 196, .14);
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+  /* Emoji rendering tetap pakai sistem font; non-emoji unicode
+     (▶ ♥) pakai stroke-style supaya keliatan crisp di pill. */
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', system-ui, sans-serif;
+}
+.apf span {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  background: rgba(231, 215, 196, .18);
+}
+.aps-mini-thumb span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .45);
+  color: rgba(255, 255, 255, .85);
+  font-size: 11px;
+  line-height: 1;
+  /* Tiny play triangle — geser kanan dikit supaya visual-balanced
+     di dalam circle (triangle bukan symmetric). */
+  padding-left: 2px;
+}
+
+/* #9 — Modal/popup pointer-events audit. User report: "Settings sempat
+   tidak ke-klik" — kemungkinan ada backdrop overlay yg masih intercept
+   click padahal visually hilang. Default state: pointer-events:none.
+   Hanya saat parent modal/container visible (.show / .open /
+   :not([hidden])) baru aktif. Safe net — sebagian besar parent sudah
+   pakai display:none, tapi rule ini cover edge case CSS-transition
+   yg leave residual interactive area. */
+.modal:not(.show) .modal-backdrop,
+.modal[hidden] .modal-backdrop,
+.video-edit-modal-overlay[hidden] .modal-backdrop,
+.video-edit-modal-overlay:not(.show) .modal-backdrop,
+.mpm-modal[hidden] .mpm-backdrop,
+.afs-info-modal[hidden] .afs-info-backdrop,
+.auth-right:not(.show) .auth-modal-backdrop,
+.notif-dropdown:not(.show),
+.notif-dropdown[hidden],
+.inbox-picker-popover[hidden],
+.profile-dropdown:not(.open),
+.user-welcome-overlay:not([data-show]):not([data-closing]),
+.admin-welcome-overlay:not([data-show]):not([data-closing]) {
+  pointer-events: none !important;
+}
+
+/* #10 — Upgrade banner kurangi dari 3 lokasi → sidebar only.
+   Per user 2026-05-23: "Upgrade muncul di dropdown + sidebar +
+   insight — agak agresif untuk free user". Sisakan sidebar (paling
+   kontekstual + persisten). Profile dropdown sudah hidden by default
+   via [hidden] attribute, tapi kalau JS show-nya buat free-tier user
+   tetap muncul. Hide explicit di sini supaya tidak pernah tampil.
+   tier-locked-cta di Premium Insights view tetap tampil — itu
+   bukan "banner" tapi konten utama page (gate page). Yang user
+   maksud "insight" kemungkinan adalah kalau upgrade-banner kebetulan
+   inject di view-header, jadi hide juga di sana untuk jaga-jaga. */
+.profile-dropdown #pdUpgradeBtn,
+.profile-dropdown .pd-upgrade,
+.profile-dropdown [class*="upgrade-banner"],
+[data-view="premium-insights"] .view-header .pm-upgrade-banner,
+[data-view="premium-insights"] .view-header [class*="upgrade-banner"],
+[data-view="insights"] .view-header .pm-upgrade-banner,
+[data-view="insights"] .view-header [class*="upgrade-banner"],
+[data-view="analytics"] .view-header .pm-upgrade-banner,
+[data-view="analytics"] .view-header [class*="upgrade-banner"] {
+  display: none !important;
+}

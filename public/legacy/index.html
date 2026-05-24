@@ -9,7 +9,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="format-detection" content="telephone=no" />
   <title>Playly. — Video Platform</title>
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v477" />
+  <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v478" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -1068,7 +1070,7 @@
               <span data-i18n="auth.email">Email</span>
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                <input type="email" name="email" placeholder="you@email.com" required autocomplete="off"/>
+                <input type="email" name="email" placeholder="you@email.com" required autocomplete="email"/>
               </div>
             </label>
 
@@ -1076,7 +1078,7 @@
               <span data-i18n="auth.password">Password</span>
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <input type="password" name="password" placeholder="Min. 6 characters" required minlength="6"/>
+                <input type="password" name="password" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/>
                 <button type="button" class="pw-toggle" tabindex="-1" aria-label="Tampilkan password">
                     <svg class="pw-eye pw-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                     <svg class="pw-eye pw-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7"/><path d="M9.4 5.2A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7-.5 1-1.2 1.9-2 2.7"/><path d="M6.7 6.7C3.7 8.7 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.6-1.2"/></svg>
@@ -1499,7 +1501,7 @@
           <span class="amf-sep" aria-hidden="true">·</span>
           <button type="button" class="amf-link" data-amf-open="support">Support</button>
         </div>
-        <div class="amf-copy">© 2026 Playly · v1.0.0 · Crafted with care</div>
+        <div class="amf-copy">© 2026 Playly · v1.0.0</div>
       </footer>
     </section>
 
@@ -1985,7 +1987,7 @@
         <span class="afs-link-sep" aria-hidden="true">·</span>
         <a href="#" class="afs-link" data-foot-action="support">Support</a>
       </nav>
-      <p class="afs-copy" data-no-i18n>© 2026 Playly · v1.0.0 · Crafted with care</p>
+      <p class="afs-copy" data-no-i18n>© 2026 Playly · v1.0.0</p>
     </section>
 
     <!-- ===== Footer info modal — Privacy / Terms / Support content =====
@@ -5811,9 +5813,9 @@
           <div class="card">
             <h3 data-i18n="settings.security">🛡 Security</h3>
             <form class="upload-form" id="changePasswordForm" style="margin-top:14px" novalidate>
-              <label data-i18n="settings.oldpw">Old Password<input type="password" name="oldPw" placeholder="Min. 6 characters" required minlength="6"/></label>
-              <label data-i18n="settings.newpw">New Password<input type="password" name="newPw" placeholder="Min. 6 characters" required minlength="6"/></label>
-              <label data-i18n="settings.confirmpw">Confirm New Password<input type="password" name="confirmPw" placeholder="Repeat new password" required minlength="6"/></label>
+              <label data-i18n="settings.oldpw">Old Password<input type="password" name="oldPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="current-password"/></label>
+              <label data-i18n="settings.newpw">New Password<input type="password" name="newPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/></label>
+              <label data-i18n="settings.confirmpw">Confirm New Password<input type="password" name="confirmPw" placeholder="Repeat new password" required minlength="6" autocomplete="new-password"/></label>
               <button type="submit" class="btn primary" style="align-self:flex-start" data-i18n="settings.changepw.btn">Change Password</button>
             </form>
           </div>
@@ -6052,9 +6054,9 @@
           <div class="card settings-card-security">
             <h3>🔑 Change Password</h3>
             <form class="upload-form security-form-grid" id="adminChangePasswordForm" novalidate>
-              <label>Old Password<input type="password" name="oldPw" placeholder="Min. 6 characters" required minlength="6"/></label>
-              <label>New Password<input type="password" name="newPw" placeholder="Min. 6 characters" required minlength="6"/></label>
-              <label>Confirmation<input type="password" name="confirmPw" placeholder="Repeat new password" required minlength="6"/></label>
+              <label>Old Password<input type="password" name="oldPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="current-password"/></label>
+              <label>New Password<input type="password" name="newPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/></label>
+              <label>Confirmation<input type="password" name="confirmPw" placeholder="Repeat new password" required minlength="6" autocomplete="new-password"/></label>
               <button type="submit" class="btn primary" style="align-self:flex-start">Change Admin Password</button>
             </form>
           </div>
@@ -7206,14 +7208,16 @@
       <div class="twofa-icon">🔐</div>
       <h3 id="setupPinTitle" data-i18n="twofa.setup.title">Enable 2FA?</h3>
       <p class="twofa-desc" id="setupPinDesc" data-i18n="twofa.setup.desc">Create a 6-digit PIN for extra verification at login. You can skip and set it later in Settings.</p>
-      <div class="twofa-input-grid" id="setupPinGrid">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="0"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="1"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="2"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="3"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="4"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-setpin-idx="5"/>
-      </div>
+      <!-- Wrapped in <form> to silence DevTools "password not in form" warning.
+           onsubmit prevented — existing JS reads inputs via data-setpin-idx. -->
+      <form class="twofa-input-grid" id="setupPinGrid" onsubmit="return false" autocomplete="off">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="0" aria-label="PIN digit 1"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="1" aria-label="PIN digit 2"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="2" aria-label="PIN digit 3"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="3" aria-label="PIN digit 4"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="4" aria-label="PIN digit 5"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-setpin-idx="5" aria-label="PIN digit 6"/>
+      </form>
       <p class="twofa-error" id="setupPinError" hidden></p>
       <div class="modal-actions">
         <button class="btn ghost" id="setupPinSkip" data-i18n="twofa.skip">Skip</button>
@@ -7437,7 +7441,7 @@
               <span>CVV</span>
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <input type="password" name="cardCvv" placeholder="123" inputmode="numeric" maxlength="4"/>
+                <input type="password" name="cardCvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc"/>
               </div>
             </label>
           </div>
@@ -7920,14 +7924,16 @@
       <div class="twofa-icon">🔐</div>
       <h3>Verifikasi 2FA</h3>
       <p class="twofa-desc">Masukkan PIN 6-digit untuk menyelesaikan login.</p>
-      <div class="twofa-input-grid" id="twoFAInputGrid">
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="0"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="1"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="2"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="3"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="4"/>
-        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" data-pin-idx="5"/>
-      </div>
+      <!-- Wrapped in <form> to silence DevTools "password not in form" warning.
+           onsubmit prevented — existing JS reads inputs via data-pin-idx. -->
+      <form class="twofa-input-grid" id="twoFAInputGrid" onsubmit="return false" autocomplete="off">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="0" aria-label="PIN digit 1"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="1" aria-label="PIN digit 2"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="2" aria-label="PIN digit 3"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="3" aria-label="PIN digit 4"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="4" aria-label="PIN digit 5"/>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-pin-idx="5" aria-label="PIN digit 6"/>
+      </form>
       <p class="twofa-error" id="twoFAError" hidden></p>
     </div>
   </div>
@@ -8294,7 +8300,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v477"></script>
+  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v478"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8740,7 +8746,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-edit-video-pro-v477" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260523-edit-video-pro-v478" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
