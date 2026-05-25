@@ -1522,6 +1522,7 @@ async function hydrateStateFromCloud(username) {
     return null;
   }
   if (!res || !res.ok || !res.state || typeof res.state !== "object") {
+    console.info("[hydrate] no cloud state (reason:", (res && res.reason) || "empty", ") — keep local");
     return { applied: false, reason: "no_cloud_state" };
   }
   const cloudState = res.state;
@@ -1541,6 +1542,9 @@ async function hydrateStateFromCloud(username) {
   // Strict (>) supaya saveState→pull loop tidak overwrite local dgn dirinya sendiri.
   const cloudWins = !localState || cloudTs > localTs;
   if (!cloudWins) {
+    console.info("[hydrate] local state lebih baru — skip cloud (local:",
+      new Date(localTs).toISOString(), "vs cloud:",
+      cloudTs ? new Date(cloudTs).toISOString() : "n/a", ")");
     return { applied: false, reason: "local_newer", cloudTs, localTs };
   }
 
@@ -1593,6 +1597,7 @@ async function hydrateProfileFromCloud(email) {
     return null;
   }
   if (!res || !res.ok || !res.profile) {
+    console.info("[hydrate-profile] no cloud profile (reason:", (res && res.reason) || "empty", ") — keep local");
     return { applied: false, reason: "no_cloud_profile" };
   }
   const cloud = res.profile;
@@ -1653,6 +1658,7 @@ async function hydrateProfileFromCloud(email) {
     console.info("[hydrate-profile] gap-filled local from cloud:", email);
     return { applied: true, mode: "gap_fill" };
   }
+  console.info("[hydrate-profile] local profile sudah lengkap — skip cloud:", email);
   return { applied: false, reason: "local_complete" };
 }
 window.hydrateProfileFromCloud = hydrateProfileFromCloud;
