@@ -36358,35 +36358,204 @@ function renderDmBroadcast() {
   }).join("");
 }
 
-// Hitung jumlah per kategori untuk kartu overview "Semua".
+// Audit 2026-05-25 v523 (req user): rewrite overview supaya tiap card
+// tampilkan LIVE PREVIEW max 2 thread teratas (Instagram-style),
+// bukan cuma counter text. Plus "Lihat semua →" link kalau ada >2.
+// Empty state per-card tetap dgn hint deskriptif kategori.
 function renderDmOverview() {
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var visible = all.filter(function (m) { return !m.archived; });
   var isReq = (typeof dmIsRequest === "function") ? dmIsRequest : function () { return false; };
-  var cDm  = visible.filter(function (m) { return !m.isAdmin && !m.isBroadcast && !isReq(m); }).length;
-  var cBc  = visible.filter(function (m) { return m.isAdmin || m.isBroadcast; }).length;
-  var cReq = visible.filter(isReq).length;
-  var cArc = all.filter(function (m) { return m.archived; }).length;
+  var dmList  = visible.filter(function (m) { return !m.isAdmin && !m.isBroadcast && !isReq(m); });
+  var bcList  = visible.filter(function (m) { return m.isAdmin || m.isBroadcast; });
+  var reqList = visible.filter(isReq);
+  var arcList = all.filter(function (m) { return m.archived; });
+  var sortByTs = function (a, b) { return (b.ts || 0) - (a.ts || 0); };
+  dmList.sort(sortByTs); bcList.sort(sortByTs); reqList.sort(sortByTs); arcList.sort(sortByTs);
+
   var set = function (id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
-  set("dmOvCountDm", cDm); set("dmOvCountBc", cBc);
-  set("dmOvCountReq", cReq); set("dmOvCountArc", cArc);
-  // Update title-line + toggle hint visibility (2026-05-25 req user UX).
-  // Markup empty state sekarang: <p.dm-ov-empty-title> + <p.dm-ov-empty-hint>.
-  // Saat n > 0 → title diisi "X percakapan — klik untuk buka", hint disembunyikan
-  // (info kategori tidak relevan lagi kalau sudah ada items). Saat n = 0 → title
-  // tetap "Belum ada X", hint visible buat jelasin kategori.
-  var body = function (id, n, none, some) {
-    var el = document.getElementById(id); if (!el) return;
-    var titleEl = el.querySelector(".dm-ov-empty-title") || el.querySelector("p");
-    var hintEl = el.querySelector(".dm-ov-empty-hint");
-    if (titleEl) titleEl.textContent = n > 0 ? (n + " " + some) : none;
-    if (hintEl) hintEl.hidden = n > 0;
+  set("dmOvCountDm",  dmList.length);
+  set("dmOvCountBc",  bcList.length);
+  set("dmOvCountReq", reqList.length);
+  set("dmOvCountArc", arcList.length);
+
+  // Empty-state copy ditampilkan kalau list kosong (vs preview rows).
+  var renderCard = function (listId, threads, emptyId, seeAllSel) {
+    var listEl = document.getElementById(listId);
+    var emptyEl = document.getElementById(emptyId);
+    if (!listEl) return;
+    if (!threads.length) {
+      // Tampilkan empty state, hide preview rows
+      if (emptyEl) emptyEl.hidden = false;
+      // Hapus preview rows kalau pernah di-render
+      Array.prototype.slice.call(listEl.querySelectorAll(".dm-ov-thread")).forEach(function (r) { r.remove(); });
+    } else {
+      // Hide empty state, render top 2 thread preview rows
+      if (emptyEl) emptyEl.hidden = true;
+      Array.prototype.slice.call(listEl.querySelectorAll(".dm-ov-thread")).forEach(function (r) { r.remove(); });
+      threads.slice(0, 2).forEach(function (m) {
+        var idx = state.messages.indexOf(m);
+        listEl.insertAdjacentHTML("beforeend", buildOvThreadRow(m, idx));
+      });
+    }
+    // Toggle "Lihat semua →" link
+    var seeAll = document.querySelector(seeAllSel);
+    if (seeAll) seeAll.hidden = threads.length <= 2;
   };
-  body("dmOvBodyDm",  cDm,  "Belum ada DM",             "percakapan — klik untuk buka");
-  body("dmOvBodyBc",  cBc,  "Belum ada broadcast",      "broadcast — klik untuk buka");
-  body("dmOvBodyReq", cReq, "Belum ada permintaan",     "permintaan — klik untuk buka");
-  body("dmOvBodyArc", cArc, "Belum ada arsip",          "chat — klik untuk buka");
+  renderCard("dmOvListDm",  dmList,  "dmOvBodyDm",  '[data-dm-open="dm"].dm-ov-seeall');
+  renderCard("dmOvListBc",  bcList,  "dmOvBodyBc",  '[data-dm-open="broadcast"].dm-ov-seeall');
+  renderCard("dmOvListReq", reqList, "dmOvBodyReq", '[data-dm-open="requests"].dm-ov-seeall');
+  renderCard("dmOvListArc", arcList, "dmOvBodyArc", '[data-dm-open="archived"].dm-ov-seeall');
 }
+
+// Build single thread preview row buat overview card. Compact: avatar +
+// name (admin badge kalau perlu) + time + last msg preview.
+function buildOvThreadRow(m, idx) {
+  var init = escapeHtml(m.init || (m.name || "U").slice(0, 1).toUpperCase());
+  var name = escapeHtml(m.name || "User");
+  var time = m.ts && typeof chatRelTime === "function" ? chatRelTime(m.ts) : "";
+  var adminBadge = (m.isAdmin || m.isBroadcast) ? '<span class="dm-ov-badge-admin">Admin</span>' : "";
+  var lastMsg = m.history && m.history.length ? m.history[m.history.length - 1] : null;
+  var preview = lastMsg
+    ? ((lastMsg.from === "me" ? "Kamu: " : "") + (lastMsg.text || "[pesan]"))
+    : (m.preview || "Belum ada pesan");
+  var previewTrim = String(preview).slice(0, 60) + (String(preview).length > 60 ? "…" : "");
+  var unreadCls = m.unread ? "is-unread" : "";
+  return '<div class="dm-ov-thread ' + unreadCls + '" data-dm-thread-open="' + idx + '" tabindex="0" role="button">'
+    + '<div class="dm-ov-avatar">' + init + '</div>'
+    + '<div class="dm-ov-info">'
+      + '<div class="dm-ov-name-row">'
+        + '<span class="dm-ov-name">@' + name + adminBadge + '</span>'
+        + (time ? '<span class="dm-ov-time">' + escapeHtml(time) + '</span>' : '')
+      + '</div>'
+      + '<div class="dm-ov-preview">' + escapeHtml(previewTrim) + '</div>'
+    + '</div>'
+  + '</div>';
+}
+
+// Click thread row di overview → buka kategori + selek thread spesifik.
+document.addEventListener("click", function (e) {
+  var row = e.target.closest && e.target.closest("[data-dm-thread-open]");
+  if (!row) return;
+  e.preventDefault();
+  e.stopPropagation(); // jangan bubble ke card click (yg buka category)
+  var idx = parseInt(row.dataset.dmThreadOpen, 10);
+  if (isNaN(idx)) return;
+  if (typeof dmState !== "undefined") dmState.openIdx = idx;
+  // Tentukan kategori dari thread
+  var m = state.messages[idx];
+  var filter = "dm";
+  if (m) {
+    if (m.archived) filter = "archived";
+    else if (m.isAdmin || m.isBroadcast) filter = "broadcast";
+    else if (typeof dmIsRequest === "function" && dmIsRequest(m)) filter = "requests";
+  }
+  if (typeof _dmOpenCategory === "function") _dmOpenCategory(filter);
+});
+
+// Click "Lihat semua →" → buka kategori penuh
+document.addEventListener("click", function (e) {
+  var link = e.target.closest && e.target.closest("a.dm-ov-seeall");
+  if (!link) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var cat = link.dataset.dmOpen;
+  if (cat && typeof _dmOpenCategory === "function") _dmOpenCategory(cat);
+});
+
+// Click CTA action button (Broadcast preferensi, Permintaan privasi).
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest && e.target.closest("[data-dm-action]");
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation(); // jangan bubble ke card click
+  var action = btn.dataset.dmAction;
+  // Semua action navigate ke Settings, lalu coba scroll ke section spesifik
+  var settingsLink = document.querySelector('.nav-item[data-view="settings"]');
+  if (settingsLink) settingsLink.click();
+  // Scroll ke section yg relevan setelah view switch
+  setTimeout(function () {
+    if (action === "dm-privacy") {
+      var target = document.querySelector('input[data-pref="privacy.allowDM"]');
+      if (target) {
+        var card = target.closest(".card");
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.style.outline = "2px solid var(--primary)";
+          setTimeout(function () { card.style.outline = ""; }, 1500);
+        }
+      }
+    } else if (action === "notif-prefs") {
+      // Belum ada section khusus broadcast pref — scroll ke top settings.
+      var settingsView = document.querySelector('section.view[data-view="settings"]');
+      if (settingsView) {
+        settingsView.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      if (typeof toast === "function") {
+        toast("ℹ️ Preferensi notifikasi global ada di Settings → Notifikasi", "info");
+      }
+    }
+  }, 200);
+});
+
+// Global search wiring — query > 0 char hide overview cards, tampilkan
+// flat search results lintas kategori.
+(function wireDmOverviewSearch() {
+  var input = document.getElementById("dmOvSearch");
+  var clearBtn = document.getElementById("dmOvSearchClear");
+  var grid = document.getElementById("dmOvGrid");
+  var resultsWrap = document.getElementById("dmOvSearchResults");
+  var resultsList = document.getElementById("dmOvSearchList");
+  var resultsCount = document.getElementById("dmOvSearchCount");
+  if (!input || !grid || !resultsWrap || !resultsList) return;
+
+  function doSearch() {
+    var q = (input.value || "").trim().toLowerCase();
+    if (clearBtn) clearBtn.hidden = q.length === 0;
+    if (!q) {
+      // Empty query → show grid, hide results
+      grid.hidden = false;
+      resultsWrap.hidden = true;
+      return;
+    }
+    // Search across ALL messages (including archived) by name + preview
+    var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
+    var matches = all.filter(function (m) {
+      var name = String(m.name || "").toLowerCase();
+      var lastMsg = m.history && m.history.length ? m.history[m.history.length - 1] : null;
+      var preview = lastMsg ? String(lastMsg.text || "") : String(m.preview || "");
+      return name.indexOf(q) !== -1 || preview.toLowerCase().indexOf(q) !== -1;
+    });
+    matches.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    if (resultsCount) resultsCount.textContent = matches.length;
+    if (!matches.length) {
+      resultsList.innerHTML = '<div class="dm-ov-search-empty">Tidak ada pesan yang cocok dengan "<b>' + escapeHtml(q) + '</b>".</div>';
+    } else {
+      resultsList.innerHTML = matches.slice(0, 30).map(function (m) {
+        var idx = state.messages.indexOf(m);
+        return buildOvThreadRow(m, idx);
+      }).join("");
+    }
+    grid.hidden = true;
+    resultsWrap.hidden = false;
+  }
+
+  input.addEventListener("input", doSearch);
+  if (clearBtn) {
+    clearBtn.addEventListener("click", function () {
+      input.value = "";
+      doSearch();
+      input.focus();
+    });
+  }
+  // Esc → clear
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && input.value) {
+      input.value = "";
+      doSearch();
+    }
+  });
+})();
 
 // Buka kategori spesifik (dari kartu overview / tombol).
 function _dmOpenCategory(filter) {
