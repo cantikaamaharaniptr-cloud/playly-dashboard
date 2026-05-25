@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v537 (Admin moderation Critical fixes: orphan cleanup + ticket notif + creator fallback)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v538 (Admin moderation High fixes: bulk-delete await + suspend cloud-push + purge retry queue + tier expiry from payment)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -15,6 +15,33 @@ console.info("%c[playly] script.js v537 (Admin moderation Critical fixes: orphan
 // perlu dibersihin sekali. Idempotent — aman dipanggil tiap boot.
 (function purgeOrphanKeys() {
   try { localStorage.removeItem("playly-current-user"); } catch (_) {}
+})();
+
+// ----------------------- CLOUD PURGE QUEUE RETRY (v538, 2026-05-25) -----------------------
+// Boot-time retry untuk cloud removeKeys yg timeout di deleteUserAccount.
+// Audit moderation flow finding H3: 8s timeout race bisa winning sebelum
+// removeKeys finish → cloud row resurrect di next boot. Sekarang queue
+// keys di localStorage saat delete, retry IIFE ini scan + remove +
+// unqueue saat success. Non-blocking, silent fail aman.
+(function retryCloudPurgeQueue() {
+  try {
+    var q = JSON.parse(localStorage.getItem("playly-cloud-purge-queue") || "[]");
+    if (!Array.isArray(q) || !q.length) return;
+    // Tunggu cloud-sync ready (anon client tersedia)
+    var wait = 0;
+    var iv = setInterval(function () {
+      if (++wait > 30) { clearInterval(iv); return; } // max 15s wait
+      if (!window.cloudSync || !window.cloudSync.removeKeys) return;
+      clearInterval(iv);
+      // Cloud-sync ready — retry purge
+      window.cloudSync.removeKeys(q)
+        .then(function () {
+          try { localStorage.setItem("playly-cloud-purge-queue", "[]"); } catch {}
+          console.info("[purge-queue] retry success — " + q.length + " stale keys removed from cloud");
+        })
+        .catch(function (err) { console.warn("[purge-queue] retry failed:", err); });
+    }, 500);
+  } catch (err) { console.warn("[purge-queue] init exception:", err); }
 })();
 
 // ----------------------- PURGE TEST ACCOUNTS (2026-05-25) -----------------------
@@ -17489,11 +17516,14 @@ document.getElementById("plpmBtnFree")?.addEventListener("click", () => {
   _closePostLoginPlanPopup();
 });
 
-// Compute Premium expiration timestamp from plan
-function computePremiumExpiry(planKey) {
+// Compute Premium expiration timestamp from plan + optional start date.
+// v538 (2026-05-25): startTs param ditambah supaya expiry bisa di-hitung
+// dari payment date (bukan approval date) — fix audit moderation H4 yg
+// bilang admin late-approve = user dapat extended window unintended.
+function computePremiumExpiry(planKey, startTs) {
   const plan = PREMIUM_PLANS[planKey];
   if (!plan || plan.durationMs === null) return null; // lifetime
-  return Date.now() + plan.durationMs;
+  return (Number(startTs) || Date.now()) + plan.durationMs;
 }
 
 // Helper: cek apakah user premium masih aktif (tidak expired)
@@ -17575,10 +17605,18 @@ function setPremiumPaymentStatus(code, status, processedBy) {
         // hanya set kalau belum ada. Sebelumnya setiap call (admin approve
         // + user activate modal) overwrite dgn Date.now() baru → drift
         // hours/days dari aktual approval time, distort expiry math.
+        //
+        // v538 HIGH FIX 4 (2026-05-25): Audit moderation flow H4 — start
+        // date dari PAYMENT date (payment.paidAt / payment.ts), bukan
+        // Date.now() (approval time). Sebelumnya kalau admin baru approve
+        // 3 bulan setelah user bayar, user dapat extended window 3 bulan
+        // unintended. Sekarang start = payment timestamp → expiry math
+        // proper aligned dgn what user paid for.
         if (!acc.premiumStartedAt) {
-          acc.premiumStartedAt = Date.now();
+          const paymentStart = Number(payment.paidAt || payment.ts || payment.createdAt) || Date.now();
+          acc.premiumStartedAt = paymentStart;
           acc.premiumExpiresAt = (typeof computePremiumExpiry === "function")
-            ? computePremiumExpiry(planKey)
+            ? computePremiumExpiry(planKey, paymentStart)
             : null;
         }
         localStorage.setItem(accKey, JSON.stringify(acc));
@@ -25412,23 +25450,49 @@ function deleteUserAccount(username) {
       // 5. Cloud-side cleanup — AWAIT supaya tidak ada race dgn next boot sync
       try {
         if (window.cloudSync?.removeKeys) {
+          // v538 HIGH FIX 3 (2026-05-25): track keys + boot-time re-purge.
+          // Audit moderation flow finding H3: Promise.race 8s timeout WIN tapi
+          // removeKeys masih in-flight — next boot sync bisa resurrect stale
+          // rows kalau cloud delete finish setelah local re-pull. Sekarang
+          // queue keys ke localStorage "playly-cloud-purge-queue" → IIFE di
+          // boot top scan queue, retry removeKeys + verify lalu unqueue.
+          const keysToDelete = [
+            accountKey,
+            `playly-account-${username}`,
+            `playly-account-${email}`,
+            `playly-state-${username}`,
+            `playly-welcomed-${username}`,
+            `playly-welcome-${username}`,
+            `playly-onboarding-${username}`,
+            `playly-notif-${username}`,
+            `playly-prefs-${username}`,
+            `playly-prefs-${email}`,
+            `playly-2fa-${username}`,
+            `playly-2fa-${email}`,
+          ];
+          // Enqueue keys SEBELUM start delete — kalau timeout/error, queue
+          // tetap ada untuk boot retry.
+          try {
+            const q = JSON.parse(localStorage.getItem("playly-cloud-purge-queue") || "[]");
+            keysToDelete.forEach(k => { if (!q.includes(k)) q.push(k); });
+            localStorage.setItem("playly-cloud-purge-queue", JSON.stringify(q));
+          } catch {}
+          let removeOk = false;
           await Promise.race([
-            window.cloudSync.removeKeys([
-              accountKey,
-              `playly-account-${username}`,
-              `playly-account-${email}`,
-              `playly-state-${username}`,
-              `playly-welcomed-${username}`,
-              `playly-welcome-${username}`,
-              `playly-onboarding-${username}`,
-              `playly-notif-${username}`,
-              `playly-prefs-${username}`,
-              `playly-prefs-${email}`,
-              `playly-2fa-${username}`,
-              `playly-2fa-${email}`,
-            ]),
+            window.cloudSync.removeKeys(keysToDelete).then(() => { removeOk = true; }),
             new Promise(r => setTimeout(r, 8000)),
           ]);
+          // Kalau success dalam window → unqueue. Kalau timeout → biarkan
+          // queue, IIFE boot akan retry.
+          if (removeOk) {
+            try {
+              const q = JSON.parse(localStorage.getItem("playly-cloud-purge-queue") || "[]");
+              const filtered = q.filter(k => !keysToDelete.includes(k));
+              localStorage.setItem("playly-cloud-purge-queue", JSON.stringify(filtered));
+            } catch {}
+          } else {
+            console.warn(`[deleteUser] removeKeys timeout — ${keysToDelete.length} keys queued for boot retry`);
+          }
         }
       } catch (err) { console.warn("[deleteUser] cloud cleanup failed:", err); }
       pushAdminEvent("🗑️", `Akun <b>@${escapeHtml(username)}</b> (${escapeHtml(email)}) dihapus permanen`);
@@ -25471,6 +25535,11 @@ function toggleUserSuspend(username) {
           acc.suspendedBy = (typeof user === "object" && user?.username) ? user.username : "admin";
           acc.suspendedReason = reasonText;
           localStorage.setItem(accountKey, JSON.stringify(acc));
+          // v538 HIGH FIX 2 (2026-05-25): Explicit cloud-sync push supaya
+          // suspend langsung visible di device user (force logout). Sebelumnya
+          // mengandalkan background interval 4-15s → window jeda user masih
+          // bisa upload/messaging.
+          try { window.cloudSync?.syncSingleKey?.(accountKey); } catch (err) { console.warn("[suspend] cloud push failed:", err); }
           pushAdminEvent("⛔", `Suspended user <b>@${escapeHtml(username)}</b> — alasan: ${escapeHtml(reasonText)}`);
           toast(`⛔ User <b>@${escapeHtml(username)}</b> di-suspend`, "warning");
           renderAdminUsers();
@@ -25493,6 +25562,8 @@ function toggleUserSuspend(username) {
     acc.reactivatedAt = Date.now();
   }
   localStorage.setItem(accountKey, JSON.stringify(acc));
+  // v538 HIGH FIX 2 (2026-05-25): Cloud push juga di fallback + unsuspend path
+  try { window.cloudSync?.syncSingleKey?.(accountKey); } catch (err) { console.warn("[suspend] cloud push failed:", err); }
   pushAdminEvent(acc.suspended ? "⛔" : "✓", `${acc.suspended ? "Suspended" : "Reactivated"} user <b>@${escapeHtml(username)}</b>`);
   toast(acc.suspended ? `⛔ User <b>@${escapeHtml(username)}</b> di-suspend` : `✓ User <b>@${escapeHtml(username)}</b> diaktifkan`, acc.suspended ? "warning" : "success");
   renderAdminUsers();
@@ -27251,26 +27322,45 @@ function applyGvBulkAction(action) {
       title: `Hapus ${ids.length} video?`,
       desc: `<b>${ids.length}</b> video akan dihapus permanen dari platform. Aksi ini tidak bisa dibatalkan.`,
       btnText: "Hapus Semua", btnClass: "danger",
-      onConfirm: () => {
-        // C-2 H3: notify SEBELUM delete supaya creator info masih tersedia
-        ids.forEach(id => {
+      onConfirm: async () => {
+        // C-2 H3: notify SEBELUM delete supaya creator info masih tersedia.
+        // v538 HIGH FIX 1 (2026-05-25): await deleteAdminVideo sequentially.
+        // Audit moderation H1: fire-and-forget bikin blob cleanup race —
+        // admin sees "success" toast tapi IDB blob mungkin orphan kalau
+        // delete promise reject. Sekarang Promise.all + log failures.
+        const deletePromises = [];
+        for (const id of ids) {
           const v = videoById.get(id);
-          if (v && v.creator && typeof deliverNotification === "function") {
+          // v538: fallback creator → _owner (C3 pattern)
+          const target = v && (v.creator || v._owner);
+          if (v && target && typeof deliverNotification === "function") {
             try {
-              deliverNotification(v.creator, {
+              deliverNotification(target, {
                 type: "video-takedown",
                 text: `🗑️ Video kamu <b>"${escapeHtml(v.title || t("video.untitled"))}"</b> dihapus permanen oleh admin.`,
                 init: "🗑️", videoId: id, fromUsername: "admin",
               });
             } catch (err) { console.warn("[bulk] notif failed for", id, err); }
           }
-          // C-2 H3: per-video audit entry
-          if (v) pushAdminEvent("🗑️", `Force delete video <i>"${escapeHtml(v.title || "(no title)")}"</i> dari <b>@${escapeHtml(v.creator || v._owner || "?")}</b>`);
-          deleteAdminVideo(id);
-        });
-        pushAdminEvent("🗑️", `Bulk: ${ids.length} video deleted`);
+          if (v) pushAdminEvent("🗑️", `Force delete video <i>"${escapeHtml(v.title || t("video.untitled"))}"</i> dari <b>@${escapeHtml(target || "?")}</b>`);
+          // Collect promises supaya bisa Promise.all + count failures
+          deletePromises.push(
+            Promise.resolve(deleteAdminVideo(id)).catch(err => {
+              console.warn(`[bulk] deleteAdminVideo(${id}) failed:`, err);
+              return false;
+            })
+          );
+        }
+        const results = await Promise.all(deletePromises);
+        const failed = results.filter(r => r === false).length;
+        pushAdminEvent("🗑️", `Bulk: ${ids.length - failed}/${ids.length} video deleted${failed ? ` (${failed} failed)` : ""}`);
         adminVideoState.selected.clear();
-        toast(`🗑️ ${ids.length} video dihapus`, "error");
+        toast(
+          failed
+            ? `🗑️ ${ids.length - failed} dari ${ids.length} video dihapus (${failed} gagal — cek console)`
+            : `🗑️ ${ids.length} video dihapus`,
+          failed ? "warning" : "error"
+        );
         renderAdminVideos();
         renderAdminLiveFeed();
       }
