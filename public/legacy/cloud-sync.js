@@ -382,10 +382,29 @@
   // EGRESS OPTIMIZATION (2026-05-21): support delta fetch via `since` arg.
   // Tanpa since → full fetch (dipakai di boot). Dengan since → cuma rows
   // yg updated_at > since → drastis kurangi egress (90%+ saving).
+  //
+  // Phase B6a-4 prep (v544, 2026-05-25): Dispatch via /api/kv/list bridge
+  // kalau useKvBridge() aktif. Bridge pakai cookie auth → RLS owner-only
+  // for per-user rows + public access untuk platform rows. Fallback ke
+  // anon-key path kalau bridge 401 (no session) atau error → anon-key
+  // dapat platform rows saja (kv_anon_all masih aktif sampai B6a-4 cutover,
+  // setelahnya cuma platform via kv_anon_platform_read).
   async function fetchAllRows(opts) {
+    const since = opts && opts.since ? opts.since : null;
+    // Bridge attempt
+    if (useKvBridge()) {
+      const res = await fetchAllRowsViaBridge(since, false);
+      if (res.ok) return res.rows;
+      // 401 (anon) atau error → fallback anon
+      if (res.status !== 401) {
+        console.warn("[cloud] bridge list failed (status " + res.status + ") — fallback to anon. Reason:", res.reason);
+      }
+    }
+    return fetchAllRowsViaAnon(since);
+  }
+  async function fetchAllRowsViaAnon(since) {
     const sb = client();
     if (!sb) return [];
-    const since = opts && opts.since ? opts.since : null;
     let q = sb.from("kv").select("key,value,updated_at").like("key", `${PREFIX}%`);
     if (since) q = q.gt("updated_at", since);
     const { data, error } = await q;
@@ -395,11 +414,42 @@
     }
     return data || [];
   }
+  async function fetchAllRowsViaBridge(since, keysOnly) {
+    try {
+      const params = new URLSearchParams();
+      if (since) params.set("since", since);
+      if (keysOnly) params.set("keysonly", "1");
+      const resp = await fetch("/api/kv/list" + (params.toString() ? "?" + params : ""), {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      let data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (resp.ok && data && data.ok) {
+        return { ok: true, rows: data.rows || [], count: data.count || 0 };
+      }
+      return { ok: false, status: resp.status, reason: (data && data.error) || "http_" + resp.status };
+    } catch (err) {
+      return { ok: false, status: 0, reason: String(err) };
+    }
+  }
 
   // EGRESS OPT v2 (2026-05-22): fetch key list ONLY (tanpa value). Payload
   // ~30 byte/key vs KB-an per row kalau ikut value. Dipakai boot delta sync
   // untuk tau key apa yang ada di cloud tanpa download semua value.
+  //
+  // Phase B6a-4 prep (v544): Dispatch via bridge kalau useKvBridge() aktif.
   async function fetchAllKeys() {
+    if (useKvBridge()) {
+      const res = await fetchAllRowsViaBridge(null, true);
+      if (res.ok) return (res.rows || []).map(r => r.key);
+      if (res.status !== 401) {
+        console.warn("[cloud] bridge keys list failed (status " + res.status + ") — fallback to anon.");
+      }
+    }
+    return fetchAllKeysViaAnon();
+  }
+  async function fetchAllKeysViaAnon() {
     const sb = client();
     if (!sb) return [];
     const { data, error } = await sb

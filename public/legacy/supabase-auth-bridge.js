@@ -23,6 +23,7 @@
   "use strict";
 
   var ENDPOINT = "/api/auth/bridge";
+  var VERIFY_ENDPOINT = "/api/auth/verify";
   var STATE_ENDPOINT = "/api/state/sync";
   var PROFILE_ENDPOINT = "/api/profile/me";
 
@@ -38,6 +39,46 @@
 
   function syncSignin(email, password, profile) {
     return postBridge(email, password, profile, "signin");
+  }
+
+  // verifyStrict(email, password) — B6b P1 telemetry. STRICT signin check
+  // ke Supabase Auth (no signup fallback, no cookie set). Dipanggil paralel
+  // dgn local SHA-256 verify untuk ukur agreement rate sebelum P2 cutover.
+  // Returns: { ok, verified, reason?, networkOk } — `networkOk` false kalau
+  // endpoint unreachable / 5xx (treat sbg "bridge down", bukan "rejected").
+  async function verifyStrict(email, password) {
+    if (!email || !password) {
+      return { ok: false, verified: false, reason: "missing_credentials", networkOk: true };
+    }
+    try {
+      var resp = await fetch(VERIFY_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ email: email, password: password }),
+      });
+      var data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (resp.ok && data && data.ok) {
+        return {
+          ok: true,
+          verified: !!data.verified,
+          reason: data.reason || null,
+          userId: data.userId || null,
+          networkOk: true,
+        };
+      }
+      // 503 / 5xx → infra issue, bukan kredensial salah
+      var networkOk = resp.status < 500 && resp.status !== 503;
+      return {
+        ok: false,
+        verified: false,
+        reason: (data && data.error) || "http_" + resp.status,
+        networkOk: networkOk,
+      };
+    } catch (err) {
+      return { ok: false, verified: false, reason: String(err), networkOk: false };
+    }
   }
 
   function syncSignup(email, password, profile) {
@@ -229,6 +270,7 @@
     syncSignin: syncSignin,
     syncSignup: syncSignup,
     syncSignout: syncSignout,
+    verifyStrict: verifyStrict,
     syncState: syncState,
     pullState: pullState,
     pullProfile: pullProfile,

@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v543 (Purge admin.playly2 — bukan real admin; ADMIN_EMAILS_PROTECTED jadi 1 entry)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v545 (B6b P1 + B6a-4 step 1: parallel-verify telemetry /api/auth/verify, kv read bridge /api/kv/list)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -20156,6 +20156,88 @@ async function verifyPassword(plain, stored) {
 // (sebelum seedOfficialAdmin) supaya tidak kena temporal-dead-zone saat seed
 // jalan di script load.
 
+// ----------------------- B6b P1 PARALLEL-VERIFY TELEMETRY (2026-05-25 v545) ---
+// Tujuan: ukur seberapa sering Supabase Auth setuju dengan local SHA-256
+// verify SEBELUM kita cutover (P2: bridge-primary, P3: drop SHA-256).
+//
+// Dipanggil setelah verifyPassword() di login handler — pass apakah local
+// accept atau reject. Background only, zero behavior change.
+//
+// Hasil di-aggregate di localStorage key `playly-auth-verify-stats` —
+// counter per outcome. View pakai window.playlyAuthVerifyStats() di console.
+//
+// Outcomes:
+//   agree       — local accept + bridge verified (ideal)
+//   bridge_no   — local accept + bridge rejected (DANGER: local hash drift?)
+//   local_no    — local reject + bridge verified (DANGER: lazy migrate gagal?)
+//   both_no     — local reject + bridge rejected (normal wrong-password)
+//   unreachable — bridge network error / 503 (no decision)
+//   skipped     — supabaseAuthBridge.verifyStrict belum tersedia
+const AUTH_VERIFY_STATS_KEY = "playly-auth-verify-stats";
+
+function recordAuthVerifyTelemetry(email, password, localOk) {
+  const bridge = window.supabaseAuthBridge;
+  if (!bridge || typeof bridge.verifyStrict !== "function") {
+    bumpAuthVerifyStat("skipped");
+    return;
+  }
+  // Fire-and-forget. Hasil di-log ke console + bump stat counter.
+  bridge.verifyStrict(email, password).then((res) => {
+    if (!res) return bumpAuthVerifyStat("skipped");
+    if (!res.networkOk) {
+      console.warn("[auth-telemetry] bridge unreachable —", res.reason);
+      return bumpAuthVerifyStat("unreachable");
+    }
+    const bridgeOk = !!res.verified;
+    let outcome;
+    if (localOk && bridgeOk) outcome = "agree";
+    else if (localOk && !bridgeOk) outcome = "bridge_no";
+    else if (!localOk && bridgeOk) outcome = "local_no";
+    else outcome = "both_no";
+
+    // Suara hanya untuk kondisi mencurigakan (mismatch) atau wrong-password.
+    if (outcome === "bridge_no" || outcome === "local_no") {
+      console.warn(
+        "[auth-telemetry] MISMATCH:",
+        outcome,
+        "local=" + localOk,
+        "bridge=" + bridgeOk,
+        "reason=" + (res.reason || "ok"),
+      );
+    } else {
+      console.log("[auth-telemetry]", outcome, "(reason=" + (res.reason || "ok") + ")");
+    }
+    bumpAuthVerifyStat(outcome);
+  }).catch((err) => {
+    console.warn("[auth-telemetry] exception:", err);
+    bumpAuthVerifyStat("unreachable");
+  });
+}
+
+function bumpAuthVerifyStat(outcome) {
+  try {
+    const raw = localStorage.getItem(AUTH_VERIFY_STATS_KEY);
+    const stats = raw ? JSON.parse(raw) : {};
+    stats[outcome] = (stats[outcome] || 0) + 1;
+    stats._lastAt = Date.now();
+    stats._lastOutcome = outcome;
+    localStorage.setItem(AUTH_VERIFY_STATS_KEY, JSON.stringify(stats));
+  } catch (_) { /* localStorage full / unavailable — ignore */ }
+}
+
+// Helper buat inspect dari devtools: window.playlyAuthVerifyStats()
+window.playlyAuthVerifyStats = function () {
+  try {
+    const raw = localStorage.getItem(AUTH_VERIFY_STATS_KEY);
+    const stats = raw ? JSON.parse(raw) : {};
+    console.table(stats);
+    return stats;
+  } catch (e) {
+    console.warn(e);
+    return null;
+  }
+};
+
 // ----------------------- LOGIN RATE LIMITING -----------------------
 // Tracking per identifier (email/username, di-normalize lowercase) di localStorage.
 // Setelah MAX_ATTEMPTS gagal berturut, akun di-lockout selama LOCKOUT_MS.
@@ -20368,8 +20450,16 @@ $("#signinForm").addEventListener("submit", async e => {
   const passwordOk = await verifyPassword(password, existing.password);
   console.log("[Auth] password check", passwordOk);
   if (!passwordOk) {
+    // B6b P1 telemetry (2026-05-25 v545): kalau local reject, panggil bridge
+    // verify juga untuk catat false-negative case (local salah / hash drift).
+    // Fire-and-forget, jangan block onFail.
+    try { recordAuthVerifyTelemetry(email, password, /*localOk=*/false); } catch (_) {}
     return onFail("password", "Password salah", "❌ Password salah");
   }
+
+  // B6b P1 telemetry: local pass → cek apakah bridge setuju. Background only,
+  // zero behavior change. Tujuan: ukur agreement rate sebelum P2 cutover.
+  try { recordAuthVerifyTelemetry(email, password, /*localOk=*/true); } catch (_) {}
 
   // Bug #1 fix (2026-05-20): cek suspended SETELAH password OK. tryAutoBoot
   // sudah cek ini, tapi handler login utama bypass — celah keamanan: user
