@@ -13,6 +13,61 @@
   try { localStorage.removeItem("playly-current-user"); } catch (_) {}
 })();
 
+// ----------------------- PURGE TEST ACCOUNTS (2026-05-25) -----------------------
+// User lapor akun test "user1" muncul di halaman Pencarian padahal Supabase
+// auth.users tidak punya entry ini. Akun-akun ini sisa-sisa testing yg di
+// localStorage + ke-sync ke kv (sebelum B5 di-deploy). Cleanup IIFE ini
+// hapus dari localStorage (cloud-sync hook akan otomatis push DELETE ke kv
+// untuk key prefix yg masih ke-sync). Idempotent — flag mencegah re-run.
+(function purgeTestAccounts() {
+  var FLAG = "playly-bf-purge-test-2026-05-25";
+  try {
+    if (localStorage.getItem(FLAG) === "1") return;
+    var testEmails = [
+      "user1@gmail.com",
+      "userbaru1@gmail.com",
+      "usernew1@gmail.com",
+    ];
+    var testUsernames = ["user1", "userbaru1", "usernew1"];
+    var removed = 0;
+    // Hapus akun + state + prefs
+    testEmails.forEach(function (e) {
+      var k = "playly-account-" + e;
+      if (localStorage.getItem(k) !== null) { localStorage.removeItem(k); removed++; }
+      var p = "playly-prefs-" + e;
+      if (localStorage.getItem(p) !== null) { localStorage.removeItem(p); removed++; }
+    });
+    testUsernames.forEach(function (u) {
+      var s = "playly-state-" + u;
+      if (localStorage.getItem(s) !== null) { localStorage.removeItem(s); removed++; }
+      var w = "playly-welcomed-" + u;
+      if (localStorage.getItem(w) !== null) { localStorage.removeItem(w); removed++; }
+      var f = "playly-2fa-" + u;
+      if (localStorage.getItem(f) !== null) { localStorage.removeItem(f); removed++; }
+    });
+    // Bersihkan playly-device-accounts (array email yg pernah login di device)
+    try {
+      var raw = localStorage.getItem("playly-device-accounts");
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          var filtered = arr.filter(function (e) {
+            return testEmails.indexOf(String(e).toLowerCase()) === -1;
+          });
+          if (filtered.length !== arr.length) {
+            localStorage.setItem("playly-device-accounts", JSON.stringify(filtered));
+            removed++;
+          }
+        }
+      }
+    } catch (_) {}
+    localStorage.setItem(FLAG, "1");
+    if (removed) console.info("[purge-test] removed " + removed + " test account keys (user1/userbaru1/usernew1)");
+  } catch (err) {
+    console.warn("[purge-test] exception:", err);
+  }
+})();
+
 // ----------------------- AUTO-PUBLISH BACKFILL (2026-05-25) -----------------------
 // Sebelum 2026-05-25, video upload default adminStatus "pending" → harus
 // admin approve dulu. User bingung kenapa video tidak muncul di "Video Saya".
@@ -30085,268 +30140,18 @@ function hqsPingLive() {
   void dot.offsetWidth; // restart animasi
   dot.classList.add("ping");
 }
-// Session duration ticker — tampilkan elapsed + countdown idle di hero pill.
-// v479: idle auto-logout setelah SESSION_IDLE_LIMIT_MS. Aktivitas user
-// (mouse, keyboard, scroll, touch) reset countdown. Pill berubah warna
-// kuning <5 menit, merah + pulse <1 menit. Toast saat auto-logout.
-const SESSION_IDLE_LIMIT_MS = 30 * 60 * 1000; // 30 menit
-let _lastActivityTs = Date.now();
-const _activityEvents = ["mousedown", "keydown", "touchstart", "scroll", "mousemove"];
-function _markActivity() {
-  _lastActivityTs = Date.now();
-}
-_activityEvents.forEach(ev => window.addEventListener(ev, _markActivity, { passive: true, capture: true }));
-
-// Test hook (Playwright/manual): set window.__sessionTestRemainingMs untuk
-// memaksa countdown ke nilai tertentu — handy buat verifikasi warning state.
-function updateHeroSessionDuration() {
-  const el = document.getElementById("heroSessionDuration");
-  const pill = document.getElementById("heroSessionPill");
-  if (!el) return;
-  let start;
-  try { start = parseInt(sessionStorage.getItem("playlySessionStart") || "0", 10); } catch (e) { start = 0; }
-  if (!start) {
-    start = Date.now();
-    try { sessionStorage.setItem("playlySessionStart", String(start)); } catch (e) {}
-  }
-  const sec = Math.max(0, Math.floor((Date.now() - start) / 1000));
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const pad = function (n) { return n < 10 ? "0" + n : "" + n; };
-  const elapsedStr = (h > 0 ? (pad(h) + ":" + pad(m) + ":" + pad(s)) : (pad(m) + ":" + pad(s)));
-
-  // Hitung sisa countdown idle. Override via test hook kalau ada.
-  let remainingMs = SESSION_IDLE_LIMIT_MS - (Date.now() - _lastActivityTs);
-  if (typeof window.__sessionTestRemainingMs === "number") {
-    remainingMs = window.__sessionTestRemainingMs;
-  }
-  const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
-  const rm = Math.floor(remainingSec / 60);
-  const rs = remainingSec % 60;
-  const totalMin = Math.round(SESSION_IDLE_LIMIT_MS / 60000);
-
-  // Audit 2026-05-25 (req user): pill compact — cuma "Sesi" + sisa idle
-  // ringkas. Detail lengkap (elapsed + idle + max) di popup yang muncul
-  // saat user klik pill. Sebelumnya "Sesi 34:07 / idle 29:59 / 30:00"
-  // terasa terlalu ramai di chrome permanent.
-  let compact;
-  if (remainingMs <= 60 * 1000) {
-    // <1 menit → tampilkan detik supaya urgent ("Sesi · 45d")
-    compact = "Sesi · " + Math.max(0, Math.ceil(remainingMs / 1000)) + "d";
-  } else {
-    // Tampilkan menit saja ("Sesi · 28m")
-    compact = "Sesi · " + Math.max(1, Math.ceil(remainingMs / 60000)) + "m";
-  }
-  el.textContent = compact;
-
-  // Update popup kalau sedang terbuka — supaya detail real-time.
-  if (typeof updateSessionPopupIfOpen === "function") {
-    try {
-      updateSessionPopupIfOpen({
-        elapsedStr: elapsedStr,
-        remainingStr: pad(rm) + ":" + pad(rs),
-        remainingMs: remainingMs,
-        totalMinStr: pad(totalMin) + ":00",
-      });
-    } catch (_) {}
-  }
-
-  // Warning classes pada pill
-  if (pill) {
-    pill.classList.remove("session-warn", "session-danger");
-    if (remainingMs <= 60 * 1000) {
-      pill.classList.add("session-danger");
-    } else if (remainingMs <= 5 * 60 * 1000) {
-      pill.classList.add("session-warn");
-    }
-  }
-
-  // E audit (2026-05-25): banner persisten dgn tombol "Lanjutkan sesi"
-  // di 60 detik terakhir. Pill warna saja sering missed user → tambahin
-  // CTA eksplisit di tengah-bawah viewport supaya jelas + actionable.
-  // Hilang otomatis kalau user kembali aktif (remainingMs >60s) atau
-  // klik tombol (reset timer via _markActivity).
-  try { maybeShowSessionExtendBanner(remainingMs); } catch (_) {}
-
-  // Auto-logout saat countdown habis. Guard supaya tidak double-fire.
-  if (remainingMs <= 0 && !window.__sessionAutoLoggedOut && typeof user !== "undefined" && user) {
-    window.__sessionAutoLoggedOut = true;
-    try {
-      if (typeof toast === "function") {
-        toast("⏱️ Sesi berakhir — silakan login kembali", "warning");
-      }
-    } catch {}
-    setTimeout(() => {
-      try {
-        if (typeof doLogout === "function") doLogout();
-        // Reset guard supaya next login bisa auto-logout lagi
-        setTimeout(() => { window.__sessionAutoLoggedOut = false; }, 2000);
-      } catch {}
-    }, 600);
-  }
-}
-setInterval(updateHeroSessionDuration, 1000);
-updateHeroSessionDuration();
-
-// Audit 2026-05-25 (req user): session detail popup — muncul saat user klik
-// pill compact. Tampilin elapsed + sisa idle + max idle + tombol "Lanjutkan
-// sesi". Real-time refresh via updateSessionPopupIfOpen() yang dipanggil
-// tiap detik dari updateHeroSessionDuration.
-function openSessionDetailPopup() {
-  const ID = "sessionDetailPopup";
-  let pop = document.getElementById(ID);
-  if (pop) {
-    // Sudah open → close (toggle behavior)
-    pop.remove();
-    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
-    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
-    return;
-  }
-  pop = document.createElement("div");
-  pop.id = ID;
-  pop.className = "session-detail-popup";
-  pop.setAttribute("role", "dialog");
-  pop.setAttribute("aria-label", "Detail sesi");
-  pop.innerHTML =
-    '<div class="sdp-head">' +
-      '<svg class="sdp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-      '<span class="sdp-title">Detail sesi</span>' +
-      '<button type="button" class="sdp-close" aria-label="Tutup">✕</button>' +
-    '</div>' +
-    '<div class="sdp-rows">' +
-      '<div class="sdp-row"><span class="sdp-label">Berjalan</span><b id="sdpElapsed">—</b></div>' +
-      '<div class="sdp-row sdp-row-highlight"><span class="sdp-label">Sisa idle</span><b id="sdpRemaining">—</b></div>' +
-      '<div class="sdp-row"><span class="sdp-label">Batas idle</span><b id="sdpTotal">—</b></div>' +
-    '</div>' +
-    '<p class="sdp-hint">Sesi otomatis berakhir saat idle melebihi batas. Aktivitas (klik, ketik, scroll) reset sisa idle.</p>' +
-    '<button type="button" class="sdp-extend">Lanjutkan sesi sekarang</button>';
-
-  // Anchor di bawah pill — gunakan getBoundingClientRect supaya posisi akurat.
-  const pill = document.getElementById("heroSessionPill");
-  if (pill) {
-    const rect = pill.getBoundingClientRect();
-    pop.style.position = "fixed";
-    pop.style.top = (rect.bottom + 8) + "px";
-    pop.style.left = Math.max(8, rect.left) + "px";
-  }
-  document.body.appendChild(pop);
-
-  // Initial fill — pakai data terakhir.
-  try {
-    updateHeroSessionDuration();
-  } catch (_) {}
-
-  // Wire close + extend buttons
-  pop.querySelector(".sdp-close")?.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    pop.remove();
-    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
-    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
-  });
-  pop.querySelector(".sdp-extend")?.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof _markActivity === "function") _markActivity();
-    if (typeof toast === "function") toast("⏱️ Sesi diperpanjang", "success");
-    pop.remove();
-    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
-    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
-  });
-
-  // Click di luar → close (capture phase supaya tidak miss event)
-  setTimeout(() => {
-    document.addEventListener("click", _sessionPopupOutsideHandler, true);
-    document.addEventListener("keydown", _sessionPopupEscHandler, true);
-  }, 0);
-}
-function _sessionPopupOutsideHandler(e) {
-  const pop = document.getElementById("sessionDetailPopup");
-  if (!pop) return;
-  if (pop.contains(e.target)) return;
-  // Klik pada pill itu sendiri → biar toggle handler yang urus
-  if (e.target.closest && e.target.closest("#heroSessionPill")) return;
-  pop.remove();
-  document.removeEventListener("click", _sessionPopupOutsideHandler, true);
-  document.removeEventListener("keydown", _sessionPopupEscHandler, true);
-}
-function _sessionPopupEscHandler(e) {
-  if (e.key !== "Escape") return;
-  const pop = document.getElementById("sessionDetailPopup");
-  if (!pop) return;
-  pop.remove();
-  document.removeEventListener("click", _sessionPopupOutsideHandler, true);
-  document.removeEventListener("keydown", _sessionPopupEscHandler, true);
-}
-function updateSessionPopupIfOpen(data) {
-  const pop = document.getElementById("sessionDetailPopup");
-  if (!pop) return;
-  const setText = (id, val) => {
-    const el = pop.querySelector("#" + id);
-    if (el) el.textContent = val;
-  };
-  setText("sdpElapsed", data.elapsedStr);
-  setText("sdpRemaining", data.remainingStr);
-  setText("sdpTotal", data.totalMinStr);
-  // Highlight color logic — sisa idle <=60s = danger merah, <=300s = warn
-  const row = pop.querySelector(".sdp-row-highlight");
-  if (row) {
-    row.classList.remove("sdp-warn", "sdp-danger");
-    if (data.remainingMs <= 60 * 1000) row.classList.add("sdp-danger");
-    else if (data.remainingMs <= 5 * 60 * 1000) row.classList.add("sdp-warn");
-  }
-}
-// Wire pill click → toggle popup
-document.addEventListener("click", function (e) {
-  const pill = e.target.closest && e.target.closest("#heroSessionPill");
-  if (!pill) return;
-  e.preventDefault();
-  e.stopPropagation();
-  openSessionDetailPopup();
-});
-
-// E audit (2026-05-25): session extend banner — muncul di 60 detik terakhir,
-// hilang otomatis di luar window itu atau saat user klik "Lanjutkan".
-function maybeShowSessionExtendBanner(remainingMs) {
-  const ID = "sessionExtendBanner";
-  let banner = document.getElementById(ID);
-  // Di luar threshold (>60s atau sudah 0/negatif) → bersihkan.
-  if (remainingMs > 60 * 1000 || remainingMs <= 0) {
-    if (banner) banner.remove();
-    return;
-  }
-  // User belum login → tidak relevan (idle timer cuma jalan setelah auth).
-  if (typeof user === "undefined" || !user) {
-    if (banner) banner.remove();
-    return;
-  }
-  if (!banner) {
-    banner = document.createElement("div");
-    banner.id = ID;
-    banner.className = "session-extend-banner";
-    banner.setAttribute("role", "alert");
-    banner.setAttribute("aria-live", "assertive");
-    banner.innerHTML =
-      '<span class="seb-icon" aria-hidden="true">⏱️</span>' +
-      '<span class="seb-text">Sesi habis dalam <b id="sebSecs">--</b> detik</span>' +
-      '<button type="button" id="sebExtend" class="seb-btn">Lanjutkan sesi</button>';
-    document.body.appendChild(banner);
-    const btn = banner.querySelector("#sebExtend");
-    if (btn) {
-      btn.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        _markActivity();
-        banner.remove();
-      });
-    }
-  }
-  const secEl = banner.querySelector("#sebSecs");
-  if (secEl) {
-    secEl.textContent = Math.max(0, Math.ceil(remainingMs / 1000));
-  }
-}
+// Session duration ticker, idle auto-logout, session detail popup, dan
+// extend banner DIHAPUS per req user 2026-05-25. Fitur ini sebelumnya:
+//   - Hero pill counter "Sesi · 28m" + popup detail (klik buka)
+//   - Banner "Lanjutkan sesi" di 60 detik terakhir
+//   - Auto-logout setelah 30 menit idle
+// Sekarang sesi persist sampai user manual logout atau browser session
+// berakhir. Defense session timeout dipindah jadi tanggung jawab server
+// (Supabase Auth cookie TTL — default 1 jam, refresh otomatis dgn ssr).
+//
+// Test hook __sessionTestRemainingMs dan helper _markActivity juga dihapus.
+// Kalau perlu re-aktifkan: git log -- public/legacy/script.js, cari commit
+// yg hapus updateHeroSessionDuration / maybeShowSessionExtendBanner.
 setInterval(() => {
   const homeView = document.querySelector('section.view[data-view="home"]');
   if (document.hidden || !homeView || !homeView.classList.contains("active")) return;
