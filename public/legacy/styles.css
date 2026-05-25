@@ -65930,3 +65930,194 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-back-btn.auth-back-btn-p
   background: rgba(106, 31, 41, .12) !important;
   border-color: rgba(106, 31, 41, .30) !important;
 }
+
+/* === Session extend banner (E audit, 2026-05-25) ===
+   Muncul di bottom-center saat sisa idle <=60 detik. Persisten, non-blocking
+   (user bisa scroll/klik di belakangnya). Tombol "Lanjutkan sesi" reset
+   timer + hide banner. Subtle pulse + warna primary supaya menarik mata
+   tanpa terasa intrusif. Works di user + admin theme. */
+.session-extend-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  background: var(--bg-3, #1a0e10);
+  color: var(--text-1, #f0e6d8);
+  border: 1px solid var(--primary, #6a1f29);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .04);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  animation: sebSlideUp .3s ease-out, sebPulse 2s ease-in-out infinite 0.5s;
+  max-width: calc(100vw - 32px);
+}
+.session-extend-banner .seb-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.session-extend-banner .seb-text {
+  color: var(--text-1, #f0e6d8);
+}
+.session-extend-banner .seb-text b {
+  color: var(--primary, #d04757);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.session-extend-banner .seb-btn {
+  background: var(--primary, #6a1f29);
+  color: #fff;
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+  white-space: nowrap;
+}
+.session-extend-banner .seb-btn:hover {
+  background: var(--primary-2, #8a2a36);
+  transform: translateY(-1px);
+}
+.session-extend-banner .seb-btn:active {
+  transform: translateY(0);
+}
+@keyframes sebSlideUp {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes sebPulse {
+  0%, 100% { box-shadow: 0 10px 32px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .04); }
+  50%      { box-shadow: 0 10px 32px rgba(0, 0, 0, .45), 0 0 0 3px rgba(208, 71, 87, .25); }
+}
+/* Reduced motion → skip animation tapi tetap muncul */
+@media (prefers-reduced-motion: reduce) {
+  .session-extend-banner {
+    animation: none;
+  }
+}
+/* Admin theme — banner pakai chrome/slate aksen instead of wine.
+   NO pulse / FX (per admin flat-no-fx policy) — slide-in saja, no infinite anim. */
+body[data-role="admin"] .session-extend-banner {
+  background: #1e2733;
+  border-color: #475569;
+  color: #e2e8f0;
+  animation: sebSlideUp .3s ease-out;
+}
+body[data-role="admin"] .session-extend-banner .seb-text b {
+  color: #f59e0b;
+}
+body[data-role="admin"] .session-extend-banner .seb-btn {
+  background: #475569;
+}
+body[data-role="admin"] .session-extend-banner .seb-btn:hover {
+  background: #64748b;
+}
+
+/* === Notif panel empty-state rich (H audit, 2026-05-25) ===
+   Versi lengkap dengan tips konkret + CTA, replace plain "No notifications".
+   Tetap fit di panel notif (~360px width). */
+.notif-empty-rich {
+  text-align: center;
+  padding: 32px 20px 28px;
+  color: var(--muted);
+}
+.notif-empty-rich .notif-empty-ico {
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+}
+.notif-empty-rich .notif-empty-ico svg {
+  width: 100%;
+  height: 100%;
+}
+.notif-empty-rich h4 {
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 8px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.notif-empty-rich > p {
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+.notif-empty-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notif-empty-tips li {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-2, var(--text));
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, .03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+.notif-empty-tips li b {
+  color: var(--text);
+  font-weight: 600;
+}
+.notif-empty-cta {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+/* Light mode tweaks — backdrop yg lebih lembut */
+body[data-theme="light"]:not([data-role="admin"]) .notif-empty-tips li {
+  background: rgba(106, 31, 41, .04);
+  border-color: rgba(106, 31, 41, .10);
+}
+
+/* Home recent activity empty-state CTA button spacing */
+.hra-empty .hra-empty-cta {
+  margin-top: 10px;
+}
+
+/* === Top Performing empty-state rich (F audit, 2026-05-25) ===
+   Sebelumnya card hidden sama sekali → halaman Beranda terasa kosong.
+   Sekarang tampil dgn motivational copy + CTA upload langsung. */
+.top-perf-empty-rich {
+  grid-column: 1 / -1;          /* span semua kolom (Views/Likes/Watch) */
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--muted);
+}
+.top-perf-empty-rich .tpe-icon {
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 8px;
+  opacity: .7;
+}
+.top-perf-empty-rich h4 {
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 6px 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.top-perf-empty-rich > p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 auto 16px;
+  max-width: 380px;
+}
+.top-perf-empty-rich .tpe-cta {
+  /* inherit .btn .primary .sm */
+}

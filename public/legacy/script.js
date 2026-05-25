@@ -30129,6 +30129,13 @@ function updateHeroSessionDuration() {
     }
   }
 
+  // E audit (2026-05-25): banner persisten dgn tombol "Lanjutkan sesi"
+  // di 60 detik terakhir. Pill warna saja sering missed user → tambahin
+  // CTA eksplisit di tengah-bawah viewport supaya jelas + actionable.
+  // Hilang otomatis kalau user kembali aktif (remainingMs >60s) atau
+  // klik tombol (reset timer via _markActivity).
+  try { maybeShowSessionExtendBanner(remainingMs); } catch (_) {}
+
   // Auto-logout saat countdown habis. Guard supaya tidak double-fire.
   if (remainingMs <= 0 && !window.__sessionAutoLoggedOut && typeof user !== "undefined" && user) {
     window.__sessionAutoLoggedOut = true;
@@ -30148,6 +30155,48 @@ function updateHeroSessionDuration() {
 }
 setInterval(updateHeroSessionDuration, 1000);
 updateHeroSessionDuration();
+
+// E audit (2026-05-25): session extend banner — muncul di 60 detik terakhir,
+// hilang otomatis di luar window itu atau saat user klik "Lanjutkan".
+function maybeShowSessionExtendBanner(remainingMs) {
+  const ID = "sessionExtendBanner";
+  let banner = document.getElementById(ID);
+  // Di luar threshold (>60s atau sudah 0/negatif) → bersihkan.
+  if (remainingMs > 60 * 1000 || remainingMs <= 0) {
+    if (banner) banner.remove();
+    return;
+  }
+  // User belum login → tidak relevan (idle timer cuma jalan setelah auth).
+  if (typeof user === "undefined" || !user) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = ID;
+    banner.className = "session-extend-banner";
+    banner.setAttribute("role", "alert");
+    banner.setAttribute("aria-live", "assertive");
+    banner.innerHTML =
+      '<span class="seb-icon" aria-hidden="true">⏱️</span>' +
+      '<span class="seb-text">Sesi habis dalam <b id="sebSecs">--</b> detik</span>' +
+      '<button type="button" id="sebExtend" class="seb-btn">Lanjutkan sesi</button>';
+    document.body.appendChild(banner);
+    const btn = banner.querySelector("#sebExtend");
+    if (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        _markActivity();
+        banner.remove();
+      });
+    }
+  }
+  const secEl = banner.querySelector("#sebSecs");
+  if (secEl) {
+    secEl.textContent = Math.max(0, Math.ceil(remainingMs / 1000));
+  }
+}
 setInterval(() => {
   const homeView = document.querySelector('section.view[data-view="home"]');
   if (document.hidden || !homeView || !homeView.classList.contains("active")) return;
@@ -30909,11 +30958,18 @@ function renderHomeNotifLatest() {
   const top = notifs.slice(0, 5);
 
   if (!top.length) {
+    // H audit (2026-05-25): paralel dengan empty state panel notif.
+    // Copy lebih actionable + ada CTA ke discover.
     wrap.innerHTML = `
       <div class="hra-empty">
         <div class="hra-empty-icon">${NI_BELL}</div>
-        <p>No notifications yet — interactions on your content will appear here.</p>
+        <p>Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.</p>
+        <button type="button" class="btn primary sm hra-empty-cta" data-jump-view="discover">Jelajahi kreator</button>
       </div>`;
+    wrap.querySelector("[data-jump-view]")?.addEventListener("click", () => {
+      const link = document.querySelector('.nav-item[data-view="discover"]');
+      if (link) link.click();
+    });
     return;
   }
 
@@ -33697,7 +33753,25 @@ function renderTopPerforming() {
   const colWatch = $("#topPerformWatch");
   if (!card || !colViews || !colLikes || !colWatch) return;
   if (!state.myVideos.length) {
-    card.style.display = "none";
+    // F audit (2026-05-25): replace "card hidden" dgn empty-state CTA.
+    // Sebelumnya hilang sama sekali → halaman Beranda terasa kosong + user
+    // tidak tahu section ini ada. Sekarang tampil dgn pesan motivasional +
+    // tombol langsung ke upload flow.
+    card.style.display = "";
+    const empty = `<div class="top-perf-empty-rich">
+      <div class="tpe-icon">📊</div>
+      <h4>Belum ada data performa</h4>
+      <p>Upload video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.</p>
+      <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">Upload video pertama</button>
+    </div>`;
+    // Ke-3 kolom share empty state — supaya tidak triple-render
+    colViews.innerHTML = empty;
+    colLikes.innerHTML = "";
+    colWatch.innerHTML = "";
+    card.querySelector("[data-jump-view]")?.addEventListener("click", () => {
+      const link = document.querySelector('.nav-item[data-view="upload"]');
+      if (link) link.click();
+    });
     return;
   }
   card.style.display = "";
@@ -33739,7 +33813,9 @@ function renderTopPerforming() {
   const topLikes = [...enriched].sort((a, b) => b._likes - a._likes).slice(0, 5);
   const topWatch = [...enriched].sort((a, b) => b._watch - a._watch).slice(0, 5);
 
-  const empty = `<div class="top-perf-empty">Belum ada data.</div>`;
+  // F audit (2026-05-25): kalau user punya video tapi semua angka 0,
+  // kasih konteks bahwa data akan muncul saat ada interaksi.
+  const empty = `<div class="top-perf-empty">Data akan muncul saat video kamu mulai mendapat tontonan.</div>`;
   colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
     ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
   colLikes.innerHTML = topLikes.length && topLikes.some(v => v._likes > 0)
@@ -43766,11 +43842,37 @@ function renderNotifications() {
   const list = $("#notifList");
   if (!list) return;
   if (!state.notifications.length) {
-    list.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted)">
-      <div class="notif-empty-ico" style="opacity:.5">${NI_BELL}</div>
-      <h4 style="font-family:'Inter'; margin:10px 0 4px; font-weight:700; color:var(--text)">No notifications</h4>
-      <p style="font-size:12.5px">Latest notifications will appear here.</p>
+    // H audit (2026-05-25): empty state lebih kaya — kasih 2-3 langkah
+    // konkret yang user bisa lakukan supaya notif mulai mengalir, plus
+    // CTA langsung ke discover. Sebelumnya hanya "No notifications"
+    // tanpa konteks → terasa "ada bug".
+    list.innerHTML = `<div class="notif-empty-rich">
+      <div class="notif-empty-ico" style="opacity:.6">${NI_BELL}</div>
+      <h4>Belum ada notifikasi</h4>
+      <p>Notifikasi muncul ketika ada interaksi di konten kamu — like, komentar, follower baru, atau balasan pesan.</p>
+      <ul class="notif-empty-tips">
+        <li>📤 <b>Upload video</b> supaya kreator lain bisa menonton & menyukai</li>
+        <li>🔍 <b>Follow kreator</b> favoritmu di halaman Jelajahi</li>
+        <li>💬 <b>Beri komentar</b> di video orang lain — biasanya direspons cepat</li>
+      </ul>
+      <div class="notif-empty-cta">
+        <button type="button" class="btn primary sm" data-jump="explore">Jelajahi kreator</button>
+        <button type="button" class="btn ghost sm" data-jump="upload">Upload video</button>
+      </div>
     </div>`;
+    // Wire CTA buttons → trigger nav action seperti sidebar
+    list.querySelectorAll("[data-jump]").forEach(b => {
+      b.addEventListener("click", e => {
+        e.preventDefault();
+        const target = b.dataset.jump;
+        const navMap = { explore: "discover", upload: "upload" };
+        const view = navMap[target] || target;
+        const link = document.querySelector(`.nav-item[data-view="${view}"]`);
+        if (link) link.click();
+        // Tutup panel notif kalau sedang open
+        document.getElementById("notifPanel")?.classList.remove("open");
+      });
+    });
     return;
   }
 
