@@ -1,0 +1,200 @@
+// KV sync endpoint — Phase B6a-2 (2026-05-25).
+//
+// Cloud-sync legacy (public/legacy/cloud-sync.js) sebelumnya pakai
+// Supabase anon key langsung dari browser → no per-user context →
+// RLS permissive (kv_anon_all). Privacy risk: PIN hash + payment data
+// shared accessible.
+//
+// Endpoint ini = future-proof migration target untuk cloud-sync. Pakai
+// cookie auth (createClient dari lib/supabase/server) → server stamp
+// user_id otomatis untuk per-user keys. RLS per-user (migration 0008)
+// enforce ownership.
+//
+// Strategi adoption:
+//   B6a-2 (sekarang): endpoint ada, BELUM dipakai cloud-sync (anon-key
+//     path masih default). Endpoint siap untuk gradual migration.
+//   B6a-3: cloud-sync.js refactor — detect per-user keys (via prefix
+//     match yg sama dgn kv_is_per_user_key di Postgres) → route through
+//     POST /api/kv/sync (bukan anon-key langsung).
+//   B6a-4: drop kv_anon_all permissive policy. Anon-key path mati.
+//     Cloud-sync 100% via bridge endpoint.
+//
+// Endpoint:
+//   POST  /api/kv/sync  body { key, value } → upsert per-user (stamp user_id)
+//   GET   /api/kv/sync?key=X            → fetch single per-user value
+//   DELETE /api/kv/sync  body { key }   → delete per-user row
+
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+// Same prefix list as Postgres function kv_is_per_user_key.
+// Sync between these 2 lists MANDATORY — keep in lockstep.
+const PER_USER_PREFIXES = [
+  'playly-state-',
+  'playly-account-',
+  'playly-prefs-',
+  'playly-welcomed-',
+  'playly-welcome-',
+  'playly-onboarding-',
+  'playly-notif-',
+  'playly-2fa-',
+  'playly-cloud-last-sync',
+  'playly-cloud-retry',
+];
+
+function isPerUserKey(key: string): boolean {
+  return PER_USER_PREFIXES.some(p => key.startsWith(p));
+}
+
+type SyncBody = {
+  key?: string;
+  value?: unknown;
+};
+
+export async function POST(req: Request) {
+  let body: SyncBody;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+  }
+  if (!body.key || typeof body.key !== 'string') {
+    return NextResponse.json({ ok: false, error: 'missing_key' }, { status: 400 });
+  }
+  if (body.value === undefined) {
+    return NextResponse.json({ ok: false, error: 'missing_value' }, { status: 400 });
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'supabase_unavailable' },
+      { status: 503 },
+    );
+  }
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  // Per-user keys WAJIB ada session
+  if (isPerUserKey(body.key) && !authUser?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'not_authenticated' },
+      { status: 401 },
+    );
+  }
+
+  // Stamp user_id otomatis untuk per-user keys (server-side, can't be spoofed)
+  const row = {
+    key: body.key,
+    value: body.value,
+    user_id: isPerUserKey(body.key) ? authUser!.id : null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('kv')
+    .upsert(row, { onConflict: 'key' });
+
+  if (error) {
+    if (error.code === '42P01' || /relation/.test(error.message)) {
+      return NextResponse.json(
+        { ok: false, error: 'schema_missing' },
+        { status: 503 },
+      );
+    }
+    if (error.code === '42703' || /column .* does not exist/.test(error.message)) {
+      // user_id column belum di-apply (migration 0008 not yet run)
+      return NextResponse.json(
+        { ok: false, error: 'schema_outdated' },
+        { status: 503 },
+      );
+    }
+    console.warn('[kv/sync] upsert failed:', error.message);
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, perUser: isPerUserKey(body.key) });
+}
+
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const key = url.searchParams.get('key');
+  if (!key) {
+    return NextResponse.json({ ok: false, error: 'missing_key_param' }, { status: 400 });
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'supabase_unavailable' },
+      { status: 503 },
+    );
+  }
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (isPerUserKey(key) && !authUser?.id) {
+    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+  }
+
+  const { data, error } = await supabase
+    .from('kv')
+    .select('key, value, updated_at')
+    .eq('key', key)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, row: data });
+}
+
+export async function DELETE(req: Request) {
+  let body: SyncBody;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+  }
+  if (!body.key) {
+    return NextResponse.json({ ok: false, error: 'missing_key' }, { status: 400 });
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'supabase_unavailable' },
+      { status: 503 },
+    );
+  }
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (isPerUserKey(body.key) && !authUser?.id) {
+    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+  }
+
+  const { error } = await supabase
+    .from('kv')
+    .delete()
+    .eq('key', body.key);
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
