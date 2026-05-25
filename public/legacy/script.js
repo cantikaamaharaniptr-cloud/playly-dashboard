@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v536 (Final ID cleanup: Clear All → Hapus Semua, empty body/desc fallback)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v537 (Admin moderation Critical fixes: orphan cleanup + ticket notif + creator fallback)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -25357,6 +25357,58 @@ function deleteUserAccount(username) {
       localStorage.removeItem(`playly-prefs-${email}`);
       localStorage.removeItem(`playly-2fa-${username}`);
       localStorage.removeItem(`playly-2fa-${email}`);
+
+      // v537 CRITICAL FIX 1 (2026-05-25): Orphan cleanup di other users' state.
+      // Audit moderation flow finding C1: delete account hanya hapus key utama
+      // tapi LEAVE behind references di state user lain (followingCreators
+      // array masih punya username deleted, state.messages thread to deleted
+      // user, comments di videos lain). Sekarang scan semua playly-state-*
+      // keys + purge references.
+      try {
+        let orphansCleaned = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || !k.startsWith("playly-state-")) continue;
+          const otherUsername = k.slice("playly-state-".length);
+          if (otherUsername === username) continue;
+          let s;
+          try { s = JSON.parse(localStorage.getItem(k)); } catch { continue; }
+          if (!s) continue;
+          let touched = false;
+          // 4a. followingCreators array
+          if (Array.isArray(s.followingCreators) && s.followingCreators.includes(username)) {
+            s.followingCreators = s.followingCreators.filter(u => u !== username);
+            touched = true;
+          }
+          // 4b. followers array (some user might "follow" deleted via legacy data)
+          if (Array.isArray(s.followers) && s.followers.includes(username)) {
+            s.followers = s.followers.filter(u => u !== username);
+            touched = true;
+          }
+          // 4c. messages threads
+          if (Array.isArray(s.messages)) {
+            const before = s.messages.length;
+            s.messages = s.messages.filter(m =>
+              !(m.with === username || m.name === username || m.fromUsername === username)
+            );
+            if (s.messages.length !== before) touched = true;
+          }
+          // 4d. comments object (per-video comments by deleted user)
+          if (s.comments && typeof s.comments === "object") {
+            Object.keys(s.comments).forEach(vid => {
+              if (!Array.isArray(s.comments[vid])) return;
+              const before = s.comments[vid].length;
+              s.comments[vid] = s.comments[vid].filter(c => c.user !== username);
+              if (s.comments[vid].length !== before) touched = true;
+              if (!s.comments[vid].length) delete s.comments[vid];
+            });
+          }
+          if (touched) {
+            try { localStorage.setItem(k, JSON.stringify(s)); orphansCleaned++; } catch {}
+          }
+        }
+        if (orphansCleaned) console.info(`[deleteUser] cleaned ${orphansCleaned} other users' state from references to @${username}`);
+      } catch (err) { console.warn("[deleteUser] orphan cleanup failed:", err); }
       // 5. Cloud-side cleanup — AWAIT supaya tidak ada race dgn next boot sync
       try {
         if (window.cloudSync?.removeKeys) {
@@ -27298,37 +27350,47 @@ function applyGvRowAction(id, action) {
     patchAdminVideo(id, c.patch);
     pushAdminEvent(c.icon, `Video <i>"${titleEsc}"</i> ${c.msg}`);
     toast(`${c.icon} <b>${titleEsc}</b> ${c.msg}`, c.tone);
-    if (typeof deliverNotification === "function" && v.creator) {
+    // v537 CRITICAL FIX 3 (2026-05-25): fallback ke v._owner kalau v.creator
+    // null. Audit moderation flow finding C3: legacy data kadang punya
+    // _owner tapi tidak creator → notif silent fail tanpa admin tahu.
+    const notifTarget = v.creator || v._owner;
+    if (typeof deliverNotification === "function" && notifTarget) {
+      // v537: text di-translate ke Indonesia, sebelumnya English hardcoded
       const notifMap = {
-        takedown: { type: "video-takedown", text: `⛔ Your video <b>"${titleEsc}"</b> was taken down by admin.` },
-        restore:  { type: "video-approved", text: `↻ Your video <b>"${titleEsc}"</b> was restored by admin & is LIVE again!` },
-        publish:  { type: "video-approved", text: `✅ Your video <b>"${titleEsc}"</b> has been published by admin!` },
+        takedown: { type: "video-takedown", text: `⛔ Video kamu <b>"${titleEsc}"</b> di-takedown oleh admin.` },
+        restore:  { type: "video-approved", text: `↻ Video kamu <b>"${titleEsc}"</b> dipulihkan admin & LIVE lagi!` },
+        publish:  { type: "video-approved", text: `✅ Video kamu <b>"${titleEsc}"</b> sudah dipublikasikan admin!` },
       };
       const n = notifMap[action];
       if (n) {
         try {
-          deliverNotification(v.creator, {
+          deliverNotification(notifTarget, {
             type: n.type, text: n.text, init: "📨", videoId: id, fromUsername: "admin"
           });
         } catch (err) { console.warn("[admin] notify creator failed:", err); }
       }
+    } else if (!notifTarget) {
+      console.warn(`[admin] video ${id} has no creator/owner — notif not sent`);
     }
     renderAdminVideos();
     renderAdminLiveFeed();
     return;
   }
   if (action === "delete") {
+    // v537 CRITICAL FIX 3: same fallback for delete flow
+    const deleteNotifTarget = v.creator || v._owner;
     openConfirm({
       icon: "🗑️", iconClass: "danger",
       title: "Force Delete Video?",
-      desc: `Video <b>${titleEsc}</b> akan dihapus permanen dari akun <b>@${escapeHtml(v.creator || v._owner)}</b>. Aksi ini tidak bisa dibatalkan.`,
-      btnText: "Delete Permanently", btnClass: "danger",
+      desc: `Video <b>${titleEsc}</b> akan dihapus permanen dari akun <b>@${escapeHtml(deleteNotifTarget || "?")}</b>. Aksi ini tidak bisa dibatalkan.`,
+      btnText: "Hapus Permanen", btnClass: "danger",
       onConfirm: () => {
         // C-2 H4 fix (2026-05-21): notify creator SEBELUM delete supaya
         // record masih ada saat notify
-        if (typeof deliverNotification === "function" && v.creator) {
+        if (typeof deliverNotification === "function" && deleteNotifTarget) {
           try {
-            deliverNotification(v.creator, {
+            // v537: pakai deleteNotifTarget (creator || _owner) bukan v.creator langsung
+            deliverNotification(deleteNotifTarget, {
               type: "video-takedown",
               text: `🗑️ Video kamu <b>${titleEsc}</b> dihapus permanen oleh admin.`,
               init: "🗑️", videoId: id, fromUsername: "admin",
@@ -28941,11 +29003,34 @@ function renderAdminTickets() {
         const arr = getAdminData("tickets");
         const t = arr.find(x => x.id === id); if (!t) return;
         const next = { new: "progress", progress: "resolved", resolved: "new" };
+        const oldStatus = t.status;
         t.status = next[t.status] || "new";
+        // v537 CRITICAL FIX 2 (2026-05-25): track admin yang resolve untuk
+        // audit accountability + race-detection (audit moderation flow C2).
+        if (t.status === "resolved" && !t.resolvedBy) {
+          t.resolvedBy = user?.username || "admin";
+          t.resolvedAt = Date.now();
+        }
         saveAdminData("tickets", arr);
         pushAdminEvent("🎫", `Tiket <b>"${t.title}"</b> → ${labels[t.status]}`);
-        // v534: pakai window.t() supaya tidak shadow ticket object `t` di scope ini
         toast(`${window.t("admin.toast.ticket.status")} <b>${labels[t.status]}</b>`, t.status === "resolved" ? "success" : "");
+        // v537 CRITICAL FIX 2: notify submitter ticket. Sebelumnya status
+        // cycle tidak kirim notif ke user yg submit → user silent diam-diam
+        // status berubah. Sekarang trigger deliverNotification.
+        try {
+          const submitterUsername = t.fromUsername || (t.from && t.from.replace(/^@/, ""));
+          if (submitterUsername && typeof deliverNotification === "function") {
+            const statusMsg = t.status === "progress" ? "sedang diproses admin"
+              : t.status === "resolved" ? "sudah diselesaikan admin"
+              : "dibuka kembali oleh admin";
+            deliverNotification(submitterUsername, {
+              type: "ticket-status",
+              text: `🎫 Tiket kamu <b>"${escapeHtml(t.title || window.t("ticket.no.subject"))}"</b> ${statusMsg}.`,
+              init: "🎫",
+              fromUsername: "admin",
+            });
+          }
+        } catch (err) { console.warn("[ticket] notify submitter failed:", err); }
         renderAdminTickets();
         renderAdminAlerts();
         renderAdminLiveFeed();
