@@ -1499,6 +1499,164 @@ function saveState() {
   try { window.supabaseAuthBridge?.syncState?.(state); } catch (_) {}
 }
 
+// Phase B4 (2026-05-25) — Pull state from Supabase pada login + apply
+// kalau cloud lebih baru dari local. Use case utama: user login di device
+// baru (localStorage `playly-state-{username}` kosong) → hydrate dari
+// cloud supaya history/preferensi/video list langsung muncul.
+//
+// Strategi konflik (kapan cloud menang):
+//   - Local kosong (fresh device / cleared cache) → cloud menang.
+//   - cloud.updated_at > local.lastActivityAt → cloud menang.
+//   - Else (local sama atau lebih baru) → skip, local stays.
+//
+// Caller (signin flow) await dengan budget waktu 1.5s. Kalau cloud
+// lambat, boot tetap jalan dgn local state — hydration finish nanti
+// di background dan trigger renderAll().
+async function hydrateStateFromCloud(username) {
+  if (!username) return null;
+  let res;
+  try {
+    res = await window.supabaseAuthBridge?.pullState?.();
+  } catch (err) {
+    console.warn("[hydrate] pullState exception:", err);
+    return null;
+  }
+  if (!res || !res.ok || !res.state || typeof res.state !== "object") {
+    return { applied: false, reason: "no_cloud_state" };
+  }
+  const cloudState = res.state;
+  const cloudTs = res.updated_at ? new Date(res.updated_at).getTime() : 0;
+
+  let localState = null;
+  let localTs = 0;
+  try {
+    const raw = localStorage.getItem(`playly-state-${username}`);
+    if (raw) {
+      localState = JSON.parse(raw);
+      localTs = Number(localState?.lastActivityAt) || 0;
+    }
+  } catch (_) {}
+
+  // Cloud wins kalau lokal kosong, atau cloud strict newer.
+  // Strict (>) supaya saveState→pull loop tidak overwrite local dgn dirinya sendiri.
+  const cloudWins = !localState || cloudTs > localTs;
+  if (!cloudWins) {
+    return { applied: false, reason: "local_newer", cloudTs, localTs };
+  }
+
+  // Merge dgn defaultState supaya field baru (yang ditambah di versi script
+  // setelah cloud snapshot diambil) tidak undefined → render crash.
+  const merged = { ...defaultState(), ...cloudState };
+  // Hindari overwrite transient fields yang sedang in-progress di tab ini.
+  // uploadingVideos = antrian upload aktif device ini, jangan ke-clobber
+  // dari cloud snapshot device lain (yang tidak punya konteks file blob).
+  if (Array.isArray(localState?.uploadingVideos) && localState.uploadingVideos.length) {
+    merged.uploadingVideos = localState.uploadingVideos;
+  }
+
+  try {
+    localStorage.setItem(`playly-state-${username}`, JSON.stringify(merged));
+  } catch (_) {}
+
+  // Kalau ini state untuk user yang sedang login DI SESI INI, replace
+  // in-memory state + trigger re-render kalau dashboard sudah booted.
+  if (typeof user !== "undefined" && user && user.username === username) {
+    state = merged;
+    if (typeof renderAll === "function" && document.body?.dataset?.role) {
+      try { renderAll(); } catch (err) { console.warn("[hydrate] renderAll failed:", err); }
+    }
+  }
+  console.info("[hydrate] cloud state applied — cloud:", new Date(cloudTs).toISOString(), "vs local:", localTs ? new Date(localTs).toISOString() : "empty");
+  return { applied: true, cloudTs, localTs };
+}
+window.hydrateStateFromCloud = hydrateStateFromCloud;
+
+// Phase B4 (2026-05-25) — Pull profile (public.profiles row) from Supabase
+// + merge ke legacy `playly-account-{email}` kalau ada field yang lebih
+// baru / lebih lengkap di cloud. Use case: user ganti device, localStorage
+// `playly-account-*` kosong tapi profile sudah ada dari device sebelumnya.
+//
+// Strategi merge:
+//   - Local kosong → bikin entry dari cloud (name, username, bio, avatar,
+//     tier, joined_at). Password TIDAK di-hydrate dari cloud (Supabase Auth
+//     pegang bcrypt server-side; legacy login validate dgn hash local atau
+//     fallback ke bridge). 2FA pin tidak di-cloud-store (privasi/security).
+//   - Local ada → field cloud yang TIDAK ada di local → tambahin. Field yg
+//     udah ada di local → respect local (user mungkin baru update belum sync).
+async function hydrateProfileFromCloud(email) {
+  if (!email) return null;
+  let res;
+  try {
+    res = await window.supabaseAuthBridge?.pullProfile?.();
+  } catch (err) {
+    console.warn("[hydrate-profile] pullProfile exception:", err);
+    return null;
+  }
+  if (!res || !res.ok || !res.profile) {
+    return { applied: false, reason: "no_cloud_profile" };
+  }
+  const cloud = res.profile;
+  const acctKey = `playly-account-${String(email).trim().toLowerCase()}`;
+  let localAcc = null;
+  try {
+    const raw = localStorage.getItem(acctKey);
+    if (raw) localAcc = JSON.parse(raw);
+  } catch (_) {}
+
+  // Map cloud fields → legacy field names.
+  const cloudMapped = {
+    email: cloud.email,
+    username: cloud.username,
+    name: cloud.name,
+    bio: cloud.bio,
+    avatar: cloud.avatar_url,
+    tier: cloud.tier,
+    joinedAt: cloud.joined_at,
+  };
+
+  // Local kosong → seed dari cloud.
+  if (!localAcc) {
+    const seeded = {};
+    Object.keys(cloudMapped).forEach(k => {
+      if (cloudMapped[k] != null && cloudMapped[k] !== "") seeded[k] = cloudMapped[k];
+    });
+    // Tandai sebagai userRegistered supaya tidak ke-purge oleh banned/cleanup
+    // logic — user ini sah, tinggal restore dari cloud.
+    seeded.userRegistered = true;
+    seeded.registeredAt = cloud.joined_at ? new Date(cloud.joined_at).getTime() : Date.now();
+    try { localStorage.setItem(acctKey, JSON.stringify(seeded)); } catch (_) {}
+    console.info("[hydrate-profile] seeded local from cloud:", email);
+    return { applied: true, mode: "seed" };
+  }
+
+  // Local ada → merge missing fields dari cloud (cloud fills gaps, never overwrites).
+  let touched = false;
+  Object.keys(cloudMapped).forEach(k => {
+    const cv = cloudMapped[k];
+    const lv = localAcc[k];
+    if ((lv == null || lv === "") && cv != null && cv !== "") {
+      localAcc[k] = cv;
+      touched = true;
+    }
+  });
+  if (touched) {
+    try { localStorage.setItem(acctKey, JSON.stringify(localAcc)); } catch (_) {}
+    // Re-sync in-memory user kalau sesi ini lagi login sbg user ini
+    if (typeof user !== "undefined" && user && user.email === email) {
+      Object.keys(cloudMapped).forEach(k => {
+        if ((user[k] == null || user[k] === "") && cloudMapped[k] != null && cloudMapped[k] !== "") {
+          user[k] = cloudMapped[k];
+        }
+      });
+      try { localStorage.setItem("playly-user", JSON.stringify(user)); } catch (_) {}
+    }
+    console.info("[hydrate-profile] gap-filled local from cloud:", email);
+    return { applied: true, mode: "gap_fill" };
+  }
+  return { applied: false, reason: "local_complete" };
+}
+window.hydrateProfileFromCloud = hydrateProfileFromCloud;
+
 // === #8 QA seed (2026-05-23) — 3 video CC-licensed sample untuk test player ===
 // Aktifkan via: localStorage.setItem('PLAYLY_DEV','1') lalu reload, ATAU
 // URL `?seedDev=1`. Disable: localStorage.removeItem('PLAYLY_DEV').
@@ -19384,10 +19542,25 @@ $("#signinForm").addEventListener("submit", async e => {
   const correctRole = isAllowedAdminEmail(existing.email) ? "admin" : "user";
   user = { name: existing.name, username: existing.username, email: existing.email, joinedAt: existing.joinedAt, role: correctRole, tier: existing.tier || "free", premiumPlan: existing.premiumPlan || null, premiumStartedAt: existing.premiumStartedAt || null, premiumExpiresAt: existing.premiumExpiresAt || null, loggedInAt: Date.now() /* C-4 U-L1: session expiry stamp */ };
 
-  // === SUPABASE AUTH BRIDGE (Phase B1, 2026-05-22) ===
-  // Sync legacy signin → Supabase auth.users (server-side). Foundation B2-B5
-  // backend migration. Non-blocking, silent fail — legacy auth tetap jalan.
-  try { window.supabaseAuthBridge?.syncSignin?.(email, password, user); } catch (_) {}
+  // === SUPABASE AUTH BRIDGE (Phase B1, 2026-05-22) + HYDRATION (B4, 2026-05-25) ===
+  // Sync legacy signin → Supabase auth.users (server-side, set cookie).
+  // SETELAH cookie ter-set, pull state + profile dari Supabase dan apply
+  // kalau cloud lebih baru — enables cross-device dashboard continuity.
+  // Non-blocking di sini — boot loop yang await dgn budget waktu 1.5s.
+  const _bridgeHydrationPromise = (async () => {
+    try {
+      const syncRes = await window.supabaseAuthBridge?.syncSignin?.(email, password, user);
+      if (syncRes && syncRes.synced) {
+        // Hydrate state + profile paralel (independent endpoints).
+        const [stateRes, profileRes] = await Promise.all([
+          hydrateStateFromCloud(user.username),
+          hydrateProfileFromCloud(user.email),
+        ]);
+        return { state: stateRes, profile: profileRes };
+      }
+    } catch (_) {}
+    return null;
+  })();
 
   // C-4 U-L3 fix (2026-05-21): kalau admin reset password user, mustChangePassword
   // di-set true. Warn user supaya ganti via Settings → Account.
@@ -19431,9 +19604,24 @@ $("#signinForm").addEventListener("submit", async e => {
   // Sebelumnya: kalau showUserWelcome gagal panggil done(), user stuck di
   // layar putih / login screen tanpa feedback.
   let booted = false;
-  const safeBoot = () => {
+  const safeBoot = async () => {
     if (booted) return;
     booted = true;
+    // Phase B4 (2026-05-25): tunggu hydration cloud max 1.5s sebelum
+    // bootDashboard supaya first render pakai data terbaru dari cloud
+    // (cross-device sync). Kalau cloud lambat, boot dgn local — hydration
+    // selesai di background lalu trigger renderAll() sendiri.
+    try {
+      await Promise.race([
+        _bridgeHydrationPromise,
+        new Promise(r => setTimeout(r, 1500)),
+      ]);
+      // Re-load state dari localStorage — kalau hydration sudah apply, ini
+      // baca versi cloud; kalau belum, baca versi local.
+      if (user && user.username) {
+        try { state = loadState(user.username); } catch (_) {}
+      }
+    } catch (_) {}
     console.log("[Auth] booting dashboard");
     try { bootDashboard(); afterBoot(); }
     catch (err) { console.error("[Auth] bootDashboard threw:", err); toast("⚠️ Gagal masuk dashboard — refresh halaman", "error"); }
@@ -20244,6 +20432,13 @@ $("#signupForm").addEventListener("submit", async e => {
 
     // === SUPABASE AUTH BRIDGE (Phase B1, 2026-05-22) ===
     // Sync legacy signup → Supabase auth.users. Foundation backend migration.
+    // CATATAN B4: signup path TIDAK hydrate dari cloud — defaultState() di
+    // baris bawah langsung wipe + push via syncState debounce, jadi cloud
+    // GET segera setelahnya akan return empty state-nya kita sendiri (race).
+    // Returning user yang ganti device → pakai signin path (auto-hydrate
+    // dari user_state). Edge case: re-signup dgn email yg sama setelah cache
+    // wipe → bridge route POST jalankan signin internal, cookie ter-set, tapi
+    // state tidak ter-restore di sesi ini. Workaround: logout + login ulang.
     try { window.supabaseAuthBridge?.syncSignup?.(email, password, user); } catch (_) {}
     state = defaultState();
     saveState();

@@ -1,4 +1,4 @@
-/* Playly Supabase Auth Bridge — Phase B1+B2+B3 (2026-05-25).
+/* Playly Supabase Auth Bridge — Phase B1+B2+B3+B4 (2026-05-25).
  *
  * Legacy signin/signup → POST kredensial + profile metadata ke
  * /api/auth/bridge → server-side:
@@ -8,20 +8,23 @@
  * Legacy `saveState()` → debounced POST blob ke /api/state/sync:
  *   B3: Upsert blob ke public.user_state
  *
- * Same-origin (playly-dashboard.vercel.app) → cookie auto-set di browser
- * via @supabase/ssr.
+ * Pada login (signin success) script.js await `pullState()` + `pullProfile()`:
+ *   B4: Hydrate localStorage dari cloud kalau cloud lebih baru → cross-
+ *       device dashboard continuity. Same-origin cookie sudah ter-set
+ *       oleh POST sebelumnya jadi GET ini auto-authenticated.
  *
  * Silent fail kalau endpoint unreachable — legacy auth + state tetap
- * jalan (localStorage tetap source of truth selama transition B1-B4).
+ * jalan (localStorage tetap source of truth selama transition).
  *
- * NOTE: jangan hapus tanpa rencana — foundation Phase B4-B5 yang switch
- * primary read ke Supabase + cleanup legacy localStorage.
+ * NOTE: jangan hapus tanpa rencana — foundation Phase B5 yang cleanup
+ * legacy localStorage + tighten RLS.
  */
 (function () {
   "use strict";
 
   var ENDPOINT = "/api/auth/bridge";
   var STATE_ENDPOINT = "/api/state/sync";
+  var PROFILE_ENDPOINT = "/api/profile/me";
 
   // Debounce window untuk state sync — saveState dipanggil 65+ tempat,
   // banyak rapid-fire (mis. saat scroll history). 1.5s window cukup buat
@@ -199,11 +202,35 @@
     }
   }
 
+  // pullProfile() — ambil profil user yang sedang login (B4 hydration).
+  // Returns { ok, profile: {...} | null, reason? }.
+  async function pullProfile() {
+    try {
+      var resp = await fetch(PROFILE_ENDPOINT, {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      var data;
+      try {
+        data = await resp.json();
+      } catch (_) {
+        data = null;
+      }
+      if (resp.ok && data && data.ok) {
+        return { ok: true, profile: data.profile || null };
+      }
+      return { ok: false, reason: (data && data.error) || "http_" + resp.status };
+    } catch (err) {
+      return { ok: false, reason: String(err) };
+    }
+  }
+
   window.supabaseAuthBridge = {
     syncSignin: syncSignin,
     syncSignup: syncSignup,
     syncSignout: syncSignout,
     syncState: syncState,
     pullState: pullState,
+    pullProfile: pullProfile,
   };
 })();
