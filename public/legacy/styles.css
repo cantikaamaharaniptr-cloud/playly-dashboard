@@ -22100,6 +22100,72 @@ body[data-role="admin"] .live-dot i {
 }
 .page-head .muted { color: var(--muted); font-size: 13px; margin-top: 4px; }
 .page-head-actions { display: flex; gap: 10px; align-items: center; }
+
+/* Admin page-head SVG icon box (v533, 2026-05-25): match user-side
+   vh-people-* pattern. Icon kotak 44×44 + flex layout di kiri title.
+   Theme-aware: user wine, admin chrome (no FX per admin flat policy). */
+.page-head-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.page-head .ph-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .06);
+  color: var(--text-2, var(--muted));
+}
+.page-head .ph-icon svg { width: 24px; height: 24px; }
+.page-head-title .ph-text { flex: 1; min-width: 0; }
+.page-head-title .ph-text h2 { margin: 0 0 4px; line-height: 1.2; }
+/* Admin theme — chrome accent (flat, no FX) */
+body[data-role="admin"] .page-head .ph-icon {
+  background: rgba(255, 255, 255, .04);
+  border-color: rgba(255, 255, 255, .08);
+  color: #cbd5e1;
+}
+/* Light mode — wine-tinted backdrop */
+body[data-theme="light"]:not([data-role="admin"]) .page-head .ph-icon {
+  background: rgba(106, 31, 41, .06);
+  border-color: rgba(106, 31, 41, .12);
+  color: var(--primary, #6a1f29);
+}
+
+/* Admin empty state — shared across renderAdmin* render functions
+   (v533, 2026-05-25). Konsisten dgn user-side empty state polish. */
+.admin-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  margin: 8px 0;
+}
+.admin-empty-state .admin-empty-icon {
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 8px;
+  opacity: .65;
+}
+.admin-empty-state h4 {
+  font-family: 'Inter', sans-serif;
+  margin: 6px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.admin-empty-state p {
+  margin: 0 auto;
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .search-mini {
   padding: 9px 14px;
   border-radius: 999px;

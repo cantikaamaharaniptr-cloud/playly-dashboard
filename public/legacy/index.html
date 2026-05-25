@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-i18n-admin-id-fix-v532" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-admin-header-empty-v533" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -2763,9 +2763,14 @@
       <!-- ============== ADMIN: GLOBAL VIDEO CONTROL ============== -->
       <section class="view admin-only" data-view="admin-videos">
         <div class="page-head">
-          <div>
-            <h2>🎬 Kontrol Konten</h2>
-            <p class="muted">Kelola semua video platform di satu tempat — approve, edit, takedown, atau aksi massal.</p>
+          <div class="page-head-title">
+            <span class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>
+            </span>
+            <div class="ph-text">
+              <h2>Kontrol Konten</h2>
+              <p class="muted">Kelola semua video platform di satu tempat — approve, edit, takedown, atau aksi massal.</p>
+            </div>
           </div>
           <div class="page-head-actions">
             <input type="search" class="search-mini" id="adminVideoSearch" placeholder="Cari judul / kreator / tag..."/>
@@ -3210,9 +3215,14 @@
       <!-- ============== ADMIN: AUDIT LOG (riwayat aksi admin) ============== -->
       <section class="view admin-only" data-view="admin-audit">
         <div class="page-head">
-          <div>
-            <h2>📋 Log Audit</h2>
-            <p class="muted">Catatan semua aksi admin: suspend user, approve/hapus video, broadcast, login, perubahan pengaturan platform.</p>
+          <div class="page-head-title">
+            <span class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+            </span>
+            <div class="ph-text">
+              <h2>Log Audit</h2>
+              <p class="muted">Catatan semua aksi admin: suspend user, approve/hapus video, broadcast, login, perubahan pengaturan platform.</p>
+            </div>
           </div>
         </div>
 
@@ -3361,9 +3371,14 @@
       <!-- ============== ADMIN: ANALYTICS & MONITORING ============== -->
       <section class="view admin-only" data-view="admin-analytics">
         <div class="page-head">
-          <div>
-            <h2>📊 Analitik & Monitoring</h2>
-            <p class="muted">Total tayangan, watch time, bandwidth &amp; video teratas di platform.</p>
+          <div class="page-head-title">
+            <span class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            </span>
+            <div class="ph-text">
+              <h2>Analitik & Monitoring</h2>
+              <p class="muted">Total tayangan, watch time, bandwidth &amp; video teratas di platform.</p>
+            </div>
           </div>
         </div>
 
@@ -3485,9 +3500,14 @@
       <!-- ============== ADMIN: AD MANAGER ============== -->
       <section class="view admin-only" data-view="admin-ads">
         <div class="page-head">
-          <div>
-            <h2>📢 Kelola Iklan</h2>
-            <p class="muted">Atur iklan yang tampil di player video — teks berjalan, banner, dan pre-roll.</p>
+          <div class="page-head-title">
+            <span class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M14 9a4 4 0 0 1 0 6"/><path d="M17 6a8 8 0 0 1 0 12"/></svg>
+            </span>
+            <div class="ph-text">
+              <h2>Kelola Iklan</h2>
+              <p class="muted">Atur iklan yang tampil di player video — teks berjalan, banner, dan pre-roll.</p>
+            </div>
           </div>
           <div class="page-head-actions">
             <button class="btn ghost small" id="adResetBtn">↺ Reset</button>
@@ -8439,8 +8459,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-i18n-admin-id-fix-v532"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-i18n-admin-id-fix-v532"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-admin-header-empty-v533"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-admin-header-empty-v533"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8886,7 +8906,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-i18n-admin-id-fix-v532" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-admin-header-empty-v533" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

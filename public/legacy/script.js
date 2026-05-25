@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v532 (Admin ID dict: 15 English leaks fixed + 4 duplicates resolved)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v533 (4 admin headers SVG-icon + admin comms/tickets empty state polish)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -27485,11 +27485,12 @@ function renderCommsInbox() {
   else if (__commsInboxFilter === "read") filtered = inbox.filter(m => !m.threadUnread);
 
   if (!filtered.length) {
+    // v533 (2026-05-25): empty state full Bahasa Indonesia + lebih informatif.
     const emptyMsg = __commsInboxFilter === "unread"
-      ? "No unread messages."
+      ? "Tidak ada pesan yang belum dibaca."
       : __commsInboxFilter === "read"
-        ? "No read messages."
-        : "No incoming messages from users yet.";
+        ? "Belum ada pesan yang sudah dibaca."
+        : "Belum ada pesan masuk dari user. Pesan baru akan muncul di sini secara real-time.";
     list.innerHTML = `<div class="comms-empty">
       <div class="comms-empty-icon">📭</div>
       ${emptyMsg}
@@ -28691,6 +28692,16 @@ function renderAdminTickets() {
       <span class="status-pill red"><i></i> ${m.tickets} baru</span>
       <span class="status-pill amber"><i></i> ${m.ticketsProgress} in-progress</span>
       <span class="status-pill green"><i></i> ${m.ticketsResolved} resolved</span>`;
+  }
+
+  // v533 (2026-05-25): empty state fallback — sebelumnya list.innerHTML = "" tanpa fallback.
+  if (!tickets.length) {
+    list.innerHTML = `<div class="admin-empty-state">
+      <div class="admin-empty-icon">🎫</div>
+      <h4>Belum ada tiket dukungan</h4>
+      <p>Tiket dari user akan muncul di sini. Status awal "Baru" → klik tombol Status untuk siklus Diproses → Selesai.</p>
+    </div>`;
+    return;
   }
 
   list.innerHTML = tickets.map(t => {
