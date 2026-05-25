@@ -27,23 +27,35 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// Same prefix list as Postgres function kv_is_per_user_key.
+// Same prefix list as cloud-sync.js PER_USER_PREFIXES_BRIDGE.
 // Sync between these 2 lists MANDATORY — keep in lockstep.
+//
+// B6a-3 (2026-05-25): SCOPE LIMITED ke 5 prefix yang jelas per-user:
+//   - playly-prefs-/welcomed-/welcome-/onboarding-/notif-
+//
+// EXCLUDED (di-handle terpisah):
+//   - playly-state-* → public.user_state table (B3)
+//   - playly-2fa-* → NO_SYNC entirely (B5)
+//   - playly-account-* → punya overlap dgn system keys (allowlist, cutoff-ts).
+//     Special handling: suffix WAJIB ada @ (email) supaya bukan system key.
+//   - playly-cloud-* → device-local, NO_SYNC
 const PER_USER_PREFIXES = [
-  'playly-state-',
-  'playly-account-',
   'playly-prefs-',
   'playly-welcomed-',
   'playly-welcome-',
   'playly-onboarding-',
   'playly-notif-',
-  'playly-2fa-',
-  'playly-cloud-last-sync',
-  'playly-cloud-retry',
 ];
 
 function isPerUserKey(key: string): boolean {
-  return PER_USER_PREFIXES.some(p => key.startsWith(p));
+  // Standard prefix match
+  if (PER_USER_PREFIXES.some(p => key.startsWith(p))) return true;
+  // playly-account-* dgn suffix berisi @ = user email account
+  if (key.startsWith('playly-account-')) {
+    const suffix = key.slice('playly-account-'.length);
+    return suffix.includes('@');
+  }
+  return false;
 }
 
 type SyncBody = {

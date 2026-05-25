@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v538 (Admin moderation High fixes: bulk-delete await + suspend cloud-push + purge retry queue + tier expiry from payment)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v540 (B6a-3: cloud-sync per-user keys route via /api/kv/sync — fallback anon on bridge fail)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi

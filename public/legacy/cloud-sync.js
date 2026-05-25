@@ -61,6 +61,67 @@
     if (isPrefixExcluded(key)) return false;
     return true;
   }
+
+  // Phase B6a-3 (2026-05-25): Per-user keys yang harus di-bridge via
+  // /api/kv/sync (cookie auth + server stamp user_id) instead of anon-key
+  // direct write. Tujuan: enforce RLS per-user, kurangi privacy risk.
+  //
+  // SCOPE LIMITED — hanya prefix yang JELAS per-user. SKIP:
+  //   - playly-state-*, playly-2fa-* (di NO_SYNC_PREFIXES, never sync)
+  //   - playly-account-* (overlap dgn system keys spt allowlist/cutoff-ts,
+  //     handle di B6c nanti)
+  //   - playly-cloud-*, playly-user, playly-device-accounts (NO_SYNC_KEYS)
+  //
+  // LOCKSTEP dgn app/api/kv/sync/route.ts PER_USER_PREFIXES — sync wajib.
+  const PER_USER_PREFIXES_BRIDGE = [
+    "playly-prefs-",
+    "playly-welcomed-",
+    "playly-welcome-",
+    "playly-onboarding-",
+    "playly-notif-",
+  ];
+  function isPerUserBridgeKey(key) {
+    if (typeof key !== "string") return false;
+    for (let i = 0; i < PER_USER_PREFIXES_BRIDGE.length; i++) {
+      if (key.startsWith(PER_USER_PREFIXES_BRIDGE[i])) return true;
+    }
+    return false;
+  }
+  // Feature flag — kill switch kalau bridge bermasalah di production.
+  // Set window.PLAYLY_USE_KV_BRIDGE = false sebelum reload untuk disable.
+  function useKvBridge() {
+    return window.PLAYLY_USE_KV_BRIDGE !== false;
+  }
+  // POST/DELETE via /api/kv/sync. Returns { ok, reason?, status? }.
+  // Fire-and-forget caller — pakai .then() bukan await supaya tidak block.
+  async function pushViaKvBridge(key, value) {
+    try {
+      const resp = await fetch("/api/kv/sync", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: key, value: value }),
+      });
+      let data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (resp.ok && data && data.ok) return { ok: true, perUser: !!data.perUser };
+      return { ok: false, reason: (data && data.error) || "http_" + resp.status, status: resp.status };
+    } catch (err) { return { ok: false, reason: String(err) }; }
+  }
+  async function deleteViaKvBridge(key) {
+    try {
+      const resp = await fetch("/api/kv/sync", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: key }),
+      });
+      let data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (resp.ok && data && data.ok) return { ok: true };
+      return { ok: false, reason: (data && data.error) || "http_" + resp.status, status: resp.status };
+    } catch (err) { return { ok: false, reason: String(err) }; }
+  }
   const cfg = window.PLAYLY_SUPABASE || {};
   const enabled = !!(cfg.url && cfg.key && window.supabase?.createClient);
 
@@ -233,6 +294,29 @@
     if (key === RETRY_QUEUE_KEY) return; // jangan loop the retry queue itself
     let value;
     try { value = JSON.parse(raw); } catch { value = raw; }
+    // Phase B6a-3 (2026-05-25): per-user keys → route via /api/kv/sync
+    // (cookie auth + RLS enforcement) BUKAN anon-key langsung.
+    // Fallback ke anon-key kalau bridge fail (network / no-auth / schema).
+    // Backward compat sampai B6a-4 cutover (drop kv_anon_all policy).
+    if (useKvBridge() && isPerUserBridgeKey(key)) {
+      pushViaKvBridge(key, value).then(function (res) {
+        if (!res.ok) {
+          // Bridge gagal — fallback ke anon path (existing behavior)
+          console.warn("[cloud] bridge push failed for " + key + " — fallback to anon. Reason:", res.reason);
+          pushViaAnon(key, value, raw);
+        }
+        // res.ok = sukses → no further action
+      });
+      return;
+    }
+    pushViaAnon(key, value, raw);
+  }
+
+  // Anon-key path — existing behavior, extracted ke function terpisah supaya
+  // bisa di-reuse sebagai fallback dari bridge path (B6a-3).
+  function pushViaAnon(key, value, raw) {
+    const sb = client();
+    if (!sb) return;
     // Merge-on-write untuk array-of-records keys yg rentan stomp.
     const mergeCfg = MERGE_KEYS_ARRAY[key];
     if (mergeCfg && Array.isArray(value)) {
@@ -267,6 +351,16 @@
     const sb = client();
     if (!sb) return Promise.resolve();
     if (!shouldSync(key)) return Promise.resolve();
+    // Phase B6a-3 (2026-05-25): per-user keys → bridge DELETE.
+    if (useKvBridge() && isPerUserBridgeKey(key)) {
+      return deleteViaKvBridge(key).then(function (res) {
+        if (!res.ok) {
+          console.warn("[cloud] bridge delete failed for " + key + " — fallback to anon. Reason:", res.reason);
+          return sb.from("kv").delete().eq("key", key)
+            .then(({ error }) => { if (error) console.warn("[cloud]", error.message); });
+        }
+      });
+    }
     return sb.from("kv").delete().eq("key", key)
       .then(({ error }) => { if (error) console.warn("[cloud]", error.message); });
   }
