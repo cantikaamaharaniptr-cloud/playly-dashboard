@@ -63770,6 +63770,36 @@ html body[data-role="admin"][data-theme="dark"] .starry-sky #stars2 {
 }
 
 /* =========================================================
+   USER theme starry-sky — apply starsDriftWavy (diagonal S-curve)
+   per req user 2026-05-25. Sebelumnya pakai starryAnimStar (pure
+   vertical 50s/100s/150s) → motion terlalu lambat + lurus → terasa
+   "stay di satu tempat". Sekarang ketiga layer pakai wavy dgn speed
+   yang lebih cepat + lateral sway → terlihat hidup. Warna + density
+   tetap (background wine, stars putih). Color base tidak berubah,
+   sesuai feedback-backdrop-no-color-shift policy.
+
+   Selector: NON-admin role + dark theme. Specificity 0,0,3,2 (32)
+   beat default rule (0,0,1,2 = 12). Light theme tetap hide.
+   ========================================================= */
+html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars {
+  animation: starsDriftWavy 30s linear infinite !important;
+}
+html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars2 {
+  animation: starsDriftWavy 45s linear infinite !important;
+}
+html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars3 {
+  animation: starsDriftWavy 60s linear infinite !important;
+}
+/* Anti-freeze utk user theme — sama strategi dgn admin */
+@media (prefers-reduced-motion: reduce) {
+  html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars,
+  html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars2,
+  html body:not([data-role="admin"])[data-theme="dark"] .starry-sky #stars3 {
+    animation-duration: 45s !important;
+  }
+}
+
+/* =========================================================
    RESPONSIVE FIXES — mobile/tablet specific (2026-05-21)
    Per user 2026-05-21: setiap fix DIBUNGKUS @media yang sesuai
    breakpoint target — desktop/laptop yang sudah OK tidak boleh
