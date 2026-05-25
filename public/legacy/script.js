@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v540 (B6a-3: cloud-sync per-user keys route via /api/kv/sync — fallback anon on bridge fail)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v541 (B6c: syskey namespace migration — playly-account-* now 100% user)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -165,13 +165,12 @@ console.info("%c[playly] script.js v540 (B6a-3: cloud-sync per-user keys route v
     const cloudDeleteKeys = [];
 
     // 1. Non-admin accounts
-    // Filter HARUS strict ke key yang suffix-nya beneran email (ada @).
-    // Tanpa ini, key system seperti "playly-account-cutoff-ts-v1" /
-    // "playly-account-allowlist" ikut ke-hapus (prefix match) → cutoff
-    // ke-reset → akun admin-created berikutnya bisa kena auto-ban.
+    // B6c (2026-05-25): playly-account-* sekarang 100% user emails (system
+    // key dipindah ke playly-syskey-* namespace via migrateCutoffKey).
+    // Suffix-@ check tetap defensive — guard kalau ada legacy key tertinggal.
     allKeys.filter(k => k.startsWith("playly-account-")).forEach(k => {
       const suffix = k.replace("playly-account-", "");
-      if (!suffix.includes("@")) return; // skip system key
+      if (!suffix.includes("@")) return; // defensive: skip legacy system key
       if (!adminEmails.includes(suffix)) {
         localStorage.removeItem(k);
         cloudDeleteKeys.push(k);
@@ -1036,12 +1035,38 @@ window.addEventListener("playly:cloud-applied", () => { purgeDemoData(); });
 //      yang kena cutoff (idempotent). Defense extra kalau acc dimodifikasi
 //      joinedAt-nya di cloud (clock skew, dst).
 // New signup (joinedAt > cutoff, email belum dibanned) tetap jalan normal.
-const CUTOFF_TS_KEY = "playly-account-cutoff-ts-v1";
+// B6c (2026-05-25): rename system key ke namespace `playly-syskey-*`
+// supaya `playly-account-*` 100% milik user accounts (suffix @email).
+// Ini unblock B6a-4 (drop kv_anon_all) — semua `playly-account-*` jelas
+// per-user, bisa di-stamp user_id via /api/kv/sync tanpa false positive.
+//
+// CUTOFF_TS_KEY = "playly-account-cutoff-ts-v1" → "playly-syskey-account-cutoff-ts-v1"
+// Migration: read fallback dari old key (one-shot transfer + delete old).
+const CUTOFF_TS_KEY = "playly-syskey-account-cutoff-ts-v1";
+const CUTOFF_TS_KEY_LEGACY = "playly-account-cutoff-ts-v1";
 const BANNED_EMAILS_KEY = "playly-banned-emails-v1";
 const ADMIN_EMAILS_PROTECTED = ["admin.playly@gmail.com", "admin.playly2@gmail.com"];
 
+// One-shot migrate dari legacy key. Idempotent — flag set setelah jalan.
+(function migrateCutoffKey() {
+  try {
+    if (localStorage.getItem("playly-syskey-migrate-cutoff-v1") === "1") return;
+    const legacy = localStorage.getItem(CUTOFF_TS_KEY_LEGACY);
+    if (legacy && !localStorage.getItem(CUTOFF_TS_KEY)) {
+      localStorage.setItem(CUTOFF_TS_KEY, legacy);
+    }
+    if (legacy !== null) {
+      localStorage.removeItem(CUTOFF_TS_KEY_LEGACY); // cleanup
+    }
+    localStorage.setItem("playly-syskey-migrate-cutoff-v1", "1");
+  } catch (err) { console.warn("[migrateCutoffKey] failed:", err); }
+})();
+
 function getAccountCutoff() {
-  const raw = localStorage.getItem(CUTOFF_TS_KEY);
+  // v541: read dari key baru, fallback ke legacy untuk safety (cross-device
+  // sync mungkin masih ada legacy row di cloud kv sebelum cleanup).
+  let raw = localStorage.getItem(CUTOFF_TS_KEY);
+  if (!raw) raw = localStorage.getItem(CUTOFF_TS_KEY_LEGACY);
   return raw ? Number(raw) : 0;
 }
 function ensureAccountCutoff() {
