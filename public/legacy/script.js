@@ -1451,6 +1451,12 @@ function saveState() {
   // Fix B5 audit 2026-05-02.
   state.lastActivityAt = Date.now();
   localStorage.setItem(`playly-state-${user.username}`, JSON.stringify(state));
+  // Phase B3 (2026-05-25) — dual-write ke Supabase user_state.
+  // Bridge punya internal debounce 1.5s + no-op delta dedup, jadi
+  // aman dipanggil tiap saveState (65+ call sites di script.js ini).
+  // Silent fail kalau bridge belum loaded / endpoint offline /
+  // user belum auth-bridged — localStorage tetap source of truth.
+  try { window.supabaseAuthBridge?.syncState?.(state); } catch (_) {}
 }
 
 // === #8 QA seed (2026-05-23) — 3 video CC-licensed sample untuk test player ===
