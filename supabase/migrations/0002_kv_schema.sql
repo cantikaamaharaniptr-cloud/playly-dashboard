@@ -9,8 +9,17 @@
 -- ⚠️ SECURITY NOTE: cloud-sync.js pakai ANON key dengan policy permissif
 -- (anon boleh CRUD semua row). Ini DESAIN LEGACY — kv = shared localStorage
 -- mirror tanpa per-user scoping. Password di key playly-account-* di-hash
--- (PBKDF2 + salt) jadi tidak plaintext. Idealnya nanti di-scope per-user,
--- tapi untuk sekarang match behavior project lama supaya cloud-sync jalan.
+-- (PBKDF2 + salt) jadi tidak plaintext.
+--
+-- MIGRASI BERTAHAP ke tabel dedicated dengan RLS owner-only:
+--   Phase B2 (2026-05-22): playly-account-* → public.profiles (public read).
+--   Phase B3 (2026-05-25): playly-state-*   → public.user_state (owner only).
+--   Phase B5 (2026-05-25): cloud-sync NO_SYNC_PREFIXES block 'playly-state-'
+--                          + 'playly-2fa-'. Migration 0006 hapus row lama.
+--   Defer:  playly-account-* hapus dari kv (sistem key seperti
+--           playly-account-allowlist masih di kv — perlu split).
+--   Defer:  RLS tighten — butuh user_id column di kv + refactor cloud-sync
+--           supaya signin pakai cookie auth (bukan anon key).
 
 -- ============================================================
 -- 1. kv table

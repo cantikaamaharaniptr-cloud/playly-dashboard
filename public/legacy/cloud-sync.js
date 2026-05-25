@@ -33,10 +33,32 @@
                               // → re-sync tiap load → state inconsistency.
                               // NO_SYNC supaya local nggak ke-pollute dari cloud.
   ]);
+  // Phase B5 (2026-05-25) — prefix-based exclusion. Untuk kelompok key
+  // per-user yang sekarang punya tabel Supabase dedicated (RLS owner-only)
+  // → hapus dari kv mirror supaya:
+  //   1) tidak duplikat antara kv + tabel khusus (kv permissive RLS =
+  //      data privacy leak).
+  //   2) kv table footprint mengecil → kurangi egress.
+  //   3) ada satu source of truth per kategori.
+  const NO_SYNC_PREFIXES = [
+    "playly-state-",          // B3: di public.user_state (RLS owner-only).
+                              // Mirror via syncState() di bridge bukan kv.
+    "playly-2fa-",            // B5 audit: PIN hash 2FA — sensitif, JANGAN
+                              // sync. Sebelumnya tidak di-block (bug). PIN
+                              // per-device — user setup 2FA ulang kalau
+                              // ganti device (acceptable security tradeoff).
+  ];
+  function isPrefixExcluded(key) {
+    for (let i = 0; i < NO_SYNC_PREFIXES.length; i++) {
+      if (key.startsWith(NO_SYNC_PREFIXES[i])) return true;
+    }
+    return false;
+  }
   function shouldSync(key) {
     if (typeof key !== "string") return false;
     if (!key.startsWith(PREFIX)) return false;
     if (NO_SYNC_KEYS.has(key)) return false;
+    if (isPrefixExcluded(key)) return false;
     return true;
   }
   const cfg = window.PLAYLY_SUPABASE || {};
@@ -305,6 +327,7 @@
     for (const row of rows) {
       if (row.value == null) continue;
       if (NO_SYNC_KEYS.has(row.key)) continue; // hormati privasi device-local
+      if (isPrefixExcluded(row.key)) continue; // B5: kategori yg punya tabel khusus
       try {
         // Bug fix 2026-05-11: JSON.stringify pada raw string menambah quote
         // pembungkus ('"light"' instead of 'light') — bikin attribute matcher
