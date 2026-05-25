@@ -2208,7 +2208,10 @@ function applyRoleToUI() {
       if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV<br/><span class="dz-promo">( Kamu Premium — upload tanpa batas ukuran, durasi &amp; kuota <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     } else {
       utb.hidden = true;
-      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · Kuota Free 1 GB/bulan<br/><span class="dz-promo">( Upgrade ke Premium untuk upload tanpa batas <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      // G audit (2026-05-25): copy lebih informatif (kasih konteks "cukup
+      // untuk ~10 video pendek") + framing "Butuh lebih?" instead of
+      // "Upgrade untuk tanpa batas" supaya tidak terasa limit-pressure.
+      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 1 GB/bulan (cukup untuk ~10 video pendek)<br/><span class="dz-promo">( Butuh lebih? Premium punya kuota tanpa batas <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     }
   }
 
@@ -17358,13 +17361,18 @@ function renderDashboardTierPill() {
       '</span>';
     pill.title = isID ? "Akun Premium aktif" : "Premium account active";
   } else {
+    // G audit (2026-05-25): soften pill copy dari hard CTA "Upgrade" jadi
+    // info-style "Premium tersedia" / "Premium available". Klik handler
+    // tetap sama (buka plan picker). Tujuan: kurangi pressure di chrome
+    // permanent yang selalu visible — premium opportunity ditampilkan
+    // sbg fitur tersedia, bukan sbg gentle nag.
     pill.innerHTML =
       '<span class="dtp-icon">○</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">Free</span>' +
-        '<span class="dtp-status">' + (isID ? "Upgrade" : "Upgrade") + '</span>' +
+        '<span class="dtp-status">' + (isID ? "Premium tersedia" : "Premium available") + '</span>' +
       '</span>';
-    pill.title = isID ? "Klik untuk upgrade ke Premium" : "Click to upgrade to Premium";
+    pill.title = isID ? "Lihat opsi Premium" : "See Premium options";
   }
   if (!pill.dataset.bound) {
     pill.dataset.bound = "1";

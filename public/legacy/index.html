@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-audit-efh-v511" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-audit-g-soften-v512" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -4379,7 +4379,7 @@
                     <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </div>
                   <p><b>Pilih video</b> atau seret ke sini</p>
-                  <small id="dropzoneLimit">Format: MP4, MOV, MKV · Kuota Free 1 GB/bulan<br/><span class="dz-promo">( Upgrade ke Premium untuk upload tanpa batas ⭐ )</span></small>
+                  <small id="dropzoneLimit">Format: MP4, MOV, MKV · 1 GB/bulan (cukup untuk ~10 video pendek)<br/><span class="dz-promo">( Butuh lebih? Premium punya kuota tanpa batas ⭐ )</span></small>
                 </div>
               <div class="dz-pro-filled">
                 <img class="dz-pro-preview" id="dropzonePreviewFill" alt="Video preview"/>
@@ -4940,7 +4940,7 @@
             <p>Kelola penggunaan penyimpanan akun Playly kamu — lihat detail file dan bebaskan kuota.</p>
           </div>
           <div class="view-actions">
-            <button class="btn primary" id="storageUpgradeBtn">⭐ Upgrade ke Unlimited</button>
+            <button class="btn primary" id="storageUpgradeBtn">⭐ Lihat opsi Premium</button>
           </div>
         </div>
 
@@ -6788,12 +6788,13 @@
         <span class="pd-tier-badge" data-tier-badge hidden></span>
       </div>
     </button>
-    <!-- Upgrade to Premium banner — only shown for free-tier users -->
+    <!-- Premium banner — info ringan untuk free-tier (audit G softening 2026-05-25:
+         "Upgrade to Premium" → "Coba Premium" supaya tidak terasa mendesak) -->
     <button type="button" class="pd-upgrade" id="pdUpgradeBtn" hidden>
       <span class="pd-upgrade-icon">⭐</span>
       <span class="pd-upgrade-text">
-        <strong>Upgrade to Premium</strong>
-        <small>Unlimited uploads · Ad-free · 4K quality</small>
+        <strong>Coba Premium</strong>
+        <small>Unggah tanpa batas · Bebas iklan · Kualitas 4K</small>
       </span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -8383,8 +8384,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-audit-efh-v511"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-audit-efh-v511"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-audit-g-soften-v512"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-audit-g-soften-v512"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8830,7 +8831,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-audit-efh-v511" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-audit-g-soften-v512" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
