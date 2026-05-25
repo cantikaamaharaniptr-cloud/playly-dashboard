@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v534 (Admin ticket/bug status + 5 toasts i18n 8 lang + filter pill unify)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v535 (Admin placeholders + 5 user-mgmt toasts i18n + bug inline labels — total 73 keys × 8 lang = 584 entries)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -6041,6 +6041,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 Bug assigned",
     "admin.toast.bug.closed":     "✓ Bug closed",
     "admin.toast.ticket.status":  "🎫 Ticket →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(no title)",
+    "ticket.no.subject":          "(no subject)",
+    "admin.toast.pw.changed":     "✓ Password changed",
+    "admin.toast.pw.admin.changed":"✓ Admin password changed",
+    "admin.toast.admin.created":  "✓ New admin",
+    "admin.toast.account.created":"✓ Account",
+    "admin.toast.account.deleted":"🗑️ Account deleted.",
+    "admin.toast.created.suffix": "created",
   },
   id: {
     "settings.language":         "Bahasa & Region",
@@ -7557,6 +7566,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 Bug ditugaskan",
     "admin.toast.bug.closed":     "✓ Bug ditutup",
     "admin.toast.ticket.status":  "🎫 Tiket →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(tanpa judul)",
+    "ticket.no.subject":          "(tanpa subjek)",
+    "admin.toast.pw.changed":     "✓ Password berhasil diubah",
+    "admin.toast.pw.admin.changed":"✓ Password admin berhasil diubah",
+    "admin.toast.admin.created":  "✓ Admin baru",
+    "admin.toast.account.created":"✓ Akun",
+    "admin.toast.account.deleted":"🗑️ Akun berhasil dihapus.",
+    "admin.toast.created.suffix": "berhasil dibuat",
   },
   ms: {
     "settings.language":         "Bahasa & Wilayah",
@@ -8828,6 +8846,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 Bug ditugaskan",
     "admin.toast.bug.closed":     "✓ Bug ditutup",
     "admin.toast.ticket.status":  "🎫 Tiket →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(tanpa tajuk)",
+    "ticket.no.subject":          "(tanpa subjek)",
+    "admin.toast.pw.changed":     "✓ Kata laluan berjaya ditukar",
+    "admin.toast.pw.admin.changed":"✓ Kata laluan admin berjaya ditukar",
+    "admin.toast.admin.created":  "✓ Admin baru",
+    "admin.toast.account.created":"✓ Akaun",
+    "admin.toast.account.deleted":"🗑️ Akaun berjaya dipadam.",
+    "admin.toast.created.suffix": "berjaya dicipta",
   },
   ja: {
     "settings.language":         "言語と地域",
@@ -10099,6 +10126,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 バグを割り当てました",
     "admin.toast.bug.closed":     "✓ バグをクローズしました",
     "admin.toast.ticket.status":  "🎫 チケット →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(タイトルなし)",
+    "ticket.no.subject":          "(件名なし)",
+    "admin.toast.pw.changed":     "✓ パスワードを変更しました",
+    "admin.toast.pw.admin.changed":"✓ 管理者パスワードを変更しました",
+    "admin.toast.admin.created":  "✓ 新規管理者",
+    "admin.toast.account.created":"✓ アカウント",
+    "admin.toast.account.deleted":"🗑️ アカウントを削除しました。",
+    "admin.toast.created.suffix": "を作成しました",
   },
   ar: {
     "settings.language":         "اللغة والمنطقة",
@@ -11370,6 +11406,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 تم تعيين الخطأ",
     "admin.toast.bug.closed":     "✓ تم إغلاق الخطأ",
     "admin.toast.ticket.status":  "🎫 تذكرة ←",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(بدون عنوان)",
+    "ticket.no.subject":          "(بدون موضوع)",
+    "admin.toast.pw.changed":     "✓ تم تغيير كلمة المرور",
+    "admin.toast.pw.admin.changed":"✓ تم تغيير كلمة مرور المشرف",
+    "admin.toast.admin.created":  "✓ مشرف جديد",
+    "admin.toast.account.created":"✓ الحساب",
+    "admin.toast.account.deleted":"🗑️ تم حذف الحساب.",
+    "admin.toast.created.suffix": "تم إنشاؤه بنجاح",
   },
   zh: {
     "settings.language":         "语言和地区",
@@ -12641,6 +12686,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 错误已分配",
     "admin.toast.bug.closed":     "✓ 错误已关闭",
     "admin.toast.ticket.status":  "🎫 工单 →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(无标题)",
+    "ticket.no.subject":          "(无主题)",
+    "admin.toast.pw.changed":     "✓ 密码已更改",
+    "admin.toast.pw.admin.changed":"✓ 管理员密码已更改",
+    "admin.toast.admin.created":  "✓ 新管理员",
+    "admin.toast.account.created":"✓ 账户",
+    "admin.toast.account.deleted":"🗑️ 账户已删除。",
+    "admin.toast.created.suffix": "创建成功",
   },
   ko: {
     "settings.language":         "언어 및 지역",
@@ -13912,6 +13966,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 버그 할당됨",
     "admin.toast.bug.closed":     "✓ 버그 종료됨",
     "admin.toast.ticket.status":  "🎫 티켓 →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(제목 없음)",
+    "ticket.no.subject":          "(제목 없음)",
+    "admin.toast.pw.changed":     "✓ 비밀번호가 변경되었습니다",
+    "admin.toast.pw.admin.changed":"✓ 관리자 비밀번호가 변경되었습니다",
+    "admin.toast.admin.created":  "✓ 신규 관리자",
+    "admin.toast.account.created":"✓ 계정",
+    "admin.toast.account.deleted":"🗑️ 계정이 삭제되었습니다.",
+    "admin.toast.created.suffix": "생성됨",
   },
   es: {
     "settings.language":         "Idioma y Región",
@@ -15183,6 +15246,15 @@ const I18N = {
     "admin.toast.bug.assigned":   "👤 Bug asignado",
     "admin.toast.bug.closed":     "✓ Bug cerrado",
     "admin.toast.ticket.status":  "🎫 Ticket →",
+    // v535 (2026-05-25): placeholder + user mgmt toasts
+    "video.untitled":             "(sin título)",
+    "ticket.no.subject":          "(sin asunto)",
+    "admin.toast.pw.changed":     "✓ Contraseña cambiada",
+    "admin.toast.pw.admin.changed":"✓ Contraseña de admin cambiada",
+    "admin.toast.admin.created":  "✓ Nuevo admin",
+    "admin.toast.account.created":"✓ Cuenta",
+    "admin.toast.account.deleted":"🗑️ Cuenta eliminada.",
+    "admin.toast.created.suffix": "creado",
   },
 };
 
@@ -15875,7 +15947,7 @@ document.getElementById("changePasswordForm")?.addEventListener("submit", async 
   acc.password = await hashPassword(newPw);
   localStorage.setItem(accKey, JSON.stringify(acc));
   e.target.reset();
-  toast("✓ Password berhasil diubah", "success");
+  toast(t("admin.toast.pw.changed"), "success");
 });
 
 // ----------------------- ADMIN SETTINGS (form handlers) -----------------------
@@ -15897,7 +15969,7 @@ $("#adminChangePasswordForm")?.addEventListener("submit", async e => {
   localStorage.setItem(accKey, JSON.stringify(acc));
   e.target.reset();
   if (typeof pushAdminEvent === "function") pushAdminEvent("🔐", "Password admin diubah");
-  toast("✓ Password admin berhasil diubah", "success");
+  toast(t("admin.toast.pw.admin.changed"), "success");
 });
 
 // ----------------------- ADMIN MANAGEMENT (super admin only) -----------------------
@@ -15939,7 +16011,7 @@ $("#createAdminForm")?.addEventListener("submit", async e => {
   if (typeof pushAdminEvent === "function") pushAdminEvent("👑", `Admin baru ditambah: <b>@${escapeHtml(username)}</b> · ${lvLabel}`);
   e.target.reset();
   renderExtraAdminList();
-  toast(`✓ Admin baru <b>@${escapeHtml(username)}</b> berhasil dibuat · ${lvLabel}`, "success");
+  toast(`${t("admin.toast.admin.created")} <b>@${escapeHtml(username)}</b> ${t("admin.toast.created.suffix")} · ${lvLabel}`, "success");
 });
 
 // =====================================================================
@@ -16147,7 +16219,7 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
   closeCreateUserModal();
   if (typeof renderAdminUsers === "function") renderAdminUsers();
   if (typeof renderAdminKPI   === "function") renderAdminKPI();
-  toast(`✓ ${isAdminMode ? "Admin" : "Akun"} <b>@${escapeHtml(username)}</b> berhasil dibuat · ${tl}`, "success");
+  toast(`${isAdminMode ? t("admin.toast.admin.created") : t("admin.toast.account.created")} <b>@${escapeHtml(username)}</b> ${t("admin.toast.created.suffix")} · ${tl}`, "success");
 });
 
 // === Inline Buat User Baru di section Pengaturan (per request user 2026-05-07).
@@ -16241,7 +16313,7 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
     }
     if (typeof renderAdminUsers === "function") renderAdminUsers();
     if (typeof renderAdminKPI   === "function") renderAdminKPI();
-    toast(`✓ Akun <b>@${escapeHtml(username)}</b> berhasil dibuat · ${tl}`, "success");
+    toast(`${t("admin.toast.account.created")} <b>@${escapeHtml(username)}</b> ${t("admin.toast.created.suffix")} · ${tl}`, "success");
   });
 })();
 
@@ -26701,7 +26773,7 @@ function renderAnTopVideosList(allVideos) {
       <span class="an-rank rank-${i + 1}">${i + 1}</span>
       <div class="an-top-thumb"><img src="${v.thumb}" alt=""/></div>
       <div class="an-top-info">
-        <strong>${escapeHtml(v.title || "(tanpa judul)")}</strong>
+        <strong>${escapeHtml(v.title || t("video.untitled"))}</strong>
         <small>@${escapeHtml(v.creator || "—")} • ${cat ? cat.emoji + " " + cat.label : "—"} • ${v.duration || "0:00"}</small>
         <div class="an-top-bar"><div class="an-top-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
       </div>
@@ -27060,7 +27132,7 @@ function renderAdminVideos() {
               <span class="gv-thumb-play">▶</span>
             </div>
             <div class="gv-video-meta">
-              <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "(tanpa judul)")}</strong>
+              <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || t("video.untitled"))}</strong>
               <small>${escapeHtml(v.duration || "0:00")} • ${escapeHtml(v.visibility || "public")}</small>
             </div>
           </div>
@@ -27135,7 +27207,7 @@ function applyGvBulkAction(action) {
             try {
               deliverNotification(v.creator, {
                 type: "video-takedown",
-                text: `🗑️ Video kamu <b>"${escapeHtml(v.title || "(tanpa judul)")}"</b> dihapus permanen oleh admin.`,
+                text: `🗑️ Video kamu <b>"${escapeHtml(v.title || t("video.untitled"))}"</b> dihapus permanen oleh admin.`,
                 init: "🗑️", videoId: id, fromUsername: "admin",
               });
             } catch (err) { console.warn("[bulk] notif failed for", id, err); }
@@ -27161,7 +27233,7 @@ function applyGvBulkAction(action) {
     if (v && v.creator && typeof deliverNotification === "function") {
       try {
         const notifMap = {
-          takedown: { type: "video-takedown", text: `⛔ Video kamu <b>"${escapeHtml(v.title || "(tanpa judul)")}"</b> di-takedown oleh admin.` },
+          takedown: { type: "video-takedown", text: `⛔ Video kamu <b>"${escapeHtml(v.title || t("video.untitled"))}"</b> di-takedown oleh admin.` },
         };
         const n = notifMap[action];
         if (n) {
@@ -27181,7 +27253,7 @@ function applyGvBulkAction(action) {
 function applyGvRowAction(id, action) {
   const v = getAllAdminVideos().find(x => x.id === id);
   if (!v) return;
-  const titleEsc = escapeHtml(v.title || "(tanpa judul)");
+  const titleEsc = escapeHtml(v.title || t("video.untitled"));
   const simple = {
     takedown: { patch: { adminStatus: "takedown"  }, icon: "⛔", msg: "di-takedown",     tone: "warning" },
     restore:  { patch: { adminStatus: "published" }, icon: "↻",  msg: "dikembalikan",    tone: "" },
@@ -27307,7 +27379,7 @@ function openAdminVideoEdit(v) {
     CATEGORIES.map(c => `<option value="${c.key}">${c.emoji} ${c.label}</option>`).join("");
   catSel.value = v.category || "";
 
-  $("#aveSubtitle").innerHTML = `Mengedit: <b>${escapeHtml(v.title || "(tanpa judul)")}</b>`;
+  $("#aveSubtitle").innerHTML = `Mengedit: <b>${escapeHtml(v.title || t("video.untitled"))}</b>`;
   modal.classList.add("show");
 }
 
@@ -28412,10 +28484,19 @@ function renderAdminInbox() {
 // (Balas via Email untuk ticket, Update Status untuk keduanya). Modal di-inject
 // dinamis ke body supaya tidak butuh markup HTML statis.
 function openInboxDetailModal({ kind, item }) {
-  const ticketLabels = { new: "NEW", progress: "IN PROGRESS", resolved: "RESOLVED" };
-  const bugStatusLabels = { open: "OPEN", assigned: "ASSIGNED", closed: "CLOSED" };
+  // v535: status labels i18n (sebelumnya hardcoded EN)
+  const ticketLabels = {
+    new: t("admin.ticket.status.new"),
+    progress: t("admin.ticket.status.progress"),
+    resolved: t("admin.ticket.status.resolved"),
+  };
+  const bugStatusLabels = {
+    open: t("admin.bug.status.open"),
+    assigned: t("admin.bug.status.assigned"),
+    closed: t("admin.bug.status.closed"),
+  };
   const isTicket = kind === "ticket";
-  const title = item.title || (isTicket ? "(tanpa subjek)" : "(tanpa judul)");
+  const title = item.title || (isTicket ? t("ticket.no.subject") : t("video.untitled"));
   const body = isTicket ? (item.body || "No message body.") : (item.desc || "No bug description.");
   const sender = item.from || item.reporter || "—";
   const senderEmail = item.fromEmail || "";
@@ -28829,7 +28910,7 @@ function renderAdminTickets() {
       <div class="ticket-row-main">
         <div class="ticket-channel">${t.ch || "📧"}</div>
         <div class="ticket-meta">
-          <b>${escapeHtml(t.title || "(tanpa subjek)")}</b>
+          <b>${escapeHtml(t.title || window.t("ticket.no.subject"))}</b>
           <div class="ticket-from">${escapeHtml(t.from || "—")}</div>
           ${fromEmailHtml}
           <small>${relTime(t.createdAt)}</small>
@@ -28933,7 +29014,7 @@ function renderAdminBugs() {
 
   list.innerHTML = bugs.map(b => `<div class="bug-item" data-bug-id="${b.id}">
     <div>
-      <h4><span class="sev ${b.sev}">${b.sev.toUpperCase()}</span>${b.title} ${b.status === "closed" ? "<small style='color:#10b981;font-weight:600;margin-left:8px'>✓ CLOSED</small>" : b.status === "assigned" ? "<small style='color:#f59e0b;font-weight:600;margin-left:8px'>👤 ASSIGNED</small>" : ""}</h4>
+      <h4><span class="sev ${b.sev}">${b.sev.toUpperCase()}</span>${b.title} ${b.status === "closed" ? `<small style='color:#10b981;font-weight:600;margin-left:8px'>✓ ${t("admin.bug.status.closed")}</small>` : b.status === "assigned" ? `<small style='color:#f59e0b;font-weight:600;margin-left:8px'>👤 ${t("admin.bug.status.assigned")}</small>` : ""}</h4>
       <p>${b.desc}</p>
       <div class="bug-meta">📌 ${b.reporter} • ${relTime(b.createdAt)} • 🖥️ ${b.browser}</div>
     </div>
@@ -45547,7 +45628,7 @@ function confirmDelete() {
         localStorage.removeItem(`playly-state-${user.username}`);
         localStorage.removeItem(`playly-welcomed-${user.username}`);
         doLogout();
-        toast("🗑️ Akun berhasil dihapus.", "error");
+        toast(t("admin.toast.account.deleted"), "error");
       }
     })
   });
@@ -46376,7 +46457,7 @@ if (tryAutoBoot()) {
           <button type="button" class="cd-list-item" data-popup-jump-video="${esc(v.id)}">
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
-              <strong>${esc(v.title || "(tanpa judul)")}</strong>
+              <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views · ${num(v.likes||0)} likes</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
@@ -46425,7 +46506,7 @@ if (tryAutoBoot()) {
           <button type="button" class="cd-list-item" data-popup-jump-video="${esc(v.id)}">
             <div class="cd-li-rank">${i+1}</div>
             <div class="cd-li-text">
-              <strong>${esc(v.title || "(tanpa judul)")}</strong>
+              <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")}</small>
             </div>
             <div class="cd-li-meta">${num(v.viewsNum||0)}<small>views</small></div>
@@ -46508,7 +46589,7 @@ if (tryAutoBoot()) {
           <button type="button" class="cd-list-item" data-popup-jump-video="${esc(v.id)}">
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
-              <strong>${esc(v.title || "(tanpa judul)")}</strong>
+              <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
