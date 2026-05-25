@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v535 (Admin placeholders + 5 user-mgmt toasts i18n + bug inline labels — total 73 keys × 8 lang = 584 entries)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v536 (Final ID cleanup: Clear All → Hapus Semua, empty body/desc fallback)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -27198,7 +27198,7 @@ function applyGvBulkAction(action) {
       icon: "🗑️", iconClass: "danger",
       title: `Hapus ${ids.length} video?`,
       desc: `<b>${ids.length}</b> video akan dihapus permanen dari platform. Aksi ini tidak bisa dibatalkan.`,
-      btnText: "Clear All", btnClass: "danger",
+      btnText: "Hapus Semua", btnClass: "danger",
       onConfirm: () => {
         // C-2 H3: notify SEBELUM delete supaya creator info masih tersedia
         ids.forEach(id => {
@@ -28497,7 +28497,7 @@ function openInboxDetailModal({ kind, item }) {
   };
   const isTicket = kind === "ticket";
   const title = item.title || (isTicket ? t("ticket.no.subject") : t("video.untitled"));
-  const body = isTicket ? (item.body || "No message body.") : (item.desc || "No bug description.");
+  const body = isTicket ? (item.body || "(Pesan kosong)") : (item.desc || "(Deskripsi bug kosong)");
   const sender = item.from || item.reporter || "—";
   const senderEmail = item.fromEmail || "";
   const status = isTicket ? (item.status || "new") : (item.status || "open");
@@ -34309,7 +34309,7 @@ $("#clearHistory")?.addEventListener("click", () => {
       icon: "🗑️", iconClass: "danger",
       title: "Clear All History?",
       desc: `Semua <b>${state.history.length}</b> riwayat tonton akan dihapus dan tidak bisa dipulihkan.`,
-      btnText: "Clear All", btnClass: "danger",
+      btnText: "Hapus Semua", btnClass: "danger",
       onConfirm: () => {
         state.history = [];
         saveState();
