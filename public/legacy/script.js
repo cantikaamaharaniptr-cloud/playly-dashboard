@@ -13,6 +13,46 @@
   try { localStorage.removeItem("playly-current-user"); } catch (_) {}
 })();
 
+// ----------------------- AUTO-PUBLISH BACKFILL (2026-05-25) -----------------------
+// Sebelum 2026-05-25, video upload default adminStatus "pending" → harus
+// admin approve dulu. User bingung kenapa video tidak muncul di "Video Saya".
+// Sekarang upload langsung "published" (line ~40105) — tapi video LAMA yang
+// terlanjur ke-flag "pending" tetap stuck. Backfill ini flip semua
+// "pending" → "published" sekali per device. Takedown/draft tidak disentuh.
+// Flag idempotent supaya tidak ke-flip lagi kalau admin sengaja set pending.
+(function backfillPendingToPublished() {
+  var FLAG = "playly-bf-auto-publish-2026-05-25";
+  try {
+    if (localStorage.getItem(FLAG) === "1") return;
+    var changed = 0;
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (!key || !key.startsWith("playly-state-")) continue;
+      var raw = localStorage.getItem(key);
+      if (!raw) continue;
+      var s;
+      try { s = JSON.parse(raw); } catch (_) { continue; }
+      if (!s || !Array.isArray(s.myVideos)) continue;
+      var touched = false;
+      s.myVideos.forEach(function (v) {
+        if (v && v.adminStatus === "pending") {
+          v.adminStatus = "published";
+          v.updatedAt = Date.now();
+          touched = true;
+          changed++;
+        }
+      });
+      if (touched) {
+        try { localStorage.setItem(key, JSON.stringify(s)); } catch (_) {}
+      }
+    }
+    localStorage.setItem(FLAG, "1");
+    if (changed) console.info("[backfill] " + changed + " video pending → published");
+  } catch (err) {
+    console.warn("[backfill] pending→published exception:", err);
+  }
+})();
+
 // ----------------------- URL-TRIGGER ADMIN RESET -----------------------
 // Visit /?cleanup=playly-reset → wipe all user data + payments + state.
 // Admin accounts are preserved. Page reloads after cleanup. Per user
@@ -4726,7 +4766,7 @@ const I18N = {
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "New Videos",
     "library.download.head":     "Download",
-    "library.status.tab.all":    "Published",
+    "library.status.tab.all":    "Issues",
     "library.status.tab.pending":"Pending",
     "library.status.tab.draft":  "Draft",
     "library.status.tab.takedown":"Takedown",
@@ -6261,7 +6301,7 @@ const I18N = {
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "Video Baru",
     "library.download.head":     "Unduhan",
-    "library.status.tab.all":    "Diterbitkan",
+    "library.status.tab.all":    "Bermasalah",
     "library.status.tab.pending":"Menunggu",
     "library.status.tab.draft":  "Draf",
     "library.status.tab.takedown":"Takedown",
@@ -7549,7 +7589,7 @@ const I18N = {
     "library.statusvideos.head": "Diterbitkan",
     "library.newvideos.head":    "Video Baharu",
     "library.download.head":     "Muat Turun",
-    "library.status.tab.all":    "Diterbitkan",
+    "library.status.tab.all":    "Bermasalah",
     "library.status.tab.pending":"Menunggu",
     "library.status.tab.draft":  "Draf",
     "library.status.tab.takedown":"Ditarik",
@@ -8753,7 +8793,7 @@ const I18N = {
     "library.statusvideos.head": "公開済み",
     "library.newvideos.head":    "新着動画",
     "library.download.head":     "ダウンロード",
-    "library.status.tab.all":    "公開済み",
+    "library.status.tab.all":    "問題あり",
     "library.status.tab.pending":"保留中",
     "library.status.tab.draft":  "下書き",
     "library.status.tab.takedown":"削除済み",
@@ -9957,7 +9997,7 @@ const I18N = {
     "library.statusvideos.head": "منشور",
     "library.newvideos.head":    "فيديوهات جديدة",
     "library.download.head":     "تنزيل",
-    "library.status.tab.all":    "منشور",
+    "library.status.tab.all":    "مشاكل",
     "library.status.tab.pending":"قيد الانتظار",
     "library.status.tab.draft":  "مسودة",
     "library.status.tab.takedown":"مسحوب",
@@ -11161,7 +11201,7 @@ const I18N = {
     "library.statusvideos.head": "已发布",
     "library.newvideos.head":    "新视频",
     "library.download.head":     "下载",
-    "library.status.tab.all":    "已发布",
+    "library.status.tab.all":    "问题",
     "library.status.tab.pending":"审核中",
     "library.status.tab.draft":  "草稿",
     "library.status.tab.takedown":"已下架",
@@ -12365,7 +12405,7 @@ const I18N = {
     "library.statusvideos.head": "게시됨",
     "library.newvideos.head":    "새 동영상",
     "library.download.head":     "다운로드",
-    "library.status.tab.all":    "게시됨",
+    "library.status.tab.all":    "문제",
     "library.status.tab.pending":"대기 중",
     "library.status.tab.draft":  "초안",
     "library.status.tab.takedown":"게시 중단",
@@ -13569,7 +13609,7 @@ const I18N = {
     "library.statusvideos.head": "Publicado",
     "library.newvideos.head":    "Nuevos Videos",
     "library.download.head":     "Descargas",
-    "library.status.tab.all":    "Publicado",
+    "library.status.tab.all":    "Problemas",
     "library.status.tab.pending":"Pendiente",
     "library.status.tab.draft":  "Borrador",
     "library.status.tab.takedown":"Retirado",
@@ -40100,9 +40140,12 @@ $("#startUpload")?.addEventListener("click", () => {
         // Subtitle (Opsi 1 manual upload / Opsi 2 auto-generate AI)
         subtitleVtt: subtitleData?.vtt || null,
         subtitleLang: subtitleData?.lang || null,
-        // Video baru masuk antrian review admin — hanya visible setelah admin publish.
-        // Kalau visibility = "draft", skip admin review (video disimpan sebagai draft user).
-        adminStatus: visibility === "draft" ? "draft" : "pending",
+        // Auto-publish (2026-05-25): video langsung live setelah upload, tidak
+        // perlu admin approval. Sebelumnya default "pending" → user kreator
+        // bingung kenapa video tidak muncul di "Video Saya". Admin tetap bisa
+        // takedown via Kontrol Konten kalau ada masalah (reaktif, bukan
+        // gate). Visibility "draft" tetap respect — user simpan draft sendiri.
+        adminStatus: visibility === "draft" ? "draft" : "published",
         submittedAt: _now,
       };
       state.myVideos.unshift(newVid);

@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-b3-state-v506" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-autopub-v507" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -4303,11 +4303,11 @@
         <div class="lib-card lib-card-bare" data-focus-target="status-videos" data-lib="status">
           <div class="dl-section-head">
             <h3><span class="lib-h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span> Status Video</h3>
-            <small>Lihat dan kelola video berdasarkan status — Diterbitkan, Draf, Sampah, atau Takedown</small>
+            <small>Video yang perlu perhatian — pending review, draft, sampah, atau di-takedown admin</small>
           </div>
           <span class="lib-count lib-count-hidden" id="statusVideoCount">0</span>
           <div class="status-sub-tabs" id="statusSubTabs">
-            <button type="button" class="status-sub-tab active" data-status-tab="all"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span> <span data-i18n="library.status.tab.all">Published</span> <span class="ssc-count" id="statusCntAll">0</span></button>
+            <button type="button" class="status-sub-tab active" data-status-tab="all"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span> <span data-i18n="library.status.tab.all">Bermasalah</span> <span class="ssc-count" id="statusCntAll">0</span></button>
             <button type="button" class="status-sub-tab" data-status-tab="draft"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"/><polyline points="14 2 14 8 20 8"/><path d="M18.4 12.6a2 2 0 0 1 3 3L17 20l-3 1 1-3Z"/></svg></span> <span data-i18n="library.status.tab.draft">Draft</span> <span class="ssc-count" id="statusCntDraft">0</span></button>
             <button type="button" class="status-sub-tab" data-status-tab="trash"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span> <span data-i18n="library.status.tab.trash">Trash</span> <span class="ssc-count" id="statusCntTrash">0</span></button>
             <button type="button" class="status-sub-tab" data-status-tab="takedown"><span class="sst-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span> <span data-i18n="library.status.tab.takedown">Takedown</span> <span class="ssc-count" id="statusCntTakedown">0</span></button>
@@ -8383,8 +8383,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-b3-state-v506"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-b3-state-v506"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-autopub-v507"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-autopub-v507"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8830,7 +8830,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-b3-state-v506" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-autopub-v507" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
