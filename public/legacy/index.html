@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-purge-test-no-session-v514" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-pencarian-social-v515" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -5227,23 +5227,33 @@
 
       <!-- ============== PEOPLE (find other users) ============== -->
       <section class="view" data-view="people" data-people-tab="all">
-        <div class="view-header">
-          <div>
-            <h2>👥 Pencarian</h2>
-            <p>Temukan user atau admin di Playly.</p>
+        <div class="view-header view-header-people">
+          <div class="vh-people-title">
+            <span class="vh-people-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg>
+            </span>
+            <div class="vh-people-text">
+              <h2>Pencarian</h2>
+              <p>Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.</p>
+            </div>
           </div>
         </div>
 
-        <!-- Tab pill: Semua (default) | User | Admin -->
+        <!-- Tab pill (req user 2026-05-25): Semua | Followers | Following.
+             Replace tab User/Admin lama — sosial graph lebih relevan untuk
+             user biasa daripada role filter. -->
         <div class="riwayat-tab-bar people-tab-bar" role="tablist" style="margin-bottom:14px">
           <button type="button" class="riwayat-tab active" data-people-tab="all" role="tab">
-            📂 Semua
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg></span>
+            <span>Semua</span> <span class="ssc-count" id="peopleCntAll">0</span>
           </button>
-          <button type="button" class="riwayat-tab" data-people-tab="user" role="tab">
-            👤 User <span class="ssc-count" id="peopleCntUser">0</span>
+          <button type="button" class="riwayat-tab" data-people-tab="followers" role="tab">
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m22 11-3 3-2-2"/></svg></span>
+            <span>Followers</span> <span class="ssc-count" id="peopleCntFollowers">0</span>
           </button>
-          <button type="button" class="riwayat-tab" data-people-tab="admin" role="tab">
-            🛡️ Admin <span class="ssc-count" id="peopleCntAdmin">0</span>
+          <button type="button" class="riwayat-tab" data-people-tab="following" role="tab">
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span>
+            <span>Following</span> <span class="ssc-count" id="peopleCntFollowing">0</span>
           </button>
         </div>
 
@@ -8384,8 +8394,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-purge-test-no-session-v514"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-purge-test-no-session-v514"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-pencarian-social-v515"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-pencarian-social-v515"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8831,7 +8841,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-purge-test-no-session-v514" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-pencarian-social-v515" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

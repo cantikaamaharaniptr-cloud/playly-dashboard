@@ -33204,16 +33204,16 @@ document.addEventListener("click", e => {
   setRiwayatTab(btn.dataset.riwayatTab);
 });
 
-// People tab switch (Semua / User / Admin) di halaman Pencarian
-// BUG fix 2026-05-10ah: dulu ternary force "admin" or "user" → klik "Semua"
-// jadi switch ke "user" (bukan "all") → admin card hilang & klik tidak respon.
+// People tab switch (Semua / Followers / Following) di halaman Pencarian.
+// 2026-05-25 req user: tab User/Admin diganti jadi sosial graph Followers/
+// Following — lebih relevan untuk user biasa daripada role filter.
 document.addEventListener("click", e => {
   const btn = e.target.closest("button[data-people-tab]");
   if (!btn) return;
   e.preventDefault();
   const view = document.querySelector('section.view[data-view="people"]');
   if (!view) return;
-  const validTabs = ["all", "user", "admin"];
+  const validTabs = ["all", "followers", "following"];
   const requested = btn.dataset.peopleTab;
   const key = validTabs.includes(requested) ? requested : "all";
   view.dataset.peopleTab = key;
@@ -35328,22 +35328,36 @@ function renderPeople() {
       a.role !== "admin" && !ADMIN_EMAILS_PROTECTED.includes((a.email || "").toLowerCase())
     );
   }
-  const userAccounts  = allAccounts.filter(a => a.role !== "admin");
-  const adminAccounts = allAccounts.filter(a => a.role === "admin");
+  // Sosial graph filtering (req user 2026-05-25): tabs sekarang
+  // Semua | Followers | Following, bukan lagi User | Admin.
+  // - followers = akun yang FOLLOW user yang lagi login (mereka punya
+  //   my username di array followingCreators-nya).
+  // - following = akun yang DI-FOLLOW oleh user (ada di
+  //   state.followingCreators saya).
+  const myUsername = user?.username || "";
+  const myFollowing = new Set(Array.isArray(state?.followingCreators) ? state.followingCreators : []);
+  const followingAccounts = allAccounts.filter(a => a.username && myFollowing.has(a.username));
+  const followersAccounts = allAccounts.filter(a => {
+    if (!a.username || !myUsername) return false;
+    try {
+      return getUserFollowing(a.username).includes(myUsername);
+    } catch (_) { return false; }
+  });
   // Update counter di tabs
   const setT = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
-  setT("peopleCntUser", userAccounts.length);
-  setT("peopleCntAdmin", adminAccounts.length);
+  setT("peopleCntAll", allAccounts.length);
+  setT("peopleCntFollowers", followersAccounts.length);
+  setT("peopleCntFollowing", followingAccounts.length);
 
   let pool;
-  if (activeTab === "admin")      pool = adminAccounts;
-  else if (activeTab === "user")  pool = userAccounts;
-  else                            pool = [...adminAccounts, ...userAccounts]; // "all"
+  if (activeTab === "followers")      pool = followersAccounts;
+  else if (activeTab === "following") pool = followingAccounts;
+  else                                pool = allAccounts; // "all"
   const accounts = pool
     .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
     .sort((a, b) => {
-      // Sort: admin di atas saat mode "all"
-      if (activeTab === "all") {
+      // Sort: admin di atas saat mode "all" (admin viewer scenario)
+      if (activeTab === "all" && isAdminViewer) {
         if (a.role === "admin" && b.role !== "admin") return -1;
         if (a.role !== "admin" && b.role === "admin") return 1;
       }
@@ -35351,12 +35365,17 @@ function renderPeople() {
     });
 
   if (!accounts.length) {
-    const tabLabel = activeTab === "admin" ? "admin" : activeTab === "user" ? "user" : "user atau admin";
-    const emptyMsg = q
-      ? `Tidak ada ${tabLabel} yang cocok dengan "<b>${escapeHtml(q)}</b>".`
-      : (activeTab === "admin"
-          ? "Belum ada admin terdaftar."
-          : "Belum ada user lain — ajak teman daftar di Playly!");
+    let emptyMsg;
+    if (q) {
+      const tabLabel = activeTab === "followers" ? "follower" : activeTab === "following" ? "akun yang kamu ikuti" : "user";
+      emptyMsg = `Tidak ada ${tabLabel} yang cocok dengan "<b>${escapeHtml(q)}</b>".`;
+    } else if (activeTab === "followers") {
+      emptyMsg = "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!";
+    } else if (activeTab === "following") {
+      emptyMsg = "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.";
+    } else {
+      emptyMsg = "Belum ada user lain — ajak teman daftar di Playly!";
+    }
     grid.innerHTML = `<div class="people-empty">${emptyMsg}</div>`;
     if (moreWrap) moreWrap.hidden = true;
     return;
