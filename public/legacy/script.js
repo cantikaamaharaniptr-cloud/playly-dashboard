@@ -4554,7 +4554,7 @@ const I18N = {
     "dm.title":                  "💬 DM",
     "dm.title.desc":             "Personal chat with creators and friends.",
     "dm.all.title":              "All Messages",
-    "dm.all.desc":               "DM, Admin Broadcast, Requests & Archive — all in one view.",
+    "dm.all.desc":               "Your inbox — DMs from friends, admin announcements, new requests, and archived chats.",
     "dm.broadcast.title":        "📢 Broadcast Admin",
     "dm.broadcast.desc":         "Announcements & broadcasts from Playly admin.",
     "dm.requests.title":         "📨 Requests",
@@ -6027,7 +6027,7 @@ const I18N = {
     "dm.title":                  "💬 DM",
     "dm.title.desc":             "Chat personal dengan kreator dan teman.",
     "dm.all.title":              "Semua Pesan",
-    "dm.all.desc":               "Gabungan DM, Broadcast Admin, Permintaan & Arsip dalam satu tampilan.",
+    "dm.all.desc":               "Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.",
     "dm.broadcast.title":        "📢 Broadcast Admin",
     "dm.broadcast.desc":         "Pengumuman & broadcast dari admin Playly.",
     "dm.requests.title":         "📨 Permintaan",
@@ -35671,12 +35671,14 @@ function renderDmList() {
   filtered.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
   if (!filtered.length) {
+    // Audit 2026-05-25 req user — empty state list view: full Bahasa Indonesia.
+    // Sebelumnya campur EN+ID ("No DMs yet", "No chats in archive").
     const emptyMap = {
-      all: q ? "No results." : "Belum ada pesan apa pun. Klik + New Message untuk mulai.",
-      dm: q ? "No results." : "No DMs yet. Click + New Message to start.",
-      broadcast: q ? "No results." : "Belum ada broadcast dari admin.",
-      requests: q ? "No results." : "No new message requests.",
-      archived: q ? "No results." : "No chats in archive.",
+      all: q ? "Tidak ada hasil." : "Belum ada pesan. Klik <b>+ Pesan Baru</b> untuk mulai chat.",
+      dm: q ? "Tidak ada hasil." : "Belum ada DM. Klik <b>+ Pesan Baru</b> untuk mulai.",
+      broadcast: q ? "Tidak ada hasil." : "Belum ada broadcast dari admin.",
+      requests: q ? "Tidak ada hasil." : "Tidak ada permintaan pesan baru.",
+      archived: q ? "Tidak ada hasil." : "Belum ada chat di arsip.",
     };
     list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
     return;
@@ -36368,15 +36370,22 @@ function renderDmOverview() {
   var set = function (id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
   set("dmOvCountDm", cDm); set("dmOvCountBc", cBc);
   set("dmOvCountReq", cReq); set("dmOvCountArc", cArc);
+  // Update title-line + toggle hint visibility (2026-05-25 req user UX).
+  // Markup empty state sekarang: <p.dm-ov-empty-title> + <p.dm-ov-empty-hint>.
+  // Saat n > 0 → title diisi "X percakapan — klik untuk buka", hint disembunyikan
+  // (info kategori tidak relevan lagi kalau sudah ada items). Saat n = 0 → title
+  // tetap "Belum ada X", hint visible buat jelasin kategori.
   var body = function (id, n, none, some) {
     var el = document.getElementById(id); if (!el) return;
-    var p = el.querySelector("p");
-    if (p) p.textContent = n > 0 ? (n + " " + some) : none;
+    var titleEl = el.querySelector(".dm-ov-empty-title") || el.querySelector("p");
+    var hintEl = el.querySelector(".dm-ov-empty-hint");
+    if (titleEl) titleEl.textContent = n > 0 ? (n + " " + some) : none;
+    if (hintEl) hintEl.hidden = n > 0;
   };
-  body("dmOvBodyDm",  cDm,  "Belum ada DM.",             "percakapan — klik untuk buka");
-  body("dmOvBodyBc",  cBc,  "Belum ada broadcast.",      "broadcast — klik untuk buka");
-  body("dmOvBodyReq", cReq, "Belum ada permintaan.",     "permintaan — klik untuk buka");
-  body("dmOvBodyArc", cArc, "Belum ada chat diarsipkan.","chat — klik untuk buka");
+  body("dmOvBodyDm",  cDm,  "Belum ada DM",             "percakapan — klik untuk buka");
+  body("dmOvBodyBc",  cBc,  "Belum ada broadcast",      "broadcast — klik untuk buka");
+  body("dmOvBodyReq", cReq, "Belum ada permintaan",     "permintaan — klik untuk buka");
+  body("dmOvBodyArc", cArc, "Belum ada arsip",          "chat — klik untuk buka");
 }
 
 // Buka kategori spesifik (dari kartu overview / tombol).

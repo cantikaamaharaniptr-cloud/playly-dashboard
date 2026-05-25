@@ -66003,6 +66003,29 @@ body[data-role="admin"] .view-header-people .vh-people-icon {
   height: 15px;
 }
 
+/* === DM overview card empty state hint (2026-05-25 audit req user) ===
+   Tambah baris kedua dgn deskripsi singkat kategori (DM/Broadcast/dst)
+   supaya user baru tidak bingung. JS body() toggle visibility-nya saat
+   kategori punya items. */
+.dm-ov-empty .dm-ov-empty-title {
+  margin: 8px 0 4px;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 13.5px;
+}
+.dm-ov-empty .dm-ov-empty-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 260px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.dm-ov-empty .dm-ov-empty-hint[hidden] {
+  display: none;
+}
+
 /* === Notif panel empty-state rich (H audit, 2026-05-25) ===
    Versi lengkap dengan tips konkret + CTA, replace plain "No notifications".
    Tetap fit di panel notif (~360px width). */

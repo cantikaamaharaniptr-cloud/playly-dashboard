@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-tier-pill-final-v521" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-dm-page-polish-v522" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -5275,13 +5275,18 @@
            kanan = chat panel aktif (header user + scroll history + input field).
            Klik thread di list kiri → load chat ke panel kanan. -->
       <section class="view" data-view="messages">
-        <div class="view-header">
-          <div>
-            <h2 id="dmPageTitle">💬 DM</h2>
-            <p id="dmPageDesc">Chat personal dengan kreator dan teman.</p>
+        <div class="view-header view-header-people">
+          <div class="vh-people-title">
+            <span class="vh-people-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
+            </span>
+            <div class="vh-people-text">
+              <h2 id="dmPageTitle">Semua Pesan</h2>
+              <p id="dmPageDesc">Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.</p>
+            </div>
           </div>
           <div class="view-actions">
-            <button class="btn primary small" id="newChat">+ New Message</button>
+            <button class="btn primary small" id="newChat">+ Pesan Baru</button>
           </div>
         </div>
 
@@ -5314,7 +5319,8 @@
               <div class="inbox-col-list">
                 <div class="dm-ov-empty" id="dmOvBodyDm">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
-                  <p>Belum ada DM.</p>
+                  <p class="dm-ov-empty-title">Belum ada DM</p>
+                  <p class="dm-ov-empty-hint">Chat langsung dengan teman atau kreator yang kamu ikuti.</p>
                 </div>
               </div>
             </div>
@@ -5330,7 +5336,8 @@
               <div class="inbox-col-list">
                 <div class="dm-ov-empty" id="dmOvBodyBc">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>
-                  <p>Belum ada broadcast.</p>
+                  <p class="dm-ov-empty-title">Belum ada broadcast</p>
+                  <p class="dm-ov-empty-hint">Pengumuman resmi dari tim Playly akan muncul di sini.</p>
                 </div>
               </div>
             </div>
@@ -5346,7 +5353,8 @@
               <div class="inbox-col-list">
                 <div class="dm-ov-empty" id="dmOvBodyReq">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
-                  <p>Belum ada permintaan.</p>
+                  <p class="dm-ov-empty-title">Belum ada permintaan</p>
+                  <p class="dm-ov-empty-hint">Pesan dari user yang belum kamu follow masuk ke sini dulu.</p>
                 </div>
               </div>
             </div>
@@ -5362,7 +5370,8 @@
               <div class="inbox-col-list">
                 <div class="dm-ov-empty" id="dmOvBodyArc">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>
-                  <p>Belum ada chat diarsipkan.</p>
+                  <p class="dm-ov-empty-title">Belum ada arsip</p>
+                  <p class="dm-ov-empty-hint">Chat yang kamu arsipkan akan tersimpan rapi di sini.</p>
                 </div>
               </div>
             </div>
@@ -8394,8 +8403,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-tier-pill-final-v521"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-tier-pill-final-v521"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-dm-page-polish-v522"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-dm-page-polish-v522"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8841,7 +8850,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-tier-pill-final-v521" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-dm-page-polish-v522" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
