@@ -17416,15 +17416,14 @@ function renderDashboardTierPill() {
       '</span>';
     pill.title = isID ? "Akun Premium aktif" : "Premium account active";
   } else {
-    // G audit (2026-05-25): soften pill copy dari hard CTA "Upgrade" jadi
-    // info-style "Premium tersedia" / "Premium available". Klik handler
-    // tetap sama (buka plan picker). Tujuan: kurangi pressure di chrome
-    // permanent yang selalu visible — premium opportunity ditampilkan
-    // sbg fitur tersedia, bukan sbg gentle nag.
+    // Audit 2026-05-25 req user (opsi 1): "Gratis" jadi badge wine
+    // outline kecil, "Premium tersedia" jadi text muted cream. Color
+    // amber #DCA96D yg sebelumnya dipakai untuk status dihapus —
+    // terlalu mencolok di topbar. Klik tetap buka plan picker.
     pill.innerHTML =
       '<span class="dtp-icon">○</span>' +
       '<span class="dtp-text">' +
-        '<span class="dtp-label">Free</span>' +
+        '<span class="dtp-tier-badge">' + (isID ? "Gratis" : "Free") + '</span>' +
         '<span class="dtp-status">' + (isID ? "Premium tersedia" : "Premium available") + '</span>' +
       '</span>';
     pill.title = isID ? "Lihat opsi Premium" : "See Premium options";
