@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-medium-audit-batch-v546" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-r2-video-storage-v547" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8457,10 +8457,26 @@
       url: "https://urfkqcdwcvyzctbtbpwv.supabase.co",
       key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyZmtxY2R3Y3Z5emN0YnRicHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODk0NjgsImV4cCI6MjA5NDk2NTQ2OH0.sXDLka8JTyfH1pJ5_hnu7t3PQHVnF-duXi93Bs6mV8k",
     };
+    // v547 (2026-05-25): Cloudflare R2 video storage. Egress $0 vs Supabase
+    // Storage (5 GB/mo cap, $0.09/GB after). New uploads → R2; existing videos
+    // tetap stream dari Supabase URL yg tersimpan di v.videoUrl.
+    //
+    // ROLLOUT SEQUENCE (status: setup pending):
+    //   1. User setup Cloudflare R2: signup, bikin bucket, generate API token
+    //   2. Set env vars di Vercel dashboard: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
+    //      R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL
+    //   3. Update PLAYLY_R2_PUBLIC_URL di bawah ke bucket public URL
+    //      (e.g. "https://pub-xxx.r2.dev" atau "https://cdn.playly.id")
+    //   4. Flip PLAYLY_USE_R2 ke true → bump cache-bust → deploy
+    //
+    // Sebelum rollout selesai: leave PLAYLY_USE_R2 = false. Cloud-sync skip
+    // R2 path → langsung pakai Supabase Storage (zero regression vs v546).
+    window.PLAYLY_USE_R2 = true; // v547 ACTIVATED — R2 setup complete 2026-05-25
+    window.PLAYLY_R2_PUBLIC_URL = "https://pub-c0bf4a455f2c43618a7d4754ae9f7835.r2.dev";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-medium-audit-batch-v546"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-medium-audit-batch-v546"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-r2-video-storage-v547"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-r2-video-storage-v547"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8906,7 +8922,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-medium-audit-batch-v546" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-r2-video-storage-v547" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

@@ -547,7 +547,26 @@
     }
   }
 
-  // === video blob: Supabase Storage =====================================
+  // === video blob: R2 (primary) + Supabase Storage (fallback) ===========
+  //
+  // v547 (2026-05-25): Cloudflare R2 jadi primary upload target (egress $0).
+  // Supabase Storage tetap ada untuk fallback + existing videos. Strategi:
+  //   - New uploads: try R2 → fallback Supabase kalau R2 error/disabled
+  //   - Existing videos: tetap stream dari Supabase URL yg tersimpan di
+  //     v.videoUrl. getVideoUrl() pakai Supabase API (kalau v.videoUrl
+  //     hilang, fallback ke Supabase lookup by id).
+  //   - Delete: dispatch by URL prefix (R2 atau Supabase) supaya tidak salah
+  //     hapus.
+  //
+  // Kill switch: window.PLAYLY_USE_R2 (default true). Set false untuk
+  // emergency rollback ke Supabase-only (mis. R2 endpoint down).
+
+  function useR2() {
+    if (typeof window === "undefined") return false;
+    if (window.PLAYLY_USE_R2 === false) return false;
+    return true; // default ON setelah v547
+  }
+
   function blobPath(id, mime) {
     const ext = !mime ? "mp4"
       : mime.includes("webm") ? "webm"
@@ -556,12 +575,82 @@
     return `${id}.${ext}`;
   }
 
-  // Upload video blob ke Supabase Storage.
-  // Return { ok, url, error } supaya caller bisa surface error ke user.
+  // Upload video blob — try R2 first, fallback to Supabase Storage.
+  // Return { ok, url, error, via: "r2"|"supabase" }.
   async function uploadVideoBlob(id, blob) {
+    if (!blob) return { ok: false, error: "no_blob" };
+    if (useR2()) {
+      const r2Res = await uploadViaR2(id, blob);
+      if (r2Res.ok) return r2Res;
+      // Soft errors (auth/network) → fallback ke Supabase. Hard errors
+      // (file_too_large) → bubble up langsung, jangan retry ke Supabase
+      // karena Supabase limit lebih kecil.
+      if (r2Res.error === "file_too_large") return r2Res;
+      console.warn("[cloud] R2 upload failed, fallback to Supabase. Reason:", r2Res.error || r2Res.reason);
+    }
+    return uploadViaSupabase(id, blob);
+  }
+
+  // R2 path: POST /api/r2/sign-upload → PUT to presigned URL.
+  // Bypass Vercel 4.5MB body limit karena file PUT langsung ke R2.
+  async function uploadViaR2(id, blob) {
+    try {
+      const signResp = await fetch("/api/r2/sign-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          id: String(id),
+          contentType: blob.type || "video/mp4",
+          sizeBytes: blob.size,
+        }),
+      });
+      let signData = null;
+      try { signData = await signResp.json(); } catch (_) {}
+      if (!signResp.ok || !signData || !signData.ok) {
+        const reason = (signData && signData.error) || ("http_" + signResp.status);
+        // file_too_large dari /api/r2/sign-upload → return spesifik supaya
+        // caller (UI) bisa kasih pesan jelas.
+        if (signData && signData.error === "file_too_large") {
+          const maxMB = ((signData.maxBytes || 0) / 1024 / 1024).toFixed(0);
+          return {
+            ok: false,
+            error: "file_too_large",
+            message: `File ${(blob.size / 1024 / 1024).toFixed(1)} MB melebihi batas ${maxMB} MB untuk R2.`,
+          };
+        }
+        return { ok: false, error: "r2_presign_failed", reason: reason };
+      }
+      // PUT file langsung ke R2 presigned URL.
+      const putResp = await fetch(signData.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": blob.type || "video/mp4",
+        },
+        body: blob,
+      });
+      if (!putResp.ok) {
+        return {
+          ok: false,
+          error: "r2_put_failed",
+          reason: "http_" + putResp.status,
+        };
+      }
+      return {
+        ok: true,
+        url: signData.publicUrl,
+        via: "r2",
+        key: signData.key,
+      };
+    } catch (err) {
+      return { ok: false, error: "r2_exception", reason: String(err) };
+    }
+  }
+
+  // Supabase path (legacy / fallback) — original implementation.
+  async function uploadViaSupabase(id, blob) {
     const sb = client();
     if (!sb) return { ok: false, error: "cloud_disabled" };
-    if (!blob) return { ok: false, error: "no_blob" };
     const sizeMB = blob.size / 1024 / 1024;
     try {
       const path = blobPath(id, blob.type);
@@ -588,7 +677,7 @@
         return { ok: false, error: "upload_failed", message: error.message };
       }
       const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
-      return { ok: true, url: data?.publicUrl || null };
+      return { ok: true, url: data?.publicUrl || null, via: "supabase" };
     } catch (e) {
       console.warn("[cloud] upload exception:", e);
       return { ok: false, error: "exception", message: e?.message || "Upload gagal" };
@@ -627,31 +716,93 @@
     } catch { return null; }
   }
 
-  // CR-5 fix (2026-05-21): SECURITY/COST — delete video blob dari Supabase
-  // Storage. Sebelumnya deleteAdminVideo hanya hapus localStorage + IDB blob,
-  // file MP4 di Supabase Storage dibiarkan → bucket grows forever, egress
-  // drain (relevan kita lagi krisis egress quota). Caller bisa await
-  // (rekomendasi) atau fire-and-forget; return promise resolves dgn
-  // {ok, error?}.
-  async function deleteVideoBlob(id) {
+  // CR-5 fix (2026-05-21): SECURITY/COST — delete video blob dari cloud.
+  // Sebelumnya deleteAdminVideo hanya hapus localStorage + IDB blob, file
+  // di-storage dibiarkan → bucket grows forever, egress drain.
+  //
+  // v547 (2026-05-25): Dispatch by URL prefix supaya R2 dan Supabase masing-
+  // masing di-delete proper. videoUrl param optional — kalau dikasih, sistem
+  // tau lokasi pasti; kalau null, coba R2 dulu (best effort) + Supabase.
+  async function deleteVideoBlob(id, videoUrl) {
+    const url = String(videoUrl || "");
+    const r2Prefix = (typeof window !== "undefined" && window.PLAYLY_R2_PUBLIC_URL)
+      ? window.PLAYLY_R2_PUBLIC_URL : "";
+    // URL-based dispatch: pasti tahu lokasi → delete spesifik.
+    if (url && r2Prefix && url.startsWith(r2Prefix)) {
+      return deleteViaR2(id, url);
+    }
+    if (url && /\.supabase\.co\//.test(url)) {
+      return deleteViaSupabase(id);
+    }
+    // No URL hint — fallback strategy: kalau R2 enabled, coba R2 + Supabase
+    // parallel (delete idempotent, no harm kalau salah satu 404). Egress
+    // negligible untuk delete request.
+    if (useR2()) {
+      const [r2Res, sbRes] = await Promise.all([
+        deleteViaR2(id, null).catch(err => ({ ok: false, error: String(err) })),
+        deleteViaSupabase(id).catch(err => ({ ok: false, error: String(err) })),
+      ]);
+      // Sukses kalau salah satu OK
+      if (r2Res.ok || sbRes.ok) return { ok: true, r2: r2Res, supabase: sbRes };
+      return { ok: false, error: "both_failed", r2: r2Res, supabase: sbRes };
+    }
+    return deleteViaSupabase(id);
+  }
+
+  async function deleteViaR2(id, knownUrl) {
+    try {
+      // Server derive key dari id+contentType, atau pakai explicit key kalau
+      // bisa di-extract dari URL. Pure id-based aman karena key sanitized
+      // server-side.
+      const payload = { id: String(id) };
+      if (knownUrl) {
+        // Try to extract key dari public URL: <publicUrl>/<key>
+        try {
+          const u = new URL(knownUrl);
+          const path = u.pathname.replace(/^\/+/, "");
+          if (path) payload.key = path;
+        } catch (_) {}
+      }
+      const resp = await fetch("/api/r2/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      });
+      let data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (resp.ok && data && data.ok) {
+        return { ok: true, via: "r2" };
+      }
+      return {
+        ok: false,
+        error: (data && data.error) || ("http_" + resp.status),
+        via: "r2",
+      };
+    } catch (err) {
+      return { ok: false, error: String(err), via: "r2" };
+    }
+  }
+
+  async function deleteViaSupabase(id) {
     const sb = client();
-    if (!sb) return { ok: false, error: "cloud_disabled" };
+    if (!sb) return { ok: false, error: "cloud_disabled", via: "supabase" };
     try {
       const filename = await findVideoFilename(id);
-      if (!filename) return { ok: true, skipped: "not_found" };
+      if (!filename) return { ok: true, skipped: "not_found", via: "supabase" };
       const { error } = await sb.storage.from(BUCKET).remove([filename]);
       if (error) {
         console.warn("[cloud] delete blob failed:", error.message);
-        return { ok: false, error: error.message };
+        return { ok: false, error: error.message, via: "supabase" };
       }
       // Invalidate filename cache so future getVideoUrl returns null
       const cache = _loadFilenameCache();
       delete cache[id];
       _saveFilenameCache(cache);
-      return { ok: true };
+      return { ok: true, via: "supabase" };
     } catch (err) {
       console.warn("[cloud] delete blob exception:", err);
-      return { ok: false, error: err?.message || "exception" };
+      return { ok: false, error: err?.message || "exception", via: "supabase" };
     }
   }
 

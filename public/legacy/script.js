@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v546 (Medium audit batch: premium code dedup, silent-grant notif, dual-admin ticket race, payment orphan cleanup)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v547 (Cloudflare R2 video storage: $0 egress; uploadVideoBlob dispatch R2 first, Supabase fallback)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -25557,9 +25557,10 @@ function deleteUserAccount(username) {
                   }).catch(() => {});
                 } catch {}
               }
-              // 3. Hapus Supabase Storage blob (CR-5 helper)
+              // 3. Hapus cloud storage blob (CR-5 helper)
+              // v547: pass v.videoUrl supaya R2 vs Supabase dispatch tepat.
               if (window.cloudSync?.deleteVideoBlob && v.id) {
-                try { window.cloudSync.deleteVideoBlob(v.id); } catch {}
+                try { window.cloudSync.deleteVideoBlob(v.id, v.videoUrl); } catch {}
               }
             }
           }
@@ -27306,6 +27307,9 @@ async function deleteAdminVideo(id) {
   const all = getAllAdminVideos();
   const target = all.find(v => v.id === id);
   if (!target) return false;
+  // v547 (2026-05-25): capture videoUrl SEBELUM filter supaya bisa pass ke
+  // deleteVideoBlob — caller tahu R2 atau Supabase, dispatch tepat.
+  const targetVideoUrl = target.videoUrl || null;
   let s;
   try { s = JSON.parse(localStorage.getItem(target._ownerKey)); } catch { return false; }
   if (!s) return false;
@@ -27326,12 +27330,11 @@ async function deleteAdminVideo(id) {
       setTimeout(() => resolve(), 3000);
     });
   } catch (err) { console.warn("[deleteAdminVideo] IDB delete failed:", err); }
-  // CR-5 fix (2026-05-21): juga hapus video blob di Supabase Storage.
-  // Sebelumnya bucket leak forever — egress drain + storage growth.
-  // Fire-and-forget OK karena admin sudah dapat feedback dari UI yg lain.
+  // CR-5 fix (2026-05-21): juga hapus video blob di cloud storage.
+  // v547: pass videoUrl supaya dispatch R2 vs Supabase tepat.
   try {
     if (window.cloudSync?.deleteVideoBlob) {
-      Promise.resolve(window.cloudSync.deleteVideoBlob(id)).catch(() => {});
+      Promise.resolve(window.cloudSync.deleteVideoBlob(id, targetVideoUrl)).catch(() => {});
     }
   } catch {}
   return true;
