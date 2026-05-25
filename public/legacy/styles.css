@@ -40740,69 +40740,32 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   text-transform: none; letter-spacing: .2px; margin-top: 0;
 }
 
-/* Free state — Audit 2026-05-25 (opsi 3): gold-wine gradient subtle +
-   bintang gold + "Free · Coba Premium". Frame Premium sebagai aspirasi.
-   Lebih menarik visual tapi masih lembut (gradient subtle, no shimmer
-   animation kayak premium-aktif). */
+/* Free state — Audit 2026-05-25 FINAL (opsi 2 dipilih user): compact,
+   icon + 1 kata "Gratis". Status text "Premium tersedia" + gradient
+   gold-wine dihapus → info pindah ke tooltip hover. Bersih + minimal
+   di chrome topbar. */
 .dashboard-tier-pill[data-tier="free"] {
-  border: 1px solid rgba(220, 169, 109, .35);
-  background: linear-gradient(135deg,
-    rgba(220, 169, 109, .08) 0%,
-    rgba(106, 31, 41, .14) 100%);
-  gap: 7px;
-  padding: 0 14px 0 11px;
+  border-color: var(--border);
+  background: var(--surface);
+  gap: 6px;
+  padding: 0 12px 0 10px;
 }
 .dashboard-tier-pill[data-tier="free"] .dtp-icon {
-  color: #DCA96D;
+  color: var(--text-2);
   font-size: 13px;
-}
-.dashboard-tier-pill[data-tier="free"] .dtp-text {
-  gap: 6px;
 }
 .dashboard-tier-pill[data-tier="free"] .dtp-label {
-  color: #fff;
+  color: var(--text);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .2px;
 }
-.dashboard-tier-pill[data-tier="free"] .dtp-sep {
-  color: rgba(220, 169, 109, .55);
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1;
-}
-.dashboard-tier-pill[data-tier="free"] .dtp-status {
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: .15px;
-  opacity: .92;
-}
 .dashboard-tier-pill[data-tier="free"]:hover {
-  background: linear-gradient(135deg,
-    rgba(220, 169, 109, .14) 0%,
-    rgba(106, 31, 41, .22) 100%);
-  border-color: rgba(220, 169, 109, .55);
+  background: rgba(80, 16, 10, .12);
+  border-color: rgba(80, 16, 10, .55);
 }
 .dashboard-tier-pill[data-tier="free"]:hover .dtp-icon {
-  color: #FFC94D;
-}
-.dashboard-tier-pill[data-tier="free"]:hover .dtp-status {
-  opacity: 1;
-}
-/* Light mode — softer gradient + dark text */
-body[data-theme="light"]:not([data-role="admin"]) .dashboard-tier-pill[data-tier="free"] {
-  background: linear-gradient(135deg,
-    rgba(220, 169, 109, .12) 0%,
-    rgba(106, 31, 41, .06) 100%);
-  border-color: rgba(220, 169, 109, .45);
-}
-body[data-theme="light"]:not([data-role="admin"]) .dashboard-tier-pill[data-tier="free"] .dtp-label,
-body[data-theme="light"]:not([data-role="admin"]) .dashboard-tier-pill[data-tier="free"] .dtp-status {
   color: var(--text);
-}
-body[data-theme="light"]:not([data-role="admin"]) .dashboard-tier-pill[data-tier="free"] .dtp-icon {
-  color: #b97606;
 }
 
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
