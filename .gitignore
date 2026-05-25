@@ -46,3 +46,4 @@ out/
 
 # Playwright/MCP browser snapshots (ephemeral test artifacts)
 .playwright-mcp/
+*.png
