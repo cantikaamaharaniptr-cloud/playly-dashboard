@@ -2,6 +2,10 @@
    PLAYLY. — Dashboard Logic (auth + multi-view)
    ========================================================= */
 
+// Version banner — log di console saat script load untuk verifikasi
+// versi yang aktif (kadang browser/CDN cache serve versi lama).
+console.info("%c[playly] script.js v530 (Inbox+People+Notif+TopPerf full i18n 8 lang, 47 keys × 8 = 376 entries)", "color:#DCA96D;font-weight:600;");
+
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
 // tapi cloud-sync mirror dari kv table → re-sync tiap load → state inconsistency.
@@ -20,13 +24,21 @@
 // hapus dari localStorage (cloud-sync hook akan otomatis push DELETE ke kv
 // untuk key prefix yg masih ke-sync). Idempotent — flag mencegah re-run.
 (function purgeTestAccounts() {
-  var FLAG = "playly-bf-purge-test-2026-05-25";
+  // Bump flag jadi v2 (2026-05-25 round 2) supaya IIFE jalan lagi
+  // walaupun device sudah set flag v1 sebelumnya — sekarang ada
+  // tambahan stale account cantika@playly.app yang perlu di-cleanup.
+  var FLAG = "playly-bf-purge-test-2026-05-25-v2";
   try {
     if (localStorage.getItem(FLAG) === "1") return;
     var testEmails = [
       "user1@gmail.com",
       "userbaru1@gmail.com",
       "usernew1@gmail.com",
+      // Round 2 (2026-05-25): stale dup account yg conflict dgn real user
+      // "cantika" (real user pakai email cantikaputri@gmail.com). Account
+      // ini muncul di halaman Pencarian sbg "diri sendiri" karena username
+      // collision. Bukan akun production yg sah.
+      "cantika@playly.app",
     ];
     var testUsernames = ["user1", "userbaru1", "usernew1"];
     var removed = 0;
@@ -1785,6 +1797,161 @@ window.__playlySeedQA = function seedQAVideos() {
   } catch {}
 })();
 
+// QA helper — seed dummy DM threads supaya bisa test live preview + search
+// di halaman Obrolan langsung (v523+). Run di console: window.__playlySeedDmDemo()
+// → seed 5 thread mixed (DM/Broadcast/Permintaan/Arsip), reload page → live
+// preview di card overview muncul. Cleanup: window.__playlyClearDmDemo().
+// Aman dipanggil multiple kali — clear dulu, lalu seed baru.
+// === DEV: Auto-show "🧪 Seed demo" button + wire click handler ONLY di localhost ===
+// Production user tidak lihat tombol ini (hidden default). Sengaja inline biar
+// jelas + minimal — kalau pindah ke utility module, gampang lupa cleanup.
+document.addEventListener("DOMContentLoaded", function () {
+  var isLocal = location.hostname === "localhost"
+             || location.hostname === "127.0.0.1"
+             || location.hostname === "::1";
+  if (!isLocal) return;
+  var setupBtn = function () {
+    var btn = document.getElementById("dmDevSeedBtn");
+    if (!btn) return false;
+    btn.hidden = false;
+    if (btn.dataset.bound) return true;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (typeof window.__playlySeedDmDemo === "function") {
+        var n = window.__playlySeedDmDemo();
+        if (typeof toast === "function") {
+          toast("🧪 " + n + " thread demo di-seed. Cek 4 card di Semua untuk lihat live preview.", "success");
+        }
+      } else {
+        console.warn("[dev] seedDmDemo not ready");
+      }
+    });
+    return true;
+  };
+  // Coba bind langsung; kalau button belum render (dashboard belum boot),
+  // retry tiap 500ms sampai 10s.
+  if (setupBtn()) return;
+  var tries = 0;
+  var iv = setInterval(function () {
+    if (setupBtn() || ++tries > 20) clearInterval(iv);
+  }, 500);
+});
+
+window.__playlySeedDmDemo = function seedDmDemo() {
+  if (!user || !state) {
+    console.warn("[seedDmDemo] no user/state — login dulu");
+    return;
+  }
+  const NOW = Date.now();
+  const minsAgo = m => NOW - m * 60 * 1000;
+  const hoursAgo = h => NOW - h * 3600 * 1000;
+  const daysAgo = d => NOW - d * 86400 * 1000;
+
+  const demoThreads = [
+    // 1. DM regular (mutual follow) — unread
+    {
+      id: "qa-dm-1",
+      name: "aldoramadhan",
+      init: "AR",
+      with: "aldoramadhan",
+      isFollowing: true, // mutual = bukan request
+      unread: 2,
+      ts: minsAgo(15),
+      online: true,
+      history: [
+        { from: "aldoramadhan", text: "Halo cantika!", ts: minsAgo(20) },
+        { from: "me", text: "Hai Aldo!", ts: minsAgo(18) },
+        { from: "aldoramadhan", text: "Mau collab di video berikutnya gak?", ts: minsAgo(15) },
+      ],
+    },
+    // 2. DM regular — read
+    {
+      id: "qa-dm-2",
+      name: "sasitirta",
+      init: "ST",
+      with: "sasitirta",
+      isFollowing: true,
+      unread: 0,
+      ts: hoursAgo(3),
+      history: [
+        { from: "sasitirta", text: "Suka banget sama konten kamu yg terakhir!", ts: hoursAgo(3) },
+      ],
+    },
+    // 3. Broadcast dari admin — unread
+    {
+      id: "qa-bc-1",
+      name: "admin.playly",
+      init: "AP",
+      isAdmin: true,
+      isBroadcast: true,
+      unread: 1,
+      ts: hoursAgo(8),
+      history: [
+        {
+          from: "admin.playly",
+          text: "🎉 Update Playly v523: dashboard Obrolan langsung sekarang punya live preview + search global!",
+          ts: hoursAgo(8),
+        },
+      ],
+    },
+    // 4. Permintaan — user yg belum follow
+    {
+      id: "qa-req-1",
+      name: "kreatorbaru",
+      init: "KB",
+      with: "kreatorbaru",
+      isFollowing: false, // request flag biasanya derive dari isFollowing=false + bukan admin
+      unread: 1,
+      ts: hoursAgo(6),
+      history: [
+        { from: "kreatorbaru", text: "Hai! Boleh tanya soal setup channel kamu?", ts: hoursAgo(6) },
+      ],
+    },
+    // 5. Arsip
+    {
+      id: "qa-arc-1",
+      name: "rianpranata",
+      init: "RP",
+      with: "rianpranata",
+      isFollowing: true,
+      archived: true,
+      unread: 0,
+      ts: daysAgo(7),
+      history: [
+        { from: "rianpranata", text: "Thanks reply-nya kemarin!", ts: daysAgo(7) },
+      ],
+    },
+  ];
+
+  // Tag isDummy supaya bisa di-clear nanti, lalu unshift ke state.messages
+  state.messages = (state.messages || []).filter(m => !m.isDummy); // clear prev seed
+  demoThreads.forEach(t => { t.isDummy = true; });
+  state.messages = [...demoThreads, ...state.messages];
+  saveState();
+  console.info("[seedDmDemo] seeded " + demoThreads.length + " threads. Reload page atau klik tab Obrolan langsung untuk lihat live preview.");
+  if (state.currentView === "messages" && typeof renderDmOverview === "function") {
+    renderDmOverview();
+    if (typeof renderMsgList === "function") renderMsgList();
+  }
+  return demoThreads.length;
+};
+
+// Cleanup helper — hapus semua thread yg di-tag isDummy dari seed.
+window.__playlyClearDmDemo = function clearDmDemo() {
+  if (!user || !state) return 0;
+  var before = (state.messages || []).length;
+  state.messages = (state.messages || []).filter(m => !m.isDummy);
+  var after = state.messages.length;
+  saveState();
+  console.info("[clearDmDemo] removed " + (before - after) + " dummy threads.");
+  if (state.currentView === "messages" && typeof renderDmOverview === "function") {
+    renderDmOverview();
+    if (typeof renderMsgList === "function") renderMsgList();
+  }
+  return before - after;
+};
+
 // Heartbeat — update lastActivityAt setiap 60s saat tab visible & user
 // belum logout. Bikin online dot di creator card / DM list akurat.
 let __heartbeatTimer = null;
@@ -2154,7 +2321,7 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Obrolan langsung", activity: "Aktivitas", discover: "Jelajahi", people: "Cari User", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Inbox", activity: "Aktivitas", discover: "Jelajahi", people: "Cari User", profile: "Edit Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email",
   "premium-insights": "Premium Insights",
@@ -4343,7 +4510,7 @@ const I18N = {
     "nav.stats":                 "Rating Scale",
     "nav.search":                "Search User",
     "nav.activity":              "Activity",
-    "nav.messages":              "Live chat",
+    "nav.messages":              "Inbox",
     "nav.settings":              "Settings",
     "nav.help":                  "Help",
     // Sidebar sub-items
@@ -4372,7 +4539,7 @@ const I18N = {
     "page.stats":                "Statistics",
     "page.search":               "Search User",
     "page.activity":             "Activity",
-    "page.messages":             "Live chat",
+    "page.messages":             "Inbox",
     "page.settings":             "Settings",
     "page.profile.edit":         "Edit Profile",
     "page.profile.creator":      "Creator Profile",
@@ -5807,6 +5974,54 @@ const I18N = {
     "admin.kpi.views.top":       "Top Performers",
     "admin.kpi.views.openan":    "Open Analytics",
     "admin.kpi.close":           "Close",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "Your inbox — DMs from friends, admin announcements, new requests, and archived chats.",
+    "inbox.search.ph":            "Search messages or users across all categories...",
+    "inbox.search.empty":         "No messages match",
+    "inbox.search.results":       "results",
+    "inbox.seeall":               "See all →",
+    "inbox.btn.newchat":          "+ New Message",
+    "inbox.btn.start":            "Start new",
+    "inbox.btn.broadcast.prefs":  "Preferences",
+    "inbox.btn.dm.privacy":       "DM privacy",
+    "inbox.empty.dm.title":       "No DMs yet",
+    "inbox.empty.dm.hint":        "Chat directly with friends or creators you follow.",
+    "inbox.empty.bc.title":       "No broadcasts",
+    "inbox.empty.bc.hint":        "Official announcements from the Playly team will appear here.",
+    "inbox.empty.req.title":      "No requests",
+    "inbox.empty.req.hint":       "Messages from users you don't follow yet land here first.",
+    "inbox.empty.arc.title":      "No archived chats",
+    "inbox.empty.arc.hint":       "Chats you archive will be stored here neatly.",
+    "inbox.list.empty.all":       "No messages yet. Click <b>+ New Message</b> to start chatting.",
+    "inbox.list.empty.dm":        "No DMs yet. Click <b>+ New Message</b> to start.",
+    "inbox.list.empty.bc":        "No broadcasts from admin.",
+    "inbox.list.empty.req":       "No new message requests.",
+    "inbox.list.empty.arc":       "No chats in archive.",
+    "inbox.list.empty.noresults": "No results.",
+    "inbox.preview.unit.dm":      "conversations — click to open",
+    "inbox.preview.unit.bc":      "broadcasts — click to open",
+    "inbox.preview.unit.req":     "requests — click to open",
+    "inbox.preview.unit.arc":     "chats — click to open",
+    "inbox.chat.back":            "Back to list",
+    "people.subtitle":            "Find users, see your followers, and manage who you follow.",
+    "people.tab.followers":       "Followers",
+    "people.tab.following":       "Following",
+    "people.empty.all":           "No other users yet — invite friends to join Playly!",
+    "people.empty.followers":     "No followers yet. Upload videos or invite friends to discover Playly!",
+    "people.empty.following":     "You're not following anyone. Open the <b>All</b> tab to explore other users.",
+    "topperf.empty.title":        "No performance data yet",
+    "topperf.empty.desc":         "Upload your first video to start seeing views, likes, and watch-time stats here.",
+    "topperf.empty.cta":          "Upload first video",
+    "topperf.empty.col":          "Data will appear when your videos start getting views.",
+    "notif.empty.rich.title":     "No notifications yet",
+    "notif.empty.rich.desc":      "Notifications appear when there's interaction on your content — likes, comments, new followers, or message replies.",
+    "notif.empty.rich.tip1":      "📤 <b>Upload videos</b> so other creators can watch & like",
+    "notif.empty.rich.tip2":      "🔍 <b>Follow creators</b> you love on the Discover page",
+    "notif.empty.rich.tip3":      "💬 <b>Leave comments</b> on others' videos — usually replied quickly",
+    "notif.empty.rich.cta.explore":"Explore creators",
+    "notif.empty.rich.cta.upload":"Upload video",
+    "notif.empty.home":           "No notifications yet — start by uploading a video or following your favorite creator.",
+    "notif.empty.home.cta":       "Explore creators",
   },
   id: {
     "settings.language":         "Bahasa & Region",
@@ -5824,7 +6039,7 @@ const I18N = {
     "nav.stats":                 "Statistik",
     "nav.search":                "Cari User",
     "nav.activity":              "Aktivitas",
-    "nav.messages":              "Obrolan langsung",
+    "nav.messages":              "Inbox",
     "nav.settings":              "Pengaturan",
     "nav.help":                  "Bantuan",
     "sub.myvideos":              "Video Saya",
@@ -5851,7 +6066,7 @@ const I18N = {
     "page.stats":                "Statistik",
     "page.search":               "Cari User",
     "page.activity":             "Aktivitas",
-    "page.messages":             "Obrolan langsung",
+    "page.messages":             "Inbox",
     "page.settings":             "Pengaturan",
     "page.profile.edit":         "Edit Profil",
     "page.profile.creator":      "Profil Kreator",
@@ -7256,6 +7471,54 @@ const I18N = {
     "admin.kpi.views.top":       "Top Performers",
     "admin.kpi.views.openan":    "Buka Analytics",
     "admin.kpi.close":           "Tutup",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.",
+    "inbox.search.ph":            "Cari pesan atau user di semua kategori...",
+    "inbox.search.empty":         "Tidak ada pesan yang cocok",
+    "inbox.search.results":       "hasil",
+    "inbox.seeall":               "Lihat semua →",
+    "inbox.btn.newchat":          "+ Pesan Baru",
+    "inbox.btn.start":            "Mulai Baru",
+    "inbox.btn.broadcast.prefs":  "Preferensi",
+    "inbox.btn.dm.privacy":       "Privasi DM",
+    "inbox.empty.dm.title":       "Belum ada DM",
+    "inbox.empty.dm.hint":        "Chat langsung dengan teman atau kreator yang kamu ikuti.",
+    "inbox.empty.bc.title":       "Belum ada broadcast",
+    "inbox.empty.bc.hint":        "Pengumuman resmi dari tim Playly akan muncul di sini.",
+    "inbox.empty.req.title":      "Belum ada permintaan",
+    "inbox.empty.req.hint":       "Pesan dari user yang belum kamu follow masuk ke sini dulu.",
+    "inbox.empty.arc.title":      "Belum ada arsip",
+    "inbox.empty.arc.hint":       "Chat yang kamu arsipkan akan tersimpan rapi di sini.",
+    "inbox.list.empty.all":       "Belum ada pesan. Klik <b>+ Pesan Baru</b> untuk mulai chat.",
+    "inbox.list.empty.dm":        "Belum ada DM. Klik <b>+ Pesan Baru</b> untuk mulai.",
+    "inbox.list.empty.bc":        "Belum ada broadcast dari admin.",
+    "inbox.list.empty.req":       "Tidak ada permintaan pesan baru.",
+    "inbox.list.empty.arc":       "Belum ada chat di arsip.",
+    "inbox.list.empty.noresults": "Tidak ada hasil.",
+    "inbox.preview.unit.dm":      "percakapan — klik untuk buka",
+    "inbox.preview.unit.bc":      "broadcast — klik untuk buka",
+    "inbox.preview.unit.req":     "permintaan — klik untuk buka",
+    "inbox.preview.unit.arc":     "chat — klik untuk buka",
+    "inbox.chat.back":            "Kembali ke daftar",
+    "people.subtitle":            "Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.",
+    "people.tab.followers":       "Followers",
+    "people.tab.following":       "Following",
+    "people.empty.all":           "Belum ada user lain — ajak teman daftar di Playly!",
+    "people.empty.followers":     "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!",
+    "people.empty.following":     "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.",
+    "topperf.empty.title":        "Belum ada data performa",
+    "topperf.empty.desc":         "Upload video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.",
+    "topperf.empty.cta":          "Upload video pertama",
+    "topperf.empty.col":          "Data akan muncul saat video kamu mulai mendapat tontonan.",
+    "notif.empty.rich.title":     "Belum ada notifikasi",
+    "notif.empty.rich.desc":      "Notifikasi muncul ketika ada interaksi di konten kamu — like, komentar, follower baru, atau balasan pesan.",
+    "notif.empty.rich.tip1":      "📤 <b>Upload video</b> supaya kreator lain bisa menonton & menyukai",
+    "notif.empty.rich.tip2":      "🔍 <b>Follow kreator</b> favoritmu di halaman Jelajahi",
+    "notif.empty.rich.tip3":      "💬 <b>Beri komentar</b> di video orang lain — biasanya direspons cepat",
+    "notif.empty.rich.cta.explore":"Jelajahi kreator",
+    "notif.empty.rich.cta.upload":"Upload video",
+    "notif.empty.home":           "Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.",
+    "notif.empty.home.cta":       "Jelajahi kreator",
   },
   ms: {
     "settings.language":         "Bahasa & Wilayah",
@@ -7273,7 +7536,7 @@ const I18N = {
     "nav.stats":                 "Skala Penilaian",
     "nav.search":                "Cari Pengguna",
     "nav.activity":              "Aktiviti",
-    "nav.messages":              "Mesej",
+    "nav.messages":              "Inbox",
     "nav.settings":              "Tetapan",
     "nav.help":                  "Bantuan",
     "sub.myvideos":              "Video Saya",
@@ -7300,7 +7563,7 @@ const I18N = {
     "page.stats":                "Statistik",
     "page.search":               "Cari Pengguna",
     "page.activity":             "Aktiviti",
-    "page.messages":             "Mesej",
+    "page.messages":             "Inbox",
     "page.settings":             "Tetapan",
     "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Pencipta",
@@ -8460,6 +8723,54 @@ const I18N = {
     "admin.kpi.views.top":       "Prestasi Tertinggi",
     "admin.kpi.views.openan":    "Buka Analitik",
     "admin.kpi.close":           "Tutup",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "Inbox anda — DM dari rakan, pengumuman admin, permintaan baru, dan sembang yang telah diarkibkan.",
+    "inbox.search.ph":            "Cari mesej atau pengguna dalam semua kategori...",
+    "inbox.search.empty":         "Tiada mesej yang sepadan",
+    "inbox.search.results":       "hasil",
+    "inbox.seeall":               "Lihat semua →",
+    "inbox.btn.newchat":          "+ Mesej Baru",
+    "inbox.btn.start":            "Mula Baru",
+    "inbox.btn.broadcast.prefs":  "Keutamaan",
+    "inbox.btn.dm.privacy":       "Privasi DM",
+    "inbox.empty.dm.title":       "Tiada DM lagi",
+    "inbox.empty.dm.hint":        "Sembang terus dengan rakan atau kreator yang anda ikuti.",
+    "inbox.empty.bc.title":       "Tiada siaran",
+    "inbox.empty.bc.hint":        "Pengumuman rasmi dari pasukan Playly akan muncul di sini.",
+    "inbox.empty.req.title":      "Tiada permintaan",
+    "inbox.empty.req.hint":       "Mesej dari pengguna yang anda belum ikuti masuk ke sini dahulu.",
+    "inbox.empty.arc.title":      "Tiada arkib",
+    "inbox.empty.arc.hint":       "Sembang yang anda arkibkan akan disimpan kemas di sini.",
+    "inbox.list.empty.all":       "Tiada mesej lagi. Klik <b>+ Mesej Baru</b> untuk mula bersembang.",
+    "inbox.list.empty.dm":        "Tiada DM lagi. Klik <b>+ Mesej Baru</b> untuk mula.",
+    "inbox.list.empty.bc":        "Tiada siaran dari admin.",
+    "inbox.list.empty.req":       "Tiada permintaan mesej baru.",
+    "inbox.list.empty.arc":       "Tiada sembang di arkib.",
+    "inbox.list.empty.noresults": "Tiada hasil.",
+    "inbox.preview.unit.dm":      "perbualan — klik untuk buka",
+    "inbox.preview.unit.bc":      "siaran — klik untuk buka",
+    "inbox.preview.unit.req":     "permintaan — klik untuk buka",
+    "inbox.preview.unit.arc":     "sembang — klik untuk buka",
+    "inbox.chat.back":            "Kembali ke senarai",
+    "people.subtitle":            "Cari pengguna, lihat pengikut anda, dan urus siapa yang anda ikuti.",
+    "people.tab.followers":       "Pengikut",
+    "people.tab.following":       "Diikuti",
+    "people.empty.all":           "Tiada pengguna lain lagi — jemput rakan untuk sertai Playly!",
+    "people.empty.followers":     "Belum ada pengikut. Muat naik video atau jemput rakan untuk kenal Playly!",
+    "people.empty.following":     "Anda belum mengikuti sesiapa. Buka tab <b>Semua</b> untuk meneroka pengguna lain.",
+    "topperf.empty.title":        "Tiada data prestasi",
+    "topperf.empty.desc":         "Muat naik video pertama anda untuk melihat statistik tontonan, suka, dan masa tonton di sini.",
+    "topperf.empty.cta":          "Muat naik video pertama",
+    "topperf.empty.col":          "Data akan muncul apabila video anda mula mendapat tontonan.",
+    "notif.empty.rich.title":     "Tiada notifikasi lagi",
+    "notif.empty.rich.desc":      "Notifikasi muncul apabila ada interaksi di konten anda — suka, komen, pengikut baru, atau balasan mesej.",
+    "notif.empty.rich.tip1":      "📤 <b>Muat naik video</b> supaya kreator lain boleh tonton & suka",
+    "notif.empty.rich.tip2":      "🔍 <b>Ikuti kreator</b> kegemaran anda di halaman Jelajah",
+    "notif.empty.rich.tip3":      "💬 <b>Beri komen</b> di video orang lain — biasanya dibalas cepat",
+    "notif.empty.rich.cta.explore":"Jelajah kreator",
+    "notif.empty.rich.cta.upload":"Muat naik video",
+    "notif.empty.home":           "Tiada notifikasi lagi — mula dengan muat naik video atau ikuti kreator kegemaran.",
+    "notif.empty.home.cta":       "Jelajah kreator",
   },
   ja: {
     "settings.language":         "言語と地域",
@@ -8477,7 +8788,7 @@ const I18N = {
     "nav.stats":                 "評価スケール",
     "nav.search":                "ユーザー検索",
     "nav.activity":              "アクティビティ",
-    "nav.messages":              "メッセージ",
+    "nav.messages":              "受信箱",
     "nav.settings":              "設定",
     "nav.help":                  "ヘルプ",
     "sub.myvideos":              "マイ動画",
@@ -8504,7 +8815,7 @@ const I18N = {
     "page.stats":                "統計",
     "page.search":               "ユーザー検索",
     "page.activity":             "アクティビティ",
-    "page.messages":             "メッセージ",
+    "page.messages":             "受信箱",
     "page.settings":             "設定",
     "page.profile.edit":         "プロフィール編集",
     "page.profile.creator":      "クリエイタープロフィール",
@@ -9664,6 +9975,54 @@ const I18N = {
     "admin.kpi.views.top":       "トップパフォーマンス",
     "admin.kpi.views.openan":    "分析を開く",
     "admin.kpi.close":           "閉じる",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "受信箱 — 友達からのDM、管理人からのお知らせ、新しいリクエスト、アーカイブされたチャット。",
+    "inbox.search.ph":            "すべてのカテゴリでメッセージやユーザーを検索...",
+    "inbox.search.empty":         "一致するメッセージがありません",
+    "inbox.search.results":       "件の結果",
+    "inbox.seeall":               "すべて表示 →",
+    "inbox.btn.newchat":          "+ 新規メッセージ",
+    "inbox.btn.start":            "新規開始",
+    "inbox.btn.broadcast.prefs":  "設定",
+    "inbox.btn.dm.privacy":       "DMプライバシー",
+    "inbox.empty.dm.title":       "DMはまだありません",
+    "inbox.empty.dm.hint":        "フォローしている友達やクリエイターと直接チャットしましょう。",
+    "inbox.empty.bc.title":       "お知らせはありません",
+    "inbox.empty.bc.hint":        "Playlyチームからの公式お知らせがここに表示されます。",
+    "inbox.empty.req.title":      "リクエストはありません",
+    "inbox.empty.req.hint":       "まだフォローしていないユーザーからのメッセージはここに届きます。",
+    "inbox.empty.arc.title":      "アーカイブはありません",
+    "inbox.empty.arc.hint":       "アーカイブしたチャットがここに整理されます。",
+    "inbox.list.empty.all":       "まだメッセージがありません。<b>+ 新規メッセージ</b>をクリックして開始。",
+    "inbox.list.empty.dm":        "DMはまだありません。<b>+ 新規メッセージ</b>をクリックして開始。",
+    "inbox.list.empty.bc":        "管理人からのお知らせはありません。",
+    "inbox.list.empty.req":       "新しいメッセージリクエストはありません。",
+    "inbox.list.empty.arc":       "アーカイブにチャットがありません。",
+    "inbox.list.empty.noresults": "結果なし。",
+    "inbox.preview.unit.dm":      "件の会話 — クリックして開く",
+    "inbox.preview.unit.bc":      "件のお知らせ — クリックして開く",
+    "inbox.preview.unit.req":     "件のリクエスト — クリックして開く",
+    "inbox.preview.unit.arc":     "件のチャット — クリックして開く",
+    "inbox.chat.back":            "リストに戻る",
+    "people.subtitle":            "ユーザーを探し、フォロワーを確認し、フォロー中の人を管理しましょう。",
+    "people.tab.followers":       "フォロワー",
+    "people.tab.following":       "フォロー中",
+    "people.empty.all":           "他のユーザーはまだいません — Playlyに友達を招待しよう!",
+    "people.empty.followers":     "まだフォロワーがいません。動画をアップロードしたり、友達をPlaylyに招待しよう!",
+    "people.empty.following":     "誰もフォローしていません。<b>すべて</b>タブで他のユーザーを探してみよう。",
+    "topperf.empty.title":        "まだパフォーマンスデータがありません",
+    "topperf.empty.desc":         "最初の動画をアップロードして、再生数・いいね・視聴時間の統計を見始めよう。",
+    "topperf.empty.cta":          "最初の動画をアップロード",
+    "topperf.empty.col":          "動画が再生され始めるとデータが表示されます。",
+    "notif.empty.rich.title":     "通知はまだありません",
+    "notif.empty.rich.desc":      "コンテンツに反応があると通知が届きます — いいね、コメント、新しいフォロワー、メッセージの返信。",
+    "notif.empty.rich.tip1":      "📤 <b>動画をアップロード</b>して他のクリエイターに見てもらおう",
+    "notif.empty.rich.tip2":      "🔍 発見ページでお気に入りの<b>クリエイターをフォロー</b>",
+    "notif.empty.rich.tip3":      "💬 他の動画に<b>コメント</b>を残そう — 早く返信が来ます",
+    "notif.empty.rich.cta.explore":"クリエイターを探す",
+    "notif.empty.rich.cta.upload":"動画をアップロード",
+    "notif.empty.home":           "通知はまだありません — 動画のアップロードや好きなクリエイターのフォローから始めよう。",
+    "notif.empty.home.cta":       "クリエイターを探す",
   },
   ar: {
     "settings.language":         "اللغة والمنطقة",
@@ -9681,7 +10040,7 @@ const I18N = {
     "nav.stats":                 "مقياس التقييم",
     "nav.search":                "بحث مستخدم",
     "nav.activity":              "النشاط",
-    "nav.messages":              "الرسائل",
+    "nav.messages":              "البريد الوارد",
     "nav.settings":              "الإعدادات",
     "nav.help":                  "مساعدة",
     "sub.myvideos":              "فيديوهاتي",
@@ -9708,7 +10067,7 @@ const I18N = {
     "page.stats":                "الإحصائيات",
     "page.search":               "بحث مستخدم",
     "page.activity":             "النشاط",
-    "page.messages":             "الرسائل",
+    "page.messages":             "البريد الوارد",
     "page.settings":             "الإعدادات",
     "page.profile.edit":         "تعديل الملف الشخصي",
     "page.profile.creator":      "ملف المنشئ",
@@ -10868,6 +11227,54 @@ const I18N = {
     "admin.kpi.views.top":       "أفضل أداء",
     "admin.kpi.views.openan":    "فتح التحليلات",
     "admin.kpi.close":           "إغلاق",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "البريد الوارد — رسائل من الأصدقاء، إعلانات المشرف، طلبات جديدة، ودردشات مؤرشفة.",
+    "inbox.search.ph":            "ابحث عن رسائل أو مستخدمين في جميع الفئات...",
+    "inbox.search.empty":         "لا توجد رسائل مطابقة",
+    "inbox.search.results":       "نتائج",
+    "inbox.seeall":               "← عرض الكل",
+    "inbox.btn.newchat":          "+ رسالة جديدة",
+    "inbox.btn.start":            "بدء جديد",
+    "inbox.btn.broadcast.prefs":  "التفضيلات",
+    "inbox.btn.dm.privacy":       "خصوصية DM",
+    "inbox.empty.dm.title":       "لا توجد رسائل بعد",
+    "inbox.empty.dm.hint":        "تحدث مباشرة مع الأصدقاء أو المبدعين الذين تتابعهم.",
+    "inbox.empty.bc.title":       "لا توجد إعلانات",
+    "inbox.empty.bc.hint":        "ستظهر الإعلانات الرسمية من فريق Playly هنا.",
+    "inbox.empty.req.title":      "لا توجد طلبات",
+    "inbox.empty.req.hint":       "تظهر هنا الرسائل من المستخدمين الذين لا تتابعهم بعد.",
+    "inbox.empty.arc.title":      "لا يوجد أرشيف",
+    "inbox.empty.arc.hint":       "ستحفظ المحادثات التي تؤرشفها هنا بترتيب.",
+    "inbox.list.empty.all":       "لا توجد رسائل بعد. اضغط <b>+ رسالة جديدة</b> للبدء.",
+    "inbox.list.empty.dm":        "لا توجد رسائل DM بعد. اضغط <b>+ رسالة جديدة</b> للبدء.",
+    "inbox.list.empty.bc":        "لا توجد إعلانات من المشرف.",
+    "inbox.list.empty.req":       "لا توجد طلبات رسائل جديدة.",
+    "inbox.list.empty.arc":       "لا توجد محادثات في الأرشيف.",
+    "inbox.list.empty.noresults": "لا توجد نتائج.",
+    "inbox.preview.unit.dm":      "محادثات — اضغط للفتح",
+    "inbox.preview.unit.bc":      "إعلانات — اضغط للفتح",
+    "inbox.preview.unit.req":     "طلبات — اضغط للفتح",
+    "inbox.preview.unit.arc":     "محادثات — اضغط للفتح",
+    "inbox.chat.back":            "العودة إلى القائمة",
+    "people.subtitle":            "ابحث عن المستخدمين، شاهد متابعيك، وأدر من تتابع.",
+    "people.tab.followers":       "المتابعون",
+    "people.tab.following":       "أتابع",
+    "people.empty.all":           "لا يوجد مستخدمون آخرون بعد — ادعُ أصدقاءك للانضمام إلى Playly!",
+    "people.empty.followers":     "لا يوجد متابعون بعد. حمّل مقاطع فيديو أو ادعُ أصدقاءك لاكتشاف Playly!",
+    "people.empty.following":     "أنت لا تتابع أحدًا. افتح تبويب <b>الكل</b> لاستكشاف المستخدمين.",
+    "topperf.empty.title":        "لا توجد بيانات أداء بعد",
+    "topperf.empty.desc":         "حمّل أول مقطع فيديو لتبدأ في رؤية إحصائيات المشاهدات والإعجابات ووقت المشاهدة هنا.",
+    "topperf.empty.cta":          "تحميل أول فيديو",
+    "topperf.empty.col":          "ستظهر البيانات عندما تبدأ مقاطع الفيديو في الحصول على مشاهدات.",
+    "notif.empty.rich.title":     "لا توجد إشعارات بعد",
+    "notif.empty.rich.desc":      "تظهر الإشعارات عند وجود تفاعل على محتواك — إعجابات، تعليقات، متابعون جدد، أو ردود رسائل.",
+    "notif.empty.rich.tip1":      "📤 <b>حمّل مقاطع فيديو</b> ليتمكن المبدعون الآخرون من المشاهدة والإعجاب",
+    "notif.empty.rich.tip2":      "🔍 <b>تابع المبدعين</b> المفضلين لديك في صفحة الاستكشاف",
+    "notif.empty.rich.tip3":      "💬 <b>اترك تعليقات</b> على مقاطع الآخرين — عادة ما يرد بسرعة",
+    "notif.empty.rich.cta.explore":"استكشف المبدعين",
+    "notif.empty.rich.cta.upload":"تحميل فيديو",
+    "notif.empty.home":           "لا توجد إشعارات بعد — ابدأ بتحميل فيديو أو متابعة المبدع المفضل لديك.",
+    "notif.empty.home.cta":       "استكشف المبدعين",
   },
   zh: {
     "settings.language":         "语言和地区",
@@ -10885,7 +11292,7 @@ const I18N = {
     "nav.stats":                 "评分",
     "nav.search":                "搜索用户",
     "nav.activity":              "动态",
-    "nav.messages":              "消息",
+    "nav.messages":              "收件箱",
     "nav.settings":              "设置",
     "nav.help":                  "帮助",
     "sub.myvideos":              "我的视频",
@@ -10912,7 +11319,7 @@ const I18N = {
     "page.stats":                "统计",
     "page.search":               "搜索用户",
     "page.activity":             "动态",
-    "page.messages":             "消息",
+    "page.messages":             "收件箱",
     "page.settings":             "设置",
     "page.profile.edit":         "编辑资料",
     "page.profile.creator":      "创作者资料",
@@ -12072,6 +12479,54 @@ const I18N = {
     "admin.kpi.views.top":       "最佳表现",
     "admin.kpi.views.openan":    "打开分析",
     "admin.kpi.close":           "关闭",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "您的收件箱 — 朋友的私信、管理员公告、新请求和已归档的聊天。",
+    "inbox.search.ph":            "在所有类别中搜索消息或用户...",
+    "inbox.search.empty":         "没有匹配的消息",
+    "inbox.search.results":       "个结果",
+    "inbox.seeall":               "查看全部 →",
+    "inbox.btn.newchat":          "+ 新消息",
+    "inbox.btn.start":            "开始新对话",
+    "inbox.btn.broadcast.prefs":  "偏好设置",
+    "inbox.btn.dm.privacy":       "私信隐私",
+    "inbox.empty.dm.title":       "暂无私信",
+    "inbox.empty.dm.hint":        "直接与您关注的朋友或创作者聊天。",
+    "inbox.empty.bc.title":       "暂无广播",
+    "inbox.empty.bc.hint":        "来自 Playly 团队的官方公告将出现在这里。",
+    "inbox.empty.req.title":      "暂无请求",
+    "inbox.empty.req.hint":       "来自您尚未关注的用户的消息会先到这里。",
+    "inbox.empty.arc.title":      "暂无归档",
+    "inbox.empty.arc.hint":       "您归档的聊天将整齐地保存在这里。",
+    "inbox.list.empty.all":       "暂无消息。点击 <b>+ 新消息</b> 开始聊天。",
+    "inbox.list.empty.dm":        "暂无私信。点击 <b>+ 新消息</b> 开始。",
+    "inbox.list.empty.bc":        "暂无管理员广播。",
+    "inbox.list.empty.req":       "没有新消息请求。",
+    "inbox.list.empty.arc":       "归档中没有聊天。",
+    "inbox.list.empty.noresults": "无结果。",
+    "inbox.preview.unit.dm":      "条对话 — 点击打开",
+    "inbox.preview.unit.bc":      "条广播 — 点击打开",
+    "inbox.preview.unit.req":     "条请求 — 点击打开",
+    "inbox.preview.unit.arc":     "条聊天 — 点击打开",
+    "inbox.chat.back":            "返回列表",
+    "people.subtitle":            "查找用户、查看您的粉丝，并管理您关注的人。",
+    "people.tab.followers":       "粉丝",
+    "people.tab.following":       "关注中",
+    "people.empty.all":           "暂无其他用户 — 邀请朋友加入 Playly！",
+    "people.empty.followers":     "暂无粉丝。上传视频或邀请朋友认识 Playly！",
+    "people.empty.following":     "您还没有关注任何人。打开 <b>全部</b> 标签探索其他用户。",
+    "topperf.empty.title":        "暂无表现数据",
+    "topperf.empty.desc":         "上传您的第一个视频，开始在这里查看观看次数、点赞和观看时长统计。",
+    "topperf.empty.cta":          "上传第一个视频",
+    "topperf.empty.col":          "当您的视频开始获得观看时，数据将出现。",
+    "notif.empty.rich.title":     "暂无通知",
+    "notif.empty.rich.desc":      "当您的内容有互动时会出现通知 — 点赞、评论、新粉丝或消息回复。",
+    "notif.empty.rich.tip1":      "📤 <b>上传视频</b>让其他创作者观看和点赞",
+    "notif.empty.rich.tip2":      "🔍 在发现页<b>关注您喜欢的创作者</b>",
+    "notif.empty.rich.tip3":      "💬 在他人的视频上<b>留言</b> — 通常会很快得到回复",
+    "notif.empty.rich.cta.explore":"探索创作者",
+    "notif.empty.rich.cta.upload":"上传视频",
+    "notif.empty.home":           "暂无通知 — 从上传视频或关注您喜爱的创作者开始。",
+    "notif.empty.home.cta":       "探索创作者",
   },
   ko: {
     "settings.language":         "언어 및 지역",
@@ -12089,7 +12544,7 @@ const I18N = {
     "nav.stats":                 "평가 척도",
     "nav.search":                "사용자 검색",
     "nav.activity":              "활동",
-    "nav.messages":              "메시지",
+    "nav.messages":              "받은편지함",
     "nav.settings":              "설정",
     "nav.help":                  "도움말",
     "sub.myvideos":              "내 동영상",
@@ -12116,7 +12571,7 @@ const I18N = {
     "page.stats":                "통계",
     "page.search":               "사용자 검색",
     "page.activity":             "활동",
-    "page.messages":             "메시지",
+    "page.messages":             "받은편지함",
     "page.settings":             "설정",
     "page.profile.edit":         "프로필 편집",
     "page.profile.creator":      "크리에이터 프로필",
@@ -13276,6 +13731,54 @@ const I18N = {
     "admin.kpi.views.top":       "최고 성과",
     "admin.kpi.views.openan":    "분석 열기",
     "admin.kpi.close":           "닫기",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "받은편지함 — 친구의 DM, 관리자 공지, 새 요청, 보관된 채팅.",
+    "inbox.search.ph":            "모든 카테고리에서 메시지 또는 사용자 검색...",
+    "inbox.search.empty":         "일치하는 메시지가 없습니다",
+    "inbox.search.results":       "건 결과",
+    "inbox.seeall":               "모두 보기 →",
+    "inbox.btn.newchat":          "+ 새 메시지",
+    "inbox.btn.start":            "새로 시작",
+    "inbox.btn.broadcast.prefs":  "환경설정",
+    "inbox.btn.dm.privacy":       "DM 프라이버시",
+    "inbox.empty.dm.title":       "아직 DM 없음",
+    "inbox.empty.dm.hint":        "팔로우하는 친구나 크리에이터와 직접 채팅하세요.",
+    "inbox.empty.bc.title":       "공지사항 없음",
+    "inbox.empty.bc.hint":        "Playly 팀의 공식 공지가 여기에 표시됩니다.",
+    "inbox.empty.req.title":      "요청 없음",
+    "inbox.empty.req.hint":       "아직 팔로우하지 않은 사용자의 메시지가 여기로 먼저 옵니다.",
+    "inbox.empty.arc.title":      "보관함 비어있음",
+    "inbox.empty.arc.hint":       "보관한 채팅이 여기에 깔끔하게 저장됩니다.",
+    "inbox.list.empty.all":       "아직 메시지가 없습니다. <b>+ 새 메시지</b>를 클릭하여 시작하세요.",
+    "inbox.list.empty.dm":        "아직 DM이 없습니다. <b>+ 새 메시지</b>를 클릭하여 시작하세요.",
+    "inbox.list.empty.bc":        "관리자 공지가 없습니다.",
+    "inbox.list.empty.req":       "새 메시지 요청이 없습니다.",
+    "inbox.list.empty.arc":       "보관함에 채팅이 없습니다.",
+    "inbox.list.empty.noresults": "결과 없음.",
+    "inbox.preview.unit.dm":      "건 대화 — 클릭하여 열기",
+    "inbox.preview.unit.bc":      "건 공지 — 클릭하여 열기",
+    "inbox.preview.unit.req":     "건 요청 — 클릭하여 열기",
+    "inbox.preview.unit.arc":     "건 채팅 — 클릭하여 열기",
+    "inbox.chat.back":            "목록으로 돌아가기",
+    "people.subtitle":            "사용자를 찾고, 팔로워를 확인하고, 팔로우 중인 사람을 관리하세요.",
+    "people.tab.followers":       "팔로워",
+    "people.tab.following":       "팔로잉",
+    "people.empty.all":           "다른 사용자가 없습니다 — 친구를 Playly에 초대하세요!",
+    "people.empty.followers":     "팔로워가 없습니다. 동영상을 업로드하거나 친구에게 Playly를 알리세요!",
+    "people.empty.following":     "아무도 팔로우하지 않습니다. <b>전체</b> 탭을 열어 다른 사용자를 탐색하세요.",
+    "topperf.empty.title":        "아직 성과 데이터 없음",
+    "topperf.empty.desc":         "첫 번째 동영상을 업로드하여 조회수, 좋아요, 시청 시간 통계를 확인하세요.",
+    "topperf.empty.cta":          "첫 동영상 업로드",
+    "topperf.empty.col":          "동영상이 조회수를 받기 시작하면 데이터가 표시됩니다.",
+    "notif.empty.rich.title":     "아직 알림 없음",
+    "notif.empty.rich.desc":      "콘텐츠에 상호작용이 있으면 알림이 표시됩니다 — 좋아요, 댓글, 새 팔로워, 메시지 답장.",
+    "notif.empty.rich.tip1":      "📤 <b>동영상 업로드</b>로 다른 크리에이터가 시청 & 좋아요할 수 있게 하세요",
+    "notif.empty.rich.tip2":      "🔍 탐색 페이지에서 좋아하는 <b>크리에이터를 팔로우</b>하세요",
+    "notif.empty.rich.tip3":      "💬 다른 동영상에 <b>댓글을 남기세요</b> — 빠르게 답장이 옵니다",
+    "notif.empty.rich.cta.explore":"크리에이터 탐색",
+    "notif.empty.rich.cta.upload":"동영상 업로드",
+    "notif.empty.home":           "아직 알림 없음 — 동영상 업로드 또는 좋아하는 크리에이터 팔로우부터 시작하세요.",
+    "notif.empty.home.cta":       "크리에이터 탐색",
   },
   es: {
     "settings.language":         "Idioma y Región",
@@ -13293,7 +13796,7 @@ const I18N = {
     "nav.stats":                 "Escala de Calificación",
     "nav.search":                "Buscar Usuario",
     "nav.activity":              "Actividad",
-    "nav.messages":              "Mensajes",
+    "nav.messages":              "Bandeja",
     "nav.settings":              "Configuración",
     "nav.help":                  "Ayuda",
     "sub.myvideos":              "Mis Videos",
@@ -13320,7 +13823,7 @@ const I18N = {
     "page.stats":                "Estadísticas",
     "page.search":               "Buscar Usuario",
     "page.activity":             "Actividad",
-    "page.messages":             "Mensajes",
+    "page.messages":             "Bandeja",
     "page.settings":             "Configuración",
     "page.profile.edit":         "Editar Perfil",
     "page.profile.creator":      "Perfil del Creador",
@@ -14480,6 +14983,54 @@ const I18N = {
     "admin.kpi.views.top":       "Mejor Desempeño",
     "admin.kpi.views.openan":    "Abrir Analítica",
     "admin.kpi.close":           "Cerrar",
+    // === v530 (2026-05-25): Inbox/People/Notif/Top-Perf i18n keys ===
+    "inbox.subtitle":             "Tu bandeja — DMs de amigos, anuncios de admin, nuevas solicitudes y chats archivados.",
+    "inbox.search.ph":            "Buscar mensajes o usuarios en todas las categorías...",
+    "inbox.search.empty":         "No hay mensajes que coincidan",
+    "inbox.search.results":       "resultados",
+    "inbox.seeall":               "Ver todos →",
+    "inbox.btn.newchat":          "+ Nuevo Mensaje",
+    "inbox.btn.start":            "Iniciar nuevo",
+    "inbox.btn.broadcast.prefs":  "Preferencias",
+    "inbox.btn.dm.privacy":       "Privacidad DM",
+    "inbox.empty.dm.title":       "Aún no hay DMs",
+    "inbox.empty.dm.hint":        "Chatea directamente con amigos o creadores que sigues.",
+    "inbox.empty.bc.title":       "Sin anuncios",
+    "inbox.empty.bc.hint":        "Los anuncios oficiales del equipo Playly aparecerán aquí.",
+    "inbox.empty.req.title":      "Sin solicitudes",
+    "inbox.empty.req.hint":       "Los mensajes de usuarios que aún no sigues llegan aquí primero.",
+    "inbox.empty.arc.title":      "Sin archivos",
+    "inbox.empty.arc.hint":       "Los chats que archives se guardarán ordenadamente aquí.",
+    "inbox.list.empty.all":       "Aún no hay mensajes. Haz clic en <b>+ Nuevo Mensaje</b> para comenzar.",
+    "inbox.list.empty.dm":        "Aún no hay DMs. Haz clic en <b>+ Nuevo Mensaje</b> para empezar.",
+    "inbox.list.empty.bc":        "Sin anuncios del admin.",
+    "inbox.list.empty.req":       "Sin nuevas solicitudes de mensajes.",
+    "inbox.list.empty.arc":       "No hay chats en archivo.",
+    "inbox.list.empty.noresults": "Sin resultados.",
+    "inbox.preview.unit.dm":      "conversaciones — haz clic para abrir",
+    "inbox.preview.unit.bc":      "anuncios — haz clic para abrir",
+    "inbox.preview.unit.req":     "solicitudes — haz clic para abrir",
+    "inbox.preview.unit.arc":     "chats — haz clic para abrir",
+    "inbox.chat.back":            "Volver a la lista",
+    "people.subtitle":            "Encuentra usuarios, ve tus seguidores y administra a quién sigues.",
+    "people.tab.followers":       "Seguidores",
+    "people.tab.following":       "Siguiendo",
+    "people.empty.all":           "No hay otros usuarios — ¡invita amigos a Playly!",
+    "people.empty.followers":     "Aún sin seguidores. ¡Sube videos o invita amigos a conocer Playly!",
+    "people.empty.following":     "No sigues a nadie. Abre la pestaña <b>Todos</b> para explorar otros usuarios.",
+    "topperf.empty.title":        "Sin datos de rendimiento aún",
+    "topperf.empty.desc":         "Sube tu primer video para empezar a ver estadísticas de vistas, likes y tiempo de visualización aquí.",
+    "topperf.empty.cta":          "Subir primer video",
+    "topperf.empty.col":          "Los datos aparecerán cuando tus videos empiecen a tener vistas.",
+    "notif.empty.rich.title":     "Sin notificaciones aún",
+    "notif.empty.rich.desc":      "Las notificaciones aparecen cuando hay interacción en tu contenido — likes, comentarios, nuevos seguidores o respuestas a mensajes.",
+    "notif.empty.rich.tip1":      "📤 <b>Sube videos</b> para que otros creadores los vean y les gusten",
+    "notif.empty.rich.tip2":      "🔍 <b>Sigue creadores</b> favoritos en la página Descubrir",
+    "notif.empty.rich.tip3":      "💬 <b>Deja comentarios</b> en videos ajenos — suelen responder rápido",
+    "notif.empty.rich.cta.explore":"Explorar creadores",
+    "notif.empty.rich.cta.upload":"Subir video",
+    "notif.empty.home":           "Sin notificaciones aún — empieza subiendo un video o siguiendo a tu creador favorito.",
+    "notif.empty.home.cta":       "Explorar creadores",
   },
 };
 
@@ -14859,6 +15410,13 @@ function applyI18n(lang) {
     } else if (!el.querySelector("input,select,textarea,button,svg")) {
       el.textContent = val;
     }
+  });
+  // v530 (2026-05-25) — support data-i18n-placeholder untuk input/textarea
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (!key) return;
+    const val = t(key);
+    if (val) el.setAttribute("placeholder", val);
   });
   // Sanitize sidebar nav items — strip emoji prefix yang mungkin sudah
   // di-inject oleh deep walker run sebelumnya. Sidebar harus text-only sesuai
@@ -28629,6 +29187,11 @@ document.addEventListener("click", e => {
 // di-restore saat user reset/keluar dari focus mode.
 function updateViewTitle(view, title) {
   if (!view || !title) return;
+  // FIX 2026-05-25: skip kalau dm-filter sub-action lagi jalan — title untuk
+  // halaman messages dikelola oleh renderMsgList (strip emoji + sinkron SVG
+  // icon). updateViewTitle akan override dgn teks polos, bikin emoji nongol
+  // lagi + SVG icon nggak ganti.
+  if (window.__dmFilterFromNav && view.dataset.view === "messages") return;
   const h = view.querySelector(".page-head h2, .view-header h2");
   if (!h) return;
   if (!h.dataset.originalTitle) h.dataset.originalTitle = h.textContent;
@@ -28753,12 +29316,31 @@ function runSubAction(action) {
     return;
   }
   if (kind === "dm-filter") {
-    // Buka messages view + apply filter ke DM list
+    // Buka messages view + apply filter ke DM list. FIX 2026-05-25: sebelumnya
+    // cuma set dmState.filter + render list. Akibatnya:
+    //   1) dmOverview (4-card "Semua") tetap visible padahal user klik
+    //      Permintaan/DM/Broadcast/Arsip — UI ngga sinkron dgn filter.
+    //   2) Top tab pill ngga update active state.
+    //   3) Title h2 di-override oleh updateViewTitle pakai teks polos
+    //      (bypass renderMsgList yg strip emoji + swap SVG icon).
+    // Solusi: panggil _dmApplyView() (toggle overview/layout/broadcast)
+    // + sync top tab pill active state + flag supaya updateViewTitle skip.
     if (typeof switchView === "function") switchView("messages");
     if (typeof dmState !== "undefined") {
       dmState.filter = value;
-      if (typeof renderDmList === "function") setTimeout(renderDmList, 50);
+      // Sync top tab pill active state supaya konsisten
+      document.querySelectorAll(".dm-section-tab").forEach(function (t) {
+        t.classList.toggle("active", t.dataset.dmFilter === value);
+      });
+      // Apply view (overview/layout/broadcast switch) — ini yg sebelumnya hilang
+      if (typeof _dmApplyView === "function") setTimeout(_dmApplyView, 50);
+      if (typeof renderDmList === "function") setTimeout(renderDmList, 60);
+      if (typeof renderMsgList === "function") setTimeout(renderMsgList, 70);
     }
+    // Tandai supaya updateViewTitle skip (kalau dipanggil setelah ini) — title
+    // dikelola oleh renderMsgList yg strip emoji + match SVG icon.
+    window.__dmFilterFromNav = true;
+    setTimeout(function () { window.__dmFilterFromNav = false; }, 200);
     return;
   }
   if (kind === "nav") {
@@ -30916,8 +31498,8 @@ function renderHomeNotifLatest() {
     wrap.innerHTML = `
       <div class="hra-empty">
         <div class="hra-empty-icon">${NI_BELL}</div>
-        <p>Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.</p>
-        <button type="button" class="btn primary sm hra-empty-cta" data-jump-view="discover">Jelajahi kreator</button>
+        <p>${escapeHtml(t("notif.empty.home"))}</p>
+        <button type="button" class="btn primary sm hra-empty-cta" data-jump-view="discover">${escapeHtml(t("notif.empty.home.cta"))}</button>
       </div>`;
     wrap.querySelector("[data-jump-view]")?.addEventListener("click", () => {
       const link = document.querySelector('.nav-item[data-view="discover"]');
@@ -33713,9 +34295,9 @@ function renderTopPerforming() {
     card.style.display = "";
     const empty = `<div class="top-perf-empty-rich">
       <div class="tpe-icon">📊</div>
-      <h4>Belum ada data performa</h4>
-      <p>Upload video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.</p>
-      <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">Upload video pertama</button>
+      <h4>${escapeHtml(t("topperf.empty.title"))}</h4>
+      <p>${escapeHtml(t("topperf.empty.desc"))}</p>
+      <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">${escapeHtml(t("topperf.empty.cta"))}</button>
     </div>`;
     // Ke-3 kolom share empty state — supaya tidak triple-render
     colViews.innerHTML = empty;
@@ -33768,7 +34350,7 @@ function renderTopPerforming() {
 
   // F audit (2026-05-25): kalau user punya video tapi semua angka 0,
   // kasih konteks bahwa data akan muncul saat ada interaksi.
-  const empty = `<div class="top-perf-empty">Data akan muncul saat video kamu mulai mendapat tontonan.</div>`;
+  const empty = `<div class="top-perf-empty">${escapeHtml(t("topperf.empty.col"))}</div>`;
   colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
     ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
   colLikes.innerHTML = topLikes.length && topLikes.some(v => v._likes > 0)
@@ -35320,7 +35902,19 @@ function renderPeople() {
   // creator/peer yang relevan untuk dicari di list user-side. Admin viewer
   // sendiri tetap lihat sesama admin (untuk audit/koordinasi).
   const isAdminViewer = user?.role === "admin";
-  let allAccounts = getAllAccounts().filter(a => a.email !== user?.email);
+  // Filter SELF — exclude by email DAN username. Sebelumnya cuma email,
+  // tapi kalau ada stale account dgn same username tapi different email
+  // (kasus dup test data), itu lolos filter dan muncul sbg "diri sendiri"
+  // di hasil search. 2026-05-25 req user.
+  const myEmail = (user?.email || "").toLowerCase();
+  const myUname = (user?.username || "").toLowerCase();
+  let allAccounts = getAllAccounts().filter(a => {
+    const ae = String(a.email || "").toLowerCase();
+    const au = String(a.username || "").toLowerCase();
+    if (myEmail && ae === myEmail) return false;
+    if (myUname && au === myUname) return false;
+    return true;
+  });
   if (!isAdminViewer) {
     allAccounts = allAccounts.filter(a =>
       a.role !== "admin" && !ADMIN_EMAILS_PROTECTED.includes((a.email || "").toLowerCase())
@@ -35365,14 +35959,16 @@ function renderPeople() {
   if (!accounts.length) {
     let emptyMsg;
     if (q) {
+      // v530 (2026-05-25): partial i18n — q search empty pakai t(), tab label
+      // tetap inline (per-tab specific noun).
       const tabLabel = activeTab === "followers" ? "follower" : activeTab === "following" ? "akun yang kamu ikuti" : "user";
-      emptyMsg = `Tidak ada ${tabLabel} yang cocok dengan "<b>${escapeHtml(q)}</b>".`;
+      emptyMsg = `${t("inbox.search.empty")} "<b>${escapeHtml(q)}</b>".`;
     } else if (activeTab === "followers") {
-      emptyMsg = "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!";
+      emptyMsg = t("people.empty.followers");
     } else if (activeTab === "following") {
-      emptyMsg = "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.";
+      emptyMsg = t("people.empty.following");
     } else {
-      emptyMsg = "Belum ada user lain — ajak teman daftar di Playly!";
+      emptyMsg = t("people.empty.all");
     }
     grid.innerHTML = `<div class="people-empty">${emptyMsg}</div>`;
     if (moreWrap) moreWrap.hidden = true;
@@ -35641,9 +36237,29 @@ function renderDmList() {
   const meta = titleKeys[dmState.filter] || titleKeys.dm;
   const titleEl = document.getElementById("dmPageTitle");
   const descEl = document.getElementById("dmPageDesc");
+  const iconEl = document.getElementById("dmPageIcon");
+  // FIX 2026-05-25: strip emoji prefix dari title — sekarang ada SVG icon
+  // terpisah di vh-people-icon. i18n values (cth: "💬 DM", "📢 Broadcast Admin")
+  // dibiarkan untuk backward compat tempat lain, tapi di-strip saat render
+  // di sini supaya tidak double icon dgn SVG di header.
+  var stripEmojiPrefix = function (s) {
+    if (!s) return s;
+    return String(s).replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F100}-\u{1F1FF}]+\s*/u, "").trim();
+  };
+  // SVG icon per kategori — swap dinamis saat user pindah tab.
+  // Inline SVG markup string supaya tidak perlu HTTP fetch + auto-inherit currentColor.
+  var iconSvg = {
+    all:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg>',
+    dm:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
+    broadcast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg>',
+    requests:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+    archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
+  };
+  if (iconEl) {
+    iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
+  }
   if (titleEl) {
-    titleEl.textContent = t(meta.t);
-    // Reset data-orig-text supaya autoTranslate skip (kita sudah translate)
+    titleEl.textContent = stripEmojiPrefix(t(meta.t));
     titleEl.dataset.origText = "";
   }
   if (descEl) {
@@ -35671,14 +36287,13 @@ function renderDmList() {
   filtered.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
   if (!filtered.length) {
-    // Audit 2026-05-25 req user — empty state list view: full Bahasa Indonesia.
-    // Sebelumnya campur EN+ID ("No DMs yet", "No chats in archive").
+    // v530 (2026-05-25): full i18n via inbox.list.empty.* keys.
     const emptyMap = {
-      all: q ? "Tidak ada hasil." : "Belum ada pesan. Klik <b>+ Pesan Baru</b> untuk mulai chat.",
-      dm: q ? "Tidak ada hasil." : "Belum ada DM. Klik <b>+ Pesan Baru</b> untuk mulai.",
-      broadcast: q ? "Tidak ada hasil." : "Belum ada broadcast dari admin.",
-      requests: q ? "Tidak ada hasil." : "Tidak ada permintaan pesan baru.",
-      archived: q ? "Tidak ada hasil." : "Belum ada chat di arsip.",
+      all:       q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.all"),
+      dm:        q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.dm"),
+      broadcast: q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.bc"),
+      requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
+      archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
     };
     list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
     return;
@@ -35733,6 +36348,11 @@ function openDmChat(idx) {
   const active = document.getElementById("dmChatActive");
   if (empty) empty.hidden = true;
   if (active) active.hidden = false;
+  // Req user 2026-05-25: remove .dm-list-only modifier → reveal chat panel
+  // (split view). Sebelumnya chat panel selalu visible; sekarang default
+  // hidden sampai user klik thread.
+  var lay = document.getElementById("dmLayout");
+  if (lay) lay.classList.remove("dm-list-only");
   // Mobile: switch ke chat panel view
   document.body.classList.add("dm-show-chat");
 
@@ -36311,12 +36931,50 @@ function _dmApplyView() {
   var f = (typeof dmState === "undefined") ? "all" : dmState.filter;
   var isAll = f === "all";
   var isBc = f === "broadcast";
+  var isDm = f === "dm";
+  // Hide "+ Pesan Baru" button saat tab non-DM (Broadcast/Permintaan/Arsip).
+  // User can only INITIATE chat from DM context — broadcast read-only, request
+  // = incoming (bukan outgoing), arsip = historical (juga bukan outgoing).
+  var newChatBtn = document.getElementById("newChat");
+  if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
   if (ov) ov.hidden = !isAll;
   if (bc) bc.hidden = !isBc;
-  if (lay) lay.hidden = isAll || isBc;   // Broadcast & Semua bukan layout chat
+  if (lay) {
+    lay.hidden = isAll || isBc;   // Broadcast & Semua bukan layout chat
+    // Req user 2026-05-25: saat switch ke tab DM/Permintaan/Arsip, default
+    // ke list-only mode (chat panel hidden). User klik thread → openDmChat
+    // remove class ini → chat panel reveal. Reset openIdx supaya state
+    // konsisten.
+    if (!lay.hidden) {
+      lay.classList.add("dm-list-only");
+      if (typeof dmState !== "undefined") dmState.openIdx = null;
+      // Pastikan chat panel empty placeholder hidden + active panel hidden
+      var emptyP = document.getElementById("dmChatEmpty");
+      var activeP = document.getElementById("dmChatActive");
+      if (emptyP) emptyP.hidden = true;
+      if (activeP) activeP.hidden = true;
+    }
+  }
   if (isAll && typeof renderDmOverview === "function") renderDmOverview();
   if (isBc && typeof renderDmBroadcast === "function") renderDmBroadcast();
 }
+
+// Wire back button (req user 2026-05-25): klik back di chat header →
+// kembali ke list-only mode (chat panel hidden, list full-width).
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest && e.target.closest("#dmChatBack");
+  if (!btn) return;
+  e.preventDefault();
+  var lay = document.getElementById("dmLayout");
+  if (lay) lay.classList.add("dm-list-only");
+  if (typeof dmState !== "undefined") dmState.openIdx = null;
+  var activeP = document.getElementById("dmChatActive");
+  if (activeP) activeP.hidden = true;
+  // Mobile: keluar dari chat view mode
+  document.body.classList.remove("dm-show-chat");
+  // Re-render list supaya tidak ada thread yg ke-mark active highlighted
+  if (typeof renderDmList === "function") renderDmList();
+});
 
 // Broadcast Admin = feed pengumuman read-only (bukan chat 2-panel).
 function renderDmBroadcast() {
@@ -36529,7 +37187,7 @@ document.addEventListener("click", function (e) {
     matches.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     if (resultsCount) resultsCount.textContent = matches.length;
     if (!matches.length) {
-      resultsList.innerHTML = '<div class="dm-ov-search-empty">Tidak ada pesan yang cocok dengan "<b>' + escapeHtml(q) + '</b>".</div>';
+      resultsList.innerHTML = '<div class="dm-ov-search-empty">' + escapeHtml(t("inbox.search.empty")) + ' "<b>' + escapeHtml(q) + '</b>".</div>';
     } else {
       resultsList.innerHTML = matches.slice(0, 30).map(function (m) {
         var idx = state.messages.indexOf(m);
@@ -43998,16 +44656,16 @@ function renderNotifications() {
     // tanpa konteks → terasa "ada bug".
     list.innerHTML = `<div class="notif-empty-rich">
       <div class="notif-empty-ico" style="opacity:.6">${NI_BELL}</div>
-      <h4>Belum ada notifikasi</h4>
-      <p>Notifikasi muncul ketika ada interaksi di konten kamu — like, komentar, follower baru, atau balasan pesan.</p>
+      <h4>${escapeHtml(t("notif.empty.rich.title"))}</h4>
+      <p>${escapeHtml(t("notif.empty.rich.desc"))}</p>
       <ul class="notif-empty-tips">
-        <li>📤 <b>Upload video</b> supaya kreator lain bisa menonton & menyukai</li>
-        <li>🔍 <b>Follow kreator</b> favoritmu di halaman Jelajahi</li>
-        <li>💬 <b>Beri komentar</b> di video orang lain — biasanya direspons cepat</li>
+        <li>${t("notif.empty.rich.tip1")}</li>
+        <li>${t("notif.empty.rich.tip2")}</li>
+        <li>${t("notif.empty.rich.tip3")}</li>
       </ul>
       <div class="notif-empty-cta">
-        <button type="button" class="btn primary sm" data-jump="explore">Jelajahi kreator</button>
-        <button type="button" class="btn ghost sm" data-jump="upload">Upload video</button>
+        <button type="button" class="btn primary sm" data-jump="explore">${escapeHtml(t("notif.empty.rich.cta.explore"))}</button>
+        <button type="button" class="btn ghost sm" data-jump="upload">${escapeHtml(t("notif.empty.rich.cta.upload"))}</button>
       </div>
     </div>`;
     // Wire CTA buttons → trigger nav action seperti sidebar

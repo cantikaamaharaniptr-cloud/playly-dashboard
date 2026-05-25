@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-dm-overview-rich-v523" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-i18n-inbox-people-notif-v530" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -2439,7 +2439,7 @@
       <div class="nav-group" data-nav-group="messages">
         <a href="#" class="nav-item nav-parent" data-view="messages">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          <span>Obrolan langsung</span>
+          <span>Inbox</span>
           <span class="badge dot" id="msgBadge">3</span>
           <button type="button" class="nav-toggle" aria-label="Expand" data-nav-toggle><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5l3 3 3-3"/></svg></button>
         </a>
@@ -5234,7 +5234,7 @@
             </span>
             <div class="vh-people-text">
               <h2>Pencarian</h2>
-              <p>Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.</p>
+              <p data-i18n="people.subtitle">Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.</p>
             </div>
           </div>
         </div>
@@ -5249,11 +5249,11 @@
           </button>
           <button type="button" class="riwayat-tab" data-people-tab="followers" role="tab">
             <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m22 11-3 3-2-2"/></svg></span>
-            <span>Followers</span> <span class="ssc-count" id="peopleCntFollowers">0</span>
+            <span data-i18n="people.tab.followers">Followers</span> <span class="ssc-count" id="peopleCntFollowers">0</span>
           </button>
           <button type="button" class="riwayat-tab" data-people-tab="following" role="tab">
             <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span>
-            <span>Following</span> <span class="ssc-count" id="peopleCntFollowing">0</span>
+            <span data-i18n="people.tab.following">Following</span> <span class="ssc-count" id="peopleCntFollowing">0</span>
           </button>
         </div>
 
@@ -5277,16 +5277,20 @@
       <section class="view" data-view="messages">
         <div class="view-header view-header-people">
           <div class="vh-people-title">
-            <span class="vh-people-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
+            <span class="vh-people-icon" id="dmPageIcon" aria-hidden="true">
+              <!-- Default = "all" (inbox icon). JS swap icon saat tab spesifik aktif -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg>
             </span>
             <div class="vh-people-text">
-              <h2 id="dmPageTitle">Semua Pesan</h2>
-              <p id="dmPageDesc">Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.</p>
+              <h2 id="dmPageTitle" data-i18n="dm.all.title">Semua Pesan</h2>
+              <p id="dmPageDesc" data-i18n="inbox.subtitle">Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.</p>
             </div>
           </div>
           <div class="view-actions">
-            <button class="btn primary small" id="newChat">+ Pesan Baru</button>
+            <!-- Dev-only seed button — auto-show di localhost via JS toggle.
+                 Hidden default supaya production user tidak lihat. -->
+            <button class="btn ghost small" id="dmDevSeedBtn" type="button" hidden title="QA: isi 5 thread dummy untuk test live preview + search">🧪 Seed demo</button>
+            <button class="btn primary small" id="newChat" data-i18n="inbox.btn.newchat">+ Pesan Baru</button>
           </div>
         </div>
 
@@ -5308,14 +5312,14 @@
                Saat ada query, overview cards hidden, hasil thread flat list. -->
           <div class="dm-ov-search">
             <span class="dm-ov-search-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
-            <input type="text" id="dmOvSearch" placeholder="Cari pesan atau user di semua kategori..." autocomplete="off"/>
+            <input type="text" id="dmOvSearch" data-i18n-placeholder="inbox.search.ph" placeholder="Cari pesan atau user di semua kategori..." autocomplete="off"/>
             <button type="button" class="dm-ov-search-clear" id="dmOvSearchClear" hidden aria-label="Bersihkan pencarian">✕</button>
           </div>
 
           <!-- Flat search results — hidden default, muncul saat query non-empty -->
           <div class="dm-ov-search-results" id="dmOvSearchResults" hidden>
             <div class="dm-ov-search-head">
-              <span id="dmOvSearchCount">0</span> hasil
+              <span id="dmOvSearchCount">0</span> <span data-i18n="inbox.search.results">hasil</span>
             </div>
             <div class="dm-ov-search-list" id="dmOvSearchList"></div>
           </div>
@@ -5328,18 +5332,18 @@
                   <h3>DM</h3>
                 </div>
                 <div class="inbox-col-actions">
-                  <button type="button" class="btn primary sm dm-ov-new" id="dmOvNew" title="Mulai percakapan baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Mulai Baru</button>
+                  <button type="button" class="btn primary sm dm-ov-new" id="dmOvNew" title="Mulai percakapan baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> <span data-i18n="inbox.btn.start">Mulai Baru</span></button>
                   <span class="inbox-col-count" id="dmOvCountDm">0</span>
                 </div>
               </div>
               <div class="inbox-col-list" id="dmOvListDm">
                 <div class="dm-ov-empty" id="dmOvBodyDm">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
-                  <p class="dm-ov-empty-title">Belum ada DM</p>
-                  <p class="dm-ov-empty-hint">Chat langsung dengan teman atau kreator yang kamu ikuti.</p>
+                  <p class="dm-ov-empty-title" data-i18n="inbox.empty.dm.title">Belum ada DM</p>
+                  <p class="dm-ov-empty-hint" data-i18n="inbox.empty.dm.hint">Chat langsung dengan teman atau kreator yang kamu ikuti.</p>
                 </div>
               </div>
-              <a href="#" class="dm-ov-seeall" data-dm-open="dm" hidden>Lihat semua →</a>
+              <a href="#" class="dm-ov-seeall" data-dm-open="dm" data-i18n="inbox.seeall" hidden>Lihat semua →</a>
             </div>
 
             <div class="inbox-column dm-ov-card" data-dm-open="broadcast" role="button" tabindex="0">
@@ -5349,18 +5353,18 @@
                   <h3>Broadcast Admin</h3>
                 </div>
                 <div class="inbox-col-actions">
-                  <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="notif-prefs" title="Atur preferensi notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Preferensi</button>
+                  <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="notif-prefs" title="Atur preferensi notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> <span data-i18n="inbox.btn.broadcast.prefs">Preferensi</span></button>
                   <span class="inbox-col-count" id="dmOvCountBc">0</span>
                 </div>
               </div>
               <div class="inbox-col-list" id="dmOvListBc">
                 <div class="dm-ov-empty" id="dmOvBodyBc">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>
-                  <p class="dm-ov-empty-title">Belum ada broadcast</p>
-                  <p class="dm-ov-empty-hint">Pengumuman resmi dari tim Playly akan muncul di sini.</p>
+                  <p class="dm-ov-empty-title" data-i18n="inbox.empty.bc.title">Belum ada broadcast</p>
+                  <p class="dm-ov-empty-hint" data-i18n="inbox.empty.bc.hint">Pengumuman resmi dari tim Playly akan muncul di sini.</p>
                 </div>
               </div>
-              <a href="#" class="dm-ov-seeall" data-dm-open="broadcast" hidden>Lihat semua →</a>
+              <a href="#" class="dm-ov-seeall" data-dm-open="broadcast" data-i18n="inbox.seeall" hidden>Lihat semua →</a>
             </div>
 
             <div class="inbox-column dm-ov-card" data-dm-open="requests" role="button" tabindex="0">
@@ -5370,18 +5374,18 @@
                   <h3>Permintaan</h3>
                 </div>
                 <div class="inbox-col-actions">
-                  <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="dm-privacy" title="Atur siapa yang bisa kirim DM"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Privasi DM</button>
+                  <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="dm-privacy" title="Atur siapa yang bisa kirim DM"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <span data-i18n="inbox.btn.dm.privacy">Privasi DM</span></button>
                   <span class="inbox-col-count" id="dmOvCountReq">0</span>
                 </div>
               </div>
               <div class="inbox-col-list" id="dmOvListReq">
                 <div class="dm-ov-empty" id="dmOvBodyReq">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
-                  <p class="dm-ov-empty-title">Belum ada permintaan</p>
-                  <p class="dm-ov-empty-hint">Pesan dari user yang belum kamu follow masuk ke sini dulu.</p>
+                  <p class="dm-ov-empty-title" data-i18n="inbox.empty.req.title">Belum ada permintaan</p>
+                  <p class="dm-ov-empty-hint" data-i18n="inbox.empty.req.hint">Pesan dari user yang belum kamu follow masuk ke sini dulu.</p>
                 </div>
               </div>
-              <a href="#" class="dm-ov-seeall" data-dm-open="requests" hidden>Lihat semua →</a>
+              <a href="#" class="dm-ov-seeall" data-dm-open="requests" data-i18n="inbox.seeall" hidden>Lihat semua →</a>
             </div>
 
             <div class="inbox-column dm-ov-card" data-dm-open="archived" role="button" tabindex="0">
@@ -5395,11 +5399,11 @@
               <div class="inbox-col-list" id="dmOvListArc">
                 <div class="dm-ov-empty" id="dmOvBodyArc">
                   <span class="dm-ov-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>
-                  <p class="dm-ov-empty-title">Belum ada arsip</p>
-                  <p class="dm-ov-empty-hint">Chat yang kamu arsipkan akan tersimpan rapi di sini.</p>
+                  <p class="dm-ov-empty-title" data-i18n="inbox.empty.arc.title">Belum ada arsip</p>
+                  <p class="dm-ov-empty-hint" data-i18n="inbox.empty.arc.hint">Chat yang kamu arsipkan akan tersimpan rapi di sini.</p>
                 </div>
               </div>
-              <a href="#" class="dm-ov-seeall" data-dm-open="archived" hidden>Lihat semua →</a>
+              <a href="#" class="dm-ov-seeall" data-dm-open="archived" data-i18n="inbox.seeall" hidden>Lihat semua →</a>
             </div>
           </div>
         </div>
@@ -5426,6 +5430,12 @@
             <!-- Active chat — populated by openDmChat() -->
             <div class="dm-chat-active" id="dmChatActive" hidden>
               <header class="dm-chat-header">
+                <!-- Back ke list view (req user 2026-05-25). CSS toggle visibility
+                     berdasarkan parent .dm-layout class. Klik → close chat panel,
+                     restore .dm-list-only modifier. -->
+                <button type="button" class="dm-chat-back" id="dmChatBack" title="Kembali ke daftar" aria-label="Kembali ke daftar pesan">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
                 <div class="avatar" id="dmChatAvatar"><span>U</span></div>
                 <div class="dm-chat-header-info">
                   <strong id="dmChatName">@user</strong>
@@ -8429,8 +8439,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-dm-overview-rich-v523"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-dm-overview-rich-v523"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-i18n-inbox-people-notif-v530"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-i18n-inbox-people-notif-v530"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8876,7 +8886,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-dm-overview-rich-v523" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-i18n-inbox-people-notif-v530" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

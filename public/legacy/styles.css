@@ -8492,6 +8492,51 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   border-radius: 16px;
   overflow: hidden;
 }
+/* List-only mode (req user 2026-05-25): saat tab DM/Permintaan/Arsip
+   dan belum ada thread di-select, tampilkan thread list saja full-width.
+   Empty chat panel placeholder hilang — terlalu makan space + tidak
+   informatif. Klik thread → remove class ini → reveal split view. */
+.dm-layout.dm-list-only {
+  grid-template-columns: 1fr;
+  height: auto;
+  min-height: 300px;
+}
+.dm-layout.dm-list-only .dm-chat {
+  display: none;
+}
+.dm-layout.dm-list-only .dm-side {
+  border-right: 0;
+  /* Pad list area sedikit lebih dalam karena sekarang full-width */
+  max-width: none;
+}
+.dm-layout.dm-list-only .dm-side-list {
+  /* Thread rows yg ada di list-only mode pakai layout yang lebih lapang */
+  padding: 4px 0;
+}
+/* Back button di chat header (visible saat list-only off + sedang ada thread).
+   Klik → kembali ke list-only view. */
+.dm-chat-back {
+  display: none;
+  background: transparent;
+  border: 0;
+  color: var(--text-2, var(--muted));
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  transition: background .12s ease, color .12s ease;
+}
+.dm-chat-back:hover {
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+}
+.dm-chat-back svg { width: 18px; height: 18px; }
+/* Show back button hanya saat layout NON-list-only (chat panel visible) */
+.dm-layout:not(.dm-list-only) .dm-chat-back {
+  display: inline-flex;
+  align-items: center;
+}
 
 /* === DM "Semua" overview — kartu per kategori gaya admin Inbox
    (per request user 2026-05-16). Toggle hidden via JS. === */
@@ -66001,6 +66046,135 @@ body[data-role="admin"] .view-header-people .vh-people-icon {
 .riwayat-tab .ptb-ico svg {
   width: 15px;
   height: 15px;
+}
+
+/* === Pencarian people grid — tightening (req user 2026-05-25) ===
+   Grid cap card width supaya tidak melebar saat hanya 1-2 entries. Single
+   row card terisi sedang (320px), bukan stretch full-screen. */
+.people-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 320px)) !important;
+  justify-content: start;
+}
+@media (max-width: 640px) {
+  .people-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+.people-empty {
+  grid-column: 1 / -1;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+/* === Broadcast Admin polish (req user 2026-05-25) ===
+   Card lebih hierarchical: avatar circle besar (gaya gradient), name+badge
+   bold di kiri, time di kanan, body padded + line-height nyaman. Hover
+   subtle border highlight. Empty state lebih ramah. */
+.dm-broadcast {
+  margin-top: 12px;
+}
+.dm-bc-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 760px;
+}
+.dm-bc-empty {
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.dm-bc-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  transition: border-color .15s ease, transform .12s ease;
+}
+.dm-bc-card:hover {
+  border-color: var(--primary, #6D2932);
+  transform: translateY(-1px);
+}
+.dm-bc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.dm-bc-ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6D2932, #4a1a22);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.dm-bc-ico svg { width: 18px; height: 18px; }
+.dm-bc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.dm-bc-meta strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-bc-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(220, 169, 109, .15);
+  color: #DCA96D;
+  border: 1px solid rgba(220, 169, 109, .35);
+  flex-shrink: 0;
+}
+.dm-bc-time {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dm-bc-body {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* Admin theme — broadcast cards pakai chrome aksen */
+body[data-role="admin"] .dm-bc-card:hover {
+  border-color: #64748b;
+}
+body[data-role="admin"] .dm-bc-ico {
+  background: #475569;
+}
+body[data-role="admin"] .dm-bc-badge {
+  background: rgba(245, 158, 11, .12);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, .35);
+}
+/* Light mode */
+body[data-theme="light"]:not([data-role="admin"]) .dm-bc-head {
+  border-bottom-color: rgba(106, 31, 41, .08);
 }
 
 /* === DM overview card empty state hint (2026-05-25 audit req user) ===
