@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-i18n-inbox-people-notif-v530" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-i18n-cards-thread-v531" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -5329,7 +5329,7 @@
               <div class="inbox-col-head">
                 <div class="inbox-col-title">
                   <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
-                  <h3>DM</h3>
+                  <h3 data-i18n="inbox.card.dm">DM</h3>
                 </div>
                 <div class="inbox-col-actions">
                   <button type="button" class="btn primary sm dm-ov-new" id="dmOvNew" title="Mulai percakapan baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> <span data-i18n="inbox.btn.start">Mulai Baru</span></button>
@@ -5350,7 +5350,7 @@
               <div class="inbox-col-head">
                 <div class="inbox-col-title">
                   <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg></span>
-                  <h3>Broadcast Admin</h3>
+                  <h3 data-i18n="inbox.card.bc">Broadcast Admin</h3>
                 </div>
                 <div class="inbox-col-actions">
                   <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="notif-prefs" title="Atur preferensi notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> <span data-i18n="inbox.btn.broadcast.prefs">Preferensi</span></button>
@@ -5371,7 +5371,7 @@
               <div class="inbox-col-head">
                 <div class="inbox-col-title">
                   <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
-                  <h3>Permintaan</h3>
+                  <h3 data-i18n="inbox.card.req">Permintaan</h3>
                 </div>
                 <div class="inbox-col-actions">
                   <button type="button" class="btn ghost sm dm-ov-action" data-dm-action="dm-privacy" title="Atur siapa yang bisa kirim DM"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <span data-i18n="inbox.btn.dm.privacy">Privasi DM</span></button>
@@ -5392,7 +5392,7 @@
               <div class="inbox-col-head">
                 <div class="inbox-col-title">
                   <span class="inbox-col-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></span>
-                  <h3>Arsip</h3>
+                  <h3 data-i18n="inbox.card.arc">Arsip</h3>
                 </div>
                 <span class="inbox-col-count" id="dmOvCountArc">0</span>
               </div>
@@ -8439,8 +8439,8 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-i18n-inbox-people-notif-v530"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-i18n-inbox-people-notif-v530"></script>
+  <script src="/legacy/cloud-sync.js?v=20260525-i18n-cards-thread-v531"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260525-i18n-cards-thread-v531"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8886,7 +8886,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-i18n-inbox-people-notif-v530" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260525-i18n-cards-thread-v531" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

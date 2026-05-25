@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v530 (Inbox+People+Notif+TopPerf full i18n 8 lang, 47 keys × 8 = 376 entries)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v531 (Inbox card headers + thread preview i18n — total 53 keys × 8 lang = 424 entries)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -6022,6 +6022,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"Upload video",
     "notif.empty.home":           "No notifications yet — start by uploading a video or following your favorite creator.",
     "notif.empty.home.cta":       "Explore creators",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "Broadcast Admin",
+    "inbox.card.req":             "Requests",
+    "inbox.card.arc":             "Archive",
+    "inbox.thread.you":           "You: ",
+    "inbox.thread.pesan":         "[message]",
   },
   id: {
     "settings.language":         "Bahasa & Region",
@@ -7519,6 +7525,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"Upload video",
     "notif.empty.home":           "Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.",
     "notif.empty.home.cta":       "Jelajahi kreator",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "Broadcast Admin",
+    "inbox.card.req":             "Permintaan",
+    "inbox.card.arc":             "Arsip",
+    "inbox.thread.you":           "Kamu: ",
+    "inbox.thread.pesan":         "[pesan]",
   },
   ms: {
     "settings.language":         "Bahasa & Wilayah",
@@ -8771,6 +8783,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"Muat naik video",
     "notif.empty.home":           "Tiada notifikasi lagi — mula dengan muat naik video atau ikuti kreator kegemaran.",
     "notif.empty.home.cta":       "Jelajah kreator",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "Siaran Admin",
+    "inbox.card.req":             "Permintaan",
+    "inbox.card.arc":             "Arkib",
+    "inbox.thread.you":           "Anda: ",
+    "inbox.thread.pesan":         "[mesej]",
   },
   ja: {
     "settings.language":         "言語と地域",
@@ -10023,6 +10041,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"動画をアップロード",
     "notif.empty.home":           "通知はまだありません — 動画のアップロードや好きなクリエイターのフォローから始めよう。",
     "notif.empty.home.cta":       "クリエイターを探す",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "管理人からのお知らせ",
+    "inbox.card.req":             "リクエスト",
+    "inbox.card.arc":             "アーカイブ",
+    "inbox.thread.you":           "あなた: ",
+    "inbox.thread.pesan":         "[メッセージ]",
   },
   ar: {
     "settings.language":         "اللغة والمنطقة",
@@ -11275,6 +11299,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"تحميل فيديو",
     "notif.empty.home":           "لا توجد إشعارات بعد — ابدأ بتحميل فيديو أو متابعة المبدع المفضل لديك.",
     "notif.empty.home.cta":       "استكشف المبدعين",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "إعلانات المشرف",
+    "inbox.card.req":             "الطلبات",
+    "inbox.card.arc":             "الأرشيف",
+    "inbox.thread.you":           "أنت: ",
+    "inbox.thread.pesan":         "[رسالة]",
   },
   zh: {
     "settings.language":         "语言和地区",
@@ -12527,6 +12557,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"上传视频",
     "notif.empty.home":           "暂无通知 — 从上传视频或关注您喜爱的创作者开始。",
     "notif.empty.home.cta":       "探索创作者",
+    "inbox.card.dm":              "私信",
+    "inbox.card.bc":              "管理员广播",
+    "inbox.card.req":             "请求",
+    "inbox.card.arc":             "归档",
+    "inbox.thread.you":           "你: ",
+    "inbox.thread.pesan":         "[消息]",
   },
   ko: {
     "settings.language":         "언어 및 지역",
@@ -13779,6 +13815,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"동영상 업로드",
     "notif.empty.home":           "아직 알림 없음 — 동영상 업로드 또는 좋아하는 크리에이터 팔로우부터 시작하세요.",
     "notif.empty.home.cta":       "크리에이터 탐색",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "관리자 공지",
+    "inbox.card.req":             "요청",
+    "inbox.card.arc":             "보관함",
+    "inbox.thread.you":           "나: ",
+    "inbox.thread.pesan":         "[메시지]",
   },
   es: {
     "settings.language":         "Idioma y Región",
@@ -15031,6 +15073,12 @@ const I18N = {
     "notif.empty.rich.cta.upload":"Subir video",
     "notif.empty.home":           "Sin notificaciones aún — empieza subiendo un video o siguiendo a tu creador favorito.",
     "notif.empty.home.cta":       "Explorar creadores",
+    "inbox.card.dm":              "DM",
+    "inbox.card.bc":              "Anuncios del Admin",
+    "inbox.card.req":             "Solicitudes",
+    "inbox.card.arc":             "Archivo",
+    "inbox.thread.you":           "Tú: ",
+    "inbox.thread.pesan":         "[mensaje]",
   },
 };
 
@@ -37075,8 +37123,8 @@ function buildOvThreadRow(m, idx) {
   var adminBadge = (m.isAdmin || m.isBroadcast) ? '<span class="dm-ov-badge-admin">Admin</span>' : "";
   var lastMsg = m.history && m.history.length ? m.history[m.history.length - 1] : null;
   var preview = lastMsg
-    ? ((lastMsg.from === "me" ? "Kamu: " : "") + (lastMsg.text || "[pesan]"))
-    : (m.preview || "Belum ada pesan");
+    ? ((lastMsg.from === "me" ? t("inbox.thread.you") : "") + (lastMsg.text || t("inbox.thread.pesan")))
+    : (m.preview || t("inbox.empty.dm.title"));
   var previewTrim = String(preview).slice(0, 60) + (String(preview).length > 60 ? "…" : "");
   var unreadCls = m.unread ? "is-unread" : "";
   return '<div class="dm-ov-thread ' + unreadCls + '" data-dm-thread-open="' + idx + '" tabindex="0" role="button">'
