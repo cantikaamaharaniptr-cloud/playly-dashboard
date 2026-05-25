@@ -26,6 +26,12 @@
                               // device dgn antrian device lain).
     "playly-cloud-last-sync", // EGRESS OPT (2026-05-21): timestamp delta fetch.
                               // Per device, jangan di-sync.
+    "playly-current-user",    // ORPHAN cleanup (2026-05-22): legacy key dari
+                              // versi lama script.js. Sekarang tidak ditulis
+                              // (cuma dibaca di purchase modal). Tapi cloud kv
+                              // masih nyimpen value lama ("demo_creator", dst)
+                              // → re-sync tiap load → state inconsistency.
+                              // NO_SYNC supaya local nggak ke-pollute dari cloud.
   ]);
   function shouldSync(key) {
     if (typeof key !== "string") return false;

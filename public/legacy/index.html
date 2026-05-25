@@ -11,10 +11,33 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260523-edit-video-pro-v502" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260522-role-isolation-v503" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- ROLE ISOLATION FOUC GUARD (2026-05-22) — sync inline CSS untuk cegah
+       admin UI flash di non-admin URL. CSS ini paint sebelum styles.css selesai
+       load. Hilang risiko race: dashboard.app render dgn data-role unset →
+       admin section sempat kelihatan sebelum applyRoleToUI() set role.
+       Aturan: kalau body bukan data-role="admin", admin-only DOM hidden HARD
+       via !important. Aman karena admin section dibuat untuk admin view saja. -->
+  <style>
+    body:not([data-role="admin"]) .admin-only,
+    body:not([data-role="admin"]) [data-admin-only],
+    body:not([data-role="admin"]) #adminHeroCard,
+    body:not([data-role="admin"]) [data-view="admin-dashboard"],
+    body:not([data-role="admin"]) [data-view="admin-users"],
+    body:not([data-role="admin"]) [data-view="admin-videos"],
+    body:not([data-role="admin"]) [data-view="admin-reports"],
+    body:not([data-role="admin"]) [data-view="admin-payments"],
+    body:not([data-role="admin"]) [data-view="admin-broadcast"],
+    body:not([data-role="admin"]) [data-view="admin-settings"],
+    body:not([data-role="admin"]) [data-view="admin-player"] {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  </style>
 </head>
 <body data-theme="dark" class="auth-mode">
 
@@ -8360,7 +8383,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260523-edit-video-pro-v502"></script>
+  <script src="/legacy/cloud-sync.js?v=20260522-role-isolation-v503"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8806,7 +8829,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260523-edit-video-pro-v502" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260522-role-isolation-v503" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

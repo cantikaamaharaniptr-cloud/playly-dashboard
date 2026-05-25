@@ -2,6 +2,17 @@
    PLAYLY. — Dashboard Logic (auth + multi-view)
    ========================================================= */
 
+// ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
+// Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
+// tapi cloud-sync mirror dari kv table → re-sync tiap load → state inconsistency.
+// playly-current-user: dulu nyimpen current user (kayak "demo_creator"), sekarang
+// tidak ada writer; tapi cloud kv masih punya value lama → bug yang dilaporkan user.
+// Cloud-sync sudah di-update no-sync untuk key ini, tapi local copy yang sudah ada
+// perlu dibersihin sekali. Idempotent — aman dipanggil tiap boot.
+(function purgeOrphanKeys() {
+  try { localStorage.removeItem("playly-current-user"); } catch (_) {}
+})();
+
 // ----------------------- URL-TRIGGER ADMIN RESET -----------------------
 // Visit /?cleanup=playly-reset → wipe all user data + payments + state.
 // Admin accounts are preserved. Page reloads after cleanup. Per user
