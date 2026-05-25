@@ -17416,17 +17416,16 @@ function renderDashboardTierPill() {
       '</span>';
     pill.title = isID ? "Akun Premium aktif" : "Premium account active";
   } else {
-    // Audit 2026-05-25 req user (opsi 1): "Gratis" jadi badge wine
-    // outline kecil, "Premium tersedia" jadi text muted cream. Color
-    // amber #DCA96D yg sebelumnya dipakai untuk status dihapus —
-    // terlalu mencolok di topbar. Klik tetap buka plan picker.
+    // Audit 2026-05-25 req user (opsi 2): compact — cuma icon + 1 kata
+    // "Gratis". Status text "Premium tersedia" dihapus, info pindah ke
+    // tooltip hover. Lebih bersih di chrome topbar. Klik tetap buka
+    // plan picker.
     pill.innerHTML =
       '<span class="dtp-icon">○</span>' +
       '<span class="dtp-text">' +
-        '<span class="dtp-tier-badge">' + (isID ? "Gratis" : "Free") + '</span>' +
-        '<span class="dtp-status">' + (isID ? "Premium tersedia" : "Premium available") + '</span>' +
+        '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
-    pill.title = isID ? "Lihat opsi Premium" : "See Premium options";
+    pill.title = isID ? "Klik untuk lihat opsi Premium" : "Click to see Premium options";
   }
   if (!pill.dataset.bound) {
     pill.dataset.bound = "1";
