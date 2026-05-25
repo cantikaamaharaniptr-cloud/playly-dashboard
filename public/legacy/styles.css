@@ -66020,6 +66020,183 @@ body[data-role="admin"] .session-extend-banner .seb-btn:hover {
   background: #64748b;
 }
 
+/* === Session detail popup (audit 2026-05-25 req user) ===
+   Pill compact di hero — klik buka popup ini dgn detail elapsed/idle/max.
+   Anchored fixed-position di bawah pill. Click-outside / Esc → close. */
+.hero-pill.hero-pill-session {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+  /* Compact: padding ringkas + font kecil tabular */
+  padding: 4px 10px;
+  background: transparent;
+}
+.hero-pill.hero-pill-session:hover {
+  background: rgba(255, 255, 255, .04);
+}
+.hero-pill.hero-pill-session #heroSessionDuration {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.session-detail-popup {
+  position: fixed;
+  z-index: 9998;
+  min-width: 240px;
+  max-width: 320px;
+  background: var(--bg-3, #1a0e10);
+  color: var(--text-1, #f0e6d8);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .5);
+  padding: 12px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  animation: sdpSlideDown .18s ease-out;
+}
+@keyframes sdpSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.session-detail-popup .sdp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  margin-bottom: 10px;
+}
+.session-detail-popup .sdp-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-2, var(--muted));
+}
+.session-detail-popup .sdp-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+.session-detail-popup .sdp-close {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.session-detail-popup .sdp-close:hover {
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+}
+.session-detail-popup .sdp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.session-detail-popup .sdp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, .03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, .04);
+}
+.session-detail-popup .sdp-row .sdp-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.session-detail-popup .sdp-row b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+}
+.session-detail-popup .sdp-row-highlight {
+  background: rgba(208, 71, 87, .06);
+  border-color: rgba(208, 71, 87, .18);
+}
+.session-detail-popup .sdp-row-highlight b {
+  color: var(--primary, #d04757);
+}
+.session-detail-popup .sdp-row-highlight.sdp-warn {
+  background: rgba(245, 158, 11, .08);
+  border-color: rgba(245, 158, 11, .25);
+}
+.session-detail-popup .sdp-row-highlight.sdp-warn b {
+  color: #f59e0b;
+}
+.session-detail-popup .sdp-row-highlight.sdp-danger {
+  background: rgba(239, 68, 68, .12);
+  border-color: rgba(239, 68, 68, .35);
+}
+.session-detail-popup .sdp-row-highlight.sdp-danger b {
+  color: #ef4444;
+}
+.session-detail-popup .sdp-hint {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+.session-detail-popup .sdp-extend {
+  width: 100%;
+  background: var(--primary, #6a1f29);
+  color: #fff;
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.session-detail-popup .sdp-extend:hover {
+  background: var(--primary-2, #8a2a36);
+}
+/* Light mode tweaks */
+body[data-theme="light"]:not([data-role="admin"]) .session-detail-popup {
+  background: #ffffff;
+  color: #1a0e10;
+  border-color: rgba(106, 31, 41, .15);
+  box-shadow: 0 12px 36px rgba(106, 31, 41, .15);
+}
+body[data-theme="light"]:not([data-role="admin"]) .session-detail-popup .sdp-row {
+  background: rgba(106, 31, 41, .04);
+  border-color: rgba(106, 31, 41, .08);
+}
+body[data-theme="light"]:not([data-role="admin"]) .session-detail-popup .sdp-head {
+  border-bottom-color: rgba(106, 31, 41, .12);
+}
+/* Admin theme — chrome/slate */
+body[data-role="admin"] .session-detail-popup {
+  background: #1e2733;
+  color: #e2e8f0;
+  border-color: #475569;
+  animation: sdpSlideDown .18s ease-out;
+}
+body[data-role="admin"] .session-detail-popup .sdp-row {
+  background: rgba(255, 255, 255, .03);
+  border-color: rgba(255, 255, 255, .06);
+}
+body[data-role="admin"] .session-detail-popup .sdp-row-highlight {
+  background: rgba(245, 158, 11, .08);
+  border-color: rgba(245, 158, 11, .25);
+}
+body[data-role="admin"] .session-detail-popup .sdp-row-highlight b {
+  color: #f59e0b;
+}
+body[data-role="admin"] .session-detail-popup .sdp-extend {
+  background: #475569;
+}
+body[data-role="admin"] .session-detail-popup .sdp-extend:hover {
+  background: #64748b;
+}
+
 /* === Notif panel empty-state rich (H audit, 2026-05-25) ===
    Versi lengkap dengan tips konkret + CTA, replace plain "No notifications".
    Tetap fit di panel notif (~360px width). */

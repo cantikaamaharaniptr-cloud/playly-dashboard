@@ -30125,7 +30125,32 @@ function updateHeroSessionDuration() {
   const rm = Math.floor(remainingSec / 60);
   const rs = remainingSec % 60;
   const totalMin = Math.round(SESSION_IDLE_LIMIT_MS / 60000);
-  el.textContent = "Sesi " + elapsedStr + " / idle " + pad(rm) + ":" + pad(rs) + " / " + pad(totalMin) + ":00";
+
+  // Audit 2026-05-25 (req user): pill compact — cuma "Sesi" + sisa idle
+  // ringkas. Detail lengkap (elapsed + idle + max) di popup yang muncul
+  // saat user klik pill. Sebelumnya "Sesi 34:07 / idle 29:59 / 30:00"
+  // terasa terlalu ramai di chrome permanent.
+  let compact;
+  if (remainingMs <= 60 * 1000) {
+    // <1 menit → tampilkan detik supaya urgent ("Sesi · 45d")
+    compact = "Sesi · " + Math.max(0, Math.ceil(remainingMs / 1000)) + "d";
+  } else {
+    // Tampilkan menit saja ("Sesi · 28m")
+    compact = "Sesi · " + Math.max(1, Math.ceil(remainingMs / 60000)) + "m";
+  }
+  el.textContent = compact;
+
+  // Update popup kalau sedang terbuka — supaya detail real-time.
+  if (typeof updateSessionPopupIfOpen === "function") {
+    try {
+      updateSessionPopupIfOpen({
+        elapsedStr: elapsedStr,
+        remainingStr: pad(rm) + ":" + pad(rs),
+        remainingMs: remainingMs,
+        totalMinStr: pad(totalMin) + ":00",
+      });
+    } catch (_) {}
+  }
 
   // Warning classes pada pill
   if (pill) {
@@ -30163,6 +30188,123 @@ function updateHeroSessionDuration() {
 }
 setInterval(updateHeroSessionDuration, 1000);
 updateHeroSessionDuration();
+
+// Audit 2026-05-25 (req user): session detail popup — muncul saat user klik
+// pill compact. Tampilin elapsed + sisa idle + max idle + tombol "Lanjutkan
+// sesi". Real-time refresh via updateSessionPopupIfOpen() yang dipanggil
+// tiap detik dari updateHeroSessionDuration.
+function openSessionDetailPopup() {
+  const ID = "sessionDetailPopup";
+  let pop = document.getElementById(ID);
+  if (pop) {
+    // Sudah open → close (toggle behavior)
+    pop.remove();
+    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
+    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
+    return;
+  }
+  pop = document.createElement("div");
+  pop.id = ID;
+  pop.className = "session-detail-popup";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "Detail sesi");
+  pop.innerHTML =
+    '<div class="sdp-head">' +
+      '<svg class="sdp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+      '<span class="sdp-title">Detail sesi</span>' +
+      '<button type="button" class="sdp-close" aria-label="Tutup">✕</button>' +
+    '</div>' +
+    '<div class="sdp-rows">' +
+      '<div class="sdp-row"><span class="sdp-label">Berjalan</span><b id="sdpElapsed">—</b></div>' +
+      '<div class="sdp-row sdp-row-highlight"><span class="sdp-label">Sisa idle</span><b id="sdpRemaining">—</b></div>' +
+      '<div class="sdp-row"><span class="sdp-label">Batas idle</span><b id="sdpTotal">—</b></div>' +
+    '</div>' +
+    '<p class="sdp-hint">Sesi otomatis berakhir saat idle melebihi batas. Aktivitas (klik, ketik, scroll) reset sisa idle.</p>' +
+    '<button type="button" class="sdp-extend">Lanjutkan sesi sekarang</button>';
+
+  // Anchor di bawah pill — gunakan getBoundingClientRect supaya posisi akurat.
+  const pill = document.getElementById("heroSessionPill");
+  if (pill) {
+    const rect = pill.getBoundingClientRect();
+    pop.style.position = "fixed";
+    pop.style.top = (rect.bottom + 8) + "px";
+    pop.style.left = Math.max(8, rect.left) + "px";
+  }
+  document.body.appendChild(pop);
+
+  // Initial fill — pakai data terakhir.
+  try {
+    updateHeroSessionDuration();
+  } catch (_) {}
+
+  // Wire close + extend buttons
+  pop.querySelector(".sdp-close")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    pop.remove();
+    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
+    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
+  });
+  pop.querySelector(".sdp-extend")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof _markActivity === "function") _markActivity();
+    if (typeof toast === "function") toast("⏱️ Sesi diperpanjang", "success");
+    pop.remove();
+    document.removeEventListener("click", _sessionPopupOutsideHandler, true);
+    document.removeEventListener("keydown", _sessionPopupEscHandler, true);
+  });
+
+  // Click di luar → close (capture phase supaya tidak miss event)
+  setTimeout(() => {
+    document.addEventListener("click", _sessionPopupOutsideHandler, true);
+    document.addEventListener("keydown", _sessionPopupEscHandler, true);
+  }, 0);
+}
+function _sessionPopupOutsideHandler(e) {
+  const pop = document.getElementById("sessionDetailPopup");
+  if (!pop) return;
+  if (pop.contains(e.target)) return;
+  // Klik pada pill itu sendiri → biar toggle handler yang urus
+  if (e.target.closest && e.target.closest("#heroSessionPill")) return;
+  pop.remove();
+  document.removeEventListener("click", _sessionPopupOutsideHandler, true);
+  document.removeEventListener("keydown", _sessionPopupEscHandler, true);
+}
+function _sessionPopupEscHandler(e) {
+  if (e.key !== "Escape") return;
+  const pop = document.getElementById("sessionDetailPopup");
+  if (!pop) return;
+  pop.remove();
+  document.removeEventListener("click", _sessionPopupOutsideHandler, true);
+  document.removeEventListener("keydown", _sessionPopupEscHandler, true);
+}
+function updateSessionPopupIfOpen(data) {
+  const pop = document.getElementById("sessionDetailPopup");
+  if (!pop) return;
+  const setText = (id, val) => {
+    const el = pop.querySelector("#" + id);
+    if (el) el.textContent = val;
+  };
+  setText("sdpElapsed", data.elapsedStr);
+  setText("sdpRemaining", data.remainingStr);
+  setText("sdpTotal", data.totalMinStr);
+  // Highlight color logic — sisa idle <=60s = danger merah, <=300s = warn
+  const row = pop.querySelector(".sdp-row-highlight");
+  if (row) {
+    row.classList.remove("sdp-warn", "sdp-danger");
+    if (data.remainingMs <= 60 * 1000) row.classList.add("sdp-danger");
+    else if (data.remainingMs <= 5 * 60 * 1000) row.classList.add("sdp-warn");
+  }
+}
+// Wire pill click → toggle popup
+document.addEventListener("click", function (e) {
+  const pill = e.target.closest && e.target.closest("#heroSessionPill");
+  if (!pill) return;
+  e.preventDefault();
+  e.stopPropagation();
+  openSessionDetailPopup();
+});
 
 // E audit (2026-05-25): session extend banner — muncul di 60 detik terakhir,
 // hilang otomatis di luar window itu atau saat user klik "Lanjutkan".
