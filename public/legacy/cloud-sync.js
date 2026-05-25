@@ -66,10 +66,14 @@
   // /api/kv/sync (cookie auth + server stamp user_id) instead of anon-key
   // direct write. Tujuan: enforce RLS per-user, kurangi privacy risk.
   //
-  // SCOPE LIMITED — hanya prefix yang JELAS per-user. SKIP:
-  //   - playly-state-*, playly-2fa-* (di NO_SYNC_PREFIXES, never sync)
-  //   - playly-account-* (overlap dgn system keys spt allowlist/cutoff-ts,
-  //     handle di B6c nanti)
+  // Phase B6c-extension (v542, 2026-05-25): tambah `playly-account-{email}`
+  // — setelah B6c rename CUTOFF_TS_KEY ke playly-syskey-*, semua
+  // `playly-account-*` 100% user accounts (suffix @email). Migration 0010
+  // stricter RLS akan deny anon-key push untuk per-user keys setelah
+  // B6a-4 cutover, jadi WAJIB route via bridge.
+  //
+  // SKIP (di-handle lain):
+  //   - playly-state-*, playly-2fa-* (NO_SYNC_PREFIXES, never sync)
   //   - playly-cloud-*, playly-user, playly-device-accounts (NO_SYNC_KEYS)
   //
   // LOCKSTEP dgn app/api/kv/sync/route.ts PER_USER_PREFIXES — sync wajib.
@@ -79,11 +83,20 @@
     "playly-welcome-",
     "playly-onboarding-",
     "playly-notif-",
+    // playly-account-* — special handling via isPerUserBridgeKey suffix check
   ];
   function isPerUserBridgeKey(key) {
     if (typeof key !== "string") return false;
+    // Standard prefix match
     for (let i = 0; i < PER_USER_PREFIXES_BRIDGE.length; i++) {
       if (key.startsWith(PER_USER_PREFIXES_BRIDGE[i])) return true;
+    }
+    // playly-account-* hanya per-user kalau suffix berisi @ (= user email).
+    // Sistem keys spt playly-syskey-* atau hipotetical playly-account-allowlist
+    // tidak match karena no @. Match API route logic.
+    if (key.startsWith("playly-account-")) {
+      var suffix = key.slice("playly-account-".length);
+      return suffix.indexOf("@") !== -1;
     }
     return false;
   }

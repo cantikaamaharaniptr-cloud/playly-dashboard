@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v541 (B6c: syskey namespace migration — playly-account-* now 100% user)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v542 (B6c+: kv orphan cleanup + auto-heal trigger + cloud-sync include playly-account bridge)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
