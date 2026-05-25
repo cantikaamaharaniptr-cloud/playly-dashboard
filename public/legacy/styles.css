@@ -22166,6 +22166,57 @@ body[data-theme="light"]:not([data-role="admin"]) .page-head .ph-icon {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* === Admin filter pill unification (v534, 2026-05-25) ===
+   3 variant class lama (.gv-tab, .inbox-filter, .comms-inbox-filter)
+   sebelumnya punya styling sedikit berbeda di body/active/hover. Group
+   selector di sini set BASE style yang sama supaya visually konsisten.
+   Per-class CSS lama tetap (untuk backward compat) — group rule menang
+   karena lebih spesifik berbasis source-order. Class .admin-filter baru
+   bisa dipakai untuk new pills supaya tidak nambah variant lagi. */
+.admin-filter,
+.gv-tab,
+.inbox-filter,
+.comms-inbox-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.admin-filter:hover,
+.gv-tab:hover,
+.inbox-filter:hover,
+.comms-inbox-filter:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong, var(--border));
+}
+.admin-filter.active,
+.gv-tab.active,
+.inbox-filter.active,
+.comms-inbox-filter.active {
+  background: var(--primary, #6D2932);
+  color: #fff;
+  border-color: var(--primary, #6D2932);
+}
+/* Admin theme — chrome accent saat aktif (flat, no FX) */
+body[data-role="admin"] .admin-filter.active,
+body[data-role="admin"] .gv-tab.active,
+body[data-role="admin"] .inbox-filter.active,
+body[data-role="admin"] .comms-inbox-filter.active {
+  background: #475569;
+  border-color: #64748b;
+}
 .search-mini {
   padding: 9px 14px;
   border-radius: 999px;

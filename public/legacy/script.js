@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v533 (4 admin headers SVG-icon + admin comms/tickets empty state polish)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v534 (Admin ticket/bug status + 5 toasts i18n 8 lang + filter pill unify)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -6028,6 +6028,19 @@ const I18N = {
     "inbox.card.arc":             "Archive",
     "inbox.thread.you":           "You: ",
     "inbox.thread.pesan":         "[message]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "NEW",
+    "admin.ticket.status.progress": "IN PROGRESS",
+    "admin.ticket.status.resolved": "RESOLVED",
+    "admin.bug.status.open":      "OPEN",
+    "admin.bug.status.assigned":  "ASSIGNED",
+    "admin.bug.status.closed":    "CLOSED",
+    "admin.toast.video.approved": "✓ Video approved",
+    "admin.toast.video.removed":  "🗑️ Video removed",
+    "admin.toast.video.restored": "↻ Video restored",
+    "admin.toast.bug.assigned":   "👤 Bug assigned",
+    "admin.toast.bug.closed":     "✓ Bug closed",
+    "admin.toast.ticket.status":  "🎫 Ticket →",
   },
   id: {
     "settings.language":         "Bahasa & Region",
@@ -7531,6 +7544,19 @@ const I18N = {
     "inbox.card.arc":             "Arsip",
     "inbox.thread.you":           "Kamu: ",
     "inbox.thread.pesan":         "[pesan]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "BARU",
+    "admin.ticket.status.progress": "DIPROSES",
+    "admin.ticket.status.resolved": "SELESAI",
+    "admin.bug.status.open":      "TERBUKA",
+    "admin.bug.status.assigned":  "DITUGASKAN",
+    "admin.bug.status.closed":    "DITUTUP",
+    "admin.toast.video.approved": "✓ Video disetujui",
+    "admin.toast.video.removed":  "🗑️ Video dihapus",
+    "admin.toast.video.restored": "↻ Video dipulihkan",
+    "admin.toast.bug.assigned":   "👤 Bug ditugaskan",
+    "admin.toast.bug.closed":     "✓ Bug ditutup",
+    "admin.toast.ticket.status":  "🎫 Tiket →",
   },
   ms: {
     "settings.language":         "Bahasa & Wilayah",
@@ -8789,6 +8815,19 @@ const I18N = {
     "inbox.card.arc":             "Arkib",
     "inbox.thread.you":           "Anda: ",
     "inbox.thread.pesan":         "[mesej]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "BARU",
+    "admin.ticket.status.progress": "DIPROSES",
+    "admin.ticket.status.resolved": "SELESAI",
+    "admin.bug.status.open":      "TERBUKA",
+    "admin.bug.status.assigned":  "DITUGASKAN",
+    "admin.bug.status.closed":    "DITUTUP",
+    "admin.toast.video.approved": "✓ Video diluluskan",
+    "admin.toast.video.removed":  "🗑️ Video dihapus",
+    "admin.toast.video.restored": "↻ Video dipulihkan",
+    "admin.toast.bug.assigned":   "👤 Bug ditugaskan",
+    "admin.toast.bug.closed":     "✓ Bug ditutup",
+    "admin.toast.ticket.status":  "🎫 Tiket →",
   },
   ja: {
     "settings.language":         "言語と地域",
@@ -10047,6 +10086,19 @@ const I18N = {
     "inbox.card.arc":             "アーカイブ",
     "inbox.thread.you":           "あなた: ",
     "inbox.thread.pesan":         "[メッセージ]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "新規",
+    "admin.ticket.status.progress": "処理中",
+    "admin.ticket.status.resolved": "解決済み",
+    "admin.bug.status.open":      "未対応",
+    "admin.bug.status.assigned":  "割り当て済み",
+    "admin.bug.status.closed":    "クローズ",
+    "admin.toast.video.approved": "✓ 動画を承認しました",
+    "admin.toast.video.removed":  "🗑️ 動画を削除しました",
+    "admin.toast.video.restored": "↻ 動画を復元しました",
+    "admin.toast.bug.assigned":   "👤 バグを割り当てました",
+    "admin.toast.bug.closed":     "✓ バグをクローズしました",
+    "admin.toast.ticket.status":  "🎫 チケット →",
   },
   ar: {
     "settings.language":         "اللغة والمنطقة",
@@ -11305,6 +11357,19 @@ const I18N = {
     "inbox.card.arc":             "الأرشيف",
     "inbox.thread.you":           "أنت: ",
     "inbox.thread.pesan":         "[رسالة]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "جديد",
+    "admin.ticket.status.progress": "قيد المعالجة",
+    "admin.ticket.status.resolved": "تم الحل",
+    "admin.bug.status.open":      "مفتوح",
+    "admin.bug.status.assigned":  "تم التعيين",
+    "admin.bug.status.closed":    "مغلق",
+    "admin.toast.video.approved": "✓ تمت الموافقة على الفيديو",
+    "admin.toast.video.removed":  "🗑️ تم حذف الفيديو",
+    "admin.toast.video.restored": "↻ تمت استعادة الفيديو",
+    "admin.toast.bug.assigned":   "👤 تم تعيين الخطأ",
+    "admin.toast.bug.closed":     "✓ تم إغلاق الخطأ",
+    "admin.toast.ticket.status":  "🎫 تذكرة ←",
   },
   zh: {
     "settings.language":         "语言和地区",
@@ -12563,6 +12628,19 @@ const I18N = {
     "inbox.card.arc":             "归档",
     "inbox.thread.you":           "你: ",
     "inbox.thread.pesan":         "[消息]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "新建",
+    "admin.ticket.status.progress": "处理中",
+    "admin.ticket.status.resolved": "已解决",
+    "admin.bug.status.open":      "未处理",
+    "admin.bug.status.assigned":  "已分配",
+    "admin.bug.status.closed":    "已关闭",
+    "admin.toast.video.approved": "✓ 视频已批准",
+    "admin.toast.video.removed":  "🗑️ 视频已删除",
+    "admin.toast.video.restored": "↻ 视频已恢复",
+    "admin.toast.bug.assigned":   "👤 错误已分配",
+    "admin.toast.bug.closed":     "✓ 错误已关闭",
+    "admin.toast.ticket.status":  "🎫 工单 →",
   },
   ko: {
     "settings.language":         "언어 및 지역",
@@ -13821,6 +13899,19 @@ const I18N = {
     "inbox.card.arc":             "보관함",
     "inbox.thread.you":           "나: ",
     "inbox.thread.pesan":         "[메시지]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "신규",
+    "admin.ticket.status.progress": "진행 중",
+    "admin.ticket.status.resolved": "해결됨",
+    "admin.bug.status.open":      "미처리",
+    "admin.bug.status.assigned":  "할당됨",
+    "admin.bug.status.closed":    "종료됨",
+    "admin.toast.video.approved": "✓ 동영상 승인됨",
+    "admin.toast.video.removed":  "🗑️ 동영상 삭제됨",
+    "admin.toast.video.restored": "↻ 동영상 복원됨",
+    "admin.toast.bug.assigned":   "👤 버그 할당됨",
+    "admin.toast.bug.closed":     "✓ 버그 종료됨",
+    "admin.toast.ticket.status":  "🎫 티켓 →",
   },
   es: {
     "settings.language":         "Idioma y Región",
@@ -15079,6 +15170,19 @@ const I18N = {
     "inbox.card.arc":             "Archivo",
     "inbox.thread.you":           "Tú: ",
     "inbox.thread.pesan":         "[mensaje]",
+    // === v534 (2026-05-25): Admin ticket/bug status + common admin toasts ===
+    "admin.ticket.status.new":    "NUEVO",
+    "admin.ticket.status.progress": "EN PROCESO",
+    "admin.ticket.status.resolved": "RESUELTO",
+    "admin.bug.status.open":      "ABIERTO",
+    "admin.bug.status.assigned":  "ASIGNADO",
+    "admin.bug.status.closed":    "CERRADO",
+    "admin.toast.video.approved": "✓ Video aprobado",
+    "admin.toast.video.removed":  "🗑️ Video eliminado",
+    "admin.toast.video.restored": "↻ Video restaurado",
+    "admin.toast.bug.assigned":   "👤 Bug asignado",
+    "admin.toast.bug.closed":     "✓ Bug cerrado",
+    "admin.toast.ticket.status":  "🎫 Ticket →",
   },
 };
 
@@ -27428,7 +27532,12 @@ function renderAdminModeration() {
         pushAdminEvent("↻", `Video <i>"${escapeHtml(item.title)}"</i> di-restore (LIVE lagi)`);
       }
       saveAdminData("mod", list);
-      toast(action === "approve" ? "✓ Video disetujui" : action === "remove" ? "🗑️ Video dihapus" : "↻ Restored", action === "remove" ? "error" : "success");
+      toast(
+        action === "approve" ? t("admin.toast.video.approved")
+          : action === "remove" ? t("admin.toast.video.removed")
+          : t("admin.toast.video.restored"),
+        action === "remove" ? "error" : "success"
+      );
       renderAdminModeration();
       renderAdminAlerts();
       renderAdminLiveFeed();
@@ -28683,7 +28792,12 @@ Tim Playly</textarea>
 function renderAdminTickets() {
   const list = $("#adminTicketList"); if (!list) return;
   const tickets = [...getAdminData("tickets")].sort((a, b) => b.createdAt - a.createdAt);
-  const labels = { new: "NEW", progress: "IN PROGRESS", resolved: "RESOLVED" };
+  // v534 (2026-05-25): status labels i18n
+  const labels = {
+    new: t("admin.ticket.status.new"),
+    progress: t("admin.ticket.status.progress"),
+    resolved: t("admin.ticket.status.resolved"),
+  };
 
   // Update top status pills
   const stats = $(".ticket-stats"); if (stats) {
@@ -28749,7 +28863,8 @@ function renderAdminTickets() {
         t.status = next[t.status] || "new";
         saveAdminData("tickets", arr);
         pushAdminEvent("🎫", `Tiket <b>"${t.title}"</b> → ${labels[t.status]}`);
-        toast(`🎫 Tiket → <b>${labels[t.status]}</b>`, t.status === "resolved" ? "success" : "");
+        // v534: pakai window.t() supaya tidak shadow ticket object `t` di scope ini
+        toast(`${window.t("admin.toast.ticket.status")} <b>${labels[t.status]}</b>`, t.status === "resolved" ? "success" : "");
         renderAdminTickets();
         renderAdminAlerts();
         renderAdminLiveFeed();
@@ -28837,8 +28952,8 @@ function renderAdminBugs() {
       const arr = getAdminData("bugs");
       const b = arr.find(x => x.id === id); if (!b) return;
       if (action === "detail") return toast(`📋 ${b.title}<br/><small>${b.desc}</small>`);
-      if (action === "assign") { b.status = "assigned"; pushAdminEvent("👤", `Bug <i>"${b.title}"</i> di-assign ke moderator`); toast("👤 Bug di-assign", "success"); }
-      if (action === "close") { b.status = "closed"; pushAdminEvent("✓", `Bug <i>"${b.title}"</i> di-close`); toast("✓ Bug di-close", "success"); }
+      if (action === "assign") { b.status = "assigned"; pushAdminEvent("👤", `Bug <i>"${b.title}"</i> di-assign ke moderator`); toast(t("admin.toast.bug.assigned"), "success"); }
+      if (action === "close") { b.status = "closed"; pushAdminEvent("✓", `Bug <i>"${b.title}"</i> di-close`); toast(t("admin.toast.bug.closed"), "success"); }
       if (action === "reopen") { b.status = "open"; pushAdminEvent("↻", `Bug <i>"${b.title}"</i> di-reopen`); toast("↻ Bug di-reopen"); }
       saveAdminData("bugs", arr);
       renderAdminBugs();
