@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v545 (B6b P1 + B6a-4 step 1: parallel-verify telemetry /api/auth/verify, kv read bridge /api/kv/list)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v546 (Medium audit batch: premium code dedup, silent-grant notif, dual-admin ticket race, payment orphan cleanup)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -17590,9 +17590,25 @@ function savePremiumPayments(arr) {
 }
 function generatePremiumCode() {
   // PLY-XXXXXXXX format, no confusing chars (no 0/O/1/I/L)
+  // v546 (2026-05-25): Audit moderation M4 — dedup loop terhadap existing
+  // payment codes. Sebelumnya pure random tanpa check → mungkin collision
+  // (~1.1 trillion combo jadi rare tapi mungkin). Sekarang re-roll sampai
+  // unique. Cap 20 attempts untuk safety; kalau exhausted (~impossible
+  // dengan 32^8 keyspace) → log warn + return last code anyway (admin
+  // bisa re-trigger generate kalau benar-benar konflik).
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "PLY-";
-  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  let existing = new Set();
+  try {
+    const arr = (typeof getPremiumPayments === "function") ? getPremiumPayments() : [];
+    for (const p of arr) if (p && p.code) existing.add(p.code);
+  } catch (_) { /* lookup failed — fallback to no-dedup */ }
+  let code;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    code = "PLY-";
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    if (!existing.has(code)) return code;
+  }
+  console.warn("[premium] generatePremiumCode: 20 collisions exhausted — returning anyway:", code);
   return code;
 }
 function getPremiumPaymentByCode(code) {
@@ -17669,6 +17685,41 @@ function setPremiumPaymentStatus(code, status, processedBy) {
   // Fire celebration popup when active session user just got upgraded.
   if (activeSessionAffected) {
     try { if (typeof openPremiumCelebration === "function") openPremiumCelebration(payment.plan); } catch {}
+  }
+  // v546 (2026-05-25): Audit moderation M5 — silent grant fix. Approve path
+  // tidak kirim notifikasi ke user (admin-grant flow paling kena). User di
+  // device lain dapat premium TANPA tahu kenapa. Sekarang deliverNotification
+  // explicit untuk semua approve, supaya user dapat tahu kode + tier change.
+  // Reject juga di-notif supaya user nggak nunggu kode selamanya.
+  if (status === "approved" || status === "rejected") {
+    try {
+      const targetUsername = payment.username
+        || (paymentEmailLc && Object.keys(localStorage).reduce((acc, k) => {
+            if (acc || !k.startsWith("playly-account-")) return acc;
+            try {
+              const a = JSON.parse(localStorage.getItem(k));
+              if (a?.email && String(a.email).toLowerCase() === paymentEmailLc) return a.username;
+            } catch {}
+            return acc;
+          }, null));
+      if (targetUsername && typeof deliverNotification === "function") {
+        if (status === "approved") {
+          deliverNotification(targetUsername, {
+            type: "premium-approved",
+            text: `🎉 Pembayaran Premium <b>${escapeHtml(payment.code || "")}</b> sudah disetujui admin. Tier kamu sekarang <b>Premium</b>.`,
+            init: "🎉",
+            fromUsername: "admin",
+          });
+        } else {
+          deliverNotification(targetUsername, {
+            type: "premium-rejected",
+            text: `❌ Pembayaran Premium <b>${escapeHtml(payment.code || "")}</b> ditolak admin. Cek detail di tab Premium kamu atau hubungi support.`,
+            init: "❌",
+            fromUsername: "admin",
+          });
+        }
+      }
+    } catch (err) { console.warn("[setPremiumPaymentStatus] notify user failed:", err); }
   }
   return true;
 }
@@ -25470,11 +25521,22 @@ function deleteUserAccount(username) {
       // bidirectionalSync di boot berikutnya pull row stale & "resurrect"
       // akun.
       const email = String(acc.email || "").toLowerCase();
+      const usernameLc = String(username || "").toLowerCase();
       // 1. Hapus playly-premium-payments entries milik user ini
+      // v546 (2026-05-25): Audit moderation M-extra — match email OR username.
+      // Sebelumnya filter cuma by email; kalau payment record punya email
+      // null/missing (legacy data atau admin-grant tanpa email) tapi username
+      // ada → orphan tertinggal di queue, render baris ghost di admin-premium-queue.
       try {
-        if (email && typeof getPremiumPayments === "function") {
+        if ((email || usernameLc) && typeof getPremiumPayments === "function") {
           const payments = getPremiumPayments();
-          const filtered = payments.filter(p => String(p.email || "").toLowerCase() !== email);
+          const filtered = payments.filter(p => {
+            const pEmail = String(p.email || "").toLowerCase();
+            const pUser = String(p.username || "").toLowerCase();
+            if (email && pEmail && pEmail === email) return false;
+            if (usernameLc && pUser && pUser === usernameLc) return false;
+            return true;
+          });
           if (filtered.length !== payments.length && typeof savePremiumPayments === "function") {
             savePremiumPayments(filtered);
           }
@@ -29177,7 +29239,7 @@ function renderAdminTickets() {
     const fromEmailHtml = t.fromEmail && t.fromEmail !== "—"
       ? `<small class="ticket-email">✉️ ${escapeHtml(t.fromEmail)}</small>`
       : "";
-    return `<div class="ticket-item ${t.priority || "normal"}" data-ticket-id="${t.id}">
+    return `<div class="ticket-item ${t.priority || "normal"}" data-ticket-id="${t.id}" data-ticket-status="${escapeHtml(t.status || "")}" data-ticket-updated-at="${Number(t.updatedAt) || 0}">
       <div class="ticket-row-main">
         <div class="ticket-channel">${t.ch || "📧"}</div>
         <div class="ticket-meta">
@@ -29209,11 +29271,31 @@ function renderAdminTickets() {
         return;
       }
       if (action === "status") {
+        // v546 (2026-05-25): Audit moderation M3 — dual-admin race detection.
+        // Bandingkan state yang user LIHAT (data-attr di DOM saat render) vs
+        // state CURRENT di storage. Kalau ada admin lain (atau cloud-sync)
+        // sudah modify ticket setelah render → toast warning + re-render,
+        // abort write. Tanpa ini: last writer wins silent overwrite.
+        const renderedStatus = item.dataset.ticketStatus || "";
+        const renderedUpdatedAt = Number(item.dataset.ticketUpdatedAt) || 0;
         const arr = getAdminData("tickets");
-        const t = arr.find(x => x.id === id); if (!t) return;
+        const t = arr.find(x => x.id === id);
+        if (!t) {
+          toast("⚠️ Tiket sudah dihapus admin lain. Refresh halaman.", "warning");
+          renderAdminTickets();
+          return;
+        }
+        const currentUpdatedAt = Number(t.updatedAt) || 0;
+        if (currentUpdatedAt > renderedUpdatedAt || (t.status || "") !== renderedStatus) {
+          toast(`⚠️ Tiket sudah diubah admin lain${t.updatedBy ? " (" + escapeHtml(t.updatedBy) + ")" : ""}. Refresh & coba lagi.`, "warning");
+          renderAdminTickets();
+          return;
+        }
         const next = { new: "progress", progress: "resolved", resolved: "new" };
         const oldStatus = t.status;
         t.status = next[t.status] || "new";
+        t.updatedAt = Date.now();
+        t.updatedBy = user?.username || "admin";
         // v537 CRITICAL FIX 2 (2026-05-25): track admin yang resolve untuk
         // audit accountability + race-detection (audit moderation flow C2).
         if (t.status === "resolved" && !t.resolvedBy) {
