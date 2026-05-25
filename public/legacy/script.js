@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v542 (B6c+: kv orphan cleanup + auto-heal trigger + cloud-sync include playly-account bridge)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v543 (Purge admin.playly2 — bukan real admin; ADMIN_EMAILS_PROTECTED jadi 1 entry)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -156,7 +156,9 @@ console.info("%c[playly] script.js v542 (B6c+: kv orphan cleanup + auto-heal tri
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.get("cleanup") !== "playly-reset") return;
-    const adminEmails = ["admin.playly@gmail.com", "admin.playly2@gmail.com"];
+    // v543 (2026-05-25): admin.playly2 dihapus per konfirmasi user — bukan
+    // akun admin real, sisa test data. Real admin tunggal: admin.playly@gmail.com.
+    const adminEmails = ["admin.playly@gmail.com"];
     const removed = { accounts: 0, payments: 0, stateKeys: 0, otherKeys: 0 };
     const allKeys = Object.keys(localStorage);
     // Kumpulkan key yg dihapus → dihapus juga di cloud Supabase
@@ -1045,7 +1047,9 @@ window.addEventListener("playly:cloud-applied", () => { purgeDemoData(); });
 const CUTOFF_TS_KEY = "playly-syskey-account-cutoff-ts-v1";
 const CUTOFF_TS_KEY_LEGACY = "playly-account-cutoff-ts-v1";
 const BANNED_EMAILS_KEY = "playly-banned-emails-v1";
-const ADMIN_EMAILS_PROTECTED = ["admin.playly@gmail.com", "admin.playly2@gmail.com"];
+// v543 (2026-05-25): admin.playly2 di-remove — bukan real admin, sisa test
+// data. Cuma 1 admin resmi: admin.playly@gmail.com.
+const ADMIN_EMAILS_PROTECTED = ["admin.playly@gmail.com"];
 
 // One-shot migrate dari legacy key. Idempotent — flag set setelah jalan.
 (function migrateCutoffKey() {
