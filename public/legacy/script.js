@@ -17416,16 +17416,20 @@ function renderDashboardTierPill() {
       '</span>';
     pill.title = isID ? "Akun Premium aktif" : "Premium account active";
   } else {
-    // Audit 2026-05-25 req user (opsi 2): compact — cuma icon + 1 kata
-    // "Gratis". Status text "Premium tersedia" dihapus, info pindah ke
-    // tooltip hover. Lebih bersih di chrome topbar. Klik tetap buka
-    // plan picker.
+    // Audit 2026-05-25 req user (opsi 3): gold-wine gradient subtle +
+    // "Free · Coba Premium". Frame Premium sebagai aspirasi, bukan
+    // limitasi. Klik buka plan picker. Ikon bintang ★ (bukan ○) supaya
+    // konsisten dgn vibe Premium.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;display:block"><path d="M12 2l2.92 6.26 6.58.86-4.83 4.66 1.2 6.5L12 17.9 5.13 20.28l1.2-6.5L1.5 9.12l6.58-.86z"/></svg>' +
+      '</span>' +
       '<span class="dtp-text">' +
-        '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
+        '<span class="dtp-label">' + (isID ? "Free" : "Free") + '</span>' +
+        '<span class="dtp-sep" aria-hidden="true">·</span>' +
+        '<span class="dtp-status">' + (isID ? "Coba Premium" : "Try Premium") + '</span>' +
       '</span>';
-    pill.title = isID ? "Klik untuk lihat opsi Premium" : "Click to see Premium options";
+    pill.title = isID ? "Klik untuk coba Premium" : "Click to try Premium";
   }
   if (!pill.dataset.bound) {
     pill.dataset.bound = "1";
