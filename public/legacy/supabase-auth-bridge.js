@@ -1,30 +1,29 @@
-/* Playly Supabase Auth Bridge — Phase B1 (2026-05-22).
+/* Playly Supabase Auth Bridge — Phase B1+B2 (2026-05-22).
  *
- * Legacy signin/signup → POST kredensial ke /api/auth/bridge → server-side
- * Supabase Auth sign-in/sign-up. Tujuan: backend migration (auth sekarang
- * di server, bukan cuma localStorage hash).
+ * Legacy signin/signup → POST kredensial + profile metadata ke
+ * /api/auth/bridge → server-side:
+ *   B1: Supabase Auth sign-in/sign-up (auth.users)
+ *   B2: Upsert profile row di public.profiles
  *
  * Same-origin (playly-dashboard.vercel.app) → cookie auto-set di browser
- * via @supabase/ssr. Future endpoint Next.js bisa baca cookie.
+ * via @supabase/ssr.
  *
  * Silent fail kalau endpoint unreachable — legacy auth tetap jalan
  * (localStorage tetap source of truth selama transition B1-B4).
  *
- * NOTE: jangan hapus tanpa rencana — ini foundation Phase B2-B5 yang
- * shift profile/state ke Supabase tables.
+ * NOTE: jangan hapus tanpa rencana — foundation Phase B3-B5 yang shift
+ * user state + switch primary source ke Supabase.
  */
 (function () {
   "use strict";
 
   var ENDPOINT = "/api/auth/bridge";
 
-  // Sync legacy signin → Supabase auth.users (server-side).
-  async function syncSignin(email, password, profile) {
+  function syncSignin(email, password, profile) {
     return postBridge(email, password, profile, "signin");
   }
 
-  // Sync legacy signup → Supabase auth.users.
-  async function syncSignup(email, password, profile) {
+  function syncSignup(email, password, profile) {
     return postBridge(email, password, profile, "signup");
   }
 
@@ -32,34 +31,44 @@
     if (!email || !password) {
       return { synced: false, reason: "missing_credentials" };
     }
+    var p = profile || {};
     try {
-      const resp = await fetch(ENDPOINT, {
+      var resp = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
           email: email,
           password: password,
-          name: profile && profile.name ? profile.name : "",
+          // Profile metadata untuk upsert ke public.profiles (B2)
+          name:       p.name       || "",
+          username:   p.username   || "",
+          tier:       p.tier       || "free",
+          bio:        p.bio        || "",
+          avatar:     p.avatar     || "",
+          joined_at:  p.joinedAt   || p.joined_at || "",
         }),
       });
-      let data;
+      var data;
       try {
         data = await resp.json();
-      } catch {
+      } catch (_) {
         data = null;
       }
       if (resp.ok && data && data.ok) {
+        var profileNote = data.profileSynced ? " + profile" : "";
         console.log(
           "[supabase-bridge] ✓ " +
             kind +
-            " synced to Supabase Auth (action=" +
+            " synced to Supabase Auth" +
+            profileNote +
+            " (action=" +
             (data.action || "?") +
             ")"
         );
-        return { synced: true };
+        return { synced: true, profileSynced: !!data.profileSynced };
       }
-      const reason = (data && data.error) || "http_" + resp.status;
+      var reason = (data && data.error) || "http_" + resp.status;
       console.warn("[supabase-bridge] " + kind + " sync failed:", reason);
       return { synced: false, reason: reason };
     } catch (err) {
@@ -68,7 +77,6 @@
     }
   }
 
-  // Sign out dari Supabase (clear cookie). Dipanggil saat legacy logout.
   async function syncSignout() {
     try {
       await fetch(ENDPOINT, {
