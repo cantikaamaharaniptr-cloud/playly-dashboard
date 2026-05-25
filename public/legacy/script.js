@@ -35394,7 +35394,7 @@ function renderPeople() {
     }
   }
 
-  const myUsername = user?.username;
+  // myUsername sudah di-deklarasi di atas saat hitung followers/following.
   grid.innerHTML = visible.map(a => {
     const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
     const isAdmin = a.role === "admin";
