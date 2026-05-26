@@ -5330,16 +5330,12 @@ body[data-theme="light"] .ar-otp-display-muted .ar-otp-digit {
 }
 
 /* ============================================================
-   ADMIN PIN 2FA GATE — field di forgotPwModal (v564, ganti dari
-   Recovery Key v563). Per request user 2026-05-26: pakai PIN 2FA
-   existing supaya admin tidak perlu simpan recovery key offline.
-   Field di-scoped ke admin role (CSS hide di user dashboard).
+   PIN 2FA GATE — field di forgotPwModal (v565, unified user+admin).
+   Per request user 2026-05-26: "di dashboard user juga samakan yaa".
+   Field SELALU visible di kedua role. Required toggle via JS
+   berdasarkan acc.pin (apakah 2FA sudah aktif untuk akun itu).
    ============================================================ */
-.auth-field-pin { display: none !important; }
-body[data-role="admin"] .auth-field-pin,
-body.auth-mode[data-role="admin"] .auth-field-pin {
-  display: block !important;
-}
+.auth-field-pin { display: block; }
 .auth-field-pin .pin-tag {
   display: inline-block;
   padding: 2px 8px;

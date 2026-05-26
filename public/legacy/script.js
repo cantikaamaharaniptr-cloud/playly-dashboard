@@ -21735,53 +21735,30 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     return toast("🔒 Reset password super-admin tidak diizinkan.", "error");
   }
 
-  // v564: PIN 2FA gate untuk admin self-reset. Field PIN cuma tampil di
-  // admin context (CSS scope), JS enforce kalau email = backup admin.
-  // - Non-admin context (user dashboard): skip block ini, masuk ke legacy
-  //   popup 2FA modal di bawah (untuk akun user yang punya PIN).
-  // - Admin context + backup admin: verify PIN inline, SKIP popup modal.
-  // - Admin context + bukan backup admin: skip block, biar verify normal.
-  const _isAdminAuthCtx = document.body.dataset.role === "admin";
-  const _isBackupAdminEmail = typeof isAllowedAdminEmail === "function" &&
-    isAllowedAdminEmail(email) &&
-    (typeof isOfficialAdminEmail !== "function" || !isOfficialAdminEmail(email));
-  let _pinAlreadyVerified = false;
-  if (_isAdminAuthCtx && _isBackupAdminEmail) {
-    const pinInput = String(fd.get("adminPin") || "").trim();
-    if (!pinInput) {
-      showFieldError(form, "adminPin", "PIN 2FA wajib untuk akun admin");
-      return toast("🔐 Akun admin perlu PIN 2FA untuk self-reset", "warning");
+  // v565: PIN 2FA gate UNIFIED untuk user + admin. Field selalu visible.
+  // - Account ada acc.pin (2FA aktif) → field WAJIB, verify inline pakai
+  //   verifyPin. Skip popup modal lama.
+  // - Account belum aktifkan 2FA → field optional, lanjut tanpa verify.
+  // - Field kosong tapi acc.pin ada → block dengan error inline.
+  const _pinInputRaw = String(fd.get("adminPin") || "").trim();
+  if (existing.pin) {
+    if (!_pinInputRaw) {
+      showFieldError(form, "adminPin", "PIN 2FA wajib karena akun ini sudah aktifkan 2FA");
+      return toast("🔐 Isi PIN 2FA untuk reset password", "warning");
     }
-    if (!/^\d{6}$/.test(pinInput)) {
+    if (!/^\d{6}$/.test(_pinInputRaw)) {
       showFieldError(form, "adminPin", "PIN harus 6 digit angka");
       return toast("⚠️ Format PIN tidak valid", "warning");
-    }
-    if (!existing.pin) {
-      // Admin belum pernah aktifkan 2FA — block, instruksikan OTP flow
-      showFieldError(form, "adminPin", "Akun ini belum aktifkan 2FA. Pakai opsi OTP via Super Admin (klik Lupa kata sandi dengan email admin di topbar).");
-      return toast("⚠️ Akun admin belum aktifkan 2FA. Gunakan flow OTP via Super Admin.", "warning");
     }
     if (typeof verifyPin !== "function") {
       return toast("⚠️ PIN verifier tidak tersedia. Hubungi support.", "error");
     }
-    const pinOk = await verifyPin(pinInput, existing.pin);
+    const pinOk = await verifyPin(_pinInputRaw, existing.pin);
     if (!pinOk) {
       showFieldError(form, "adminPin", "PIN 2FA salah");
       return toast("❌ PIN 2FA tidak cocok", "error");
     }
-    _pinAlreadyVerified = true; // skip popup modal di bawah
-  }
-
-  // Legacy popup 2FA modal — untuk regular user yang punya PIN, atau
-  // admin yang sudah verify inline (skip kalau _pinAlreadyVerified).
-  if (existing.pin && !_pinAlreadyVerified) {
-    if (typeof open2FAModal !== "function") {
-      return toast("⚠️ 2FA verification tidak tersedia. Hubungi support.", "error");
-    }
-    const enteredPin = await open2FAModal(pin => verifyPin(pin, existing.pin));
-    if (enteredPin === null) {
-      return toast("⚠️ Verifikasi 2FA dibatalkan — password tidak di-reset.", "warning");
-    }
+    // PIN ok — skip popup modal lama (sudah verified inline)
   }
 
   // Hash password baru & simpan
@@ -22653,57 +22630,49 @@ window.addEventListener("playly:cloud-applied", () => {
   setTimeout(_arTryMountSuperEntry, 500);
 });
 
-// ============ ADMIN PIN 2FA GATE (SELF-RESET) ========================
-// v564: ganti dari Recovery Key (v563*) ke PIN 2FA existing per user
-// request "saya tidak terlalu suka opsi ini hapuskan saja kamu ganti
-// dengan opsi kedua ya".
+// ============ PIN 2FA GATE (SELF-RESET, UNIFIED v565) ================
+// v565: ganti dari Recovery Key (v563*) ke PIN 2FA existing, sekarang
+// unified untuk user + admin per request "di dashboard user juga samakan".
 //
 // Flow:
-// - Saat admin set 2FA di Pengaturan → acc.pin di-set (sudah ada di sistem).
-// - Saat admin lupa password → modal "Reset Kata Sandi" tampil dengan field
-//   PIN 2FA. Field di-scope ke body[data-role="admin"] (CSS hide di user).
-// - Submit: verify input vs acc.pin pakai verifyPin existing.
-// - Admin yang belum aktifkan 2FA → block dengan instruksi pakai OTP via
-//   super admin.
+// - Field SELALU visible di forgotPwModal (user + admin context).
+// - JS refresh: lookup account, kalau acc.pin set → required + tag "WAJIB",
+//   kalau gak ada → optional + tag "opsional".
+// - Submit: kalau acc.pin set → verify pakai verifyPin inline (skip popup
+//   modal). Kalau gak ada → field kosong OK, lanjut tanpa verify.
 
 function _refreshForgotAdminPinField() {
   const form = document.getElementById("forgotPwForm");
   if (!form) return;
   const field = document.getElementById("forgotAdminPinField");
   if (!field) return;
-
-  const isAdminContext = document.body.dataset.role === "admin";
   const pinInput = field.querySelector('input[name="adminPin"]');
+  const pinTag = field.querySelector(".pin-tag");
 
-  if (!isAdminContext) {
-    if (pinInput) {
-      pinInput.removeAttribute("required");
-      pinInput.value = "";
-    }
-    field.classList.remove("pin-required");
-    return;
-  }
-
-  // Admin context — toggle required + visual berdasarkan email
+  // Resolve email + look up account untuk cek acc.pin
   const idInput = form.querySelector('input[name="email"]');
   const id = (idInput?.value || "").trim().toLowerCase();
-  let email = id;
-  if (id && !id.includes("@")) {
-    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
-    if (acct) email = (acct.email || "").toLowerCase();
+  let acct = null;
+  if (id) {
+    if (id.includes("@")) {
+      try { acct = JSON.parse(localStorage.getItem(`playly-account-${id}`) || "null"); } catch {}
+    } else if (typeof findAccountByUsername === "function") {
+      acct = findAccountByUsername(id);
+    }
   }
-  const isBackupAdmin = !!email &&
-    typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
-    typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email);
+  const has2FA = !!(acct && acct.pin);
 
   if (pinInput) {
-    if (isBackupAdmin) {
+    if (has2FA) {
       pinInput.setAttribute("required", "");
       field.classList.add("pin-required");
     } else {
       pinInput.removeAttribute("required");
       field.classList.remove("pin-required");
     }
+  }
+  if (pinTag) {
+    pinTag.textContent = has2FA ? "wajib" : "opsional";
   }
 }
 
