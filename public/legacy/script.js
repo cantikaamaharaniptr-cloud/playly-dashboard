@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v549 (R2 env trim defense + server-side URL diagnostic log)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v552 (cloud session expiry warning on auto-boot — observability for missing Supabase cookie)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -46537,6 +46537,40 @@ function tryAutoBoot() {
 
 if (tryAutoBoot()) {
   bootDashboard();
+  // v551 (2026-05-26): cloud session health check. bridge.syncSignin
+  // hanya dipanggil saat user submit form login — NOT saat auto-boot dari
+  // localStorage. Akibat: kalau Supabase cookie expired/missing (cookie
+  // cleared, browser data wipe, atau timeout >1 minggu), semua /api/*
+  // request return 401 → kv sync fall back ke anon-key (still works), TAPI
+  // /api/r2/sign-upload fail → upload video fallback ke Supabase Storage
+  // (user lose R2 egress benefit, silent).
+  //
+  // Fix in this PR: cuma observability. Satu fetch ringan saat boot, log
+  // SATU warning kalau session expired (vs ratusan "bridge push failed"
+  // dari per-key sync). Set flag window.PLAYLY_CLOUD_SESSION_EXPIRED
+  // supaya UI bisa show small "Reconnect cloud" indicator nanti.
+  //
+  // Real fix (silent re-auth dgn refresh token) = B6b territory, butuh
+  // store refresh token + new bridge endpoint untuk session restore.
+  setTimeout(() => {
+    fetch("/api/state/sync", { method: "GET", credentials: "same-origin" })
+      .then((r) => {
+        if (r.status === 401) {
+          window.PLAYLY_CLOUD_SESSION_EXPIRED = true;
+          console.warn(
+            "[cloud-bridge] Supabase session expired/missing on auto-boot.\n" +
+            "  → Cloud-sync push will fall back to anon-key (still works).\n" +
+            "  → R2 video upload will fall back to Supabase Storage.\n" +
+            "  → Re-login (logout + login) to restore full cloud sync."
+          );
+        } else if (r.ok) {
+          window.PLAYLY_CLOUD_SESSION_EXPIRED = false;
+        }
+      })
+      .catch(() => {
+        // Network error — not a session issue, ignore silently.
+      });
+  }, 2000); // delay 2s supaya gak race dgn boot sequence + other fetches
 } else {
   localStorage.removeItem("playly-user");
   user = null;
