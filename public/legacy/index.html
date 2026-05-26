@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260526-rkey-admin-only-v563d" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260526-pin-2fa-gate-v564" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8055,16 +8055,16 @@
             <input type="text" name="email" placeholder="kamu@email.com atau username" required autocomplete="off"/>
           </div>
         </label>
-        <!-- Recovery Key gate (per user 2026-05-26 v563c).
-             Field SELALU VISIBLE supaya user tau ada gate keamanan ekstra.
-             Optional untuk regular user, REQUIRED untuk akun admin (JS toggle
-             required attr berdasarkan email detection). -->
-        <label class="auth-field auth-field-rkey" id="forgotRecoveryKeyField">
-          <span>🔑 Recovery Key <small class="rkey-tag">khusus admin</small></span>
-          <small class="rkey-hint">12 karakter yang super admin kasih saat akun admin dibuat. Format <code>XXXX-XXXX-XXXX</code>. <b>Kosongkan kalau kamu bukan admin</b>. Kalau admin & hilang, pakai opsi OTP via Super Admin.</small>
+        <!-- PIN 2FA gate (per user 2026-05-26 v564 — ganti dari Recovery Key).
+             Pakai PIN 6-digit yang sudah ada di sistem 2FA Pengaturan.
+             Field cuma tampil di admin auth context, REQUIRED kalau email
+             admin terdeteksi (JS toggle via _refreshForgotAdminPinField). -->
+        <label class="auth-field auth-field-pin" id="forgotAdminPinField">
+          <span>PIN 2FA <small class="pin-tag">khusus admin</small></span>
+          <small class="pin-hint">PIN 6-digit yang kamu set di <b>Pengaturan → Autentikasi Dua Faktor (2FA)</b> sebelum lupa password. Belum aktifkan 2FA atau lupa PIN? Pakai opsi OTP via Super Admin.</small>
           <div class="input-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.15-8.15"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/></svg>
-            <input type="text" name="recoveryKey" placeholder="XXXX-XXXX-XXXX (opsional untuk user biasa)" maxlength="14" autocomplete="off" spellcheck="false"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1.2" fill="currentColor"/></svg>
+            <input type="password" inputmode="numeric" name="adminPin" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" autocomplete="off"/>
           </div>
         </label>
         <label class="auth-field">
@@ -8942,7 +8942,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260526-rkey-admin-only-v563d" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260526-pin-2fa-gate-v564" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
