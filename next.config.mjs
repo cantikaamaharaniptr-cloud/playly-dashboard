@@ -18,6 +18,8 @@ const nextConfig = {
         //   /auth/reset               (forgot password destination)
         //   /api/translate-subtitle   (DeepL proxy)
         { source: '/', destination: '/legacy/index.html' },
+        { source: '/login', destination: '/legacy/index.html' },
+        { source: '/signup', destination: '/legacy/index.html' },
         { source: '/admin', destination: '/legacy/index.html' },
         { source: '/watch', destination: '/legacy/watch.html' },
         { source: '/embed', destination: '/legacy/embed.html' },
