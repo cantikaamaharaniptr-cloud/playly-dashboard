@@ -44754,17 +44754,18 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   transition: border-color .2s ease, background .2s ease;
 }
 .admin-faq-item:hover { border-color: rgba(165, 175, 195, .40); background: rgba(20, 30, 48, .50); }
-/* Two-tone open state (req 2026-05-26, contoh dari user FAQ):
-   Halus — beda tone-nya subtle, sama navy family. */
+/* Two-tone open state (req 2026-05-26) — pakai shade dari --admin-grad
+   palette resmi: #3C5078 (mid-navy) untuk summary, #1C283C (deep-navy)
+   untuk paragraph. Tone-nya halus, sama family color (navy slate). */
 .admin-faq-item[open] {
   border-color: rgba(165, 175, 195, .42);
 }
 .admin-faq-item[open] > summary {
-  background: rgba(40, 54, 78, .55);
+  background: rgba(60, 80, 120, .35);
 }
 .admin-faq-item[open] > p {
-  background: rgba(22, 32, 50, .55);
-  border-top: 1px solid rgba(165, 175, 195, .18);
+  background: rgba(28, 40, 60, .55);
+  border-top: 1px solid rgba(173, 181, 189, .22);
 }
 .admin-faq-item summary {
   font-size: 14.5px;
