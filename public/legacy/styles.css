@@ -19594,9 +19594,10 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 16px;
   font-weight: 800;
-  color: var(--admin-accent, #ADB5BD);
-  background: rgba(173, 181, 189, 0.10);
-  border: 1px solid rgba(173, 181, 189, 0.22);
+  /* White/cream solid bg, text navy deep (req 2026-05-26) */
+  color: #1C283C;
+  background: #FFFFFF;
+  border: 1px solid rgba(173, 181, 189, 0.35);
 }
 .aws-body h3 {
   font-size: 16px;
@@ -19661,10 +19662,11 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   transition: transform .25s var(--ease, ease);
 }
 .admin-faq-item[open] summary::after { content: "−"; }
-/* Kolom jawaban — perbedaan halus: divider tipis only, tanpa blok bg. */
+/* Kolom jawaban — FULL WIDTH menyatu dgn card (margin 0). Solid wine-dark
+   navy untuk recessed effect, mirror pattern user FAQ. */
 .admin-faq-item p {
-  margin: 0 18px;
-  padding: 14px 0 16px;
+  margin: 0;
+  padding: 14px 18px 16px;
   border-top: 1px solid rgba(173, 181, 189, 0.18);
   font-size: 13.5px;
   line-height: 1.65;
@@ -35797,9 +35799,10 @@ body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar-signin span {
 body[data-theme="light"][data-role="admin"].auth-mode .admin-workflow-step .aws-num,
 body[data-theme="light"][data-role="admin"].auth-mode .admin-workflow-step .awf-num,
 body[data-theme="light"][data-role="admin"].auth-mode .awg-step .aws-num {
-  color: #212529 !important;
-  background: rgba(52, 58, 64, .10) !important;
-  border: 1px solid rgba(52, 58, 64, .25) !important;
+  /* Light mode mirror — white solid, text navy deep (req 2026-05-26) */
+  color: #1C283C !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(28, 40, 60, .35) !important;
 }
 
 /* Security card icon */
@@ -44729,9 +44732,10 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
-  color: #FFFFFF;
-  background: rgba(165, 175, 195, .10);
-  border: 1px solid rgba(165, 175, 195, .22);
+  /* White/cream solid bg, text navy deep (req 2026-05-26) */
+  color: #1C283C;
+  background: #FFFFFF;
+  border: 1px solid rgba(165, 175, 195, .35);
 }
 .aws-body h3 { font-size: 16px; font-weight: 700; margin: 0 0 6px; color: #FFFFFF; }
 .aws-body p { font-size: 13.5px; line-height: 1.6; color: #FFFFFF; margin: 0; }
@@ -44754,18 +44758,20 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   transition: border-color .2s ease, background .2s ease;
 }
 .admin-faq-item:hover { border-color: rgba(165, 175, 195, .40); background: rgba(20, 30, 48, .50); }
-/* Two-tone open state (req 2026-05-26) — pakai shade dari --admin-grad
-   palette resmi: #3C5078 (mid-navy) untuk summary, #1C283C (deep-navy)
-   untuk paragraph. Tone-nya halus, sama family color (navy slate). */
+/* Two-tone open state (req 2026-05-26) — mirror user FAQ pattern persis:
+   summary solid wine→navy mid-bright, paragraph solid wine-dark→navy near-black.
+   Card MENYATU (margin 0 di p, overflow hidden di item, padding internal saja). */
 .admin-faq-item[open] {
   border-color: rgba(165, 175, 195, .42);
+  background: transparent;
 }
 .admin-faq-item[open] > summary {
-  background: rgba(60, 80, 120, .35);
+  background: #3C5078;
 }
 .admin-faq-item[open] > p {
-  background: rgba(28, 40, 60, .55);
-  border-top: 1px solid rgba(173, 181, 189, .22);
+  background: #0E1828;
+  border-top: 1px solid rgba(220, 211, 169, .22);
+  color: #DEE2E6;
 }
 .admin-faq-item summary {
   font-size: 14.5px;
@@ -44787,15 +44793,14 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   line-height: 1;
 }
 .admin-faq-item[open] summary::after { content: "−"; }
-/* Kolom jawaban — perbedaan halus: divider tipis only, tanpa blok bg
-   (req 2026-05-26). */
+/* Kolom jawaban — FULL WIDTH menyatu dgn card (margin 0). */
 .admin-faq-item p {
-  margin: 0 18px;
-  padding: 14px 0 16px;
+  margin: 0;
+  padding: 14px 18px 16px;
   border-top: 1px solid rgba(165, 175, 195, .18);
   font-size: 13.5px;
   line-height: 1.65;
-  color: #ADB5BD;
+  color: #DEE2E6;
 }
 
 /* ---------- FOOT SECTION ---------- */
@@ -46251,16 +46256,17 @@ body[data-role="admin"].auth-mode .admin-workflow-list .admin-workflow-step .aws
               color .4s ease;
   will-change: transform, box-shadow;
 }
-/* Active state: scale + bright bg + white glow + white text */
+/* Active state: scale + white solid bg + navy text + glow */
 body[data-role="admin"].auth-mode .admin-workflow-list .admin-workflow-step.aws-active .aws-num {
   transform: scale(1.10);
-  background: rgba(60, 80, 120, .85) !important;
-  border-color: rgba(255, 255, 255, .55) !important;
-  color: #FFFFFF !important;
+  /* White solid (req 2026-05-26) */
+  background: #FFFFFF !important;
+  border-color: rgba(28, 40, 60, .55) !important;
+  color: #1C283C !important;
   box-shadow:
-    0 0 0 4px rgba(60, 80, 120, .25),
+    0 0 0 4px rgba(255, 255, 255, .25),
     0 0 18px rgba(255, 255, 255, .35),
-    0 0 32px rgba(60, 80, 120, .35);
+    0 0 32px rgba(28, 40, 60, .25);
 }
 /* Connecting line between steps yang fill saat aktif (visual flow) — transform-based for perf */
 body[data-role="admin"].auth-mode .admin-workflow-list .admin-workflow-step .aws-num::after {
@@ -48017,8 +48023,11 @@ html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-list {
 }
 html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item {
   width: 100% !important;
-  padding: 11px 20px !important;
+  /* padding: 0 supaya summary & p menyatu nempel ke border card (req
+     2026-05-26). Padding internal sekarang di summary & p saja. */
+  padding: 0 !important;
   border-radius: 9px !important;
+  overflow: hidden !important;
   background: rgba(28, 40, 60, .55) !important;
   border: 1px solid rgba(165, 175, 195, .18) !important;
   text-align: left !important;
@@ -48060,7 +48069,8 @@ html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item summary 
   cursor: pointer !important;
   list-style: none !important;
   gap: 14px !important;
-  padding: 0 !important;
+  /* Padding 14px 18px supaya teks pertanyaan tidak nempel ke edge card */
+  padding: 14px 18px !important;
   position: static !important;
   text-align: left !important;
 }
@@ -48085,7 +48095,9 @@ html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item[open] su
   color: #FFFFFF !important;
 }
 html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item p {
-  margin: 12px 0 4px !important;
+  /* margin: 0 supaya p FULL WIDTH menyatu dgn card, padding internal saja */
+  margin: 0 !important;
+  padding: 14px 18px 16px !important;
   font-size: 13.5px !important;
   line-height: 1.65 !important;
   color: rgba(255, 255, 255, .8) !important;
@@ -48456,12 +48468,15 @@ html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item summary:
   transform: translateY(-50%) !important;
 }
 html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item p {
-  margin: 14px auto 4px !important;
+  /* margin 0 + no max-width supaya FULL WIDTH menyatu dgn card (req
+     2026-05-26). Padding internal di rule lain handle spacing. */
+  margin: 0 !important;
+  padding: 14px 18px 16px !important;
   font-size: 14px !important;
   line-height: 1.7 !important;
   color: #FFFFFF !important;
-  text-align: center !important;
-  max-width: 900px !important;
+  text-align: left !important;
+  max-width: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
   html body[data-role="admin"].auth-mode #adminFaqSection .admin-faq-item {
@@ -65202,18 +65217,28 @@ body[data-theme="light"][data-role="admin"].auth-mode .auth-topbar svg {
   color: #1F2937 !important;
   stroke: currentColor !important;
 }
-/* "Masuk" button di topbar — biarkan pakai surface var(--text) tetap charcoal,
-   tapi pastikan border visible di panel terang. */
+/* "Masuk" button di topbar — disamakan dengan tombol Pengaturan (gear)
+   (req 2026-05-26): bg graphite super tipis, border subtle, font graphite. */
 html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-signin,
 html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .btn.primary.auth-topbar-btn {
-  background: #FFFFFF !important;
-  border: 1px solid rgba(31, 41, 55, .22) !important;
+  background: rgba(31, 41, 55, 0.06) !important;
+  background-image: none !important;
+  border: 1px solid rgba(31, 41, 55, 0.18) !important;
   color: #1F2937 !important;
-  box-shadow: 0 1px 3px rgba(31, 41, 55, .08) !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  box-shadow: none !important;
 }
 html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-signin svg,
 html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .btn.primary.auth-topbar-btn svg {
   color: #1F2937 !important;
+  stroke: #1F2937 !important;
+}
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .auth-topbar-signin span,
+html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarAdmin .btn.primary.auth-topbar-btn span {
+  color: #1F2937 !important;
+  -webkit-text-fill-color: #1F2937 !important;
+  background: transparent !important;
+  background-image: none !important;
 }
 /* Settings gear button di topbar */
 html body[data-theme="light"][data-role="admin"].auth-mode #authTopbarSettingsBtnAdmin,
