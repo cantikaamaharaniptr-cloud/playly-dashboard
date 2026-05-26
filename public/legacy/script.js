@@ -30297,10 +30297,20 @@ setInterval(() => {
 }, 30000);
 
 function renderUserStats() {
-  const myViews = state.myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const myUploads = state.myVideos.length;
-  const myLikes = state.myVideos.reduce((s, v) => s + (v.likes || 0), 0);
-  const following = state.followingCreators.length;
+  // v550 (2026-05-26): defensive null guards. Fungsi ini dipanggil dari
+  // cloud-sync applyToLocal SETELAH state hydrated, tapi ada race condition
+  // saat anonymous/auto-boot sebelum loadState() jalan → state masih null
+  // atau missing arrays → TypeError "Cannot read properties of null
+  // (reading 'myVideos')" di console (tracked dari live test v547).
+  if (!state) return;
+  const myVideos = Array.isArray(state.myVideos) ? state.myVideos : [];
+  const followingCreators = Array.isArray(state.followingCreators) ? state.followingCreators : [];
+  const messages = Array.isArray(state.messages) ? state.messages : [];
+
+  const myViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
+  const myUploads = myVideos.length;
+  const myLikes = myVideos.reduce((s, v) => s + (v.likes || 0), 0);
+  const following = followingCreators.length;
 
   // Real-time home stats widget — kasih animasi bump kalau angka berubah
   patchHomeStat("#hsVideos", String(myUploads));
@@ -30329,15 +30339,15 @@ function renderUserStats() {
   // Sidebar Videos badge: angka kalau ada upload baru 24 jam, dot kalau punya
   // video tapi tidak ada yang baru, hidden kalau belum punya video apapun.
   const oneDayMs = 86400000;
-  const newUploads24h = (state.myVideos || []).filter(v => {
+  const newUploads24h = myVideos.filter(v => {
     const t = Number(v.ts || v.uploadedAt || 0);
     return t > 0 && (Date.now() - t) <= oneDayMs;
   }).length;
   setBadgeMode($("#videoCount"), newUploads24h, myUploads > 0);
 
   // Messages badge: angka kalau ada unread, dot kalau ada thread, hidden kalau kosong
-  const unread = state.messages.filter(m => m.unread).length;
-  setBadgeMode($("#msgBadge"), unread, state.messages.length > 0);
+  const unread = messages.filter(m => m.unread).length;
+  setBadgeMode($("#msgBadge"), unread, messages.length > 0);
 }
 
 // ----------------------- LIVE CLOCK & GREETING -----------------------
