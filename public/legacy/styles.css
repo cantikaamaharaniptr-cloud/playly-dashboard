@@ -5079,9 +5079,19 @@ body[data-theme="light"] #upSubtitleAiCard.has-quota .upf-note {
   font: inherit;
 }
 .ar-choice-card:hover {
-  background: var(--surface-3);
-  border-color: var(--border-strong);
+  /* v568c: hover sebelumnya pakai surface-3 (slate-blueish) yang tidak
+     match Playly palette. Ganti ke wine→gold tinted bg + gold accent
+     border + subtle glow. Per user feedback "jelek sesuaikan". */
+  background: linear-gradient(135deg, rgba(139, 58, 78, .14), rgba(220, 169, 109, .08));
+  border-color: rgba(220, 169, 109, .45);
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 58, 78, .18), 0 0 0 1px rgba(220, 169, 109, .18);
+}
+.ar-choice-card:hover .ar-choice-ico {
+  filter: drop-shadow(0 0 6px rgba(220, 169, 109, .55));
+}
+.ar-choice-card:hover strong {
+  color: var(--gold, #DCA96D);
 }
 .ar-choice-ico { font-size: 28px; line-height: 1; }
 .ar-choice-card strong { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -5090,19 +5100,38 @@ body[data-theme="light"] #upSubtitleAiCard.has-quota .upf-note {
   .ar-choice-grid { grid-template-columns: 1fr; }
 }
 
-/* Form generic */
-.ar-form { display: flex; flex-direction: column; gap: 12px; }
-.ar-form .ar-label { font-size: 12.5px; font-weight: 600; color: var(--text); letter-spacing: .02em; }
-.ar-form input[type="text"] {
+/* Form generic — v568f: rapikan layout supaya konsisten dengan header
+   centered. Label center, input centered placeholder, max-width sedikit
+   lebih sempit supaya tidak terlalu lebar relatif panel. */
+.ar-form { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.ar-form .ar-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: .02em;
+  text-align: center;
+  margin-bottom: 2px;
+}
+.ar-form input[type="text"],
+.ar-form input[type="password"],
+.ar-form input[type="email"] {
   width: 100%;
-  padding: 12px 14px;
+  padding: 11px 14px;
   border-radius: 10px;
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
   font-size: 14px;
+  text-align: center;
 }
-.ar-form input[type="text"]:focus {
+.ar-form input[type="text"]::placeholder,
+.ar-form input[type="password"]::placeholder,
+.ar-form input[type="email"]::placeholder {
+  text-align: center;
+}
+.ar-form input[type="text"]:focus,
+.ar-form input[type="password"]:focus,
+.ar-form input[type="email"]:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(220, 169, 109, .14);
@@ -5310,7 +5339,41 @@ body[data-theme="light"] #upSubtitleAiCard.has-quota .upf-note {
 
 /* Light theme — boost surface/border untuk contrast */
 body[data-theme="light"] .ar-choice-card { background: #f8fafc; border-color: #e2e8f0; }
-body[data-theme="light"] .ar-choice-card:hover { background: #f1f5f9; border-color: #cbd5e1; }
+/* v568c: hover light-theme mirror — wine→gold tint untuk konsistensi dgn
+   dark theme. Gold deeper untuk kontras vs white bg. */
+body[data-theme="light"] .ar-choice-card:hover {
+  background: linear-gradient(135deg, rgba(122, 46, 66, .08), rgba(180, 130, 70, .06));
+  border-color: rgba(180, 130, 70, .55);
+  box-shadow: 0 6px 16px rgba(122, 46, 66, .14), 0 0 0 1px rgba(180, 130, 70, .22);
+}
+body[data-theme="light"] .ar-choice-card:hover strong {
+  color: #8a5a2a;
+}
+
+/* v568g: ADMIN context hover — pakai slate-silver palette (bukan wine-gold)
+   supaya match admin identity. Override v568c rule yang dirancang untuk
+   user theme (wine palette). */
+body[data-role="admin"] .ar-choice-card:hover {
+  background: linear-gradient(135deg, rgba(60, 80, 120, .22), rgba(154, 170, 196, .10));
+  border-color: rgba(154, 170, 196, .55);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(28, 40, 60, .45), 0 0 0 1px rgba(154, 170, 196, .22);
+}
+body[data-role="admin"] .ar-choice-card:hover .ar-choice-ico {
+  filter: drop-shadow(0 0 8px rgba(180, 195, 220, .55));
+}
+body[data-role="admin"] .ar-choice-card:hover strong {
+  color: #C8D4E5;
+}
+/* Light theme admin (white bg) — deeper slate untuk kontras */
+body[data-theme="light"][data-role="admin"] .ar-choice-card:hover {
+  background: linear-gradient(135deg, rgba(28, 40, 60, .10), rgba(60, 80, 120, .06));
+  border-color: rgba(60, 80, 120, .55);
+  box-shadow: 0 6px 16px rgba(28, 40, 60, .18), 0 0 0 1px rgba(60, 80, 120, .22);
+}
+body[data-theme="light"][data-role="admin"] .ar-choice-card:hover strong {
+  color: #1C283C;
+}
 body[data-theme="light"] .ar-req-row { background: #f8fafc; border-color: #e2e8f0; }
 body[data-theme="light"] .ar-otp-grid input,
 body[data-theme="light"] .ar-form input[type="text"] {
@@ -5381,6 +5444,130 @@ body[data-theme="light"] .auth-field-pin .pin-tag {
   background: rgba(180, 130, 70, .12);
   border-color: rgba(180, 130, 70, .42);
   color: #8a5a2a;
+}
+
+/* v567: choice picker description center-aligned + compact action row */
+.ar-text-center { text-align: center !important; }
+.ar-form-actions-compact {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.btn.btn-compact {
+  padding: 7px 16px !important;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+/* v568e/v568h: ar-modal primary buttons — solid var(--primary) match
+   Playly identity (wine di user, navy di admin). Global rule di line
+   ~31497 memaksa transparent + outline; butuh specificity LEBIH TINGGI.
+   v568h fix: shadow color per role (jangan pakai wine shadow di admin
+   context — bocor visual). */
+/* USER context — wine shadow */
+body:not([data-role="admin"]) .ar-modal .btn.primary,
+body:not([data-role="admin"]) .ar-modal .btn.primary:focus,
+body:not([data-role="admin"]) .ar-modal .btn.primary:focus-visible,
+body:not([data-role="admin"]) .ar-modal .btn.primary:active {
+  background: var(--primary) !important;
+  border: 1px solid transparent !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .35) !important;
+  transform: none !important;
+}
+body:not([data-role="admin"]) .ar-modal .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .45) !important;
+}
+/* ADMIN context — v568i: chrome gradient (slate→navy) match admin P logo
+   identity. Subtle inset highlight bukan heavy shadow. */
+body[data-role="admin"] .ar-modal .btn.primary,
+body[data-role="admin"] .ar-modal .btn.primary:focus,
+body[data-role="admin"] .ar-modal .btn.primary:focus-visible,
+body[data-role="admin"] .ar-modal .btn.primary:active {
+  background: linear-gradient(135deg, #4A5E80 0%, #1C283C 100%) !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, .35),
+    inset 0 1px 0 rgba(255, 255, 255, .12) !important;
+  transform: none !important;
+}
+body[data-role="admin"] .ar-modal .btn.primary:hover {
+  background: linear-gradient(135deg, #5A6E92 0%, #2A3955 100%) !important;
+  border-color: rgba(255, 255, 255, .24) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+}
+/* forgotPwModal Reset Kata Sandi — same per-role shadow split */
+body:not([data-role="admin"]) #forgotPwModal .modal-actions .btn.primary {
+  background: var(--primary) !important;
+  border: 1px solid transparent !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .35) !important;
+}
+body:not([data-role="admin"]) #forgotPwModal .modal-actions .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .45) !important;
+}
+body[data-role="admin"] #forgotPwModal .modal-actions .btn.primary {
+  background: linear-gradient(135deg, #4A5E80 0%, #1C283C 100%) !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, .35),
+    inset 0 1px 0 rgba(255, 255, 255, .12) !important;
+}
+body[data-role="admin"] #forgotPwModal .modal-actions .btn.primary:hover {
+  background: linear-gradient(135deg, #5A6E92 0%, #2A3955 100%) !important;
+  border-color: rgba(255, 255, 255, .24) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+}
+
+/* v568: forgotPwModal buttons rata kanan + compact. Warna Reset Kata Sandi
+   ganti dari merah → wine-gold gradient untuk match palette Playly. */
+#forgotPwModal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+#forgotPwModal .modal-actions .btn {
+  padding: 7px 18px !important;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9px;
+  min-width: 0;
+}
+/* v568d: Reset Kata Sandi button — pakai solid wine match default Playly
+   primary button. Gradient sebelumnya (wine→gold) terlihat muddy/jelek
+   per user feedback. */
+#forgotPwModal .modal-actions .btn.primary {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .35);
+}
+#forgotPwModal .modal-actions .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .45);
 }
 
 .hero-text p {

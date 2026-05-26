@@ -21640,15 +21640,39 @@ function openForgotPwModal(prefillId = "") {
     target?.focus();
   }, 100);
 }
-function closeForgotPwModal() {
+function closeForgotPwModal(opts = {}) {
   $("#forgotPwModal")?.classList.remove("show");
+  // v567: kalau di-open dari choice picker dan close BUKAN karena success,
+  // balik ke choice picker supaya user bisa pilih opsi OTP.
+  if (window._forgotPwFromChoice && !opts.success) {
+    const prefill = window._forgotPwReturnPrefill || "";
+    window._forgotPwFromChoice = false;
+    window._forgotPwReturnPrefill = "";
+    setTimeout(() => {
+      if (typeof openUniversalRecoveryChoiceModal === "function") {
+        openUniversalRecoveryChoiceModal(prefill);
+      }
+    }, 100);
+  } else if (opts.success) {
+    // Success: clear flags supaya next open dari direct call ngga re-trigger
+    window._forgotPwFromChoice = false;
+    window._forgotPwReturnPrefill = "";
+  }
 }
 
 $("#forgotPw")?.addEventListener("click", e => {
   e.preventDefault();
-  // Pre-fill dari field email login kalau sudah diisi user
+  // v566: ganti dari direct openForgotPwModal ke universal choice picker.
+  // User pilih dulu: pakai PIN 2FA / password sendiri ATAU minta OTP dari
+  // super admin. Lalu route ke modal yang sesuai.
   const loginInput = $("#signinForm")?.querySelector('input[name="email"]');
-  openForgotPwModal((loginInput?.value || "").trim().toLowerCase());
+  const prefill = (loginInput?.value || "").trim().toLowerCase();
+  if (typeof openUniversalRecoveryChoiceModal === "function") {
+    openUniversalRecoveryChoiceModal(prefill);
+  } else {
+    // Safety net kalau choice modal tidak ke-load
+    openForgotPwModal(prefill);
+  }
 });
 
 // Tombol close (x, backdrop, batal) di forgot-pw modal
@@ -21735,11 +21759,9 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     return toast("🔒 Reset password super-admin tidak diizinkan.", "error");
   }
 
-  // v565: PIN 2FA gate UNIFIED untuk user + admin. Field selalu visible.
-  // - Account ada acc.pin (2FA aktif) → field WAJIB, verify inline pakai
-  //   verifyPin. Skip popup modal lama.
-  // - Account belum aktifkan 2FA → field optional, lanjut tanpa verify.
-  // - Field kosong tapi acc.pin ada → block dengan error inline.
+  // v565/v567: PIN 2FA gate UNIFIED untuk user + admin. Field selalu visible.
+  // v567: tambah 3-attempt limit. Kalau salah 3x, lockout 15 menit. Warning
+  // di setiap percobaan ("sisa 2 percobaan", "sisa 1 percobaan", "terkunci").
   const _pinInputRaw = String(fd.get("adminPin") || "").trim();
   if (existing.pin) {
     if (!_pinInputRaw) {
@@ -21753,12 +21775,44 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     if (typeof verifyPin !== "function") {
       return toast("⚠️ PIN verifier tidak tersedia. Hubungi support.", "error");
     }
+
+    // === 3-attempt limit + 15-min lockout ===
+    const pinAttemptKey = `playly-forgot-pin-attempts-${email}`;
+    const PIN_MAX_ATTEMPTS = 3;
+    const PIN_LOCKOUT_MS = 15 * 60 * 1000;
+    let attemptsState = { count: 0, lockedUntil: 0 };
+    try {
+      const raw = localStorage.getItem(pinAttemptKey);
+      if (raw) attemptsState = JSON.parse(raw);
+    } catch {}
+    // Cek lockout aktif
+    if (attemptsState.lockedUntil && Date.now() < attemptsState.lockedUntil) {
+      const minLeft = Math.ceil((attemptsState.lockedUntil - Date.now()) / 60000);
+      showFieldError(form, "adminPin", `Terlalu banyak percobaan salah. Coba lagi dalam ${minLeft} menit.`);
+      return toast(`🔒 PIN locked ${minLeft} menit lagi karena 3x salah berturut-turut`, "error");
+    }
+    // Reset count kalau lockout sudah lewat
+    if (attemptsState.lockedUntil && Date.now() >= attemptsState.lockedUntil) {
+      attemptsState = { count: 0, lockedUntil: 0 };
+    }
+
     const pinOk = await verifyPin(_pinInputRaw, existing.pin);
     if (!pinOk) {
-      showFieldError(form, "adminPin", "PIN 2FA salah");
-      return toast("❌ PIN 2FA tidak cocok", "error");
+      attemptsState.count = (attemptsState.count || 0) + 1;
+      if (attemptsState.count >= PIN_MAX_ATTEMPTS) {
+        attemptsState.lockedUntil = Date.now() + PIN_LOCKOUT_MS;
+        attemptsState.count = 0;
+        try { localStorage.setItem(pinAttemptKey, JSON.stringify(attemptsState)); } catch {}
+        showFieldError(form, "adminPin", `Salah 3 kali. PIN 2FA terkunci 15 menit untuk akun ini.`);
+        return toast(`🔒 PIN salah 3x — terkunci 15 menit. Tunggu atau pakai opsi OTP via Super Admin.`, "error");
+      }
+      const remaining = PIN_MAX_ATTEMPTS - attemptsState.count;
+      try { localStorage.setItem(pinAttemptKey, JSON.stringify(attemptsState)); } catch {}
+      showFieldError(form, "adminPin", `PIN 2FA salah. Sisa ${remaining} percobaan.`);
+      return toast(`❌ PIN salah — sisa ${remaining} percobaan sebelum dikunci 15 menit`, "error");
     }
-    // PIN ok — skip popup modal lama (sudah verified inline)
+    // PIN ok — clear attempt counter
+    try { localStorage.removeItem(pinAttemptKey); } catch {}
   }
 
   // Hash password baru & simpan
@@ -21770,7 +21824,7 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     clearLoginAttempts(id);
     clearLoginAttempts(email);
     hideLockBanner();
-    closeForgotPwModal();
+    closeForgotPwModal({ success: true });
     // CR-1: audit log — admin bisa lihat reset history
     try {
       if (typeof pushAdminEvent === "function") {
@@ -21901,30 +21955,29 @@ function getMyAdminRecoveryRequest(email) {
 }
 
 // Create a new request. Validates:
-// - Email harus exist di admin allowlist (backup admin)
-// - BUKAN super admin email (super admin pakai recovery codes nanti)
+// - Akun harus ada (user atau backup admin OK)
+// - BUKAN super admin email (super admin pakai recovery code nanti)
 // - Ngga ada request aktif yang baru (cegah spam)
+// v566: di-extend untuk accept user accounts juga, bukan cuma backup admin.
 function createAdminRecoveryRequest(emailOrUsername) {
   const id = (emailOrUsername || "").trim().toLowerCase();
   if (!id) return { ok: false, error: "Email atau username wajib diisi" };
 
-  // Resolve to email
+  // Resolve to email + cek akun ada
   let email = id;
+  let acct = null;
   if (!id.includes("@")) {
-    // Username → cari email-nya
-    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
+    acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
     if (!acct) return { ok: false, error: "Username tidak ditemukan" };
     email = (acct.email || "").toLowerCase();
+  } else {
+    try { acct = JSON.parse(localStorage.getItem(`playly-account-${email}`) || "null"); } catch {}
+    if (!acct) return { ok: false, error: "Email belum terdaftar" };
   }
 
-  // Block super admin
+  // Block super admin (recovery code flow nanti — bukan via OTP)
   if (typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(email)) {
     return { ok: false, error: "Akun super admin tidak bisa recovery via OTP. Pakai recovery code." };
-  }
-
-  // Must be in admin allowlist (= backup admin)
-  if (typeof isAllowedAdminEmail === "function" && !isAllowedAdminEmail(email)) {
-    return { ok: false, error: "Email ini bukan akun admin. Pakai 'Reset via Email' biasa." };
   }
 
   const arr = getAdminRecoveryRequests();
@@ -21973,8 +22026,45 @@ async function generateRecoveryOtp(requestId) {
   return { ok: true, otpPlain, request: req };
 }
 
+// v568: combined generate + send dalam 1 step. Super admin click 1 button,
+// sistem auto-generate OTP + transition status ke WAITING_INPUT (= sent via
+// email). Return plain OTP untuk display ke super admin (simulasi konten
+// email yang dikirim ke user).
+async function generateAndSendRecoveryOtp(requestId) {
+  const gen = await generateRecoveryOtp(requestId);
+  if (!gen.ok) {
+    // Kalau status sudah OTP_GENERATED (legacy v562 flow), generate ulang
+    // by manually transitioning + creating new OTP
+    const arr = getAdminRecoveryRequests();
+    const req = arr.find(r => r.id === requestId);
+    if (req && (req.status === AR_STATUS.OTP_GENERATED || req.status === AR_STATUS.INPUT_RECEIVED)) {
+      // Force re-generate
+      req.status = AR_STATUS.PENDING;
+      _writeAdminRecoveryRequests(arr);
+      const retry = await generateRecoveryOtp(requestId);
+      if (!retry.ok) return retry;
+      // Mark sent
+      retry.request.status = AR_STATUS.WAITING_INPUT;
+      _writeAdminRecoveryRequests(getAdminRecoveryRequests().map(r => r.id === requestId ? retry.request : r));
+      return { ok: true, otpPlain: retry.otpPlain, request: retry.request };
+    }
+    return gen;
+  }
+  // Transition status ke WAITING_INPUT (= email terkirim ke user)
+  const arr = getAdminRecoveryRequests();
+  const req = arr.find(r => r.id === requestId);
+  if (req && req.status === AR_STATUS.OTP_GENERATED) {
+    req.status = AR_STATUS.WAITING_INPUT;
+    _writeAdminRecoveryRequests(arr);
+  }
+  return { ok: true, otpPlain: gen.otpPlain, request: req };
+}
+
 // Super admin re-types OTP untuk konfirmasi bahwa dia ngga typo saat baca.
 // State: OTP_GENERATED → OTP_VERIFIED (kalau cocok) atau stay (kalau salah)
+// v568: deprecated — alur sekarang combine generate+send + auto-verify.
+// Fungsi ini tetap diexpose untuk backwards compat tapi tidak dipanggil
+// dari UI baru.
 async function verifyGeneratedOtp(requestId, otpReentered) {
   const arr = getAdminRecoveryRequests();
   const req = arr.find(r => r.id === requestId);
@@ -21991,26 +22081,50 @@ async function verifyGeneratedOtp(requestId, otpReentered) {
   return { ok: true, request: req };
 }
 
-// Backup admin submit OTP yang dia terima dari super admin.
-// State: WAITING_INPUT → INPUT_RECEIVED
-function submitBackupOtp(requestId, otp) {
+// v568: submitBackupOtp sekarang AUTO-VERIFY langsung (tidak ada step
+// INPUT_RECEIVED + manual super admin approve). Kalau OTP match: status
+// langsung APPROVED. Kalau salah: counter increment, kalau exceed 3 →
+// status DENIED.
+async function submitBackupOtp(requestId, otp) {
   const arr = getAdminRecoveryRequests();
   const req = arr.find(r => r.id === requestId);
   if (!req) return { ok: false, error: "Request tidak ditemukan" };
   if (req.status !== AR_STATUS.WAITING_INPUT) {
-    if (req.status === AR_STATUS.INPUT_RECEIVED) {
-      return { ok: false, error: "OTP sudah pernah di-submit, tunggu konfirmasi super admin" };
+    if (req.status === AR_STATUS.APPROVED) {
+      return { ok: true, request: req, alreadyApproved: true };
     }
-    return { ok: false, error: "Request belum siap menerima OTP. Tunggu super admin generate OTP dulu." };
+    if (req.status === AR_STATUS.DENIED) {
+      return { ok: false, error: "Request sudah ditolak. Submit permintaan baru." };
+    }
+    if (req.status === AR_STATUS.EXPIRED) {
+      return { ok: false, error: "Request kadaluarsa. Submit permintaan baru." };
+    }
+    return { ok: false, error: "Request belum siap menerima OTP. Super admin/admin harus kirim OTP dulu." };
   }
   const clean = String(otp || "").trim();
   if (!/^\d{4}$/.test(clean)) {
     return { ok: false, error: "OTP harus 4 digit angka" };
   }
-  req.otp_entered = clean;
-  req.status = AR_STATUS.INPUT_RECEIVED;
+  // Auto-verify via hash
+  const enteredHash = await hashAdminOtp(clean);
+  if (enteredHash === req.otp_hash) {
+    req.otp_entered = clean;
+    req.status = AR_STATUS.APPROVED;
+    req.final_decision_at = Date.now();
+    _writeAdminRecoveryRequests(arr);
+    return { ok: true, request: req, approved: true };
+  }
+  // Wrong OTP — increment counter
+  req.wrong_attempts = (req.wrong_attempts || 0) + 1;
+  if (req.wrong_attempts >= 3) {
+    req.status = AR_STATUS.DENIED;
+    req.final_decision_at = Date.now();
+    _writeAdminRecoveryRequests(arr);
+    return { ok: false, error: "OTP salah 3x. Request otomatis ditolak. Submit permintaan baru.", lockedOut: true };
+  }
   _writeAdminRecoveryRequests(arr);
-  return { ok: true, request: req };
+  const remaining = 3 - req.wrong_attempts;
+  return { ok: false, error: `OTP salah — sisa ${remaining} percobaan`, attemptLeft: remaining };
 }
 
 // Super admin final approve atau deny berdasarkan OTP yang di-input backup
@@ -22136,30 +22250,46 @@ function openAdminRecoveryChoiceModal(prefillId = "") {
   return m;
 }
 
-// Modal: backup admin submit request OTP
-function openAdminRecoveryOtpRequestModal(prefillId = "") {
+// Modal: user/admin submit request OTP. v567: copy "Super Admin atau Admin",
+// hapus X button, Batal click → balik ke choice picker (kalau opened from
+// choice). Opts: { fromChoice: bool }
+function openAdminRecoveryOtpRequestModal(prefillId = "", opts = {}) {
   _arRemoveOpenModals();
+  // v568: context-aware copy + via email (bukan WA/SMS)
+  const _isAdminCtx = document.body.dataset.role === "admin";
+  const _approverLabel = _isAdminCtx ? "Super Admin" : "Super Admin atau Admin";
+  const _approverDesc = _isAdminCtx ? "Super admin" : "Super admin atau admin";
   const m = document.createElement("div");
   m.className = "modal show ar-modal";
   m.style.zIndex = "10020";
+  const fromChoice = !!opts.fromChoice;
   m.innerHTML = `
-    <div class="modal-backdrop" data-close></div>
-    <div class="modal-panel ar-panel-narrow">
-      <button class="modal-close" data-close aria-label="Tutup">×</button>
-      <h3>🔐 Minta OTP ke Super Admin</h3>
-      <p class="muted">Masukkan email/username admin kamu. Super admin akan generate OTP dan kirim ke kamu via WA/SMS.</p>
+    <div class="modal-backdrop" data-ar-back></div>
+    <div class="modal-panel ar-panel-narrow" data-no-i18n>
+      <h3 class="ar-text-center" data-no-i18n>🔐 Minta OTP ke ${_arEscapeHtml(_approverLabel)}</h3>
+      <p class="muted ar-text-center" data-no-i18n>Masukkan email/username akunmu. ${_arEscapeHtml(_approverDesc)} akan generate OTP dan kirim 4-digit OTP ke email kamu.</p>
       <form class="ar-form" id="arOtpRequestForm">
-        <label class="ar-label">Email atau Username Admin</label>
-        <input type="text" name="id" placeholder="admin@email.com atau username" value="${_arEscapeHtml(prefillId)}" autocomplete="off" required />
+        <label class="ar-label" data-no-i18n>Email atau Username</label>
+        <input type="text" name="id" placeholder="kamu@email.com atau username" value="${_arEscapeHtml(prefillId)}" autocomplete="off" required />
         <div class="ar-form-err" hidden></div>
-        <div class="ar-form-actions">
-          <button type="button" class="btn ghost" data-close>Batal</button>
-          <button type="submit" class="btn primary">Kirim Permintaan</button>
+        <div class="ar-form-actions ar-form-actions-compact">
+          <button type="button" class="btn ghost btn-compact" data-ar-back>Batal</button>
+          <button type="submit" class="btn primary btn-compact">Kirim Permintaan</button>
         </div>
       </form>
     </div>
   `;
   document.body.appendChild(m);
+
+  // Back to choice picker (Batal / backdrop)
+  m.addEventListener("click", e => {
+    if (e.target.matches("[data-ar-back]")) {
+      m.remove();
+      if (fromChoice && typeof openUniversalRecoveryChoiceModal === "function") {
+        setTimeout(() => openUniversalRecoveryChoiceModal(prefillId), 50);
+      }
+    }
+  });
 
   m.querySelector("#arOtpRequestForm")?.addEventListener("submit", e => {
     e.preventDefault();
@@ -22202,18 +22332,22 @@ function openAdminRecoveryWaitModal(requestId) {
 
     const remainingMin = Math.max(0, Math.ceil((req.expires_at - Date.now()) / 60000));
 
+    // v568: context-aware copy
+    const _isAdminCtx = document.body.dataset.role === "admin";
+    const _approverLabel = _isAdminCtx ? "Super Admin" : "Super Admin atau Admin";
+
     if (req.status === AR_STATUS.PENDING || req.status === AR_STATUS.OTP_GENERATED) {
       body.innerHTML = `
-        <h3>🆕 Permintaan terkirim</h3>
-        <p class="muted">Tunggu super admin generate OTP. Kamu bakal terima 4 digit OTP via WA/SMS.</p>
+        <h3 class="ar-text-center" data-no-i18n>🆕 Permintaan terkirim</h3>
+        <p class="muted ar-text-center" data-no-i18n>Tunggu ${_arEscapeHtml(_approverLabel)} kirim OTP. Kamu bakal terima 4-digit OTP via email.</p>
         <div class="ar-status-pill ar-pill-pending">${_arEscapeHtml(_arStatusLabel(req.status))}</div>
         <div class="ar-ttl">Berlaku ${remainingMin} menit lagi</div>
-        <div class="ar-form-actions"><button type="button" class="btn ghost" data-close>Tutup (request tetap aktif)</button></div>
+        <div class="ar-form-actions-compact"><button type="button" class="btn ghost btn-compact" data-close>Tutup (request tetap aktif)</button></div>
       `;
     } else if (req.status === AR_STATUS.WAITING_INPUT) {
       body.innerHTML = `
-        <h3>📨 Masukkan OTP dari Super Admin</h3>
-        <p class="muted">Ketik 4 digit OTP yang super admin kirim ke kamu via WA/SMS.</p>
+        <h3 class="ar-text-center" data-no-i18n>📨 Masukkan OTP dari email</h3>
+        <p class="muted ar-text-center" data-no-i18n>Cek email kamu, ketik 4-digit OTP yang ${_arEscapeHtml(_approverLabel)} kirim.</p>
         <div class="ar-otp-grid" data-ar-otp-grid>
           <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="0" />
           <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="1" />
@@ -22222,30 +22356,21 @@ function openAdminRecoveryWaitModal(requestId) {
         </div>
         <div class="ar-form-err" hidden></div>
         <div class="ar-ttl">Berlaku ${remainingMin} menit lagi</div>
-        <div class="ar-form-actions">
-          <button type="button" class="btn ghost" data-close>Tutup</button>
-          <button type="button" class="btn primary" data-ar-submit-otp>Kirim OTP</button>
+        <div class="ar-form-actions-compact">
+          <button type="button" class="btn ghost btn-compact" data-close>Tutup</button>
+          <button type="button" class="btn primary btn-compact" data-ar-submit-otp>Verify</button>
         </div>
       `;
       wireOtpInputs(body);
     } else if (req.status === AR_STATUS.INPUT_RECEIVED) {
-      body.innerHTML = `
-        <h3>⏳ Menunggu konfirmasi super admin</h3>
-        <p class="muted">Super admin akan cek OTP yang kamu input dengan yang dia kirim. Tunggu sebentar.</p>
-        <div class="ar-status-pill ar-pill-waiting">${_arEscapeHtml(_arStatusLabel(req.status))}</div>
-        <div class="ar-form-actions"><button type="button" class="btn ghost" data-close>Tutup (akan diberitahu nanti)</button></div>
-      `;
-    } else if (req.status === AR_STATUS.APPROVED) {
-      body.innerHTML = `
-        <h3>✅ Akses disetujui</h3>
-        <p class="muted">Super admin sudah confirm OTP kamu. Sekarang silakan set password baru untuk akun admin kamu.</p>
-        <div class="ar-form-actions"><button type="button" class="btn primary" data-ar-set-new-pw>Set Password Baru</button></div>
-      `;
+      // v568: legacy state (alur lama). Tampilkan password reset langsung
+      // karena di alur baru INPUT_RECEIVED tidak terpakai.
+      renderInlinePasswordReset(body, req);
       stopPoll();
-      body.querySelector("[data-ar-set-new-pw]")?.addEventListener("click", () => {
-        m.remove();
-        if (typeof openForgotPwModal === "function") openForgotPwModal(req.requester_email);
-      });
+    } else if (req.status === AR_STATUS.APPROVED) {
+      // v568: tampilkan password reset INLINE di modal yang sama
+      renderInlinePasswordReset(body, req);
+      stopPoll();
     } else if (req.status === AR_STATUS.DENIED) {
       body.innerHTML = `
         <h3>❌ Permintaan ditolak</h3>
@@ -22280,7 +22405,7 @@ function openAdminRecoveryWaitModal(requestId) {
       });
     });
     cells[0]?.focus();
-    scope.querySelector("[data-ar-submit-otp]")?.addEventListener("click", () => {
+    scope.querySelector("[data-ar-submit-otp]")?.addEventListener("click", async () => {
       if (submitting) return;
       const otp = cells.map(c => c.value).join("");
       if (!/^\d{4}$/.test(otp)) {
@@ -22290,15 +22415,79 @@ function openAdminRecoveryWaitModal(requestId) {
         return;
       }
       submitting = true;
-      const r = submitBackupOtp(requestId, otp);
+      // v568: submitBackupOtp sekarang AUTO-VERIFY (return approved=true kalau match)
+      const r = await submitBackupOtp(requestId, otp);
       submitting = false;
       if (!r.ok) {
         const err = scope.querySelector(".ar-form-err");
-        err.textContent = r.error || "Gagal submit OTP";
+        err.textContent = r.error || "Gagal verify OTP";
         err.hidden = false;
+        // Clear cells supaya bisa input ulang
+        cells.forEach(c => c.value = "");
+        cells[0].focus();
         return;
       }
-      render(); // transition ke INPUT_RECEIVED
+      // OTP match → status APPROVED, refresh render (akan auto-tampil password reset inline)
+      render();
+    });
+  }
+
+  // v568: render password reset form INLINE di modal yang sama (bukan
+  // navigate ke forgotPwModal). Setelah OTP approved, user langsung set
+  // password baru di sini.
+  function renderInlinePasswordReset(scope, req) {
+    scope.innerHTML = `
+      <h3 class="ar-text-center" data-no-i18n>✅ OTP terverifikasi</h3>
+      <p class="muted ar-text-center" data-no-i18n>Sekarang atur password baru untuk akun <b>${_arEscapeHtml(req.requester_email)}</b>.</p>
+      <form class="ar-form" id="arInlinePwForm" autocomplete="off">
+        <label class="ar-label" data-no-i18n>Password Baru</label>
+        <input type="password" name="pw1" placeholder="Min. 6 karakter" required minlength="6" autocomplete="new-password" />
+        <label class="ar-label" data-no-i18n>Konfirmasi Password Baru</label>
+        <input type="password" name="pw2" placeholder="Ulangi password baru" required minlength="6" autocomplete="new-password" />
+        <div class="ar-form-err" hidden></div>
+        <div class="ar-form-actions-compact">
+          <button type="submit" class="btn primary btn-compact">Set Password Baru</button>
+        </div>
+      </form>
+    `;
+    const form = scope.querySelector("#arInlinePwForm");
+    form?.addEventListener("submit", async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const pw1 = String(fd.get("pw1") || "");
+      const pw2 = String(fd.get("pw2") || "");
+      const errEl = form.querySelector(".ar-form-err");
+      const showErr = msg => { errEl.textContent = msg; errEl.hidden = false; };
+      if (pw1.length < 6) return showErr("Password minimal 6 karakter");
+      if (pw1 !== pw2) return showErr("Konfirmasi password tidak cocok");
+      try {
+        const acct = JSON.parse(localStorage.getItem(`playly-account-${req.requester_email}`) || "null");
+        if (!acct) return showErr("Akun tidak ditemukan");
+        acct.password = await hashPassword(pw1);
+        acct.passwordResetAt = Date.now();
+        localStorage.setItem(`playly-account-${req.requester_email}`, JSON.stringify(acct));
+        // Reset login lockout
+        if (typeof clearLoginAttempts === "function") {
+          clearLoginAttempts(req.requester_email);
+          if (req.requester_username) clearLoginAttempts(req.requester_username);
+        }
+        // Audit log
+        try {
+          if (typeof pushAdminEvent === "function") {
+            pushAdminEvent("🔑", `Password reset via OTP recovery untuk <b>${escapeHtml(acct.username || req.requester_email)}</b>`);
+          }
+        } catch {}
+        if (typeof toast === "function") {
+          toast("🔑 Password berhasil di-reset. Silakan login dengan password baru.", "success");
+        }
+        m.remove();
+        // Pre-fill email di login form
+        const loginInput = document.querySelector('#signinForm input[name="email"]');
+        if (loginInput) loginInput.value = req.requester_email;
+      } catch (err) {
+        console.error("[inline-pw-reset] error", err);
+        showErr("Gagal reset password. Coba lagi.");
+      }
     });
   }
 
@@ -22329,8 +22518,8 @@ function openSuperAdminRecoveryListModal() {
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel ar-panel-wide">
       <button class="modal-close" data-close aria-label="Tutup">×</button>
-      <h3>🔐 Permintaan Akses Admin</h3>
-      <p class="muted">Daftar admin cadangan yang minta recovery via OTP. Klik aksi sesuai status.</p>
+      <h3 data-no-i18n>🔐 Permintaan Akses Akun</h3>
+      <p class="muted" data-no-i18n>Daftar user/admin yang minta recovery via OTP. Klik aksi sesuai status.</p>
       <div class="ar-req-list"></div>
     </div>
   `;
@@ -22355,15 +22544,17 @@ function openSuperAdminRecoveryListModal() {
     listEl.innerHTML = reqs.map(r => {
       const ageMin = Math.floor((Date.now() - (r.created_at || 0)) / 60000);
       const ttlMin = Math.max(0, Math.ceil(((r.expires_at || 0) - Date.now()) / 60000));
+      // v568: simplified flow — combine generate+send jadi 1 button "Kirim OTP".
+      // Setelah dikirim, auto-verify saat user input. Tidak ada step re-verify
+      // atau manual konfirmasi.
       let actionBtn = "";
-      if (r.status === AR_STATUS.PENDING) {
-        actionBtn = `<button class="btn primary" data-ar-action="generate" data-ar-id="${_arEscapeHtml(r.id)}">Generate OTP</button>`;
-      } else if (r.status === AR_STATUS.OTP_GENERATED) {
-        actionBtn = `<button class="btn primary" data-ar-action="verify" data-ar-id="${_arEscapeHtml(r.id)}">Re-verify OTP</button>`;
+      if (r.status === AR_STATUS.PENDING || r.status === AR_STATUS.OTP_GENERATED) {
+        actionBtn = `<button class="btn primary btn-compact" data-ar-action="send" data-ar-id="${_arEscapeHtml(r.id)}">📨 Kirim OTP</button>`;
       } else if (r.status === AR_STATUS.WAITING_INPUT) {
-        actionBtn = `<span class="ar-status-pill ar-pill-waiting">Tunggu backup admin input...</span>`;
+        actionBtn = `<span class="ar-status-pill ar-pill-waiting">OTP terkirim, tunggu user input...</span>`;
       } else if (r.status === AR_STATUS.INPUT_RECEIVED) {
-        actionBtn = `<button class="btn primary" data-ar-action="final" data-ar-id="${_arEscapeHtml(r.id)}">Konfirmasi OTP</button>`;
+        // Legacy state — kalau ada request lama, auto-redirect ke "kirim ulang"
+        actionBtn = `<button class="btn primary btn-compact" data-ar-action="send" data-ar-id="${_arEscapeHtml(r.id)}">📨 Kirim OTP Ulang</button>`;
       }
       return `
         <div class="ar-req-row" data-ar-req-row="${_arEscapeHtml(r.id)}">
@@ -22385,18 +22576,15 @@ function openSuperAdminRecoveryListModal() {
     if (!btn) return;
     const action = btn.dataset.arAction;
     const id = btn.dataset.arId;
-    if (action === "generate") {
-      const gen = await generateRecoveryOtp(id);
-      if (!gen.ok) return toast(gen.error || "Gagal generate OTP", "error");
-      m.remove();
-      openSuperAdminGenerateOtpModal(id, gen.otpPlain);
-    } else if (action === "verify") {
-      m.remove();
-      openSuperAdminVerifyOtpModal(id);
-    } else if (action === "final") {
-      const req = getAdminRecoveryRequests().find(r => r.id === id);
-      m.remove();
-      openSuperAdminFinalConfirmModal(id, req?.otp_entered || "");
+    if (action === "send") {
+      // v568: combined generate + send. Auto-transition status ke WAITING_INPUT.
+      // Tampilkan modal display OTP supaya super admin bisa copy + verify
+      // bahwa "email sudah terkirim" (dalam simulasi via system message).
+      const gen = await generateAndSendRecoveryOtp(id);
+      if (!gen.ok) return toast(gen.error || "Gagal kirim OTP", "error");
+      // Open modal display OTP + confirmation
+      openSuperAdminSendOtpModal(id, gen.otpPlain);
+      // Refresh list di belakang (modal akan re-open list setelah close)
     }
   });
 
@@ -22412,26 +22600,31 @@ function openSuperAdminRecoveryListModal() {
   return m;
 }
 
-// Modal: super admin lihat OTP yang baru di-generate. Kirim eksternal lalu lanjut verify.
-function openSuperAdminGenerateOtpModal(requestId, otpPlain) {
+// Modal: super admin lihat OTP yang baru terkirim ke email user.
+// v568: gabungan dari generate + verify modal lama. Status sudah ter-update
+// ke WAITING_INPUT saat modal ini terbuka (via generateAndSendRecoveryOtp).
+// Super admin lihat OTP plain untuk verifikasi konten email yang sudah
+// terkirim. Tutup modal = balik ke list super admin.
+function openSuperAdminSendOtpModal(requestId, otpPlain) {
   _arRemoveOpenModals();
   const m = document.createElement("div");
   m.className = "modal show ar-modal";
   m.style.zIndex = "10020";
   const otpDigits = String(otpPlain).split("").map(d => `<span class="ar-otp-digit">${d}</span>`).join("");
+  // Get user email for display
+  const req = getAdminRecoveryRequests().find(r => r.id === requestId);
+  const userEmail = req?.requester_email || "user";
   m.innerHTML = `
-    <div class="modal-backdrop" data-close></div>
-    <div class="modal-panel ar-panel-narrow">
-      <button class="modal-close" data-close aria-label="Tutup">×</button>
-      <h3>🔑 OTP berhasil di-generate</h3>
-      <p class="muted">Kirim 4 digit ini ke backup admin via <b>WA / SMS / telepon</b> — di luar Playly. Jangan screenshot ke chat publik.</p>
+    <div class="modal-backdrop" data-ar-back-list></div>
+    <div class="modal-panel ar-panel-narrow" data-no-i18n>
+      <h3 class="ar-text-center" data-no-i18n>📨 OTP terkirim ke email</h3>
+      <p class="muted ar-text-center" data-no-i18n>OTP 4-digit di bawah sudah dikirim ke <b>${_arEscapeHtml(userEmail)}</b>. User sekarang akan diminta input OTP ini di layar mereka.</p>
       <div class="ar-otp-display">${otpDigits}</div>
-      <button type="button" class="btn ghost ar-copy-btn" data-ar-copy="${_arEscapeHtml(otpPlain)}">📋 Copy OTP</button>
+      <button type="button" class="btn ghost ar-copy-btn btn-compact" data-ar-copy="${_arEscapeHtml(otpPlain)}">📋 Copy OTP</button>
       <div class="ar-divider"></div>
-      <p class="muted">Setelah kamu kirim ke backup admin, klik "Lanjut" untuk re-verify OTP.</p>
-      <div class="ar-form-actions">
-        <button type="button" class="btn ghost" data-close>Nanti</button>
-        <button type="button" class="btn primary" data-ar-continue>Lanjut: Re-verify OTP</button>
+      <p class="muted ar-text-center" data-no-i18n>Sistem akan auto-verify saat user input OTP. Kamu tidak perlu approve manual.</p>
+      <div class="ar-form-actions-compact">
+        <button type="button" class="btn primary btn-compact" data-ar-back-list>Selesai</button>
       </div>
     </div>
   `;
@@ -22441,9 +22634,12 @@ function openSuperAdminGenerateOtpModal(requestId, otpPlain) {
     const otp = e.currentTarget.dataset.arCopy;
     try { await navigator.clipboard.writeText(otp); toast("✅ OTP di-copy", "success"); } catch { toast("Gagal copy, salin manual", "warning"); }
   });
-  m.querySelector("[data-ar-continue]")?.addEventListener("click", () => {
-    m.remove();
-    openSuperAdminVerifyOtpModal(requestId);
+  // Klik "Selesai" atau backdrop → balik ke list
+  m.addEventListener("click", e => {
+    if (e.target.matches("[data-ar-back-list]")) {
+      m.remove();
+      openSuperAdminRecoveryListModal();
+    }
   });
   return m;
 }
@@ -22699,32 +22895,77 @@ window._adminPinGate = {
   refreshFormField: _refreshForgotAdminPinField
 };
 
-// ───────────────────── HOOK: forgot password handler ─────────────────────
-// Intercept #forgotPw click handler — kalau email yang diisi = backup admin,
-// tampilkan choice modal (Email vs OTP). Kalau bukan, fallback ke flow lama.
-// Listener pakai capture phase supaya kita bisa preventDefault sebelum
-// handler eksisting jalan.
-document.addEventListener("click", (e) => {
-  const link = e.target.closest("#forgotPw");
-  if (!link) return;
-  const loginInput = document.querySelector('#signinForm input[name="email"]');
-  const id = (loginInput?.value || "").trim().toLowerCase();
-  if (!id) return; // no email → let existing handler show forgot pw modal
-  // Resolve to email (handle username)
-  let email = id;
-  if (!id.includes("@")) {
-    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
-    if (acct) email = (acct.email || "").toLowerCase();
-  }
-  // Backup admin? → show choice modal
-  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
-      typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email)) {
-    e.preventDefault();
-    e.stopPropagation();
-    openAdminRecoveryChoiceModal(id);
-  }
-  // Super admin / regular user → biarkan handler existing
-}, true);
+// ───────────────────── UNIVERSAL RECOVERY CHOICE MODAL (v566) ─────────────────
+// Per request user 2026-05-26: jangan langsung buka kolom — pilih dulu mana
+// cara recovery (PIN 2FA sendiri atau minta OTP ke super admin), baru
+// arahkan ke modal/form yang sesuai.
+//
+// Diganti dari openAdminRecoveryChoiceModal (v562 backup-admin-only). Choice
+// modal sekarang universal: berlaku untuk user + backup admin. Super admin
+// tetap di-block via createAdminRecoveryRequest validator (recovery code
+// flow nanti).
+function openUniversalRecoveryChoiceModal(prefillId = "") {
+  _arRemoveOpenModals();
+  // v568: context-aware copy. ADMIN dashboard (body[data-role="admin"]):
+  //   "Super Admin" saja — backup admin tidak bisa approve admin recovery
+  //   (security: only super admin handles admin keys). USER dashboard:
+  //   "Super Admin/Admin" — backup admin BISA approve user recovery.
+  const _isAdminCtx = document.body.dataset.role === "admin";
+  const _approverLabel = _isAdminCtx ? "Super Admin" : "Super Admin/Admin";
+  const _approverDesc = _isAdminCtx ? "super admin" : "super admin atau admin";
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal ar-modal-choice";
+  m.id = "universalRecoveryChoiceModal";
+  m.style.zIndex = "10020";
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow" data-no-i18n>
+      <h3 class="ar-text-center" data-no-i18n>Pilih cara recovery akun</h3>
+      <p class="muted ar-text-center" data-no-i18n>Mau reset sendiri atau minta verifikasi dari ${_approverDesc}? Pilih yang paling cocok dengan situasimu.</p>
+      <div class="ar-choice-grid">
+        <button type="button" class="ar-choice-card" data-ar-choice="self">
+          <div class="ar-choice-ico">🔐</div>
+          <strong data-no-i18n>Reset Sendiri</strong>
+          <small data-no-i18n>Atur password baru langsung. Kalau akunmu aktif 2FA, perlu masukkan PIN 6-digit untuk verifikasi.</small>
+        </button>
+        <button type="button" class="ar-choice-card" data-ar-choice="otp">
+          <div class="ar-choice-ico">📨</div>
+          <strong data-no-i18n>Minta OTP via ${_arEscapeHtml(_approverLabel)}</strong>
+          <small data-no-i18n>${_arEscapeHtml(_approverDesc.charAt(0).toUpperCase() + _approverDesc.slice(1))} akan kirim OTP 4-digit ke email kamu. Cocok kalau lupa PIN 2FA atau belum aktifkan.</small>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  m.querySelector('[data-ar-choice="self"]')?.addEventListener("click", () => {
+    m.remove();
+    if (typeof openForgotPwModal === "function") {
+      // v567: track bahwa modal di-open dari choice picker, supaya Batal/
+      // backdrop close → balik ke choice picker (bukan close total)
+      window._forgotPwFromChoice = true;
+      window._forgotPwReturnPrefill = prefillId;
+      openForgotPwModal(prefillId);
+    }
+  });
+  m.querySelector('[data-ar-choice="otp"]')?.addEventListener("click", () => {
+    m.remove();
+    if (typeof openAdminRecoveryOtpRequestModal === "function") {
+      openAdminRecoveryOtpRequestModal(prefillId, { fromChoice: true });
+    }
+  });
+  // v568b: klik backdrop di luar panel → close modal total. User minta
+  // "klik di luar dari dalam kolom keluar dari halaman pop up".
+  m.addEventListener("click", e => {
+    if (e.target.matches(".modal-backdrop, [data-close]")) {
+      m.remove();
+    }
+  });
+  return m;
+}
+
+// Expose untuk inline caller (#forgotPw direct listener)
+window.openUniversalRecoveryChoiceModal = openUniversalRecoveryChoiceModal;
 
 // ====================================================================
 
