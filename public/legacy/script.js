@@ -21752,9 +21752,12 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     // sampai sini valid karena modal verify internal.
   }
 
-  // v563: Backup admin → require Recovery Key sebagai gate self-reset.
+  // v563/v563d: Backup admin → require Recovery Key sebagai gate self-reset.
   // Super admin sudah di-block di atas. Regular user → skip check ini.
-  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email)) {
+  // v563d: hanya enforce kalau lagi di admin auth context — supaya user
+  // dashboard yang tidak punya field-nya tetap bisa reset normal.
+  const _isAdminAuthCtx = document.body.dataset.role === "admin";
+  if (_isAdminAuthCtx && typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email)) {
     const rkeyInput = String(fd.get("recoveryKey") || "").trim();
     if (!rkeyInput) {
       showFieldError(form, "recoveryKey", "Recovery key wajib untuk akun admin");
@@ -22775,20 +22778,33 @@ async function generateAndStoreAdminRecoveryKey(email) {
   }
 }
 
-// v563c: Field Recovery Key SELALU VISIBLE supaya user tau ada gate. Cuma
-// toggle status `required` + visual highlight berdasarkan email detection.
-// - Regular user / empty email → field optional (label muted)
-// - Backup admin detected → field required (label highlighted gold)
-// - Super admin → field optional (super admin di-block dari self-reset)
+// v563d: Field Recovery Key scoped ke admin role saja. CSS handle visibility
+// via body[data-role="admin"]. JS handle `required` toggle berdasarkan email
+// detection — TAPI hanya kalau memang lagi di admin context. Di user dashboard,
+// CSS sudah hide total → JS tidak boleh add `required` (akan block form submit).
 function _refreshForgotRecoveryKeyField() {
   const form = document.getElementById("forgotPwForm");
   if (!form) return;
   const field = document.getElementById("forgotRecoveryKeyField");
   if (!field) return;
-  // Pastikan field selalu visible — abaikan attribute hidden lama
   field.hidden = false;
   field.removeAttribute("hidden");
 
+  // Cek apakah lagi di admin auth context. Kalau bukan, field hidden via CSS
+  // dan JS skip required toggle supaya regular user bisa submit form bebas.
+  const isAdminContext = document.body.dataset.role === "admin";
+  const rkeyInput = field.querySelector('input[name="recoveryKey"]');
+
+  if (!isAdminContext) {
+    if (rkeyInput) {
+      rkeyInput.removeAttribute("required");
+      rkeyInput.value = ""; // clear any leftover input
+    }
+    field.classList.remove("rkey-required");
+    return;
+  }
+
+  // Admin context — toggle required + visual berdasarkan email
   const idInput = form.querySelector('input[name="email"]');
   const id = (idInput?.value || "").trim().toLowerCase();
   let email = id;
@@ -22800,7 +22816,6 @@ function _refreshForgotRecoveryKeyField() {
     typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
     typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email);
 
-  const rkeyInput = field.querySelector('input[name="recoveryKey"]');
   if (rkeyInput) {
     if (isBackupAdmin) {
       rkeyInput.setAttribute("required", "");

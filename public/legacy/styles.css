@@ -5333,7 +5333,15 @@ body[data-theme="light"] .ar-otp-display-muted .ar-otp-digit {
    ADMIN RECOVERY KEY — field + display modal (v563)
    Per request user 2026-05-26: Recovery Key gate untuk self-reset
    admin tanpa minta OTP ke super admin.
+   v563d: Field di-scoped ke admin role saja. User dashboard / user
+   login → field hidden total (per role-isolation memory).
    ============================================================ */
+/* Default HIDE — field hanya muncul saat admin auth context */
+.auth-field-rkey { display: none !important; }
+body[data-role="admin"] .auth-field-rkey,
+body.auth-mode[data-role="admin"] .auth-field-rkey {
+  display: block !important;
+}
 .auth-field-rkey .rkey-tag {
   display: inline-block;
   padding: 2px 8px;
