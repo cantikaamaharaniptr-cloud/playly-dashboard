@@ -16270,6 +16270,14 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
         setExtraAdminEmails(extras);
       }
     } catch (err) { console.warn("[create-user] allowlist push failed:", err); }
+    // v563: Auto-generate Recovery Key untuk backup admin baru. Display
+    // sekali ke super admin lewat modal. Hash di-store di acc, plain key
+    // hanya muncul di modal lalu hilang.
+    try {
+      if (typeof generateAndStoreAdminRecoveryKey === "function") {
+        await generateAndStoreAdminRecoveryKey(email);
+      }
+    } catch (err) { console.warn("[create-user] recovery key generation failed:", err); }
   }
 
   const tl = isAdminMode
@@ -21624,7 +21632,13 @@ function openForgotPwModal(prefillId = "") {
   if (!modal || !form) return;
   form.reset();
   clearFieldErrors(form);
-  if (prefillId) form.querySelector('input[name="email"]').value = prefillId;
+  if (prefillId) {
+    const emailInput = form.querySelector('input[name="email"]');
+    emailInput.value = prefillId;
+    // v563: fire input event supaya listener auto show/hide Recovery Key field
+    // ke-trigger. Programmatic .value = ... tidak fire input event by default.
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
   modal.classList.add("show");
   setTimeout(() => {
     const target = prefillId ? form.querySelector('input[name="password"]') : form.querySelector('input[name="email"]');
@@ -21736,6 +21750,29 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
       return toast("⚠️ Verifikasi 2FA dibatalkan — password tidak di-reset.", "warning");
     }
     // sampai sini valid karena modal verify internal.
+  }
+
+  // v563: Backup admin → require Recovery Key sebagai gate self-reset.
+  // Super admin sudah di-block di atas. Regular user → skip check ini.
+  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email)) {
+    const rkeyInput = String(fd.get("recoveryKey") || "").trim();
+    if (!rkeyInput) {
+      showFieldError(form, "recoveryKey", "Recovery key wajib untuk akun admin");
+      return toast("🔑 Akun admin perlu Recovery Key untuk self-reset", "warning");
+    }
+    if (!existing.recoveryKeyHash) {
+      // Akun admin LEGACY (dibuat sebelum v563) — belum punya recovery key
+      showFieldError(form, "recoveryKey", "Akun ini belum punya recovery key. Pakai opsi 'OTP via Super Admin' di modal Lupa Kata Sandi.");
+      return toast("⚠️ Akun admin ini belum punya recovery key. Hubungi super admin atau pakai flow OTP.", "warning");
+    }
+    if (typeof verifyAdminRecoveryKey !== "function") {
+      return toast("⚠️ Recovery key verifier tidak tersedia. Hubungi support.", "error");
+    }
+    const rkeyOk = await verifyAdminRecoveryKey(rkeyInput, existing.recoveryKeyHash);
+    if (!rkeyOk) {
+      showFieldError(form, "recoveryKey", "Recovery key salah");
+      return toast("❌ Recovery key tidak cocok", "error");
+    }
   }
 
   // Hash password baru & simpan
@@ -22606,6 +22643,203 @@ window.addEventListener("playly:view-changed", e => {
 window.addEventListener("playly:cloud-applied", () => {
   setTimeout(_arTryMountSuperEntry, 500);
 });
+
+// ============ ADMIN RECOVERY KEY (SELF-RESET GATE) ===================
+// Per request user 2026-05-26 v563: forgot-pw modal "kurang aman" karena
+// cuma butuh email. Tambah Recovery Key sebagai gate untuk self-reset
+// admin tanpa minta OTP ke super admin.
+//
+// Flow:
+// 1. Saat super admin buat backup admin via "Buat Admin" → sistem auto-
+//    generate Recovery Key 12 karakter (format XXXX-XXXX-XXXX, alphabet
+//    aman tanpa 0/O/1/I/l).
+// 2. Tampil modal sekali ke super admin: "Salin & kirim ke backup admin."
+//    Plain key TIDAK pernah disimpan, hanya hash-nya.
+// 3. Backup admin terima key, simpan offline.
+// 4. Lupa password? Buka "Reset Kata Sandi" → field Recovery Key muncul
+//    otomatis kalau email backup admin → ketik key + new password.
+// 5. Sistem verify hash → kalau cocok, password updated.
+// 6. Recovery key tetap valid setelah dipakai (bukan one-time) — admin
+//    bisa self-reset berkali-kali. Super admin bisa regenerate kalau key
+//    di-compromise (defer ke session berikutnya).
+
+const ADMIN_RKEY_SALT = "playly-admin-rkey-salt-v1";
+// Alphabet aman — no 0/O, no 1/I/l (ambigu via telpon/tulisan tangan)
+const RKEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function generateAdminRecoveryKey() {
+  // Cryptographically random — pakai crypto.getRandomValues
+  const arr = new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  let s = "";
+  for (let i = 0; i < 12; i++) {
+    s += RKEY_ALPHABET[arr[i] % RKEY_ALPHABET.length];
+    if (i === 3 || i === 7) s += "-";
+  }
+  return s; // e.g. "K9X4-MZ7P-Q8RT"
+}
+
+async function hashAdminRecoveryKey(key) {
+  // Normalize: trim, uppercase, strip dashes — supaya user bisa input
+  // dengan/tanpa dash dan tetap match.
+  const normalized = String(key || "").trim().toUpperCase().replace(/-/g, "");
+  if (!normalized) return null;
+  const data = new TextEncoder().encode(ADMIN_RKEY_SALT + normalized);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return "rk:" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function verifyAdminRecoveryKey(input, storedHash) {
+  if (!storedHash || !input) return false;
+  const computed = await hashAdminRecoveryKey(input);
+  return computed === storedHash;
+}
+
+// Modal: tampilkan plain recovery key ke super admin SEKALI saat backup
+// admin dibuat. Plain key TIDAK disimpan di mana-mana — hanya hash.
+function openAdminRecoveryKeyDisplayModal(targetEmail, plainKey) {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.style.zIndex = "10025";
+  // Split key untuk display 4-4-4 dengan gap
+  const groups = plainKey.split("-");
+  const groupsHtml = groups.map(g => `<span class="rkey-group">${_arEscapeHtml(g)}</span>`).join('<span class="rkey-sep">-</span>');
+  m.innerHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel ar-panel-narrow">
+      <h3>🔑 Recovery Key Backup Admin</h3>
+      <p class="muted">Akun admin <b>${_arEscapeHtml(targetEmail)}</b> baru saja dibuat. Kirim recovery key di bawah ke backup admin lewat <b>channel aman</b> (WA pribadi/SMS) — JANGAN screenshot ke chat publik.</p>
+      <div class="rkey-display">${groupsHtml}</div>
+      <button type="button" class="btn ghost rkey-copy-btn" data-rkey-copy="${_arEscapeHtml(plainKey)}">📋 Copy Recovery Key</button>
+      <div class="rkey-warning">
+        <strong>⚠️ Penting</strong>
+        <small>Key ini <b>hanya muncul sekali</b>. Setelah modal ditutup tidak bisa dilihat lagi. Backup admin butuh key ini untuk reset password sendiri tanpa OTP.</small>
+      </div>
+      <label class="rkey-ack-label">
+        <input type="checkbox" id="rkeyAck"/>
+        <span>Saya sudah copy + kirim ke backup admin via channel aman</span>
+      </label>
+      <div class="ar-form-actions">
+        <button type="button" class="btn primary" data-rkey-done disabled>Selesai</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  const ackCb = m.querySelector("#rkeyAck");
+  const doneBtn = m.querySelector("[data-rkey-done]");
+  ackCb?.addEventListener("change", () => {
+    doneBtn.disabled = !ackCb.checked;
+  });
+
+  m.querySelector("[data-rkey-copy]")?.addEventListener("click", async e => {
+    const key = e.currentTarget.dataset.rkeyCopy;
+    try {
+      await navigator.clipboard.writeText(key);
+      if (typeof toast === "function") toast("✅ Recovery key di-copy", "success");
+    } catch {
+      if (typeof toast === "function") toast("Gagal copy, salin manual", "warning");
+    }
+  });
+
+  doneBtn?.addEventListener("click", () => {
+    if (ackCb?.checked) m.remove();
+  });
+  return m;
+}
+
+// Expose hook untuk caller (createUserForm) — generate key, hash, save ke
+// account, lalu tampilkan modal. Returns true kalau sukses.
+async function generateAndStoreAdminRecoveryKey(email) {
+  const key = generateAdminRecoveryKey();
+  const hash = await hashAdminRecoveryKey(key);
+  try {
+    const raw = localStorage.getItem(`playly-account-${email}`);
+    if (!raw) return false;
+    const acc = JSON.parse(raw);
+    acc.recoveryKeyHash = hash;
+    acc.recoveryKeyCreatedAt = Date.now();
+    localStorage.setItem(`playly-account-${email}`, JSON.stringify(acc));
+    // Cloud sync push (fire-and-forget)
+    try {
+      if (window.cloudSync?.syncSingleKey) {
+        Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${email}`)).catch(() => {});
+      }
+    } catch {}
+    openAdminRecoveryKeyDisplayModal(email, key);
+    return true;
+  } catch (e) {
+    console.error("[recovery-key] failed", e);
+    return false;
+  }
+}
+
+// Auto show/hide Recovery Key field di forgotPwModal berdasarkan email
+// yang diketik. Show kalau email backup admin (not super admin, not regular user).
+function _refreshForgotRecoveryKeyField() {
+  const form = document.getElementById("forgotPwForm");
+  if (!form) return;
+  const field = document.getElementById("forgotRecoveryKeyField");
+  if (!field) return;
+  const idInput = form.querySelector('input[name="email"]');
+  const id = (idInput?.value || "").trim().toLowerCase();
+  if (!id) {
+    field.hidden = true;
+    return;
+  }
+  let email = id;
+  if (!id.includes("@")) {
+    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
+    if (acct) email = (acct.email || "").toLowerCase();
+  }
+  // Show ONLY untuk backup admin (admin allowlist tapi bukan super admin)
+  const isBackupAdmin = typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
+                        typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email);
+  field.hidden = !isBackupAdmin;
+  const rkeyInput = field.querySelector('input[name="recoveryKey"]');
+  if (rkeyInput) {
+    if (isBackupAdmin) rkeyInput.setAttribute("required", "");
+    else { rkeyInput.removeAttribute("required"); rkeyInput.value = ""; }
+  }
+}
+
+// Listen for email input changes + modal opens
+document.addEventListener("input", e => {
+  if (e.target.matches('#forgotPwForm input[name="email"]')) {
+    _refreshForgotRecoveryKeyField();
+  }
+});
+// Re-check tiap kali forgot modal dibuka (event after openForgotPwModal)
+document.addEventListener("click", e => {
+  if (e.target.closest("#forgotPw")) {
+    setTimeout(_refreshForgotRecoveryKeyField, 150);
+  }
+});
+
+// Auto-format recovery key input — uppercase + auto-insert dashes
+document.addEventListener("input", e => {
+  if (!e.target.matches('#forgotPwForm input[name="recoveryKey"]')) return;
+  const raw = e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, "");
+  const trimmed = raw.slice(0, 12);
+  let formatted = "";
+  for (let i = 0; i < trimmed.length; i++) {
+    formatted += trimmed[i];
+    if ((i === 3 || i === 7) && i < trimmed.length - 1) formatted += "-";
+  }
+  if (e.target.value !== formatted) {
+    e.target.value = formatted;
+  }
+});
+
+// Expose untuk testing + caller integration
+window._adminRecoveryKey = {
+  generate: generateAdminRecoveryKey,
+  hash: hashAdminRecoveryKey,
+  verify: verifyAdminRecoveryKey,
+  generateAndStore: generateAndStoreAdminRecoveryKey,
+  refreshFormField: _refreshForgotRecoveryKeyField
+};
 
 // ───────────────────── HOOK: forgot password handler ─────────────────────
 // Intercept #forgotPw click handler — kalau email yang diisi = backup admin,

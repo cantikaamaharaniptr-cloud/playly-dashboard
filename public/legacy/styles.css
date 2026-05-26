@@ -5329,6 +5329,133 @@ body[data-theme="light"] .ar-otp-display-muted .ar-otp-digit {
   color: #0f172a;
 }
 
+/* ============================================================
+   ADMIN RECOVERY KEY — field + display modal (v563)
+   Per request user 2026-05-26: Recovery Key gate untuk self-reset
+   admin tanpa minta OTP ke super admin.
+   ============================================================ */
+.auth-field-rkey .rkey-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: rgba(220, 169, 109, .14);
+  border: 1px solid rgba(220, 169, 109, .35);
+  color: var(--gold, #DCA96D);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  vertical-align: middle;
+}
+.auth-field-rkey .rkey-hint {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 4px 0 8px;
+  line-height: 1.45;
+}
+.auth-field-rkey .rkey-hint code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--gold, #DCA96D);
+}
+.auth-field-rkey input[name="recoveryKey"] {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 14.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rkey-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 24px 0 12px;
+  padding: 18px 12px;
+  background: linear-gradient(135deg, rgba(220, 169, 109, .12), rgba(220, 169, 109, .03));
+  border: 1.5px solid rgba(220, 169, 109, .35);
+  border-radius: 14px;
+}
+.rkey-group {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold, #DCA96D);
+  letter-spacing: .12em;
+}
+.rkey-sep {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(220, 169, 109, .55);
+  padding: 0 6px;
+}
+.rkey-copy-btn {
+  display: block;
+  margin: 8px auto 16px;
+}
+.rkey-warning {
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .28);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.rkey-warning strong {
+  display: block;
+  font-size: 13px;
+  color: #ef4444;
+  margin-bottom: 4px;
+}
+.rkey-warning small {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  display: block;
+}
+.rkey-ack-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.rkey-ack-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold, #DCA96D);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Light theme mirror */
+body[data-theme="light"] .auth-field-rkey .rkey-tag {
+  background: rgba(180, 130, 70, .12);
+  border-color: rgba(180, 130, 70, .42);
+  color: #8a5a2a;
+}
+body[data-theme="light"] .auth-field-rkey .rkey-hint code {
+  background: #f1f5f9;
+  color: #8a5a2a;
+}
+body[data-theme="light"] .rkey-display {
+  background: linear-gradient(135deg, rgba(180, 130, 70, .10), rgba(180, 130, 70, .02));
+  border-color: rgba(180, 130, 70, .42);
+}
+body[data-theme="light"] .rkey-group { color: #8a5a2a; }
+body[data-theme="light"] .rkey-sep   { color: rgba(180, 130, 70, .55); }
+body[data-theme="light"] .rkey-ack-label { background: #f8fafc; border-color: #e2e8f0; }
+
 .hero-text p {
   color: var(--text);
   font-size: 15.5px;        /* diperbesar per request user 2026-05-16 (dari 13.5) */
