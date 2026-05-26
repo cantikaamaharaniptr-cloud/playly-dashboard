@@ -35612,12 +35612,13 @@ function bindFypCards(scope) {
     if (poster.complete) syncAspect();
     else poster.addEventListener("load", syncAspect, { once: true });
   });
-  // Tap video → single-tap play/pause, double-tap → like + heart pop
+  // Tap video → single-tap buka player (req 2026-05-26), double-tap → like + heart pop
   $$(".fyp-video-wrap", scope).forEach(w => {
     let tapTimer = null;
     w.addEventListener("click", e => {
       if (e.target.closest("[data-fyp-mute]")) return;
-      // Double-tap detection: 2 clicks within 280ms = like
+      if (e.target.closest("[data-fyp-vol]")) return;
+      // Double-tap detection: 2 clicks within 280ms = like + heart pop
       if (tapTimer) {
         clearTimeout(tapTimer);
         tapTimer = null;
@@ -35626,7 +35627,13 @@ function bindFypCards(scope) {
       }
       tapTimer = setTimeout(() => {
         tapTimer = null;
-        toggleFypPlay(w);
+        // Single-tap buka full player view (req 2026-05-26).
+        const card = w.closest(".fyp-card");
+        const id = card && +card.dataset.vid;
+        if (id && typeof openPlayer === "function") {
+          pauseAllFypVideos?.();
+          openPlayer(id);
+        }
       }, 280);
     });
   });
@@ -35687,8 +35694,11 @@ function bindFypCards(scope) {
       const v = findVideo(id);
       if (v) {
         const likedNow = state.liked.includes(id);
-        b.querySelector("small").textContent = fmtNum((v.likes || 0) + (likedNow ? 1 : 0));
-        b.querySelector("svg").setAttribute("fill", likedNow ? "currentColor" : "none");
+        // Selector fix (req 2026-05-26): template render pakai <span data-fyp-like-count>,
+        // bukan <small>. Sebelumnya `b.querySelector("small")` return null → count tidak naik di UI.
+        const countEl = b.querySelector(`[data-fyp-like-count="${id}"]`) || b.querySelector("span");
+        if (countEl) countEl.textContent = fmtNum((v.likes || 0) + (likedNow ? 1 : 0));
+        b.querySelector("svg")?.setAttribute("fill", likedNow ? "currentColor" : "none");
         // Notif ke creator saat like baru (bukan unlike, bukan video sendiri)
         if (!wasLiked && v.creator && v.creator !== user.username) {
           const init = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
@@ -35891,7 +35901,9 @@ function triggerFypDoubleTapLike(wrap, evt) {
       likeBtn.classList.add("active");
       const v = findVideo(id);
       if (v) {
-        likeBtn.querySelector("small").textContent = fmtNum((v.likes || 0) + 1);
+        // Selector fix (req 2026-05-26): template pakai <span data-fyp-like-count>
+        const countEl = likeBtn.querySelector(`[data-fyp-like-count="${id}"]`) || likeBtn.querySelector("span");
+        if (countEl) countEl.textContent = fmtNum((v.likes || 0) + 1);
         likeBtn.querySelector("svg")?.setAttribute("fill", "currentColor");
       }
       // Kirim notif ke creator
@@ -44044,11 +44056,17 @@ async function openPlayer(id) {
   // Update URL hash → #/watch/:id (v479 hash router)
   try { window.playlyRouter?.pushWatch(id); } catch {}
 
-  // Track view real-time — naik untuk SEMUA viewer (termasuk creator sendiri).
+  // Track view real-time — naik untuk viewer lain. Self-view (creator
+  // nonton video sendiri) TIDAK dihitung per req 2026-05-26.
   // Sekali per session per video supaya tidak spam saat reopen di session yang sama.
   {
     const viewKey = `playly-view-${id}-${user?.username || 'anon'}`;
-    if (!sessionStorage.getItem(viewKey)) {
+    const isSelfView = !!user?.username && (
+      user.username === v.creator ||
+      user.username === v.uploader ||
+      user.username === v.uploaderUsername
+    );
+    if (!sessionStorage.getItem(viewKey) && !isSelfView) {
       sessionStorage.setItem(viewKey, "1");
       updateVideoStat(id, "viewsNum", 1);
       // Refresh v supaya display di bawah pakai angka terbaru
