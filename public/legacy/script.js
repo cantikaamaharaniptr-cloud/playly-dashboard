@@ -4716,11 +4716,14 @@ const I18N = {
     "upload.ai.empty":           "Type a title/topic first to get ideas.",
     "upload.ai.applied":         "Applied to the form",
     "upload.ai.generated":       "Ideas generated from your topic",
-    "upload.ai.note.locked":     "Premium-only — upgrade to generate title / description / tag ideas from a topic.",
+    "upload.ai.note.locked":     "✨ Auto title, description & tag ideas — available on Premium.",
+    "upload.ai.note.quota":      "✨ Premium generates title / description / tag ideas from your topic.",
     "upload.sub.autogen":        "Auto-generate AI",
     "upload.sub.autogen.desc":   "Auto-generate subtitles from the video's audio using Whisper Tiny.",
     "upload.sub.gen.now":        "Generate Now",
-    "upload.sub.note.locked":    "Premium-only — upgrade to auto-generate subtitles from video audio.",
+    "upload.sub.note.locked":    "✨ Auto subtitle from video audio. Try 3 free runs this month.",
+    "upload.sub.note.quota":     "🎁 {n} of 3 free runs left this month",
+    "upload.sub.note.quota.out": "🎁 Free quota used — go Premium for unlimited",
     "upload.sub.manual":         "Manual Upload",
     "subprev.title":             "Subtitle Preview",
     "subprev.empty":             "No subtitle to preview yet.",
@@ -6263,11 +6266,14 @@ const I18N = {
     "upload.ai.empty":           "Ketik judul/topik dulu untuk dapat referensi.",
     "upload.ai.applied":         "Dipakai ke form",
     "upload.ai.generated":       "Referensi dibuat dari topik kamu",
-    "upload.ai.note.locked":     "Khusus Premium — upgrade untuk buat saran judul / deskripsi / tag dari topik.",
+    "upload.ai.note.locked":     "✨ Saran judul, deskripsi & tag otomatis — tersedia di Premium.",
+    "upload.ai.note.quota":      "✨ Premium bikin saran judul / deskripsi / tag dari topik. Coba upgrade kapan-kapan.",
     "upload.sub.autogen":        "Buat Otomatis AI",
     "upload.sub.autogen.desc":   "Buat subtitle otomatis dari audio video pakai Whisper Tiny.",
     "upload.sub.gen.now":        "Buat Sekarang",
-    "upload.sub.note.locked":    "Khusus Premium — upgrade untuk buat subtitle otomatis dari audio video.",
+    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video. Coba 3x gratis bulan ini.",
+    "upload.sub.note.quota":     "🎁 Sisa {n} dari 3 percobaan gratis bulan ini",
+    "upload.sub.note.quota.out": "🎁 Kuota gratis habis bulan ini — Premium untuk akses unlimited",
     "upload.sub.manual":         "Unggah Manual",
     "subprev.title":             "Preview Subtitle",
     "subprev.empty":             "Belum ada subtitle untuk dipreview.",
@@ -20321,7 +20327,12 @@ window.playlyAuthVerifyStats = function () {
 // Tracking per identifier (email/username, di-normalize lowercase) di localStorage.
 // Setelah MAX_ATTEMPTS gagal berturut, akun di-lockout selama LOCKOUT_MS.
 // Login sukses → reset counter.
-const LOGIN_MAX_ATTEMPTS = 3;
+// CAPTCHA_AFTER_FAILS: berapa failed attempt sebelum captcha required.
+// Default 2 → attempt #1 & #2 mulus tanpa captcha, attempt #3+ baru kena.
+// Tujuan: kurangi friction onboarding untuk user yang ketik password benar
+// dari awal. Bot atau brute force tetap kena captcha sebelum lockout.
+const LOGIN_MAX_ATTEMPTS = 5;
+const CAPTCHA_AFTER_FAILS = 2;
 const LOGIN_LOCKOUT_MS = 30 * 60 * 1000; // 30 menit
 function loginAttemptKey(id) { return `playly-login-attempts-${id}`; }
 function getLoginAttempts(id) {
@@ -20466,15 +20477,22 @@ $("#signinForm").addEventListener("submit", async e => {
     return;
   }
 
-  // CAPTCHA gate — random type tiap kali (puzzle/hold/slider) supaya bot tidak bisa hardcode.
-  // Admin: double-layer (2 challenges chained, harder per challenge) — extra
-  // resistant to bot/hacker. User: single challenge.
+  // CAPTCHA gate — hanya tampil kalau user sudah failed >= CAPTCHA_AFTER_FAILS
+  // attempt sebelumnya. Attempt pertama (count=0) dan kedua (count=1) mulus
+  // tanpa captcha untuk reduce onboarding friction. Admin TETAP kena captcha
+  // dari attempt pertama (security-critical, double-layer).
   const isAdminLogin = typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(identifier);
-  console.log("[Auth] opening CAPTCHA", { admin: isAdminLogin });
-  const captchaPassed = await openCaptchaModal({ admin: isAdminLogin });
-  console.log("[Auth] captcha result", captchaPassed);
-  if (!captchaPassed) {
-    return toast("⚠️ CAPTCHA verification cancelled — login cancelled", "warning");
+  const _failCount = getLoginAttempts(identifier).count || 0;
+  const _captchaRequired = isAdminLogin || _failCount >= CAPTCHA_AFTER_FAILS;
+  if (_captchaRequired) {
+    console.log("[Auth] opening CAPTCHA", { admin: isAdminLogin, failCount: _failCount });
+    const captchaPassed = await openCaptchaModal({ admin: isAdminLogin });
+    console.log("[Auth] captcha result", captchaPassed);
+    if (!captchaPassed) {
+      return toast("⚠️ CAPTCHA verification cancelled — login cancelled", "warning");
+    }
+  } else {
+    console.log("[Auth] CAPTCHA skipped — first attempts smooth", { failCount: _failCount });
   }
 
   const btn = e.target.querySelector(".auth-submit");
@@ -21751,7 +21769,875 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // =================== DASHBOARD INIT =========================
 // ============================================================
 
+// Defer non-critical render → tunggu browser idle frame supaya above-fold
+// painting selesai dulu. Pakai requestIdleCallback (fallback setTimeout).
+// Tujuan: kurangi cognitive load awal + improve perceived performance pada
+// Beranda yang punya banyak section. Below-fold seperti Pencapaian, Papan
+// Peringkat, Level Kreator detail tidak butuh tampil instan.
+function _deferRender(fn) {
+  if (typeof fn !== "function") return;
+  const run = () => { try { fn(); } catch (e) { console.warn("[deferRender]", e); } };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(run, { timeout: 1500 });
+  } else {
+    setTimeout(run, 0);
+  }
+}
+
+// ====================================================================
+// ============ ADMIN RECOVERY (BACKUP ADMIN OTP FLOW) ================
+// ====================================================================
+// Per request user 2026-05-26: backup admin yang lupa password tidak bisa
+// pakai email reset biasa (karena Playly belum punya email infra). Alur:
+//   1. Backup admin: klik "Lupa kata sandi" → pilih "OTP via Super Admin"
+//      → submit email/username → request masuk ke super admin
+//   2. Super admin: lihat pending request → klik "Generate OTP" → sistem
+//      buat 4 digit acak, HANYA super admin yang lihat plaintext-nya
+//      (hash disimpan, plaintext dilempar lewat external channel)
+//   3. Super admin: re-ketik OTP yang dia kirim (double-check anti-typo)
+//   4. Super admin: kirim 4 digit ke backup admin via WA/SMS/telepon
+//   5. Backup admin: input 4 digit di recovery screen → status "received"
+//   6. Super admin: lihat yang di-input backup admin → final approve/deny
+//   7. Approved: backup admin granted access (force password reset)
+//
+// SECURITY:
+// - OTP hashed sebelum store (jangan plain text di localStorage)
+// - TTL 30 menit per request (auto-expire)
+// - Super admin email TIDAK boleh request via flow ini (rejected)
+// - Backup admin yang minta WAJIB email-nya ada di admin allowlist
+
+const ADMIN_RECOVERY_KEY = "playly-admin-recovery-requests";
+const ADMIN_RECOVERY_TTL_MS = 30 * 60 * 1000; // 30 menit
+
+// Status constants — state machine satu arah (kecuali deny dari mana saja)
+const AR_STATUS = {
+  PENDING:        "pending",        // request masuk, super admin belum action
+  OTP_GENERATED:  "otp_generated",  // OTP dibuat, tunggu super admin re-verify
+  OTP_VERIFIED:   "otp_verified",   // super admin re-typed correctly
+  WAITING_INPUT:  "waiting_input",  // tunggu backup admin input OTP
+  INPUT_RECEIVED: "input_received", // backup admin sudah input, tunggu final
+  APPROVED:       "approved",       // super admin approve, backup boleh login
+  DENIED:         "denied",         // super admin tolak
+  EXPIRED:        "expired"         // TTL habis tanpa final decision
+};
+
+// Hash 4-digit OTP — pakai SHA-256 dengan dedicated salt. Jangan re-use
+// password salt supaya OTP hash space terpisah secara cryptographic.
+const PLAYLY_OTP_SALT_V1 = "playly-admin-otp-salt-v1";
+async function hashAdminOtp(otpPlain) {
+  const data = new TextEncoder().encode(PLAYLY_OTP_SALT_V1 + String(otpPlain ?? ""));
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return "otp:" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function _readAdminRecoveryRequests() {
+  try {
+    const raw = localStorage.getItem(ADMIN_RECOVERY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+function _writeAdminRecoveryRequests(arr) {
+  try {
+    localStorage.setItem(ADMIN_RECOVERY_KEY, JSON.stringify(arr));
+  } catch (e) { console.warn("[admin-recovery] write failed", e); }
+}
+
+// Expire old pending requests yang lewat TTL. Dipanggil tiap kali read.
+function _expireOldRecoveryRequests(arr) {
+  const now = Date.now();
+  let mutated = false;
+  for (const req of arr) {
+    if (req.status === AR_STATUS.APPROVED || req.status === AR_STATUS.DENIED || req.status === AR_STATUS.EXPIRED) continue;
+    if (req.expires_at && now > req.expires_at) {
+      req.status = AR_STATUS.EXPIRED;
+      mutated = true;
+    }
+  }
+  return mutated;
+}
+
+function getAdminRecoveryRequests() {
+  const arr = _readAdminRecoveryRequests();
+  if (_expireOldRecoveryRequests(arr)) _writeAdminRecoveryRequests(arr);
+  return arr;
+}
+
+// Get the ACTIVE (non-final) request for a given email, kalau ada.
+// Dipakai backup admin untuk polling status request yang dia submit.
+function getMyAdminRecoveryRequest(email) {
+  const e = (email || "").trim().toLowerCase();
+  if (!e) return null;
+  const arr = getAdminRecoveryRequests();
+  // Sort by created_at descending, ambil yang terbaru
+  const mine = arr.filter(r => r.requester_email === e);
+  mine.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+  return mine[0] || null;
+}
+
+// Create a new request. Validates:
+// - Email harus exist di admin allowlist (backup admin)
+// - BUKAN super admin email (super admin pakai recovery codes nanti)
+// - Ngga ada request aktif yang baru (cegah spam)
+function createAdminRecoveryRequest(emailOrUsername) {
+  const id = (emailOrUsername || "").trim().toLowerCase();
+  if (!id) return { ok: false, error: "Email atau username wajib diisi" };
+
+  // Resolve to email
+  let email = id;
+  if (!id.includes("@")) {
+    // Username → cari email-nya
+    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
+    if (!acct) return { ok: false, error: "Username tidak ditemukan" };
+    email = (acct.email || "").toLowerCase();
+  }
+
+  // Block super admin
+  if (typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(email)) {
+    return { ok: false, error: "Akun super admin tidak bisa recovery via OTP. Pakai recovery code." };
+  }
+
+  // Must be in admin allowlist (= backup admin)
+  if (typeof isAllowedAdminEmail === "function" && !isAllowedAdminEmail(email)) {
+    return { ok: false, error: "Email ini bukan akun admin. Pakai 'Reset via Email' biasa." };
+  }
+
+  const arr = getAdminRecoveryRequests();
+
+  // Cek apakah ada request aktif (non-final, non-expired) untuk email ini
+  const existing = arr.find(r =>
+    r.requester_email === email &&
+    [AR_STATUS.PENDING, AR_STATUS.OTP_GENERATED, AR_STATUS.OTP_VERIFIED, AR_STATUS.WAITING_INPUT, AR_STATUS.INPUT_RECEIVED].includes(r.status)
+  );
+  if (existing) {
+    return { ok: true, request: existing, alreadyExisted: true };
+  }
+
+  const now = Date.now();
+  const req = {
+    id: "rcv_" + now.toString(36) + "_" + Math.random().toString(36).slice(2, 8),
+    requester_email: email,
+    requester_username: id.includes("@") ? "" : id,
+    otp_hash: null,
+    otp_entered: null,
+    otp_super_verified: false,
+    status: AR_STATUS.PENDING,
+    created_at: now,
+    expires_at: now + ADMIN_RECOVERY_TTL_MS,
+    final_decision_at: null
+  };
+  arr.push(req);
+  _writeAdminRecoveryRequests(arr);
+  return { ok: true, request: req, alreadyExisted: false };
+}
+
+// Super admin generate OTP. Returns plain OTP (4 digit) sekali — caller
+// HARUS tampilkan ke super admin lalu jangan store/kirim ke siapa-siapa.
+// State: PENDING → OTP_GENERATED
+async function generateRecoveryOtp(requestId) {
+  const arr = getAdminRecoveryRequests();
+  const req = arr.find(r => r.id === requestId);
+  if (!req) return { ok: false, error: "Request tidak ditemukan" };
+  if (req.status !== AR_STATUS.PENDING) {
+    return { ok: false, error: "OTP sudah pernah di-generate untuk request ini" };
+  }
+  const otpPlain = String(Math.floor(1000 + Math.random() * 9000)); // 4 digit, 1000-9999
+  req.otp_hash = await hashAdminOtp(otpPlain);
+  req.status = AR_STATUS.OTP_GENERATED;
+  _writeAdminRecoveryRequests(arr);
+  return { ok: true, otpPlain, request: req };
+}
+
+// Super admin re-types OTP untuk konfirmasi bahwa dia ngga typo saat baca.
+// State: OTP_GENERATED → OTP_VERIFIED (kalau cocok) atau stay (kalau salah)
+async function verifyGeneratedOtp(requestId, otpReentered) {
+  const arr = getAdminRecoveryRequests();
+  const req = arr.find(r => r.id === requestId);
+  if (!req) return { ok: false, error: "Request tidak ditemukan" };
+  if (req.status !== AR_STATUS.OTP_GENERATED) {
+    return { ok: false, error: "Request bukan dalam state otp_generated" };
+  }
+  const hashReentered = await hashAdminOtp(otpReentered);
+  if (hashReentered !== req.otp_hash) {
+    return { ok: false, error: "OTP yang kamu re-type tidak cocok dengan yang di-generate. Coba lagi." };
+  }
+  req.status = AR_STATUS.WAITING_INPUT;
+  _writeAdminRecoveryRequests(arr);
+  return { ok: true, request: req };
+}
+
+// Backup admin submit OTP yang dia terima dari super admin.
+// State: WAITING_INPUT → INPUT_RECEIVED
+function submitBackupOtp(requestId, otp) {
+  const arr = getAdminRecoveryRequests();
+  const req = arr.find(r => r.id === requestId);
+  if (!req) return { ok: false, error: "Request tidak ditemukan" };
+  if (req.status !== AR_STATUS.WAITING_INPUT) {
+    if (req.status === AR_STATUS.INPUT_RECEIVED) {
+      return { ok: false, error: "OTP sudah pernah di-submit, tunggu konfirmasi super admin" };
+    }
+    return { ok: false, error: "Request belum siap menerima OTP. Tunggu super admin generate OTP dulu." };
+  }
+  const clean = String(otp || "").trim();
+  if (!/^\d{4}$/.test(clean)) {
+    return { ok: false, error: "OTP harus 4 digit angka" };
+  }
+  req.otp_entered = clean;
+  req.status = AR_STATUS.INPUT_RECEIVED;
+  _writeAdminRecoveryRequests(arr);
+  return { ok: true, request: req };
+}
+
+// Super admin final approve atau deny berdasarkan OTP yang di-input backup
+// admin. Approve = system also validate that otp_entered matches otp_hash
+// (defense in depth — super admin bisa keliru lihat).
+// State: INPUT_RECEIVED → APPROVED atau DENIED
+async function finalDecideRecovery(requestId, approve) {
+  const arr = getAdminRecoveryRequests();
+  const req = arr.find(r => r.id === requestId);
+  if (!req) return { ok: false, error: "Request tidak ditemukan" };
+  if (req.status !== AR_STATUS.INPUT_RECEIVED) {
+    return { ok: false, error: "Request belum di-input OTP oleh backup admin" };
+  }
+
+  if (approve) {
+    // Defense in depth: sistem juga cross-check hash
+    const enteredHash = await hashAdminOtp(req.otp_entered);
+    if (enteredHash !== req.otp_hash) {
+      // Super admin keliru approve OTP yang sebenarnya salah → tetap deny
+      req.status = AR_STATUS.DENIED;
+      req.final_decision_at = Date.now();
+      _writeAdminRecoveryRequests(arr);
+      return { ok: false, error: "OTP yang di-input backup admin TIDAK COCOK dengan yang di-generate. Request otomatis di-deny demi keamanan." };
+    }
+    req.status = AR_STATUS.APPROVED;
+  } else {
+    req.status = AR_STATUS.DENIED;
+  }
+  req.final_decision_at = Date.now();
+  _writeAdminRecoveryRequests(arr);
+  return { ok: true, request: req };
+}
+
+// Helper: count pending requests (untuk badge di sidebar super admin)
+function countPendingAdminRecovery() {
+  return getAdminRecoveryRequests().filter(r =>
+    [AR_STATUS.PENDING, AR_STATUS.OTP_GENERATED, AR_STATUS.WAITING_INPUT, AR_STATUS.INPUT_RECEIVED].includes(r.status)
+  ).length;
+}
+
+// Expose for testing + UI hooks
+window._adminRecovery = {
+  getRequests: getAdminRecoveryRequests,
+  getMine: getMyAdminRecoveryRequest,
+  create: createAdminRecoveryRequest,
+  generate: generateRecoveryOtp,
+  verify: verifyGeneratedOtp,
+  submit: submitBackupOtp,
+  decide: finalDecideRecovery,
+  countPending: countPendingAdminRecovery,
+  STATUS: AR_STATUS
+};
+
+// ============ ADMIN RECOVERY — UI LAYER =============================
+// Semua modal di-inject dinamis (avoid edit index.html). Pakai existing
+// .modal / .modal-panel / data-close pattern + global click handler
+// untuk close. Setiap function open* membuat element, append ke body,
+// return element supaya bisa di-remove saat close.
+
+function _arRemoveOpenModals() {
+  document.querySelectorAll(".ar-modal").forEach(el => el.remove());
+}
+
+function _arEscapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Status label helper untuk display.
+function _arStatusLabel(status) {
+  switch (status) {
+    case AR_STATUS.PENDING:        return "🆕 Menunggu super admin";
+    case AR_STATUS.OTP_GENERATED:  return "🔑 OTP dibuat, super admin re-verify";
+    case AR_STATUS.OTP_VERIFIED:   return "✅ OTP terverifikasi";
+    case AR_STATUS.WAITING_INPUT:  return "📨 Menunggu kamu input OTP";
+    case AR_STATUS.INPUT_RECEIVED: return "⏳ Menunggu konfirmasi super admin";
+    case AR_STATUS.APPROVED:       return "✅ Disetujui — akses diberikan";
+    case AR_STATUS.DENIED:         return "❌ Ditolak super admin";
+    case AR_STATUS.EXPIRED:        return "⏰ Kadaluarsa (30 menit)";
+    default: return status;
+  }
+}
+
+// ───────────────────── BACKUP ADMIN SIDE ─────────────────────
+
+// Modal pilih jalur recovery: Email atau OTP via Super Admin.
+// Buka dari handler #forgotPw setelah cek backup admin status.
+function openAdminRecoveryChoiceModal(prefillId = "") {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.id = "adminRecoveryChoiceModal";
+  m.style.zIndex = "10020";
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>Pilih cara recovery akun admin</h3>
+      <p class="muted">Akun admin cadangan punya 2 cara recovery. Pilih salah satu.</p>
+      <div class="ar-choice-grid">
+        <button type="button" class="ar-choice-card" data-ar-choice="email">
+          <div class="ar-choice-ico">✉️</div>
+          <strong>Reset via Email</strong>
+          <small>Pakai email akun untuk set password baru. Cepat kalau kamu masih akses email.</small>
+        </button>
+        <button type="button" class="ar-choice-card" data-ar-choice="otp">
+          <div class="ar-choice-ico">🔐</div>
+          <strong>Minta OTP ke Super Admin</strong>
+          <small>Super admin akan kirim 4 digit OTP via WA/SMS untuk verify identitasmu.</small>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  m.querySelector('[data-ar-choice="email"]')?.addEventListener("click", () => {
+    m.remove();
+    if (typeof openForgotPwModal === "function") openForgotPwModal(prefillId);
+  });
+  m.querySelector('[data-ar-choice="otp"]')?.addEventListener("click", () => {
+    m.remove();
+    openAdminRecoveryOtpRequestModal(prefillId);
+  });
+  return m;
+}
+
+// Modal: backup admin submit request OTP
+function openAdminRecoveryOtpRequestModal(prefillId = "") {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.style.zIndex = "10020";
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>🔐 Minta OTP ke Super Admin</h3>
+      <p class="muted">Masukkan email/username admin kamu. Super admin akan generate OTP dan kirim ke kamu via WA/SMS.</p>
+      <form class="ar-form" id="arOtpRequestForm">
+        <label class="ar-label">Email atau Username Admin</label>
+        <input type="text" name="id" placeholder="admin@email.com atau username" value="${_arEscapeHtml(prefillId)}" autocomplete="off" required />
+        <div class="ar-form-err" hidden></div>
+        <div class="ar-form-actions">
+          <button type="button" class="btn ghost" data-close>Batal</button>
+          <button type="submit" class="btn primary">Kirim Permintaan</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  m.querySelector("#arOtpRequestForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const id = String(fd.get("id") || "").trim().toLowerCase();
+    const errEl = m.querySelector(".ar-form-err");
+    const showErr = (msg) => { errEl.textContent = msg; errEl.hidden = false; };
+    const r = createAdminRecoveryRequest(id);
+    if (!r.ok) return showErr(r.error || "Gagal membuat permintaan");
+    m.remove();
+    openAdminRecoveryWaitModal(r.request.id);
+  });
+  return m;
+}
+
+// Modal: backup admin menunggu super admin generate OTP + input OTP saat sudah ada.
+// Polling status tiap 3 detik.
+function openAdminRecoveryWaitModal(requestId) {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.id = "adminRecoveryWaitModal";
+  m.dataset.requestId = requestId;
+  m.style.zIndex = "10020";
+  m.innerHTML = `<div class="modal-backdrop"></div><div class="modal-panel ar-panel-narrow"><div class="ar-body"></div></div>`;
+  document.body.appendChild(m);
+
+  const body = m.querySelector(".ar-body");
+  let pollTimer = null;
+  let submitting = false;
+
+  function render() {
+    const req = getAdminRecoveryRequests().find(r => r.id === requestId);
+    if (!req) {
+      body.innerHTML = `<h3>Permintaan hilang</h3><p class="muted">Permintaan tidak ditemukan. Mungkin sudah di-cancel super admin.</p>
+        <div class="ar-form-actions"><button type="button" class="btn primary" data-close-ok>Tutup</button></div>`;
+      stopPoll();
+      return;
+    }
+
+    const remainingMin = Math.max(0, Math.ceil((req.expires_at - Date.now()) / 60000));
+
+    if (req.status === AR_STATUS.PENDING || req.status === AR_STATUS.OTP_GENERATED) {
+      body.innerHTML = `
+        <h3>🆕 Permintaan terkirim</h3>
+        <p class="muted">Tunggu super admin generate OTP. Kamu bakal terima 4 digit OTP via WA/SMS.</p>
+        <div class="ar-status-pill ar-pill-pending">${_arEscapeHtml(_arStatusLabel(req.status))}</div>
+        <div class="ar-ttl">Berlaku ${remainingMin} menit lagi</div>
+        <div class="ar-form-actions"><button type="button" class="btn ghost" data-close>Tutup (request tetap aktif)</button></div>
+      `;
+    } else if (req.status === AR_STATUS.WAITING_INPUT) {
+      body.innerHTML = `
+        <h3>📨 Masukkan OTP dari Super Admin</h3>
+        <p class="muted">Ketik 4 digit OTP yang super admin kirim ke kamu via WA/SMS.</p>
+        <div class="ar-otp-grid" data-ar-otp-grid>
+          <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="0" />
+          <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="1" />
+          <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="2" />
+          <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="3" />
+        </div>
+        <div class="ar-form-err" hidden></div>
+        <div class="ar-ttl">Berlaku ${remainingMin} menit lagi</div>
+        <div class="ar-form-actions">
+          <button type="button" class="btn ghost" data-close>Tutup</button>
+          <button type="button" class="btn primary" data-ar-submit-otp>Kirim OTP</button>
+        </div>
+      `;
+      wireOtpInputs(body);
+    } else if (req.status === AR_STATUS.INPUT_RECEIVED) {
+      body.innerHTML = `
+        <h3>⏳ Menunggu konfirmasi super admin</h3>
+        <p class="muted">Super admin akan cek OTP yang kamu input dengan yang dia kirim. Tunggu sebentar.</p>
+        <div class="ar-status-pill ar-pill-waiting">${_arEscapeHtml(_arStatusLabel(req.status))}</div>
+        <div class="ar-form-actions"><button type="button" class="btn ghost" data-close>Tutup (akan diberitahu nanti)</button></div>
+      `;
+    } else if (req.status === AR_STATUS.APPROVED) {
+      body.innerHTML = `
+        <h3>✅ Akses disetujui</h3>
+        <p class="muted">Super admin sudah confirm OTP kamu. Sekarang silakan set password baru untuk akun admin kamu.</p>
+        <div class="ar-form-actions"><button type="button" class="btn primary" data-ar-set-new-pw>Set Password Baru</button></div>
+      `;
+      stopPoll();
+      body.querySelector("[data-ar-set-new-pw]")?.addEventListener("click", () => {
+        m.remove();
+        if (typeof openForgotPwModal === "function") openForgotPwModal(req.requester_email);
+      });
+    } else if (req.status === AR_STATUS.DENIED) {
+      body.innerHTML = `
+        <h3>❌ Permintaan ditolak</h3>
+        <p class="muted">Super admin menolak permintaan recovery. Hubungi super admin langsung kalau ini kesalahan.</p>
+        <div class="ar-form-actions"><button type="button" class="btn ghost" data-close>Tutup</button></div>
+      `;
+      stopPoll();
+    } else if (req.status === AR_STATUS.EXPIRED) {
+      body.innerHTML = `
+        <h3>⏰ Permintaan kadaluarsa</h3>
+        <p class="muted">Permintaan ini sudah lebih dari 30 menit. Silakan submit permintaan baru.</p>
+        <div class="ar-form-actions"><button type="button" class="btn primary" data-ar-retry>Submit Permintaan Baru</button></div>
+      `;
+      stopPoll();
+      body.querySelector("[data-ar-retry]")?.addEventListener("click", () => {
+        m.remove();
+        openAdminRecoveryOtpRequestModal(req.requester_email);
+      });
+    }
+  }
+
+  function wireOtpInputs(scope) {
+    const cells = Array.from(scope.querySelectorAll("[data-ar-otp-cell]"));
+    cells.forEach((cell, i) => {
+      cell.addEventListener("input", e => {
+        const v = (e.target.value || "").replace(/\D/g, "").slice(-1);
+        e.target.value = v;
+        if (v && i < cells.length - 1) cells[i + 1].focus();
+      });
+      cell.addEventListener("keydown", e => {
+        if (e.key === "Backspace" && !cell.value && i > 0) cells[i - 1].focus();
+      });
+    });
+    cells[0]?.focus();
+    scope.querySelector("[data-ar-submit-otp]")?.addEventListener("click", () => {
+      if (submitting) return;
+      const otp = cells.map(c => c.value).join("");
+      if (!/^\d{4}$/.test(otp)) {
+        const err = scope.querySelector(".ar-form-err");
+        err.textContent = "Lengkapi 4 digit OTP";
+        err.hidden = false;
+        return;
+      }
+      submitting = true;
+      const r = submitBackupOtp(requestId, otp);
+      submitting = false;
+      if (!r.ok) {
+        const err = scope.querySelector(".ar-form-err");
+        err.textContent = r.error || "Gagal submit OTP";
+        err.hidden = false;
+        return;
+      }
+      render(); // transition ke INPUT_RECEIVED
+    });
+  }
+
+  function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  render();
+  pollTimer = setInterval(render, 3000);
+
+  m.addEventListener("click", e => {
+    if (e.target.matches("[data-close], [data-close-ok], .modal-backdrop")) {
+      stopPoll();
+      m.remove();
+    }
+  });
+  return m;
+}
+
+// ───────────────────── SUPER ADMIN SIDE ─────────────────────
+
+// Modal list pending requests untuk super admin.
+function openSuperAdminRecoveryListModal() {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.id = "superRecoveryListModal";
+  m.style.zIndex = "10020";
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-wide">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>🔐 Permintaan Akses Admin</h3>
+      <p class="muted">Daftar admin cadangan yang minta recovery via OTP. Klik aksi sesuai status.</p>
+      <div class="ar-req-list"></div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  const listEl = m.querySelector(".ar-req-list");
+  let pollTimer = null;
+
+  function render() {
+    const reqs = getAdminRecoveryRequests()
+      .filter(r => r.status !== AR_STATUS.EXPIRED && r.status !== AR_STATUS.APPROVED && r.status !== AR_STATUS.DENIED)
+      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+
+    if (!reqs.length) {
+      listEl.innerHTML = `<div class="ar-empty">
+        <div class="ar-empty-ico">📭</div>
+        <p>Tidak ada permintaan recovery yang aktif.</p>
+      </div>`;
+      return;
+    }
+
+    listEl.innerHTML = reqs.map(r => {
+      const ageMin = Math.floor((Date.now() - (r.created_at || 0)) / 60000);
+      const ttlMin = Math.max(0, Math.ceil(((r.expires_at || 0) - Date.now()) / 60000));
+      let actionBtn = "";
+      if (r.status === AR_STATUS.PENDING) {
+        actionBtn = `<button class="btn primary" data-ar-action="generate" data-ar-id="${_arEscapeHtml(r.id)}">Generate OTP</button>`;
+      } else if (r.status === AR_STATUS.OTP_GENERATED) {
+        actionBtn = `<button class="btn primary" data-ar-action="verify" data-ar-id="${_arEscapeHtml(r.id)}">Re-verify OTP</button>`;
+      } else if (r.status === AR_STATUS.WAITING_INPUT) {
+        actionBtn = `<span class="ar-status-pill ar-pill-waiting">Tunggu backup admin input...</span>`;
+      } else if (r.status === AR_STATUS.INPUT_RECEIVED) {
+        actionBtn = `<button class="btn primary" data-ar-action="final" data-ar-id="${_arEscapeHtml(r.id)}">Konfirmasi OTP</button>`;
+      }
+      return `
+        <div class="ar-req-row" data-ar-req-row="${_arEscapeHtml(r.id)}">
+          <div class="ar-req-info">
+            <strong>${_arEscapeHtml(r.requester_email)}</strong>
+            <div class="ar-req-meta">
+              <span class="ar-status-pill ar-pill-${r.status}">${_arEscapeHtml(_arStatusLabel(r.status))}</span>
+              <span class="ar-req-age">${ageMin} menit lalu · TTL ${ttlMin}m</span>
+            </div>
+          </div>
+          <div class="ar-req-actions">${actionBtn}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  listEl.addEventListener("click", async e => {
+    const btn = e.target.closest("[data-ar-action]");
+    if (!btn) return;
+    const action = btn.dataset.arAction;
+    const id = btn.dataset.arId;
+    if (action === "generate") {
+      const gen = await generateRecoveryOtp(id);
+      if (!gen.ok) return toast(gen.error || "Gagal generate OTP", "error");
+      m.remove();
+      openSuperAdminGenerateOtpModal(id, gen.otpPlain);
+    } else if (action === "verify") {
+      m.remove();
+      openSuperAdminVerifyOtpModal(id);
+    } else if (action === "final") {
+      const req = getAdminRecoveryRequests().find(r => r.id === id);
+      m.remove();
+      openSuperAdminFinalConfirmModal(id, req?.otp_entered || "");
+    }
+  });
+
+  render();
+  pollTimer = setInterval(render, 3000);
+
+  m.addEventListener("click", e => {
+    if (e.target.matches("[data-close], .modal-backdrop")) {
+      if (pollTimer) clearInterval(pollTimer);
+      m.remove();
+    }
+  });
+  return m;
+}
+
+// Modal: super admin lihat OTP yang baru di-generate. Kirim eksternal lalu lanjut verify.
+function openSuperAdminGenerateOtpModal(requestId, otpPlain) {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.style.zIndex = "10020";
+  const otpDigits = String(otpPlain).split("").map(d => `<span class="ar-otp-digit">${d}</span>`).join("");
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>🔑 OTP berhasil di-generate</h3>
+      <p class="muted">Kirim 4 digit ini ke backup admin via <b>WA / SMS / telepon</b> — di luar Playly. Jangan screenshot ke chat publik.</p>
+      <div class="ar-otp-display">${otpDigits}</div>
+      <button type="button" class="btn ghost ar-copy-btn" data-ar-copy="${_arEscapeHtml(otpPlain)}">📋 Copy OTP</button>
+      <div class="ar-divider"></div>
+      <p class="muted">Setelah kamu kirim ke backup admin, klik "Lanjut" untuk re-verify OTP.</p>
+      <div class="ar-form-actions">
+        <button type="button" class="btn ghost" data-close>Nanti</button>
+        <button type="button" class="btn primary" data-ar-continue>Lanjut: Re-verify OTP</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  m.querySelector("[data-ar-copy]")?.addEventListener("click", async e => {
+    const otp = e.currentTarget.dataset.arCopy;
+    try { await navigator.clipboard.writeText(otp); toast("✅ OTP di-copy", "success"); } catch { toast("Gagal copy, salin manual", "warning"); }
+  });
+  m.querySelector("[data-ar-continue]")?.addEventListener("click", () => {
+    m.remove();
+    openSuperAdminVerifyOtpModal(requestId);
+  });
+  return m;
+}
+
+// Modal: super admin ketik ulang OTP untuk verify anti-typo.
+function openSuperAdminVerifyOtpModal(requestId) {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.style.zIndex = "10020";
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>🔍 Re-verify OTP</h3>
+      <p class="muted">Ketik ulang 4 digit OTP yang barusan kamu kirim ke backup admin. Ini untuk pastikan kamu ngga typo waktu kirim.</p>
+      <div class="ar-otp-grid">
+        <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="0" />
+        <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="1" />
+        <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="2" />
+        <input type="text" inputmode="numeric" maxlength="1" data-ar-otp-cell="3" />
+      </div>
+      <div class="ar-form-err" hidden></div>
+      <div class="ar-form-actions">
+        <button type="button" class="btn ghost" data-close>Tutup</button>
+        <button type="button" class="btn primary" data-ar-submit>Verify</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  const cells = Array.from(m.querySelectorAll("[data-ar-otp-cell]"));
+  cells.forEach((cell, i) => {
+    cell.addEventListener("input", e => {
+      const v = (e.target.value || "").replace(/\D/g, "").slice(-1);
+      e.target.value = v;
+      if (v && i < cells.length - 1) cells[i + 1].focus();
+    });
+    cell.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !cell.value && i > 0) cells[i - 1].focus();
+    });
+  });
+  cells[0]?.focus();
+
+  m.querySelector("[data-ar-submit]")?.addEventListener("click", async () => {
+    const otp = cells.map(c => c.value).join("");
+    const err = m.querySelector(".ar-form-err");
+    if (!/^\d{4}$/.test(otp)) { err.textContent = "Lengkapi 4 digit"; err.hidden = false; return; }
+    const v = await verifyGeneratedOtp(requestId, otp);
+    if (!v.ok) {
+      err.textContent = v.error || "Verify gagal";
+      err.hidden = false;
+      cells.forEach(c => c.value = "");
+      cells[0].focus();
+      return;
+    }
+    m.remove();
+    if (typeof toast === "function") toast("✅ OTP terverifikasi. Sekarang tunggu backup admin input OTP.", "success");
+    openSuperAdminRecoveryListModal();
+  });
+  return m;
+}
+
+// Modal: super admin final approve/deny setelah backup admin input OTP.
+function openSuperAdminFinalConfirmModal(requestId, otpEntered) {
+  _arRemoveOpenModals();
+  const m = document.createElement("div");
+  m.className = "modal show ar-modal";
+  m.style.zIndex = "10020";
+  const digitsDisplay = String(otpEntered || "----").padEnd(4, "-").slice(0, 4).split("").map(d => `<span class="ar-otp-digit">${d}</span>`).join("");
+  m.innerHTML = `
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel ar-panel-narrow">
+      <button class="modal-close" data-close aria-label="Tutup">×</button>
+      <h3>🔎 Konfirmasi OTP backup admin</h3>
+      <p class="muted">Backup admin sudah input OTP berikut. Cocokkan dengan yang barusan kamu kirim — kalau sama, approve. Kalau beda, deny.</p>
+      <div class="ar-otp-display ar-otp-display-muted">${digitsDisplay}</div>
+      <div class="ar-divider"></div>
+      <p class="muted">Approve = backup admin granted access + bisa set password baru. Deny = request closed.</p>
+      <div class="ar-form-actions">
+        <button type="button" class="btn ghost" data-ar-deny>❌ Tolak</button>
+        <button type="button" class="btn primary" data-ar-approve>✅ Setujui Akses</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  m.querySelector("[data-ar-approve]")?.addEventListener("click", async () => {
+    const r = await finalDecideRecovery(requestId, true);
+    if (r.ok) {
+      if (typeof toast === "function") toast("✅ Akses diberikan ke backup admin", "success");
+    } else {
+      if (typeof toast === "function") toast(r.error || "Approve gagal", "error");
+    }
+    m.remove();
+    openSuperAdminRecoveryListModal();
+  });
+  m.querySelector("[data-ar-deny]")?.addEventListener("click", async () => {
+    const r = await finalDecideRecovery(requestId, false);
+    if (typeof toast === "function") toast(r.ok ? "Request ditolak" : (r.error || "Deny gagal"), r.ok ? "info" : "error");
+    m.remove();
+    openSuperAdminRecoveryListModal();
+  });
+  return m;
+}
+
+// Public API hooks untuk caller (signin handler, sidebar button, dst.)
+window._adminRecovery.openChoice = openAdminRecoveryChoiceModal;
+window._adminRecovery.openRequest = openAdminRecoveryOtpRequestModal;
+window._adminRecovery.openWait = openAdminRecoveryWaitModal;
+window._adminRecovery.openSuperList = openSuperAdminRecoveryListModal;
+
+// ───────────────── SUPER ADMIN ENTRY POINT — TOPBAR BUTTON ─────────────────
+// Inject "Permintaan Akses" button ke topbar admin. Muncul HANYA kalau user
+// adalah super admin. Badge count auto-update via polling 5s.
+function mountSuperAdminRecoveryEntry() {
+  // Sudah di-mount?
+  if (document.getElementById("arSuperEntry")) return;
+  // Cek super admin status
+  const u = window.user || null;
+  if (typeof isSuperAdmin === "function" && !isSuperAdmin(u)) return;
+
+  // Cari container yang cocok di topbar — coba beberapa fallback
+  const candidates = [
+    "#topbarRight",
+    ".topbar-right",
+    ".topbar .topbar-actions",
+    ".topbar"
+  ];
+  let container = null;
+  for (const sel of candidates) {
+    container = document.querySelector(sel);
+    if (container) break;
+  }
+  if (!container) return;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "arSuperEntry";
+  btn.className = "ar-super-entry";
+  btn.title = "Permintaan Akses Admin";
+  btn.setAttribute("data-count", "0");
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2L4 5v7c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3z"/>
+      <path d="M9 12l2 2 4-4"/>
+    </svg>
+    <span class="ar-super-entry-badge"></span>
+  `;
+  // Insert di awal container biar paling kiri (atau gunakan prepend)
+  container.insertBefore(btn, container.firstChild);
+
+  btn.addEventListener("click", () => openSuperAdminRecoveryListModal());
+
+  function refreshBadge() {
+    const count = countPendingAdminRecovery();
+    btn.setAttribute("data-count", String(count));
+    const badge = btn.querySelector(".ar-super-entry-badge");
+    if (badge) badge.textContent = count > 0 ? String(count) : "";
+  }
+  refreshBadge();
+  // Polling badge tiap 5 detik
+  setInterval(refreshBadge, 5000);
+}
+
+// Auto-mount saat dashboard init (super admin only). Coba beberapa kali
+// dengan retry karena topbar mungkin belum render saat first call.
+function _arTryMountSuperEntry() {
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    mountSuperAdminRecoveryEntry();
+    if (document.getElementById("arSuperEntry") || tries > 10) {
+      clearInterval(timer);
+    }
+  }, 400);
+}
+
+// Mount saat view berubah ke admin dashboard
+window.addEventListener("playly:view-changed", e => {
+  if (e.detail?.view === "admin-dashboard") _arTryMountSuperEntry();
+});
+window.addEventListener("playly:cloud-applied", () => {
+  setTimeout(_arTryMountSuperEntry, 500);
+});
+
+// ───────────────────── HOOK: forgot password handler ─────────────────────
+// Intercept #forgotPw click handler — kalau email yang diisi = backup admin,
+// tampilkan choice modal (Email vs OTP). Kalau bukan, fallback ke flow lama.
+// Listener pakai capture phase supaya kita bisa preventDefault sebelum
+// handler eksisting jalan.
+document.addEventListener("click", (e) => {
+  const link = e.target.closest("#forgotPw");
+  if (!link) return;
+  const loginInput = document.querySelector('#signinForm input[name="email"]');
+  const id = (loginInput?.value || "").trim().toLowerCase();
+  if (!id) return; // no email → let existing handler show forgot pw modal
+  // Resolve to email (handle username)
+  let email = id;
+  if (!id.includes("@")) {
+    const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
+    if (acct) email = (acct.email || "").toLowerCase();
+  }
+  // Backup admin? → show choice modal
+  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
+      typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email)) {
+    e.preventDefault();
+    e.stopPropagation();
+    openAdminRecoveryChoiceModal(id);
+  }
+  // Super admin / regular user → biarkan handler existing
+}, true);
+
+// ====================================================================
+
 function renderAll() {
+  // Above-fold critical — harus tampil instant
   renderHomeActivity();
   renderHomeStats();
   renderLiveMetrics();
@@ -21766,21 +22652,21 @@ function renderAll() {
   renderVideoGrid();
   renderUserStats();
   renderNotifications();
-  // Home 2-col row baru — CONTINUE WATCHING + NEW FROM FOLLOWING
   renderHomeNotifLatest();
   renderHomeTierWidget();
   renderHomeFollowingFeed();
-  renderHomeRanking();
   updateHeroDmAlert();
-  // Trending news section (Google News per kategori, default Utama)
-  if (typeof renderTrendingNews === "function") renderTrendingNews("homeTrendingList", "top");
-  // Trending sekarang + Untuk kamu (video grids — per user 2026-05-11)
-  if (typeof renderHomeTrendingNow === "function") renderHomeTrendingNow();
-  if (typeof renderHomeForYou === "function") renderHomeForYou();
-  if (typeof renderHomeFollowingUpdates === "function") renderHomeFollowingUpdates();
-  if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
-  if (typeof renderHomeAchievements === "function") renderHomeAchievements();
-  if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
+
+  // Below-fold — defer ke idle frame berikutnya supaya first paint cepat.
+  // Section ini tampil di bawah viewport awal, user belum lihat saat load.
+  _deferRender(renderHomeRanking);
+  if (typeof renderTrendingNews === "function") _deferRender(() => renderTrendingNews("homeTrendingList", "top"));
+  if (typeof renderHomeTrendingNow === "function") _deferRender(renderHomeTrendingNow);
+  if (typeof renderHomeForYou === "function") _deferRender(renderHomeForYou);
+  if (typeof renderHomeFollowingUpdates === "function") _deferRender(renderHomeFollowingUpdates);
+  if (typeof renderHomeCreatorLevel === "function") _deferRender(renderHomeCreatorLevel);
+  if (typeof renderHomeAchievements === "function") _deferRender(renderHomeAchievements);
+  if (typeof renderHomeRankingSelf === "function") _deferRender(renderHomeRankingSelf);
 }
 
 function initDashboard() {
@@ -35425,9 +36311,10 @@ const TRENDING_CAT_FALLBACK = {
   ]
 };
 
-async function renderTrendingNews(listId, category = "top") {
+async function renderTrendingNews(listId, category = "top", opts = {}) {
   const list = document.getElementById(listId);
   if (!list) return;
+  const { forceRefresh = false } = opts;
 
   // Loading skeleton
   list.innerHTML = `<div class="trending-empty">
@@ -35453,12 +36340,17 @@ async function renderTrendingNews(listId, category = "top") {
   const rssUrl = TRENDING_CAT_FEEDS[category] || TRENDING_CAT_FEEDS.top;
 
   // Try fetch real Google News via rss2json proxy. Cache 5 min per kategori.
+  // Track sumber data: "live" (fresh fetch), "cache" (session cache hit),
+  // "fallback" (network error → curated static). Dipakai untuk update LIVE
+  // pill di header supaya user tahu data fresh atau bukan.
   let items = null;
+  let dataSource = "fallback";
   try {
     const cached = sessionStorage.getItem(cacheKey);
     const cachedTime = parseInt(sessionStorage.getItem(cacheTsKey) || "0", 10);
-    if (cached && (Date.now() - cachedTime) < 5 * 60 * 1000) {
+    if (!forceRefresh && cached && (Date.now() - cachedTime) < 5 * 60 * 1000) {
       items = JSON.parse(cached);
+      dataSource = "cache";
     } else {
       const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
       const resp = await fetch(apiUrl);
@@ -35470,23 +36362,49 @@ async function renderTrendingNews(listId, category = "top") {
         link: it.link,
         ts: it.pubDate ? new Date(it.pubDate).getTime() : 0
       }));
-      sessionStorage.setItem(cacheKey, JSON.stringify(items));
-      sessionStorage.setItem(cacheTsKey, String(Date.now()));
+      if (items.length) {
+        sessionStorage.setItem(cacheKey, JSON.stringify(items));
+        sessionStorage.setItem(cacheTsKey, String(Date.now()));
+        dataSource = "live";
+      }
     }
   } catch (err) {
     items = null;
   }
 
-  // Fallback — curated per kategori
+  // Fallback — curated per kategori (network error / RSS down)
   if (!items || !items.length) {
     items = (TRENDING_CAT_FALLBACK[category] || TRENDING_CAT_FALLBACK.top).slice(0, 3);
+    dataSource = "fallback";
   }
 
   // Force max 3 items
   items = items.slice(0, 3);
 
+  // Update LIVE pill di header (sibling element) sesuai sumber data.
+  // LIVE (green) = data fresh dari RSS; CACHE = data sessionStorage; OFFLINE
+  // = pakai curated fallback (network/RSS gagal).
+  try {
+    const card = list.closest(".trending-card");
+    if (card) {
+      const pill = card.querySelector(".trending-live-pill");
+      if (pill) {
+        pill.classList.remove("is-cache", "is-fallback");
+        if (dataSource === "live") {
+          pill.innerHTML = '<span class="trending-live-dot"></span>LIVE';
+        } else if (dataSource === "cache") {
+          pill.innerHTML = '<span class="trending-live-dot"></span>CACHE';
+          pill.classList.add("is-cache");
+        } else {
+          pill.innerHTML = '<span class="trending-live-dot"></span>OFFLINE';
+          pill.classList.add("is-fallback");
+        }
+      }
+    }
+  } catch {}
+
   const trendIcon = (i) => i === 0 ? "↑" : i === 1 ? "→" : "↗";
-  list.innerHTML = items.map((it, i) => {
+  const itemsHtml = items.map((it, i) => {
     const isLink = !!it.link;
     const tag = isLink ? "a" : "div";
     const linkAttrs = isLink ? `href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"` : "";
@@ -35500,7 +36418,31 @@ async function renderTrendingNews(listId, category = "top") {
       <span class="trending-trend">${trendIcon(i)}</span>
     </${tag}>`;
   }).join("");
+
+  // Retry button — hanya muncul saat data dari fallback (RSS gagal). User bisa
+  // coba refresh manual tanpa reload halaman. Cache hit tidak perlu retry.
+  const retryHtml = dataSource === "fallback"
+    ? `<button type="button" class="trending-retry-btn" data-trend-retry="${escapeHtml(category)}" data-trend-target="${escapeHtml(listId)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+        <span>Coba muat ulang</span>
+      </button>`
+    : "";
+  list.innerHTML = itemsHtml + retryHtml;
 }
+
+// Delegated handler — klik retry button di trending list → force refresh
+// dari RSS (skip session cache).
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest?.("[data-trend-retry]");
+  if (!btn) return;
+  e.preventDefault();
+  const category = btn.dataset.trendRetry;
+  const targetId = btn.dataset.trendTarget;
+  if (!category || !targetId) return;
+  btn.disabled = true;
+  btn.classList.add("loading");
+  renderTrendingNews(targetId, category, { forceRefresh: true });
+});
 
 // Backwards-compat — keep existing call sites working
 function renderDiscoverTrending(category = "top") {
@@ -40038,17 +40980,17 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     });
   }
 
-  // Update note saat tier user berubah
+  // Update note saat tier user berubah. Soft state untuk Free user: pakai
+  // sparkle icon (✨ aspirational) bukan lock icon (🔒 punitive).
   function refreshAiNote() {
     if (topicInput) topicInput.placeholder = t("upload.ai.topic.ph");
     if (!noteEl) return;
     if (!isPremium()) {
-      noteEl.innerHTML = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ' + t("upload.ai.note.locked");
+      const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
+      noteEl.innerHTML = ICO_SPARK + " " + t("upload.ai.note.locked");
       noteEl.hidden = false;
       card.classList.add("locked");
     } else {
-      // Note "ready" dihapus total (per request user 2026-05-16). JANGAN pakai
-      // t() — value kosong bikin t() fallback ke nama key ("upload.ai.note.ready").
       noteEl.innerHTML = "";
       noteEl.hidden = true;
       card.classList.remove("locked");
@@ -40729,22 +41671,72 @@ self.onmessage = async (e) => {
     }
   }
 
+  // SUBTITLE AI FREE QUOTA — 3x per bulan untuk Free user.
+  // Hook: kasih user free experience supaya bisa nilai kualitas Subtitle AI
+  // sebelum decide upgrade. Quota di-reset otomatis tiap bulan kalender.
+  // Stored di localStorage: { month: "2026-05", used: 0..3 }
+  const SUB_FREE_QUOTA = 3;
+  function _subFreeKey() { return "playly-sub-ai-free-quota"; }
+  function _currentMonthKey() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+  function getSubFreeQuotaUsed() {
+    try {
+      const raw = localStorage.getItem(_subFreeKey());
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      if (obj.month !== _currentMonthKey()) return 0; // bulan baru = reset
+      return Math.max(0, Math.min(SUB_FREE_QUOTA, obj.used || 0));
+    } catch { return 0; }
+  }
+  function incrementSubFreeQuota() {
+    const used = getSubFreeQuotaUsed() + 1;
+    try {
+      localStorage.setItem(_subFreeKey(), JSON.stringify({ month: _currentMonthKey(), used }));
+    } catch {}
+    return used;
+  }
+  function getSubFreeQuotaRemaining() {
+    return Math.max(0, SUB_FREE_QUOTA - getSubFreeQuotaUsed());
+  }
+  // Expose untuk testing
+  window._subFreeQuota = { used: getSubFreeQuotaUsed, remaining: getSubFreeQuotaRemaining };
+
   autoBtn?.addEventListener("click", e => {
     e.preventDefault();
-    // Premium-only gate (per request user 2026-05-14) — Free user dapat toast.
     const isPremium = !!(user && (user.tier === "premium" || user.role === "admin"));
     if (!isPremium) {
-      if (typeof toast === "function") {
-        toast("⭐ Auto-generate AI subtitle hanya untuk Premium. Upgrade dulu yuk!", "warning");
+      // Free user: cek quota sebelum gate ke premium prompt.
+      const remaining = getSubFreeQuotaRemaining();
+      if (remaining <= 0) {
+        if (typeof toast === "function") {
+          toast("🎁 Kuota gratis bulan ini habis. Upgrade Premium untuk akses unlimited.", "warning");
+        }
+        return;
       }
-      return;
+      // Confirm sekali sebelum konsumsi quota — supaya user sadar ini "dihitung"
+      const willUse = SUB_FREE_QUOTA - remaining + 1;
+      const ok = confirm(
+        "🎁 Kamu masih punya " + remaining + " dari " + SUB_FREE_QUOTA + " percobaan gratis bulan ini.\n\n" +
+        "Lanjut generate subtitle (percobaan ke-" + willUse + ")?\n\n" +
+        "Setelah kuota habis, fitur ini perlu Premium."
+      );
+      if (!ok) return;
+      incrementSubFreeQuota();
+      // Refresh UI counter setelah quota dipakai
+      if (typeof window.refreshSubtitleAiLockedState === "function") {
+        // Tunggu sebentar supaya state localStorage ter-flush
+        setTimeout(window.refreshSubtitleAiLockedState, 50);
+      }
     }
     autoGenerateSubtitle();
   });
 
-  // Apply locked visual state ke kartu subtitle AI kalau user Free.
-  // Per redesign 2026-05-15 v27: ditambah note bar update + premium pill auto-hide
-  // untuk premium user — sama mekanisme dengan AI Assist card.
+  // Apply visual state ke kartu subtitle AI.
+  // Free user dengan quota tersisa → soft state (ungu/sparkle, ada counter).
+  // Free user kuota habis → muted lock state.
+  // Premium → fully unlocked, no banner.
   window.refreshSubtitleAiLockedState = function () {
     const card = document.getElementById("upSubtitleAiCard");
     const btn = document.getElementById("upSubtitleAutoBtn");
@@ -40755,35 +41747,51 @@ self.onmessage = async (e) => {
       (typeof isPremiumActive === "function" && isPremiumActive(_u)) ||
       !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
       document.body.dataset.tier === "premium";
-    card.classList.toggle("locked", !isPremium);
+
+    const remaining = isPremium ? Infinity : getSubFreeQuotaRemaining();
+    const hasFreeQuota = !isPremium && remaining > 0;
+    const quotaExhausted = !isPremium && remaining <= 0;
+
+    // 3-state class system:
+    //  is-unlocked  → Premium / admin (full access, no banner)
+    //  has-quota    → Free user dengan quota tersisa (soft sparkle state)
+    //  locked       → Free user, quota habis (locked, premium prompt)
     card.classList.toggle("is-unlocked", isPremium);
-    // Note bar text — locked = gold warning, premium = muted normal
+    card.classList.toggle("has-quota", hasFreeQuota);
+    card.classList.toggle("locked", quotaExhausted);
+
     if (note) {
       if (isPremium) {
-        // Note "ready" dihapus total (per request user). JANGAN pakai t() —
-        // value kosong bikin t() fallback ke nama key.
         note.innerHTML = "";
         note.hidden = true;
+      } else if (hasFreeQuota) {
+        // Soft sparkle state — tampilkan counter quota
+        const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
+        note.innerHTML = ICO_SPARK + " " + t("upload.sub.note.quota").replace("{n}", String(remaining));
+        note.hidden = false;
       } else {
-        note.innerHTML = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ' + t("upload.sub.note.locked");
+        // Kuota habis — soft lock state (bukan harsh)
+        const ICO_GIFT = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8c0-3 3-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>';
+        note.innerHTML = ICO_GIFT + " " + t("upload.sub.note.quota.out");
         note.hidden = false;
       }
     }
-    // Set disabled attribute supaya benar-benar tidak bisa diklik untuk Free user
+
+    // Button enable/disable — Premium dan Free-with-quota bisa klik.
+    // Free-no-quota: disabled (tapi click handler tetap kasih friendly toast).
     if (btn) {
-      if (isPremium) {
+      if (isPremium || hasFreeQuota) {
         btn.removeAttribute("disabled");
         btn.removeAttribute("aria-disabled");
-        btn.title = "";
+        btn.title = isPremium ? "" : ("Sisa " + remaining + " percobaan gratis bulan ini");
       } else {
         btn.setAttribute("disabled", "disabled");
         btn.setAttribute("aria-disabled", "true");
-        btn.title = t("upload.sub.note.locked");
+        btn.title = t("upload.sub.note.quota.out");
       }
     }
-    // Bonus: sync AI Assist card juga — kalau premium, hide PREMIUM pill di sana.
-    // refreshAiNote() handle .locked class & note text untuk AI Assist; di sini cuma
-    // toggle is-unlocked supaya CSS bisa hide pill konsisten dengan subtitle card.
+
+    // Sync AI Assist card juga — selalu locked untuk non-premium (no quota).
     const aiAssistCard = document.getElementById("upAiAssist");
     if (aiAssistCard) aiAssistCard.classList.toggle("is-unlocked", isPremium);
   };

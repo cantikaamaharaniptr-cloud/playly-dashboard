@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260526-audit-user-section-v557" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260526-admin-recovery-v562" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -733,7 +733,10 @@
               <defs>
                 <!-- Chrome / silver iridescent — frosted satin metal vibe.
                      White → light slate → cool grey → deep slate untuk efek
-                     metal mengkilap dengan subtle hint blue (mirip referensi). -->
+                     metal mengkilap. LOGO IDENTITY — jangan ubah stop-color
+                     ini (user 2026-05-26). Kalau ada problem kontras dengan
+                     backdrop, fix lewat CSS drop-shadow outline, BUKAN ganti
+                     gradient stops. -->
                 <linearGradient id="plyl-au-admin" x1="10%" y1="0%" x2="90%" y2="100%">
                   <stop offset="0%"   stop-color="#FFFFFF"/>
                   <stop offset="30%"  stop-color="#FFFFFF"/>
@@ -8927,7 +8930,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260526-audit-user-section-v557" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260526-admin-recovery-v562" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
