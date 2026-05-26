@@ -10884,8 +10884,14 @@ body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin { display: flex
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .06em;
-  /* Cream/beige terang — readable di bg wine, match palette hero text */
+  /* Cream/beige terang — readable di bg wine dark */
   color: #E8D8C4;
+}
+/* Light mode mirror — wine deep di bg terang biar terbaca jelas */
+body[data-theme="light"] .auth-pill-badge {
+  background: rgba(109, 41, 50, .08);
+  border-color: rgba(109, 41, 50, .25);
+  color: #6D2932;
 }
 .auth-pill-dot {
   /* req user 2026-05-20 (revisi 3): warna solid #6D2932 + EFEK
@@ -19620,16 +19626,17 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   max-width: 880px;
   margin: 0 auto;
 }
+/* Kolom pertanyaan (summary) — graphite subtle (default state). */
 .admin-faq-item {
   background: rgba(52, 58, 64, 0.30);
   border: 1px solid rgba(173, 181, 189, 0.14);
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 0;
+  overflow: hidden;
   transition: border-color .2s var(--ease, ease), background .2s var(--ease, ease);
 }
 .admin-faq-item:hover { border-color: rgba(173, 181, 189, 0.28); }
 .admin-faq-item[open] {
-  background: rgba(52, 58, 64, 0.45);
   border-color: rgba(173, 181, 189, 0.32);
 }
 .admin-faq-item summary {
@@ -19642,6 +19649,7 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 14px 18px;
 }
 .admin-faq-item summary::-webkit-details-marker { display: none; }
 .admin-faq-item summary::after {
@@ -19653,8 +19661,11 @@ body[data-role="admin"].auth-mode .admin-activity-section {
   transition: transform .25s var(--ease, ease);
 }
 .admin-faq-item[open] summary::after { content: "−"; }
+/* Kolom jawaban — perbedaan halus: divider tipis only, tanpa blok bg. */
 .admin-faq-item p {
-  margin: 12px 0 4px;
+  margin: 0 18px;
+  padding: 14px 0 16px;
+  border-top: 1px solid rgba(173, 181, 189, 0.18);
   font-size: 13.5px;
   line-height: 1.65;
   color: #ADB5BD;
@@ -32487,12 +32498,13 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 240px;
+  /* Compact (req 2026-05-26) — sebelumnya 240px / padding 6px. */
+  min-width: 210px;
   background: var(--bg-elev);
   border: 1px solid var(--border-strong);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 16px 40px -12px rgba(0, 0, 0, .55);
-  padding: 6px;
+  padding: 4px;
   z-index: 1010;
   animation: atsmFadeIn .18s var(--ease);
 }
@@ -32504,11 +32516,11 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 4px 2px;
+  padding: 2px 2px;
 }
 .atsm-section-label {
-  padding: 6px 10px 4px;
-  font-size: 10.5px;
+  padding: 4px 10px 2px;
+  font-size: 9.5px;
   font-weight: 800;
   letter-spacing: .08em;
   color: var(--muted);
@@ -32521,13 +32533,13 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
 .atsm-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
+  gap: 8px;
+  padding: 6px 10px;
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -32537,10 +32549,10 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
   font-family: inherit;
 }
 .atsm-row:hover { background: var(--surface-2); }
-.atsm-row .atsm-flag { font-size: 14px; flex-shrink: 0; }
+.atsm-row .atsm-flag { font-size: 13px; flex-shrink: 0; }
 .atsm-row .atsm-label { flex: 1; min-width: 0; }
 .atsm-row .atsm-check {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: rgba(212, 166, 74, 1);
   opacity: 0;
@@ -32553,16 +32565,16 @@ body[data-theme="light"] .auth-topbar-payment-pill[data-status="rejected"] {
 .atsm-divider {
   height: 1px;
   background: var(--border);
-  margin: 2px 8px;
+  margin: 2px 6px;
 }
 .atsm-foot {
-  padding: 8px 12px 4px;
+  padding: 6px 10px 2px;
   text-align: center;
   border-top: 1px solid var(--border);
   margin-top: 2px;
 }
 .atsm-foot small {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--muted);
   letter-spacing: .02em;
 }
@@ -35594,6 +35606,9 @@ body[data-theme="light"][data-role="admin"].auth-mode .admin-faq-item summary {
 body[data-theme="light"][data-role="admin"].auth-mode .admin-faq-item p {
   color: #343A40 !important;
   font-weight: 500;
+  /* Light mode mirror — divider tipis only, tanpa blok bg. */
+  background: transparent !important;
+  border-top: 1px solid rgba(52, 58, 64, .14) !important;
 }
 
 /* Topbar admin (login page sticky) — TRANSPARENT, nyatu dgn backdrop. */
@@ -44734,11 +44749,23 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   background: rgba(20, 30, 48, .30);
   border: 1px solid rgba(165, 175, 195, .18);
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 0;
+  overflow: hidden;
   transition: border-color .2s ease, background .2s ease;
 }
 .admin-faq-item:hover { border-color: rgba(165, 175, 195, .40); background: rgba(20, 30, 48, .50); }
-.admin-faq-item[open] { background: rgba(20, 30, 48, .55); border-color: rgba(165, 175, 195, .40); }
+/* Two-tone open state (req 2026-05-26, contoh dari user FAQ):
+   Halus — beda tone-nya subtle, sama navy family. */
+.admin-faq-item[open] {
+  border-color: rgba(165, 175, 195, .42);
+}
+.admin-faq-item[open] > summary {
+  background: rgba(40, 54, 78, .55);
+}
+.admin-faq-item[open] > p {
+  background: rgba(22, 32, 50, .55);
+  border-top: 1px solid rgba(165, 175, 195, .18);
+}
 .admin-faq-item summary {
   font-size: 14.5px;
   font-weight: 700;
@@ -44749,6 +44776,7 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 14px 18px;
 }
 .admin-faq-item summary::-webkit-details-marker { display: none; }
 .admin-faq-item summary::after {
@@ -44758,7 +44786,16 @@ body[data-role="admin"] #authCard .btn.primary.auth-submit {
   line-height: 1;
 }
 .admin-faq-item[open] summary::after { content: "−"; }
-.admin-faq-item p { margin: 12px 0 4px; font-size: 13.5px; line-height: 1.65; color: #FFFFFF; }
+/* Kolom jawaban — perbedaan halus: divider tipis only, tanpa blok bg
+   (req 2026-05-26). */
+.admin-faq-item p {
+  margin: 0 18px;
+  padding: 14px 0 16px;
+  border-top: 1px solid rgba(165, 175, 195, .18);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #ADB5BD;
+}
 
 /* ---------- FOOT SECTION ---------- */
 .admin-foot-section {
@@ -45784,10 +45821,12 @@ body[data-role="admin"] .admin-landing-head h2 {
    + force white text di area landing yang masih slate
    ========================================================= */
 body[data-role="admin"] .auth-topbar-settings-menu {
-  background: rgba(28, 40, 60, .90) !important;
-  border: 1px solid rgba(165, 175, 195, .14) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
+  /* Solid bg (req 2026-05-26) — sebelumnya .90 alpha + blur → tampil
+     semi-transparan. Sekarang full opaque dengan navy deep. */
+  background: rgb(20, 30, 48) !important;
+  border: 1px solid rgba(165, 175, 195, .22) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow: 0 1px 4px rgba(0, 0, 0, .55), 0 16px 40px rgba(0, 0, 0, .55) !important;
 }
 body[data-role="admin"] .auth-topbar-settings-menu .atsm-section-label,
@@ -53063,8 +53102,17 @@ html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-ite
   border: 1px solid rgba(27, 60, 83, 0.14) !important;
 }
 html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-item[open] {
-  background: linear-gradient(135deg, #FFFFFF 0%, #EAF0F6 100%) !important;
+  background: #FFFFFF !important;
   border-color: rgba(27, 60, 83, 0.24) !important;
+}
+/* Two-tone open state light mode (req 2026-05-26):
+   Pertanyaan = light grey (recessed), Jawaban = pure white (raised). */
+html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-item[open] > summary {
+  background: #EAF0F6 !important;
+}
+html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-item[open] > p {
+  background: #FFFFFF !important;
+  border-top: 1px solid rgba(27, 60, 83, 0.18) !important;
 }
 html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-item summary,
 html body[data-theme="light"][data-role="admin"] #adminFaqSection .admin-faq-item h3,
