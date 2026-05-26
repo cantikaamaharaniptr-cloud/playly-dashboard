@@ -113,6 +113,9 @@ export async function POST(req: Request) {
       // yang browser ga reproduce → 403/Failed to fetch.
       signableHeaders: new Set(['host', 'content-type']),
     });
+    // v549 diagnostic: log first 120 chars + length untuk debug invisible
+    // chars / malformed URLs di Vercel function logs.
+    console.log('[r2/sign-upload] url len=', uploadUrl.length, 'preview=', uploadUrl.slice(0, 120));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[r2/sign-upload] presign failed:', msg);

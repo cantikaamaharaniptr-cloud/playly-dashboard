@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v548 (R2 presign hotfix: disable SDK auto-checksum + minimal signableHeaders + trim publicUrl whitespace)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v549 (R2 env trim defense + server-side URL diagnostic log)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi

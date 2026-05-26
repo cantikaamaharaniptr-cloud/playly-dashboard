@@ -22,11 +22,15 @@ export type R2Config = {
 };
 
 export function getR2Config(): R2Config | null {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_BUCKET;
-  const publicUrl = process.env.R2_PUBLIC_URL;
+  // v549 (2026-05-26): trim() ALL env vars defensively. Copy-paste from
+  // Cloudflare dashboard ke Vercel env vars often introduces trailing \t
+  // / \n / spaces yang bikin URL malformed (host includes whitespace →
+  // browser refuses to fetch → "Failed to fetch" generic error).
+  const accountId = process.env.R2_ACCOUNT_ID?.trim();
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  const bucket = process.env.R2_BUCKET?.trim();
+  const publicUrl = process.env.R2_PUBLIC_URL?.trim();
 
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
     return null;
@@ -51,9 +55,7 @@ export function getR2Config(): R2Config | null {
   return {
     client,
     bucket,
-    // v548: trim whitespace defensively — Vercel env var paste might include
-    // trailing tab/newline (observed in production: publicUrl ended with \t).
-    publicUrl: publicUrl.trim().replace(/\/+$/, ''),
+    publicUrl: publicUrl.replace(/\/+$/, ''),
   };
 }
 
