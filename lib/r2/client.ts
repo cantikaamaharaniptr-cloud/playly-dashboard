@@ -39,12 +39,21 @@ export function getR2Config(): R2Config | null {
       accessKeyId,
       secretAccessKey,
     },
+    // v548 hotfix (2026-05-26): AWS SDK v3.730+ default checksum behavior
+    // ('WHEN_SUPPORTED') signs `x-amz-checksum-crc32` into presigned URLs.
+    // Browser fetch() can't reproduce this header → signature mismatch →
+    // browser blocks request as "Failed to fetch". WHEN_REQUIRED makes SDK
+    // only add checksum when explicitly asked.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 
   return {
     client,
     bucket,
-    publicUrl: publicUrl.replace(/\/+$/, ''),
+    // v548: trim whitespace defensively — Vercel env var paste might include
+    // trailing tab/newline (observed in production: publicUrl ended with \t).
+    publicUrl: publicUrl.trim().replace(/\/+$/, ''),
   };
 }
 

@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260525-r2-video-storage-v547" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260526-r2-presign-hotfix-v548" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -435,7 +435,7 @@
 
             <div class="auth-pill-badge">
               <span class="auth-pill-dot"></span>
-              <span>Live now — 12,408 creators online</span>
+              <span>LIVE · BERBAGI VIDEO TANPA BATAS</span>
             </div>
 
             <h2 class="auth-hero-title" data-i18n="auth.showcase.user.title">Share your creation,<br/><span class="grad-text" data-i18n="auth.showcase.user.title.grad">touch the world</span></h2>
@@ -452,9 +452,9 @@
             </div>
 
             <div class="auth-stats">
-              <div><b data-counter="12408">12k+</b><span data-i18n="auth.stat.creators">Active creators</span></div>
-              <div><b data-counter="2400000">2.4M</b><span data-i18n="auth.stat.videos">Videos</span></div>
-              <div><b data-counter="89000000">89M</b><span data-i18n="auth.stat.views">Views/month</span></div>
+              <div><b data-no-i18n>500+</b><span data-no-i18n>Kreator aktif</span></div>
+              <div><b data-no-i18n>1.2k+</b><span data-no-i18n>Video</span></div>
+              <div><b data-no-i18n>85k</b><span data-no-i18n>Views/bulan</span></div>
             </div>
 
             <!-- Play orb animation with floating notification cards (restored per request 2026-05-03) -->
@@ -800,8 +800,8 @@
           <div class="admin-ticker" aria-hidden="true">
             <span class="adt-dot"></span>
             <span class="adt-label">MONITORING</span>
-            <b class="adt-count" data-count-to="12408">0</b>
-            <span class="adt-suffix">sessions</span>
+            <b class="adt-count">Live</b>
+            <span class="adt-suffix">real-time</span>
           </div>
         </div>
 
@@ -961,7 +961,7 @@
                   </svg>
                 </span>
                 <strong>Premium</strong>
-                <span class="apc-price">$9<small>/bulan</small></span>
+                <span class="apc-price">$9.99<small>/bulan</small></span>
                 <span class="apc-price-idr">≈ Rp 148.500</span>
                 <ul>
                   <li>Unggah tanpa batas</li>
@@ -1526,7 +1526,7 @@
     <section class="auth-finalcta-section">
       <div class="auth-plans-head">
         <span class="auth-plans-eyebrow">READY TO START?</span>
-        <h2>Join 12,000+ creators on Playly today</h2>
+        <h2>Become an early Playly creator today</h2>
         <p>Start free in under 30 seconds. Upgrade whenever you outgrow it.</p>
       </div>
       <div class="finalcta-body">
@@ -2599,7 +2599,7 @@
                 <div class="admin-kpi-card" data-popup="kpi-views" role="button" tabindex="0" title="Views This Month detail" data-kpi="views">
                   <div class="admin-kpi-icon views"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
                   <div class="kpi-content">
-                    <strong id="kpiViews" data-kpi-num="2400000">2.4M</strong>
+                    <strong id="kpiViews" data-kpi-num="0">0</strong>
                     <small>Views This Month</small>
                     <span class="kpi-sub" id="kpiSubViews"></span>
                   </div>
@@ -8475,8 +8475,8 @@
     window.PLAYLY_R2_PUBLIC_URL = "https://pub-c0bf4a455f2c43618a7d4754ae9f7835.r2.dev";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/legacy/cloud-sync.js?v=20260525-r2-video-storage-v547"></script>
-  <script src="/legacy/supabase-auth-bridge.js?v=20260525-r2-video-storage-v547"></script>
+  <script src="/legacy/cloud-sync.js?v=20260526-r2-presign-hotfix-v548"></script>
+  <script src="/legacy/supabase-auth-bridge.js?v=20260526-r2-presign-hotfix-v548"></script>
 
   <!-- Floating Upload Button (FAB) — muncul saat scroll melewati hero -->
 
@@ -8922,7 +8922,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260525-r2-video-storage-v547" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260526-r2-presign-hotfix-v548" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

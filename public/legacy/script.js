@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v547 (Cloudflare R2 video storage: $0 egress; uploadVideoBlob dispatch R2 first, Supabase fallback)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v548 (R2 presign hotfix: disable SDK auto-checksum + minimal signableHeaders + trim publicUrl whitespace)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -2724,7 +2724,12 @@ function startAdminAuthMotion() {
   const el = document.querySelector(".auth-left-admin .admin-ticker .adt-count");
   if (!el) return;
   __adminAuthMotionStarted = true;
-  const target = parseInt(el.getAttribute("data-count-to") || "12408", 10);
+  // Skip counter animation kalau elemen tidak punya data-count-to (mis. saat
+  // ticker dipakai untuk label statis "Live") — sebelumnya fallback "12408"
+  // bikin counter palsu auto-jalan padahal copy bukan numerik.
+  const rawTarget = el.getAttribute("data-count-to");
+  if (!rawTarget) return;
+  const target = parseInt(rawTarget, 10);
   const duration = 1800;
   const start = performance.now();
   const fmt = (n) => n.toLocaleString("en-US");
@@ -5379,7 +5384,7 @@ const I18N = {
     "faq.a6":                    "Yes — the dashboard is fully responsive and works smoothly on phones, tablets, laptops, and desktops. Native iOS & Android apps coming soon.",
     // ===== LANDING: FINAL CTA =====
     "finalcta.eyebrow":          "READY TO START?",
-    "finalcta.title":            "Join 12,000+ creators on Playly today",
+    "finalcta.title":            "Become an early Playly creator today",
     "finalcta.subtitle":         "Start free in under 30 seconds. Upgrade whenever you outgrow it.",
     "finalcta.btn.primary":      "Get started free →",
     "finalcta.btn.secondary":    "I already have an account",
@@ -6990,7 +6995,7 @@ const I18N = {
     "faq.a6":                    "Ya — dashboard sepenuhnya responsif dan berjalan mulus di ponsel, tablet, laptop, dan desktop. Aplikasi native iOS & Android segera hadir.",
     // ===== LANDING: FINAL CTA =====
     "finalcta.eyebrow":          "SIAP MULAI?",
-    "finalcta.title":            "Bergabung dengan 12.000+ kreator di Playly hari ini",
+    "finalcta.title":            "Jadi kreator awal Playly hari ini",
     "finalcta.subtitle":         "Mulai gratis dalam kurang dari 30 detik. Upgrade kapan saja saat kamu butuh lebih.",
     "finalcta.btn.primary":      "Mulai gratis →",
     "finalcta.btn.secondary":    "Saya sudah punya akun",
@@ -8323,7 +8328,7 @@ const I18N = {
     "faq.q6":                    "Adakah Playly tersedia di mudah alih?",
     "faq.a6":                    "Ya — papan pemuka adalah responsif sepenuhnya dan berfungsi lancar pada telefon, tablet, komputer riba, dan komputer meja. Aplikasi asli iOS & Android akan datang.",
     "finalcta.eyebrow":          "BERSEDIA UNTUK MULA?",
-    "finalcta.title":            "Sertai 12,000+ pencipta di Playly hari ini",
+    "finalcta.title":            "Jadi pencipta awal Playly hari ini",
     "finalcta.subtitle":         "Mula percuma dalam masa kurang 30 saat. Naik taraf bila-bila masa anda berkembang.",
     "finalcta.btn.primary":      "Mula percuma →",
     "finalcta.btn.secondary":    "Saya sudah ada akaun",
@@ -9603,7 +9608,7 @@ const I18N = {
     "faq.q6":                    "Playlyはモバイルで利用できますか？",
     "faq.a6":                    "はい — ダッシュボードは完全レスポンシブで、スマホ、タブレット、ノートPC、デスクトップでスムーズに動作。ネイティブiOS・Androidアプリも近日公開。",
     "finalcta.eyebrow":          "始める準備はできましたか？",
-    "finalcta.title":            "今日12,000+ クリエイターと一緒にPlaylyへ",
+    "finalcta.title":            "今日からPlaylyの早期クリエイターに",
     "finalcta.subtitle":         "30秒以内に無料で開始。必要に応じていつでもアップグレード。",
     "finalcta.btn.primary":      "無料で始める →",
     "finalcta.btn.secondary":    "すでにアカウントをお持ちです",
@@ -10883,7 +10888,7 @@ const I18N = {
     "faq.q6":                    "هل Playly متاح على الجوال؟",
     "faq.a6":                    "نعم — اللوحة متجاوبة بالكامل وتعمل بسلاسة على الهواتف والأجهزة اللوحية وأجهزة الكمبيوتر المحمولة وسطح المكتب. تطبيقات iOS و Android الأصلية قريبًا.",
     "finalcta.eyebrow":          "مستعد للبدء؟",
-    "finalcta.title":            "انضم إلى أكثر من 12,000 منشئ على Playly اليوم",
+    "finalcta.title":            "كن أحد المبدعين الأوائل في Playly اليوم",
     "finalcta.subtitle":         "ابدأ مجانًا في أقل من 30 ثانية. ارقَ متى تفوقت على ذلك.",
     "finalcta.btn.primary":      "ابدأ مجانًا ←",
     "finalcta.btn.secondary":    "لدي حساب بالفعل",
@@ -12163,7 +12168,7 @@ const I18N = {
     "faq.q6":                    "Playly 在移动端可用吗？",
     "faq.a6":                    "是的 — 后台完全响应式，在手机、平板、笔记本和台式机上都能流畅运行。原生 iOS 和 Android 应用即将推出。",
     "finalcta.eyebrow":          "准备好开始了吗？",
-    "finalcta.title":            "今天就加入 12,000+ Playly 创作者",
+    "finalcta.title":            "今天就成为 Playly 的早期创作者",
     "finalcta.subtitle":         "30 秒内免费开始。当你的需求增长时随时升级。",
     "finalcta.btn.primary":      "免费开始 →",
     "finalcta.btn.secondary":    "我已有账户",
@@ -13443,7 +13448,7 @@ const I18N = {
     "faq.q6":                    "Playly가 모바일에서 사용 가능한가요?",
     "faq.a6":                    "예 — 대시보드는 완전히 반응형이며 휴대폰, 태블릿, 노트북 및 데스크탑에서 매끄럽게 작동합니다. 네이티브 iOS 및 Android 앱이 곧 출시됩니다.",
     "finalcta.eyebrow":          "시작할 준비가 되셨나요?",
-    "finalcta.title":            "오늘 12,000+ Playly 크리에이터에 합류하세요",
+    "finalcta.title":            "오늘 Playly의 얼리 크리에이터가 되세요",
     "finalcta.subtitle":         "30초 내에 무료로 시작하세요. 필요할 때 언제든 업그레이드.",
     "finalcta.btn.primary":      "무료로 시작 →",
     "finalcta.btn.secondary":    "이미 계정이 있습니다",
@@ -14723,7 +14728,7 @@ const I18N = {
     "faq.q6":                    "¿Playly está disponible en móvil?",
     "faq.a6":                    "Sí — el panel es totalmente adaptable y funciona suavemente en teléfonos, tablets, laptops y computadoras de escritorio. Apps nativas iOS y Android próximamente.",
     "finalcta.eyebrow":          "¿LISTO PARA EMPEZAR?",
-    "finalcta.title":            "Únete a más de 12,000 creadores en Playly hoy",
+    "finalcta.title":            "Sé uno de los primeros creadores en Playly",
     "finalcta.subtitle":         "Empieza gratis en menos de 30 segundos. Mejora cuando lo superes.",
     "finalcta.btn.primary":      "Empieza gratis →",
     "finalcta.btn.secondary":    "Ya tengo una cuenta",
@@ -16633,6 +16638,29 @@ document.addEventListener("keydown", e => {
     if (wrap?.classList.contains("show")) closeAuthModal();
   }
 });
+
+// Deep-link: /login & /signup → auto-open modal pada landing.
+// Sebelumnya URL ini 404 karena Next.js belum punya rewrite-nya. Rewrite
+// sudah dipasang di next.config.mjs; script ini cuma men-trigger modal
+// dan rewrite history-state ke "/" supaya URL tidak persist (deep-link
+// share, refresh, dsb tetap clean).
+(function handleAuthDeepLink() {
+  function tryOpen() {
+    const path = (location.pathname || "").toLowerCase();
+    if (path !== "/login" && path !== "/signup") return;
+    // Skip kalau user sudah login (akan ke-redirect oleh boot flow lain)
+    if (document.body?.dataset.role) return;
+    const wrap = document.getElementById("authModalWrap");
+    if (!wrap) return;
+    openAuthModal(path === "/signup" ? "signup-form" : "signin");
+    try { history.replaceState(null, "", "/"); } catch {}
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", tryOpen, { once: true });
+  } else {
+    setTimeout(tryOpen, 0);
+  }
+})();
 
 // === AUTH STATE MACHINE (per request 2026-05-04 — flow flipped) ===
 // States: landing | signin | signup-form | signup-pick
@@ -29484,6 +29512,8 @@ function switchView(name, { fromNav = false } = {}) {
     if (state.messages.length !== before) {
       saveState();
     }
+    // Pastikan chat user-picker modal tidak ikut "bocor" ke view lain
+    document.getElementById("__chatUserPicker")?.remove();
   }
   if (name !== state.currentView) state.prevView = state.currentView;
   state.currentView = name;
@@ -29611,19 +29641,9 @@ function switchView(name, { fromNav = false } = {}) {
     // dari user lain saat user di view lain). renderMsgList sudah include
     // re-load state.messages dari localStorage di awal function.
     renderMsgList();
-    // Auto-open new-chat picker kalau user belum punya obrolan apa pun.
-    // Per request 2026-05-09: "jika belum ada obrolan kamu buatkan otomatis
-    // jika di klik". Kalau user tutup tanpa pilih, tidak ada thread dibuat.
-    // Kalau user pilih lawan tapi tidak nulis pesan, thread placeholder akan
-    // dibersihkan saat user pindah view (lihat cleanup logic di atas).
-    const hasChats = Array.isArray(state.messages) && state.messages.some(m => !m.archived);
-    if (!hasChats && typeof openChatUserPicker === "function") {
-      setTimeout(() => {
-        if (state.currentView === "messages" && !document.getElementById("__chatUserPicker")) {
-          openChatUserPicker();
-        }
-      }, 250);
-    }
+    // Auto-open picker dihilangkan: terlalu intrusive saat user cuma mau
+    // navigate ke Pesan. User dapat klik tombol "+ New Message" untuk
+    // memulai chat baru — empty state list sudah memberi instruksi tsb.
   }
   if (name === "people") {
     // Render dulu pakai data lokal supaya tampilan tidak kosong, lalu force pull

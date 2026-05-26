@@ -92,18 +92,26 @@ export async function POST(req: Request) {
   const contentType = String(body.contentType || 'video/mp4');
   const key = videoObjectKey(id, contentType);
 
+  // v548 (2026-05-26): minimal PutObjectCommand — no CacheControl.
+  // CacheControl di signed payload bikin browser harus echo header
+  // `Cache-Control: public, max-age=604800` di PUT, kalau gak → signature
+  // mismatch. Set cache via bucket-level metadata atau lifecycle policy
+  // kalau perlu (deferred — R2 default CDN cache cukup untuk MVP).
   const cmd = new PutObjectCommand({
     Bucket: r2.bucket,
     Key: key,
     ContentType: contentType,
-    // Public-read bucket → no ACL needed; cache 7 hari di edge.
-    CacheControl: 'public, max-age=604800',
   });
 
   let uploadUrl: string;
   try {
     uploadUrl = await getSignedUrl(r2.client, cmd, {
       expiresIn: PRESIGN_TTL_SECONDS,
+      // v548: unhoistableHeaders kosong + signableHeaders minimal supaya
+      // signature SDK match dgn header browser fetch (cuma Content-Type +
+      // Host). Tanpa ini, SDK auto-sign x-amz-checksum-* atau Cache-Control
+      // yang browser ga reproduce → 403/Failed to fetch.
+      signableHeaders: new Set(['host', 'content-type']),
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
