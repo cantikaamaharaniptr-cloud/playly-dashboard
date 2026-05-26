@@ -5368,6 +5368,21 @@ body[data-theme="light"] .ar-otp-display-muted .ar-otp-digit {
   letter-spacing: .06em;
   text-transform: uppercase;
 }
+/* Visual highlight kalau admin terdeteksi → field required, gold accent
+   border + tag berubah ke "WAJIB". User regular: tag tetap "khusus admin"
+   muted, border default — user tau field ini ada tapi gak harus diisi. */
+.auth-field-rkey.rkey-required input[name="recoveryKey"] {
+  border-color: rgba(220, 169, 109, .55);
+  box-shadow: 0 0 0 1px rgba(220, 169, 109, .14);
+}
+.auth-field-rkey.rkey-required .rkey-tag::after {
+  content: " · WAJIB";
+  font-weight: 800;
+}
+body[data-theme="light"] .auth-field-rkey.rkey-required input[name="recoveryKey"] {
+  border-color: rgba(180, 130, 70, .62);
+  box-shadow: 0 0 0 1px rgba(180, 130, 70, .18);
+}
 
 .rkey-display {
   display: flex;

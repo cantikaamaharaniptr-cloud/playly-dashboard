@@ -22775,32 +22775,40 @@ async function generateAndStoreAdminRecoveryKey(email) {
   }
 }
 
-// Auto show/hide Recovery Key field di forgotPwModal berdasarkan email
-// yang diketik. Show kalau email backup admin (not super admin, not regular user).
+// v563c: Field Recovery Key SELALU VISIBLE supaya user tau ada gate. Cuma
+// toggle status `required` + visual highlight berdasarkan email detection.
+// - Regular user / empty email → field optional (label muted)
+// - Backup admin detected → field required (label highlighted gold)
+// - Super admin → field optional (super admin di-block dari self-reset)
 function _refreshForgotRecoveryKeyField() {
   const form = document.getElementById("forgotPwForm");
   if (!form) return;
   const field = document.getElementById("forgotRecoveryKeyField");
   if (!field) return;
+  // Pastikan field selalu visible — abaikan attribute hidden lama
+  field.hidden = false;
+  field.removeAttribute("hidden");
+
   const idInput = form.querySelector('input[name="email"]');
   const id = (idInput?.value || "").trim().toLowerCase();
-  if (!id) {
-    field.hidden = true;
-    return;
-  }
   let email = id;
-  if (!id.includes("@")) {
+  if (id && !id.includes("@")) {
     const acct = typeof findAccountByUsername === "function" ? findAccountByUsername(id) : null;
     if (acct) email = (acct.email || "").toLowerCase();
   }
-  // Show ONLY untuk backup admin (admin allowlist tapi bukan super admin)
-  const isBackupAdmin = typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
-                        typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email);
-  field.hidden = !isBackupAdmin;
+  const isBackupAdmin = !!email &&
+    typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(email) &&
+    typeof isOfficialAdminEmail === "function" && !isOfficialAdminEmail(email);
+
   const rkeyInput = field.querySelector('input[name="recoveryKey"]');
   if (rkeyInput) {
-    if (isBackupAdmin) rkeyInput.setAttribute("required", "");
-    else { rkeyInput.removeAttribute("required"); rkeyInput.value = ""; }
+    if (isBackupAdmin) {
+      rkeyInput.setAttribute("required", "");
+      field.classList.add("rkey-required");
+    } else {
+      rkeyInput.removeAttribute("required");
+      field.classList.remove("rkey-required");
+    }
   }
 }
 
