@@ -23416,6 +23416,12 @@ body[data-theme="light"][data-role="admin"] .audit-section-head {
   background: rgba(173, 181, 189, .18);
   border: 1px solid rgba(173, 181, 189, .35);
 }
+/* User tier — distinct color (req 2026-05-26): muted cyan-blue, beda
+   visual dari admin/super-admin biar admin gampang scan user activity. */
+.audit-row[data-actor-tier="user"] .audit-icon {
+  background: rgba(120, 160, 200, .18);
+  border: 1px solid rgba(120, 160, 200, .35);
+}
 
 .inbox-row-avatar {
   width: 36px; height: 36px;

@@ -28291,7 +28291,81 @@ function getAuditEvents() {
       actorEmail: senderEmail
     });
   }
+  // === USER EVENTS (req 2026-05-26) ===
+  // Admin mau monitor pergerakan user — aggregate dari multiple sources:
+  // - Signup (createdAt dari akun)
+  // - Upload video (uploadedAt + creator dari videos array)
+  // - Premium purchase (payments log)
+  // - Like / follow / comment (notifications, kalau ada)
+  for (const ev of getUserEvents()) events.push(ev);
   events.sort((a, b) => b.ts - a.ts);
+  return events;
+}
+
+// === USER EVENTS aggregator (req 2026-05-26) ===
+// Kumpulkan aksi user platform (signup, upload, payment) jadi timeline
+// supaya admin bisa monitor pergerakan user di Log Audit.
+function getUserEvents() {
+  const events = [];
+  // 1. Signup events — dari getAllAccounts() (skip admin accounts)
+  try {
+    const accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : []) || [];
+    for (const a of accounts) {
+      if (!a || a.role === "admin") continue;
+      const ts = Number(a.createdAt || a.signupAt || 0);
+      if (!ts) continue;
+      events.push({
+        id: `usr-signup-${a.username}`,
+        ico: "👤",
+        text: `User <b>@${escapeHtml(a.username || "")}</b> daftar akun baru${a.tier === "premium" ? " (Premium)" : ""}`,
+        ts,
+        actorTier: "user",
+        actorEmail: (a.email || "").toLowerCase(),
+        actorUsername: a.username || ""
+      });
+    }
+  } catch {}
+  // 2. Upload video events — dari global videos array
+  try {
+    const vids = (typeof videos !== "undefined" && Array.isArray(videos)) ? videos : [];
+    for (const v of vids) {
+      if (!v) continue;
+      const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
+      if (!ts) continue;
+      const title = String(v.title || "(tanpa judul)").slice(0, 60);
+      events.push({
+        id: `usr-upload-${v.id}`,
+        ico: "🎬",
+        text: `<b>@${escapeHtml(v.creator || "?")}</b> upload video "<i>${escapeHtml(title)}</i>"`,
+        ts,
+        actorTier: "user",
+        actorEmail: "",
+        actorUsername: v.creator || ""
+      });
+    }
+  } catch {}
+  // 3. Premium purchase events — dari payments log (localStorage atau adminData)
+  try {
+    let payments = [];
+    try { payments = JSON.parse(localStorage.getItem("playly-payments") || "[]") || []; } catch {}
+    if (!payments.length) payments = (getAdminData("payments") || []) || [];
+    for (const p of payments) {
+      if (!p) continue;
+      const ts = Number(p.paidAt || p.ts || p.createdAt || 0);
+      if (!ts) continue;
+      const uname = p.username || p.user || "?";
+      const amt = p.amountLabel || (p.amount ? `$${p.amount}` : "");
+      events.push({
+        id: `usr-pay-${p.id || ts}-${uname}`,
+        ico: "💳",
+        text: `<b>@${escapeHtml(uname)}</b> upgrade ke Premium${amt ? ` (${escapeHtml(amt)})` : ""}`,
+        ts,
+        actorTier: "user",
+        actorEmail: "",
+        actorUsername: uname
+      });
+    }
+  } catch {}
   return events;
 }
 
@@ -28311,12 +28385,14 @@ function renderAuditStats(allEvents) {
   const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
   const today = allEvents.filter(e => e.ts >= startOfDay.getTime()).length;
   const week  = allEvents.filter(e => now - e.ts <= 7 * 86400000).length;
+  const userCount = allEvents.filter(e => e.actorTier === "user").length;
   let bcCount = 0;
   try { bcCount = (JSON.parse(localStorage.getItem("playly-admin-sent") || "[]") || []).length; } catch {}
 
   $("#auditStatToday")      && ($("#auditStatToday").textContent = today);
   $("#auditStatWeek")       && ($("#auditStatWeek").textContent  = week);
   $("#auditStatTotal")      && ($("#auditStatTotal").textContent = allEvents.length);
+  $("#auditStatUsers")      && ($("#auditStatUsers").textContent = userCount);
   $("#auditStatBroadcasts") && ($("#auditStatBroadcasts").textContent = bcCount);
 
   // Sidebar badge — total aksi hari ini
@@ -28346,6 +28422,7 @@ function renderAuditTimeline(filter, query) {
   if (isSuper) {
     if (__auditActor === "super-admin") filtered = filtered.filter(e => e.actorTier === "super-admin");
     else if (__auditActor === "admin")  filtered = filtered.filter(e => e.actorTier === "admin");
+    else if (__auditActor === "user")   filtered = filtered.filter(e => e.actorTier === "user");
   }
   if (query) {
     const q = query.toLowerCase();
@@ -28360,25 +28437,38 @@ function renderAuditTimeline(filter, query) {
     return;
   }
 
-  const renderRow = (e) => `
-    <div class="audit-row" data-actor-tier="${e.actorTier || "admin"}">
+  const tierMeta = (tier) => {
+    if (tier === "super-admin") return "👑";
+    if (tier === "user") return "👤";
+    return "🛡️";
+  };
+  const renderRow = (e) => {
+    const tier = e.actorTier || "admin";
+    const metaIdent = (tier === "user")
+      ? (e.actorUsername ? `@${escapeHtml(e.actorUsername)}` : "")
+      : escapeHtml(e.actorEmail || "");
+    return `
+    <div class="audit-row" data-actor-tier="${tier}">
       <div class="audit-icon">${e.ico}</div>
       <div class="audit-text">
         ${e.text}
-        ${isSuper && e.actorEmail ? `<small class="audit-actor-meta">${e.actorTier === "super-admin" ? "👑" : "🛡️"} ${escapeHtml(e.actorEmail)}</small>` : ""}
+        ${isSuper && metaIdent ? `<small class="audit-actor-meta">${tierMeta(tier)} ${metaIdent}</small>` : ""}
       </div>
       <small class="audit-time" title="${new Date(e.ts).toLocaleString("id-ID")}">${chatRelTime(e.ts) || "—"}</small>
     </div>`;
+  };
 
-  // Super admin + actor filter "all" → split jadi 2 section. Filter spesifik
-  // ("super-admin" / "admin") atau admin biasa → tampil flat list seperti dulu.
+  // Super admin + actor filter "all" → split jadi 3 section (Super Admin /
+  // Admin / User). Filter spesifik → tampil flat list.
   const showSplit = isSuper && (__auditActor === "all" || !__auditActor);
   if (showSplit) {
     const isIDA = (typeof currentLang === "function") ? (currentLang() === "id") : true;
     const superEvents = filtered.filter(e => e.actorTier === "super-admin").slice(0, 100);
     const adminEvents = filtered.filter(e => e.actorTier === "admin").slice(0, 100);
+    const userEvents  = filtered.filter(e => e.actorTier === "user").slice(0, 100);
     const superHead = isIDA ? "Aktivitas Super Admin" : "Super Admin Activity";
     const adminHead = isIDA ? "Aktivitas Admin Biasa" : "Admin Activity";
+    const userHead  = isIDA ? "Aktivitas User"        : "User Activity";
     const sectionEmpty = (kind) => {
       const msg = isIDA ? `Tidak ada aksi ${kind} di periode ini.` : `No ${kind} actions in this period.`;
       return `<div class="audit-empty" style="padding:18px"><p style="margin:0;font-size:12.5px">${msg}</p></div>`;
@@ -28403,6 +28493,16 @@ function renderAuditTimeline(filter, query) {
         <div class="audit-section-body">
           ${adminEvents.length ? adminEvents.map(renderRow).join("") : sectionEmpty(isIDA ? "admin biasa" : "admin")}
         </div>
+      </div>
+      <div class="audit-section">
+        <div class="audit-section-head">
+          <span class="audit-section-icon">👤</span>
+          <h4>${userHead}</h4>
+          <span class="audit-section-count">${userEvents.length}</span>
+        </div>
+        <div class="audit-section-body">
+          ${userEvents.length ? userEvents.map(renderRow).join("") : sectionEmpty(isIDA ? "user" : "user")}
+        </div>
       </div>`;
   } else {
     // Filter spesifik (super-admin / admin) atau admin biasa →
@@ -28416,6 +28516,9 @@ function renderAuditTimeline(filter, query) {
     } else if (__auditActor === "admin") {
       head = isIDA ? "Aktivitas Admin Biasa" : "Admin Activity";
       icon = "🛡️";
+    } else if (__auditActor === "user") {
+      head = isIDA ? "Aktivitas User" : "User Activity";
+      icon = "👤";
     } else {
       head = isIDA ? "Aktivitas Saya" : "My Activity";
       icon = "📋";
