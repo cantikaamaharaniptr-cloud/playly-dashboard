@@ -5540,6 +5540,1222 @@ body[data-role="admin"] #forgotPwModal .modal-actions .btn.primary:hover {
     inset 0 1px 0 rgba(255, 255, 255, .18) !important;
 }
 
+/* ============================================================
+   ONBOARDING TOUR — first-time user (v569)
+   Per request user 2026-05-26: tampilkan 4-step tour ke user baru
+   (Upload, Discover, Profile, Settings). Spotlight pakai box-shadow
+   trick — outer huge shadow di element kecil = backdrop dark + cutout.
+   ============================================================ */
+.onboarding-root {
+  position: fixed;
+  inset: 0;
+  z-index: 99996;
+  pointer-events: none;
+}
+.onboarding-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, .72);
+  pointer-events: none;
+  transition: all .35s cubic-bezier(.4, 0, .2, 1);
+  outline: 2px solid rgba(220, 169, 109, .55);
+  outline-offset: 1px;
+  animation: obPulse 2.2s ease-in-out infinite;
+}
+@keyframes obPulse {
+  0%, 100% { outline-color: rgba(220, 169, 109, .55); }
+  50%      { outline-color: rgba(220, 169, 109, .95); }
+}
+body[data-role="admin"] .onboarding-spotlight {
+  outline-color: rgba(154, 170, 196, .55);
+  animation: obPulseAdmin 2.2s ease-in-out infinite;
+}
+@keyframes obPulseAdmin {
+  0%, 100% { outline-color: rgba(154, 170, 196, .55); }
+  50%      { outline-color: rgba(154, 170, 196, .95); }
+}
+body.reduced-motion .onboarding-spotlight { animation: none; }
+.onboarding-tooltip {
+  position: fixed;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .35);
+  pointer-events: auto;
+  animation: obFadeIn .25s cubic-bezier(.4, 0, .2, 1);
+}
+@keyframes obFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.onboarding-step-num,
+.onboarding-step-pill {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--gold, #DCA96D);
+  margin-bottom: 10px;
+}
+.onboarding-step-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(220, 169, 109, .14);
+  border: 1px solid rgba(220, 169, 109, .35);
+  font-size: 10px;
+}
+body[data-role="admin"] .onboarding-step-num,
+body[data-role="admin"] .onboarding-step-pill {
+  color: #9AAAC4;
+}
+body[data-role="admin"] .onboarding-step-pill {
+  background: rgba(154, 170, 196, .14);
+  border-color: rgba(154, 170, 196, .35);
+}
+
+/* Welcome step — center modal dengan backdrop full */
+.onboarding-root-welcome {
+  pointer-events: auto;
+}
+.onboarding-backdrop-full {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .72);
+  animation: obFadeIn .25s ease;
+}
+.onboarding-welcome-card {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+  width: 420px !important;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  padding: 28px 28px 22px !important;
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border-strong);
+}
+.onboarding-title-welcome {
+  font-size: 20px !important;
+  margin-bottom: 12px !important;
+  line-height: 1.25 !important;
+}
+.onboarding-welcome-card::before {
+  display: none !important;
+}
+.onboarding-welcome-card .onboarding-actions {
+  margin-top: 8px;
+}
+.onboarding-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+.onboarding-body {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.onboarding-progress {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 14px;
+  justify-content: center;
+}
+.onboarding-dot {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  transition: all .25s;
+}
+.onboarding-dot.done {
+  background: rgba(220, 169, 109, .55);
+}
+.onboarding-dot.active {
+  background: var(--gold, #DCA96D);
+  width: 32px;
+}
+body[data-role="admin"] .onboarding-dot.done   { background: rgba(154, 170, 196, .55); }
+body[data-role="admin"] .onboarding-dot.active { background: #9AAAC4; }
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.onboarding-actions-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+/* v569d: button styling jelas — Skip ghost text-only, Kembali proper button
+   dengan border supaya terlihat jelas sebagai action. */
+.onboarding-skip {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 7px;
+  transition: all .15s;
+}
+.onboarding-skip:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.onboarding-prev {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 7px 14px;
+  border-radius: 8px;
+  transition: all .15s;
+}
+.onboarding-prev:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+body[data-role="admin"] .onboarding-prev {
+  background: rgba(154, 170, 196, .08);
+  border-color: rgba(154, 170, 196, .25);
+  color: var(--text);
+}
+body[data-role="admin"] .onboarding-prev:hover {
+  background: rgba(154, 170, 196, .14);
+  border-color: rgba(154, 170, 196, .4);
+}
+.onboarding-next {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .02em;
+}
+.onboarding-next:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .4);
+}
+body[data-role="admin"] .onboarding-next {
+  background: linear-gradient(135deg, #4A5E80 0%, #1C283C 100%);
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+body[data-role="admin"] .onboarding-next:hover {
+  background: linear-gradient(135deg, #5A6E92 0%, #2A3955 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+/* Tooltip arrow — pseudo-element rotate 45 deg */
+.onboarding-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  transform: rotate(45deg);
+  z-index: -1;
+}
+.onboarding-arrow-top::before    { top: -7px; left: 50%; margin-left: -6px; border-right: 0; border-bottom: 0; }
+.onboarding-arrow-bottom::before { bottom: -7px; left: 50%; margin-left: -6px; border-left: 0; border-top: 0; }
+.onboarding-arrow-left::before   { left: -7px; top: 50%; margin-top: -6px; border-right: 0; border-top: 0; }
+.onboarding-arrow-right::before  { right: -7px; top: 50%; margin-top: -6px; border-left: 0; border-bottom: 0; }
+
+/* Mobile: smaller tooltip + simpler positioning */
+@media (max-width: 640px) {
+  .onboarding-tooltip {
+    width: calc(100vw - 24px) !important;
+    left: 12px !important;
+    padding: 14px 16px;
+  }
+  .onboarding-tooltip::before { display: none; }
+}
+
+/* Reduced motion */
+body.reduced-motion .onboarding-spotlight,
+body.reduced-motion .onboarding-tooltip {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* v569f: Tour completion modal — centered popup, celebration style */
+.ob-complete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99997;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: obCompleteFadeIn .3s cubic-bezier(.4, 0, .2, 1);
+}
+@keyframes obCompleteFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.ob-complete-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.ob-complete-card {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 32px 28px 26px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, .55),
+    0 4px 12px rgba(0, 0, 0, .35);
+  animation: obCompleteSlideUp .35s cubic-bezier(.4, 0, .2, 1);
+}
+@keyframes obCompleteSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ob-complete-icon {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  /* v569g: ganti dari green check ke trophy gold-wine match Playly palette */
+  background: linear-gradient(135deg, rgba(220, 169, 109, .22), rgba(139, 58, 78, .12));
+  border: 1.5px solid rgba(220, 169, 109, .55);
+  color: var(--gold, #DCA96D);
+  box-shadow:
+    0 0 0 6px rgba(220, 169, 109, .10),
+    0 8px 22px rgba(139, 58, 78, .35),
+    inset 0 1px 0 rgba(255, 255, 255, .14);
+  animation: obIconPop .5s cubic-bezier(.34, 1.56, .64, 1) .1s both;
+}
+body[data-role="admin"] .ob-complete-icon {
+  background: linear-gradient(135deg, rgba(154, 170, 196, .22), rgba(60, 80, 120, .14));
+  border-color: rgba(154, 170, 196, .55);
+  color: #C8D4E5;
+  box-shadow:
+    0 0 0 6px rgba(154, 170, 196, .10),
+    0 8px 22px rgba(28, 40, 60, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+.ob-complete-icon svg {
+  width: 32px;
+  height: 32px;
+}
+@keyframes obIconPop {
+  from { opacity: 0; transform: scale(.4); }
+  60%  { opacity: 1; transform: scale(1.15); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.ob-complete-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.ob-complete-body {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.ob-complete-actions {
+  display: flex;
+  justify-content: center;
+}
+.ob-complete-cta {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s;
+  letter-spacing: .02em;
+  box-shadow: 0 4px 12px rgba(109, 41, 50, .4);
+}
+.ob-complete-cta:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(109, 41, 50, .5);
+}
+/* Admin context — chrome gradient match identity */
+body[data-role="admin"] .ob-complete-cta {
+  background: linear-gradient(135deg, #4A5E80 0%, #1C283C 100%);
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 4px 12px rgba(28, 40, 60, .45), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+body[data-role="admin"] .ob-complete-cta:hover {
+  background: linear-gradient(135deg, #5A6E92 0%, #2A3955 100%);
+  box-shadow: 0 6px 18px rgba(28, 40, 60, .55), inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+/* Reduced motion */
+body.reduced-motion .ob-complete-modal,
+body.reduced-motion .ob-complete-card,
+body.reduced-motion .ob-complete-icon {
+  animation: none !important;
+}
+
+/* ============================================================
+   COMMENT SYSTEM v570 — threaded comments dengan reply, like, report
+   ============================================================ */
+.comment-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.comment-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.comment-item:last-child { border-bottom: 0; }
+.comment-item.comment-reply {
+  padding: 10px 0;
+  border-bottom: 0;
+  border-top: 1px dashed var(--border);
+}
+.comment-body { flex: 1; min-width: 0; }
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.comment-meta strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.comment-meta .time {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.comment-text {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.comment-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ca-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.ca-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.ca-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.ca-btn.ca-like.active {
+  color: var(--primary, #6D2932);
+  background: var(--primary-soft, rgba(109, 41, 50, .12));
+}
+.ca-btn.ca-like.active:hover {
+  background: rgba(109, 41, 50, .18);
+}
+.ca-btn.ca-report.active {
+  color: #ef4444;
+  background: rgba(239, 68, 68, .10);
+}
+.ca-btn.ca-report.active:hover {
+  background: rgba(239, 68, 68, .16);
+}
+body[data-role="admin"] .ca-btn.ca-like.active {
+  color: #9AAAC4;
+  background: rgba(154, 170, 196, .14);
+}
+
+/* Reply form */
+.comment-reply-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.comment-reply-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 13px;
+}
+.comment-reply-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(220, 169, 109, .14);
+}
+
+/* Nested replies indented */
+.comment-replies {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+/* Avatar size tiny untuk replies */
+.avatar.tiny {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+/* ============================================================
+   GLOBAL SEARCH SUGGESTIONS DROPDOWN v570
+   ============================================================ */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .25);
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 9990;
+  display: none;
+}
+.search-suggestions.show { display: block; }
+.search-suggestions .ss-section {
+  padding: 8px 0;
+}
+.search-suggestions .ss-section + .ss-section {
+  border-top: 1px solid var(--border);
+}
+.search-suggestions .ss-section-title {
+  padding: 6px 14px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.search-suggestions .ss-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background .12s;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+}
+.search-suggestions .ss-item:hover,
+.search-suggestions .ss-item:focus-visible {
+  background: var(--surface-2);
+}
+.search-suggestions .ss-thumb {
+  width: 44px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.search-suggestions .ss-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.search-suggestions .ss-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.search-suggestions .ss-info {
+  flex: 1;
+  min-width: 0;
+}
+.search-suggestions .ss-info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-suggestions .ss-info small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.search-suggestions .ss-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.search-suggestions mark {
+  background: rgba(220, 169, 109, .25);
+  color: inherit;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   SEARCH ENHANCEMENTS v573 — history, see all, results overlay
+   ============================================================ */
+.ss-section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+}
+.ss-section-title-row .ss-section-title {
+  padding: 0;
+}
+.ss-clear-history {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.ss-clear-history:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.ss-item-history { position: relative; }
+.ss-thumb-history {
+  background: var(--surface-2);
+  font-size: 16px;
+}
+.ss-remove-history {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ss-remove-history:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.ss-footer {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.ss-see-all {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+}
+.ss-see-all:hover {
+  background: var(--surface-3);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Search Results Overlay (full-page modal) */
+.sr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99995;
+  display: none;
+}
+.sr-overlay.show { display: block; }
+.sr-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .68);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.sr-panel {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100vw - 48px);
+  max-width: 1180px;
+  height: calc(100vh - 48px);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  animation: srSlideIn .3s cubic-bezier(.4, 0, .2, 1);
+}
+@keyframes srSlideIn {
+  from { opacity: 0; transform: translate(-50%, 16px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.sr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.sr-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sr-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sr-close-btn:hover { background: var(--surface-3); }
+.sr-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+.sr-subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.sr-query-input {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+}
+.sr-query-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(220, 169, 109, .14);
+}
+.sr-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+.sr-sidebar {
+  width: 240px;
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sr-filter-group { margin-bottom: 22px; }
+.sr-filter-group h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.sr-chip {
+  display: inline-block;
+  margin: 4px 4px 0 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sr-chip:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+.sr-chip.active {
+  background: var(--primary-soft, rgba(109, 41, 50, .14));
+  color: var(--primary, #6D2932);
+  border-color: var(--primary, #6D2932);
+}
+body[data-role="admin"] .sr-chip.active {
+  background: rgba(154, 170, 196, .14);
+  color: #9AAAC4;
+  border-color: rgba(154, 170, 196, .55);
+}
+.sr-content {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+.sr-section { margin-bottom: 28px; }
+.sr-section-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.sr-creators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.sr-creator-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: all .15s;
+}
+.sr-creator-card:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.sr-creator-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.sr-creator-info { flex: 1; min-width: 0; }
+.sr-creator-info strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.sr-creator-info small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.sr-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.sr-video-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: all .15s;
+}
+.sr-video-card:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.sr-video-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--muted);
+  overflow: hidden;
+}
+.sr-video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sr-video-info strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sr-video-info small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.sr-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+.sr-empty-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+  opacity: .6;
+}
+.sr-empty h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--text);
+}
+.sr-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (max-width: 768px) {
+  .sr-panel {
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    border-radius: 0;
+  }
+  .sr-body { flex-direction: column; }
+  .sr-sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+  .sr-filter-group { margin-bottom: 12px; display: inline-block; margin-right: 14px; }
+}
+
+/* ============================================================
+   USER AUDIT LOG v572 — Riwayat Aktivitas Akun di Pengaturan
+   ============================================================ */
+.user-audit-card .user-audit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.user-audit-card .user-audit-head h3 { margin: 0 0 4px; }
+.user-audit-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.audit-filter-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.audit-filter-btn:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.audit-filter-btn.active {
+  background: var(--primary-soft, rgba(109, 41, 50, .14));
+  color: var(--primary, #6D2932);
+  border-color: var(--primary, #6D2932);
+}
+body[data-role="admin"] .audit-filter-btn.active {
+  background: rgba(154, 170, 196, .14);
+  color: #9AAAC4;
+  border-color: rgba(154, 170, 196, .55);
+}
+.user-audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.audit-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.audit-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: background .12s;
+}
+.audit-row:hover { background: var(--surface-2); }
+.audit-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.audit-info { flex: 1; min-width: 0; }
+.audit-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+.audit-action-row strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.audit-type-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.audit-details {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.audit-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   SESSION MANAGEMENT v571 — Sesi Aktif card di Pengaturan
+   ============================================================ */
+.sessions-card .sessions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.sessions-card .sessions-head h3 {
+  margin: 0 0 4px;
+}
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sessions-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all .15s;
+}
+.session-row.session-current {
+  background: linear-gradient(135deg, rgba(220, 169, 109, .08), rgba(220, 169, 109, .02));
+  border-color: rgba(220, 169, 109, .35);
+}
+body[data-role="admin"] .session-row.session-current {
+  background: linear-gradient(135deg, rgba(154, 170, 196, .10), rgba(154, 170, 196, .02));
+  border-color: rgba(154, 170, 196, .35);
+}
+.session-icon {
+  font-size: 26px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.session-row.session-current .session-icon {
+  background: rgba(220, 169, 109, .14);
+}
+body[data-role="admin"] .session-row.session-current .session-icon {
+  background: rgba(154, 170, 196, .14);
+}
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+.session-device-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.session-device-row strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.session-badge-current {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(220, 169, 109, .14);
+  border: 1px solid rgba(220, 169, 109, .42);
+  color: var(--gold, #DCA96D);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+body[data-role="admin"] .session-badge-current {
+  background: rgba(154, 170, 196, .14);
+  border-color: rgba(154, 170, 196, .42);
+  color: #9AAAC4;
+}
+.session-meta {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.session-actions {
+  flex-shrink: 0;
+}
+.session-current-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success, #10B981);
+}
+.session-revoke {
+  font-size: 12.5px;
+}
+.session-revoke:hover {
+  background: rgba(239, 68, 68, .10);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, .35);
+}
+
 /* v568: forgotPwModal buttons rata kanan + compact. Warna Reset Kata Sandi
    ganti dari merah → wine-gold gradient untuk match palette Playly. */
 #forgotPwModal .modal-actions {
@@ -67451,3 +68667,542 @@ body[data-theme="light"]:not([data-role="admin"]) .notif-empty-tips li {
 .top-perf-empty-rich .tpe-cta {
   /* inherit .btn .primary .sm */
 }
+
+/* =========================================================================
+   v575 — EMPTY-STATE ILUSTRASI (item 24)
+   Pattern: tambahkan class .empty-rich-v24 ke container existing
+   (mis. .lib-inline-comments-empty, .storage-empty, .riwayat-empty,
+    .ndd-empty). Struktur DOM:
+     <div class="<existing> empty-rich-v24">
+       <div class="er-illust" aria-hidden="true">[svg]</div>
+       <h4 class="er-title">Judul</h4>
+       <p class="er-copy">Deskripsi pendek + arahan</p>
+       <button class="er-cta btn primary sm">CTA</button> (opsional)
+     </div>
+   ========================================================================= */
+.empty-rich-v24 {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 28px 18px !important;
+  color: var(--text-2) !important;
+  background: transparent;
+  font-size: 13px !important;
+  line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: 14px;
+  animation: erFadeIn .35s ease-out;
+}
+body[data-theme="light"] .empty-rich-v24 {
+  border-color: rgba(28,40,60,0.10);
+}
+@keyframes erFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.empty-rich-v24 .er-illust {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%,
+    rgba(190,151,82,0.10) 0%,
+    rgba(190,151,82,0.04) 55%,
+    transparent 80%);
+  margin-bottom: 4px;
+  animation: erFloat 4.5s ease-in-out infinite;
+}
+body[data-role="admin"] .empty-rich-v24 .er-illust {
+  background: radial-gradient(circle at 50% 45%,
+    rgba(140,160,195,0.10) 0%,
+    rgba(140,160,195,0.04) 55%,
+    transparent 80%);
+}
+@keyframes erFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-rich-v24 .er-illust { animation: none; }
+  .empty-rich-v24 { animation: none; }
+}
+.empty-rich-v24 .er-illust svg {
+  width: 44px;
+  height: 44px;
+  /* v580c: jangan pakai var(--text-3) → ini slate-blue admin yang "bocor".
+     Default neutral warm (cocok dengan palette user wine+gold). Admin di-override
+     di bawah. */
+  stroke: #8a7a66;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  overflow: visible;
+}
+body[data-role="admin"] .empty-rich-v24 .er-illust svg {
+  stroke: #8ca0c3;  /* slate-blue khusus admin */
+}
+body[data-theme="light"]:not([data-role="admin"]) .empty-rich-v24 .er-illust svg {
+  stroke: #9c8a73;  /* warm taupe di light theme user */
+}
+.empty-rich-v24 .er-illust .er-acc {
+  stroke: #BE9752;
+  fill: none;                       /* v580b: hilangkan fill yang nge-bocor di open path */
+}
+.empty-rich-v24 .er-illust .er-acc-fill {
+  stroke: #BE9752;
+  fill: #BE9752;                    /* untuk dot/circle yang memang harus filled */
+}
+body[data-role="admin"] .empty-rich-v24 .er-illust .er-acc { stroke: #8ca0c3; }
+body[data-role="admin"] .empty-rich-v24 .er-illust .er-acc-fill {
+  stroke: #8ca0c3;
+  fill: #8ca0c3;
+}
+.empty-rich-v24 .er-title {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0.1px;
+}
+.empty-rich-v24 .er-copy {
+  margin: 0;
+  max-width: 280px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.empty-rich-v24 .er-cta {
+  margin-top: 6px;
+}
+/* v580: fix kontras tombol CTA empty-state — sebelumnya inherit ghost-wine
+   global (transparent + wine outline) → invisible di dark surface. Solid wine
+   filled supaya jelas keliatan. */
+body:not([data-role="admin"]) .empty-rich-v24 .er-cta.btn.primary,
+body:not([data-role="admin"]) .empty-rich-v24 .er-cta.btn.primary:focus,
+body:not([data-role="admin"]) .empty-rich-v24 .er-cta.btn.primary:active {
+  background: linear-gradient(135deg, #6D2932 0%, #5A2129 100%) !important;
+  color: #F8E9C9 !important;
+  border: 1px solid #6D2932 !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+body:not([data-role="admin"]) .empty-rich-v24 .er-cta.btn.primary:hover {
+  background: linear-gradient(135deg, #7d3640 0%, #6a2832 100%) !important;
+  color: #FFF1D2 !important;
+  border-color: #7d3640 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .empty-rich-v24 .er-cta.btn.primary {
+  background: linear-gradient(135deg, #8B3A44 0%, #6D2932 100%) !important;
+  color: #FFFFFF !important;
+  border-color: #6D2932 !important;
+}
+/* Inline variant (smaller, no border) untuk konteks padat seperti
+   notif dropdown atau komentar inline */
+.empty-rich-v24.er-inline {
+  border: none;
+  padding: 22px 14px !important;
+  gap: 6px;
+}
+.empty-rich-v24.er-inline .er-illust {
+  width: 56px;
+  height: 56px;
+}
+.empty-rich-v24.er-inline .er-illust svg {
+  width: 32px;
+  height: 32px;
+}
+.empty-rich-v24.er-inline .er-title { font-size: 13px; }
+.empty-rich-v24.er-inline .er-copy { font-size: 12px; }
+
+/* Specificity override: existing class properties seperti text-align/font-size
+   sudah declared; pakai !important di atas untuk amankan ringkas. Tapi untuk
+   .riwayat-empty di scope user kita perlu override min-height/padding lagi: */
+body:not([data-role="admin"]) .riwayat-section .riwayat-empty.empty-rich-v24 {
+  padding: 28px 18px !important;
+  font-size: 13px;
+}
+/* ============== END v575 ============== */
+
+/* =========================================================================
+   v576 — KONTRAS FIX (3 targeted spots)
+   Issue: button `.btn.primary` di user-role di-force jadi ghost (transparent
+   + wine border + wine text) oleh override global di sekitar line 32814.
+   Akibatnya: + Ikuti di people-card, Mulai Baru di DM overview, dan count
+   pill `.inbox-col-count` semua jadi dark-wine-on-dark — hampir invisible.
+   Plus chip-tabs button.active (Semua di Activity page) juga low-contrast.
+   Fix: scoped overrides high-specificity dengan !important untuk menang
+   spec war vs override global.
+   ========================================================================= */
+
+/* (1) People card — + Follow button jadi solid wine (filled, bukan ghost) */
+body:not([data-role="admin"]) .people-card .people-actions .btn.primary,
+body:not([data-role="admin"]) .people-card .people-actions .btn.primary:focus,
+body:not([data-role="admin"]) .people-card .people-actions .btn.primary:active {
+  background: linear-gradient(135deg, #6D2932 0%, #5A2129 100%) !important;
+  color: #F8E9C9 !important;
+  border: 1px solid #6D2932 !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+body:not([data-role="admin"]) .people-card .people-actions .btn.primary:hover {
+  background: linear-gradient(135deg, #7d3640 0%, #6a2832 100%) !important;
+  color: #FFF1D2 !important;
+  border-color: #7d3640 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .people-card .people-actions .btn.primary,
+body[data-theme="light"]:not([data-role="admin"]) .people-card .people-actions .btn.primary:focus,
+body[data-theme="light"]:not([data-role="admin"]) .people-card .people-actions .btn.primary:active {
+  background: linear-gradient(135deg, #8B3A44 0%, #6D2932 100%) !important;
+  color: #FFFFFF !important;
+  border-color: #6D2932 !important;
+}
+
+/* (2) Activity page chip-tabs — active state filled wine + cream text */
+body:not([data-role="admin"]) #activityFilters.chip-tabs button.active,
+body:not([data-role="admin"]) .notif-page-filters.chip-tabs button.active {
+  background: linear-gradient(135deg, #6D2932 0%, #5A2129 100%) !important;
+  color: #F8E9C9 !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #activityFilters.chip-tabs button.active,
+body[data-theme="light"]:not([data-role="admin"]) .notif-page-filters.chip-tabs button.active {
+  background: linear-gradient(135deg, #8B3A44 0%, #6D2932 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* (3) DM overview cards — UNIFIED button style. Tombol Mulai Baru /
+   Preferensi / Privasi DM dibuat sama dengan icon box kolom (`.inbox-col-icon`):
+   neutral surface-2 background + subtle border, mengikuti warna text default. */
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.primary,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.primary:focus,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.primary:active,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.ghost,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.ghost:focus,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.ghost:active {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.primary:hover,
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn.ghost:hover {
+  background: var(--bg-elev-2, var(--surface-2)) !important;
+  color: var(--text) !important;
+  border-color: var(--border-strong, var(--border)) !important;
+  filter: brightness(1.08);
+}
+/* SVG icon di dalam button ikut currentColor */
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .btn svg {
+  stroke: currentColor !important;
+}
+
+/* Count pill "0" di DM overview — samakan dengan icon-box (surface-2 +
+   border default), supaya seragam dengan tombol di kolom yang sama. */
+body:not([data-role="admin"]) #dmOverview .inbox-col-count {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+/* ============== END v576 ============== */
+
+/* =========================================================================
+   v577 — DM overview: Mulai Baru jadi tombol ikon "+" saja, Preferensi
+   & Privasi DM dihapus. Tombol "+" tetap fungsi sama (id #dmOvNew →
+   handler existing). Bentuk: pill square sesuai count pill style.
+   ========================================================================= */
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .dm-ov-new-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  flex: 0 0 auto !important;
+}
+body:not([data-role="admin"]) #dmOverview .inbox-col-actions .dm-ov-new-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  stroke: currentColor !important;
+}
+/* Count pill "0" — ikut bentuk tombol "+" (bundar 28×28, padding 0) */
+body:not([data-role="admin"]) #dmOverview .inbox-col-count {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+}
+/* ============== END v577 ============== */
+
+/* =========================================================================
+   v579 — Inbox: hapus "Seed demo" + "+ Pesan Baru" dari view-actions.
+   Search bar dipindah ke baris tabs, posisinya di kanan tab "Arsip".
+   ========================================================================= */
+.dm-tabs-search-row-v579 {
+  display: flex;
+  align-items: stretch;       /* samakan tinggi child */
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: nowrap;
+}
+.dm-tabs-search-row-v579 .dm-section-tabs {
+  flex: 0 0 auto;
+  margin-bottom: 0;           /* override default 14px */
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar { height: 4px; }
+.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+.dm-tabs-search-row-v579 .dm-section-tab { white-space: nowrap; flex-shrink: 0; }
+
+/* Search box: lebar fixed di kanan, tinggi match tabs (via align-items:stretch).
+   Push ke kanan dengan margin-left:auto, padding-y diturunkan supaya match
+   tinggi tab strip (~36-40px). */
+.dm-tabs-search-row-v579 .dm-ov-search-inline {
+  flex: 0 0 auto;
+  width: 320px;
+  margin: 0 0 0 auto;         /* push kanan, no bottom margin */
+  padding-top: 6px;
+  padding-bottom: 6px;
+  display: flex;
+  align-items: center;
+}
+.dm-tabs-search-row-v579 .dm-ov-search-inline input {
+  font-size: 13px;
+}
+
+@media (max-width: 980px) {
+  .dm-tabs-search-row-v579 .dm-ov-search-inline { width: 240px; }
+}
+@media (max-width: 720px) {
+  .dm-tabs-search-row-v579 { flex-wrap: wrap; align-items: center; }
+  .dm-tabs-search-row-v579 .dm-ov-search-inline {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+/* ============== END v579 ============== */
+
+/* =========================================================================
+   v581 — Stats KPI card polish
+   - Icon box: 36 → 44px, border-radius 12, dual-shadow (soft halo + gold rim)
+   - Stat card: tambah subtle gradient bg + border highlight on hover
+   - Spark line: lebih halus, pakai gold accent supaya pop di wine box
+   ========================================================================= */
+body:not([data-role="admin"]) [data-view="stats"] .stat-card {
+  background: linear-gradient(180deg,
+    rgba(125,54,64,0.06) 0%,
+    rgba(28,40,60,0.0) 60%),
+    var(--bg-elev);
+  border: 1px solid rgba(190,151,82,0.10);
+  position: relative;
+  overflow: hidden;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(190,151,82,0.5) 30%,
+    rgba(190,151,82,0.5) 70%,
+    transparent 100%);
+  opacity: 0.65;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-card:hover {
+  border-color: rgba(190,151,82,0.28);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.32),
+    0 0 0 1px rgba(190,151,82,0.10) inset;
+}
+
+body:not([data-role="admin"]) [data-view="stats"] .stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--c1, #7d3640) 0%, var(--c2, #561C24) 100%);
+  position: relative;
+  margin-bottom: 14px;
+  box-shadow:
+    0 6px 16px rgba(109,41,50,0.40),
+    0 0 0 1px rgba(190,151,82,0.18) inset,
+    0 1px 0 rgba(255,255,255,0.06) inset;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%,
+    rgba(255,255,255,0.18) 0%,
+    transparent 55%);
+  pointer-events: none;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-icon svg {
+  width: 22px;
+  height: 22px;
+  color: #F5E3C0;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+
+/* Stat label sedikit lebih lega + warm tone */
+body:not([data-role="admin"]) [data-view="stats"] .stat-label {
+  color: #BFA98A;
+  font-size: 10.5px;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-value {
+  color: #F5E3C0;
+  letter-spacing: -.03em;
+}
+body:not([data-role="admin"]) [data-view="stats"] .stat-trend.neutral {
+  background: rgba(190,151,82,0.08);
+  color: #BFA98A;
+}
+
+/* Light theme */
+body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-card {
+  background: linear-gradient(180deg,
+    rgba(125,54,64,0.04) 0%,
+    transparent 60%),
+    var(--bg-elev);
+  border-color: rgba(109,41,50,0.14);
+}
+body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-icon {
+  box-shadow:
+    0 4px 12px rgba(109,41,50,0.25),
+    0 0 0 1px rgba(190,151,82,0.25) inset,
+    0 1px 0 rgba(255,255,255,0.20) inset;
+}
+body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-icon svg {
+  color: #FFF1D2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-role="admin"]) [data-view="stats"] .stat-card:hover { transform: none; }
+}
+/* ============== END v581 ============== */
+
+/* =========================================================================
+   v582 — Section header icon box (consistent dengan KPI .stat-icon)
+   Pakai class .sec-icon-v582 sebagai inline-flex wine gradient box.
+   Size variants:
+     default  → 32px (h3 / h4)
+     .sec-icon-lg → 40px (h2 page title)
+     .sec-icon-sm → 26px (top-perf-col-title)
+   ========================================================================= */
+.sec-icon-v582 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
+  color: #F5E3C0;
+  vertical-align: -7px;
+  position: relative;
+  box-shadow:
+    0 4px 12px rgba(109,41,50,0.32),
+    0 0 0 1px rgba(190,151,82,0.18) inset,
+    0 1px 0 rgba(255,255,255,0.06) inset;
+  flex-shrink: 0;
+}
+.sec-icon-v582::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%,
+    rgba(255,255,255,0.16) 0%,
+    transparent 55%);
+  pointer-events: none;
+}
+.sec-icon-v582 svg {
+  width: 17px;
+  height: 17px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.22));
+}
+.sec-icon-v582.sec-icon-lg {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  margin-right: 12px;
+  vertical-align: -10px;
+}
+.sec-icon-v582.sec-icon-lg svg { width: 22px; height: 22px; }
+.sec-icon-v582.sec-icon-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  margin-right: 8px;
+  vertical-align: -6px;
+}
+.sec-icon-v582.sec-icon-sm svg { width: 14px; height: 14px; }
+
+/* Admin role: pakai slate-blue gradient */
+body[data-role="admin"] .sec-icon-v582 {
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%);
+  color: #E8EEF5;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset,
+    0 1px 0 rgba(255,255,255,0.06) inset;
+}
+
+/* Light theme — sedikit lebih subtle shadow */
+body[data-theme="light"]:not([data-role="admin"]) .sec-icon-v582 {
+  box-shadow:
+    0 3px 10px rgba(109,41,50,0.22),
+    0 0 0 1px rgba(190,151,82,0.25) inset,
+    0 1px 0 rgba(255,255,255,0.20) inset;
+}
+
+/* Boost .mc-icon (mini chart title) — sebelumnya weak surface bg, sekarang
+   selaraskan dengan sec-icon-v582 di user role. */
+body:not([data-role="admin"]) [data-view="stats"] .mc-icon {
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+  color: #F5E3C0;
+  border-radius: 9px;
+  box-shadow:
+    0 4px 10px rgba(109,41,50,0.28),
+    0 0 0 1px rgba(190,151,82,0.16) inset;
+  position: relative;
+}
+body:not([data-role="admin"]) [data-view="stats"] .mc-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%,
+    rgba(255,255,255,0.14) 0%,
+    transparent 55%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-icon-v582::after, .mc-icon::after { display: none; }
+}
+/* ============== END v582 ============== */
+

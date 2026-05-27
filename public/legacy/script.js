@@ -21520,6 +21520,9 @@ $("#signupForm").addEventListener("submit", async e => {
     // Akun terlindungi dari auto-purge cleanup, cutoff, dan resurrected-cloud check.
     accountToSave.userRegistered = true;
     accountToSave.registeredAt = Date.now();
+    // v569c: tandai sebagai signup baru — onboarding tour trigger via flag ini
+    // di initDashboard. Flag akan di-clear setelah user finish/skip tour.
+    accountToSave.justSignedUp = true;
     if (pickedPlanKey === "trial") accountToSave.trialUsed = true;
     // Auto-unban: kalau email pernah masuk banned-list (mis. setelah admin cleanup),
     // un-ban saat user re-register fresh. Email re-registered explicitly dianggap
@@ -21825,6 +21828,15 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
     clearLoginAttempts(email);
     hideLockBanner();
     closeForgotPwModal({ success: true });
+    // v572: Audit log — catat password change. Pakai emailOverride karena
+    // user mungkin belum login (forgot pw flow). Storage di acc.email.
+    try {
+      if (typeof addUserAuditEvent === "function") {
+        addUserAuditEvent("password", "Password di-reset",
+          `Password baru disetel via Lupa Kata Sandi flow`,
+          { emailOverride: email });
+      }
+    } catch {}
     // CR-1: audit log — admin bisa lihat reset history
     try {
       if (typeof pushAdminEvent === "function") {
@@ -23002,6 +23014,417 @@ function renderAll() {
   if (typeof renderHomeRankingSelf === "function") _deferRender(renderHomeRankingSelf);
 }
 
+// ============ ONBOARDING TOUR (FIRST-TIME USER) ======================
+// v569: Per request user 2026-05-26. Saat user baru pertama kali masuk
+// dashboard (acc.onboardingCompleted belum true), tampilkan tour 4-step
+// highlight ke fitur utama: Upload, Discover, Profile, Settings.
+// User bisa Skip (mark completed) atau navigate prev/next sampai selesai.
+
+const ONBOARDING_STEPS = [
+  {
+    welcome: true,
+    title: '👋 Selamat datang di Playly!',
+    body: 'Kami pandu kamu sebentar — 12 step singkat untuk kenal fitur utama Playly. Pakai tombol Lanjut/Kembali untuk navigate, atau Lewati kalau buru-buru.',
+    position: 'center'
+  },
+  {
+    target: '#hpcUploadBtn',
+    title: '📹 Upload Video Pertamamu',
+    body: 'Tombol ini buat upload video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
+    position: 'bottom'
+  },
+  {
+    target: '.nav-item[data-view="discover"]',
+    title: '🔍 Jelajahi & Trending',
+    body: 'Cek video kreator lain + berita trending real-time dari Google News (5 kategori: Utama, Tekno, Bisnis, Hiburan, Olahraga). Inspirasi konten di sini.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="videos"]',
+    title: '📚 Pustaka Saya',
+    body: 'Semua video kamu: yang live, draft, status moderation (bermasalah/takedown), plus yang disimpan offline. Kelola semua di satu tempat.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="stats"]',
+    title: '📊 Statistik Channel',
+    body: 'Performa lengkap: total tontonan, suka, followers, top video. 5 tab analisis dengan periode 7/30/90 hari atau 1 tahun.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="premium-insights"]',
+    title: '⭐ Insight Premium',
+    body: 'Analitik mendalam khusus Premium: audience demographic, retention curve, jam tayang terbaik, AI prediksi performa video.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="people"]',
+    title: '🔎 Pencarian Kreator',
+    body: 'Cari kreator lain, follow akun yang menarik, atau temukan teman lewat username/nama. Build network kamu di sini.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="activity"]',
+    title: '⚡ Aktivitas Sosial',
+    body: 'Semua interaksi akun: suka, komentar, share link, pengikut baru. 4 filter sub-menu untuk fokus per jenis aktivitas.',
+    position: 'right'
+  },
+  {
+    target: '.nav-item[data-view="messages"]',
+    title: '💬 Pesan & Inbox',
+    body: 'DM dari teman, broadcast admin, permintaan dari non-follower, arsip — 4 quadrant dengan privacy controls.',
+    position: 'right'
+  },
+  {
+    target: '#openNotif',
+    title: '🔔 Notifikasi',
+    body: 'Bell di sini untuk update real-time: like baru, komentar, follower, broadcast admin. Klik untuk lihat semua aktivitas akun.',
+    position: 'bottom'
+  },
+  {
+    target: '#hpcEditBtn',
+    title: '✨ Lengkapi Profilmu',
+    body: 'Foto, bio, social links (Instagram, X/Twitter, GitHub, Website). Profil lengkap bikin kamu lebih dipercaya follower & viewer.',
+    position: 'bottom'
+  },
+  {
+    target: '.footer-link[data-view="settings"]',
+    title: '🔐 Pengaturan & 2FA',
+    body: 'Notifikasi, tampilan, bahasa, riwayat pembayaran. PENTING: aktifkan 2FA (PIN 6-digit) — biar bisa self-reset kalau lupa password.',
+    position: 'right'
+  }
+];
+
+let _onboardingState = null;
+
+function _obEscape(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// v569c: shouldShowOnboarding — hanya tampil tour kalau acc.justSignedUp === true.
+// justSignedUp flag di-set di signup completion (line ~21521). Existing user
+// yang sudah pernah login (atau admin-created accounts) TIDAK punya flag ini
+// → tidak akan lihat tour.
+function shouldShowOnboarding() {
+  if (!user?.email) return false;
+  try {
+    const acct = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "null");
+    return !!(acct?.justSignedUp) && !acct?.onboardingCompleted;
+  } catch { return false; }
+}
+
+// Backward-compat alias
+function isOnboardingCompleted() {
+  if (!user?.email) return true;
+  try {
+    const acct = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "null");
+    return !!(acct?.onboardingCompleted);
+  } catch { return true; }
+}
+
+function markOnboardingCompleted() {
+  if (!user?.email) return;
+  try {
+    const raw = localStorage.getItem(`playly-account-${user.email}`);
+    if (!raw) return;
+    const acct = JSON.parse(raw);
+    acct.onboardingCompleted = true;
+    acct.onboardingCompletedAt = Date.now();
+    delete acct.justSignedUp; // clear signup flag — tour ngga akan trigger lagi
+    localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acct));
+    try {
+      if (window.cloudSync?.syncSingleKey) {
+        Promise.resolve(window.cloudSync.syncSingleKey(`playly-account-${user.email}`)).catch(() => {});
+      }
+    } catch {}
+  } catch (e) { console.warn("[onboarding] mark completed failed", e); }
+}
+
+function startOnboardingTour() {
+  if (_onboardingState) return; // already running
+  _onboardingState = { stepIndex: 0 };
+  _renderOnboarding();
+  window.addEventListener("resize", _renderOnboarding);
+  document.addEventListener("keydown", _onboardingKeyHandler);
+}
+
+function _onboardingKeyHandler(e) {
+  if (!_onboardingState) return;
+  if (e.key === "Escape") {
+    endOnboardingTour(true); // ESC = skip, mark completed
+  } else if (e.key === "ArrowRight" || e.key === "Enter") {
+    advanceOnboarding(1);
+  } else if (e.key === "ArrowLeft") {
+    advanceOnboarding(-1);
+  }
+}
+
+function _renderOnboarding() {
+  if (!_onboardingState) return;
+  const step = ONBOARDING_STEPS[_onboardingState.stepIndex];
+  if (!step) {
+    endOnboardingTour(true);
+    return;
+  }
+  // Welcome step (no target) → render centered modal
+  if (step.welcome) {
+    _renderOnboardingWelcome(step);
+    return;
+  }
+  const target = document.querySelector(step.target);
+  if (!target) {
+    console.warn("[onboarding] target not found:", step.target, "— skipping");
+    advanceOnboarding(1);
+    return;
+  }
+  // Scroll target into view first
+  target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  // Delay rendering position calc supaya scroll selesai
+  setTimeout(() => {
+    if (!_onboardingState) return;
+    _positionOnboardingUI(target, step);
+  }, 320);
+}
+
+function _renderOnboardingWelcome(step) {
+  let root = document.getElementById("onboardingRoot");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "onboardingRoot";
+    root.className = "onboarding-root onboarding-root-welcome";
+    document.body.appendChild(root);
+  } else {
+    root.classList.add("onboarding-root-welcome");
+  }
+  const total = ONBOARDING_STEPS.length;
+  const i = _onboardingState.stepIndex;
+  root.innerHTML = `
+    <div class="onboarding-backdrop-full"></div>
+    <div class="onboarding-tooltip onboarding-welcome-card">
+      <div class="onboarding-step-pill">LANGKAH ${i + 1} / ${total}</div>
+      <h3 class="onboarding-title onboarding-title-welcome">${_obEscape(step.title)}</h3>
+      <p class="onboarding-body">${_obEscape(step.body)}</p>
+      <div class="onboarding-progress">
+        ${ONBOARDING_STEPS.map((_, idx) => `<span class="onboarding-dot${idx === i ? ' active' : ''}${idx < i ? ' done' : ''}"></span>`).join('')}
+      </div>
+      <div class="onboarding-actions">
+        <button type="button" class="onboarding-skip" data-ob-action="skip">Lewati tour</button>
+        <div class="onboarding-actions-right">
+          <button type="button" class="onboarding-next" data-ob-action="next">Mulai tour →</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function _positionOnboardingUI(target, step) {
+  let root = document.getElementById("onboardingRoot");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "onboardingRoot";
+    root.className = "onboarding-root";
+    document.body.appendChild(root);
+  } else {
+    root.classList.remove("onboarding-root-welcome");
+  }
+  const rect = target.getBoundingClientRect();
+  const padding = 8;
+  const spotX = rect.left - padding;
+  const spotY = rect.top - padding;
+  const spotW = rect.width + padding * 2;
+  const spotH = rect.height + padding * 2;
+
+  const ttW = 360;
+  const ttHEst = 240; // estimasi tinggi tooltip
+  const ttGap = 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let ttX, ttY, ttArrow;
+
+  // Smart positioning — coba primary direction, flip kalau kena edge
+  function tryPosition(pos) {
+    switch (pos) {
+      case 'bottom':
+        if (spotY + spotH + ttGap + ttHEst > vh - 12) return null;
+        return { ttX: spotX + spotW/2 - ttW/2, ttY: spotY + spotH + ttGap, ttArrow: 'top' };
+      case 'top':
+        if (spotY - ttGap - ttHEst < 12) return null;
+        return { ttX: spotX + spotW/2 - ttW/2, ttY: spotY - ttGap - ttHEst, ttArrow: 'bottom' };
+      case 'right':
+        if (spotX + spotW + ttGap + ttW > vw - 12) return null;
+        return { ttX: spotX + spotW + ttGap, ttY: spotY + spotH/2 - ttHEst/2, ttArrow: 'left' };
+      case 'left':
+        if (spotX - ttGap - ttW < 12) return null;
+        return { ttX: spotX - ttGap - ttW, ttY: spotY + spotH/2 - ttHEst/2, ttArrow: 'right' };
+    }
+    return null;
+  }
+
+  // Try primary direction, fall through ke yang alternatif kalau gak muat
+  const fallbacks = {
+    bottom: ['bottom', 'top', 'right', 'left'],
+    top:    ['top', 'bottom', 'right', 'left'],
+    right:  ['right', 'left', 'bottom', 'top'],
+    left:   ['left', 'right', 'bottom', 'top']
+  };
+  const order = fallbacks[step.position] || fallbacks.bottom;
+  let chosen = null;
+  for (const p of order) {
+    chosen = tryPosition(p);
+    if (chosen) break;
+  }
+  // Last resort: center on screen
+  if (!chosen) {
+    chosen = { ttX: vw/2 - ttW/2, ttY: vh/2 - ttHEst/2, ttArrow: '' };
+  }
+  ttX = chosen.ttX; ttY = chosen.ttY; ttArrow = chosen.ttArrow;
+
+  // Final clamp ke viewport
+  ttX = Math.max(12, Math.min(vw - ttW - 12, ttX));
+  ttY = Math.max(12, Math.min(vh - ttHEst - 12, ttY));
+
+  const total = ONBOARDING_STEPS.length;
+  const i = _onboardingState.stepIndex;
+  const arrowClass = ttArrow ? `onboarding-arrow-${ttArrow}` : '';
+  root.innerHTML = `
+    <div class="onboarding-spotlight" style="left:${spotX}px;top:${spotY}px;width:${spotW}px;height:${spotH}px;"></div>
+    <div class="onboarding-tooltip ${arrowClass}" style="left:${ttX}px;top:${ttY}px;width:${ttW}px;">
+      <div class="onboarding-step-pill">LANGKAH ${i + 1} / ${total}</div>
+      <h4 class="onboarding-title">${_obEscape(step.title)}</h4>
+      <p class="onboarding-body">${_obEscape(step.body)}</p>
+      <div class="onboarding-progress">
+        ${ONBOARDING_STEPS.map((_, idx) => `<span class="onboarding-dot${idx === i ? ' active' : ''}${idx < i ? ' done' : ''}"></span>`).join('')}
+      </div>
+      <div class="onboarding-actions">
+        <button type="button" class="onboarding-skip" data-ob-action="skip">Lewati</button>
+        <div class="onboarding-actions-right">
+          ${i > 0 ? '<button type="button" class="onboarding-prev" data-ob-action="prev">← Kembali</button>' : ''}
+          <button type="button" class="onboarding-next" data-ob-action="next">${i === total - 1 ? '🎉 Selesai' : 'Lanjut →'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function advanceOnboarding(direction = 1) {
+  if (!_onboardingState) return;
+  _onboardingState.stepIndex += direction;
+  if (_onboardingState.stepIndex < 0) _onboardingState.stepIndex = 0;
+  if (_onboardingState.stepIndex >= ONBOARDING_STEPS.length) {
+    endOnboardingTour(true);
+    return;
+  }
+  _renderOnboarding();
+}
+
+function endOnboardingTour(completed) {
+  if (!_onboardingState) return;
+  const wasFinished = _onboardingState.stepIndex >= ONBOARDING_STEPS.length - 1;
+  _onboardingState = null;
+  window.removeEventListener("resize", _renderOnboarding);
+  document.removeEventListener("keydown", _onboardingKeyHandler);
+  document.getElementById("onboardingRoot")?.remove();
+  if (completed) {
+    markOnboardingCompleted();
+    // v569f: ganti toast ke centered popup modal supaya lebih rapi + visible.
+    // Hanya muncul kalau user FINISH tour (klik Selesai di step terakhir).
+    if (wasFinished) {
+      _showOnboardingCompleteModal();
+    }
+  }
+}
+
+function _showOnboardingCompleteModal() {
+  // Remove any existing
+  document.getElementById("onboardingCompleteModal")?.remove();
+  const m = document.createElement("div");
+  m.id = "onboardingCompleteModal";
+  m.className = "ob-complete-modal";
+  m.innerHTML = `
+    <div class="ob-complete-backdrop" data-ob-complete-close></div>
+    <div class="ob-complete-card">
+      <div class="ob-complete-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- Party popper cone -->
+          <path d="M5.8 11.3 2 22l10.7-3.79"/>
+          <!-- Small confetti dots -->
+          <path d="M4 3h.01"/>
+          <path d="M22 8h.01"/>
+          <path d="M15 2h.01"/>
+          <path d="M22 20h.01"/>
+          <!-- Streamers + curls -->
+          <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+          <path d="m22 13-1.99.78a2.9 2.9 0 0 0-1.78 3.18c.05.86-.63 1.6-1.5 1.6H16"/>
+          <path d="M18.42 9.61a2.1 2.1 0 1 1 4.2 0V15"/>
+        </svg>
+      </div>
+      <h3 class="ob-complete-title">Tour Selesai!</h3>
+      <p class="ob-complete-body">Sekarang kamu sudah kenal semua fitur utama Playly. Saatnya mulai eksplorasi dan bikin kreasi pertamamu.</p>
+      <div class="ob-complete-actions">
+        <button type="button" class="ob-complete-cta" data-ob-complete-close>Mulai Eksplorasi →</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+  // Close handler
+  m.addEventListener("click", e => {
+    if (e.target.matches("[data-ob-complete-close]")) {
+      m.remove();
+    }
+  });
+  // ESC close
+  const escHandler = e => {
+    if (e.key === "Escape") {
+      m.remove();
+      document.removeEventListener("keydown", escHandler);
+    }
+  };
+  document.addEventListener("keydown", escHandler);
+  // Auto-cleanup ESC listener saat modal removed
+  const mo = new MutationObserver(() => {
+    if (!document.body.contains(m)) {
+      document.removeEventListener("keydown", escHandler);
+      mo.disconnect();
+    }
+  });
+  mo.observe(document.body, { childList: true });
+}
+
+// Click delegation untuk button di tooltip
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-ob-action]");
+  if (!btn) return;
+  e.preventDefault();
+  const action = btn.dataset.obAction;
+  if (action === "skip") endOnboardingTour(true);
+  else if (action === "next") advanceOnboarding(1);
+  else if (action === "prev") advanceOnboarding(-1);
+});
+
+// Expose untuk testing + manual trigger
+window._onboarding = {
+  start: startOnboardingTour,
+  end: endOnboardingTour,
+  isCompleted: isOnboardingCompleted,
+  shouldShow: shouldShowOnboarding,
+  reset: () => {
+    // Dev helper: set justSignedUp + clear completed → tour trigger lagi
+    if (!user?.email) return;
+    try {
+      const raw = localStorage.getItem(`playly-account-${user.email}`);
+      if (!raw) return;
+      const acct = JSON.parse(raw);
+      delete acct.onboardingCompleted;
+      delete acct.onboardingCompletedAt;
+      acct.justSignedUp = true;
+      localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acct));
+      console.log("[onboarding] reset (justSignedUp=true) for", user.email);
+    } catch {}
+  }
+};
+
+// ====================================================================
+
 function initDashboard() {
   renderAll();
   startLiveClock();
@@ -23043,6 +23466,33 @@ function initDashboard() {
       : `✨ Dashboard kamu siap! Mulai dari <b>Upload</b> video pertama.`;
     setTimeout(() => toast(msg, "success"), 700);
     localStorage.setItem(`playly-welcomed-${user.username}`, "1");
+  }
+
+  // v569c: Trigger onboarding tour HANYA kalau user role + acc.justSignedUp
+  // (baru pertama kali signup). Existing user / admin-created accounts skip.
+  // Admin role juga skip (tidak butuh tour, sudah familiar platform).
+  if (user.role === "user" && typeof shouldShowOnboarding === "function" && shouldShowOnboarding()) {
+    setTimeout(() => {
+      if (typeof startOnboardingTour === "function") startOnboardingTour();
+    }, 2000);
+  }
+
+  // v571: Upsert current session ke daftar Sesi Aktif. Setiap kali user buka
+  // dashboard (login/refresh), session current di-update lastActiveAt.
+  if (user.role === "user" && typeof upsertCurrentSession === "function") {
+    try { upsertCurrentSession(); } catch (e) { console.warn("[sessions] upsert failed", e); }
+  }
+
+  // v572: Catat login event ke user audit log (security transparency).
+  // Hanya catat sekali per session browser supaya gak flood saat reload.
+  if (user.role === "user" && typeof addUserAuditEvent === "function") {
+    const auditSessKey = `playly-audit-login-${user.username}`;
+    if (!sessionStorage.getItem(auditSessKey)) {
+      try {
+        addUserAuditEvent("login", "Login berhasil", "Sesi baru dimulai");
+        sessionStorage.setItem(auditSessKey, String(Date.now()));
+      } catch (e) { console.warn("[audit] login event failed", e); }
+    }
   }
 }
 
@@ -31494,11 +31944,14 @@ function renderStatsRow() {
   const myLikes = state.myVideos.reduce((s, v) => s + (v.likes || 0), 0);
   const following = state.followingCreators.length;
 
+  // v581: gradient diseragamkan ke wine richer (#7d3640 → #561C24) supaya
+  // pop di atas .stat-card bg yang sudah dark. Stroke-width naik ke 2.2,
+  // border-radius icon box dibesarkan via CSS — visual lebih solid & clean.
   const cards = [
-    { label: "Total Videos", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#561C24", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#561C24" },
-    { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>`, c1: "#E8D8C4", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#E8D8C4" },
-    { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`, c1: "#6D2932", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#6D2932" },
-    { label: "Following", value: following, raw: following, icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 11h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`, c1: "#6D2932", c2: "#E8D8C4", trend: following > 0 ? "up" : null, trendText: following > 0 ? "creators followed" : "—", spark: "#E8D8C4" }
+    { label: "Total Videos", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
+    { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
+    { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
+    { label: "Following", value: following, raw: following, icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M22 11h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: following > 0 ? "up" : null, trendText: following > 0 ? "creators followed" : "—", spark: "#BE9752" }
   ];
 
   row.innerHTML = cards.map(c => `
@@ -35816,7 +36269,15 @@ function renderPurchaseHistory() {
     }
   } catch {}
   if (!purchases.length) {
-    wrap.innerHTML = `<div class="riwayat-empty">Belum ada riwayat pembelian.</div>`;
+    wrap.innerHTML = (typeof window._emptyRichV24 === "function")
+      ? window._emptyRichV24({
+          kind: "purchase",
+          title: "Belum ada pembelian",
+          copy: "Riwayat upgrade premium dan transaksi akan tampil di sini.",
+          cta: { label: "Lihat paket premium", view: "premium" },
+          extra: "riwayat-empty",
+        })
+      : `<div class="riwayat-empty">Belum ada riwayat pembelian.</div>`;
     return;
   }
   const statusBadge = (st) => {
@@ -35847,7 +36308,17 @@ function renderSearchHistorySections() {
   const renderChips = (wrap, items, kind) => {
     if (!wrap) return;
     if (!items.length) {
-      wrap.innerHTML = `<div class="riwayat-empty">Belum ada pencarian.</div>`;
+      const isUser = kind === "user";
+      wrap.innerHTML = (typeof window._emptyRichV24 === "function")
+        ? window._emptyRichV24({
+            kind: isUser ? "search-user" : "search-video",
+            title: isUser ? "Belum ada pencarian user" : "Belum ada pencarian video",
+            copy:  isUser
+              ? "User yang pernah kamu cari muncul di sini sebagai chip — cepat klik ulang."
+              : "Mulai eksplorasi — kata kunci dan tag tersimpan untuk akses cepat.",
+            extra: "riwayat-empty",
+          })
+        : `<div class="riwayat-empty">Belum ada pencarian.</div>`;
       return;
     }
     wrap.innerHTML = items.slice(0, 30).map(q =>
@@ -39224,6 +39695,14 @@ document.addEventListener("click", function (e) {
   function doSearch() {
     var q = (input.value || "").trim().toLowerCase();
     if (clearBtn) clearBtn.hidden = q.length === 0;
+    // v579: search dipindah ke luar #dmOverview — saat ada query, pastikan
+    // tab "Semua" aktif supaya dm-overview visible (yang nge-host result list).
+    if (q) {
+      var allTab = document.querySelector('[data-dm-filter="all"]');
+      if (allTab && !allTab.classList.contains("active")) {
+        try { allTab.click(); } catch (_) {}
+      }
+    }
     if (!q) {
       // Empty query → show grid, hide results
       grid.hidden = false;
@@ -44731,7 +45210,15 @@ function refreshLibInlineComments(id) {
   if (!list) return;
   const comments = (state?.comments && Array.isArray(state.comments[id])) ? state.comments[id] : [];
   if (!comments.length) {
-    list.innerHTML = `<div class="lib-inline-comments-empty">Belum ada komentar — jadilah yang pertama!</div>`;
+    list.innerHTML = (typeof window._emptyRichV24 === "function")
+      ? window._emptyRichV24({
+          kind: "comment",
+          title: "Belum ada komentar",
+          copy: "Jadilah yang pertama berkomentar — ceritakan pendapatmu!",
+          inline: true,
+          extra: "lib-inline-comments-empty",
+        })
+      : `<div class="lib-inline-comments-empty">Belum ada komentar — jadilah yang pertama!</div>`;
     return;
   }
   list.innerHTML = comments.map(c => {
@@ -46189,29 +46676,1112 @@ function setupCustomPlayer() {
 
 setupCustomPlayer();
 
+// ============ COMMENT SYSTEM v570 ============
+// Threaded comments dengan reply, like toggle, report. Storage compat backward
+// dengan format lama (auto-migrate saat baca).
+function _genCommentId() {
+  return "c_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+}
+function _normalizeComment(c, idx) {
+  if (!c.id) c.id = "legacy_" + (c.ts || Date.now()) + "_" + idx;
+  if (c.parentId === undefined) c.parentId = null;
+  // Migrate legacy `likes: number` → `likes: []` (kosongkan supaya fresh)
+  if (typeof c.likes === "number") c.likes = [];
+  if (!Array.isArray(c.likes)) c.likes = [];
+  if (!Array.isArray(c.reports)) c.reports = [];
+  return c;
+}
+function _formatCommentTime(ts) {
+  if (!ts) return "—";
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "baru saja";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} menit lalu`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} jam lalu`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day} hari lalu`;
+  return new Date(ts).toLocaleDateString("id-ID");
+}
+
 function renderComments(id) {
-  const comments = getVideoComments(id);
-  $("#commentCount").textContent = `${comments.length} Comments`;
-  $("#commentList").innerHTML = comments.length ? comments.map((c, i) => `
-    <div class="comment">
-      <div class="avatar small"><span>${escapeHtml(c.init || "")}</span></div>
-      <div class="info">
-        <div><strong>@${escapeHtml(c.name)}</strong><span class="time">${escapeHtml(c.time || "")}</span></div>
-        <p>${escapeHtml(c.text || "")}</p>
-        <div class="reactions"><button data-like-c="${i}">♥ ${c.likes || 0}</button><button>Reply</button></div>
+  const raw = getVideoComments(id).map(_normalizeComment);
+  // Save normalized back (one-time migration)
+  setVideoComments(id, raw);
+
+  const me = (user?.username || "").toLowerCase();
+  const topLevel = raw.filter(c => !c.parentId);
+  const repliesByParent = {};
+  raw.filter(c => c.parentId).forEach(r => {
+    if (!repliesByParent[r.parentId]) repliesByParent[r.parentId] = [];
+    repliesByParent[r.parentId].push(r);
+  });
+  topLevel.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  Object.values(repliesByParent).forEach(arr => arr.sort((a, b) => (a.ts || 0) - (b.ts || 0)));
+
+  const total = raw.length;
+  $("#commentCount").textContent = `${total} Komentar`;
+
+  if (!topLevel.length) {
+    $("#commentList").innerHTML = `<div class="comment-empty">Belum ada komentar. Jadilah yang pertama!</div>`;
+    return;
+  }
+
+  $("#commentList").innerHTML = topLevel.map(c => _renderCommentRow(c, repliesByParent[c.id] || [], me, false)).join("");
+}
+
+function _renderCommentRow(c, replies, me, isReply) {
+  const liked = c.likes.includes(me);
+  const reported = c.reports.includes(me);
+  const name = c.name || c.username || "anon";
+  const init = c.init || (name[0] || "?").toUpperCase();
+  const heartFill = liked ? 'currentColor' : 'none';
+  return `
+    <div class="comment-item${isReply ? ' comment-reply' : ''}" data-comment-id="${escapeHtml(c.id)}">
+      <div class="avatar ${isReply ? 'tiny' : 'small'}"><span>${escapeHtml(init)}</span></div>
+      <div class="comment-body">
+        <div class="comment-meta">
+          <strong>@${escapeHtml(name)}</strong>
+          <span class="time">${escapeHtml(_formatCommentTime(c.ts))}</span>
+        </div>
+        <p class="comment-text">${escapeHtml(c.text || "")}</p>
+        <div class="comment-actions">
+          <button type="button" class="ca-btn ca-like${liked ? ' active' : ''}" data-c-action="like" data-c-id="${escapeHtml(c.id)}" aria-label="Suka">
+            <svg viewBox="0 0 24 24" fill="${heartFill}" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>
+            <span>${c.likes.length}</span>
+          </button>
+          ${!isReply ? `<button type="button" class="ca-btn" data-c-action="reply" data-c-id="${escapeHtml(c.id)}">Balas</button>` : ""}
+          <button type="button" class="ca-btn ca-report${reported ? ' active' : ''}" data-c-action="report" data-c-id="${escapeHtml(c.id)}" title="Laporkan komentar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 21V4a1 1 0 0 1 1-1h14a1 1 0 0 1 .8 1.6L16 9l3.8 4.4A1 1 0 0 1 19 15H5"/></svg>
+            <span>${reported ? "Dilaporkan" : "Lapor"}</span>
+          </button>
+        </div>
+        ${!isReply ? `
+          <div class="comment-reply-form" id="reply-form-${escapeHtml(c.id)}" hidden>
+            <input type="text" class="comment-reply-input" placeholder="Balas @${escapeHtml(name)}..." data-c-reply-input="${escapeHtml(c.id)}"/>
+            <button type="button" class="btn primary small" data-c-submit-reply="${escapeHtml(c.id)}">Kirim</button>
+            <button type="button" class="btn ghost small" data-c-cancel-reply="${escapeHtml(c.id)}">Batal</button>
+          </div>
+          ${replies.length ? `<div class="comment-replies">${replies.map(r => _renderCommentRow(r, [], me, true)).join("")}</div>` : ""}
+        ` : ""}
       </div>
     </div>
-  `).join("") : `<div style="text-align:center; padding:24px; color:var(--muted); font-size:13px">Belum ada komentar. Jadilah yang pertama!</div>`;
-  $$("[data-like-c]").forEach(b => b.addEventListener("click", () => {
-    const list = getVideoComments(id);
-    const idx = +b.dataset.likeC;
-    if (list[idx]) {
-      list[idx].likes = (list[idx].likes || 0) + 1;
-      setVideoComments(id, list);
-      renderComments(id);
-    }
-  }));
+  `;
 }
+
+// Event delegation untuk semua comment actions
+document.addEventListener("click", e => {
+  const actBtn = e.target.closest("[data-c-action]");
+  if (actBtn) {
+    e.preventDefault();
+    const action = actBtn.dataset.cAction;
+    const cId = actBtn.dataset.cId;
+    const vId = state?.currentVideo;
+    if (!vId) return;
+    if (action === "like") _toggleCommentLike(vId, cId);
+    else if (action === "reply") _openReplyForm(cId);
+    else if (action === "report") _reportComment(vId, cId);
+    return;
+  }
+  const submit = e.target.closest("[data-c-submit-reply]");
+  if (submit) {
+    e.preventDefault();
+    _submitCommentReply(state.currentVideo, submit.dataset.cSubmitReply);
+    return;
+  }
+  const cancel = e.target.closest("[data-c-cancel-reply]");
+  if (cancel) {
+    e.preventDefault();
+    _closeReplyForm(cancel.dataset.cCancelReply);
+    return;
+  }
+});
+
+// Enter di reply input = submit
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  const input = e.target.closest("[data-c-reply-input]");
+  if (!input) return;
+  e.preventDefault();
+  _submitCommentReply(state.currentVideo, input.dataset.cReplyInput);
+});
+
+function _toggleCommentLike(videoId, commentId) {
+  const list = getVideoComments(videoId).map(_normalizeComment);
+  const c = list.find(x => x.id === commentId);
+  if (!c) return;
+  const me = (user?.username || "").toLowerCase();
+  const idx = c.likes.indexOf(me);
+  if (idx === -1) c.likes.push(me);
+  else c.likes.splice(idx, 1);
+  setVideoComments(videoId, list);
+  renderComments(videoId);
+}
+
+function _openReplyForm(parentId) {
+  const form = document.getElementById(`reply-form-${parentId}`);
+  if (!form) return;
+  form.hidden = false;
+  setTimeout(() => form.querySelector("input")?.focus(), 50);
+}
+
+function _closeReplyForm(parentId) {
+  const form = document.getElementById(`reply-form-${parentId}`);
+  if (!form) return;
+  form.hidden = true;
+  const input = form.querySelector("input");
+  if (input) input.value = "";
+}
+
+function _submitCommentReply(videoId, parentId) {
+  const form = document.getElementById(`reply-form-${parentId}`);
+  const input = form?.querySelector("input");
+  const txt = input?.value?.trim();
+  if (!txt) return;
+  const list = getVideoComments(videoId).map(_normalizeComment);
+  const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  list.unshift({
+    id: _genCommentId(),
+    parentId,
+    name: user.username,
+    init: initials,
+    text: txt,
+    ts: Date.now(),
+    likes: [],
+    reports: []
+  });
+  setVideoComments(videoId, list);
+  renderComments(videoId);
+  // Notify parent comment author
+  const parent = list.find(x => x.id === parentId);
+  if (parent && parent.name && parent.name !== user.username && typeof deliverNotification === "function") {
+    deliverNotification(parent.name, {
+      type: "comment", videoId,
+      init: initials,
+      fromUsername: user.username,
+      text: `<b>@${user.username}</b> membalas komentarmu: "${escapeHtml(txt.length > 80 ? txt.slice(0, 77) + "..." : txt)}"`
+    });
+  }
+  if (typeof toast === "function") toast("↩️ Balasan terkirim", "success");
+}
+
+function _reportComment(videoId, commentId) {
+  const list = getVideoComments(videoId).map(_normalizeComment);
+  const c = list.find(x => x.id === commentId);
+  if (!c) return;
+  const me = (user?.username || "").toLowerCase();
+  if (c.reports.includes(me)) {
+    if (typeof toast === "function") toast("Kamu sudah lapor komentar ini sebelumnya", "info");
+    return;
+  }
+  if (!confirm(`Laporkan komentar dari @${c.name || "anon"}?\n\n"${(c.text || "").slice(0, 100)}"\n\nAdmin akan review.`)) return;
+  c.reports.push(me);
+  setVideoComments(videoId, list);
+  renderComments(videoId);
+  try {
+    if (typeof pushAdminEvent === "function") {
+      pushAdminEvent("⚠️", `Komentar dilaporkan oleh <b>@${user.username}</b> — <b>@${c.name}</b>: "${escapeHtml((c.text || "").slice(0, 60))}"`);
+    }
+  } catch {}
+  if (typeof toast === "function") toast("✓ Laporan terkirim ke admin", "success");
+}
+
+// ============ GLOBAL SEARCH v570 ============
+// Real search di topbar #globalSearch. Match across video title/tag/desc/
+// creator + user accounts (username/name). Debounce 200ms, render dropdown
+// di #searchSuggestions.
+let _globalSearchTimer = null;
+
+function _gsHighlight(text, query) {
+  if (!query) return escapeHtml(text || "");
+  const t = String(text || "");
+  const q = query.toLowerCase();
+  const lower = t.toLowerCase();
+  const idx = lower.indexOf(q);
+  if (idx === -1) return escapeHtml(t);
+  return escapeHtml(t.slice(0, idx)) + "<mark>" + escapeHtml(t.slice(idx, idx + q.length)) + "</mark>" + escapeHtml(t.slice(idx + q.length));
+}
+
+// v573: enhanced multi-word search dengan field scoring + filter support
+function _gsScoreVideo(v, words) {
+  const title = String(v.title || "").toLowerCase();
+  const tags = (Array.isArray(v.tags) ? v.tags.join(" ") : String(v.tags || "")).toLowerCase();
+  const desc = String(v.description || v.desc || "").toLowerCase();
+  const creator = String(v.creator || v.username || "").toLowerCase();
+  let totalScore = 0;
+  let allWordsHit = true;
+  for (const w of words) {
+    if (!w) continue;
+    let wordScore = 0;
+    if (title === w) wordScore = 150;
+    else if (title.startsWith(w + " ") || title.startsWith(w)) wordScore = 100;
+    else if (title.includes(" " + w) || title.includes(w + " ")) wordScore = 85;
+    else if (title.includes(w)) wordScore = 70;
+    else if (tags.includes(w)) wordScore = 55;
+    else if (creator.includes(w)) wordScore = 45;
+    else if (desc.includes(w)) wordScore = 25;
+    if (wordScore === 0) { allWordsHit = false; break; }
+    totalScore += wordScore;
+  }
+  return allWordsHit ? totalScore : 0;
+}
+
+function _gsApplyFilters(videos, filters) {
+  const now = Date.now();
+  return videos.filter(v => {
+    // Duration filter
+    if (filters.duration && filters.duration !== "all") {
+      const dur = v.durationSec || v.durationSeconds || 0;
+      if (filters.duration === "short" && dur > 5 * 60) return false;
+      if (filters.duration === "medium" && (dur <= 5 * 60 || dur > 20 * 60)) return false;
+      if (filters.duration === "long" && dur <= 20 * 60) return false;
+    }
+    // Date filter
+    if (filters.date && filters.date !== "all") {
+      const ts = v.createdAt || v.uploadedAt || v.ts || 0;
+      if (!ts) return filters.date === "all";
+      const diff = now - ts;
+      if (filters.date === "today" && diff > 24 * 3600 * 1000) return false;
+      if (filters.date === "week" && diff > 7 * 24 * 3600 * 1000) return false;
+      if (filters.date === "month" && diff > 30 * 24 * 3600 * 1000) return false;
+      if (filters.date === "year" && diff > 365 * 24 * 3600 * 1000) return false;
+    }
+    return true;
+  });
+}
+
+function _gsSortVideos(videos, sort) {
+  if (sort === "newest") return [...videos].sort((a, b) =>
+    (b.createdAt || b.ts || 0) - (a.createdAt || a.ts || 0));
+  if (sort === "views") return [...videos].sort((a, b) =>
+    (b.viewsNum || 0) - (a.viewsNum || 0));
+  if (sort === "likes") return [...videos].sort((a, b) =>
+    (b.likes || 0) - (a.likes || 0));
+  // Default: relevance (already sorted by score)
+  return videos;
+}
+
+function _gsSearchVideos(query, opts = {}) {
+  let vids = [];
+  try { vids = (typeof getPlatformVideos === "function") ? getPlatformVideos() : []; } catch {}
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const matches = [];
+  for (const v of vids) {
+    if (!v) continue;
+    const score = _gsScoreVideo(v, words);
+    if (score > 0) matches.push({ video: v, score });
+  }
+  matches.sort((a, b) => b.score - a.score);
+  let result = matches.map(m => m.video);
+  // Apply filters + sort kalau ada opts
+  if (opts.filters) result = _gsApplyFilters(result, opts.filters);
+  if (opts.sort && opts.sort !== "relevance") result = _gsSortVideos(result, opts.sort);
+  return opts.limit ? result.slice(0, opts.limit) : result;
+}
+
+function _gsSearchCreators(query) {
+  const q = query.toLowerCase();
+  const matches = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("playly-account-")) continue;
+    try {
+      const acc = JSON.parse(localStorage.getItem(key));
+      if (!acc || acc.role === "admin") continue;
+      const username = String(acc.username || "").toLowerCase();
+      const name = String(acc.name || "").toLowerCase();
+      let rank = 0;
+      if (username.startsWith(q)) rank = 100;
+      else if (name.startsWith(q)) rank = 90;
+      else if (username.includes(q)) rank = 70;
+      else if (name.includes(q)) rank = 60;
+      if (rank > 0) matches.push({ acc, rank });
+    } catch {}
+  }
+  matches.sort((a, b) => b.rank - a.rank);
+  return matches.slice(0, 4).map(m => m.acc);
+}
+
+// v573: Search history — track last 10 queries in localStorage
+const SEARCH_HISTORY_KEY = "playly-search-history";
+const SEARCH_HISTORY_MAX = 10;
+function getSearchHistory() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function addSearchHistory(query) {
+  query = (query || "").trim();
+  if (!query || query.length < 2) return;
+  let arr = getSearchHistory();
+  arr = arr.filter(q => q.toLowerCase() !== query.toLowerCase());
+  arr.unshift(query);
+  arr = arr.slice(0, SEARCH_HISTORY_MAX);
+  try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr)); } catch {}
+}
+function clearSearchHistory() {
+  try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch {}
+}
+
+function _gsRenderHistoryDropdown() {
+  const drop = document.getElementById("searchSuggestions");
+  if (!drop) return;
+  const history = getSearchHistory();
+  if (!history.length) {
+    drop.innerHTML = `<div class="ss-empty">Mulai ketik untuk cari video atau kreator.</div>`;
+    drop.classList.add("show");
+    return;
+  }
+  drop.innerHTML = `
+    <div class="ss-section">
+      <div class="ss-section-title-row">
+        <span class="ss-section-title">PENCARIAN TERAKHIR</span>
+        <button type="button" class="ss-clear-history" data-ss-clear-history>Hapus semua</button>
+      </div>
+      ${history.map(q => `
+        <button type="button" class="ss-item ss-item-history" data-ss-history="${escapeHtml(q)}">
+          <div class="ss-thumb ss-thumb-history">🕒</div>
+          <div class="ss-info">
+            <strong>${escapeHtml(q)}</strong>
+          </div>
+          <button type="button" class="ss-remove-history" data-ss-remove-history="${escapeHtml(q)}" aria-label="Hapus dari history">×</button>
+        </button>
+      `).join("")}
+    </div>
+  `;
+  drop.classList.add("show");
+}
+
+function _gsRender(query, videoMatches, creatorMatches) {
+  const drop = document.getElementById("searchSuggestions");
+  if (!drop) return;
+  if (!query) {
+    _gsRenderHistoryDropdown();
+    return;
+  }
+  if (!videoMatches.length && !creatorMatches.length) {
+    drop.innerHTML = `<div class="ss-empty">Tidak ada hasil untuk "<b>${escapeHtml(query)}</b>"</div>`;
+    drop.classList.add("show");
+    return;
+  }
+  const totalCount = videoMatches.length + creatorMatches.length;
+  let html = "";
+  if (videoMatches.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">VIDEO</div>
+      ${videoMatches.slice(0, 5).map(v => {
+        const thumb = v.thumb || v.thumbnail || "";
+        const init = String(v.creator || v.username || "?")[0].toUpperCase();
+        return `<button type="button" class="ss-item" data-ss-video="${escapeHtml(String(v.id))}">
+          <div class="ss-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
+          <div class="ss-info">
+            <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
+            <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views</small>
+          </div>
+        </button>`;
+      }).join("")}
+    </div>`;
+  }
+  if (creatorMatches.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">KREATOR</div>
+      ${creatorMatches.slice(0, 4).map(a => {
+        const init = String(a.name || a.username || "?")[0].toUpperCase();
+        return `<button type="button" class="ss-item" data-ss-user="${escapeHtml(a.username || "")}">
+          <div class="ss-avatar">${escapeHtml(init)}</div>
+          <div class="ss-info">
+            <strong>${_gsHighlight(a.name || a.username, query)}</strong>
+            <small>@${escapeHtml(a.username || "")}</small>
+          </div>
+        </button>`;
+      }).join("")}
+    </div>`;
+  }
+  // "Lihat semua hasil" footer
+  html += `<div class="ss-footer">
+    <button type="button" class="ss-see-all" data-ss-see-all="${escapeHtml(query)}">
+      Lihat semua hasil untuk "<b>${escapeHtml(query)}</b>" (${totalCount}) →
+    </button>
+  </div>`;
+  drop.innerHTML = html;
+  drop.classList.add("show");
+}
+
+function _gsRun(query) {
+  query = (query || "").trim();
+  if (!query || query.length < 1) {
+    _gsRender("", [], []);
+    return;
+  }
+  const videos = _gsSearchVideos(query);
+  const creators = _gsSearchCreators(query);
+  _gsRender(query, videos, creators);
+}
+
+// ============ SEARCH RESULTS FULL PAGE v573 ============
+// Saat user klik "Lihat semua hasil" atau Enter di search → tampilkan
+// halaman hasil lengkap dengan filter sidebar + grid result. Pakai dynamic
+// overlay (tidak pakai switchView karena view sudah banyak; modal-style
+// full-screen lebih ringan).
+let _searchResultsState = { query: "", filters: {}, sort: "relevance" };
+
+function openSearchResults(query) {
+  query = (query || "").trim();
+  if (!query) return;
+  addSearchHistory(query);
+  _searchResultsState = { query, filters: {}, sort: "relevance" };
+  _renderSearchResultsOverlay();
+  // Close dropdown
+  document.getElementById("searchSuggestions")?.classList.remove("show");
+}
+
+function _renderSearchResultsOverlay() {
+  let overlay = document.getElementById("searchResultsOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "searchResultsOverlay";
+    overlay.className = "sr-overlay";
+    document.body.appendChild(overlay);
+  }
+  const { query, filters, sort } = _searchResultsState;
+  const videos = _gsSearchVideos(query, { filters, sort });
+  const creators = _gsSearchCreators(query);
+  const total = videos.length + creators.length;
+
+  const filterChip = (group, key, label, isActive) =>
+    `<button type="button" class="sr-chip${isActive ? ' active' : ''}" data-sr-filter="${group}" data-sr-value="${escapeHtml(key)}">${escapeHtml(label)}</button>`;
+
+  overlay.innerHTML = `
+    <div class="sr-backdrop" data-sr-close></div>
+    <div class="sr-panel">
+      <header class="sr-header">
+        <div class="sr-header-left">
+          <button type="button" class="sr-close-btn" data-sr-close aria-label="Tutup">×</button>
+          <div>
+            <h2 class="sr-title">Hasil pencarian</h2>
+            <p class="sr-subtitle">"${escapeHtml(query)}" · ${total} hasil</p>
+          </div>
+        </div>
+        <input type="text" class="sr-query-input" id="srQueryInput" value="${escapeHtml(query)}" placeholder="Cari lagi..."/>
+      </header>
+
+      <div class="sr-body">
+        <aside class="sr-sidebar">
+          <div class="sr-filter-group">
+            <h4>Durasi</h4>
+            ${filterChip("duration", "all", "Semua", !filters.duration || filters.duration === "all")}
+            ${filterChip("duration", "short", "< 5 menit", filters.duration === "short")}
+            ${filterChip("duration", "medium", "5–20 menit", filters.duration === "medium")}
+            ${filterChip("duration", "long", "> 20 menit", filters.duration === "long")}
+          </div>
+          <div class="sr-filter-group">
+            <h4>Tanggal Upload</h4>
+            ${filterChip("date", "all", "Kapan saja", !filters.date || filters.date === "all")}
+            ${filterChip("date", "today", "Hari ini", filters.date === "today")}
+            ${filterChip("date", "week", "Minggu ini", filters.date === "week")}
+            ${filterChip("date", "month", "Bulan ini", filters.date === "month")}
+            ${filterChip("date", "year", "Tahun ini", filters.date === "year")}
+          </div>
+          <div class="sr-filter-group">
+            <h4>Urutkan</h4>
+            ${filterChip("sort", "relevance", "Relevansi", sort === "relevance")}
+            ${filterChip("sort", "newest", "Terbaru", sort === "newest")}
+            ${filterChip("sort", "views", "Terpopuler", sort === "views")}
+            ${filterChip("sort", "likes", "Terbanyak Like", sort === "likes")}
+          </div>
+        </aside>
+
+        <main class="sr-content">
+          ${creators.length ? `
+            <section class="sr-section">
+              <h3 class="sr-section-title">Kreator (${creators.length})</h3>
+              <div class="sr-creators-grid">
+                ${creators.map(a => {
+                  const init = String(a.name || a.username || "?")[0].toUpperCase();
+                  return `<button type="button" class="sr-creator-card" data-ss-user="${escapeHtml(a.username || "")}">
+                    <div class="sr-creator-avatar">${escapeHtml(init)}</div>
+                    <div class="sr-creator-info">
+                      <strong>${_gsHighlight(a.name || a.username, query)}</strong>
+                      <small>@${escapeHtml(a.username || "")}</small>
+                    </div>
+                  </button>`;
+                }).join("")}
+              </div>
+            </section>
+          ` : ""}
+
+          ${videos.length ? `
+            <section class="sr-section">
+              <h3 class="sr-section-title">Video (${videos.length})</h3>
+              <div class="sr-videos-grid">
+                ${videos.map(v => {
+                  const thumb = v.thumb || v.thumbnail || "";
+                  const init = String(v.creator || v.username || "?")[0].toUpperCase();
+                  return `<button type="button" class="sr-video-card" data-ss-video="${escapeHtml(String(v.id))}">
+                    <div class="sr-video-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
+                    <div class="sr-video-info">
+                      <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
+                      <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views · ❤ ${v.likes || 0}</small>
+                    </div>
+                  </button>`;
+                }).join("")}
+              </div>
+            </section>
+          ` : ""}
+
+          ${total === 0 ? `
+            <div class="sr-empty">
+              <div class="sr-empty-icon">🔍</div>
+              <h3>Tidak ada hasil</h3>
+              <p>Coba kata kunci lain atau ubah filter.</p>
+            </div>
+          ` : ""}
+        </main>
+      </div>
+    </div>
+  `;
+  overlay.classList.add("show");
+}
+
+// Filter chip click → update state + re-render
+document.addEventListener("click", e => {
+  const chip = e.target.closest("[data-sr-filter]");
+  if (chip) {
+    e.preventDefault();
+    const group = chip.dataset.srFilter;
+    const value = chip.dataset.srValue;
+    if (group === "sort") {
+      _searchResultsState.sort = value;
+    } else {
+      _searchResultsState.filters[group] = value;
+    }
+    _renderSearchResultsOverlay();
+    return;
+  }
+  if (e.target.closest("[data-sr-close]")) {
+    e.preventDefault();
+    document.getElementById("searchResultsOverlay")?.classList.remove("show");
+    document.getElementById("searchResultsOverlay")?.remove();
+    return;
+  }
+  // History click
+  const histBtn = e.target.closest("[data-ss-history]");
+  if (histBtn && !e.target.closest("[data-ss-remove-history]")) {
+    e.preventDefault();
+    const q = histBtn.dataset.ssHistory;
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = q;
+    _gsRun(q);
+    return;
+  }
+  const removeHist = e.target.closest("[data-ss-remove-history]");
+  if (removeHist) {
+    e.preventDefault();
+    e.stopPropagation();
+    const q = removeHist.dataset.ssRemoveHistory;
+    const arr = getSearchHistory().filter(x => x !== q);
+    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr)); } catch {}
+    _gsRenderHistoryDropdown();
+    return;
+  }
+  if (e.target.closest("[data-ss-clear-history]")) {
+    e.preventDefault();
+    if (!confirm("Hapus semua riwayat pencarian?")) return;
+    clearSearchHistory();
+    _gsRenderHistoryDropdown();
+    return;
+  }
+  // See all results
+  const seeAll = e.target.closest("[data-ss-see-all]");
+  if (seeAll) {
+    e.preventDefault();
+    openSearchResults(seeAll.dataset.ssSeeAll);
+    return;
+  }
+});
+
+// Live re-query di sr-query-input
+document.addEventListener("input", e => {
+  if (!e.target.matches("#srQueryInput")) return;
+  _searchResultsState.query = e.target.value;
+  // Debounce
+  clearTimeout(window._srQueryTimer);
+  window._srQueryTimer = setTimeout(() => _renderSearchResultsOverlay(), 220);
+});
+
+// Enter di topbar #globalSearch → open full results
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "globalSearch") {
+    e.preventDefault();
+    const q = e.target.value.trim();
+    if (q) openSearchResults(q);
+  }
+  // ESC tutup overlay
+  if (e.key === "Escape" && document.getElementById("searchResultsOverlay")?.classList.contains("show")) {
+    document.getElementById("searchResultsOverlay")?.remove();
+  }
+});
+
+// Wire global search input
+document.addEventListener("input", e => {
+  if (!e.target.matches("#globalSearch")) return;
+  if (_globalSearchTimer) clearTimeout(_globalSearchTimer);
+  const q = e.target.value;
+  _globalSearchTimer = setTimeout(() => _gsRun(q), 180);
+});
+// Open dropdown on focus if query present
+document.addEventListener("focus", e => {
+  if (!e.target.matches("#globalSearch")) return;
+  const q = e.target.value?.trim();
+  if (q) _gsRun(q);
+}, true);
+// Close dropdown when click outside
+document.addEventListener("click", e => {
+  const inSearch = e.target.closest(".topbar-search");
+  if (!inSearch) {
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+  }
+});
+// Click result → navigate
+document.addEventListener("click", e => {
+  const videoBtn = e.target.closest("[data-ss-video]");
+  if (videoBtn) {
+    e.preventDefault();
+    const vid = parseInt(videoBtn.dataset.ssVideo, 10);
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = "";
+    if (typeof openPlayer === "function" && !Number.isNaN(vid)) openPlayer(vid);
+    return;
+  }
+  const userBtn = e.target.closest("[data-ss-user]");
+  if (userBtn) {
+    e.preventDefault();
+    const username = userBtn.dataset.ssUser;
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = "";
+    if (typeof openUserProfile === "function") openUserProfile(username);
+    else if (typeof switchView === "function") switchView("user-profile");
+    return;
+  }
+});
+// Escape closes dropdown
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.activeElement?.id === "globalSearch") {
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    document.activeElement.blur();
+  }
+});
+
+window._search = {
+  run: _gsRun,
+  openResults: openSearchResults,
+  history: getSearchHistory,
+  clearHistory: clearSearchHistory,
+  addHistory: addSearchHistory
+};
+
+// ============ SESSION MANAGEMENT v571 ============
+// Track active sessions per account. Storage: playly-sessions-{email} = [
+//   { id, deviceLabel, browser, os, userAgent, loginAt, lastActiveAt }
+// ]
+// Current browser punya session_id unik di localStorage `playly-session-id`,
+// generated saat first login per browser. Login/dashboard load → upsert ke
+// list. Logout → remove. "Logout all other devices" → keep only current id.
+
+const SESSION_KEY_PREFIX = "playly-sessions-";
+const SESSION_ID_KEY = "playly-session-id";
+
+function _getOrCreateSessionId() {
+  let id = localStorage.getItem(SESSION_ID_KEY);
+  if (!id) {
+    id = "ses_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+    try { localStorage.setItem(SESSION_ID_KEY, id); } catch {}
+  }
+  return id;
+}
+
+function _detectDeviceInfo() {
+  const ua = navigator.userAgent || "";
+  // Browser
+  let browser = "Browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\//.test(ua)) browser = "Opera";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Safari\//.test(ua)) browser = "Safari";
+  // OS
+  let os = "Desktop";
+  if (/Windows NT 10/.test(ua)) os = "Windows 10/11";
+  else if (/Windows NT/.test(ua)) os = "Windows";
+  else if (/Mac OS X/.test(ua)) os = "macOS";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
+  else if (/Linux/.test(ua)) os = "Linux";
+  // Device type
+  const isMobile = /Mobile|Android|iPhone|iPod/.test(ua);
+  const deviceType = isMobile ? "📱 Mobile" : "💻 Desktop";
+  return {
+    browser, os, deviceType,
+    deviceLabel: `${browser} di ${os}`,
+    userAgent: ua.slice(0, 240) // truncate untuk storage
+  };
+}
+
+function _getSessionsKey() {
+  return user?.email ? `${SESSION_KEY_PREFIX}${user.email}` : null;
+}
+
+function getActiveSessions() {
+  const key = _getSessionsKey();
+  if (!key) return [];
+  try {
+    const arr = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+function saveActiveSessions(arr) {
+  const key = _getSessionsKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(arr));
+    if (window.cloudSync?.syncSingleKey) {
+      Promise.resolve(window.cloudSync.syncSingleKey(key)).catch(() => {});
+    }
+  } catch {}
+}
+
+function upsertCurrentSession() {
+  if (!user?.email) return;
+  const sid = _getOrCreateSessionId();
+  const dev = _detectDeviceInfo();
+  const list = getActiveSessions();
+  const now = Date.now();
+  const existing = list.find(s => s.id === sid);
+  if (existing) {
+    existing.lastActiveAt = now;
+    // Update device info kalau berubah (mis. browser upgrade)
+    existing.browser = dev.browser;
+    existing.os = dev.os;
+    existing.deviceLabel = dev.deviceLabel;
+  } else {
+    list.unshift({
+      id: sid,
+      deviceLabel: dev.deviceLabel,
+      browser: dev.browser,
+      os: dev.os,
+      deviceType: dev.deviceType,
+      userAgent: dev.userAgent,
+      loginAt: now,
+      lastActiveAt: now
+    });
+  }
+  saveActiveSessions(list);
+}
+
+function removeSession(sessionId) {
+  const list = getActiveSessions().filter(s => s.id !== sessionId);
+  saveActiveSessions(list);
+  return list;
+}
+
+function logoutAllOtherSessions() {
+  const currentId = _getOrCreateSessionId();
+  const list = getActiveSessions().filter(s => s.id === currentId);
+  saveActiveSessions(list);
+  return list;
+}
+
+function _formatSessionTime(ts) {
+  if (!ts) return "—";
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "baru saja";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} menit lalu`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} jam lalu`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day} hari lalu`;
+  return new Date(ts).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderActiveSessions() {
+  const list = document.getElementById("sessionsList");
+  if (!list) return;
+  // Upsert current session sebelum render (ensure visible)
+  upsertCurrentSession();
+  const sessions = getActiveSessions();
+  if (!sessions.length) {
+    list.innerHTML = `<div class="sessions-empty" data-no-i18n>Belum ada sesi aktif.</div>`;
+    return;
+  }
+  const currentId = _getOrCreateSessionId();
+  // Sort: current first, then by lastActiveAt desc
+  sessions.sort((a, b) => {
+    if (a.id === currentId) return -1;
+    if (b.id === currentId) return 1;
+    return (b.lastActiveAt || 0) - (a.lastActiveAt || 0);
+  });
+  list.innerHTML = sessions.map(s => {
+    const isCurrent = s.id === currentId;
+    return `
+      <div class="session-row${isCurrent ? ' session-current' : ''}" data-session-id="${escapeHtml(s.id)}">
+        <div class="session-icon">${s.deviceType?.charAt(0) === "📱" ? "📱" : "💻"}</div>
+        <div class="session-info">
+          <div class="session-device-row">
+            <strong>${escapeHtml(s.deviceLabel || "Unknown device")}</strong>
+            ${isCurrent ? '<span class="session-badge-current" data-no-i18n>Perangkat ini</span>' : ''}
+          </div>
+          <small class="session-meta">
+            Login: ${escapeHtml(_formatSessionTime(s.loginAt))} · Aktif terakhir: ${escapeHtml(_formatSessionTime(s.lastActiveAt))}
+          </small>
+        </div>
+        <div class="session-actions">
+          ${isCurrent
+            ? '<span class="session-current-tag" data-no-i18n>✓ Aktif</span>'
+            : `<button type="button" class="btn ghost btn-compact session-revoke" data-session-revoke="${escapeHtml(s.id)}">Logout</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Event delegation untuk session actions
+document.addEventListener("click", e => {
+  const revokeBtn = e.target.closest("[data-session-revoke]");
+  if (revokeBtn) {
+    e.preventDefault();
+    const sid = revokeBtn.dataset.sessionRevoke;
+    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    removeSession(sid);
+    renderActiveSessions();
+    if (typeof toast === "function") toast("✓ Device di-logout", "success");
+    return;
+  }
+  if (e.target.closest("#sessionsLogoutAllBtn")) {
+    e.preventDefault();
+    const sessions = getActiveSessions();
+    const otherCount = sessions.filter(s => s.id !== _getOrCreateSessionId()).length;
+    if (otherCount === 0) {
+      if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
+      return;
+    }
+    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    logoutAllOtherSessions();
+    renderActiveSessions();
+    if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
+  }
+});
+
+// Re-render saat user buka settings view
+window.addEventListener("playly:view-changed", e => {
+  if (e.detail?.view === "settings" && user?.role === "user") {
+    setTimeout(() => renderActiveSessions(), 100);
+  }
+});
+
+// Update lastActiveAt heartbeat tiap 5 menit kalau user masih buka tab
+setInterval(() => {
+  if (user?.email) upsertCurrentSession();
+}, 5 * 60 * 1000);
+
+window._sessions = {
+  list: getActiveSessions,
+  upsert: upsertCurrentSession,
+  remove: removeSession,
+  logoutAllOthers: logoutAllOtherSessions,
+  render: renderActiveSessions,
+  detect: _detectDeviceInfo
+};
+
+// ============ USER AUDIT LOG v572 ============
+// Security transparency: catat aktivitas penting akun user (login, password
+// changed, privacy toggle, 2FA enable/disable). Storage:
+// playly-user-audit-{email} = array (cap 100 most recent). Cloud-sync mirror.
+
+const USER_AUDIT_KEY_PREFIX = "playly-user-audit-";
+const USER_AUDIT_MAX = 100;
+
+const AUDIT_TYPES = {
+  LOGIN:       "login",
+  PASSWORD:    "password",
+  PRIVACY:     "privacy",
+  TWOFA:       "twofa",
+  PROFILE:     "profile",
+  SESSION:     "session",
+  RECOVERY:    "recovery"
+};
+
+function _getUserAuditKey(emailOverride) {
+  const email = emailOverride || user?.email;
+  return email ? `${USER_AUDIT_KEY_PREFIX}${email}` : null;
+}
+
+function getUserAuditLog(emailOverride) {
+  const key = _getUserAuditKey(emailOverride);
+  if (!key) return [];
+  try {
+    const arr = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+function saveUserAuditLog(arr, emailOverride) {
+  const key = _getUserAuditKey(emailOverride);
+  if (!key) return;
+  // Cap di USER_AUDIT_MAX
+  const capped = arr.slice(0, USER_AUDIT_MAX);
+  try {
+    localStorage.setItem(key, JSON.stringify(capped));
+    if (window.cloudSync?.syncSingleKey) {
+      Promise.resolve(window.cloudSync.syncSingleKey(key)).catch(() => {});
+    }
+  } catch {}
+}
+
+function addUserAuditEvent(type, action, details, opts = {}) {
+  const email = opts.emailOverride || user?.email;
+  if (!email) return;
+  const list = getUserAuditLog(email);
+  const dev = typeof _detectDeviceInfo === "function" ? _detectDeviceInfo() : {};
+  list.unshift({
+    id: "audit_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
+    type: type || "general",
+    action: action || "",
+    details: details || "",
+    deviceLabel: opts.deviceLabel || dev.deviceLabel || "Unknown device",
+    ts: Date.now()
+  });
+  saveUserAuditLog(list, email);
+}
+
+function clearUserAuditLog() {
+  const key = _getUserAuditKey();
+  if (!key) return;
+  try {
+    localStorage.removeItem(key);
+    if (window.cloudSync?.syncSingleKey) {
+      Promise.resolve(window.cloudSync.syncSingleKey(key)).catch(() => {});
+    }
+  } catch {}
+}
+
+function _formatAuditTime(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  const isToday = d.toDateString() === today.toDateString();
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const time = d.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return `Hari ini ${time}`;
+  if (isYesterday) return `Kemarin ${time}`;
+  return d.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }) + " " + time;
+}
+
+const AUDIT_TYPE_META = {
+  login:    { icon: "🔓", label: "Login", color: "var(--success, #10B981)" },
+  password: { icon: "🔑", label: "Password", color: "var(--primary, #6D2932)" },
+  privacy:  { icon: "🔒", label: "Privasi", color: "var(--gold, #DCA96D)" },
+  twofa:    { icon: "🔐", label: "2FA", color: "#3B82F6" },
+  profile:  { icon: "👤", label: "Profil", color: "#9333EA" },
+  session:  { icon: "🖥", label: "Sesi", color: "#8B5CF6" },
+  recovery: { icon: "⚠", label: "Recovery", color: "#EF4444" },
+  general:  { icon: "•", label: "Aktivitas", color: "var(--muted)" }
+};
+
+function renderUserAuditLog() {
+  const list = document.getElementById("userAuditList");
+  if (!list) return;
+  const filter = list.dataset.filter || "all";
+  let events = getUserAuditLog();
+  if (filter !== "all") events = events.filter(e => e.type === filter);
+  events.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+  if (!events.length) {
+    list.innerHTML = `<div class="audit-empty" data-no-i18n>Belum ada aktivitas tercatat${filter !== "all" ? ` untuk kategori "${filter}"` : ""}.</div>`;
+    return;
+  }
+
+  list.innerHTML = events.map(ev => {
+    const meta = AUDIT_TYPE_META[ev.type] || AUDIT_TYPE_META.general;
+    return `
+      <div class="audit-row" data-audit-id="${escapeHtml(ev.id)}">
+        <div class="audit-icon" style="background:${meta.color}22;color:${meta.color}">${meta.icon}</div>
+        <div class="audit-info">
+          <div class="audit-action-row">
+            <strong>${escapeHtml(ev.action || "Aktivitas")}</strong>
+            <span class="audit-type-pill" style="background:${meta.color}22;color:${meta.color}">${escapeHtml(meta.label)}</span>
+          </div>
+          ${ev.details ? `<p class="audit-details">${escapeHtml(ev.details)}</p>` : ""}
+          <small class="audit-meta">
+            ${escapeHtml(_formatAuditTime(ev.ts))} · ${escapeHtml(ev.deviceLabel || "Unknown")}
+          </small>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Event delegation: filter + clear
+document.addEventListener("click", e => {
+  const filterBtn = e.target.closest("[data-audit-filter]");
+  if (filterBtn) {
+    e.preventDefault();
+    const filter = filterBtn.dataset.auditFilter;
+    document.querySelectorAll("[data-audit-filter]").forEach(b => b.classList.toggle("active", b.dataset.auditFilter === filter));
+    const list = document.getElementById("userAuditList");
+    if (list) {
+      list.dataset.filter = filter;
+      renderUserAuditLog();
+    }
+    return;
+  }
+  if (e.target.closest("#userAuditClearBtn")) {
+    e.preventDefault();
+    if (!confirm("Hapus semua riwayat aktivitas akun? Aksi ini tidak bisa di-undo.")) return;
+    clearUserAuditLog();
+    renderUserAuditLog();
+    if (typeof toast === "function") toast("✓ Riwayat aktivitas dihapus", "success");
+  }
+});
+
+// Auto-render saat user buka settings view
+window.addEventListener("playly:view-changed", e => {
+  if (e.detail?.view === "settings" && user?.role === "user") {
+    setTimeout(() => renderUserAuditLog(), 150);
+  }
+});
+
+window._userAudit = {
+  get: getUserAuditLog,
+  add: addUserAuditEvent,
+  clear: clearUserAuditLog,
+  render: renderUserAuditLog,
+  TYPES: AUDIT_TYPES
+};
+
+// ============ HOOK: setPref → audit privacy + 2FA changes ============
+(function _hookAuditToSetPref() {
+  if (typeof window.setPref !== "function") return;
+  const orig = window.setPref;
+  window.setPref = function(key, value) {
+    const result = orig.apply(this, arguments);
+    // Hanya audit privacy + display + notif (filter biar tidak terlalu noisy)
+    if (key.startsWith("privacy.")) {
+      addUserAuditEvent(AUDIT_TYPES.PRIVACY, "Pengaturan privasi diubah",
+        `${key.replace("privacy.", "")} → ${value ? "ON" : "OFF"}`);
+    }
+    return result;
+  };
+})();
 
 $("#commentSend")?.addEventListener("click", sendComment);
 $("#commentField")?.addEventListener("keydown", e => { if (e.key === "Enter") sendComment(); });
@@ -46220,8 +47790,17 @@ function sendComment() {
   if (!txt) return;
   const id = state.currentVideo;
   const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
-  const list = getVideoComments(id);
-  list.unshift({ name: user.username, init: initials, text: txt, time: "just now", likes: 0, ts: Date.now() });
+  const list = getVideoComments(id).map(_normalizeComment);
+  list.unshift({
+    id: _genCommentId(),
+    parentId: null,
+    name: user.username,
+    init: initials,
+    text: txt,
+    ts: Date.now(),
+    likes: [],
+    reports: []
+  });
   setVideoComments(id, list);
   $("#commentField").value = "";
   renderComments(id);
@@ -49039,7 +50618,15 @@ async function renderStoragePage() {
   const fileList = document.getElementById("storageFileList");
   if (fileList) {
     if (!myVideos.length) {
-      fileList.innerHTML = `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
+      fileList.innerHTML = (typeof window._emptyRichV24 === "function")
+        ? window._emptyRichV24({
+            kind: "storage",
+            title: "Storage kamu masih kosong",
+            copy: "Upload video pertamamu untuk mulai berbagi konten.",
+            cta: { label: "Upload sekarang", view: "upload" },
+            extra: "storage-empty",
+          })
+        : `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
     } else {
       const sorted = [...myVideos].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0));
       // Status label per admin status — biar user jelas tau video ini lagi
@@ -51948,3 +53535,62 @@ function getNotifList() {
     };
   }
 })();
+
+/* ============ v575: helper empty-state ilustrasi (item 24) ============
+   Dipakai di renderer dinamis (purchase history, search history, komentar
+   inline, storage, notif dropdown). Markup di-mirror dengan CSS
+   .empty-rich-v24 di styles.css. Variant: kind = comment|storage|purchase|
+   search-user|search-video|notif|generic. Inline = true bikin variant kecil
+   (border-less, padding kompak) — cocok untuk konteks padat. CTA opsional. */
+window._emptyRichV24 = function emptyRichV24(opts) {
+  opts = opts || {};
+  const kind   = opts.kind   || "generic";
+  const title  = opts.title  || "Belum ada data";
+  const copy   = opts.copy   || "";
+  const cta    = opts.cta    || null;        // { label, view } or null
+  const extra  = opts.extra  || "";          // extra class(es) untuk container
+  const inline = opts.inline === true;
+  const svgMap = {
+    comment: `<svg viewBox="0 0 48 48"><path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H22l-8 8v-8h-2a4 4 0 0 1-4-4Z"/><circle class="er-acc-fill" cx="18" cy="21" r="1.8"/><circle class="er-acc-fill" cx="24" cy="21" r="1.8"/><circle class="er-acc-fill" cx="30" cy="21" r="1.8"/></svg>`,
+    storage: `<svg viewBox="0 0 48 48"><path d="M6 16a4 4 0 0 1 4-4h8l4 4h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z"/><path class="er-acc" d="M24 22v10"/><path class="er-acc" d="M19 27l5-5 5 5"/></svg>`,
+    purchase: `<svg viewBox="0 0 48 48"><path d="M12 6h20l4 4v32l-5-3-5 3-5-3-5 3-5-3-3 3V10Z"/><path class="er-acc" d="M16 16h16M16 22h16M16 28h10"/></svg>`,
+    "search-user": `<svg viewBox="0 0 48 48"><circle cx="20" cy="18" r="7"/><path d="M8 38c0-6.6 5.4-12 12-12s12 5.4 12 12"/><circle class="er-acc" cx="33" cy="33" r="6"/><path class="er-acc" d="M38 38l4 4"/></svg>`,
+    "search-video": `<svg viewBox="0 0 48 48"><rect x="6" y="10" width="28" height="20" rx="3"/><path d="M14 15l8 5-8 5Z" fill="currentColor" stroke="none" opacity=".55"/><circle class="er-acc" cx="35" cy="33" r="6"/><path class="er-acc" d="M40 38l4 4"/></svg>`,
+    notif: `<svg viewBox="0 0 48 48"><path d="M12 18a12 12 0 0 1 24 0c0 10 4 12 4 12H8s4-2 4-12Z"/><path d="M20 36a4 4 0 0 0 8 0"/><path class="er-acc" d="M34 12l3-3M37 16h4M34 6V2" opacity=".7"/></svg>`,
+    search: `<svg viewBox="0 0 48 48"><circle cx="22" cy="22" r="12"/><path d="M31 31l8 8" class="er-acc"/></svg>`,
+    generic: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><path class="er-acc" d="M16 26c2 3 5 4 8 4s6-1 8-4M19 19h.01M29 19h.01"/></svg>`
+  };
+  const svg = svgMap[kind] || svgMap.generic;
+  const ctaHtml = (cta && cta.label)
+    ? `<button type="button" class="er-cta btn primary sm" ${cta.view ? `data-navigate-view="${escapeHtml(cta.view)}"` : ""} data-no-i18n>${escapeHtml(cta.label)}</button>`
+    : "";
+  const inlineCls = inline ? " er-inline" : "";
+  return `<div class="empty-rich-v24${inlineCls}${extra ? " " + extra : ""}" data-no-i18n>
+    <div class="er-illust" aria-hidden="true">${svg}</div>
+    <h4 class="er-title">${escapeHtml(title)}</h4>
+    ${copy ? `<p class="er-copy">${escapeHtml(copy)}</p>` : ""}
+    ${ctaHtml}
+  </div>`;
+};
+
+/* Generic handler untuk tombol .er-cta yang punya data-navigate-view —
+   redirect ke view dashboard tertentu (premium, upload, dst). Dipasang
+   sekali via event-delegation. */
+document.addEventListener("click", function(e) {
+  const t = e.target && e.target.closest && e.target.closest("[data-navigate-view]");
+  if (!t) return;
+  const view = t.getAttribute("data-navigate-view");
+  if (!view) return;
+  e.preventDefault();
+  try {
+    // Coba berbagai entry-point yang sudah ada di codebase ini
+    if (typeof window.setView === "function")       return window.setView(view);
+    if (typeof window.showView === "function")      return window.showView(view);
+    if (typeof window.openView === "function")      return window.openView(view);
+    if (typeof window.navigateTo === "function")    return window.navigateTo(view);
+    // Fallback: trigger klik pada nav item yang sesuai
+    const nav = document.querySelector(`[data-nav="${view}"], [data-view-target="${view}"], .nav-item[data-target="${view}"]`);
+    if (nav && typeof nav.click === "function") nav.click();
+  } catch {}
+}, false);
+
