@@ -4,7 +4,7 @@
 
 // Version banner — log di console saat script load untuk verifikasi
 // versi yang aktif (kadang browser/CDN cache serve versi lama).
-console.info("%c[playly] script.js v554 (admin FAQ open-state palette align ke --admin-grad navy)", "color:#DCA96D;font-weight:600;");
+console.info("%c[playly] script.js v583 (skeleton loading system + pricing modal distinction + concurrent session work)", "color:#DCA96D;font-weight:600;");
 
 // ----------------------- ORPHAN KEYS CLEANUP (2026-05-22) -----------------------
 // Cleanup key localStorage warisan dari versi lama yang sudah tidak ditulis lagi
@@ -37120,11 +37120,13 @@ async function renderTrendingNews(listId, category = "top", opts = {}) {
   if (!list) return;
   const { forceRefresh = false } = opts;
 
-  // Loading skeleton
-  list.innerHTML = `<div class="trending-empty">
-    <div class="trending-empty-icon">⏳</div>
-    <p>Memuat berita trending...</p>
-  </div>`;
+  // Loading skeleton — v583 unified (5 rows mock list item)
+  list.innerHTML = (typeof window._skeleton === "function")
+    ? window._skeleton("row", { count: 5 })
+    : `<div class="trending-empty">
+        <div class="trending-empty-icon">⏳</div>
+        <p>Memuat berita trending...</p>
+      </div>`;
 
   // Helper untuk relative time
   const relTimeShort = (ts) => {
@@ -53571,6 +53573,89 @@ window._emptyRichV24 = function emptyRichV24(opts) {
     ${copy ? `<p class="er-copy">${escapeHtml(copy)}</p>` : ""}
     ${ctaHtml}
   </div>`;
+};
+
+/* v583: helper skeleton loading konsisten (item 23). Generate markup
+   reusable yang pakai class .skeleton (shimmer existing) + structural
+   primitives .skel-* (v583). Pakai untuk standardize loading placeholder
+   di renderer dinamis.
+   Usage:
+     el.innerHTML = window._skeleton('row', { count: 3 });
+     el.innerHTML = window._skeleton('grid', { count: 6, narrow: true });
+     el.innerHTML = window._skeleton('text', { lines: 3 });
+     el.innerHTML = window._skeleton('card', { count: 2 });
+*/
+window._skeleton = function skeleton(kind, opts) {
+  opts = opts || {};
+  var count = Math.max(1, opts.count || 3);
+  var k = String(kind || "row");
+
+  function lines(n, widths) {
+    n = n || 3;
+    widths = widths || ["wide", "half", "mid", "x-wide"];
+    var out = "";
+    for (var i = 0; i < n; i++) {
+      out += '<div class="skeleton skel-line ' + widths[i % widths.length] + '"></div>';
+    }
+    return out;
+  }
+
+  function row() {
+    return '<div class="skel-row">'
+      + '<div class="skeleton skel-circle"></div>'
+      + '<div class="skel-text">'
+        + '<div class="skeleton skel-line mid"></div>'
+        + '<div class="skeleton skel-line short"></div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function card() {
+    return '<div class="skel-card-wrap">'
+      + '<div class="skeleton skel-card-thumb"></div>'
+      + '<div class="skeleton skel-line wide"></div>'
+      + '<div class="skeleton skel-line half"></div>'
+      + '</div>';
+  }
+
+  var inner = "";
+  if (k === "row") {
+    for (var i = 0; i < count; i++) inner += row();
+    return '<div class="skel-wrap">' + inner + '</div>';
+  }
+  if (k === "text") {
+    return '<div class="skel-wrap">' + lines(opts.lines || 3) + '</div>';
+  }
+  if (k === "card") {
+    for (var j = 0; j < count; j++) inner += card();
+    var cls = "skel-grid" + (opts.narrow ? " skel-grid-narrow" : "");
+    return '<div class="skel-wrap"><div class="' + cls + '">' + inner + '</div></div>';
+  }
+  if (k === "grid") {
+    for (var g = 0; g < count; g++) {
+      inner += '<div class="skel-card-wrap">'
+        + '<div class="skeleton skel-card-thumb"></div>'
+        + '<div class="skeleton skel-line wide"></div>'
+        + '<div class="skeleton skel-line half"></div>'
+        + '</div>';
+    }
+    var gcls = "skel-grid" + (opts.narrow ? " skel-grid-narrow" : "");
+    return '<div class="skel-wrap"><div class="' + gcls + '">' + inner + '</div></div>';
+  }
+  if (k === "line") {
+    // Single inline placeholder, support width via opts.width
+    var w = opts.width || "wide";
+    return '<span class="skeleton skel-line ' + w + '" style="display:inline-block;vertical-align:middle"></span>';
+  }
+  if (k === "title-sub") {
+    // Hero/page header skeleton: judul besar + 1 baris subtitle
+    return '<div class="skel-wrap">'
+      + '<div class="skeleton skel-line-lg"></div>'
+      + '<div class="skeleton skel-line mid"></div>'
+      + '</div>';
+  }
+  // Fallback: 3 baris text
+  return '<div class="skel-wrap">' + lines(3) + '</div>';
 };
 
 /* Generic handler untuk tombol .er-cta yang punya data-navigate-view —

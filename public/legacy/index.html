@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260527-stats-section-icons-v582" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260527-skeleton-system-v583" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -933,7 +933,10 @@
               <span>Kembali</span>
             </button>
             <h3 class="auth-pick-title auth-pick-title-center" data-i18n="auth.tier.choose">Pilih paket kamu</h3>
-            <p class="auth-pick-sub auth-pick-sub-center">Mulai gratis, upgrade kapan saja.</p>
+            <!-- v555 (2026-05-26): subtitle lebih clear bahwa ini SIGNUP tier
+                 picker (Free vs Premium), bukan Premium variant picker
+                 (yang di-handle planPickerModal). Mengurangi confusion. -->
+            <p class="auth-pick-sub auth-pick-sub-center">Daftar gratis selamanya — atau langsung pilih Premium.</p>
             <div class="auth-pick-grid">
               <button type="button" class="auth-pick-card" data-pick-tier="free">
                 <span class="apc-icon" aria-hidden="true">
@@ -4994,8 +4997,8 @@
             <span id="storagePagePct">0%</span>
           </div>
           <div class="storage-overview-info">
-            <h3 id="storagePageUsed">— / —</h3>
-            <p id="storagePageStatus">Memuat data penyimpanan...</p>
+            <h3 id="storagePageUsed"><span class="skeleton skel-line-lg" style="display:inline-block;width:140px;vertical-align:middle" aria-label="Memuat..."></span></h3>
+            <p id="storagePageStatus"><span class="skeleton skel-line mid" style="display:inline-block;vertical-align:middle" aria-label="Memuat data penyimpanan..."></span></p>
             <div class="storage-overview-bar">
               <i id="storagePageBar" style="width:0%"></i>
             </div>
@@ -7482,15 +7485,18 @@
   </div>
 
   <!-- =================== PREMIUM PLAN PICKER MODAL =================== -->
-  <!-- Step 1 of upgrade flow: user pilih plan (Uji Coba / Bulanan / Tahunan /
-       Selamanya). Uji Coba = instant tanpa payment. Selain itu → buka payment
-       modal. Teks Indonesia, ikon inline SVG stroke-based (di renderPlanPicker). -->
+  <!-- Step 1 of upgrade flow: user pilih varian Premium (Uji Coba / Bulanan /
+       Tahunan / Selamanya). Uji Coba = instant tanpa payment. Selain itu →
+       buka payment modal. Teks Indonesia, ikon inline SVG stroke-based.
+       v555 (2026-05-26): eyebrow "PILIH PAKET KAMU" → "PILIH PAKET PREMIUM"
+       supaya tidak ambigu dgn auth signup tier picker (yang title-nya juga
+       "Pilih paket kamu" — beda fungsi: tier vs variant). -->
   <div class="modal" id="planPickerModal">
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel plan-picker-panel">
       <button class="modal-close" type="button" data-close aria-label="Tutup">✕</button>
       <div class="plan-picker-head">
-        <span class="plan-picker-eyebrow">PILIH PAKET KAMU</span>
+        <span class="plan-picker-eyebrow">PILIH PAKET PREMIUM</span>
         <h3>Buka Playly Premium</h3>
         <p class="muted">Mulai gratis 7 hari, upgrade kapan saja. Batal kapan pun.</p>
       </div>
@@ -9032,7 +9038,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260527-stats-section-icons-v582" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260527-skeleton-system-v583" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

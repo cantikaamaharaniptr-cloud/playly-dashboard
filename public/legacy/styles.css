@@ -69206,3 +69206,111 @@ body:not([data-role="admin"]) [data-view="stats"] .mc-icon::after {
 }
 /* ============== END v582 ============== */
 
+/* =========================================================================
+   v583 — Skeleton loading system konsisten (item 23)
+   Base `.skeleton` sudah ada (wine shimmer di user, dark di admin).
+   Tambah primitive structural reusable:
+     .skel-line      → text bar (default 12px, override pakai inline style)
+     .skel-line-lg   → judul (18px)
+     .skel-line-sm   → caption (10px)
+     .skel-circle    → avatar bulat (default 36px)
+     .skel-card      → card placeholder (rounded box)
+     .skel-row       → flex row dengan circle + lines (mock list item)
+     .skel-grid      → grid container, isi dengan .skel-card[n]
+     .skel-block     → spacer block (set width/height via inline style)
+   Pakai bareng `.skeleton` untuk shimmer:
+     <div class="skeleton skel-line wide"></div>
+   Atau pakai helper: window._skeleton('row', { count: 3 }) → returns HTML.
+   ========================================================================= */
+
+/* Width modifiers (extend dari .skel-line existing) */
+.skel-line.full   { width: 100%; }
+.skel-line.x-wide { width: 95%; }
+.skel-line.mid    { width: 65%; }
+.skel-line.tiny   { width: 18%; }
+
+/* Size variants */
+.skel-line-lg {
+  height: 18px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  width: 60%;
+}
+.skel-line-sm {
+  height: 10px;
+  border-radius: 3px;
+  margin-bottom: 5px;
+  width: 40%;
+}
+
+/* Avatar / icon circle */
+.skel-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.skel-circle-sm { width: 28px; height: 28px; }
+.skel-circle-lg { width: 56px; height: 56px; }
+
+/* Card placeholder (height set inline atau via context) */
+.skel-card {
+  width: 100%;
+  min-height: 80px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.skel-card-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* Row layout (mock list item: avatar + 2 lines) */
+.skel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.skel-row > .skel-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skel-row > .skel-text .skel-line { margin-bottom: 0; }
+
+/* Grid wrapper */
+.skel-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.skel-grid-narrow { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+
+/* Block (generic) */
+.skel-block {
+  border-radius: 8px;
+  width: 100%;
+  height: 40px;
+}
+
+/* Container wrap: subtle fade-in on first paint, anti-flicker.
+   `.skel-wrap` di parent, isi dengan skel primitives. */
+.skel-wrap {
+  animation: skelWrapIn .25s ease-out;
+}
+@keyframes skelWrapIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Reduced-motion: skeleton shimmer sudah di-handle existing rule di line ~47066
+   (.skeleton animation: none). Wrap juga di-disable. */
+@media (prefers-reduced-motion: reduce) {
+  .skel-wrap { animation: none; }
+}
+/* ============== END v583 ============== */
+
