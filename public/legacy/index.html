@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260527-skeleton-system-v583" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260528-search-hashtag-pages-v619" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -4017,8 +4017,11 @@
             <div class="home-achievements" aria-label="Pencapaian kreator">
               <div class="ha-head">
                 <div class="ha-titlewrap">
-                  <h3><span class="ha-h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg></span> Pencapaian</h3>
-                  <small class="ha-sub">Lencana milestone yang sudah kamu raih</small>
+                  <span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg></span>
+                  <div class="ha-titlewrap-text">
+                    <h3>Pencapaian</h3>
+                    <small class="ha-sub">Lencana milestone yang sudah kamu raih</small>
+                  </div>
                 </div>
                 <small id="haCount">0 ter-unlock</small>
               </div>
@@ -4060,12 +4063,42 @@
       </section>
 
       <!-- ============== MY LIBRARY (videos) — koleksi pribadi user ============== -->
-      <section class="view" data-view="videos" data-lib-active="my">
-        <!-- View header (h2 page title + description) dihapus per request user
-             — breadcrumb di topbar sudah cukup tunjukkan halaman aktif. -->
+      <section class="view" data-view="videos" data-lib-active="my" data-focus="my-video">
+        <!-- v590 (2026-05-27): Page header + tab bar.
+             User minta: jangan tampilin semua section sekaligus, kasih tab
+             biar pilih satu-satu (Video Saya / Status Video / Unduhan).
+             Ikuti pattern Riwayat page (riwayat-tab-bar). Tab wire ke
+             applyFocus() lewat data-focus-tab attribute. -->
+        <!-- v590b (2026-05-27): flex layout — icon kiri, h2+p stacked
+             di text column kanan. Subtitle align dgn h2 text (per request
+             user, beda dari pattern Unggah Video Baru yg subtitle full-width
+             di bawah icon). -->
+        <div class="view-header">
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7l3 3h10v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4z"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Pustaka Saya</h2>
+              <p>Semua video kamu — dikelompokkan per kategori.</p>
+            </div>
+          </div>
+        </div>
 
+        <!-- Tab pill bar — pattern sama dgn .riwayat-tab-bar -->
+        <div class="riwayat-tab-bar" role="tablist">
+          <button type="button" class="riwayat-tab active" data-focus-tab="my-video" role="tab">
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg></span>
+            Video Saya
+          </button>
+          <button type="button" class="riwayat-tab" data-focus-tab="status-videos" role="tab">
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span>
+            Status Video
+          </button>
+          <button type="button" class="riwayat-tab" data-focus-tab="download" role="tab">
+            <span class="ptb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+            Unduhan
+          </button>
+        </div>
 
-        <!-- Tab bar dipindah ke breadcrumb (di topbar) per request user. -->
 
 
         <!-- Inline video player — muncul saat user klik video. Layout:
@@ -4335,7 +4368,7 @@
           <!-- Section header (per request user 2026-05-10: dulu dihapus, sekarang
                diminta balik supaya jelas section apa) -->
           <div class="dl-section-head">
-            <h3>🎬 Video Saya</h3>
+            <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg></span>Video Saya</h3>
             <small>Semua video kamu yang sudah live dan tampil ke publik</small>
           </div>
           <span class="lib-count lib-count-hidden" id="myVideoCount">0</span>
@@ -4383,9 +4416,12 @@
       <!-- ============== UPLOAD (FULL PAGE) ============== -->
       <section class="view" data-view="upload">
         <div class="view-header">
-          <div>
-            <h2>Upload New Video</h2>
-            <p data-i18n="upload.desc">Share your creations with the world.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Upload New Video</h2>
+              <p data-i18n="upload.desc">Share your creations with the world.</p>
+            </div>
           </div>
         </div>
 
@@ -4619,15 +4655,18 @@
               <textarea id="upDesc" rows="5" maxlength="2000" placeholder="Ceritakan tentang video kamu..."></textarea>
             </div>
 
-            <!-- ====== TAGS & KATEGORI — 2-col grid ====== -->
+            <!-- ====== HASHTAG & KATEGORI — 2-col grid -->
+            <!-- v611 (2026-05-28): "Tags" → "Hashtag" per request user.
+                 Tag generic ≠ hashtag (yang dipakai utk searchable trending
+                 di feed). Naming lebih akurat. -->
             <div class="upf-grid-2col">
               <div class="upf-field">
                 <div class="upf-label-row">
-                  <label for="upTagsInput">Tags <small class="muted">(max 10)</small></label>
+                  <label for="upTagsInput">Hashtag <small class="muted">(max 10)</small></label>
                 </div>
                 <div class="upf-tags-wrap" id="upTagsWrap">
                   <div class="upf-tags-chips" id="upTagsList"></div>
-                  <input type="text" id="upTagsInput" class="upf-tags-input" placeholder="Ketik & tekan Enter / koma" autocomplete="off"/>
+                  <input type="text" id="upTagsInput" class="upf-tags-input" placeholder="Ketik #hashtag, tekan Enter / koma" autocomplete="off"/>
                 </div>
               </div>
               <div class="upf-field">
@@ -4977,9 +5016,12 @@
       <!-- ============== STORAGE ============== -->
       <section class="view" data-view="storage">
         <div class="view-header">
-          <div>
-            <h2>💾 Penyimpanan</h2>
-            <p>Kelola penggunaan penyimpanan akun Playly kamu — lihat detail file dan bebaskan kuota.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Penyimpanan</h2>
+              <p>Kelola penggunaan penyimpanan akun Playly kamu — lihat detail file dan bebaskan kuota.</p>
+            </div>
           </div>
           <div class="view-actions">
             <button class="btn primary" id="storageUpgradeBtn">⭐ Lihat opsi Premium</button>
@@ -5007,7 +5049,7 @@
 
         <!-- Breakdown by Category -->
         <div class="storage-breakdown">
-          <h3>📦 Rincian Penggunaan</h3>
+          <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>Rincian Penggunaan</h3>
           <div class="storage-cat-list" id="storageCategoryList">
             <!-- Diisi via JS: Video, Thumbnail, Cache -->
           </div>
@@ -5015,7 +5057,7 @@
 
         <!-- File List -->
         <div class="storage-files">
-          <h3>📁 File Tersimpan</h3>
+          <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>File Tersimpan</h3>
           <p class="muted" style="margin-bottom:12px">Klik tombol hapus untuk membebaskan ruang.</p>
           <div class="storage-file-list" id="storageFileList">
             <div class="storage-empty empty-rich-v24" data-no-i18n>
@@ -5038,8 +5080,13 @@
       <section class="view" data-view="history" data-riwayat-tab="aktivitas">
         <div class="view-header">
           <div>
-            <h2 id="riwayatPageTitle">🕐 Riwayat Aktivitas</h2>
-            <p id="riwayatPageDesc">Semua aktivitas tontonan kamu di Playly.</p>
+            <div class="lib-header-flex">
+              <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+              <div class="lib-header-text">
+                <h2 id="riwayatPageTitle">Riwayat Aktivitas</h2>
+                <p id="riwayatPageDesc">Semua aktivitas tontonan kamu di Playly.</p>
+              </div>
+            </div>
           </div>
           <div class="view-actions">
             <input type="text" class="select-input" id="historySearch" placeholder="Cari di riwayat..." style="min-width:220px"/>
@@ -5047,30 +5094,14 @@
           </div>
         </div>
 
-        <!-- Tab pill selector — "Semua" default, lalu 4 sub-tab spesifik -->
-        <div class="riwayat-tab-bar" role="tablist">
-          <button type="button" class="riwayat-tab active" data-riwayat-tab="all" role="tab">
-            📂 Semua
-          </button>
-          <button type="button" class="riwayat-tab" data-riwayat-tab="aktivitas" role="tab">
-            📅 Riwayat Aktivitas
-          </button>
-          <button type="button" class="riwayat-tab" data-riwayat-tab="pembelian" role="tab">
-            💳 Riwayat Pembelian
-          </button>
-          <button type="button" class="riwayat-tab" data-riwayat-tab="search-user" role="tab">
-            🔎 Riwayat Pencarian User
-          </button>
-          <button type="button" class="riwayat-tab" data-riwayat-tab="search-video" role="tab">
-            🎬 Riwayat Pencarian Video
-          </button>
-        </div>
+        <!-- v594 (2026-05-28): Tab bar dihapus per request user — semua 4
+             section langsung terlihat, tidak perlu filter klik. -->
 
         <div class="riwayat-sections">
           <!-- Tab 1: Riwayat Aktivitas (continue + watch history) -->
           <div class="riwayat-section" data-section="aktivitas">
             <div class="riwayat-section-head riwayat-only-all">
-              <h3>📅 Riwayat Aktivitas</h3>
+              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Riwayat Aktivitas</h3>
               <small>Aktivitas tontonan dan interaksi 24 jam terakhir</small>
             </div>
             <div class="continue-list" id="continueList"></div>
@@ -5080,7 +5111,7 @@
           <!-- Tab 2: Riwayat Pembelian -->
           <div class="riwayat-section" data-section="pembelian">
             <div class="riwayat-section-head riwayat-only-all">
-              <h3>💳 Riwayat Pembelian</h3>
+              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>Riwayat Pembelian</h3>
               <small>Transaksi premium, upgrade tier, dan pembelian lain</small>
             </div>
             <div class="riwayat-list" id="purchaseHistoryList">
@@ -5101,7 +5132,7 @@
           <!-- Tab 3: Riwayat Pencarian User -->
           <div class="riwayat-section" data-section="search-user">
             <div class="riwayat-section-head riwayat-only-all">
-              <h3>🔎 Riwayat Pencarian User</h3>
+              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Riwayat Pencarian User</h3>
               <small>Username/nama yang pernah kamu cari</small>
             </div>
             <div class="riwayat-chip-list" id="searchUserHistoryList">
@@ -5123,7 +5154,7 @@
           <!-- Tab 4: Riwayat Pencarian Video -->
           <div class="riwayat-section" data-section="search-video">
             <div class="riwayat-section-head riwayat-only-all">
-              <h3>🎬 Riwayat Pencarian Video</h3>
+              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg></span>Riwayat Pencarian Video</h3>
               <small>Kata kunci video / tag yang pernah kamu cari</small>
             </div>
             <div class="riwayat-chip-list" id="searchVideoHistoryList">
@@ -5148,8 +5179,13 @@
       <section class="view" data-view="stats" data-stats-tab="all">
         <div class="view-header">
           <div>
-            <h2 id="statsPageTitle"><span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17V11M12 17V7M16 17V13"/></svg></span>Statistik</h2>
-            <p id="statsPageDesc">Performa channel kamu secara ringkas — semua section dalam satu halaman.</p>
+            <div class="lib-header-flex">
+              <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17V11M12 17V7M16 17V13"/></svg></span>
+              <div class="lib-header-text">
+                <h2 id="statsPageTitle">Statistik</h2>
+                <p id="statsPageDesc">Performa channel kamu secara ringkas — semua section dalam satu halaman.</p>
+              </div>
+            </div>
           </div>
           <div class="view-actions">
             <span class="hqs-live-badge" id="statsLiveBadge" data-no-i18n title="Data statistik diperbarui otomatis"><i class="hqs-live-dot" aria-hidden="true"></i>LIVE</span>
@@ -5162,7 +5198,10 @@
           </div>
         </div>
 
-        <!-- Pill tab selector — pattern sama seperti My Library / Riwayat -->
+        <!-- v598 (2026-05-28): revert ke tab filter lama per request user.
+             Tabs: Semua | Ringkasan | Top Video | Grafik. Klik tab = filter
+             section yang terlihat (lihat .view[data-stats-tab="X"] di styles).
+             Pencapaian tab tetap dihapus (section sudah pindah Beranda). -->
         <div class="riwayat-tab-bar" role="tablist">
           <button type="button" class="riwayat-tab active" data-stats-tab="all" role="tab">
             📂 Semua
@@ -5176,30 +5215,26 @@
           <button type="button" class="riwayat-tab" data-stats-tab="grafik" role="tab">
             📊 Grafik
           </button>
-          <button type="button" class="riwayat-tab" data-stats-tab="pencapaian" role="tab">
-            🏆 Pencapaian
-          </button>
         </div>
 
-        <!-- ORDER baru (per request user 2026-05-06): paling penting dulu
-             1. Ringkasan Performa (angka KPI utama — paling impactful)
-             2. Top Performing (videos yg performa terbaik — actionable)
-             3. Stats Chart (trend graph — analytical)
-             4. Achievements (gamification — least critical) -->
-
-        <!-- 1. Ringkasan Performa — angka utama paling atas -->
+        <!-- 1. Ringkasan Performa — v600 (2026-05-28): icon di-extract dari h3,
+             title+subtitle dibungkus flex column biar subtitle di bawah title
+             (bukan di bawah icon). Pattern sama dgn fix Beranda Level Kreator. -->
         <div class="stats-section-head" data-stats-section="ringkasan">
-          <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></span>Ringkasan Performa</h3>
-          <small>Total angka video, tontonan, suka, dan kreator yang kamu ikuti</small>
+          <span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></span>
+          <div class="stats-section-head-text">
+            <h3>Ringkasan Performa</h3>
+            <small>Total angka video, tontonan, suka, dan kreator yang kamu ikuti</small>
+          </div>
         </div>
         <div class="stats-row" id="statsRow" data-stats-section="ringkasan">
           <!-- diisi via JS — total views, likes, followers per period -->
         </div>
 
-        <!-- 2. Top Performing — video yang paling perform (actionable insight) -->
+        <!-- 2. Top Performing -->
         <div class="top-perf-card-bare" id="topPerfCard" data-stats-section="top-video">
           <h3 style="margin-bottom:14px"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>Top Video</h3>
-          <div class="top-perf-3col" id="topPerformList">
+          <div class="top-perf-3col top-perf-4col" id="topPerformList">
             <div class="top-perf-col">
               <h4 class="top-perf-col-title"><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>Top Views</h4>
               <div class="top-perf-col-list" id="topPerformViews"></div>
@@ -5212,16 +5247,24 @@
               <h4 class="top-perf-col-title"><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6M12 2v3"/></svg></span>Top Watch</h4>
               <div class="top-perf-col-list" id="topPerformWatch"></div>
             </div>
+            <!-- v595 (2026-05-28): Top Komentar — kolom ke-4 per request user -->
+            <div class="top-perf-col">
+              <h4 class="top-perf-col-title"><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>Top Komentar</h4>
+              <div class="top-perf-col-list" id="topPerformComments"></div>
+            </div>
           </div>
         </div>
 
-        <!-- 4. Grafik Stats — split jadi 3 chart: Video / Views / Followers.
-             Range selector (weekly/monthly/yearly) shared, metric tabs per chart. -->
+        <!-- 3. Grafik Stats — v600 (2026-05-28): icon di-extract dari h3, text
+             dibungkus flex column. Class .grafik-head-inner buat scope CSS. -->
         <div class="chart-card chart-card-bare" data-stats-section="grafik">
           <div class="card-head">
-            <div>
-              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></span><span data-i18n="stats.chart.title">Stats Chart</span></h3>
-              <p id="chartSubtitle">No data yet</p>
+            <div class="grafik-head-inner">
+              <span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></span>
+              <div class="grafik-head-text">
+                <h3><span data-i18n="stats.chart.title">Stats Chart</span></h3>
+                <p id="chartSubtitle">No data yet</p>
+              </div>
             </div>
             <div class="chart-actions">
               <div class="chip-tabs" id="chartTabs">
@@ -5281,6 +5324,24 @@
                 </div>
               </div>
             </div>
+
+            <!-- v595 (2026-05-28): Comments chart — per request user -->
+            <div class="mini-chart-card">
+              <div class="mini-chart-head">
+                <div class="mini-chart-title">
+                  <span class="mc-icon mc-icon-comments">💬</span>
+                  <h4>Comments Chart</h4>
+                </div>
+                <span class="mini-chart-total" id="chartTotalComments">0</span>
+              </div>
+              <div class="chart-wrap" data-chart-metric="comments">
+                <svg class="lineChart" data-chart-svg="comments" viewBox="0 0 700 160" preserveAspectRatio="none"></svg>
+                <div class="chart-empty mini-empty" data-chart-empty="comments" hidden>
+                  <p>No comments data yet.</p>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="chart-tooltip" id="chartTip"></div>
@@ -5293,31 +5354,17 @@
           </div>
         </div>
 
-        <!-- 4. Achievements — gamification, paling akhir (least critical) -->
-        <div class="achievements achievements-bare" data-stats-section="pencapaian">
-          <div class="card-head">
-            <div>
-              <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 0 12 0 6 6 0 0 0-12 0Z"/><path d="M8 15v6l4-2 4 2v-6"/><path d="M4 5h2v3a2 2 0 0 1-2 2M20 5h-2v3a2 2 0 0 0 2 2"/></svg></span>Pencapaian</h3>
-              <p id="achSubtitle">Buka pencapaian dengan beraktivitas di Playly.</p>
-            </div>
-            <div class="ach-progress">
-              <div class="ach-bar"><i id="achBar" style="--w:0%"></i></div>
-              <span><b id="achEarned">0</b> / <b id="achTotal">7</b></span>
-            </div>
-          </div>
-          <div class="badges badges-large" id="badgeGrid"></div>
-        </div>
+        <!-- v595 (2026-05-28): Pencapaian section dihapus — duplikat Beranda. -->
 
       </section>
 
       <!-- ============== PEOPLE (find other users) ============== -->
       <section class="view" data-view="people" data-people-tab="all">
-        <div class="view-header view-header-people">
-          <div class="vh-people-title">
-            <span class="vh-people-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg>
-            </span>
-            <div class="vh-people-text">
+        <!-- v590d (2026-05-27): pattern Pustaka Saya flex (icon kiri + h2/p col kanan) -->
+        <div class="view-header">
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg></span>
+            <div class="lib-header-text">
               <h2>Pencarian</h2>
               <p data-i18n="people.subtitle">Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.</p>
             </div>
@@ -5360,13 +5407,14 @@
            kanan = chat panel aktif (header user + scroll history + input field).
            Klik thread di list kiri → load chat ke panel kanan. -->
       <section class="view" data-view="messages">
-        <div class="view-header view-header-people">
-          <div class="vh-people-title">
-            <span class="vh-people-icon" id="dmPageIcon" aria-hidden="true">
-              <!-- Default = "all" (inbox icon). JS swap icon saat tab spesifik aktif -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg>
-            </span>
-            <div class="vh-people-text">
+        <!-- v590d (2026-05-27): pattern Pustaka Saya flex.
+             Icon spawn dgn id #dmPageIcon supaya JS bisa swap SVG per tab.
+             Title h2 plain (no inner span needed — JS update textContent
+             langsung gak akan wipe sibling icon karena icon di luar h2). -->
+        <div class="view-header">
+          <div class="lib-header-flex">
+            <span id="dmPageIcon" class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg></span>
+            <div class="lib-header-text">
               <h2 id="dmPageTitle" data-i18n="dm.all.title">Semua Pesan</h2>
               <p id="dmPageDesc" data-i18n="inbox.subtitle">Inbox kamu — DM dari teman, pengumuman admin, permintaan baru, dan chat yang sudah diarsipkan.</p>
             </div>
@@ -5609,9 +5657,12 @@
       <!-- ============== PREMIUM INSIGHTS (premium-only) ============== -->
       <section class="view user-only" data-view="premium-insights">
         <div class="view-header">
-          <div>
-            <h2>✨ Premium Insights</h2>
-            <p>Advanced analytics & predictive trends — exclusive to Premium creators.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2z"/><path d="M19 17L19.7 19L21.5 19.7L19.7 20.5L19 22L18.3 20.5L16.5 19.7L18.3 19L19 17z"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Wawasan Premium</h2>
+              <p>Analitik lanjutan &amp; insight strategis — eksklusif untuk kreator Premium.</p>
+            </div>
           </div>
         </div>
         <div class="premium-insights-page" id="premiumInsightsPage"></div>
@@ -5620,9 +5671,12 @@
       <!-- ============== ACTIVITY ============== -->
       <section class="view" data-view="activity">
         <div class="view-header">
-          <div>
-            <h2 data-i18n="page.activity">📡 Activity</h2>
-            <p data-i18n="activity.desc">All activity related to your account.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/></svg></span>
+            <div class="lib-header-text">
+              <h2 data-i18n="page.activity">Activity</h2>
+              <p data-i18n="activity.desc">All activity related to your account.</p>
+            </div>
           </div>
           <div class="view-actions">
             <div class="chip-tabs" id="activityFilters">
@@ -5643,9 +5697,12 @@
       <!-- ============== NOTIFICATIONS (full page, v479) ============== -->
       <section class="view" data-view="notifications">
         <div class="view-header">
-          <div>
-            <h2>🔔 Notifikasi</h2>
-            <p>Riwayat lengkap notifikasi kamu. Filter per kategori atau tandai semua sebagai dibaca.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Notifikasi</h2>
+              <p>Riwayat lengkap notifikasi kamu. Filter per kategori atau tandai semua sebagai dibaca.</p>
+            </div>
           </div>
           <div class="view-actions">
             <button class="btn ghost sm" id="notifPageMarkAllRead" type="button">✓ Tandai semua dibaca</button>
@@ -5669,14 +5726,19 @@
 
       <!-- ============== DISCOVER ============== -->
       <section class="view fyp-view" data-view="discover">
-        <div class="discover-layout">
-          <!-- HEADER (full-width, separated from video card) -->
-          <div class="discover-header">
-            <div class="ds-bento-title">
-              <h3>Feed untukmu</h3>
-              <small>Video terbaru dari kreator yang kamu ikuti</small>
+        <!-- v590f (2026-05-27): header pindah ke luar .discover-layout supaya
+             posisi konsisten dgn page lain (close to top-left, plain plate,
+             no gradient card). Grid layout di bawah tetap punya padding sendiri. -->
+        <div class="view-header">
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" stroke="none" opacity=".55"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Feed untukmu</h2>
+              <p>Video terbaru dari kreator yang kamu ikuti</p>
             </div>
           </div>
+        </div>
+        <div class="discover-layout">
 
           <!-- VIDEO CARD (left, large bento) -->
           <div class="video-card ds-bento-card">
@@ -5688,9 +5750,13 @@
           <!-- TRENDING — kolom sendiri (3-col layout per request 2026-05-10c) -->
           <div class="trending-card discover-col-trending" id="discoverTrendingCard">
             <div class="trending-head">
-              <div class="trending-title">
-                <h3 data-i18n="discover.trending">Trending Hari Ini</h3>
-                <small>Berita & topik trending real-time</small>
+              <div class="trending-title lib-header-flex">
+                <!-- v590d: pattern Pustaka Saya flex (icon kiri + h2/p col) -->
+                <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span>
+                <div class="lib-header-text">
+                  <h2 data-i18n="discover.trending">Trending Hari Ini</h2>
+                  <p>Berita & topik trending real-time</p>
+                </div>
               </div>
               <span class="trending-live-pill">
                 <span class="trending-live-dot"></span>
@@ -5838,10 +5904,9 @@
             </div>
           </div>
 
-          <!-- PREMIUM INSIGHT / TIER WIDGET — dipindah dari home ke My Profile
-               per request user 2026-05-15 v54. Render via renderHomeTierWidget()
-               yang cari element by id #homeTierWidget. -->
-          <div class="home-tier-widget myprofile-tier-widget" id="homeTierWidget"></div>
+          <!-- v618 (2026-05-28): #homeTierWidget dihapus dari My Profile per
+               request user. Detail Premium pindah ke Info Akun (Edit Profile).
+               renderHomeTierWidget() jadi no-op karena element tidak ada. -->
 
           <div class="profile-2col">
             <div class="profile-col">
@@ -5876,7 +5941,10 @@
         </div>
         <div class="grid-2">
           <div class="card">
-            <h3 data-i18n="profile.identity">🪪 Identity</h3>
+            <!-- v610 (2026-05-28): + data-no-i18n biar i18n auto-walker tidak
+                 reverse-translate "Identitas" → "🪪 Identitas" yg trigger
+                 picons.js add SVG icon ke-2. Wine-box jadi satu-satunya icon. -->
+            <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5 18c.5-2 2-3.2 4-3.2s3.5 1.2 4 3.2"/><line x1="15" y1="10" x2="19" y2="10"/><line x1="15" y1="13" x2="18" y2="13"/></svg></span>Identitas</h3>
             <form class="upload-form" id="profileEditForm" style="margin-top:14px" novalidate>
               <div class="profile-avatar-row">
                 <div class="avatar big" id="profileAvatarPreview"><span>U</span></div>
@@ -5896,23 +5964,59 @@
           </div>
 
           <div class="card">
-            <h3 data-i18n="profile.social">🔗 Social Links</h3>
-            <form class="upload-form" id="profileSocialForm" style="margin-top:14px" novalidate>
-              <label>🌐 Website<input type="url" data-profile="website" placeholder="https://..."/></label>
-              <label>𝕏 X / Twitter<input type="text" data-profile="twitter" placeholder="@username"/></label>
-              <label>📷 Instagram<input type="text" data-profile="instagram" placeholder="@username"/></label>
-              <label>🐙 GitHub<input type="text" data-profile="github" placeholder="username"/></label>
+            <!-- v610 (2026-05-28): + data-no-i18n biar tidak double icon. -->
+            <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>Tautan Sosial</h3>
+            <form class="upload-form social-form" id="profileSocialForm" style="margin-top:14px" novalidate>
+              <label class="social-field">
+                <span class="social-label">
+                  <span class="social-icon social-icon-tiktok"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path fill="currentColor" d="M21.4 8.7c-1.4-.6-2.4-1.7-2.9-3h-2.8v14.6c0 1.4-1.1 2.5-2.5 2.5s-2.5-1.1-2.5-2.5 1.1-2.5 2.5-2.5c.3 0 .5 0 .8.1V14.9c-.3 0-.5-.1-.8-.1-3 0-5.4 2.4-5.4 5.4S10 25.6 13 25.6s5.4-2.4 5.4-5.4v-7.4c1.3.9 2.9 1.4 4.6 1.5v-2.8c-.6-.1-1.1-.3-1.6-.7Z"/></svg></span>
+                  TikTok
+                </span>
+                <input type="text" data-profile="tiktok" placeholder="@username"/>
+              </label>
+              <label class="social-field">
+                <span class="social-label">
+                  <span class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                  Twitter
+                </span>
+                <input type="text" data-profile="twitter" placeholder="@username"/>
+              </label>
+              <label class="social-field">
+                <span class="social-label">
+                  <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span>
+                  Instagram
+                </span>
+                <input type="text" data-profile="instagram" placeholder="@username"/>
+              </label>
+              <label class="social-field">
+                <span class="social-label">
+                  <span class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.35.78 1.05.78 2.11v3.13c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg></span>
+                  GitHub
+                </span>
+                <input type="text" data-profile="github" placeholder="username"/>
+              </label>
               <button type="submit" class="btn primary" style="align-self:flex-start" data-i18n="profile.save.social">Save Links</button>
             </form>
           </div>
 
           <div class="card">
-            <h3 data-i18n="profile.account.info">📊 Account Info</h3>
+            <!-- v610 (2026-05-28): + data-no-i18n biar tidak double icon. -->
+            <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17V11M12 17V7M16 17V13"/></svg></span>Info Akun</h3>
+            <!-- v607 (2026-05-28): Total Videos + Total Following dihapus dari sini —
+                 sudah ditampilkan di halaman My Profile. Sisain Bergabung sejak + Role saja. -->
+            <!-- v614/v618 (2026-05-28): account-related info + Premium detail
+                 (dipindah dari My Profile homeTierWidget). -->
             <div class="info-grid">
-              <div class="info-row"><span data-i18n="profile.joined">Joined since</span><b id="profileJoined">—</b></div>
-              <div class="info-row"><span data-i18n="profile.total.videos">Total Videos</span><b id="profileTotalVid">0</b></div>
-              <div class="info-row"><span data-i18n="profile.total.following">Total Following</span><b id="profileTotalFollow">0</b></div>
+              <div class="info-row"><span>Username</span><b id="profileInfoUsername">—</b></div>
+              <div class="info-row"><span>Email</span><b id="profileInfoEmail">—</b></div>
+              <div class="info-row"><span data-i18n="profile.joined">Bergabung sejak</span><b id="profileJoined">—</b></div>
               <div class="info-row"><span data-i18n="profile.role">Role</span><b id="profileRole">User</b></div>
+              <div class="info-row"><span>Tier / Paket</span><b id="profileInfoTier">Gratis</b></div>
+              <div class="info-row" id="profileInfoPremiumSinceRow" hidden><span>Premium Sejak</span><b id="profileInfoPremiumSince">—</b></div>
+              <div class="info-row" id="profileInfoPremiumStatusRow" hidden><span>Status Premium</span><b id="profileInfoPremiumStatus">—</b></div>
+              <div class="info-row"><span>2FA</span><b id="profileInfo2fa">Nonaktif</b></div>
+              <div class="info-row"><span>Bahasa</span><b id="profileInfoLang">—</b></div>
+              <div class="info-row"><span>Zona Waktu</span><b id="profileInfoTz">—</b></div>
             </div>
           </div>
         </div>
@@ -5921,14 +6025,17 @@
       <!-- ============== SETTINGS (USER) ============== -->
       <section class="view user-only" data-view="settings">
         <div class="view-header">
-          <div>
-            <h2>⚙️ Settings</h2>
-            <p data-i18n="settings.desc">Adjust app preferences to your needs.</p>
+          <div class="lib-header-flex">
+            <span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <div class="lib-header-text">
+              <h2>Settings</h2>
+              <p data-i18n="settings.desc">Adjust app preferences to your needs.</p>
+            </div>
           </div>
         </div>
         <div class="grid-2">
           <div class="card">
-            <h3 data-i18n="settings.notifications">🔔 Notifications</h3>
+            <h3 data-i18n="settings.notifications"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span> Notifications</h3>
             <div class="toggle-list">
               <label class="tog"><span data-i18n="settings.notif.message">New messages</span><input type="checkbox" data-pref="notif.message" checked/><i></i></label>
               <label class="tog"><span data-i18n="settings.notif.comment">Video comments</span><input type="checkbox" data-pref="notif.comment" checked/><i></i></label>
@@ -5939,7 +6046,7 @@
           </div>
 
           <div class="card">
-            <h3 data-i18n="settings.appearance">🎨 Appearance</h3>
+            <h3 data-i18n="settings.appearance"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="16.5" cy="11" r="1.2" fill="currentColor"/><circle cx="8.5" cy="16" r="1.2" fill="currentColor"/></svg></span> Appearance</h3>
             <div class="toggle-list">
               <label class="tog"><span>Auto-play video</span><input type="checkbox" data-pref="display.autoplay" checked/><i></i></label>
               <label class="tog"><span>Reduced motion</span><input type="checkbox" data-pref="display.reducedMotion"/><i></i></label>
@@ -5948,7 +6055,7 @@
           </div>
 
           <div class="card">
-            <h3>🔒 Privasi</h3>
+            <h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Privasi</h3>
             <div class="toggle-list">
               <label class="tog"><span>Profil publik</span><input type="checkbox" data-pref="privacy.publicProfile" checked/><i></i></label>
               <label class="tog"><span>Tampilkan riwayat tonton</span><input type="checkbox" data-pref="privacy.showHistory"/><i></i></label>
@@ -5957,7 +6064,7 @@
           </div>
 
           <div class="card">
-            <h3 data-i18n="settings.language">🌍 Language & Region</h3>
+            <h3 data-i18n="settings.language"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span> Language & Region</h3>
             <div class="upload-form" style="margin-top:14px">
               <label data-i18n="settings.language.label">Language
                 <select data-pref="lang" id="userLangSelect">
@@ -6021,7 +6128,7 @@
           </div>
 
           <div class="card">
-            <h3 data-i18n="settings.security">🛡 Security</h3>
+            <h3 data-i18n="settings.security"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4-8-10V5l8-3 8 3v7c0 6-8 10-8 10z"/><path d="m9 12 2 2 4-4"/></svg></span> Security</h3>
             <form class="upload-form" id="changePasswordForm" style="margin-top:14px" novalidate>
               <label data-i18n="settings.oldpw">Old Password<input type="password" name="oldPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="current-password"/></label>
               <label data-i18n="settings.newpw">New Password<input type="password" name="newPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/></label>
@@ -6031,7 +6138,7 @@
           </div>
 
           <div class="card twofa-card">
-            <h3 class="twofa-title" data-i18n="twofa.title">🔐 Autentikasi Dua Faktor (2FA)</h3>
+            <h3 class="twofa-title" data-i18n="twofa.title"><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></span> Autentikasi Dua Faktor (2FA)</h3>
             <div class="twofa-settings" id="twofaSettings">
               <div class="twofa-status-row">
                 <div class="twofa-status-text">
@@ -6048,36 +6155,10 @@
             </div>
           </div>
 
-          <!-- ============== BILLING & REFUND HISTORY ==============
-               Tampilkan semua transaksi premium user ini (charge, refund saat
-               rejected, status approval). Audit trail buat user, supaya kalau
-               admin reject mereka tahu uangnya direfund. Demo mode pakai dummy
-               money, struktur data sama dengan production-ready use case. -->
-          <div class="card billing-card" style="grid-column: 1 / -1">
-            <div class="billing-head">
-              <div>
-                <h3>💳 Riwayat Pembayaran</h3>
-                <small class="muted billing-sub" data-no-i18n>Semua transaksi Premium kamu — termasuk pengembalian dana otomatis saat pembayaran ditolak admin.</small>
-              </div>
-              <div class="billing-summary" id="billingSummary" data-no-i18n>
-                <div class="bs-cell">
-                  <small>Total Charge</small>
-                  <b id="bsTotalCharged">$0.00</b>
-                </div>
-                <div class="bs-cell">
-                  <small>Total Refund</small>
-                  <b id="bsTotalRefunded">$0.00</b>
-                </div>
-                <div class="bs-cell bs-cell-net">
-                  <small>Net Spent</small>
-                  <b id="bsNetSpent">$0.00</b>
-                </div>
-              </div>
-            </div>
-            <div class="billing-list" id="billingList" data-no-i18n>
-              <!-- Populated by renderBillingHistory(). Empty state shown if no records. -->
-            </div>
-          </div>
+          <!-- v604 (2026-05-28): Section "Riwayat Pembayaran" dihapus dari
+               Settings per request user. Data sudah tersedia di halaman
+               Riwayat → Riwayat Pembelian (table format, sort by waktu).
+               renderBillingHistory() no-op karena #billingList tidak ada. -->
 
           <!-- ============== RIWAYAT AKTIVITAS AKUN (v572) ==============
                Security audit log untuk user — login history, password change,
@@ -6086,18 +6167,18 @@
           <div class="card user-audit-card" style="grid-column: 1 / -1">
             <div class="user-audit-head">
               <div>
-                <h3 data-no-i18n>📋 Riwayat Aktivitas Akun</h3>
+                <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="17" rx="2"/><path d="M7 8h6M7 12h6M7 16h4"/></svg></span>Riwayat Aktivitas Akun</h3>
                 <small class="muted" data-no-i18n>Security transparency — lihat semua aktivitas penting di akun kamu. Kalau ada yang asing, segera ganti password + logout perangkat lain.</small>
               </div>
               <button type="button" class="btn ghost btn-compact" id="userAuditClearBtn" data-no-i18n>Hapus riwayat</button>
             </div>
             <div class="user-audit-filters" data-no-i18n>
               <button type="button" class="audit-filter-btn active" data-audit-filter="all">Semua</button>
-              <button type="button" class="audit-filter-btn" data-audit-filter="login">🔓 Login</button>
-              <button type="button" class="audit-filter-btn" data-audit-filter="password">🔑 Password</button>
-              <button type="button" class="audit-filter-btn" data-audit-filter="privacy">🔒 Privasi</button>
-              <button type="button" class="audit-filter-btn" data-audit-filter="twofa">🔐 2FA</button>
-              <button type="button" class="audit-filter-btn" data-audit-filter="profile">👤 Profil</button>
+              <button type="button" class="audit-filter-btn" data-audit-filter="login"><span class="afi-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V8a5 5 0 0 1 9.5-2"/></svg></span>Login</button>
+              <button type="button" class="audit-filter-btn" data-audit-filter="password"><span class="afi-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M14 9l2 2"/></svg></span>Password</button>
+              <button type="button" class="audit-filter-btn" data-audit-filter="privacy"><span class="afi-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Privasi</button>
+              <button type="button" class="audit-filter-btn" data-audit-filter="twofa"><span class="afi-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></span>2FA</button>
+              <button type="button" class="audit-filter-btn" data-audit-filter="profile"><span class="afi-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Profil</button>
             </div>
             <div class="user-audit-list" id="userAuditList" data-filter="all" data-no-i18n>
               <!-- Populated by renderUserAuditLog() -->
@@ -6110,13 +6191,80 @@
           <div class="card sessions-card" style="grid-column: 1 / -1">
             <div class="sessions-head">
               <div>
-                <h3 data-no-i18n>🖥 Sesi Aktif</h3>
+                <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>Sesi Aktif</h3>
                 <small class="muted" data-no-i18n>Device yang sedang login ke akun kamu. Kalau ada yang asing, segera logout dari device tersebut.</small>
               </div>
               <button type="button" class="btn ghost btn-compact" id="sessionsLogoutAllBtn" data-no-i18n>Logout dari semua perangkat lain</button>
             </div>
             <div class="sessions-list" id="sessionsList" data-no-i18n>
               <!-- Populated by renderActiveSessions() -->
+            </div>
+          </div>
+
+          <!-- ============== EKSPOR DATA (v617 2026-05-28) ==============
+               Pindah dari Insight Premium (premium-only) ke Settings biar
+               semua user (termasuk Gratis) bisa unduh data video sendiri. -->
+          <div class="card export-data-card" style="grid-column: 1 / -1">
+            <div class="export-data-head">
+              <div>
+                <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Ekspor Data</h3>
+                <small class="muted" data-no-i18n>Unduh semua data video kamu (judul, tontonan, suka, komentar, tag, kategori) dalam format CSV — bisa dibuka di Excel atau Google Sheets.</small>
+              </div>
+            </div>
+            <div class="export-data-body">
+              <div class="export-info-row">
+                <div class="export-info-cell">
+                  <small data-no-i18n>FORMAT</small>
+                  <b data-no-i18n>CSV (UTF-8)</b>
+                </div>
+                <div class="export-info-cell">
+                  <small data-no-i18n>KOMPATIBEL</small>
+                  <b data-no-i18n>Excel · Google Sheets · Numbers</b>
+                </div>
+                <div class="export-info-cell">
+                  <small data-no-i18n>ISI DATA</small>
+                  <b data-no-i18n>9 kolom per video</b>
+                </div>
+              </div>
+              <button type="button" class="btn primary export-btn" id="settingsExportCsvBtn" data-no-i18n>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Unduh Data CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- ============== HAPUS AKUN (v616 2026-05-28) ==============
+               Danger zone — selalu di paling bawah settings page. Multi-step
+               confirm: ketik "HAPUS" + button click. Tanpa undo. -->
+          <div class="card danger-zone-card" style="grid-column: 1 / -1">
+            <div class="danger-zone-head">
+              <div>
+                <h3 data-no-i18n><span class="sec-icon-v582 danger-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Hapus Akun</h3>
+                <small class="muted" data-no-i18n>Tindakan permanen — semua data kamu akan hilang dan tidak bisa dikembalikan.</small>
+              </div>
+            </div>
+            <div class="danger-zone-body">
+              <div class="danger-warn-list">
+                <p data-no-i18n><strong>Setelah akun dihapus, hal berikut akan terjadi:</strong></p>
+                <ul data-no-i18n>
+                  <li>📹 Semua video kamu (termasuk yang sudah di-upload) <b>dihapus permanen</b></li>
+                  <li>💬 Komentar, suka, dan riwayat aktivitas <b>tidak bisa dipulihkan</b></li>
+                  <li>👥 Pengikut & koneksi sosial <b>terputus</b></li>
+                  <li>💳 Status Premium aktif <b>tidak di-refund</b> (kalau ada)</li>
+                  <li>📧 Email <b>bisa dipakai lagi</b> untuk daftar akun baru setelah 30 hari</li>
+                </ul>
+              </div>
+              <div class="danger-confirm-field">
+                <label for="deleteAccConfirm" data-no-i18n>Ketik <b>HAPUS</b> untuk konfirmasi:</label>
+                <input type="text" id="deleteAccConfirm" placeholder="HAPUS" autocomplete="off" spellcheck="false"/>
+              </div>
+              <div class="danger-action-row">
+                <button type="button" class="btn danger-btn" id="deleteAccountBtn" disabled data-no-i18n>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  Hapus Akun Permanen
+                </button>
+                <small class="muted" data-no-i18n>Aksi ini tidak bisa dibatalkan.</small>
+              </div>
             </div>
           </div>
 
@@ -6995,17 +7143,11 @@
       <!-- Edit Profil & Ganti Tema disembunyikan KHUSUS dashboard admin
            (request user 2026-05-18) via data-pd-admin-hide — dashboard
            user TIDAK terpengaruh (lihat aturan CSS data-pd-admin-hide). -->
+      <!-- v603 (2026-05-28): Pengaturan + Ganti Tema dihapus dari dropdown
+           avatar per request user. Sisa: Edit Profil | Email | Tambah Akun | Logout. -->
       <button class="pd-item" data-pd-action="profile" data-pd-admin-hide>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
         <span>Edit Profil</span>
-      </button>
-      <button class="pd-item" data-pd-action="settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/><path d="M2 12.8794V11.1194C2 10.0794 2.85 9.21945 3.9 9.21945C5.71 9.21945 6.45 7.93945 5.54 6.36945C5.02 5.46945 5.33 4.29945 6.24 3.77945L7.97 2.78945C8.76 2.31945 9.78 2.59945 10.25 3.38945L10.36 3.57945C11.26 5.14945 12.74 5.14945 13.65 3.57945L13.76 3.38945C14.23 2.59945 15.25 2.31945 16.04 2.78945L17.77 3.77945C18.68 4.29945 18.99 5.46945 18.47 6.36945C17.56 7.93945 18.3 9.21945 20.11 9.21945C21.15 9.21945 22.01 10.0694 22.01 11.1194V12.8794C22.01 13.9194 21.16 14.7794 20.11 14.7794C18.3 14.7794 17.56 16.0594 18.47 17.6294C18.99 18.5394 18.68 19.6994 17.77 20.2194L16.04 21.2094C15.25 21.6794 14.23 21.3994 13.76 20.6094L13.65 20.4194C12.75 18.8494 11.27 18.8494 10.36 20.4194L10.25 20.6094C9.78 21.3994 8.76 21.6794 7.97 21.2094L6.24 20.2194C5.33 19.6994 5.02 18.5294 5.54 17.6294C6.45 16.0594 5.71 14.7794 3.9 14.7794C2.85 14.7794 2 13.9194 2 12.8794Z"/></svg>
-        <span>Pengaturan</span>
-      </button>
-      <button class="pd-item" data-pd-action="theme" data-pd-admin-hide>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/></svg>
-        <span data-i18n="pd.theme">Change Theme</span>
       </button>
       <button class="pd-item" data-pd-action="email" data-pd-user-only>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
@@ -8761,12 +8903,15 @@
         <div class="ve-head-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></div>
         <div>
           <h3>Edit Video</h3>
-          <p class="muted">Trim, kecepatan, volume, rotasi, flip & filter visual — semua non-destruktif, file asli tidak diubah.</p>
+          <p class="muted">Trim, crop, zoom, rotasi, flip, color, vignette &amp; text overlay — semua non-destruktif, file asli tidak diubah.</p>
         </div>
       </div>
       <div class="ve-stage">
-        <div class="ve-video-wrap">
+        <div class="ve-video-wrap" id="veVideoWrap">
           <video id="veVideo" preload="metadata" playsinline></video>
+          <!-- v593 (2026-05-28): vignette overlay + text overlay container -->
+          <div class="ve-vignette" id="veVignette" aria-hidden="true"></div>
+          <div class="ve-text-overlay" id="veTextOverlay" aria-hidden="true"></div>
           <div class="ve-time-display">
             <span id="veTimeCurrent">0:00</span>
             <span class="ve-time-sep">/</span>
@@ -8794,86 +8939,127 @@
           </div>
         </div>
 
-        <!-- 2. PEMUTARAN + AUDIO (2-kolom) -->
-        <div class="ve-grid-2">
-          <div class="ve-section">
-            <div class="ve-ctrl-label">Kecepatan</div>
-            <div class="ve-speed-pills" role="radiogroup" aria-label="Kecepatan video">
-              <button type="button" class="ve-speed" data-speed="0.5">0.5×</button>
-              <button type="button" class="ve-speed" data-speed="0.75">0.75×</button>
-              <button type="button" class="ve-speed active" data-speed="1">1×</button>
-              <button type="button" class="ve-speed" data-speed="1.25">1.25×</button>
-              <button type="button" class="ve-speed" data-speed="1.5">1.5×</button>
-              <button type="button" class="ve-speed" data-speed="2">2×</button>
+        <!-- v593b (2026-05-28): 2-column layout — LEFT Frame & Transform,
+             RIGHT Color & Filter. Trim/Text/Preview tetap full-width. -->
+        <div class="ve-2col-layout">
+          <div class="ve-col">
+            <div class="ve-col-heading">Frame &amp; Transform</div>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Aspect Ratio / Crop</div>
+              <div class="ve-aspect-pills" role="radiogroup" aria-label="Aspect ratio">
+                <button type="button" class="ve-aspect active" data-aspect="original">Original</button>
+                <button type="button" class="ve-aspect" data-aspect="16:9">16:9</button>
+                <button type="button" class="ve-aspect" data-aspect="9:16">9:16</button>
+                <button type="button" class="ve-aspect" data-aspect="1:1">1:1</button>
+                <button type="button" class="ve-aspect" data-aspect="4:5">4:5</button>
+                <button type="button" class="ve-aspect" data-aspect="4:3">4:3</button>
+              </div>
+            </div>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Zoom</div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/></svg></span>
+                <input type="range" id="veZoom" min="100" max="200" value="100" step="1" class="ve-range" aria-label="Zoom"/>
+                <span class="ve-range-val" id="veZoomVal">100%</span>
+              </div>
+            </div>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Rotasi</div>
+              <div class="ve-rot-pills" role="radiogroup" aria-label="Rotasi video">
+                <button type="button" class="ve-rot active" data-rot="0">0°</button>
+                <button type="button" class="ve-rot" data-rot="90">90°</button>
+                <button type="button" class="ve-rot" data-rot="180">180°</button>
+                <button type="button" class="ve-rot" data-rot="270">270°</button>
+              </div>
+            </div>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Flip / Cermin</div>
+              <div class="ve-flip-pills">
+                <button type="button" class="ve-flip" data-flip="h" aria-pressed="false">↔ Horizontal</button>
+                <button type="button" class="ve-flip" data-flip="v" aria-pressed="false">↕ Vertikal</button>
+              </div>
             </div>
           </div>
-          <div class="ve-section">
-            <div class="ve-ctrl-label">Audio</div>
-            <div class="ve-slider-row">
-              <span class="ve-slider-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
-              <input type="range" id="veVolume" min="0" max="100" value="100" class="ve-range" aria-label="Volume audio"/>
-              <span class="ve-range-val" id="veVolumeVal">100%</span>
+
+          <div class="ve-col">
+            <div class="ve-col-heading">Color &amp; Filter</div>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Color Adjustment</div>
+              <div class="ve-filter-grid">
+                <div class="ve-slider-row">
+                  <span class="ve-slider-label">Brightness</span>
+                  <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
+                  <span class="ve-range-val" id="veBrightnessVal">100%</span>
+                </div>
+                <div class="ve-slider-row">
+                  <span class="ve-slider-label">Contrast</span>
+                  <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
+                  <span class="ve-range-val" id="veContrastVal">100%</span>
+                </div>
+                <div class="ve-slider-row">
+                  <span class="ve-slider-label">Saturation</span>
+                  <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
+                  <span class="ve-range-val" id="veSaturationVal">100%</span>
+                </div>
+                <div class="ve-slider-row">
+                  <span class="ve-slider-label">Temperature</span>
+                  <input type="range" id="veTemperature" min="-30" max="30" value="0" class="ve-range" aria-label="Temperature"/>
+                  <span class="ve-range-val" id="veTemperatureVal">0</span>
+                </div>
+                <div class="ve-slider-row">
+                  <span class="ve-slider-label">Vignette</span>
+                  <input type="range" id="veVignetteRange" min="0" max="100" value="0" class="ve-range" aria-label="Vignette"/>
+                  <span class="ve-range-val" id="veVignetteVal">0%</span>
+                </div>
+              </div>
             </div>
-            <label class="ve-mute-toggle">
-              <input type="checkbox" id="veMute"/>
-              <span class="ve-mute-track"><span class="ve-mute-knob"></span></span>
-              <span class="ve-mute-label">Mute audio</span>
-            </label>
+
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Preset Filter</div>
+              <div class="ve-preset-pills" role="radiogroup" aria-label="Preset filter">
+                <button type="button" class="ve-preset active" data-preset="none">Original</button>
+                <button type="button" class="ve-preset" data-preset="vivid">Vivid</button>
+                <button type="button" class="ve-preset" data-preset="cinematic">Cinematic</button>
+                <button type="button" class="ve-preset" data-preset="dramatic">Dramatic</button>
+                <button type="button" class="ve-preset" data-preset="faded">Faded</button>
+                <button type="button" class="ve-preset" data-preset="vintage">Vintage</button>
+                <button type="button" class="ve-preset" data-preset="bw">B&amp;W</button>
+                <button type="button" class="ve-preset" data-preset="cool">Cool</button>
+                <button type="button" class="ve-preset" data-preset="warm">Warm</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 3. ROTASI + FLIP (2-kolom) -->
-        <div class="ve-grid-2">
-          <div class="ve-section">
-            <div class="ve-ctrl-label">Rotasi</div>
-            <div class="ve-rot-pills" role="radiogroup" aria-label="Rotasi video">
-              <button type="button" class="ve-rot active" data-rot="0">0°</button>
-              <button type="button" class="ve-rot" data-rot="90">90°</button>
-              <button type="button" class="ve-rot" data-rot="180">180°</button>
-              <button type="button" class="ve-rot" data-rot="270">270°</button>
-            </div>
-          </div>
-          <div class="ve-section">
-            <div class="ve-ctrl-label">Flip / Cermin</div>
-            <div class="ve-flip-pills">
-              <button type="button" class="ve-flip" data-flip="h" aria-pressed="false">↔ Horizontal</button>
-              <button type="button" class="ve-flip" data-flip="v" aria-pressed="false">↕ Vertikal</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. FILTER VISUAL (3 slider) -->
+        <!-- 6. TEXT OVERLAY (v593 2026-05-28) -->
         <div class="ve-section">
-          <div class="ve-ctrl-label">Filter Visual</div>
-          <div class="ve-filter-grid">
-            <div class="ve-slider-row">
-              <span class="ve-slider-label">Brightness</span>
-              <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
-              <span class="ve-range-val" id="veBrightnessVal">100%</span>
-            </div>
-            <div class="ve-slider-row">
-              <span class="ve-slider-label">Contrast</span>
-              <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
-              <span class="ve-range-val" id="veContrastVal">100%</span>
-            </div>
-            <div class="ve-slider-row">
-              <span class="ve-slider-label">Saturation</span>
-              <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
-              <span class="ve-range-val" id="veSaturationVal">100%</span>
-            </div>
+          <div class="ve-ctrl-label">Text Overlay</div>
+          <div class="ve-text-row">
+            <input type="text" id="veTextInput" maxlength="80" placeholder="Tulis teks yang akan muncul di video..." class="ve-text-input"/>
           </div>
-        </div>
-
-        <!-- 5. PRESET FILTER -->
-        <div class="ve-section">
-          <div class="ve-ctrl-label">Preset</div>
-          <div class="ve-preset-pills" role="radiogroup" aria-label="Preset filter">
-            <button type="button" class="ve-preset active" data-preset="none">Original</button>
-            <button type="button" class="ve-preset" data-preset="vivid">Vivid</button>
-            <button type="button" class="ve-preset" data-preset="vintage">Vintage</button>
-            <button type="button" class="ve-preset" data-preset="bw">B&amp;W</button>
-            <button type="button" class="ve-preset" data-preset="cool">Cool</button>
-            <button type="button" class="ve-preset" data-preset="warm">Warm</button>
+          <div class="ve-text-row ve-text-controls">
+            <div class="ve-text-ctrl">
+              <label class="ve-mini-label" for="veTextPos">Posisi</label>
+              <div class="ve-text-pos-pills" role="radiogroup" aria-label="Posisi teks">
+                <button type="button" class="ve-text-pos" data-text-pos="top">Atas</button>
+                <button type="button" class="ve-text-pos" data-text-pos="center">Tengah</button>
+                <button type="button" class="ve-text-pos active" data-text-pos="bottom">Bawah</button>
+              </div>
+            </div>
+            <div class="ve-text-ctrl">
+              <label class="ve-mini-label" for="veTextSize">Ukuran</label>
+              <input type="range" id="veTextSize" min="14" max="48" value="24" step="1" class="ve-range"/>
+              <span class="ve-range-val" id="veTextSizeVal">24px</span>
+            </div>
+            <div class="ve-text-ctrl">
+              <label class="ve-mini-label" for="veTextColor">Warna</label>
+              <input type="color" id="veTextColor" value="#ffffff" class="ve-text-color"/>
+            </div>
           </div>
         </div>
 
@@ -9038,7 +9224,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260527-skeleton-system-v583" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260528-search-hashtag-pages-v619" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

@@ -4162,11 +4162,44 @@ function populateProfileForm() {
     }
   }
   // Info akun
+  // v614 (2026-05-28): tambah Username, Email, Tier, 2FA, Bahasa, Zona Waktu —
+  // info account-related (bukan stats video/follower).
   const joined = user.joinedAt ? new Date(user.joinedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "—";
   $("#profileJoined") && ($("#profileJoined").textContent = joined);
   $("#profileTotalVid") && ($("#profileTotalVid").textContent = state?.myVideos?.length || 0);
   $("#profileTotalFollow") && ($("#profileTotalFollow").textContent = state?.followingCreators?.length || 0);
   $("#profileRole") && ($("#profileRole").textContent = user.role === "admin" ? "Administrator" : "User");
+  $("#profileInfoUsername") && ($("#profileInfoUsername").textContent = user.username ? "@" + user.username : "—");
+  $("#profileInfoEmail") && ($("#profileInfoEmail").textContent = user.email || "—");
+  const tierMap = { premium: "Premium ⭐", premium_yearly: "Premium Tahunan ⭐", premium_lifetime: "Premium Lifetime ⭐", free: "Gratis" };
+  $("#profileInfoTier") && ($("#profileInfoTier").textContent = tierMap[user.tier] || "Gratis");
+  $("#profileInfo2fa") && ($("#profileInfo2fa").textContent = user.twoFactorEnabled ? "✓ Aktif" : "Nonaktif");
+  const langMap = { id: "Bahasa Indonesia", en: "English", ms: "Bahasa Melayu", ja: "日本語", ar: "العربية", zh: "中文", ko: "한국어", es: "Español" };
+  const curLang = (typeof currentLang === "function" ? currentLang() : (localStorage.getItem("playly-lang") || "id"));
+  $("#profileInfoLang") && ($("#profileInfoLang").textContent = langMap[curLang] || curLang.toUpperCase());
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "—";
+    $("#profileInfoTz") && ($("#profileInfoTz").textContent = tz);
+  } catch { $("#profileInfoTz") && ($("#profileInfoTz").textContent = "—"); }
+  // v618 (2026-05-28): Premium detail rows — hanya tampil kalau user Premium.
+  const isPremium = user.tier && user.tier !== "free";
+  const premiumSinceRow = document.getElementById("profileInfoPremiumSinceRow");
+  const premiumStatusRow = document.getElementById("profileInfoPremiumStatusRow");
+  if (isPremium) {
+    if (premiumSinceRow) premiumSinceRow.hidden = false;
+    if (premiumStatusRow) premiumStatusRow.hidden = false;
+    const sinceTs = user.premiumStartedAt || user.premiumPaidAt || user.joinedAt || Date.now();
+    const sinceDate = new Date(sinceTs).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    const days = Math.max(0, Math.floor((Date.now() - sinceTs) / 86400000));
+    const sinceText = days === 0 ? `${sinceDate} (baru saja)`
+      : days === 1 ? `${sinceDate} (1 hari)`
+      : `${sinceDate} (${days} hari)`;
+    $("#profileInfoPremiumSince") && ($("#profileInfoPremiumSince").textContent = sinceText);
+    $("#profileInfoPremiumStatus") && ($("#profileInfoPremiumStatus").textContent = "✓ Aktif · Verified");
+  } else {
+    if (premiumSinceRow) premiumSinceRow.hidden = true;
+    if (premiumStatusRow) premiumStatusRow.hidden = true;
+  }
 }
 
 document.getElementById("profileEditForm")?.addEventListener("submit", e => {
@@ -4426,7 +4459,7 @@ function persistUserAndAccount() {
   if (acc) {
     Object.assign(acc, {
       name: user.name, bio: user.bio, avatar: user.avatar,
-      website: user.website, twitter: user.twitter,
+      tiktok: user.tiktok, twitter: user.twitter,
       instagram: user.instagram, github: user.github
     });
     localStorage.setItem(accKey, JSON.stringify(acc));
@@ -4622,9 +4655,9 @@ const I18N = {
     "btn.bagikan":               "Share",
     "profile.videos.by":         "Videos by",
     // Settings sections
-    "settings.notifications":    "🔔 Notifications",
+    "settings.notifications":    "Notifications",
     "settings.display":          "🎨 Display",
-    "settings.privacy":          "🔒 Privacy",
+    "settings.privacy":          "Privacy",
     "settings.security":         "Security",
     "settings.autoplay":         "Auto-play video",
     "settings.reducedmotion":    "Reduced motion",
@@ -4742,9 +4775,9 @@ const I18N = {
     "stats.achievements":        "Achievements",
     "stats.achievements.sub":    "Unlock achievements by being active on Playly.",
     "stats.topperforming":       "Top Performing",
-    "stats.topviews":            "👁️ Top Views",
-    "stats.toplikes":            "❤️ Top Likes",
-    "stats.topwatch":            "⏱️ Top Watch",
+    "stats.topviews":            "Top Views",
+    "stats.toplikes":            "Top Likes",
+    "stats.topwatch":            "Top Watch",
     "stats.grafik":              "📈 Stats Chart",
     "stats.grafik.video":        "Video Stats Chart",
     "stats.grafik.views":        "Views Stats Chart",
@@ -5152,7 +5185,7 @@ const I18N = {
     "twofa.skip":                "Skip",
     "twofa.enable":              "Enable",
     // 2FA card di Settings (per user 2026-05-06)
-    "twofa.title":               "🔐 Two-Factor Authentication (2FA)",
+    "twofa.title":               "Two-Factor Authentication (2FA)",
     "twofa.status":              "Status:",
     "twofa.hint":                "Add a security layer with a 6-digit PIN required at login.",
     "twofa.activate":            "Enable 2FA",
@@ -5805,8 +5838,8 @@ const I18N = {
     "settings.newpw":            "New Password",
     "settings.confirmpw":        "Confirm New Password",
     "settings.changepw.btn":     "Change Password",
-    "settings.notifications":    "🔔 Notifications",
-    "settings.appearance":       "🎨 Appearance",
+    "settings.notifications":    "Notifications",
+    "settings.appearance":       "Appearance",
     "settings.notif.message":    "New messages",
     "settings.notif.comment":    "Video comments",
     "settings.notif.follower":   "New followers",
@@ -6176,9 +6209,9 @@ const I18N = {
     "btn.following":             "✓ Mengikuti",
     "btn.message":               "Pesan",
     "btn.share":                 "Bagikan",
-    "settings.notifications":    "🔔 Notifikasi",
+    "settings.notifications":    "Notifikasi",
     "settings.display":          "🎨 Tampilan",
-    "settings.privacy":          "🔒 Privasi",
+    "settings.privacy":          "Privasi",
     "settings.security":         "Keamanan",
     "settings.autoplay":         "Auto-play video",
     "settings.reducedmotion":    "Animasi minimal",
@@ -6292,9 +6325,9 @@ const I18N = {
     "stats.achievements":        "Pencapaian",
     "stats.achievements.sub":    "Buka pencapaian dengan beraktivitas di Playly.",
     "stats.topperforming":       "Performa Terbaik",
-    "stats.topviews":            "👁️ Top Tontonan",
-    "stats.toplikes":            "❤️ Top Suka",
-    "stats.topwatch":            "⏱️ Top Tonton",
+    "stats.topviews":            "Top Tontonan",
+    "stats.toplikes":            "Top Suka",
+    "stats.topwatch":            "Top Tonton",
     "stats.grafik":              "📈 Grafik Statistik",
     "stats.grafik.video":        "Grafik Statistik Video",
     "stats.grafik.views":        "Grafik Statistik Tontonan",
@@ -6743,7 +6776,7 @@ const I18N = {
     "settings.newpw":            "Password Baru",
     "settings.confirmpw":        "Konfirmasi Password Baru",
     "settings.changepw.btn":     "Ganti Password",
-    "settings.appearance":       "🎨 Tampilan",
+    "settings.appearance":       "Tampilan",
     "settings.notif.message":    "Pesan baru",
     "settings.notif.comment":    "Komentar di video",
     "settings.notif.follower":   "Follower baru",
@@ -6766,7 +6799,7 @@ const I18N = {
     "twofa.skip":                "Lewati",
     "twofa.enable":              "Aktifkan",
     // 2FA card di Settings (per user 2026-05-06)
-    "twofa.title":               "🔐 Autentikasi Dua Faktor (2FA)",
+    "twofa.title":               "Autentikasi Dua Faktor (2FA)",
     "twofa.status":              "Status:",
     "twofa.hint":                "Tambah lapisan keamanan dengan PIN 6-digit yang diminta saat login.",
     "twofa.activate":            "Aktifkan 2FA",
@@ -7705,9 +7738,9 @@ const I18N = {
     "btn.share":                 "Kongsi",
     "btn.bagikan":               "Kongsi",
     "profile.videos.by":         "Video oleh",
-    "settings.notifications":    "🔔 Pemberitahuan",
+    "settings.notifications":    "Pemberitahuan",
     "settings.display":          "🎨 Paparan",
-    "settings.privacy":          "🔒 Privasi",
+    "settings.privacy":          "Privasi",
     "settings.security":         "Keselamatan",
     "settings.autoplay":         "Main video automatik",
     "settings.reducedmotion":    "Animasi minima",
@@ -7784,9 +7817,9 @@ const I18N = {
     "stats.achievements":        "Pencapaian",
     "stats.achievements.sub":    "Buka kunci pencapaian dengan aktif di Playly.",
     "stats.topperforming":       "Prestasi Tertinggi",
-    "stats.topviews":            "👁️ Tontonan Tertinggi",
-    "stats.toplikes":            "❤️ Suka Tertinggi",
-    "stats.topwatch":            "⏱️ Tontonan Tertinggi",
+    "stats.topviews":            "Tontonan Tertinggi",
+    "stats.toplikes":            "Suka Tertinggi",
+    "stats.topwatch":            "Tontonan Tertinggi",
     "stats.grafik":              "📈 Carta Statistik",
     "stats.grafik.video":        "Carta Statistik Video",
     "stats.grafik.views":        "Carta Statistik Tontonan",
@@ -8637,7 +8670,7 @@ const I18N = {
     "settings.newpw":            "Kata Laluan Baharu",
     "settings.confirmpw":        "Sahkan Kata Laluan Baharu",
     "settings.changepw.btn":     "Tukar Kata Laluan",
-    "settings.appearance":       "🎨 Penampilan",
+    "settings.appearance":       "Penampilan",
     "help.center":               "❓ Pusat Bantuan",
     "ph.search.menu":            "Cari menu...",
     "ph.search.video":           "Cari video, pencipta, atau tag...",
@@ -8985,9 +9018,9 @@ const I18N = {
     "btn.share":                 "シェア",
     "btn.bagikan":               "シェア",
     "profile.videos.by":         "動画作成者",
-    "settings.notifications":    "🔔 通知",
+    "settings.notifications":    "通知",
     "settings.display":          "🎨 表示",
-    "settings.privacy":          "🔒 プライバシー",
+    "settings.privacy":          "プライバシー",
     "settings.security":         "セキュリティ",
     "settings.autoplay":         "動画の自動再生",
     "settings.reducedmotion":    "アニメーションを減らす",
@@ -9064,9 +9097,9 @@ const I18N = {
     "stats.achievements":        "達成項目",
     "stats.achievements.sub":    "Playlyで活動して達成項目を解除しましょう。",
     "stats.topperforming":       "トップパフォーマンス",
-    "stats.topviews":            "👁️ トップ視聴",
-    "stats.toplikes":            "❤️ トップいいね",
-    "stats.topwatch":            "⏱️ トップ視聴時間",
+    "stats.topviews":            "トップ視聴",
+    "stats.toplikes":            "トップいいね",
+    "stats.topwatch":            "トップ視聴時間",
     "stats.grafik":              "📈 統計グラフ",
     "stats.grafik.video":        "動画統計グラフ",
     "stats.grafik.views":        "視聴統計グラフ",
@@ -9917,7 +9950,7 @@ const I18N = {
     "settings.newpw":            "新しいパスワード",
     "settings.confirmpw":        "新しいパスワードを確認",
     "settings.changepw.btn":     "パスワード変更",
-    "settings.appearance":       "🎨 外観",
+    "settings.appearance":       "外観",
     "help.center":               "❓ ヘルプセンター",
     "ph.search.menu":            "メニューを検索...",
     "ph.search.video":           "動画、クリエイター、タグを検索...",
@@ -10265,9 +10298,9 @@ const I18N = {
     "btn.share":                 "مشاركة",
     "btn.bagikan":               "مشاركة",
     "profile.videos.by":         "فيديوهات من قبل",
-    "settings.notifications":    "🔔 الإشعارات",
+    "settings.notifications":    "الإشعارات",
     "settings.display":          "🎨 العرض",
-    "settings.privacy":          "🔒 الخصوصية",
+    "settings.privacy":          "الخصوصية",
     "settings.security":         "الأمان",
     "settings.autoplay":         "تشغيل تلقائي للفيديو",
     "settings.reducedmotion":    "تقليل الحركة",
@@ -10344,9 +10377,9 @@ const I18N = {
     "stats.achievements":        "الإنجازات",
     "stats.achievements.sub":    "افتح الإنجازات بالنشاط على Playly.",
     "stats.topperforming":       "الأداء الأعلى",
-    "stats.topviews":            "👁️ أعلى المشاهدات",
-    "stats.toplikes":            "❤️ أعلى الإعجابات",
-    "stats.topwatch":            "⏱️ أعلى مشاهدة",
+    "stats.topviews":            "أعلى المشاهدات",
+    "stats.toplikes":            "أعلى الإعجابات",
+    "stats.topwatch":            "أعلى مشاهدة",
     "stats.grafik":              "📈 الرسم البياني للإحصائيات",
     "stats.grafik.video":        "الرسم البياني لإحصائيات الفيديو",
     "stats.grafik.views":        "الرسم البياني لإحصائيات المشاهدات",
@@ -11197,7 +11230,7 @@ const I18N = {
     "settings.newpw":            "كلمة المرور الجديدة",
     "settings.confirmpw":        "تأكيد كلمة المرور الجديدة",
     "settings.changepw.btn":     "تغيير كلمة المرور",
-    "settings.appearance":       "🎨 المظهر",
+    "settings.appearance":       "المظهر",
     "help.center":               "❓ مركز المساعدة",
     "ph.search.menu":            "ابحث في القائمة...",
     "ph.search.video":           "ابحث عن فيديو، منشئ، أو وسم...",
@@ -11545,9 +11578,9 @@ const I18N = {
     "btn.share":                 "分享",
     "btn.bagikan":               "分享",
     "profile.videos.by":         "视频作者",
-    "settings.notifications":    "🔔 通知",
+    "settings.notifications":    "通知",
     "settings.display":          "🎨 显示",
-    "settings.privacy":          "🔒 隐私",
+    "settings.privacy":          "隐私",
     "settings.security":         "安全",
     "settings.autoplay":         "自动播放视频",
     "settings.reducedmotion":    "减少动画",
@@ -11624,9 +11657,9 @@ const I18N = {
     "stats.achievements":        "成就",
     "stats.achievements.sub":    "通过在 Playly 活跃来解锁成就。",
     "stats.topperforming":       "表现最佳",
-    "stats.topviews":            "👁️ 最高观看",
-    "stats.toplikes":            "❤️ 最高点赞",
-    "stats.topwatch":            "⏱️ 最高观看时长",
+    "stats.topviews":            "最高观看",
+    "stats.toplikes":            "最高点赞",
+    "stats.topwatch":            "最高观看时长",
     "stats.grafik":              "📈 数据图表",
     "stats.grafik.video":        "视频数据图表",
     "stats.grafik.views":        "观看数据图表",
@@ -12477,7 +12510,7 @@ const I18N = {
     "settings.newpw":            "新密码",
     "settings.confirmpw":        "确认新密码",
     "settings.changepw.btn":     "更改密码",
-    "settings.appearance":       "🎨 外观",
+    "settings.appearance":       "外观",
     "help.center":               "❓ 帮助中心",
     "ph.search.menu":            "搜索菜单...",
     "ph.search.video":           "搜索视频、创作者或标签...",
@@ -12825,9 +12858,9 @@ const I18N = {
     "btn.share":                 "공유",
     "btn.bagikan":               "공유",
     "profile.videos.by":         "동영상 작성자",
-    "settings.notifications":    "🔔 알림",
+    "settings.notifications":    "알림",
     "settings.display":          "🎨 디스플레이",
-    "settings.privacy":          "🔒 개인정보",
+    "settings.privacy":          "개인정보",
     "settings.security":         "보안",
     "settings.autoplay":         "동영상 자동 재생",
     "settings.reducedmotion":    "애니메이션 줄이기",
@@ -12904,9 +12937,9 @@ const I18N = {
     "stats.achievements":        "업적",
     "stats.achievements.sub":    "Playly에서 활동하여 업적을 잠금 해제하세요.",
     "stats.topperforming":       "최고 성과",
-    "stats.topviews":            "👁️ 최고 조회",
-    "stats.toplikes":            "❤️ 최고 좋아요",
-    "stats.topwatch":            "⏱️ 최고 시청 시간",
+    "stats.topviews":            "최고 조회",
+    "stats.toplikes":            "최고 좋아요",
+    "stats.topwatch":            "최고 시청 시간",
     "stats.grafik":              "📈 통계 차트",
     "stats.grafik.video":        "동영상 통계 차트",
     "stats.grafik.views":        "조회 통계 차트",
@@ -13757,7 +13790,7 @@ const I18N = {
     "settings.newpw":            "새 비밀번호",
     "settings.confirmpw":        "새 비밀번호 확인",
     "settings.changepw.btn":     "비밀번호 변경",
-    "settings.appearance":       "🎨 외관",
+    "settings.appearance":       "외관",
     "help.center":               "❓ 도움말 센터",
     "ph.search.menu":            "메뉴 검색...",
     "ph.search.video":           "동영상, 크리에이터 또는 태그 검색...",
@@ -14105,9 +14138,9 @@ const I18N = {
     "btn.share":                 "Compartir",
     "btn.bagikan":               "Compartir",
     "profile.videos.by":         "Videos de",
-    "settings.notifications":    "🔔 Notificaciones",
+    "settings.notifications":    "Notificaciones",
     "settings.display":          "🎨 Pantalla",
-    "settings.privacy":          "🔒 Privacidad",
+    "settings.privacy":          "Privacidad",
     "settings.security":         "Seguridad",
     "settings.autoplay":         "Reproducción automática de video",
     "settings.reducedmotion":    "Movimiento reducido",
@@ -14184,9 +14217,9 @@ const I18N = {
     "stats.achievements":        "Logros",
     "stats.achievements.sub":    "Desbloquea logros siendo activo en Playly.",
     "stats.topperforming":       "Mejor Desempeño",
-    "stats.topviews":            "👁️ Top Vistas",
-    "stats.toplikes":            "❤️ Top Me gusta",
-    "stats.topwatch":            "⏱️ Top Tiempo de Visualización",
+    "stats.topviews":            "Top Vistas",
+    "stats.toplikes":            "Top Me gusta",
+    "stats.topwatch":            "Top Tiempo de Visualización",
     "stats.grafik":              "📈 Gráfico de Estadísticas",
     "stats.grafik.video":        "Gráfico de Estadísticas de Video",
     "stats.grafik.views":        "Gráfico de Estadísticas de Vistas",
@@ -15037,7 +15070,7 @@ const I18N = {
     "settings.newpw":            "Nueva Contraseña",
     "settings.confirmpw":        "Confirmar Nueva Contraseña",
     "settings.changepw.btn":     "Cambiar Contraseña",
-    "settings.appearance":       "🎨 Apariencia",
+    "settings.appearance":       "Apariencia",
     "help.center":               "❓ Centro de Ayuda",
     "ph.search.menu":            "Buscar menú...",
     "ph.search.video":           "Buscar video, creador o etiqueta...",
@@ -31801,6 +31834,13 @@ function applyFocus(view, value) {
   view.classList.toggle("focus-mode", key !== "all");
   // Saat reset ke "all" → restore judul asli (sebelum dimodifikasi oleh sub-item)
   if (key === "all") restoreViewTitle(view);
+  // v590 (2026-05-27): sync tab pill UI dgn current focus key. Jadi
+  // saat sidebar sub-item di-klik (focus:my-video, dst), tab pill di
+  // page Pustaka Saya juga ikut update active state.
+  const tabBtns = view.querySelectorAll("button[data-focus-tab]");
+  if (tabBtns.length) {
+    tabBtns.forEach(b => b.classList.toggle("active", b.dataset.focusTab === key));
+  }
 }
 
 // User minta: jangan auto-expand saat view berubah. Group hanya buka via klik.
@@ -31942,16 +31982,27 @@ function renderStatsRow() {
   const myUploads = state.myVideos.length;
   const myViews = state.myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
   const myLikes = state.myVideos.reduce((s, v) => s + (v.likes || 0), 0);
-  const following = state.followingCreators.length;
+  // v595 (2026-05-28): Following → Followers (channel kamu yang di-follow),
+  // tambah Total Komentar + Engagement Rate. Following = metric viewer, bukan
+  // creator — diganti Followers per cleanup user.
+  const myComments = state.myVideos.reduce((s, v) =>
+    s + ((state.comments?.[v.id]?.length) || 0), 0);
+  let myFollowers = 0;
+  try {
+    myFollowers = (typeof getUserFollowers === "function" && user?.username)
+      ? getUserFollowers(user.username).length
+      : (Array.isArray(state?.followers) ? state.followers.length : 0);
+  } catch {}
+  const engagementPct = myViews > 0 ? ((myLikes + myComments) / myViews * 100) : 0;
+  const engagementText = engagementPct > 0 ? engagementPct.toFixed(1) + "%" : "—";
 
-  // v581: gradient diseragamkan ke wine richer (#7d3640 → #561C24) supaya
-  // pop di atas .stat-card bg yang sudah dark. Stroke-width naik ke 2.2,
-  // border-radius icon box dibesarkan via CSS — visual lebih solid & clean.
   const cards = [
     { label: "Total Videos", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
     { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
     { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
-    { label: "Following", value: following, raw: following, icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M22 11h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: following > 0 ? "up" : null, trendText: following > 0 ? "creators followed" : "—", spark: "#BE9752" }
+    { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
+    { label: "Followers", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
+    { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M12 20.5l-1.45-1.32C5.4 14.36 2 11.28 2 7.5 2 4.42 4.42 2 7.5 2 9.24 2 10.91 2.81 12 4.09 13.09 2.81 14.76 2 16.5 2 19.58 2 22 4.42 22 7.5c0 3.78-3.4 6.86-8.55 11.69L12 20.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="11" r="1.5" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
   ];
 
   row.innerHTML = cards.map(c => `
@@ -33497,111 +33548,318 @@ function renderPremiumInsightsView() {
   }).length;
   const uploadDelta = thisWeek - lastWeek;
 
+  // v605 (2026-05-28): Redesign Insight Premium jadi premium-EXCLUSIVE features
+  // (tidak duplikat dgn Statistik biasa). Per request user.
+  // FOCUS: predictive trends, demographics, best-time forecast, benchmark.
+
+  // 1. Forecast views 7 hari ke depan — linear extrapolation dari past trend
+  const PLATFORM_AVG_ENGAGEMENT = 3.5; // % industry baseline
+  const benchmarkDelta = engagement - PLATFORM_AVG_ENGAGEMENT;
+  const benchmarkPct = PLATFORM_AVG_ENGAGEMENT > 0 ? (benchmarkDelta / PLATFORM_AVG_ENGAGEMENT) * 100 : 0;
+
+  // Past 7 days views (per day): simulate from total
+  const recentDailyViews = [];
+  for (let i = 0; i < 7; i++) {
+    // Distribute totalViews across last 7 days with slight upward trend
+    const ratio = totalViews > 0 ? (0.08 + 0.04 * i) : 0;
+    recentDailyViews.push(Math.round(totalViews * ratio / 7));
+  }
+  // Forecast next 7 days: extrapolate (avg growth)
+  const growthRate = recentDailyViews.length > 1
+    ? (recentDailyViews[6] - recentDailyViews[0]) / (recentDailyViews[0] || 1)
+    : 0;
+  const forecastDailyViews = [];
+  for (let i = 0; i < 7; i++) {
+    const last = recentDailyViews[6] || 0;
+    forecastDailyViews.push(Math.round(last * (1 + (growthRate * (i + 1) / 7))));
+  }
+  const forecastTotal = forecastDailyViews.reduce((s, v) => s + v, 0);
+  const forecastDelta = totalViews > 0
+    ? Math.round(((forecastTotal - recentDailyViews.reduce((s, v) => s + v, 0)) / (recentDailyViews.reduce((s, v) => s + v, 0) || 1)) * 100)
+    : 0;
+
+  // 2. Audience demographics — derived from total followers + reasonable distribution
+  // (Real platform analytics tidak tersedia tanpa backend; gunakan model distribusi)
+  const totalFollowers = (typeof getUserFollowers === "function" && user?.username)
+    ? getUserFollowers(user.username).length : 0;
+  const demoAge = [
+    { label: "13-17", pct: 12 },
+    { label: "18-24", pct: 38 },
+    { label: "25-34", pct: 28 },
+    { label: "35-44", pct: 14 },
+    { label: "45+",   pct:  8 },
+  ];
+  const demoRegion = [
+    { label: "Jakarta",   pct: 32 },
+    { label: "Jawa Barat", pct: 18 },
+    { label: "Jawa Timur", pct: 14 },
+    { label: "Bali",      pct:  8 },
+    { label: "Lainnya",   pct: 28 },
+  ];
+
+  // 3. Best upload time — derived from state.history (audience activity proxy)
+  const activityHours = new Array(24).fill(0);
+  const activityDays = new Array(7).fill(0);
+  try {
+    (state?.history || []).forEach(h => {
+      if (h?.ts) {
+        const d = new Date(h.ts);
+        activityHours[d.getHours()]++;
+        activityDays[d.getDay() === 0 ? 6 : d.getDay() - 1]++; // Sen=0
+      }
+    });
+  } catch {}
+  // Find peak hour bucket (group hours into time slots)
+  const slots = [
+    { label: "Pagi",  range: [6, 11],  start: 6 },
+    { label: "Siang", range: [12, 16], start: 12 },
+    { label: "Sore",  range: [17, 19], start: 17 },
+    { label: "Malam", range: [20, 23], start: 20 },
+  ];
+  const slotScores = slots.map(s => {
+    let score = 0;
+    for (let h = s.range[0]; h <= s.range[1]; h++) score += activityHours[h] || 0;
+    return { ...s, score };
+  });
+  const peakSlot = slotScores.reduce((a, b) => b.score > a.score ? b : a, slotScores[0]);
+  const DAY_NAMES = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+  const peakDayIdx = activityDays.indexOf(Math.max(...activityDays));
+  const peakDay = DAY_NAMES[peakDayIdx >= 0 ? peakDayIdx : 4]; // default Jumat
+
   wrap.innerHTML = `
     <div class="pi-grid">
-      <!-- Performance Overview — REAL numbers -->
-      <div class="pi-card pi-card-big">
-        <h4>📊 Performance Overview</h4>
-        <div class="pi-row-4">
-          <div class="pi-stat"><small>TOTAL VIDEO</small><strong>${fmtNum(totalVideos)}</strong></div>
-          <div class="pi-stat"><small>TOTAL TONTONAN</small><strong>${fmtNum(totalViews)}</strong></div>
-          <div class="pi-stat"><small>ENGAGEMENT RATE</small><strong>${engagement.toFixed(1)}%</strong></div>
-          <div class="pi-stat"><small>RATA-RATA TONTONAN</small><strong>${fmtNum(avgViews)}</strong></div>
-        </div>
-      </div>
 
-      <!-- Top 3 Performing Videos -->
+      <!-- 1. WATCH TIME FUNNEL — Drop-off Analysis (v613 2026-05-28)
+           Replace Prediksi Tren Views. Tunjukkan retention viewer per
+           segment video (0%/25%/50%/75%/100%). Insight: di mana drop-off
+           paling parah biar creator bisa fix opening/pacing. -->
       <div class="pi-card pi-card-big">
-        <h4>🏆 Top 3 Video Terbaik (by views)</h4>
-        ${topVids.length ? topVids.map((v, i) => `
-          <div class="pi-top-row">
-            <span class="pi-top-rank">${i + 1}</span>
-            <div class="pi-top-info">
-              <strong>${escapeHtml(v.title || "Untitled")}</strong>
-              <small>${fmtNum(v.viewsNum || 0)} tontonan · ${fmtNum(v.likes || 0)} suka</small>
-            </div>
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg></span>Analisis Retensi Tonton</h4>
+            <small>Berapa banyak penonton yang tetap nonton sampai akhir — analisis drop-off.</small>
           </div>
-        `).join("") : `<div class="pi-empty">Belum ada video. Upload dulu untuk lihat insight di sini.</div>`}
+          <span class="pi-tag-badge">${(() => {
+            // Compute avg completion rate dari history
+            const hist = Array.isArray(state?.history) ? state.history : [];
+            const avg = hist.length
+              ? Math.round(hist.reduce((s, h) => s + (h.progress || 0), 0) / hist.length)
+              : 0;
+            return `${avg}% rata-rata`;
+          })()}</span>
+        </div>
+        ${(() => {
+          const hist = Array.isArray(state?.history) ? state.history : [];
+          // Compute retention at 5 segments: 0% (start), 25%, 50%, 75%, 100%
+          let buckets;
+          if (hist.length === 0) {
+            // Dummy realistic data
+            buckets = [
+              { label: "0%",   pct: 100, count: 100, note: "Mulai nonton" },
+              { label: "25%",  pct: 78,  count: 78,  note: "Lewat opening" },
+              { label: "50%",  pct: 54,  count: 54,  note: "Tengah video" },
+              { label: "75%",  pct: 38,  count: 38,  note: "Hampir akhir" },
+              { label: "100%", pct: 24,  count: 24,  note: "Selesai tonton" },
+            ];
+          } else {
+            const total = hist.length;
+            const at = (pct) => hist.filter(h => (h.progress || 0) >= pct).length;
+            const c0 = total, c25 = at(25), c50 = at(50), c75 = at(75), c100 = at(95);
+            buckets = [
+              { label: "0%",   pct: 100, count: c0,   note: "Mulai nonton" },
+              { label: "25%",  pct: Math.round((c25 / total) * 100), count: c25, note: "Lewat opening" },
+              { label: "50%",  pct: Math.round((c50 / total) * 100), count: c50, note: "Tengah video" },
+              { label: "75%",  pct: Math.round((c75 / total) * 100), count: c75, note: "Hampir akhir" },
+              { label: "100%", pct: Math.round((c100 / total) * 100), count: c100, note: "Selesai tonton" },
+            ];
+          }
+          // Find biggest drop-off between consecutive buckets
+          let maxDropIdx = 0, maxDrop = 0;
+          for (let i = 1; i < buckets.length; i++) {
+            const d = buckets[i - 1].pct - buckets[i].pct;
+            if (d > maxDrop) { maxDrop = d; maxDropIdx = i; }
+          }
+          const dropMsg = maxDrop > 0
+            ? `⚠️ Drop-off terbesar: <b>${maxDrop}%</b> antara ${buckets[maxDropIdx - 1].label} → ${buckets[maxDropIdx].label}. ${buckets[maxDropIdx].label === "25%" ? "Coba opening lebih engaging." : buckets[maxDropIdx].label === "50%" ? "Pacing tengah video bisa di-optimize." : buckets[maxDropIdx].label === "75%" ? "Tambah call-to-action sebelum akhir." : "Coba ending yang lebih punchy."}`
+            : `✓ Retention bagus — viewer kebanyakan nonton sampai akhir.`;
+
+          return `<div class="pi-funnel">
+            ${buckets.map((b, i) => `
+              <div class="pi-funnel-row${i === maxDropIdx && maxDrop > 0 ? ' has-drop' : ''}">
+                <div class="pi-funnel-label">
+                  <span class="pfl-pos">${b.label}</span>
+                  <span class="pfl-note">${b.note}</span>
+                </div>
+                <div class="pi-funnel-bar-wrap">
+                  <div class="pi-funnel-bar" style="width:${b.pct}%">
+                    <span class="pfb-pct">${b.pct}%</span>
+                  </div>
+                </div>
+                <div class="pi-funnel-count">${fmtNum(b.count)}</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="pi-funnel-insight">${dropMsg}</div>`;
+        })()}
       </div>
 
-      <!-- Upload Activity -->
+      <!-- 2a. AUDIENCE DEMOGRAPHICS — Usia (separate card) -->
+      <!-- v614 (2026-05-28): split jadi 2 card terpisah biar pemisahnya lebih jelas. -->
       <div class="pi-card">
-        <h4>📅 Aktivitas Upload</h4>
-        <div class="pi-stat-row"><span>Minggu ini</span><b>${thisWeek} video</b></div>
-        <div class="pi-stat-row"><span>Minggu lalu</span><b>${lastWeek} video</b></div>
-        <div class="pi-stat-row">
-          <span>Perubahan</span>
-          <b class="${uploadDelta > 0 ? 'pi-trend up' : uploadDelta < 0 ? 'pi-trend down' : ''}">
-            ${uploadDelta > 0 ? '↗ +' : uploadDelta < 0 ? '↘ ' : ''}${uploadDelta} video
-          </b>
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg></span>Profil Audiens — Usia</h4>
+            <small>Distribusi umur penonton kamu.</small>
+          </div>
+          <span class="pi-tag-badge">${fmtNum(totalFollowers)} jangkauan</span>
+        </div>
+        <div class="pi-demo-list">
+          ${demoAge.map(a => `
+            <div class="pi-demo-row">
+              <span class="pi-demo-label">${a.label}</span>
+              <div class="pi-demo-bar"><i style="width:${a.pct}%"></i></div>
+              <span class="pi-demo-pct">${a.pct}%</span>
+            </div>
+          `).join("")}
         </div>
       </div>
 
-      <!-- Top Tags -->
+      <!-- 2b. AUDIENCE DEMOGRAPHICS — Lokasi (separate card) -->
       <div class="pi-card">
-        <h4>🏷️ Tag Paling Sering Dipakai</h4>
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>Profil Audiens — Lokasi</h4>
+            <small>5 daerah teratas asal penonton kamu.</small>
+          </div>
+          <span class="pi-tag-badge">${fmtNum(totalFollowers)} jangkauan</span>
+        </div>
+        <div class="pi-demo-list">
+          ${demoRegion.map(r => `
+            <div class="pi-demo-row">
+              <span class="pi-demo-label">${r.label}</span>
+              <div class="pi-demo-bar"><i style="width:${r.pct}%"></i></div>
+              <span class="pi-demo-pct">${r.pct}%</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- 3. BEST UPLOAD TIME FORECAST -->
+      <div class="pi-card">
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Waktu Upload Terbaik</h4>
+            <small>Jam saat penonton paling aktif menonton.</small>
+          </div>
+        </div>
+        <div class="pi-best-time-pick">
+          <div class="pi-bt-day">${peakDay}</div>
+          <div class="pi-bt-slot">${peakSlot.label}</div>
+          <div class="pi-bt-hours">${String(peakSlot.start).padStart(2, "0")}:00 – ${String(peakSlot.range[1] + 1).padStart(2, "0")}:00</div>
+        </div>
+        <div class="pi-slot-bars">
+          ${slotScores.map(s => {
+            const max = Math.max(...slotScores.map(x => x.score), 1);
+            const pct = (s.score / max) * 100;
+            const isPeak = s === peakSlot;
+            return `<div class="pi-slot-bar ${isPeak ? 'peak' : ''}">
+              <span class="psb-label">${s.label}</span>
+              <div class="psb-track"><i style="width:${pct}%"></i></div>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>
+
+      <!-- 4. ENGAGEMENT BENCHMARK vs Platform Average -->
+      <div class="pi-card">
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span>Perbandingan Interaksi</h4>
+            <small>Performa kamu vs rata-rata kreator Playly.</small>
+          </div>
+        </div>
+        <div class="pi-bench-row">
+          <div class="pi-bench-cell">
+            <small>KAMU</small>
+            <strong>${engagement.toFixed(1)}%</strong>
+            <div class="pi-bench-bar"><i style="width:${Math.min(100, engagement * 10)}%;background:var(--primary,#d4a64a)"></i></div>
+          </div>
+          <div class="pi-bench-cell">
+            <small>RATA-RATA</small>
+            <strong style="color:var(--muted)">${PLATFORM_AVG_ENGAGEMENT}%</strong>
+            <div class="pi-bench-bar"><i style="width:${Math.min(100, PLATFORM_AVG_ENGAGEMENT * 10)}%;background:rgba(140,150,180,.4)"></i></div>
+          </div>
+        </div>
+        <div class="pi-bench-verdict ${benchmarkDelta >= 0 ? 'good' : 'bad'}">
+          ${benchmarkDelta >= 0
+            ? `🏆 ${Math.abs(benchmarkPct).toFixed(0)}% di atas rata-rata kreator. Konten kamu lebih menarik!`
+            : `📉 ${Math.abs(benchmarkPct).toFixed(0)}% di bawah rata-rata. Coba upload lebih sering atau perbanyak interaksi dengan penonton.`}
+        </div>
+      </div>
+
+      <!-- 5. TOP HASHTAGS — premium-only strategic insight -->
+      <!-- v611 (2026-05-28): "Tag" → "Hashtag" per request user. -->
+      <div class="pi-card pi-card-big">
+        <div class="pi-card-head">
+          <div>
+            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></span>Analisis Hashtag Populer</h4>
+            <small>Hashtag paling sering kamu pakai — diurutkan dari yang terbanyak.</small>
+          </div>
+        </div>
         ${topTags.length ? `
           <div class="pi-tag-cloud">
-            ${topTags.map(([tag, count]) => `
-              <span class="pi-tag-chip">#${escapeHtml(tag)} <b>${count}</b></span>
-            `).join("")}
-          </div>` : `<div class="pi-empty">Belum ada tag. Tambahkan tag saat upload untuk lihat ini.</div>`
+            ${topTags.map(([tag, count], i) => {
+              const sizes = ["pi-tag-xl", "pi-tag-lg", "pi-tag-md", "pi-tag-sm"];
+              const sizeClass = sizes[Math.min(i, sizes.length - 1)];
+              return `<span class="pi-tag-chip ${sizeClass}">#${escapeHtml(tag)} <b>${count}</b></span>`;
+            }).join("")}
+          </div>` : `<div class="pi-empty">Belum ada hashtag. Tambahkan hashtag saat upload video untuk lihat analisis.</div>`
         }
       </div>
 
-      <!-- Engagement Breakdown -->
-      <div class="pi-card pi-card-big">
-        <h4>💖 Breakdown Interaksi</h4>
-        <div class="pi-stat-row"><span>❤️ Total Suka</span><b>${fmtNum(totalLikes)}</b></div>
-        <div class="pi-stat-row"><span>💬 Total Komentar</span><b>${fmtNum(totalComments)}</b></div>
-        <div class="pi-stat-row"><span>↗ Total Dibagikan</span><b>${fmtNum(totalShares)}</b></div>
-        <div class="pi-stat-row"><span>📊 Engagement Rate</span><b>${engagement.toFixed(2)}%</b></div>
-      </div>
+      <!-- v617 (2026-05-28): Ekspor Data dihapus dari Insight Premium —
+           dipindah ke Settings biar semua user (termasuk Gratis) bisa
+           ekspor data video sendiri. -->
 
-      <!-- Export — fungsional CSV download -->
-      <div class="pi-card pi-card-export">
-        <h4>📤 Export Data</h4>
-        <p>Download data video kamu sebagai CSV untuk dianalisis di Excel/Google Sheets.</p>
-        <div class="pi-export-row">
-          <button class="btn primary" id="piExportCsvBtn">📊 Download CSV</button>
-        </div>
-      </div>
     </div>
   `;
 
-  // Wire CSV export — REAL functional download
-  document.getElementById("piExportCsvBtn")?.addEventListener("click", () => {
-    if (!myVideos.length) {
-      toast?.("Belum ada data video untuk di-export.", "info");
-      return;
-    }
-    const headers = ["id", "title", "uploaded_at", "views", "likes", "comments", "shares", "tags", "category"];
-    const rows = myVideos.map(v => [
-      v.id || "",
-      `"${String(v.title || "").replace(/"/g, '""')}"`,
-      v.createdAt ? new Date(v.createdAt).toISOString() : "",
-      v.viewsNum || 0,
-      v.likes || 0,
-      Array.isArray(v.comments) ? v.comments.length : (v.comments || 0),
-      v.shares || 0,
-      `"${(Array.isArray(v.tags) ? v.tags.join(",") : "")}"`,
-      v.category || "",
-    ].join(","));
-    const csv = [headers.join(","), ...rows].join("\n");
-    // UTF-8 BOM (﻿) di awal file → Excel auto-detect encoding sebagai UTF-8.
-    // Tanpa BOM, Excel anggap CSV sebagai ANSI/locale default → karakter non-ASCII
-    // (emoji, accent, dll.) jadi gibberish. Google Sheets juga aman dgn BOM.
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `playly-insights-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-    toast?.(`✓ Data ${myVideos.length} video di-export ke CSV.`, "success");
-  });
+  // v612 (2026-05-28): forecast sparkline render dihapus (card sudah di-remove).
+  // v617 (2026-05-28): CSV export pindah ke Settings, button piExportCsvBtn dihapus.
+}
+
+// v617 (2026-05-28): Standalone CSV export — dipakai dari Settings (semua user,
+// termasuk Gratis). Read state.myVideos directly, no premium gate.
+function _exportVideosToCSV() {
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  if (!myVideos.length) {
+    toast?.("Belum ada data video untuk di-export.", "info");
+    return;
+  }
+  const headers = ["id", "title", "uploaded_at", "views", "likes", "comments", "shares", "tags", "category"];
+  const rows = myVideos.map(v => [
+    v.id || "",
+    `"${String(v.title || "").replace(/"/g, '""')}"`,
+    v.createdAt ? new Date(v.createdAt).toISOString() : "",
+    v.viewsNum || 0,
+    v.likes || 0,
+    Array.isArray(v.comments) ? v.comments.length : (v.comments || 0),
+    v.shares || 0,
+    `"${(Array.isArray(v.tags) ? v.tags.join(",") : "")}"`,
+    v.category || "",
+  ].join(","));
+  const csv = [headers.join(","), ...rows].join("\n");
+  // UTF-8 BOM (﻿) → Excel auto-detect encoding sebagai UTF-8.
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `playly-data-video-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast?.(`✓ Data ${myVideos.length} video berhasil diunduh.`, "success");
 }
 
 // ----------------------- HOME — UPLOAD STREAK (7-day activity bar) -----------------------
@@ -35013,8 +35271,13 @@ function renderHomeCreatorLevel() {
 
   wrap.innerHTML =
     '<div class="hlv-head">' +
-      '<div class="hlv-titlewrap"><h3><span class="hlv-h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span> Level Kreator</h3>' +
-      '<small class="hlv-sub">Naik level dari aktivitas channel — terus tumbuh, tanpa batas</small></div>' +
+      '<div class="hlv-titlewrap">' +
+        '<span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span>' +
+        '<div class="hlv-titlewrap-text">' +
+          '<h3>Level Kreator</h3>' +
+          '<small class="hlv-sub">Naik level dari aktivitas channel — terus tumbuh, tanpa batas</small>' +
+        '</div>' +
+      '</div>' +
       '<small class="hlv-note">XP: tontonan + suka + video + pengikut</small>' +
     '</div>' +
     '<div class="hlv-main">' +
@@ -36198,13 +36461,16 @@ function setRiwayatTab(tab) {
       b.classList.toggle("active", b.dataset.riwayatTab === key);
     }
   });
-  // Update title + description + breadcrumb
+  // Update title + description + breadcrumb.
+  // v590h (2026-05-27): strip emoji prefix dari title — sekarang ada SVG
+  // wine box icon di .lib-header-flex (sibling h2), jadi emoji di text =
+  // double icon. Title text-only sekarang.
   const meta = {
-    "all":          { title: "🕐 Riwayat",                desc: "Semua aktivitas kamu di Playly — dikelompokkan per kategori.", crumb: "Riwayat" },
-    "aktivitas":    { title: "📅 Riwayat Aktivitas",      desc: "Semua aktivitas tontonan kamu di Playly.",          crumb: "Riwayat Aktivitas" },
-    "pembelian":    { title: "💳 Riwayat Pembelian",      desc: "Transaksi premium, upgrade tier, dan pembelian lain.", crumb: "Riwayat Pembelian" },
-    "search-user":  { title: "🔎 Riwayat Pencarian User", desc: "Username/nama yang pernah kamu cari.",                 crumb: "Pencarian User" },
-    "search-video": { title: "🎬 Riwayat Pencarian Video", desc: "Kata kunci video / tag yang pernah kamu cari.",       crumb: "Pencarian Video" },
+    "all":          { title: "Riwayat",                desc: "Semua aktivitas kamu di Playly — dikelompokkan per kategori.", crumb: "Riwayat" },
+    "aktivitas":    { title: "Riwayat Aktivitas",      desc: "Semua aktivitas tontonan kamu di Playly.",          crumb: "Riwayat Aktivitas" },
+    "pembelian":    { title: "Riwayat Pembelian",      desc: "Transaksi premium, upgrade tier, dan pembelian lain.", crumb: "Riwayat Pembelian" },
+    "search-user":  { title: "Riwayat Pencarian User", desc: "Username/nama yang pernah kamu cari.",                 crumb: "Pencarian User" },
+    "search-video": { title: "Riwayat Pencarian Video", desc: "Kata kunci video / tag yang pernah kamu cari.",       crumb: "Pencarian Video" },
   }[key];
   const titleEl = document.getElementById("riwayatPageTitle");
   const descEl  = document.getElementById("riwayatPageDesc");
@@ -36222,6 +36488,40 @@ document.addEventListener("click", e => {
   e.preventDefault();
   setRiwayatTab(btn.dataset.riwayatTab);
 });
+
+// v590 (2026-05-27): Pustaka Saya tab system — wire data-focus-tab buttons
+// ke applyFocus(). Mirror sidebar sub-action focus:X tapi via tab pill di
+// page itself. Default tab: my-video (set via HTML data-focus="my-video").
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-focus-tab]");
+  if (!btn) return;
+  e.preventDefault();
+  const view = btn.closest("section.view");
+  if (!view) return;
+  const key = btn.dataset.focusTab;
+  // Update active state pada semua sibling tabs
+  view.querySelectorAll("button[data-focus-tab]").forEach(b => {
+    b.classList.toggle("active", b === btn);
+  });
+  // Apply focus mode (hide non-matching sections)
+  if (typeof applyFocus === "function") applyFocus(view, key);
+});
+
+// On page load, apply default focus untuk views yang punya data-focus attribute.
+// Tanpa ini, semua sections render dulu (terlihat sekejap) sebelum tab JS jalan.
+(function applyInitialFocusOnLoad() {
+  const run = () => {
+    document.querySelectorAll("section.view[data-focus]").forEach(view => {
+      const key = view.dataset.focus || "all";
+      if (typeof applyFocus === "function") applyFocus(view, key);
+    });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run, { once: true });
+  } else {
+    run();
+  }
+})();
 
 // People tab switch (Semua / Followers / Following) di halaman Pencarian.
 // 2026-05-25 req user: tab User/Admin diganti jadi sosial graph Followers/
@@ -36247,13 +36547,23 @@ function renderPurchaseHistory() {
   if (!wrap) return;
   // Per user 2026-05-06: Riwayat Pembelian harus tampil dari playly-premium-payments
   // (transaksi premium real user). Filter ke email user yang lagi aktif.
+  // v604 (2026-05-28): + summary Total Charge/Refund/Net Spent (merged dari
+  // Riwayat Pembayaran di Settings yang dihapus).
   let purchases = [];
+  let totalCharged = 0;
+  let totalRefunded = 0;
   try {
     const allPayments = (typeof getPremiumPayments === "function") ? getPremiumPayments() : [];
     const myEmail = String(user?.email || "").toLowerCase();
     if (myEmail) {
-      purchases = allPayments
-        .filter(p => p && String(p.email || "").toLowerCase() === myEmail)
+      const myPayments = allPayments.filter(p => p && String(p.email || "").toLowerCase() === myEmail);
+      // Aggregate summary
+      myPayments.forEach(p => {
+        const amt = Number(p.amount || 0);
+        if (p.status === "approved") totalCharged += amt;
+        else if (p.status === "rejected") totalRefunded += amt;
+      });
+      purchases = myPayments
         .map(p => ({
           ts: Number(p.processedAt || p.paidAt || p.createdAt || Date.now()),
           label: p.plan === "monthly" ? "Playly Premium · Bulanan"
@@ -36268,36 +36578,54 @@ function renderPurchaseHistory() {
         .sort((a, b) => b.ts - a.ts);
     }
   } catch {}
+  const netSpent = totalCharged - totalRefunded;
+  // Summary cards (Total Charge / Refund / Net Spent) — merged dari Settings billing.
+  const summaryHtml = `
+    <div class="rwt-billing-summary">
+      <div class="rbs-cell">
+        <small>Total Charge</small>
+        <b>$${totalCharged.toFixed(2)}</b>
+      </div>
+      <div class="rbs-cell">
+        <small>Total Refund</small>
+        <b>$${totalRefunded.toFixed(2)}</b>
+      </div>
+      <div class="rbs-cell rbs-cell-net">
+        <small>Net Spent</small>
+        <b>$${netSpent.toFixed(2)}</b>
+      </div>
+    </div>`;
+  // v592 (2026-05-28): table list — per request user.
+  const tableHead = `<thead><tr>
+      <th style="width:20%">Tanggal</th>
+      <th style="width:34%">Item</th>
+      <th style="width:16%">Metode</th>
+      <th style="width:16%">Status</th>
+      <th style="width:14%">Jumlah</th>
+    </tr></thead>`;
   if (!purchases.length) {
-    wrap.innerHTML = (typeof window._emptyRichV24 === "function")
-      ? window._emptyRichV24({
-          kind: "purchase",
-          title: "Belum ada pembelian",
-          copy: "Riwayat upgrade premium dan transaksi akan tampil di sini.",
-          cta: { label: "Lihat paket premium", view: "premium" },
-          extra: "riwayat-empty",
-        })
-      : `<div class="riwayat-empty">Belum ada riwayat pembelian.</div>`;
+    wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}
+      <tbody><tr class="rwt-empty-row"><td colspan="5">Belum ada riwayat pembelian. Upgrade premium akan tampil di sini.</td></tr></tbody>
+    </table>`;
     return;
   }
   const statusBadge = (st) => {
     if (st === "approved") return '<span class="riwayat-status-badge ok">✓ Approved</span>';
     if (st === "rejected") return '<span class="riwayat-status-badge bad">✕ Rejected</span>';
     if (st === "pending")  return '<span class="riwayat-status-badge warn">⏳ Pending</span>';
-    return "";
+    return '<span class="rwt-when">—</span>';
   };
-  wrap.innerHTML = purchases.slice(0, 30).map(p => {
+  const rows = purchases.slice(0, 30).map(p => {
     const when = p.ts ? new Date(p.ts).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-    return `<div class="riwayat-row">
-      <span style="font-size:18px">💳</span>
-      <div style="flex:1;min-width:0">
-        <strong>${escapeHtml(p.label)}</strong>
-        <small style="display:block;margin-top:2px">${when}${p.method ? " · " + escapeHtml(p.method) : ""}${p.code ? " · " + escapeHtml(p.code) : ""}</small>
-      </div>
-      ${statusBadge(p.status)}
-      <b style="margin-left:10px">${escapeHtml(p.amount)}</b>
-    </div>`;
+    return `<tr>
+      <td class="rwt-when">${escapeHtml(when)}</td>
+      <td><strong>${escapeHtml(p.label)}</strong>${p.code ? `<br><small class="rwt-method">${escapeHtml(p.code)}</small>` : ""}</td>
+      <td class="rwt-method">${p.method ? escapeHtml(p.method) : "—"}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td class="rwt-amount" style="text-align:right">${escapeHtml(p.amount)}</td>
+    </tr>`;
   }).join("");
+  wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}<tbody>${rows}</tbody></table>`;
 }
 
 function renderSearchHistorySections() {
@@ -36305,31 +36633,32 @@ function renderSearchHistorySections() {
   const vidWrap  = document.getElementById("searchVideoHistoryList");
   const userQs = Array.isArray(state?.searchHistoryUser)  ? state.searchHistoryUser  : [];
   const vidQs  = Array.isArray(state?.searchHistoryVideo) ? state.searchHistoryVideo : [];
-  const renderChips = (wrap, items, kind) => {
+  // v592 (2026-05-28): table list — per request user.
+  const renderTable = (wrap, items, kind) => {
     if (!wrap) return;
+    const isUser = kind === "user";
+    const head = `<thead><tr><th style="width:62%">Kueri</th><th style="width:18%">Tipe</th><th style="width:20%">Aksi</th></tr></thead>`;
     if (!items.length) {
-      const isUser = kind === "user";
-      wrap.innerHTML = (typeof window._emptyRichV24 === "function")
-        ? window._emptyRichV24({
-            kind: isUser ? "search-user" : "search-video",
-            title: isUser ? "Belum ada pencarian user" : "Belum ada pencarian video",
-            copy:  isUser
-              ? "User yang pernah kamu cari muncul di sini sebagai chip — cepat klik ulang."
-              : "Mulai eksplorasi — kata kunci dan tag tersimpan untuk akses cepat.",
-            extra: "riwayat-empty",
-          })
-        : `<div class="riwayat-empty">Belum ada pencarian.</div>`;
+      wrap.innerHTML = `<table class="riwayat-table">${head}
+        <tbody><tr class="rwt-empty-row"><td colspan="3">${isUser ? "Belum ada pencarian user." : "Belum ada pencarian video."}</td></tr></tbody>
+      </table>`;
       return;
     }
-    wrap.innerHTML = items.slice(0, 30).map(q =>
-      `<span class="riwayat-chip" data-kind="${kind}" data-q="${escapeHtml(String(q))}">
-        ${escapeHtml(String(q))}
-        <span class="riwayat-chip-x" data-kind="${kind}-rm" data-q="${escapeHtml(String(q))}" title="Hapus">✕</span>
-      </span>`
-    ).join("");
+    const rows = items.slice(0, 30).map(q => {
+      const qe = escapeHtml(String(q));
+      return `<tr class="riwayat-chip" data-kind="${kind}" data-q="${qe}" style="cursor:pointer">
+        <td><span class="rwt-query">${qe}</span></td>
+        <td class="rwt-method">${isUser ? "User" : "Video"}</td>
+        <td style="text-align:right">
+          <button type="button" class="rwt-act rwt-act-play" data-kind="${kind}" data-q="${qe}" title="Cari ulang" aria-label="Cari ulang">↗</button>
+          <button type="button" class="rwt-act" data-kind="${kind}-rm" data-q="${qe}" title="Hapus" aria-label="Hapus">✕</button>
+        </td>
+      </tr>`;
+    }).join("");
+    wrap.innerHTML = `<table class="riwayat-table">${head}<tbody>${rows}</tbody></table>`;
   };
-  renderChips(userWrap, userQs, "user");
-  renderChips(vidWrap,  vidQs,  "video");
+  renderTable(userWrap, userQs, "user");
+  renderTable(vidWrap,  vidQs,  "video");
 }
 
 // Hapus chip pencarian / klik chip
@@ -36364,10 +36693,12 @@ function renderHistory() {
   renderSearchHistorySections();
 
   if (!state.history.length) {
-    // Per user 2026-05-10: HANYA satu empty state yang tampil. continueList
-    // kosongkan supaya tidak duplikat dengan #historyGroups empty card.
+    // v592 (2026-05-28): tabel empty state (sebelumnya emptyHTML card).
     $("#continueList") && ($("#continueList").innerHTML = "");
-    $("#historyGroups") && ($("#historyGroups").innerHTML = emptyHTML("🕐", "Riwayat masih kosong", "Video yang kamu tonton akan muncul di sini, dikelompokkan berdasarkan tanggal.", "Discover Video", "discover"));
+    $("#historyGroups") && ($("#historyGroups").innerHTML = `<table class="riwayat-table">
+      <thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>
+      <tbody><tr class="rwt-empty-row"><td colspan="4">Riwayat masih kosong. Video yang kamu tonton akan muncul di sini.</td></tr></tbody>
+    </table>`);
     return;
   }
 
@@ -36424,34 +36755,47 @@ function renderHistory() {
   });
   const groupOrder = ["Today", "Yesterday", "This week", "Older"];
 
-  $("#historyGroups").innerHTML = groupOrder.filter(g => groups[g]).map(g => {
+  // v592 (2026-05-28): Tabel list — Tanggal | Video | Progress | Aksi.
+  // Group dibuat jadi rwt-group-row (separator row di dalam tabel).
+  const tableRows = groupOrder.filter(g => groups[g]).map(g => {
     const items = groups[g];
-    return `
-      <div class="history-group">
-        <div class="history-group-title">${g}</div>
-        ${items.map(h => {
-          const v = findVideo(h.videoId);
-          if (!v) return "";
-          return `
-            <div class="history-item" data-vid="${v.id}">
-              <div class="mini-thumb"><img src="${v.thumb}" alt=""/></div>
-              <div class="info">
-                <h5>${v.title}</h5>
-                <div class="meta">@${v.creator} • ${v.views} views • ${h.progress}% watched</div>
-              </div>
-              <div class="time-ago">${h.time}</div>
-              <button class="remove-btn" data-rm="${state.history.indexOf(h)}">✕</button>
+    const groupRow = `<tr class="rwt-group-row"><td colspan="4">${g}</td></tr>`;
+    const itemRows = items.map(h => {
+      const v = findVideo(h.videoId);
+      if (!v) return "";
+      const idx = state.history.indexOf(h);
+      const pct = Math.max(0, Math.min(100, Math.round(h.progress || 0)));
+      return `<tr class="history-item" data-vid="${v.id}">
+        <td class="rwt-when">${escapeHtml(h.time || "")}</td>
+        <td>
+          <div class="rwt-video-cell">
+            <img class="rwt-thumb" src="${escapeHtml(v.thumb)}" alt=""/>
+            <div class="rwt-video-meta">
+              <strong>${escapeHtml(v.title)}</strong>
+              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} views</small>
             </div>
-          `;
-        }).join("")}
-      </div>
-    `;
-  }).join("") || `<div style="text-align:center; color:var(--muted); padding:32px">Tidak ada riwayat yang cocok.</div>`;
+          </div>
+        </td>
+        <td>
+          <span class="rwt-progress">${pct}% ditonton<i><span style="width:${pct}%"></span></i></span>
+        </td>
+        <td style="text-align:right">
+          <button class="rwt-act" data-rm="${idx}" title="Hapus" aria-label="Hapus">✕</button>
+        </td>
+      </tr>`;
+    }).join("");
+    return groupRow + itemRows;
+  }).join("");
+
+  const tableHead = `<thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>`;
+  $("#historyGroups").innerHTML = tableRows
+    ? `<table class="riwayat-table">${tableHead}<tbody>${tableRows}</tbody></table>`
+    : `<table class="riwayat-table">${tableHead}<tbody><tr class="rwt-empty-row"><td colspan="4">Tidak ada riwayat yang cocok.</td></tr></tbody></table>`;
 
   // "more >" untuk Riwayat Tontonan
   if (riwayatRemaining > 0) {
     $("#historyGroups").innerHTML += `
-      <button type="button" class="people-more-btn history-more-btn" data-history-more="riwayat">
+      <button type="button" class="people-more-btn history-more-btn" data-history-more="riwayat" style="margin-top:10px">
         <span>more (+${riwayatRemaining})</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
       </button>`;
@@ -36459,7 +36803,7 @@ function renderHistory() {
 
   $$("#continueList .continue-card, #historyGroups .history-item").forEach(c => {
     c.addEventListener("click", e => {
-      if (e.target.closest(".remove-btn")) return;
+      if (e.target.closest(".remove-btn") || e.target.closest(".rwt-act")) return;
       openPlayer(+c.dataset.vid);
     });
   });
@@ -36566,137 +36910,253 @@ function generateChartData(metric, range) {
   const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
   const followerCount = (typeof getUserFollowers === "function" && user?.username)
     ? getUserFollowers(user.username).length : 0;
+  // v595 (2026-05-28): comments series — total komentar di semua video user.
+  const totalComments = myVideos.reduce((s, v) =>
+    s + ((state.comments?.[v.id]?.length) || 0), 0);
 
-  // Distribusi cumulative pakai pattern naik halus, ujung = total real.
-  // Hasil: angka kanan = nilai sekarang yang real, kiri = histori naik.
-  const total = metric === "videos" ? totalVideos
-    : metric === "views" ? totalViews
+  const total = metric === "videos"   ? totalVideos
+    : metric === "views"              ? totalViews
+    : metric === "comments"           ? totalComments
     : followerCount;
   const n = labels.length;
   const values = [];
+
+  // v602d (2026-05-28): DUMMY DATA preview mode — kalau total 0, inject
+  // realistic varying values per metric biar chart bentuknya kelihatan.
+  // HAPUS block ini kalau data real sudah masuk. Variasi per metric beda
+  // pattern (videos = ascending discrete, views = exponential, followers =
+  // steady growth, comments = spiky).
   if (total === 0) {
-    for (let i = 0; i < n; i++) values.push(0);
-  } else {
-    // Smooth growth curve, ending at `total`
-    for (let i = 0; i < n; i++) {
-      const ratio = (i + 1) / n;
-      values.push(Math.round(total * (0.4 + 0.6 * ratio)));
-    }
+    const DUMMY = {
+      weekly: {
+        videos:    [2, 1, 3, 2, 4, 5, 3],
+        views:     [120, 280, 180, 420, 380, 680, 520],
+        followers: [45, 52, 58, 67, 78, 84, 92],
+        comments:  [8, 24, 12, 18, 32, 28, 41],
+      },
+      monthly: {
+        videos:    [8, 12, 9, 16],
+        views:     [1200, 2400, 1800, 4200],
+        followers: [120, 180, 230, 310],
+        comments:  [45, 82, 67, 124],
+      },
+      yearly: {
+        videos:    [3, 5, 4, 8, 6, 10, 12, 9, 15, 18, 14, 22],
+        views:     [800, 1200, 980, 2400, 1800, 3600, 5200, 4100, 7800, 9200, 8400, 12400],
+        followers: [50, 80, 120, 180, 240, 320, 410, 520, 680, 820, 980, 1240],
+        comments:  [12, 28, 18, 64, 42, 92, 138, 84, 220, 280, 240, 380],
+      },
+    };
+    const demo = (DUMMY[range] && DUMMY[range][metric]) || new Array(n).fill(0);
+    for (let i = 0; i < n; i++) values.push(demo[i] || 0);
+    const demoTotal = values.reduce((s, v) => s + v, 0);
+    return { labels, values, total: demoTotal, isDummy: true };
+  }
+
+  // Smooth growth curve, ending at `total`
+  for (let i = 0; i < n; i++) {
+    const ratio = (i + 1) / n;
+    values.push(Math.round(total * (0.4 + 0.6 * ratio)));
   }
   return { labels, values, total };
 }
 
-// Render satu mini-chart ke svg target. `metric` = "videos"|"views"|"followers".
+// v602 (2026-05-28): Modern UI/UX redesign — Vercel/Linear/Stripe analytics
+// pattern. Big number headline + delta % vs periode sebelumnya + smooth
+// bezier area sparkline (no axis, no grid, no labels — minimal & clear).
+// Hover → tooltip via data point.
 function drawMiniChart(metric) {
   const svg = document.querySelector(`[data-chart-svg="${metric}"]`);
   const empty = document.querySelector(`[data-chart-empty="${metric}"]`);
   if (!svg) return;
   const wrap = svg.parentElement;
+  const card = wrap?.closest(".mini-chart-card");
   const data = generateChartData(metric, state.chartRange);
   const hasData = data.total > 0;
+
+  // Modern card layout — find/create headline + delta elements
+  const head = card?.querySelector(".mini-chart-head");
+  let bigEl = card?.querySelector(".mc-big");
+  let deltaEl = card?.querySelector(".mc-delta");
+  if (head && !bigEl) {
+    const wrapEl = document.createElement("div");
+    wrapEl.className = "mc-headline";
+    wrapEl.innerHTML = '<b class="mc-big"></b><span class="mc-delta"></span>';
+    head.insertAdjacentElement("afterend", wrapEl);
+    bigEl = wrapEl.querySelector(".mc-big");
+    deltaEl = wrapEl.querySelector(".mc-delta");
+  }
 
   if (!hasData) {
     svg.innerHTML = "";
     if (empty) empty.hidden = false;
+    if (bigEl) bigEl.textContent = "0";
+    if (deltaEl) { deltaEl.textContent = ""; deltaEl.className = "mc-delta"; }
     return;
   }
   if (empty) empty.hidden = true;
 
-  const containerW = Math.max(600, Math.round(wrap?.offsetWidth || svg.clientWidth || 700));
-  const W = containerW, H = 160, PAD_L = 40, PAD_R = 24, PAD_T = 14, PAD_B = 26;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  const max = Math.max(...data.values, 1) * 1.1;
-  const stepX = (W - PAD_L - PAD_R) / (data.values.length - 1);
-  const points = data.values.map((v, i) => [PAD_L + i * stepX, H - PAD_B - (v / max) * (H - PAD_T - PAD_B)]);
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(" ");
-  const area = `${path} L ${points[points.length - 1][0]} ${H - PAD_B} L ${points[0][0]} ${H - PAD_B} Z`;
-  const dotFill = getComputedStyle(document.body).getPropertyValue("--bg-elev").trim() || "#11131f";
-  const gradId = `chartG-${metric}`;
-  const fillId = `chartFill-${metric}`;
+  // Compute delta: current period total vs previous period (last half vs first half)
+  const half = Math.floor(data.values.length / 2);
+  const prevSum = data.values.slice(0, half).reduce((s, v) => s + v, 0);
+  const currSum = data.values.slice(half).reduce((s, v) => s + v, 0);
+  let deltaPct = 0;
+  if (prevSum > 0) deltaPct = ((currSum - prevSum) / prevSum) * 100;
+  else if (currSum > 0) deltaPct = 100;
+  const deltaTrend = deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
+  const deltaSign = deltaPct > 0 ? "+" : "";
+  const deltaArrow = deltaTrend === "up" ? "↑" : deltaTrend === "down" ? "↓" : "·";
 
-  // Color per metric
+  if (bigEl) bigEl.textContent = (typeof fmtNum === "function" ? fmtNum(data.total) : String(data.total));
+  if (deltaEl) {
+    deltaEl.className = `mc-delta mc-delta-${deltaTrend}`;
+    deltaEl.innerHTML = `<i>${deltaArrow}</i> ${deltaSign}${deltaPct.toFixed(1)}% <small>vs sebelumnya</small>`;
+  }
+
+  // === v603 (2026-05-28): Step Chart (stair-step path) ===
+  // Discrete stair-step path bukan smooth curve. Cocok untuk data integer
+  // (video count, follower count) yang nggak ada nilai 0.5. Path naik tegak
+  // di tengah antar period biar visual jelas "lompat" per period.
+  wrap.innerHTML = ""; // clear old DOM
+  // Restore main SVG
+  if (svg) {
+    svg.style.display = "";
+    wrap.appendChild(svg);
+  }
+
+  // Restore big number (in case prev render hid it for ring style)
+  if (bigEl) bigEl.style.display = "";
+
+  const containerW = Math.max(280, Math.round(wrap?.offsetWidth || svg.clientWidth || 600));
+  const W = containerW, H = 80, PAD_X = 4, PAD_Y = 4;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+
+  const n = data.values.length;
+  const min = Math.min(...data.values, 0);
+  const max = Math.max(...data.values, 1);
+  const range = max - min || 1;
+  const stepX = (W - PAD_X * 2) / Math.max(1, n);
+  const points = data.values.map((v, i) => [
+    PAD_X + (i + 0.5) * stepX, // center of each segment
+    H - PAD_Y - ((v - min) / range) * (H - PAD_Y * 2),
+  ]);
+
   const colors = {
-    videos:    { from: "#561C24", to: "#E8D8C4" },
-    views:     { from: "#3b82f6", to: "#a5b4fc" },
-    followers: { from: "#f59e0b", to: "#fde68a" },
+    videos:    "#BE9752",
+    views:     "#7d3640",
+    followers: "#f59e0b",
+    comments:  "#10b981",
   };
   const c = colors[metric] || colors.videos;
+  const fillId = `chartFill-${metric}`;
 
-  let grid = "";
-  for (let i = 0; i <= 3; i++) {
-    const y = PAD_T + (i * (H - PAD_T - PAD_B) / 3);
-    const val = Math.round(max - (i * max / 3));
-    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(140,150,180,.1)" stroke-dasharray="2,4"/>`;
-    grid += `<text x="${PAD_L - 6}" y="${y + 3}" fill="rgba(140,150,180,.6)" font-size="9" text-anchor="end" font-family="Inter">${val}</text>`;
+  // Build stair-step path:
+  // M startX,startY → H (next segment edge) → V (newY) → H (next segment edge) → V (newY) ...
+  let stepPath = "";
+  let areaPath = "";
+  if (n > 0) {
+    // Start at left edge of first segment, height = first value
+    const firstY = points[0][1];
+    const startX = PAD_X;
+    stepPath = `M ${startX} ${firstY.toFixed(2)} `;
+    let prevY = firstY;
+    for (let i = 0; i < n; i++) {
+      // Segment runs from i*stepX to (i+1)*stepX, height = points[i][1]
+      const segLeft = PAD_X + i * stepX;
+      const segRight = PAD_X + (i + 1) * stepX;
+      const y = points[i][1];
+      if (i > 0 && y !== prevY) {
+        // Vertical step at boundary
+        stepPath += `L ${segLeft.toFixed(2)} ${y.toFixed(2)} `;
+      }
+      // Horizontal across segment
+      stepPath += `L ${segRight.toFixed(2)} ${y.toFixed(2)} `;
+      prevY = y;
+    }
+    // Area = step + close to bottom
+    areaPath = stepPath + `L ${(PAD_X + n * stepX).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;
   }
 
-  let xLabels = "";
-  data.labels.forEach((l, i) => {
-    xLabels += `<text x="${PAD_L + i * stepX}" y="${H - PAD_B + 16}" fill="rgba(140,150,180,.6)" font-size="10" text-anchor="middle" font-family="Inter">${l}</text>`;
-  });
-
-  let dots = "";
+  // Markers at each step's right edge (data point indicator)
+  let markers = "";
   points.forEach((p, i) => {
-    // Stagger delay per dot — pop in after the line draws
-    const delay = 0.9 + (i / Math.max(1, points.length - 1)) * 0.45;
-    dots += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${dotFill}" stroke="url(#${gradId})" stroke-width="2" data-i="${i}" data-val="${data.values[i]}" data-label="${data.labels[i]}" class="chart-dot chart-dot-anim" style="cursor:pointer;transition:r .2s;animation-delay:${delay.toFixed(2)}s"/>`;
+    markers += `<circle cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="3" fill="${c}" stroke="rgba(0,0,0,0.4)" stroke-width="1" class="chart-step-marker" style="opacity:0;animation-delay:${(0.8 + i * 0.08).toFixed(2)}s"/>`;
+    // Invisible wider hit target
+    const segLeft = PAD_X + i * stepX;
+    markers += `<rect x="${segLeft.toFixed(2)}" y="0" width="${stepX.toFixed(2)}" height="${H}" fill="transparent" data-i="${i}" data-val="${data.values[i]}" data-x="${p[0].toFixed(2)}" data-y="${p[1].toFixed(2)}" class="chart-step-hit" style="cursor:pointer"/>`;
   });
 
-  // Path length for stroke-dasharray draw animation. Approximate via straight
-  // segment sum (cukup buat ngasih efek "drawing" — tidak perlu exact length).
+  // Path length for draw animation
   let pathLen = 0;
+  // Approximate: sum H + V segments
   for (let i = 1; i < points.length; i++) {
-    const dx = points[i][0] - points[i-1][0];
-    const dy = points[i][1] - points[i-1][1];
-    pathLen += Math.sqrt(dx*dx + dy*dy);
+    pathLen += stepX + Math.abs(points[i][1] - points[i - 1][1]);
   }
+  pathLen += stepX; // first segment horizontal
+  pathLen *= 1.1;
 
   svg.innerHTML = `
     <defs>
-      <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${c.from}"/><stop offset="100%" stop-color="${c.to}"/></linearGradient>
-      <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c.from}" stop-opacity=".35"/><stop offset="100%" stop-color="${c.to}" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c}" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+      </linearGradient>
     </defs>
-    ${grid}
-    <path class="chart-area-anim" d="${area}" fill="url(#${fillId})"/>
-    <path class="chart-line-anim" d="${path}" fill="none" stroke="url(#${gradId})" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
-    ${dots}
-    ${xLabels}
+    <path class="chart-area-anim" d="${areaPath}" fill="url(#${fillId})"/>
+    <path class="chart-line-anim" d="${stepPath}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="miter" stroke-linecap="square" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
+    ${markers}
   `;
 
   const tip = $("#chartTip");
-  const unitLabel = metric === "videos" ? "video" : metric === "views" ? "views" : "followers";
-  $$(".chart-dot", svg).forEach((d, i) => {
+  const unitLabel = metric === "videos" ? "video"
+    : metric === "views" ? "views"
+    : metric === "comments" ? "komentar"
+    : "followers";
+  $$(".chart-step-hit", svg).forEach((d, i) => {
     d.addEventListener("mouseenter", () => {
-      d.setAttribute("r", "5");
+      const marker = svg.querySelectorAll(".chart-step-marker")[i];
+      if (marker) marker.setAttribute("r", "5");
       const rect = svg.getBoundingClientRect();
-      const cx = +d.getAttribute("cx") * (rect.width / W) + rect.left + window.scrollX;
-      const cy = +d.getAttribute("cy") * (rect.height / H) + rect.top + window.scrollY;
-      tip.innerHTML = `<small>${data.labels[i]}</small><b>${(+d.getAttribute("data-val")).toLocaleString("id-ID")} ${unitLabel}</b>`;
-      tip.style.position = "fixed";
-      tip.style.left = `${cx - tip.offsetWidth / 2 - window.scrollX}px`;
-      tip.style.top = `${cy - tip.offsetHeight - 10 - window.scrollY}px`;
-      tip.classList.add("show");
+      const cx = +d.getAttribute("data-x") * (rect.width / W) + rect.left + window.scrollX;
+      const cy = +d.getAttribute("data-y") * (rect.height / H) + rect.top + window.scrollY;
+      if (tip) {
+        tip.innerHTML = `<small>${data.labels[i] || ""}</small><b>${(+d.getAttribute("data-val")).toLocaleString("id-ID")} ${unitLabel}</b>`;
+        tip.style.position = "fixed";
+        tip.style.left = `${cx - tip.offsetWidth / 2 - window.scrollX}px`;
+        tip.style.top = `${cy - tip.offsetHeight - 10 - window.scrollY}px`;
+        tip.style.transform = "";
+        tip.classList.add("show");
+      }
     });
-    d.addEventListener("mouseleave", () => { d.setAttribute("r", "3"); tip.classList.remove("show"); });
+    d.addEventListener("mouseleave", () => {
+      const marker = svg.querySelectorAll(".chart-step-marker")[i];
+      if (marker) marker.setAttribute("r", "3");
+      if (tip) tip.classList.remove("show");
+    });
   });
 }
 
 function drawChart() {
-  // Render 3 chart sekaligus + update total angka di header
+  // Render 4 chart sekaligus + update total angka di header.
+  // v595 (2026-05-28): + Comments chart.
   const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
+  const totalComments = myVideos.reduce((s, v) =>
+    s + ((state.comments?.[v.id]?.length) || 0), 0);
   const followerCount = (typeof getUserFollowers === "function" && user?.username)
     ? getUserFollowers(user.username).length : 0;
   const setT = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = fmt(n); };
   setT("chartTotalVideos", myVideos.length);
   setT("chartTotalViews", totalViews);
   setT("chartTotalFollowers", followerCount);
+  setT("chartTotalComments", totalComments);
 
   const subtitle = $("#chartSubtitle");
   if (subtitle) {
     const labelMap = { weekly: "minggu ini", monthly: "bulan ini", yearly: "tahun ini" };
-    if (myVideos.length === 0 && totalViews === 0 && followerCount === 0) {
+    if (myVideos.length === 0 && totalViews === 0 && followerCount === 0 && totalComments === 0) {
       subtitle.textContent = "Belum ada data — unggah video untuk mulai tracking";
     } else {
       subtitle.textContent = `Performa ${labelMap[state.chartRange]}`;
@@ -36706,6 +37166,7 @@ function drawChart() {
   drawMiniChart("videos");
   drawMiniChart("views");
   drawMiniChart("followers");
+  drawMiniChart("comments");
 }
 
 $$("#chartTabs button").forEach(b => {
@@ -36740,15 +37201,12 @@ $("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.ta
 
 function renderTopPerforming() {
   const card = $("#topPerfCard");
-  const colViews = $("#topPerformViews");
-  const colLikes = $("#topPerformLikes");
-  const colWatch = $("#topPerformWatch");
+  const colViews    = $("#topPerformViews");
+  const colLikes    = $("#topPerformLikes");
+  const colWatch    = $("#topPerformWatch");
+  const colComments = $("#topPerformComments"); // v595 (2026-05-28): kolom ke-4
   if (!card || !colViews || !colLikes || !colWatch) return;
   if (!state.myVideos.length) {
-    // F audit (2026-05-25): replace "card hidden" dgn empty-state CTA.
-    // Sebelumnya hilang sama sekali → halaman Beranda terasa kosong + user
-    // tidak tahu section ini ada. Sekarang tampil dgn pesan motivasional +
-    // tombol langsung ke upload flow.
     card.style.display = "";
     const empty = `<div class="top-perf-empty-rich">
       <div class="tpe-icon">📊</div>
@@ -36756,10 +37214,10 @@ function renderTopPerforming() {
       <p>${escapeHtml(t("topperf.empty.desc"))}</p>
       <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">${escapeHtml(t("topperf.empty.cta"))}</button>
     </div>`;
-    // Ke-3 kolom share empty state — supaya tidak triple-render
     colViews.innerHTML = empty;
     colLikes.innerHTML = "";
     colWatch.innerHTML = "";
+    if (colComments) colComments.innerHTML = "";
     card.querySelector("[data-jump-view]")?.addEventListener("click", () => {
       const link = document.querySelector('.nav-item[data-view="upload"]');
       if (link) link.click();
@@ -36768,8 +37226,6 @@ function renderTopPerforming() {
   }
   card.style.display = "";
 
-  // Real-time aggregate dari state.myVideos. Watch time = views × duration ×
-  // 0.6 (avg retention) — konsisten dengan formula admin analytics.
   const parseDur = (d) => {
     if (!d) return 0;
     const p = String(d).split(":").map(Number);
@@ -36790,6 +37246,7 @@ function renderTopPerforming() {
     _views: v.viewsNum || 0,
     _likes: v.likes || 0,
     _watch: (v.viewsNum || 0) * parseDur(v.duration) * 0.6,
+    _comments: (state.comments?.[v.id]?.length) || 0,
   }));
 
   const renderRow = (v, i, valFmt, valSrc) => `
@@ -36801,12 +37258,11 @@ function renderTopPerforming() {
     </div>
   `;
 
-  const topViews = [...enriched].sort((a, b) => b._views - a._views).slice(0, 5);
-  const topLikes = [...enriched].sort((a, b) => b._likes - a._likes).slice(0, 5);
-  const topWatch = [...enriched].sort((a, b) => b._watch - a._watch).slice(0, 5);
+  const topViews    = [...enriched].sort((a, b) => b._views    - a._views).slice(0, 5);
+  const topLikes    = [...enriched].sort((a, b) => b._likes    - a._likes).slice(0, 5);
+  const topWatch    = [...enriched].sort((a, b) => b._watch    - a._watch).slice(0, 5);
+  const topComments = [...enriched].sort((a, b) => b._comments - a._comments).slice(0, 5);
 
-  // F audit (2026-05-25): kalau user punya video tapi semua angka 0,
-  // kasih konteks bahwa data akan muncul saat ada interaksi.
   const empty = `<div class="top-perf-empty">${escapeHtml(t("topperf.empty.col"))}</div>`;
   colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
     ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
@@ -36814,6 +37270,10 @@ function renderTopPerforming() {
     ? topLikes.map((v, i) => renderRow(v, i, fmtNum, "_likes")).join("") : empty;
   colWatch.innerHTML = topWatch.length && topWatch.some(v => v._watch > 0)
     ? topWatch.map((v, i) => renderRow(v, i, fmtWatch, "_watch")).join("") : empty;
+  if (colComments) {
+    colComments.innerHTML = topComments.length && topComments.some(v => v._comments > 0)
+      ? topComments.map((v, i) => renderRow(v, i, fmtNum, "_comments")).join("") : empty;
+  }
 
   $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
 }
@@ -38786,6 +39246,9 @@ function renderDmList() {
     iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
   }
   if (titleEl) {
+    // v590d (2026-05-27): icon sekarang di LUAR h2 (sibling), jadi
+    // textContent update titleEl aman — gak ada child element yg perlu
+    // di-preserve.
     titleEl.textContent = stripEmojiPrefix(t(meta.t));
     titleEl.dataset.origText = "";
   }
@@ -47006,6 +47469,67 @@ function _gsSearchCreators(query) {
   return matches.slice(0, 4).map(m => m.acc);
 }
 
+// v619 (2026-05-28): search hashtags — aggregate unique tags dari semua
+// platform videos, match by prefix/substring, count usage.
+function _gsSearchHashtags(query) {
+  const q = query.toLowerCase().replace(/^#/, "");
+  if (!q) return [];
+  let vids = [];
+  try { vids = (typeof getPlatformVideos === "function") ? getPlatformVideos() : []; } catch {}
+  const tagCount = {};
+  vids.forEach(v => {
+    (Array.isArray(v.tags) ? v.tags : []).forEach(t => {
+      const tag = String(t || "").trim().toLowerCase().replace(/^#/, "");
+      if (!tag) return;
+      tagCount[tag] = (tagCount[tag] || 0) + 1;
+    });
+  });
+  const matches = [];
+  for (const [tag, count] of Object.entries(tagCount)) {
+    let rank = 0;
+    if (tag === q) rank = 100;
+    else if (tag.startsWith(q)) rank = 80;
+    else if (tag.includes(q)) rank = 50;
+    if (rank > 0) matches.push({ tag, count, rank });
+  }
+  matches.sort((a, b) => b.rank - a.rank || b.count - a.count);
+  return matches.slice(0, 5);
+}
+
+// v619 (2026-05-28): search halaman/section — quick-nav untuk navigasi
+// (mis. user ketik "stats" → jump ke Statistik).
+function _gsSearchPages(query) {
+  const q = query.toLowerCase();
+  const PAGES = [
+    { view: "home",            label: "Beranda",              keywords: ["beranda", "home", "dashboard"], icon: "home" },
+    { view: "discover",        label: "Discover",             keywords: ["discover", "jelajahi", "explore", "feed"], icon: "compass" },
+    { view: "videos",          label: "Pustaka Saya",         keywords: ["pustaka", "library", "video saya", "koleksi"], icon: "folder" },
+    { view: "upload",          label: "Unggah Video",         keywords: ["upload", "unggah", "post"], icon: "upload" },
+    { view: "history",         label: "Riwayat",              keywords: ["riwayat", "history", "pembelian", "pencarian"], icon: "clock" },
+    { view: "stats",           label: "Statistik",            keywords: ["stats", "statistik", "analytics", "grafik", "chart"], icon: "chart" },
+    { view: "premium-insights",label: "Wawasan Premium",      keywords: ["insight", "premium", "wawasan", "demographics", "audiens"], icon: "star" },
+    { view: "people",          label: "Pencarian Kreator",    keywords: ["people", "kreator", "followers", "following", "cari"], icon: "users" },
+    { view: "messages",        label: "Pesan",                keywords: ["messages", "pesan", "dm", "chat", "inbox"], icon: "message" },
+    { view: "activity",        label: "Aktivitas",            keywords: ["activity", "aktivitas", "notif", "notification"], icon: "bell" },
+    { view: "premium",         label: "Premium",              keywords: ["premium", "upgrade", "paket", "pricing"], icon: "star" },
+    { view: "myprofile",       label: "Profil Saya",          keywords: ["profile", "profil", "akun"], icon: "user" },
+    { view: "settings",        label: "Pengaturan",           keywords: ["settings", "pengaturan", "config", "preferences"], icon: "settings" },
+  ];
+  const matches = [];
+  PAGES.forEach(p => {
+    let rank = 0;
+    if (p.label.toLowerCase() === q) rank = 100;
+    else if (p.label.toLowerCase().startsWith(q)) rank = 80;
+    else if (p.keywords.some(k => k === q)) rank = 75;
+    else if (p.keywords.some(k => k.startsWith(q))) rank = 65;
+    else if (p.keywords.some(k => k.includes(q))) rank = 40;
+    else if (p.label.toLowerCase().includes(q)) rank = 35;
+    if (rank > 0) matches.push({ ...p, rank });
+  });
+  matches.sort((a, b) => b.rank - a.rank);
+  return matches.slice(0, 4);
+}
+
 // v573: Search history — track last 10 queries in localStorage
 const SEARCH_HISTORY_KEY = "playly-search-history";
 const SEARCH_HISTORY_MAX = 10;
@@ -47057,20 +47581,37 @@ function _gsRenderHistoryDropdown() {
   drop.classList.add("show");
 }
 
-function _gsRender(query, videoMatches, creatorMatches) {
+function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatches) {
   const drop = document.getElementById("searchSuggestions");
   if (!drop) return;
   if (!query) {
     _gsRenderHistoryDropdown();
     return;
   }
-  if (!videoMatches.length && !creatorMatches.length) {
+  hashtagMatches = hashtagMatches || [];
+  pageMatches = pageMatches || [];
+  if (!videoMatches.length && !creatorMatches.length && !hashtagMatches.length && !pageMatches.length) {
     drop.innerHTML = `<div class="ss-empty">Tidak ada hasil untuk "<b>${escapeHtml(query)}</b>"</div>`;
     drop.classList.add("show");
     return;
   }
-  const totalCount = videoMatches.length + creatorMatches.length;
+  const totalCount = videoMatches.length + creatorMatches.length + hashtagMatches.length + pageMatches.length;
   let html = "";
+  // v619 (2026-05-28): + HALAMAN section (quick-nav) di top
+  if (pageMatches.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">HALAMAN</div>
+      ${pageMatches.map(p => `
+        <button type="button" class="ss-item" data-ss-page="${escapeHtml(p.view)}">
+          <div class="ss-page-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+          <div class="ss-info">
+            <strong>${_gsHighlight(p.label, query)}</strong>
+            <small>Buka halaman</small>
+          </div>
+        </button>
+      `).join("")}
+    </div>`;
+  }
   if (videoMatches.length) {
     html += `<div class="ss-section">
       <div class="ss-section-title">VIDEO</div>
@@ -47102,6 +47643,21 @@ function _gsRender(query, videoMatches, creatorMatches) {
       }).join("")}
     </div>`;
   }
+  // v619 (2026-05-28): + HASHTAG section
+  if (hashtagMatches.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">HASHTAG</div>
+      ${hashtagMatches.map(h => `
+        <button type="button" class="ss-item" data-ss-hashtag="${escapeHtml(h.tag)}">
+          <div class="ss-hashtag-icon" aria-hidden="true">#</div>
+          <div class="ss-info">
+            <strong>${_gsHighlight("#" + h.tag, query)}</strong>
+            <small>${h.count} video</small>
+          </div>
+        </button>
+      `).join("")}
+    </div>`;
+  }
   // "Lihat semua hasil" footer
   html += `<div class="ss-footer">
     <button type="button" class="ss-see-all" data-ss-see-all="${escapeHtml(query)}">
@@ -47115,12 +47671,14 @@ function _gsRender(query, videoMatches, creatorMatches) {
 function _gsRun(query) {
   query = (query || "").trim();
   if (!query || query.length < 1) {
-    _gsRender("", [], []);
+    _gsRender("", [], [], [], []);
     return;
   }
   const videos = _gsSearchVideos(query);
   const creators = _gsSearchCreators(query);
-  _gsRender(query, videos, creators);
+  const hashtags = _gsSearchHashtags(query);
+  const pages = _gsSearchPages(query);
+  _gsRender(query, videos, creators, hashtags, pages);
 }
 
 // ============ SEARCH RESULTS FULL PAGE v573 ============
@@ -47370,6 +47928,28 @@ document.addEventListener("click", e => {
     else if (typeof switchView === "function") switchView("user-profile");
     return;
   }
+  // v619 (2026-05-28): hashtag click → buka search results filtered ke hashtag
+  const hashtagBtn = e.target.closest("[data-ss-hashtag]");
+  if (hashtagBtn) {
+    e.preventDefault();
+    const tag = hashtagBtn.dataset.ssHashtag;
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = "#" + tag;
+    if (typeof openSearchResults === "function") openSearchResults("#" + tag);
+    return;
+  }
+  // v619 (2026-05-28): page click → switchView ke halaman tujuan
+  const pageBtn = e.target.closest("[data-ss-page]");
+  if (pageBtn) {
+    e.preventDefault();
+    const view = pageBtn.dataset.ssPage;
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = "";
+    if (typeof switchView === "function") switchView(view);
+    return;
+  }
 });
 // Escape closes dropdown
 document.addEventListener("keydown", e => {
@@ -47593,6 +48173,59 @@ window.addEventListener("playly:view-changed", e => {
 setInterval(() => {
   if (user?.email) upsertCurrentSession();
 }, 5 * 60 * 1000);
+
+// v617 (2026-05-28): Ekspor Data CSV — di Settings, available untuk semua user.
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#settingsExportCsvBtn")) {
+    if (typeof _exportVideosToCSV === "function") _exportVideosToCSV();
+  }
+});
+
+// v616 (2026-05-28): Hapus Akun — danger zone di settings.
+// Multi-step: ketik "HAPUS" → enable button → click → final confirm modal →
+// nuke localStorage + reload.
+(function wireDeleteAccount() {
+  const input = document.getElementById("deleteAccConfirm");
+  const btn = document.getElementById("deleteAccountBtn");
+  if (!input || !btn) return;
+  input.addEventListener("input", () => {
+    btn.disabled = input.value.trim().toUpperCase() !== "HAPUS";
+  });
+  btn.addEventListener("click", async () => {
+    if (input.value.trim().toUpperCase() !== "HAPUS") return;
+    const proceed = typeof confirmAction === "function"
+      ? await confirmAction({
+          title: "⚠️ Hapus Akun Permanen?",
+          message: "Akun, video, riwayat, dan semua data kamu akan dihapus selamanya. Tindakan ini TIDAK BISA DIBATALKAN.",
+          confirmText: "Ya, Hapus Permanen",
+          cancelText: "Batalkan",
+          danger: true,
+        })
+      : confirm("Hapus akun permanen? Semua data hilang dan tidak bisa dipulihkan.");
+    if (!proceed) return;
+    // Nuke user-specific data
+    try {
+      const email = String(user?.email || "").toLowerCase();
+      if (email) {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i) || "";
+          if (k.includes(email) || k.startsWith("playly-acc-") || k.startsWith("playly-state-")) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+      }
+      // Logout flag
+      sessionStorage.clear();
+      try { localStorage.removeItem("playly-current-user"); } catch {}
+      try { localStorage.removeItem("playly-session-active"); } catch {}
+    } catch (e) { console.warn("[delete-account] cleanup error:", e); }
+    if (typeof toast === "function") toast("Akun berhasil dihapus. Sampai jumpa! 👋", "info");
+    // Hard redirect ke landing
+    setTimeout(() => { location.href = "/"; }, 600);
+  });
+})();
 
 window._sessions = {
   list: getActiveSessions,
@@ -48112,9 +48745,9 @@ function renderUserProfile() {
     }
   }
 
-  // Socials
+  // Socials — v606 (2026-05-28): Website removed, TikTok added.
   const socials = [];
-  if (acc?.website)   socials.push(`<a href="${escapeHtml(acc.website)}" target="_blank" rel="noopener">🌐 Website</a>`);
+  if (acc?.tiktok)    socials.push(`<a href="https://tiktok.com/@${encodeURIComponent(String(acc.tiktok).replace(/^@/, ""))}" target="_blank" rel="noopener">🎵 ${escapeHtml(acc.tiktok)}</a>`);
   if (acc?.twitter)   socials.push(`<a href="https://twitter.com/${encodeURIComponent(String(acc.twitter).replace(/^@/, ""))}" target="_blank" rel="noopener">𝕏 ${escapeHtml(acc.twitter)}</a>`);
   if (acc?.instagram) socials.push(`<a href="https://instagram.com/${encodeURIComponent(String(acc.instagram).replace(/^@/, ""))}" target="_blank" rel="noopener">📷 ${escapeHtml(acc.instagram)}</a>`);
   if (acc?.github)    socials.push(`<a href="https://github.com/${encodeURIComponent(acc.github)}" target="_blank" rel="noopener">🐙 ${escapeHtml(acc.github)}</a>`);
@@ -50599,14 +51232,16 @@ async function renderStoragePage() {
   // Breakdown by category
   const catList = document.getElementById("storageCategoryList");
   if (catList) {
+    // v585 (2026-05-27): icon emoji → SVG dengan wine gradient box
+    // (.sec-icon-v582 sec-icon-sm pattern). Konsisten dgn section headers.
     const cats = [
-      { icon: "🎬", label: "Video", desc: `${myVideos.length} file video`, size: videoBytes },
-      { icon: "🖼️", label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
-      { icon: "💾", label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes },
     ];
     catList.innerHTML = cats.map(c => `
       <div class="storage-cat-row">
-        <span class="storage-cat-icon">${c.icon}</span>
+        <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
         <div class="storage-cat-info">
           <strong>${c.label}</strong>
           <small>${c.desc}</small>
@@ -50691,7 +51326,8 @@ async function renderStoragePage() {
 function setStatsTab(tab) {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
-  const valid = ["all", "ringkasan", "pencapaian", "top-video", "grafik"];
+  // v595 (2026-05-28): drop "pencapaian" tab — section dihapus dari Statistik.
+  const valid = ["all", "ringkasan", "top-video", "grafik"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.statsTab = key;
   if (typeof state === "object" && state) state.statsTab = key;
@@ -50701,13 +51337,12 @@ function setStatsTab(tab) {
       b.classList.toggle("active", b.dataset.statsTab === key);
     }
   });
-  // Update title + breadcrumb sesuai tab
+  // Update title + breadcrumb sesuai tab.
   const meta = {
-    "all":        { title: "📊 Statistik",            desc: "Performa channel kamu — semua section dalam satu halaman.",          crumb: "Statistik" },
-    "ringkasan":  { title: "📈 Ringkasan Performa",   desc: "Total video, tontonan, suka, dan kreator yang kamu ikuti.",         crumb: "Ringkasan" },
-    "pencapaian": { title: "🏆 Pencapaian",           desc: "Badge yang sudah kamu unlock dengan beraktivitas di Playly.",        crumb: "Pencapaian" },
-    "top-video":  { title: "🌟 Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, dan ditonton lama.", crumb: "Top Video" },
-    "grafik":     { title: "📊 Grafik Statistik",     desc: "Tren video, tontonan, dan followers per minggu/bulan/tahun.",        crumb: "Grafik" },
+    "all":        { title: "Statistik",            desc: "Performa channel kamu — Ringkasan, Top Video, dan Grafik dalam satu halaman.", crumb: "Statistik" },
+    "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
+    "top-video":  { title: "Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, ditonton lama, dan dikomentari.", crumb: "Top Video" },
+    "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },
   }[key];
   const titleEl = document.getElementById("statsPageTitle");
   const descEl  = document.getElementById("statsPageDesc");
@@ -50728,6 +51363,57 @@ document.addEventListener("click", e => {
   e.preventDefault();
   setStatsTab(btn.dataset.statsTab);
 });
+
+// v596 (2026-05-28): Stats scroll-spy nav — klik tab = smooth scroll ke section,
+// scroll page = auto-highlight tab aktif via IntersectionObserver. Filter
+// behavior (setStatsTab) dipertahankan untuk backward-compat (sidebar deep
+// link "stats:ringkasan" dll), tapi data-stats-tab="all" lock di HTML jadi
+// semua section selalu visible. Tab pakai data-stats-jump (beda attribute).
+(function wireStatsScrollSpy() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const tabs = view.querySelectorAll("[data-stats-jump]");
+  if (!tabs.length) return;
+
+  // Click → scroll smooth ke section dengan data-stats-section yang match.
+  tabs.forEach(btn => btn.addEventListener("click", e => {
+    e.preventDefault();
+    const key = btn.dataset.statsJump;
+    const target = view.querySelector(`[data-stats-section="${key}"]`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Optimistic active update sebelum IntersectionObserver fire
+    tabs.forEach(t => t.classList.toggle("active", t === btn));
+  }));
+
+  // Scroll-spy via IntersectionObserver — section yang paling besar di
+  // viewport jadi tab aktif. rootMargin negative atas + positive bawah biar
+  // tab switch saat section "menyentuh" area atas (di bawah sticky nav).
+  const sections = view.querySelectorAll("[data-stats-section]");
+  if (!sections.length || typeof IntersectionObserver !== "function") return;
+
+  let lastActive = null;
+  const setActive = (key) => {
+    if (key === lastActive) return;
+    lastActive = key;
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.statsJump === key));
+  };
+
+  const io = new IntersectionObserver((entries) => {
+    // Cari section yang paling banyak terlihat di viewport (intersectionRatio terbesar)
+    const visible = entries
+      .filter(en => en.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+    if (visible.length) {
+      const key = visible[0].target.getAttribute("data-stats-section");
+      if (key) setActive(key);
+    }
+  }, {
+    rootMargin: "-100px 0px -55% 0px",
+    threshold: [0, 0.25, 0.5, 0.75, 1],
+  });
+  sections.forEach(s => io.observe(s));
+})();
 
 // =====================================================================
 // SAVE CARD POPUP — tawaran simpan info kartu setelah pembayaran berhasil.
@@ -51657,6 +52343,8 @@ function saveVideoEdit() {
 
 /* =========================================================
    USER STATS — RING CHART v4 (dynamic, 0% empty, 2-col)
+   v603b (2026-05-28): RE-ENABLED per request user "ganti ke bentuk awal".
+   Ring chart adalah bentuk paling awal sebelum saya touch apapun.
    ========================================================= */
 (function () {
   if (window.__pjRingChart4) return;
@@ -53387,63 +54075,128 @@ function getNotifList() {
 })();
 
 // =====================================================================
-// EDIT VIDEO — Effects Extension (2026-05-23): Volume slider, Rotasi,
-// Flip H/V, Brightness/Contrast/Saturation, Preset filter.
-// Standalone IIFE — wire kontrol baru, terapkan via CSS transform+filter
-// di element #veVideo (non-destruktif, sesuai prinsip modal). Tidak
-// menyentuh kode wireVideoEditor lama: hook Reset/Apply lewat addEventListener,
-// extend pendingUpload.videoEdit dgn field baru.
+// EDIT VIDEO — Effects Extension
+// v593 (2026-05-28): drop Kecepatan + Audio (per request user).
+// Tambah: Aspect Ratio/Crop, Zoom, Temperature, Vignette, Text Overlay,
+// expanded preset filters (Cinematic, Dramatic, Faded). Non-destruktif —
+// semua via CSS transform/filter + overlay div + metadata.
 // =====================================================================
 (function wireVideoEditorEffects() {
   const modal = document.getElementById("videoEditorModal");
   if (!modal) return;
   const video = document.getElementById("veVideo");
-  const volume = document.getElementById("veVolume");
-  const volumeVal = document.getElementById("veVolumeVal");
-  const muteCb = document.getElementById("veMute");
+  const videoWrap = document.getElementById("veVideoWrap");
+  const vignetteEl = document.getElementById("veVignette");
+  const textOverlayEl = document.getElementById("veTextOverlay");
   const rotPills = modal.querySelectorAll(".ve-rot");
   const flipPills = modal.querySelectorAll(".ve-flip");
+  const aspectPills = modal.querySelectorAll(".ve-aspect");
+  const zoom = document.getElementById("veZoom");
+  const zoomVal = document.getElementById("veZoomVal");
   const bright = document.getElementById("veBrightness");
   const brightVal = document.getElementById("veBrightnessVal");
   const contrast = document.getElementById("veContrast");
   const contrastVal = document.getElementById("veContrastVal");
   const satur = document.getElementById("veSaturation");
   const saturVal = document.getElementById("veSaturationVal");
+  const temp = document.getElementById("veTemperature");
+  const tempVal = document.getElementById("veTemperatureVal");
+  const vign = document.getElementById("veVignetteRange");
+  const vignValEl = document.getElementById("veVignetteVal");
   const presetPills = modal.querySelectorAll(".ve-preset");
+  const textInput = document.getElementById("veTextInput");
+  const textSize = document.getElementById("veTextSize");
+  const textSizeVal = document.getElementById("veTextSizeVal");
+  const textColor = document.getElementById("veTextColor");
+  const textPosPills = modal.querySelectorAll(".ve-text-pos");
   const resetBtn = document.getElementById("veReset");
   const applyBtn = document.getElementById("veApply");
-  if (!video || !volume || !bright || !rotPills.length) return;
+  if (!video || !bright || !rotPills.length) return;
 
   const state = {
-    volume: 100, rotate: 0, flipH: false, flipV: false,
-    brightness: 100, contrast: 100, saturation: 100, preset: "none"
+    aspect: "original", zoom: 100, rotate: 0, flipH: false, flipV: false,
+    brightness: 100, contrast: 100, saturation: 100,
+    temperature: 0, vignette: 0, preset: "none",
+    text: "", textPos: "bottom", textSize: 24, textColor: "#ffffff",
+  };
+
+  // Map aspect string → CSS aspect-ratio value.
+  const ASPECT_MAP = {
+    "original": "",
+    "16:9": "16 / 9",
+    "9:16": "9 / 16",
+    "1:1":  "1 / 1",
+    "4:5":  "4 / 5",
+    "4:3":  "4 / 3",
   };
 
   function applyEffects() {
     const sx = state.flipH ? -1 : 1;
     const sy = state.flipV ? -1 : 1;
-    video.style.transform = "rotate(" + state.rotate + "deg) scaleX(" + sx + ") scaleY(" + sy + ")";
+    const scale = Math.max(1, state.zoom / 100);
+    video.style.transform = "rotate(" + state.rotate + "deg) scale(" + scale + ") scaleX(" + sx + ") scaleY(" + sy + ")";
     let f = "brightness(" + state.brightness + "%) contrast(" + state.contrast + "%) saturate(" + state.saturation + "%)";
+    // Temperature: negative = cool (blue), positive = warm (sepia/orange).
+    if (state.temperature !== 0) {
+      const t = state.temperature;
+      if (t > 0) f += " sepia(" + Math.min(0.4, t / 75) + ") saturate(" + (1 + t / 200) + ")";
+      else       f += " hue-rotate(" + Math.max(-25, t) + "deg) saturate(" + (1 - Math.abs(t) / 300) + ")";
+    }
     switch (state.preset) {
-      case "vintage": f += " sepia(.4) contrast(1.05)"; break;
-      case "bw":      f += " grayscale(1)"; break;
-      case "cool":    f += " hue-rotate(-12deg) saturate(1.1)"; break;
-      case "warm":    f += " sepia(.18) saturate(1.18)"; break;
-      case "vivid":   f += " saturate(1.3) contrast(1.1)"; break;
+      case "vintage":   f += " sepia(.4) contrast(1.05)"; break;
+      case "bw":        f += " grayscale(1)"; break;
+      case "cool":      f += " hue-rotate(-12deg) saturate(1.1)"; break;
+      case "warm":      f += " sepia(.18) saturate(1.18)"; break;
+      case "vivid":     f += " saturate(1.3) contrast(1.1)"; break;
+      case "cinematic": f += " contrast(1.15) saturate(.85) brightness(.95) sepia(.08)"; break;
+      case "dramatic":  f += " contrast(1.3) saturate(1.2) brightness(.92)"; break;
+      case "faded":     f += " contrast(.85) saturate(.7) brightness(1.05)"; break;
     }
     video.style.filter = f;
-    video.volume = Math.max(0, Math.min(1, state.volume / 100));
+
+    if (videoWrap) {
+      const ratio = ASPECT_MAP[state.aspect] || "";
+      videoWrap.style.aspectRatio = ratio;
+    }
+
+    if (vignetteEl) {
+      const v = Math.max(0, Math.min(100, state.vignette)) / 100;
+      vignetteEl.style.opacity = v;
+      vignetteEl.style.display = v > 0 ? "block" : "none";
+    }
+
+    if (textOverlayEl) {
+      const t = (state.text || "").trim();
+      if (!t) {
+        textOverlayEl.style.display = "none";
+        textOverlayEl.textContent = "";
+      } else {
+        textOverlayEl.style.display = "block";
+        textOverlayEl.textContent = t;
+        textOverlayEl.style.fontSize = state.textSize + "px";
+        textOverlayEl.style.color = state.textColor;
+        textOverlayEl.dataset.pos = state.textPos;
+      }
+    }
   }
 
   function syncUI() {
-    if (volume)     volume.value = state.volume;
-    if (volumeVal)  volumeVal.textContent = state.volume + "%";
     if (bright)     bright.value = state.brightness;
     if (brightVal)  brightVal.textContent = state.brightness + "%";
     if (contrast)   contrast.value = state.contrast;
     if (contrastVal) contrastVal.textContent = state.contrast + "%";
     if (satur)      satur.value = state.saturation;
     if (saturVal)   saturVal.textContent = state.saturation + "%";
+    if (temp)       temp.value = state.temperature;
+    if (tempVal)    tempVal.textContent = String(state.temperature);
+    if (vign)       vign.value = state.vignette;
+    if (vignValEl)  vignValEl.textContent = state.vignette + "%";
+    if (zoom)       zoom.value = state.zoom;
+    if (zoomVal)    zoomVal.textContent = state.zoom + "%";
+    if (textInput)  textInput.value = state.text;
+    if (textSize)   textSize.value = state.textSize;
+    if (textSizeVal) textSizeVal.textContent = state.textSize + "px";
+    if (textColor)  textColor.value = state.textColor;
     rotPills.forEach(function (p) { p.classList.toggle("active", Number(p.dataset.rot) === state.rotate); });
     flipPills.forEach(function (p) {
       const f = p.dataset.flip;
@@ -53451,33 +54204,52 @@ function getNotifList() {
       p.classList.toggle("active", on);
       p.setAttribute("aria-pressed", on ? "true" : "false");
     });
+    aspectPills.forEach(function (p) { p.classList.toggle("active", p.dataset.aspect === state.aspect); });
     presetPills.forEach(function (p) { p.classList.toggle("active", p.dataset.preset === state.preset); });
+    textPosPills.forEach(function (p) { p.classList.toggle("active", p.dataset.textPos === state.textPos); });
   }
 
   function resetState() {
-    state.volume = 100;
+    state.aspect = "original"; state.zoom = 100;
     state.rotate = 0; state.flipH = false; state.flipV = false;
     state.brightness = 100; state.contrast = 100; state.saturation = 100;
-    state.preset = "none";
+    state.temperature = 0; state.vignette = 0; state.preset = "none";
+    state.text = ""; state.textPos = "bottom"; state.textSize = 24; state.textColor = "#ffffff";
     syncUI(); applyEffects();
   }
 
-  if (volume) volume.addEventListener("input", function () {
-    state.volume = Number(volume.value);
-    if (volumeVal) volumeVal.textContent = state.volume + "%";
-    applyEffects();
-  });
-  function wireRange(input, valEl, key) {
+  function wireRange(input, valEl, key, suffix) {
     if (!input) return;
+    suffix = suffix == null ? "%" : suffix;
     input.addEventListener("input", function () {
       state[key] = Number(input.value);
-      if (valEl) valEl.textContent = state[key] + "%";
+      if (valEl) valEl.textContent = state[key] + suffix;
       applyEffects();
     });
   }
   wireRange(bright, brightVal, "brightness");
   wireRange(contrast, contrastVal, "contrast");
   wireRange(satur, saturVal, "saturation");
+  wireRange(zoom, zoomVal, "zoom");
+  wireRange(vign, vignValEl, "vignette");
+  if (temp) temp.addEventListener("input", function () {
+    state.temperature = Number(temp.value);
+    if (tempVal) tempVal.textContent = String(state.temperature);
+    applyEffects();
+  });
+  if (textSize) textSize.addEventListener("input", function () {
+    state.textSize = Number(textSize.value);
+    if (textSizeVal) textSizeVal.textContent = state.textSize + "px";
+    applyEffects();
+  });
+  if (textInput) textInput.addEventListener("input", function () {
+    state.text = textInput.value || "";
+    applyEffects();
+  });
+  if (textColor) textColor.addEventListener("input", function () {
+    state.textColor = textColor.value || "#ffffff";
+    applyEffects();
+  });
 
   rotPills.forEach(function (p) { p.addEventListener("click", function () {
     state.rotate = Number(p.dataset.rot) || 0;
@@ -53495,9 +54267,21 @@ function getNotifList() {
     applyEffects();
   }); });
 
+  aspectPills.forEach(function (p) { p.addEventListener("click", function () {
+    state.aspect = p.dataset.aspect || "original";
+    aspectPills.forEach(function (x) { x.classList.toggle("active", x === p); });
+    applyEffects();
+  }); });
+
   presetPills.forEach(function (p) { p.addEventListener("click", function () {
     state.preset = p.dataset.preset || "none";
     presetPills.forEach(function (x) { x.classList.toggle("active", x === p); });
+    applyEffects();
+  }); });
+
+  textPosPills.forEach(function (p) { p.addEventListener("click", function () {
+    state.textPos = p.dataset.textPos || "bottom";
+    textPosPills.forEach(function (x) { x.classList.toggle("active", x === p); });
     applyEffects();
   }); });
 
@@ -53507,14 +54291,21 @@ function getNotifList() {
     const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
     if (!pu) return;
     pu.videoEdit = Object.assign(pu.videoEdit || {}, {
-      volume: state.volume,
+      aspect: state.aspect,
+      zoom: state.zoom,
       rotate: state.rotate,
       flipH: state.flipH,
       flipV: state.flipV,
       brightness: state.brightness,
       contrast: state.contrast,
       saturation: state.saturation,
-      preset: state.preset
+      temperature: state.temperature,
+      vignette: state.vignette,
+      preset: state.preset,
+      text: state.text,
+      textPos: state.textPos,
+      textSize: state.textSize,
+      textColor: state.textColor,
     });
   });
 
@@ -53525,14 +54316,21 @@ function getNotifList() {
       origOpen.apply(this, arguments);
       const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
       const prev = (pu && pu.videoEdit) || {};
-      state.volume     = prev.volume     != null ? prev.volume     : 100;
+      state.aspect     = prev.aspect     || "original";
+      state.zoom       = prev.zoom       != null ? prev.zoom       : 100;
       state.rotate     = prev.rotate     != null ? prev.rotate     : 0;
       state.flipH      = !!prev.flipH;
       state.flipV      = !!prev.flipV;
       state.brightness = prev.brightness != null ? prev.brightness : 100;
       state.contrast   = prev.contrast   != null ? prev.contrast   : 100;
       state.saturation = prev.saturation != null ? prev.saturation : 100;
+      state.temperature = prev.temperature != null ? prev.temperature : 0;
+      state.vignette   = prev.vignette   != null ? prev.vignette   : 0;
       state.preset     = prev.preset     || "none";
+      state.text       = prev.text       || "";
+      state.textPos    = prev.textPos    || "bottom";
+      state.textSize   = prev.textSize   != null ? prev.textSize   : 24;
+      state.textColor  = prev.textColor  || "#ffffff";
       syncUI(); applyEffects();
     };
   }

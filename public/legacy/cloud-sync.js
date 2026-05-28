@@ -1036,7 +1036,7 @@
   function injectMainScript() {
     if (document.querySelector('script[data-playly-main]')) return;
     const s = document.createElement("script");
-    s.src = "script.js?v=20260517-home-typo-v278";
+    s.src = "script.js?v=20260528-search-hashtag-pages-v619";
     s.dataset.playlyMain = "1";
     document.body.appendChild(s);
   }
