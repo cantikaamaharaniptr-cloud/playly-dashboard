@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="robots" content="noindex,nofollow"/>
+  <title>Playly. — Mengalihkan...</title>
+  <style>
+    body { background:#1a0c10; color:#E8D8C4; font-family:system-ui,sans-serif;
+           display:grid; place-items:center; height:100vh; margin:0; text-align:center; padding:24px; }
+    a { color:#C7B7A3; }
+    .spinner { width:32px; height:32px; border:3px solid rgba(232,216,196,.15);
+               border-top-color:#C7B7A3; border-radius:50%; animation:spin .8s linear infinite;
+               margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script>
+  /*
+   * GitHub Pages 404 fallback — re-route URL clean (Vercel-style) ke index.html
+   * dengan query param yang sesuai. Pattern yang ditangani:
+   *   /admin              → /?admin=1
+   *   /admin/             → /?admin=1
+   *   /watch              → /watch.html
+   *   /embed              → /embed.html
+   *   /id/{videoId}       → /watch.html?v={videoId}
+   *   /id/{videoId}/embed → /embed.html?v={videoId}
+   *   /id/{user}/{videoId} → /watch.html?v={videoId}&u={user}
+   *   /id/{user}/{videoId}/embed → /embed.html?v={videoId}&u={user}
+   * Selain itu → root index.html (graceful fallback, bukan dead-end).
+   *
+   * Base detection: strip nama repo dari pathname kalau di GitHub Pages
+   * (e.g. /playly-dashboard/admin → base="/playly-dashboard/", route="/admin").
+   */
+  (function () {
+    var fullPath = location.pathname;
+    var origin = location.origin;
+    var search = location.search || "";
+    var hash = location.hash || "";
+
+    // Auto-detect base path: kalau ada repo segment di path (mis. /playly-dashboard/),
+    // anggap segment pertama setelah host adalah base. Untuk Vercel root, base = "/".
+    var base = "/";
+    var parts = fullPath.split("/").filter(Boolean); // ["playly-dashboard","admin"] atau ["admin"]
+    var route = "/" + parts.join("/");
+    if (location.hostname.indexOf("github.io") !== -1 && parts.length > 0) {
+      base = "/" + parts[0] + "/";
+      route = "/" + parts.slice(1).join("/");
+    }
+    if (route === "/") route = ""; // root path
+
+    var target = base; // default → root
+    var qs = search ? search.replace(/^\?/, "&") : "";
+
+    // Match patterns
+    var m;
+    if (route === "/admin" || route === "/admin/") {
+      target = base + "?admin=1" + qs;
+    } else if (route === "/watch" || route === "/watch/") {
+      target = base + "watch.html" + search;
+    } else if (route === "/embed" || route === "/embed/") {
+      target = base + "embed.html" + search;
+    } else if ((m = route.match(/^\/id\/([^\/]+)\/embed\/?$/))) {
+      // /id/{videoId}/embed
+      target = base + "embed.html?v=" + encodeURIComponent(m[1]) + qs;
+    } else if ((m = route.match(/^\/id\/([^\/]+)\/?$/))) {
+      // /id/{videoId}
+      target = base + "watch.html?v=" + encodeURIComponent(m[1]) + qs;
+    } else if ((m = route.match(/^\/id\/([^\/]+)\/([^\/]+)\/embed\/?$/))) {
+      // /id/{user}/{videoId}/embed
+      target = base + "embed.html?v=" + encodeURIComponent(m[2]) + "&u=" + encodeURIComponent(m[1]) + qs;
+    } else if ((m = route.match(/^\/id\/([^\/]+)\/([^\/]+)\/?$/))) {
+      // /id/{user}/{videoId}
+      target = base + "watch.html?v=" + encodeURIComponent(m[2]) + "&u=" + encodeURIComponent(m[1]) + qs;
+    }
+    // Tambah hash kalau ada
+    if (hash && target.indexOf("#") === -1) target += hash;
+
+    location.replace(target);
+  })();
+  </script>
+</head>
+<body>
+  <div class="spinner"></div>
+  <p>Mengalihkan halaman...</p>
+  <p style="font-size:12px;opacity:.6;margin-top:8px">Kalau halaman tidak terbuka otomatis, <a href="./">klik di sini</a>.</p>
+</body>
+</html>
