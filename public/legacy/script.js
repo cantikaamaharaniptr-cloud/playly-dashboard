@@ -31780,7 +31780,14 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderHomeSmartActions === "function") renderHomeSmartActions();
     updateHeroDmAlert();
   }
-  if (name === "history") renderHistory();
+  if (name === "history") {
+    // Default ke tampilan semua section saat switch ke Riwayat. Sub-action
+    // sidebar (riwayat-tab:X) akan override 80ms kemudian via runSubAction.
+    // Reset di sini (bukan di renderHistory) supaya date filter change
+    // gak nge-reset pilihan tab user.
+    setRiwayatTab("all");
+    renderHistory();
+  }
   if (name === "notifications") {
     if (typeof renderNotifPage === "function") renderNotifPage();
   }
@@ -37228,9 +37235,8 @@ function refreshRiwayatAfterDateChange() {
 })();
 
 function renderHistory() {
-  // Setiap masuk halaman Riwayat → reset ke "all" (semua section terlihat).
-  // User pilih pill spesifik kalau mau filter — bukan memori tab terakhir.
-  setRiwayatTab("all");
+  // Reset ke "all" pindah ke switchView() supaya renderHistory bisa dipanggil
+  // dari date filter change tanpa nge-reset tab pilihan user.
   // Sync UI date filter dgn state (saat re-render dari date input change atau navigasi).
   syncRiwayatDateFilterUI();
   // Render semua section content (filtering visual diatur via CSS by data-riwayat-tab)

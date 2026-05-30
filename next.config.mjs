@@ -32,6 +32,13 @@ const nextConfig = {
   },
 
   async headers() {
+    // Dev mode: hindari cache 1-tahun supaya tiap edit script.js/styles.css
+    // langsung kelihatan tanpa user perlu Ctrl+Shift+R berulang kali.
+    // Prod tetep pake immutable (file legacy versi statis).
+    const isDev = process.env.NODE_ENV !== 'production';
+    const legacyJsCss = isDev
+      ? 'no-store, must-revalidate'
+      : 'public, max-age=31536000, immutable';
     return [
       {
         source: '/(.*)',
@@ -49,7 +56,7 @@ const nextConfig = {
       {
         source: '/legacy/:path*.(js|css)',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'Cache-Control', value: legacyJsCss },
         ],
       },
     ];

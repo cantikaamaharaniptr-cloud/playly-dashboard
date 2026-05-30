@@ -40858,13 +40858,16 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 
 /* Halaman Riwayat — date filter bar (2026-05-30, right-aligned 2026-05-30).
    Bar inline di kanan, di atas riwayat-sections. Dipake buat filter
-   Aktivitas + Pembelian by tanggal. Mode tabs + input + reset semua 1 row. */
+   Aktivitas + Pembelian by tanggal. Mode tabs + input + reset semua 1 row.
+   Parent .view = flex column, jadi pakai align-self: flex-end (bukan
+   margin-left: auto yang ga jalan di flex cross-axis). */
 .riwayat-datefilter {
+  align-self: flex-end;          /* right-align di flex column parent */
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 10px 14px;
-  margin: 0 4px 18px auto;       /* margin-left: auto → right-align block */
+  margin: 0 4px 18px;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
