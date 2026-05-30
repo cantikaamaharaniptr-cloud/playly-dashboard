@@ -51909,12 +51909,9 @@ function setStatsTab(tab) {
   }
 }
 
-document.addEventListener("click", e => {
-  const btn = e.target.closest("button[data-stats-tab]");
-  if (!btn) return;
-  e.preventDefault();
-  setStatsTab(btn.dataset.statsTab);
-});
+// Tab bar di atas halaman Statistik dihapus 2026-05-30 (duplikat sidebar).
+// Click handler [button[data-stats-tab]] dihapus karena tidak ada button lagi.
+// setStatsTab() tetep diekspor — dipanggil oleh sidebar handleSubAction.
 
 // v596 (2026-05-28): Stats scroll-spy nav — klik tab = smooth scroll ke section,
 // scroll page = auto-highlight tab aktif via IntersectionObserver. Filter

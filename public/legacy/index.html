@@ -5384,24 +5384,10 @@
           </div>
         </div>
 
-        <!-- v598 (2026-05-28): revert ke tab filter lama per request user.
-             Tabs: Semua | Ringkasan | Top Video | Grafik. Klik tab = filter
-             section yang terlihat (lihat .view[data-stats-tab="X"] di styles).
-             Pencapaian tab tetap dihapus (section sudah pindah Beranda). -->
-        <div class="riwayat-tab-bar" role="tablist">
-          <button type="button" class="riwayat-tab active" data-stats-tab="all" role="tab">
-            📂 Semua
-          </button>
-          <button type="button" class="riwayat-tab" data-stats-tab="ringkasan" role="tab">
-            📈 Ringkasan
-          </button>
-          <button type="button" class="riwayat-tab" data-stats-tab="top-video" role="tab">
-            🌟 Top Video
-          </button>
-          <button type="button" class="riwayat-tab" data-stats-tab="grafik" role="tab">
-            📊 Grafik
-          </button>
-        </div>
+        <!-- Tab bar (Semua/Ringkasan/Top Video/Grafik) dihapus 2026-05-30 —
+             duplikat dengan sidebar Statistik → Ringkasan/Top Video/Grafik/Pencapaian.
+             Filter tetep jalan via sidebar deep-link (data-sub-action="stats-tab:X")
+             yang panggil setStatsTab() di script.js. -->
 
         <!-- 1. Ringkasan Performa — v600 (2026-05-28): icon di-extract dari h3,
              title+subtitle dibungkus flex column biar subtitle di bawah title
