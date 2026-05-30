@@ -32106,6 +32106,12 @@ function runSubAction(action) {
     if (typeof setStatsTab === "function") setStatsTab(value);
     return;
   }
+  if (kind === "riwayat-tab") {
+    // Sidebar sub-item Riwayat → filter ke section spesifik
+    // (aktivitas / pembelian / search-user / search-video).
+    if (typeof setRiwayatTab === "function") setRiwayatTab(value);
+    return;
+  }
   if (kind === "gv-filter") {
     const tab = document.querySelector(`.gv-tab[data-gv-filter="${value}"]`);
     tab?.click();
