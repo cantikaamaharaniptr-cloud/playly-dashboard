@@ -40960,7 +40960,11 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .rdf-field small {
   display: none;
 }
-/* Date input — sejajar dgn search row (h 34px, radius 8px), super compact */
+/* Date input — sejajar dgn search row (h 34px, radius 8px), super compact.
+   color-scheme: dark → browser render native calendar popup pakai dark mode
+   (background gelap, text light), matching tema web.
+   accent-color → highlight tanggal hari ini + tanggal terpilih pakai warna
+   wine primary, bukan biru default browser. */
 .rdf-field input[type="date"] {
   height: 34px;
   padding: 0 6px;
@@ -40970,6 +40974,19 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   width: 118px;
   box-sizing: border-box;
   line-height: 1;
+  color-scheme: dark;
+  accent-color: var(--primary, #C7B7A3);
+}
+/* Calendar picker icon — invert (default hitam ke putih) supaya keliatan
+   di dark background. */
+.rdf-field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) brightness(1.2);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity .15s;
+}
+.rdf-field input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 .rdf-quick {
   display: inline-flex;
