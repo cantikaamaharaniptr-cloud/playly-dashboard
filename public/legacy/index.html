@@ -5251,40 +5251,37 @@
             </div>
           </div>
           <div class="view-actions">
-            <input type="text" class="select-input" id="historySearch" placeholder="Cari di riwayat..." style="min-width:220px"/>
+            <!-- Date filter bar dipindah ke dalam view-actions supaya 1 baris
+                 compact dgn search + Bersihkan Semua. Hidden saat data-riwayat-tab="all"
+                 (lihat CSS). Pencarian User/Video stay tampil tapi gak filter
+                 (notice di tabel) karena gak nyimpen ts. -->
+            <div class="riwayat-datefilter" id="riwayatDateFilter">
+              <div class="rdf-modes" role="tablist" aria-label="Mode filter tanggal">
+                <button type="button" class="rdf-mode active" data-rdf-mode="single" role="tab" aria-selected="true">Spesifik</button>
+                <button type="button" class="rdf-mode" data-rdf-mode="range" role="tab" aria-selected="false">Rentang</button>
+              </div>
+              <div class="rdf-controls">
+                <label class="rdf-field" data-rdf-mode-show="single">
+                  <input type="date" id="rdfSingle" class="select-input" aria-label="Pilih tanggal"/>
+                </label>
+                <label class="rdf-field" data-rdf-mode-show="range" hidden>
+                  <input type="date" id="rdfFrom" class="select-input" aria-label="Tanggal mulai"/>
+                </label>
+                <label class="rdf-field" data-rdf-mode-show="range" hidden>
+                  <input type="date" id="rdfTo" class="select-input" aria-label="Tanggal akhir"/>
+                </label>
+                <div class="rdf-quick" data-rdf-mode-show="range" hidden>
+                  <button type="button" class="rdf-quick-btn" data-rdf-quick="7">7 hari</button>
+                  <button type="button" class="rdf-quick-btn" data-rdf-quick="30">30 hari</button>
+                  <button type="button" class="rdf-quick-btn" data-rdf-quick="90">3 bulan</button>
+                </div>
+                <button type="button" class="rdf-reset" id="rdfReset" hidden>✕</button>
+              </div>
+              <div class="rdf-status" id="rdfStatus" hidden></div>
+            </div>
+            <input type="text" class="select-input" id="historySearch" placeholder="Cari di riwayat..." style="min-width:200px"/>
             <button class="btn ghost" id="clearHistory">🗑 Bersihkan Semua</button>
           </div>
-        </div>
-
-        <!-- Date filter bar — single date or range mode. Filter Aktivitas +
-             Pembelian (yang ada timestamp). Pencarian User/Video di-hide
-             saat filter aktif karena gak nyimpen ts. -->
-        <div class="riwayat-datefilter" id="riwayatDateFilter">
-          <div class="rdf-modes" role="tablist" aria-label="Mode filter tanggal">
-            <button type="button" class="rdf-mode active" data-rdf-mode="single" role="tab" aria-selected="true">Tanggal Spesifik</button>
-            <button type="button" class="rdf-mode" data-rdf-mode="range" role="tab" aria-selected="false">Rentang Tanggal</button>
-          </div>
-          <div class="rdf-controls">
-            <label class="rdf-field" data-rdf-mode-show="single">
-              <small>Tanggal</small>
-              <input type="date" id="rdfSingle" class="select-input" aria-label="Pilih tanggal"/>
-            </label>
-            <label class="rdf-field" data-rdf-mode-show="range" hidden>
-              <small>Dari</small>
-              <input type="date" id="rdfFrom" class="select-input" aria-label="Tanggal mulai"/>
-            </label>
-            <label class="rdf-field" data-rdf-mode-show="range" hidden>
-              <small>Sampai</small>
-              <input type="date" id="rdfTo" class="select-input" aria-label="Tanggal akhir"/>
-            </label>
-            <div class="rdf-quick" data-rdf-mode-show="range" hidden>
-              <button type="button" class="rdf-quick-btn" data-rdf-quick="7">7 hari</button>
-              <button type="button" class="rdf-quick-btn" data-rdf-quick="30">30 hari</button>
-              <button type="button" class="rdf-quick-btn" data-rdf-quick="90">3 bulan</button>
-            </div>
-            <button type="button" class="rdf-reset" id="rdfReset" hidden>✕ Hapus Filter</button>
-          </div>
-          <div class="rdf-status" id="rdfStatus" hidden></div>
         </div>
 
         <!-- v594 (2026-05-28): Tab bar dihapus per request user — semua 4

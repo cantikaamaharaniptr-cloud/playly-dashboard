@@ -40888,20 +40888,14 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   display: none;
 }
 
-/* Halaman Riwayat — date filter bar (2026-05-30, flat right-aligned 2026-05-30).
-   Bar inline di kanan, tepat di bawah view-actions. Dipake buat filter
-   Aktivitas + Pembelian by tanggal. Mode tabs + input + reset semua 1 row.
-   Flat style (no card chrome) supaya keliatan sebagai extension dari view-actions
-   di atasnya — bukan widget terpisah. Right edge align dgn .view-actions. */
+/* Halaman Riwayat — date filter inline di view-actions (2026-05-30).
+   Sekarang HTML nest di dalam .view-actions, jadi natural inline 1 baris
+   dgn search + Bersihkan Semua. Flat style, no card chrome.
+   Status text di-show via positioning kalau perlu (saat ini hidden). */
 .riwayat-datefilter {
-  align-self: flex-end;
-  margin: -8px 4px 14px;         /* margin-top negatif: kasih nempel ke view-actions */
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;           /* semua elemen h 34px, center align lebih rapi */
+  align-items: center;
   gap: 6px;
-  width: fit-content;
-  max-width: 100%;
 }
 /* Mode toggle pill bar — h 34px, sejajar dgn search row */
 .rdf-modes {
