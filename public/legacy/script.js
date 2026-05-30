@@ -37252,7 +37252,7 @@ function _rdfRenderPopup(input) {
       <div class="rdfp-actions">
         <button type="button" class="rdfp-action rdfp-clear" data-rdfp-action="clear">Hapus</button>
         <button type="button" class="rdfp-action rdfp-today-btn" data-rdfp-action="today">Hari ini</button>
-        <button type="button" class="rdfp-action rdfp-apply" data-rdfp-action="close">Tutup</button>
+        <button type="button" class="rdfp-action rdfp-apply" data-rdfp-action="close">Terapkan</button>
       </div>
     `;
   };
