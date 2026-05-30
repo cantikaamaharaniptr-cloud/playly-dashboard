@@ -37169,6 +37169,168 @@ function refreshRiwayatAfterDateChange() {
   if (typeof renderHistory === "function") renderHistory();
 }
 
+// Custom date picker — replace native <input type=date> popup dgn calendar
+// matching tema web (wine/dark). Input pakai readonly supaya native picker
+// di-block, click handler buka popup custom yg dirender via JS.
+const RDF_DAY_NAMES = ["MIN", "SEN", "SEL", "RAB", "KAM", "JUM", "SAB"];
+const RDF_MONTH_NAMES = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+let _rdfActivePopup = null;
+let _rdfActiveInput = null;
+let _rdfViewMonth = null; // {year, month}
+
+function _rdfPad(n) { return String(n).padStart(2, "0"); }
+function _rdfYmdFromDate(d) {
+  return `${d.getFullYear()}-${_rdfPad(d.getMonth() + 1)}-${_rdfPad(d.getDate())}`;
+}
+function _rdfClosePicker() {
+  if (_rdfActivePopup) {
+    _rdfActivePopup.remove();
+    _rdfActivePopup = null;
+    _rdfActiveInput = null;
+  }
+}
+function _rdfBuildGrid(year, month, selectedYmd) {
+  const todayYmd = _rdfYmdFromDate(new Date());
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();          // 0=MIN
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  const cells = [];
+  for (let i = startWeekday - 1; i >= 0; i--) {
+    cells.push({ day: prevMonthDays - i, otherMonth: true });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ymd = `${year}-${_rdfPad(month + 1)}-${_rdfPad(d)}`;
+    cells.push({
+      day: d, ymd,
+      isToday: ymd === todayYmd,
+      isSelected: ymd === selectedYmd,
+    });
+  }
+  const trailing = (7 - (cells.length % 7)) % 7;
+  for (let d = 1; d <= trailing; d++) {
+    cells.push({ day: d, otherMonth: true });
+  }
+  return cells;
+}
+function _rdfRenderPopup(input) {
+  const popup = document.createElement("div");
+  popup.className = "rdf-datepicker-popup";
+  const sel = input.value;                          // YYYY-MM-DD atau kosong
+  if (!_rdfViewMonth) {
+    let base;
+    if (sel) {
+      const [y, m] = sel.split("-").map(Number);
+      base = new Date(y, m - 1, 1);
+    } else {
+      base = new Date();
+    }
+    _rdfViewMonth = { year: base.getFullYear(), month: base.getMonth() };
+  }
+  const renderInner = () => {
+    const { year, month } = _rdfViewMonth;
+    const cells = _rdfBuildGrid(year, month, input.value);
+    popup.innerHTML = `
+      <div class="rdfp-head">
+        <button type="button" class="rdfp-nav" data-rdfp-nav="prev" aria-label="Bulan sebelumnya">‹</button>
+        <span class="rdfp-title">${RDF_MONTH_NAMES[month]} ${year}</span>
+        <button type="button" class="rdfp-nav" data-rdfp-nav="next" aria-label="Bulan berikutnya">›</button>
+      </div>
+      <div class="rdfp-days">
+        ${RDF_DAY_NAMES.map(d => `<span class="rdfp-daylabel">${d}</span>`).join("")}
+      </div>
+      <div class="rdfp-grid">
+        ${cells.map(c => {
+          if (c.otherMonth) return `<span class="rdfp-cell rdfp-other">${c.day}</span>`;
+          const cls = `rdfp-cell rdfp-day${c.isToday ? " rdfp-today" : ""}${c.isSelected ? " rdfp-selected" : ""}`;
+          return `<button type="button" class="${cls}" data-rdfp-pick="${c.ymd}">${c.day}</button>`;
+        }).join("")}
+      </div>
+      <div class="rdfp-actions">
+        <button type="button" class="rdfp-action rdfp-clear" data-rdfp-action="clear">Hapus</button>
+        <button type="button" class="rdfp-action rdfp-today-btn" data-rdfp-action="today">Hari ini</button>
+        <button type="button" class="rdfp-action rdfp-apply" data-rdfp-action="close">Tutup</button>
+      </div>
+    `;
+  };
+  renderInner();
+  // Position: di bawah input, kanan-align ke input edge supaya gak overflow.
+  const rect = input.getBoundingClientRect();
+  popup.style.top = (window.scrollY + rect.bottom + 6) + "px";
+  // Default: align left edge dgn input. Adjust kalau overflow ke kanan viewport.
+  let left = window.scrollX + rect.left;
+  const popupW = 280;
+  if (left + popupW > window.innerWidth - 12) {
+    left = Math.max(8, window.scrollX + rect.right - popupW);
+  }
+  popup.style.left = left + "px";
+  document.body.appendChild(popup);
+  _rdfActivePopup = popup;
+  _rdfActiveInput = input;
+  popup.addEventListener("click", e => {
+    e.stopPropagation();
+    const navBtn = e.target.closest("[data-rdfp-nav]");
+    if (navBtn) {
+      if (navBtn.dataset.rdfpNav === "prev") {
+        if (--_rdfViewMonth.month < 0) { _rdfViewMonth.month = 11; _rdfViewMonth.year--; }
+      } else {
+        if (++_rdfViewMonth.month > 11) { _rdfViewMonth.month = 0; _rdfViewMonth.year++; }
+      }
+      renderInner();
+      return;
+    }
+    const pickBtn = e.target.closest("[data-rdfp-pick]");
+    if (pickBtn) {
+      input.value = pickBtn.dataset.rdfpPick;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      _rdfClosePicker();
+      return;
+    }
+    const actBtn = e.target.closest("[data-rdfp-action]");
+    if (actBtn) {
+      const act = actBtn.dataset.rdfpAction;
+      if (act === "clear") {
+        input.value = "";
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        _rdfClosePicker();
+      } else if (act === "today") {
+        const t = new Date();
+        input.value = _rdfYmdFromDate(t);
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        _rdfClosePicker();
+      } else if (act === "close") {
+        _rdfClosePicker();
+      }
+    }
+  });
+}
+// Open custom picker on click; close on outside click.
+document.addEventListener("click", e => {
+  const input = e.target.closest(".rdf-date-input");
+  if (input) {
+    // Toggle: kalau popup udah open untuk input ini, tutup.
+    if (_rdfActiveInput === input) { _rdfClosePicker(); return; }
+    if (_rdfActivePopup) _rdfClosePicker();
+    _rdfViewMonth = null;          // reset, recompute dari nilai input
+    _rdfRenderPopup(input);
+    return;
+  }
+  // Click di luar popup → close
+  if (_rdfActivePopup && !e.target.closest(".rdf-datepicker-popup")) {
+    _rdfClosePicker();
+  }
+}, true);
+// Escape key → close
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && _rdfActivePopup) _rdfClosePicker();
+});
+// Scroll/resize → close (avoid floating popup di tempat salah)
+window.addEventListener("scroll", () => { if (_rdfActivePopup) _rdfClosePicker(); }, true);
+window.addEventListener("resize", () => { if (_rdfActivePopup) _rdfClosePicker(); });
+
 // Bind date picker handlers — di luar renderHistory supaya cuma sekali pasang.
 // Document-level delegation supaya aman walaupun bar di-rebuild.
 (function bindRiwayatDateFilter() {
