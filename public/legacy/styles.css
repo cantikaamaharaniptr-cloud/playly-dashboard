@@ -40898,43 +40898,47 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   margin: -8px 4px 14px;         /* margin-top negatif: kasih nempel ke view-actions */
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;           /* semua elemen h 34px, center align lebih rapi */
+  gap: 6px;
   width: fit-content;
   max-width: 100%;
 }
+/* Mode toggle pill bar — h 34px, sejajar dgn search row */
 .rdf-modes {
   display: inline-flex;
-  gap: 4px;
-  padding: 3px;
-  background: var(--bg-elev);
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   width: fit-content;
-  align-self: center;             /* center vertically dgn input field */
+  height: 34px;
+  box-sizing: border-box;
+  align-items: stretch;
 }
 .rdf-mode {
   background: transparent;
   border: 0;
   color: var(--muted);
-  padding: 6px 14px;
-  border-radius: 7px;
+  padding: 0 12px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background .15s, color .15s;
+  line-height: 1;
 }
 .rdf-mode:hover { color: var(--text); }
 .rdf-mode.active {
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .rdf-controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
   justify-content: flex-end;
 }
 /* Status text full-width di bawah bar — gak ikut row inline */
@@ -40942,36 +40946,43 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   flex-basis: 100%;
   margin-top: 4px;
 }
+/* Label kecil di atas input (TANGGAL/DARI/SAMPAI) — di-hide karena
+   input date sendiri udah self-explanatory. Compact. */
 .rdf-field {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
 }
 .rdf-field small {
-  font-size: 10.5px;
-  color: var(--muted);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  font-weight: 600;
+  display: none;
 }
+/* Date input — sejajar dgn search row (h 34px, radius 8px) */
 .rdf-field input[type="date"] {
-  min-width: 150px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  min-width: 140px;
+  box-sizing: border-box;
+  line-height: 1;
 }
 .rdf-quick {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .rdf-quick-btn {
   background: rgba(255, 200, 170, 0.06);
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 7px 12px;
+  padding: 0 10px;
+  height: 34px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
+  box-sizing: border-box;
+  line-height: 1;
 }
 .rdf-quick-btn:hover {
   background: rgba(255, 200, 170, 0.12);
@@ -40982,13 +40993,16 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background: transparent;
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 7px 14px;
+  padding: 0 12px;
+  height: 34px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
   margin-left: auto;
+  box-sizing: border-box;
+  line-height: 1;
 }
 .rdf-reset:hover {
   background: rgba(255, 100, 100, 0.08);
