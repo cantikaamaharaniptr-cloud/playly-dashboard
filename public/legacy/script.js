@@ -36797,7 +36797,60 @@ function setupLibMiniDrag() {
 
 // ----------------------- HISTORY VIEW -----------------------
 // Pagination state — increment per klik "more >" (10 per halaman)
-const historyState = { contLimit: 10, riwayatLimit: 10 };
+// Date filter state — null = no filter aktif.
+//   dateMode: "single" | "range"
+//   dateFrom / dateTo: epoch ms (start-of-day) atau null
+const historyState = {
+  contLimit: 10,
+  riwayatLimit: 10,
+  dateMode: "single",
+  dateFrom: null,
+  dateTo: null,
+};
+
+// Helper — konversi input date (YYYY-MM-DD) ke epoch ms.
+// startOfDay: hari itu jam 00:00 lokal. endOfDay: jam 23:59:59.999.
+function _parseDateInput(s, endOfDay = false) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3];
+  const dt = new Date(y, mo, d);
+  if (isNaN(dt.getTime())) return null;
+  if (endOfDay) dt.setHours(23, 59, 59, 999);
+  return dt.getTime();
+}
+
+// Cek apakah filter tanggal aktif.
+function isHistoryDateFilterActive() {
+  return historyState.dateFrom !== null || historyState.dateTo !== null;
+}
+
+// Cek apakah timestamp ts (epoch ms) jatuh di dalam rentang filter.
+// Range half-open: [from, to]. Kalau tidak filter, return true.
+function inHistoryDateRange(ts) {
+  if (!isHistoryDateFilterActive()) return true;
+  if (typeof ts !== "number" || !isFinite(ts)) return false;
+  if (historyState.dateFrom !== null && ts < historyState.dateFrom) return false;
+  if (historyState.dateTo !== null && ts > historyState.dateTo) return false;
+  return true;
+}
+
+// Format range untuk status text.
+function _fmtDateFilterLabel() {
+  const opts = { day: "numeric", month: "long", year: "numeric" };
+  const from = historyState.dateFrom !== null
+    ? new Date(historyState.dateFrom).toLocaleDateString("id-ID", opts) : null;
+  const to = historyState.dateTo !== null
+    ? new Date(historyState.dateTo).toLocaleDateString("id-ID", opts) : null;
+  if (from && to) {
+    if (from === to) return `Menampilkan data tanggal ${from}`;
+    return `Menampilkan data dari ${from} sampai ${to}`;
+  }
+  if (from) return `Menampilkan data sejak ${from}`;
+  if (to) return `Menampilkan data sampai ${to}`;
+  return "";
+}
 
 // ===== Riwayat sections (pembelian / pencarian) =====
 // Tab switcher: all | aktivitas | pembelian | search-user | search-video
@@ -36911,7 +36964,15 @@ function renderPurchaseHistory() {
     const allPayments = (typeof getPremiumPayments === "function") ? getPremiumPayments() : [];
     const myEmail = String(user?.email || "").toLowerCase();
     if (myEmail) {
-      const myPayments = allPayments.filter(p => p && String(p.email || "").toLowerCase() === myEmail);
+      let myPayments = allPayments.filter(p => p && String(p.email || "").toLowerCase() === myEmail);
+      // Date filter — apply ke ts pembelian (processedAt → paidAt → createdAt).
+      // Summary cards juga ikut filter, supaya konsisten dgn list.
+      if (typeof isHistoryDateFilterActive === "function" && isHistoryDateFilterActive()) {
+        myPayments = myPayments.filter(p => {
+          const ts = Number(p.processedAt || p.paidAt || p.createdAt || 0);
+          return inHistoryDateRange(ts);
+        });
+      }
       // Aggregate summary
       myPayments.forEach(p => {
         const amt = Number(p.amount || 0);
@@ -36988,14 +37049,21 @@ function renderSearchHistorySections() {
   const vidWrap  = document.getElementById("searchVideoHistoryList");
   const userQs = Array.isArray(state?.searchHistoryUser)  ? state.searchHistoryUser  : [];
   const vidQs  = Array.isArray(state?.searchHistoryVideo) ? state.searchHistoryVideo : [];
+  // Pencarian gak nyimpen timestamp — saat filter tanggal aktif, kasih
+  // notice di list. List tetep ditampilin (gak ke-hide) supaya user tau
+  // chip-chip ini ada tapi tidak ke-filter.
+  const filterActive = typeof isHistoryDateFilterActive === "function" && isHistoryDateFilterActive();
   // v592 (2026-05-28): table list — per request user.
   const renderTable = (wrap, items, kind) => {
     if (!wrap) return;
     const isUser = kind === "user";
     const head = `<thead><tr><th style="width:62%">Kueri</th><th style="width:18%">Tipe</th><th style="width:20%">Aksi</th></tr></thead>`;
+    const filterNotice = filterActive
+      ? `<tr class="rwt-group-row"><td colspan="3" style="font-style:italic; color:var(--muted)">ℹ Pencarian tidak menyimpan tanggal — semua kueri tampil di sini (tidak ikut filter).</td></tr>`
+      : "";
     if (!items.length) {
       wrap.innerHTML = `<table class="riwayat-table">${head}
-        <tbody><tr class="rwt-empty-row"><td colspan="3">${isUser ? "Belum ada pencarian user." : "Belum ada pencarian video."}</td></tr></tbody>
+        <tbody>${filterNotice}<tr class="rwt-empty-row"><td colspan="3">${isUser ? "Belum ada pencarian user." : "Belum ada pencarian video."}</td></tr></tbody>
       </table>`;
       return;
     }
@@ -37010,7 +37078,7 @@ function renderSearchHistorySections() {
         </td>
       </tr>`;
     }).join("");
-    wrap.innerHTML = `<table class="riwayat-table">${head}<tbody>${rows}</tbody></table>`;
+    wrap.innerHTML = `<table class="riwayat-table">${head}<tbody>${filterNotice}${rows}</tbody></table>`;
   };
   renderTable(userWrap, userQs, "user");
   renderTable(vidWrap,  vidQs,  "video");
@@ -37039,26 +37107,152 @@ document.addEventListener("click", e => {
   }
 });
 
+// Sync UI date picker bar dgn historyState (kalau filter ke-reset dari tempat lain
+// atau pas masuk halaman pertama kali). Update mode tab, hide/show field per mode,
+// set input value, dan tampilin/hide tombol reset + status text.
+function syncRiwayatDateFilterUI() {
+  const bar = document.getElementById("riwayatDateFilter");
+  if (!bar) return;
+  // Mode tabs — active class
+  bar.querySelectorAll("[data-rdf-mode]").forEach(b => {
+    b.classList.toggle("active", b.dataset.rdfMode === historyState.dateMode);
+    b.setAttribute("aria-selected", b.dataset.rdfMode === historyState.dateMode ? "true" : "false");
+  });
+  // Hide/show field grup per mode
+  bar.querySelectorAll("[data-rdf-mode-show]").forEach(el => {
+    el.hidden = el.dataset.rdfModeShow !== historyState.dateMode;
+  });
+  // Set input value dari state (kalau ada)
+  const toInputDate = (ts) => {
+    if (ts === null) return "";
+    const d = new Date(ts);
+    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const singleEl = document.getElementById("rdfSingle");
+  const fromEl = document.getElementById("rdfFrom");
+  const toEl = document.getElementById("rdfTo");
+  if (historyState.dateMode === "single") {
+    if (singleEl) singleEl.value = toInputDate(historyState.dateFrom);
+  } else {
+    if (fromEl) fromEl.value = toInputDate(historyState.dateFrom);
+    if (toEl)   toEl.value   = toInputDate(historyState.dateTo);
+  }
+  // Reset button
+  const resetBtn = document.getElementById("rdfReset");
+  if (resetBtn) resetBtn.hidden = !isHistoryDateFilterActive();
+  // Status text
+  const statusEl = document.getElementById("rdfStatus");
+  if (statusEl) {
+    const label = _fmtDateFilterLabel();
+    statusEl.textContent = label;
+    statusEl.hidden = !label;
+  }
+}
+
+// Re-render Riwayat — dipake setelah change filter date. Kalo halaman blm dibuka
+// (gak ada element), no-op.
+function refreshRiwayatAfterDateChange() {
+  if (typeof renderHistory === "function") renderHistory();
+}
+
+// Bind date picker handlers — di luar renderHistory supaya cuma sekali pasang.
+// Document-level delegation supaya aman walaupun bar di-rebuild.
+(function bindRiwayatDateFilter() {
+  document.addEventListener("click", e => {
+    // Mode toggle
+    const modeBtn = e.target.closest("[data-rdf-mode]");
+    if (modeBtn) {
+      const newMode = modeBtn.dataset.rdfMode;
+      if (newMode === historyState.dateMode) return;
+      historyState.dateMode = newMode;
+      // Saat ganti mode, clear filter — biar gak ngebingungin (single value
+      // beda interpretasi vs range value).
+      historyState.dateFrom = null;
+      historyState.dateTo = null;
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+      return;
+    }
+    // Quick preset (range mode): 7 / 30 / 90 hari terakhir
+    const quickBtn = e.target.closest("[data-rdf-quick]");
+    if (quickBtn) {
+      const days = parseInt(quickBtn.dataset.rdfQuick, 10) || 7;
+      const now = new Date();
+      now.setHours(23, 59, 59, 999);
+      const from = new Date();
+      from.setDate(from.getDate() - (days - 1));
+      from.setHours(0, 0, 0, 0);
+      historyState.dateMode = "range";
+      historyState.dateFrom = from.getTime();
+      historyState.dateTo = now.getTime();
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+      return;
+    }
+    // Reset filter
+    if (e.target.closest("#rdfReset")) {
+      historyState.dateFrom = null;
+      historyState.dateTo = null;
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+      return;
+    }
+  });
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === "rdfSingle") {
+      const ts = _parseDateInput(t.value, false);
+      const tsEnd = _parseDateInput(t.value, true);
+      historyState.dateFrom = ts;
+      historyState.dateTo = tsEnd;
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+    } else if (t.id === "rdfFrom") {
+      historyState.dateFrom = _parseDateInput(t.value, false);
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+    } else if (t.id === "rdfTo") {
+      historyState.dateTo = _parseDateInput(t.value, true);
+      syncRiwayatDateFilterUI();
+      refreshRiwayatAfterDateChange();
+    }
+  });
+})();
+
 function renderHistory() {
   // Setiap masuk halaman Riwayat → reset ke "all" (semua section terlihat).
   // User pilih pill spesifik kalau mau filter — bukan memori tab terakhir.
   setRiwayatTab("all");
+  // Sync UI date filter dgn state (saat re-render dari date input change atau navigasi).
+  syncRiwayatDateFilterUI();
   // Render semua section content (filtering visual diatur via CSS by data-riwayat-tab)
   renderPurchaseHistory();
   renderSearchHistorySections();
 
-  if (!state.history.length) {
+  // Apply date filter ke state.history. Item harus punya .ts numeric.
+  // Item lama yang gak punya .ts akan ke-filter out saat filter aktif.
+  const baseHistory = isHistoryDateFilterActive()
+    ? state.history.filter(h => inHistoryDateRange(h.ts))
+    : state.history;
+
+  if (!baseHistory.length) {
     // v592 (2026-05-28): tabel empty state (sebelumnya emptyHTML card).
+    // Filter-aware (2026-05-30): kalo gak ada hasil karena filter, pesan beda.
+    const emptyMsg = isHistoryDateFilterActive()
+      ? "Tidak ada aktivitas di rentang tanggal yang dipilih. Coba rentang lain atau hapus filter."
+      : "Riwayat masih kosong. Video yang kamu tonton akan muncul di sini.";
     $("#continueList") && ($("#continueList").innerHTML = "");
     $("#historyGroups") && ($("#historyGroups").innerHTML = `<table class="riwayat-table">
       <thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>
-      <tbody><tr class="rwt-empty-row"><td colspan="4">Riwayat masih kosong. Video yang kamu tonton akan muncul di sini.</td></tr></tbody>
+      <tbody><tr class="rwt-empty-row"><td colspan="4">${emptyMsg}</td></tr></tbody>
     </table>`);
     return;
   }
 
-  // Lanjutkan Nonton — max contLimit (default 10)
-  const allCont = state.history.filter(h => h.progress < 100);
+  // Lanjutkan Nonton — max contLimit (default 10) — respect date filter.
+  const allCont = baseHistory.filter(h => h.progress < 100);
   const contLimit = historyState.contLimit;
   const cont = allCont.slice(0, contLimit);
   const contRemaining = Math.max(0, allCont.length - cont.length);
@@ -37091,9 +37285,9 @@ function renderHistory() {
       </button>`;
   }
 
-  // Riwayat Tontonan — flat list, batas riwayatLimit (default 10)
+  // Riwayat Tontonan — flat list, batas riwayatLimit (default 10) — respect date filter.
   const q = ($("#historySearch")?.value || "").toLowerCase();
-  const filteredAll = state.history.filter(h => {
+  const filteredAll = baseHistory.filter(h => {
     if (!q) return true;
     const v = findVideo(h.videoId);
     return v && (v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q));

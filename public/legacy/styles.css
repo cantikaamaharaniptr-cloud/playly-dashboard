@@ -40856,6 +40856,112 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   font-size: .8rem;
 }
 
+/* Halaman Riwayat — date filter bar (2026-05-30).
+   Bar di atas riwayat-sections, dipake buat filter Aktivitas + Pembelian
+   by tanggal. Single mode = 1 input, Range mode = 2 input + quick presets. */
+.riwayat-datefilter {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 0 4px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rdf-modes {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  width: fit-content;
+}
+.rdf-mode {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.rdf-mode:hover { color: var(--text); }
+.rdf-mode.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.rdf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.rdf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rdf-field small {
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.rdf-field input[type="date"] {
+  min-width: 150px;
+}
+.rdf-quick {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rdf-quick-btn {
+  background: rgba(255, 200, 170, 0.06);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.rdf-quick-btn:hover {
+  background: rgba(255, 200, 170, 0.12);
+  color: var(--text);
+  border-color: var(--primary);
+}
+.rdf-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  margin-left: auto;
+}
+.rdf-reset:hover {
+  background: rgba(255, 100, 100, 0.08);
+  color: #ff8888;
+  border-color: #ff8888;
+}
+.rdf-status {
+  font-size: 12px;
+  color: var(--primary);
+  background: rgba(199, 183, 163, 0.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(199, 183, 163, 0.18);
+}
+
 /* Halaman Riwayat — section list */
 .riwayat-sections {
   display: flex;
