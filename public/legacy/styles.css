@@ -40862,6 +40862,23 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
    Force right-align dgn margin-left: auto. */
 .view[data-view="history"] .view-actions {
   margin-left: auto;
+  gap: 6px;
+}
+
+/* Riwayat: samakan tinggi + radius + padding antara search input & Bersihkan
+   Semua button supaya sejajar rapi. Pakai box-sizing border-box biar ukuran
+   sama persis walaupun border-width beda. */
+.view[data-view="history"] .view-actions .select-input,
+.view[data-view="history"] .view-actions .btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+.view[data-view="history"] .view-actions .select-input {
+  min-width: 200px;          /* override inline style min-width:220px */
 }
 
 /* Date filter cuma tampil di sub-page (Aktivitas/Pembelian/Pencarian) —
