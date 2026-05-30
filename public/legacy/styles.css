@@ -40856,18 +40856,21 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   font-size: .8rem;
 }
 
-/* Halaman Riwayat — date filter bar (2026-05-30).
-   Bar di atas riwayat-sections, dipake buat filter Aktivitas + Pembelian
-   by tanggal. Single mode = 1 input, Range mode = 2 input + quick presets. */
+/* Halaman Riwayat — date filter bar (2026-05-30, right-aligned 2026-05-30).
+   Bar inline di kanan, di atas riwayat-sections. Dipake buat filter
+   Aktivitas + Pembelian by tanggal. Mode tabs + input + reset semua 1 row. */
 .riwayat-datefilter {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px 16px;
-  margin: 0 4px 18px;
+  padding: 10px 14px;
+  margin: 0 4px 18px auto;       /* margin-left: auto → right-align block */
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px;
+  width: fit-content;
+  max-width: 100%;
 }
 .rdf-modes {
   display: inline-flex;
@@ -40876,6 +40879,7 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background: rgba(0, 0, 0, 0.25);
   border-radius: 10px;
   width: fit-content;
+  align-self: center;             /* center vertically dgn input field */
 }
 .rdf-mode {
   background: transparent;
@@ -40898,7 +40902,13 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 12px;
+  gap: 10px;
+  justify-content: flex-end;
+}
+/* Status text full-width di bawah bar — gak ikut row inline */
+.rdf-status {
+  flex-basis: 100%;
+  margin-top: 4px;
 }
 .rdf-field {
   display: flex;
