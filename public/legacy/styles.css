@@ -40889,13 +40889,15 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 
 /* Halaman Riwayat — date filter inline di view-actions (2026-05-30).
-   Sekarang HTML nest di dalam .view-actions, jadi natural inline 1 baris
-   dgn search + Bersihkan Semua. Flat style, no card chrome.
-   Status text di-show via positioning kalau perlu (saat ini hidden). */
+   Container relative supaya status text bisa di-position absolute (di bawah
+   bar, gak ganggu inline layout). nowrap: gabung sama search + Bersihkan
+   tetep 1 baris kalau muat. */
 .riwayat-datefilter {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: nowrap;
+  position: relative;
 }
 /* Mode toggle pill bar — h 34px, sejajar dgn search row */
 .rdf-modes {
@@ -40929,16 +40931,19 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .rdf-controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
-  justify-content: flex-end;
+  gap: 4px;
 }
-/* Status text full-width di bawah bar — gak ikut row inline */
+/* Status text — keluar dari flex flow (absolute) supaya gak push elemen lain.
+   Tampil di bawah bar (tooltip-like) saat filter aktif. */
 .rdf-status {
-  flex-basis: 100%;
-  margin-top: 4px;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  white-space: nowrap;
+  z-index: 5;
 }
 /* Label kecil di atas input (TANGGAL/DARI/SAMPAI) — di-hide karena
    input date sendiri udah self-explanatory. Compact. */
@@ -40949,26 +40954,27 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .rdf-field small {
   display: none;
 }
-/* Date input — sejajar dgn search row (h 34px, radius 8px) */
+/* Date input — sejajar dgn search row (h 34px, radius 8px), super compact */
 .rdf-field input[type="date"] {
   height: 34px;
-  padding: 0 10px;
+  padding: 0 8px;
   border-radius: 8px;
-  font-size: 12.5px;
-  min-width: 140px;
+  font-size: 12px;
+  min-width: 130px;
+  width: 130px;
   box-sizing: border-box;
   line-height: 1;
 }
 .rdf-quick {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  display: inline-flex;
+  gap: 2px;
+  flex-wrap: nowrap;
 }
 .rdf-quick-btn {
   background: rgba(255, 200, 170, 0.06);
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 0 10px;
+  padding: 0 8px;
   height: 34px;
   border-radius: 8px;
   font-size: 11.5px;
@@ -40977,6 +40983,7 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   transition: all .15s;
   box-sizing: border-box;
   line-height: 1;
+  white-space: nowrap;
 }
 .rdf-quick-btn:hover {
   background: rgba(255, 200, 170, 0.12);
