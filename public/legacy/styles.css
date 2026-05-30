@@ -40936,14 +40936,20 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   align-items: center;
   gap: 4px;
 }
-/* Status text — keluar dari flex flow (absolute) supaya gak push elemen lain.
-   Tampil di bawah bar (tooltip-like) saat filter aktif. */
+/* Status text — sekarang sibling .view-actions (di luar date filter).
+   Auto-flow ke baris baru di bawah header, right-aligned. */
 .rdf-status {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  align-self: flex-end;
+  margin: 6px 4px 0;
   white-space: nowrap;
-  z-index: 5;
+}
+
+/* Bersihkan Semua jadi icon-only square — saving ~100px horizontal */
+.view[data-view="history"] .view-actions .btn-icon-only {
+  width: 34px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
 }
 /* Label kecil di atas input (TANGGAL/DARI/SAMPAI) — di-hide karena
    input date sendiri udah self-explanatory. Compact. */
@@ -40957,11 +40963,11 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 /* Date input — sejajar dgn search row (h 34px, radius 8px), super compact */
 .rdf-field input[type="date"] {
   height: 34px;
-  padding: 0 8px;
+  padding: 0 6px;
   border-radius: 8px;
-  font-size: 12px;
-  min-width: 130px;
-  width: 130px;
+  font-size: 11.5px;
+  min-width: 118px;
+  width: 118px;
   box-sizing: border-box;
   line-height: 1;
 }
@@ -40974,10 +40980,11 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background: rgba(255, 200, 170, 0.06);
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 0 8px;
+  padding: 0 6px;
   height: 34px;
+  min-width: 32px;
   border-radius: 8px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
@@ -40994,16 +41001,19 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background: transparent;
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 0 12px;
+  padding: 0;
+  width: 34px;
   height: 34px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
-  margin-left: auto;
   box-sizing: border-box;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .rdf-reset:hover {
   background: rgba(255, 100, 100, 0.08);

@@ -5275,13 +5275,15 @@
                   <button type="button" class="rdf-quick-btn" data-rdf-quick="30" title="30 hari terakhir">30d</button>
                   <button type="button" class="rdf-quick-btn" data-rdf-quick="90" title="3 bulan terakhir">90d</button>
                 </div>
-                <button type="button" class="rdf-reset" id="rdfReset" hidden>✕</button>
+                <button type="button" class="rdf-reset" id="rdfReset" title="Hapus Filter" hidden>✕</button>
               </div>
-              <div class="rdf-status" id="rdfStatus" hidden></div>
             </div>
-            <input type="text" class="select-input" id="historySearch" placeholder="Cari di riwayat..." style="min-width:200px"/>
-            <button class="btn ghost" id="clearHistory">🗑 Bersihkan Semua</button>
+            <input type="text" class="select-input" id="historySearch" placeholder="Cari di riwayat..." style="min-width:160px;width:160px"/>
+            <button class="btn ghost btn-icon-only" id="clearHistory" title="Bersihkan Semua">🗑</button>
           </div>
+          <!-- Status text di luar view-actions, ambil baris sendiri di bawah header
+               saat filter aktif. Posisi natural (block element) — gak overlap. -->
+          <div class="rdf-status" id="rdfStatus" hidden></div>
         </div>
 
         <!-- v594 (2026-05-28): Tab bar dihapus per request user — semua 4
