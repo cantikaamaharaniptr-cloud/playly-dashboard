@@ -40856,6 +40856,14 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   font-size: .8rem;
 }
 
+/* Halaman Riwayat — view-actions right-align saat wrap (2026-05-30).
+   .view-header pakai justify-content: space-between + flex-wrap, jadi waktu
+   wrap (header lebar) view-actions naik ke baris baru tapi left-aligned.
+   Force right-align dgn margin-left: auto. */
+.view[data-view="history"] .view-actions {
+  margin-left: auto;
+}
+
 /* Halaman Riwayat — date filter bar (2026-05-30, right-aligned 2026-05-30).
    Bar inline di kanan, di atas riwayat-sections. Dipake buat filter
    Aktivitas + Pembelian by tanggal. Mode tabs + input + reset semua 1 row.
