@@ -41108,40 +41108,40 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   transition: all .15s;
   font-family: inherit;
 }
-/* Hapus: ghost button warna terang, bg light transparan */
+/* Hapus: light cream solid bg, dark text — match referensi */
 .rdfp-clear {
-  color: #f1e4d6;
-  background: rgba(241, 228, 214, 0.08);
-  border: 1px solid rgba(241, 228, 214, 0.25);
+  color: #2a1418;
+  background: #ede0d2;
+  border: 1px solid #d4c5b5;
   padding: 6px 14px;
 }
 .rdfp-clear:hover {
-  background: rgba(241, 228, 214, 0.18);
-  border-color: rgba(241, 228, 214, 0.45);
+  background: #f5e8da;
+  border-color: #e0d2c2;
 }
-/* Hari ini: text-only, warna wine red */
+/* Hari ini: text-only, warna wine red lebih dalam match referensi */
 .rdfp-today-btn {
-  color: #C7556A;
+  color: #B33A4F;
   font-weight: 700;
   background: transparent;
   border: 0;
 }
 .rdfp-today-btn:hover {
-  color: #E8748A;
+  color: #D04B62;
 }
-/* Terapkan: solid wine red CTA */
+/* Terapkan: solid burgundy lebih dalam match referensi */
 .rdfp-apply {
-  background: #8B2D3A;
-  color: #f1e4d6;
+  background: #7A2330;
+  color: #f5e8da;
   padding: 7px 18px;
   font-weight: 800;
-  border: 1px solid #A03848;
-  box-shadow: 0 4px 14px rgba(139, 45, 58, 0.4);
+  border: 1px solid #8E2A39;
+  box-shadow: 0 4px 14px rgba(122, 35, 48, 0.45);
 }
 .rdfp-apply:hover {
-  background: #A03848;
+  background: #8E2A39;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(160, 56, 72, 0.55);
+  box-shadow: 0 6px 18px rgba(142, 42, 57, 0.6);
 }
 .rdf-quick {
   display: inline-flex;
