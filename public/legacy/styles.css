@@ -40864,10 +40864,10 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   margin-left: auto;
 }
 
-/* Date filter cuma tampil di mode "all" (parent Riwayat) — di sub-page
-   (Aktivitas/Pembelian/Pencarian) di-hide supaya UI lebih bersih.
-   Filter state tetep di-respect kalau dipasang di "all" lalu pindah sub-page. */
-.view[data-view="history"]:not([data-riwayat-tab="all"]) .riwayat-datefilter {
+/* Date filter cuma tampil di sub-page (Aktivitas/Pembelian/Pencarian) —
+   di parent "Riwayat" (mode all) di-hide karena nampilkan semua section
+   sekaligus, filter per-tanggal lebih relevan saat drill ke 1 section. */
+.view[data-view="history"][data-riwayat-tab="all"] .riwayat-datefilter {
   display: none;
 }
 
