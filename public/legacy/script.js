@@ -26746,14 +26746,99 @@ function renderAdminKPI() {
     countUp($("#kpiViews"),  m.totalViews,         fmtNum);
   }, 120);
 
-  // Tren Total Pengguna → format PERSEN, konsisten dgn kartu lain
-  // (↑ X%), bukan "N baru 24j". (req user 2026-05-19). Hitung % real:
-  // kontribusi user baru 24 jam terhadap total user.
+  // === Dynamic trend % per KPI (v2 2026-05-30) ===
+  // Trend = bandingkan periode 24 jam terakhir vs 24 jam sebelumnya.
+  // Format: ↑ X.X% (hijau) / ↓ X.X% (merah) / → 0% (netral)
   const trendEls = $$(".admin-kpi-card .kpi-trend");
+  const DAY_MS = 86400000;
+  const now = Date.now();
+  const since24h = now - DAY_MS;
+  const sincePrev = now - 2 * DAY_MS;
+  // Helper: render delta dgn warna otomatis
+  const applyTrend = (el, pct, opts = {}) => {
+    if (!el) return;
+    const sign = pct > 0 ? "↑" : pct < 0 ? "↓" : "→";
+    const cls = pct > 0 ? "up" : pct < 0 ? "down" : "flat";
+    el.className = `kpi-trend ${cls}`;
+    el.textContent = `${sign} ${Math.abs(pct).toFixed(1)}%`;
+    el.title = opts.title || "";
+  };
+
+  // 1. Users — kontribusi user baru 24 jam terhadap total user
   const usersPct = userCount > 0
     ? Math.round((m.newUsers24h / userCount) * 1000) / 10
     : 0;
-  if (trendEls[0]) trendEls[0].textContent = `↑ ${usersPct}%`;
+  applyTrend(trendEls[0], usersPct, {
+    title: `${m.newUsers24h || 0} pengguna baru 24 jam terakhir`,
+  });
+
+  // 2. Videos — bandingkan video upload 24h vs 24h sebelumnya
+  try {
+    const vids = m.videos || [];
+    const vTime = v => {
+      const t = v && (v.createdAt || v.uploadedAt || v.publishedAt || v.date || v.ts);
+      return t ? new Date(t).getTime() : 0;
+    };
+    const newVid24h = vids.filter(v => { const t = vTime(v); return t >= since24h; }).length;
+    const newVidPrev = vids.filter(v => { const t = vTime(v); return t >= sincePrev && t < since24h; }).length;
+    const vidPct = newVidPrev > 0
+      ? Math.round(((newVid24h - newVidPrev) / newVidPrev) * 1000) / 10
+      : (newVid24h > 0 ? 100 : 0);
+    applyTrend(trendEls[1], vidPct, {
+      title: `${newVid24h} video 24 jam · ${newVidPrev} video periode sebelumnya`,
+    });
+  } catch (_) {
+    if (trendEls[1]) trendEls[1].textContent = "→ 0%";
+  }
+
+  // 3. Views — bandingkan views 24h vs sebelumnya (estimasi dari log
+  // platform jika ada, atau pakai total views growth rate)
+  try {
+    const evts = (typeof getAdminData === "function" ? getAdminData("events") : []) || [];
+    const playEvts = evts.filter(e => e && /play|view|tonton/i.test(String(e.text || "")));
+    const views24h = playEvts.filter(e => e.ts >= since24h).length;
+    const viewsPrev = playEvts.filter(e => e.ts >= sincePrev && e.ts < since24h).length;
+    let viewsPct = 0;
+    if (viewsPrev > 0) {
+      viewsPct = Math.round(((views24h - viewsPrev) / viewsPrev) * 1000) / 10;
+    } else if (views24h > 0) {
+      viewsPct = 100;
+    }
+    applyTrend(trendEls[2], viewsPct, {
+      title: `${views24h} tontonan tercatat 24 jam terakhir`,
+    });
+  } catch (_) {
+    if (trendEls[2]) trendEls[2].textContent = "→ 0%";
+  }
+
+  // 4. Revenue — bandingkan pendapatan hari ini vs kemarin (epoch-based)
+  try {
+    if (typeof getPremiumPayments === "function" && trendEls[3]) {
+      const payments = (getPremiumPayments() || []).filter(p =>
+        p && p.status === "approved" && p.method !== "Admin Grant" && (Number(p.amount) || 0) > 0
+      );
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const yesterdayStart = todayStart.getTime() - DAY_MS;
+      const rate = 16000; // USD → IDR (sama dgn computeRevenueFromLedger)
+      const revToday = payments
+        .filter(p => Number(p.paidAt) >= todayStart.getTime())
+        .reduce((s, p) => s + (Number(p.amount) || 0) * rate, 0);
+      const revYesterday = payments
+        .filter(p => Number(p.paidAt) >= yesterdayStart && Number(p.paidAt) < todayStart.getTime())
+        .reduce((s, p) => s + (Number(p.amount) || 0) * rate, 0);
+      let revPct = 0;
+      if (revYesterday > 0) {
+        revPct = Math.round(((revToday - revYesterday) / revYesterday) * 1000) / 10;
+      } else if (revToday > 0) {
+        revPct = 100;
+      }
+      applyTrend(trendEls[3], revPct, {
+        title: `Rp ${Math.round(revToday).toLocaleString("id-ID")} hari ini vs Rp ${Math.round(revYesterday).toLocaleString("id-ID")} kemarin`,
+      });
+    }
+  } catch (_) {
+    if (trendEls[3]) trendEls[3].textContent = "→ 0%";
+  }
 
   // Avatar-stack melayang dihapus (req user 2026-05-19) — avatar
   // sekarang di DALAM row daftar, pakai profil user masing-masing.
