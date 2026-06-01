@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v681" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v682" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8963,9 +8963,9 @@
               <div class="ve-trim-playhead" id="veTrimPlayhead"></div>
             </div>
             <div class="ve-trim-meta">
-              <span>Mulai: <b id="veStartTime">0:00</b></span>
-              <span>Akhir: <b id="veEndTime">0:00</b></span>
-              <span>Durasi: <b id="veDurationTime">0:00</b></span>
+              <span class="ve-trim-meta-item"><small>Mulai</small><b id="veStartTime">0:00</b></span>
+              <span class="ve-trim-meta-item ve-trim-meta-dur"><small>Durasi</small><b id="veDurationTime">0:00</b></span>
+              <span class="ve-trim-meta-item ve-trim-meta-end"><small>Akhir</small><b id="veEndTime">0:00</b></span>
             </div>
           </div>
         </div>
@@ -8973,16 +8973,16 @@
         <!-- v635 (2026-05-29): TABS layout — no scroll. 3 tab: Frame / Color / Text -->
         <div class="ve-tabs" role="tablist">
           <button type="button" class="ve-tab active" data-ve-tab="frame" role="tab" aria-selected="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8"/><polyline points="4 16 4 12 8 12"/><path d="M12 8v4l3 2"/></svg>
-            Advance
+            <span class="ve-tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8"/><polyline points="4 16 4 12 8 12"/><path d="M12 8v4l3 2"/></svg></span>
+            <span class="ve-tab-label">Advance</span>
           </button>
           <button type="button" class="ve-tab" data-ve-tab="color" role="tab" aria-selected="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9z"/></svg>
-            Color
+            <span class="ve-tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9z"/></svg></span>
+            <span class="ve-tab-label">Color</span>
           </button>
           <button type="button" class="ve-tab" data-ve-tab="text" role="tab" aria-selected="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-            Text Overlay
+            <span class="ve-tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></span>
+            <span class="ve-tab-label">Text Overlay</span>
           </button>
         </div>
 
@@ -8991,12 +8991,12 @@
           <div class="ve-section">
             <div class="ve-ctrl-label">Aspect Ratio / Crop</div>
             <div class="ve-aspect-pills" role="radiogroup" aria-label="Aspect ratio">
-              <button type="button" class="ve-aspect active" data-aspect="original">Original</button>
-              <button type="button" class="ve-aspect" data-aspect="16:9">16:9</button>
-              <button type="button" class="ve-aspect" data-aspect="9:16">9:16</button>
-              <button type="button" class="ve-aspect" data-aspect="1:1">1:1</button>
-              <button type="button" class="ve-aspect" data-aspect="4:5">4:5</button>
-              <button type="button" class="ve-aspect ve-aspect-free" data-aspect="bebas">✂ Bebas</button>
+              <button type="button" class="ve-aspect active" data-aspect="original"><i class="ve-ar-shape" style="--arw:18px;--arh:13px" aria-hidden="true"></i><span>Original</span></button>
+              <button type="button" class="ve-aspect" data-aspect="16:9"><i class="ve-ar-shape" style="--arw:20px;--arh:11px" aria-hidden="true"></i><span>16:9</span></button>
+              <button type="button" class="ve-aspect" data-aspect="9:16"><i class="ve-ar-shape" style="--arw:10px;--arh:18px" aria-hidden="true"></i><span>9:16</span></button>
+              <button type="button" class="ve-aspect" data-aspect="1:1"><i class="ve-ar-shape" style="--arw:15px;--arh:15px" aria-hidden="true"></i><span>1:1</span></button>
+              <button type="button" class="ve-aspect" data-aspect="4:5"><i class="ve-ar-shape" style="--arw:13px;--arh:16px" aria-hidden="true"></i><span>4:5</span></button>
+              <button type="button" class="ve-aspect ve-aspect-free" data-aspect="bebas"><i class="ve-ar-shape ve-ar-free" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></i><span>Bebas</span></button>
             </div>
           </div>
 
@@ -9031,18 +9031,18 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                 </button>
               </div>
-            </div>
-          </div>
-
-          <div class="ve-section">
-            <div class="ve-ctrl-label">Flip / Cermin</div>
-            <div class="ve-flip-icons">
-              <button type="button" class="ve-icon-btn ve-flip" data-flip="h" aria-pressed="false" aria-label="Flip horizontal" title="Flip horizontal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 8l5 4-5 4V8z"/><path d="M21 8l-5 4 5 4V8z"/></svg>
-              </button>
-              <button type="button" class="ve-icon-btn ve-flip" data-flip="v" aria-pressed="false" aria-label="Flip vertikal" title="Flip vertikal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 3l4 5 4-5H8z"/><path d="M8 21l4-5 4 5H8z"/></svg>
-              </button>
+              <!-- v682: Flip / Cermin dipindah ke grid Advance, sejajar dengan slider -->
+              <div class="ve-slider-row ve-slider-row-flip">
+                <span class="ve-slider-label">Flip / Cermin</span>
+                <div class="ve-flip-icons">
+                  <button type="button" class="ve-icon-btn ve-flip" data-flip="h" aria-pressed="false" aria-label="Flip horizontal" title="Flip horizontal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 8l5 4-5 4V8z"/><path d="M21 8l-5 4 5 4V8z"/></svg>
+                  </button>
+                  <button type="button" class="ve-icon-btn ve-flip" data-flip="v" aria-pressed="false" aria-label="Flip vertikal" title="Flip vertikal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 3l4 5 4-5H8z"/><path d="M8 21l4-5 4 5H8z"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -9363,7 +9363,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260601-edit-video-v681" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260601-edit-video-v682" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

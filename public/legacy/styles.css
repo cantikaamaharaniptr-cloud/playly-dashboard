@@ -71457,3 +71457,159 @@ textarea#upDesc.upf-desc-textarea {
   max-height: 480px;
   overflow: auto;
 }
+
+/* ============================================================
+   v682 (2026-06-01): Edit Video editor — review refinements
+   (stage/zoom separation, trim meta, tabs, aspect, flip)
+   ============================================================ */
+
+/* --- 1: separate the black video frame from the inspect/preview bar --- */
+.video-editor-panel .ve-stage {
+  background: var(--surface);
+  padding: 16px 24px 12px;
+  flex-direction: column;
+  gap: 12px;
+}
+.video-editor-panel .ve-stage-viewport {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.28);
+}
+.video-editor-panel .ve-video-wrap { border-radius: 13px; }
+.video-editor-panel .ve-stage-bar {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  gap: 10px;
+}
+.video-editor-panel .ve-stage .ve-preview-btn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 9px;
+}
+
+/* --- 2: trim meta — simpler, tidy 3-up (mini label above value) --- */
+.video-editor-panel .ve-trim-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.video-editor-panel .ve-trim-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  text-align: center;
+}
+.video-editor-panel .ve-trim-meta-item small {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.video-editor-panel .ve-trim-meta-item b {
+  font-size: 14px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.video-editor-panel .ve-trim-meta-dur b { color: var(--primary); }
+
+/* --- 3: tabs — full-width segmented, icon box + label box (not plain/left) --- */
+.video-editor-panel .ve-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 0;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.video-editor-panel .ve-tab {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  margin-bottom: 0;
+  font-size: 12.5px; font-weight: 700;
+}
+.video-editor-panel .ve-tab-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.video-editor-panel .ve-tab-ico svg { width: 15px; height: 15px; }
+.video-editor-panel .ve-tab-label { white-space: nowrap; }
+.video-editor-panel .ve-tab:hover { color: var(--text); border-color: var(--primary); }
+.video-editor-panel .ve-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--cream);
+}
+.video-editor-panel .ve-tab.active .ve-tab-ico {
+  background: rgba(255,255,255,.16);
+  border-color: transparent;
+  color: var(--cream);
+}
+@media (max-width: 560px) {
+  .video-editor-panel .ve-tab-label { display: none; }
+  .video-editor-panel .ve-tab { padding: 9px; }
+}
+
+/* --- 4: aspect ratio — tidy even grid w/ visual ratio shapes --- */
+.video-editor-panel .ve-aspect-pills {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.video-editor-panel .ve-aspect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 58px;
+  padding: 8px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 12px; font-weight: 700;
+}
+.video-editor-panel .ve-ar-shape {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--arw, 16px); height: var(--arh, 14px);
+  border: 1.6px solid currentColor;
+  border-radius: 3px;
+  opacity: .6;
+}
+.video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+.video-editor-panel .ve-aspect.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--cream);
+}
+.video-editor-panel .ve-aspect.active .ve-ar-shape { opacity: 1; }
+.video-editor-panel .ve-ar-free {
+  width: auto; height: auto; border: 0; opacity: .9;
+}
+.video-editor-panel .ve-ar-free svg { width: 18px; height: 18px; }
+
+/* --- 5: flip row inside Advance grid (aligned with the sliders) --- */
+.video-editor-panel .ve-slider-row-flip {
+  grid-template-columns: auto 1fr;
+}
+.video-editor-panel .ve-slider-row-flip .ve-flip-icons {
+  justify-self: start;
+  gap: 8px;
+}

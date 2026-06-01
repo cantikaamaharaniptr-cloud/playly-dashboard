@@ -1036,7 +1036,7 @@
   function injectMainScript() {
     if (document.querySelector('script[data-playly-main]')) return;
     const s = document.createElement("script");
-    s.src = "script.js?v=20260601-edit-video-v681";
+    s.src = "script.js?v=20260601-edit-video-v682";
     s.dataset.playlyMain = "1";
     document.body.appendChild(s);
   }
