@@ -5739,7 +5739,7 @@ const I18N = {
     "pp.eyebrow":                 "CHOOSE YOUR PLAN",
     "pp.title":                   "Unlock Playly Premium",
     "pp.subtitle":                "Start free for 7 days, upgrade anytime. Cancel whenever.",
-    "pp.foot":                    "All plans include daily upload quota (Free 2 GB/day · Premium 10 GB/day), 4K quality, ad-free, priority support.",
+    "pp.foot":                    "All paid plans include 10 GB/day upload quota, 4K quality, ad-free, priority support.",
     "pay.upgrade.title":          "Upgrade to Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Monthly",
     "pay.plan.monthly.desc":      "Auto-renew monthly. Cancel anytime from Settings.",
@@ -7352,7 +7352,7 @@ const I18N = {
     "pp.eyebrow":                 "PILIH PAKET KAMU",
     "pp.title":                   "Buka Playly Premium",
     "pp.subtitle":                "Mulai gratis 7 hari, upgrade kapan saja. Batal kapan pun.",
-    "pp.foot":                    "Semua paket dapat kuota harian (Gratis 2 GB/hari · Premium 10 GB/hari), kualitas 4K, bebas iklan, dukungan prioritas.",
+    "pp.foot":                    "Semua paket berbayar dapat kuota harian 10 GB upload, kualitas 4K, bebas iklan, dukungan prioritas.",
     "pay.upgrade.title":          "Upgrade ke Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Bulanan",
     "pay.plan.monthly.desc":      "Auto-renew bulanan. Batal kapan saja dari Settings.",
@@ -17336,14 +17336,14 @@ const PREMIUM_PLANS = {
     durationMs: 365 * 24 * 60 * 60 * 1000, price: 89.99, priceLabel: "$89.99", suffix: "/tahun",
     badge: "HEMAT 25%", recommended: true,
     icon: "flame", desc: "Nilai terbaik — 12 bulan dengan harga 9 bulan.",
-    features: ["Semua fitur Bulanan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun", "Dukungan kreator prioritas"]
+    features: ["Upload 10 GB/hari", "Kualitas 4K + Bebas iklan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun"]
   },
   lifetime: {
     key: "lifetime", name: "Selamanya", durationLabel: "Selamanya",
     durationMs: null, price: 199, priceLabel: "$199", suffix: "sekali bayar",
     badge: "PALING UNTUNG",
     icon: "crown", desc: "Sekali bayar. Premium selamanya, tanpa perpanjangan.",
-    features: ["Semua fitur Tahunan", "Tanpa batas waktu", "Semua fitur baru termasuk", "Akses Founders Club"]
+    features: ["Upload 10 GB/hari · selamanya", "Kualitas 4K + Bebas iklan", "Semua fitur baru termasuk", "Akses Founders Club"]
   }
 };
 
