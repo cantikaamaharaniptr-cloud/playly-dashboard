@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260528-search-hashtag-pages-v619" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v681" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -4652,7 +4652,7 @@
                 <label for="upDesc">Deskripsi</label>
                 <span class="upf-counter" id="upDescCounter">0/2000</span>
               </div>
-              <textarea id="upDesc" rows="5" maxlength="2000" placeholder="Ceritakan tentang video kamu..."></textarea>
+              <textarea id="upDesc" rows="5" maxlength="2000" placeholder="Ceritakan tentang video kamu..." class="upf-desc-textarea"></textarea>
             </div>
 
             <!-- ====== HASHTAG & KATEGORI — 2-col grid -->
@@ -4867,7 +4867,7 @@
                   <span class="upf-seg-card">
                     <span class="upf-seg-text">
                       <strong>Semua usia</strong>
-                      <small>Aman untuk anak-anak</small>
+                      <small>Untuk semua umur</small>
                     </span>
                   </span>
                 </label>
@@ -8907,16 +8907,47 @@
         </div>
       </div>
       <div class="ve-stage">
-        <div class="ve-video-wrap" id="veVideoWrap">
-          <video id="veVideo" preload="metadata" playsinline></video>
-          <!-- v593 (2026-05-28): vignette overlay + text overlay container -->
-          <div class="ve-vignette" id="veVignette" aria-hidden="true"></div>
-          <div class="ve-text-overlay" id="veTextOverlay" aria-hidden="true"></div>
-          <div class="ve-time-display">
-            <span id="veTimeCurrent">0:00</span>
-            <span class="ve-time-sep">/</span>
-            <span id="veTimeTotal">0:00</span>
+        <!-- v681: inspect-zoom wrapper (CSS scale only — viewing aid, NOT the Zoom effect) -->
+        <div class="ve-stage-viewport" id="veStageViewport">
+          <div class="ve-stage-scale" id="veStageScale">
+            <div class="ve-video-wrap" id="veVideoWrap">
+              <video id="veVideo" preload="metadata" playsinline></video>
+              <!-- v593 (2026-05-28): vignette overlay + text overlay container -->
+              <div class="ve-vignette" id="veVignette" aria-hidden="true"></div>
+              <div class="ve-text-overlay" id="veTextOverlay" aria-hidden="true"></div>
+              <!-- v681: freeform crop rectangle (only shown in "Bebas" mode) -->
+              <div class="ve-crop-overlay" id="veCropOverlay" hidden aria-hidden="true">
+                <div class="ve-crop-box" id="veCropBox">
+                  <span class="ve-crop-handle" data-crop-handle="nw"></span>
+                  <span class="ve-crop-handle" data-crop-handle="ne"></span>
+                  <span class="ve-crop-handle" data-crop-handle="sw"></span>
+                  <span class="ve-crop-handle" data-crop-handle="se"></span>
+                </div>
+              </div>
+              <div class="ve-time-display">
+                <span id="veTimeCurrent">0:00</span>
+                <span class="ve-time-sep">/</span>
+                <span id="veTimeTotal">0:00</span>
+              </div>
+            </div>
           </div>
+        </div>
+        <!-- v681: inspect-zoom control + Putar Preview moved directly below stage (1g) -->
+        <div class="ve-stage-bar">
+          <div class="ve-inspect" role="group" aria-label="Inspect zoom">
+            <button type="button" class="ve-inspect-btn" id="veInspectOut" aria-label="Perkecil tampilan" title="Perkecil tampilan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <span class="ve-inspect-val" id="veInspectVal">100%</span>
+            <button type="button" class="ve-inspect-btn" id="veInspectIn" aria-label="Perbesar tampilan" title="Perbesar tampilan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button type="button" class="ve-inspect-btn ve-inspect-reset" id="veInspectReset" title="Reset tampilan">Reset</button>
+          </div>
+          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+            <span class="ve-preview-label">Putar Preview</span>
+          </button>
         </div>
       </div>
       <div class="ve-controls">
@@ -8942,8 +8973,8 @@
         <!-- v635 (2026-05-29): TABS layout — no scroll. 3 tab: Frame / Color / Text -->
         <div class="ve-tabs" role="tablist">
           <button type="button" class="ve-tab active" data-ve-tab="frame" role="tab" aria-selected="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
-            Frame
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8"/><polyline points="4 16 4 12 8 12"/><path d="M12 8v4l3 2"/></svg>
+            Advance
           </button>
           <button type="button" class="ve-tab" data-ve-tab="color" role="tab" aria-selected="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9z"/></svg>
@@ -8969,9 +9000,9 @@
             </div>
           </div>
 
-          <!-- v635: Zoom diganti Position X + Position Y per request user -->
+          <!-- v681: "Posisi Frame (Pan)" → "Advance" — Position X/Y + Zoom 0–1000% + Rotate fine -->
           <div class="ve-section">
-            <div class="ve-ctrl-label">Posisi Frame (Pan)</div>
+            <div class="ve-ctrl-label">Advance</div>
             <div class="ve-pos-grid">
               <div class="ve-slider-row">
                 <span class="ve-slider-label">Posisi X</span>
@@ -8983,30 +9014,35 @@
                 <input type="range" id="vePosY" min="-50" max="50" value="0" step="1" class="ve-range" aria-label="Posisi vertikal"/>
                 <span class="ve-range-val" id="vePosYVal">0</span>
               </div>
-              <div class="ve-slider-row">
+              <!-- v681: Zoom 0–1000% (default 100%), with scale −/+ step buttons (1a) -->
+              <div class="ve-slider-row ve-slider-row-zoom">
                 <span class="ve-slider-label">Zoom</span>
-                <input type="range" id="veZoom" min="100" max="200" value="100" step="1" class="ve-range" aria-label="Zoom"/>
+                <button type="button" class="ve-zoom-step" id="veZoomDown" aria-label="Perkecil zoom" title="Perkecil −10%">−</button>
+                <input type="range" id="veZoom" min="0" max="1000" value="100" step="10" class="ve-range" aria-label="Zoom"/>
+                <button type="button" class="ve-zoom-step" id="veZoomUp" aria-label="Perbesar zoom" title="Perbesar +10%">+</button>
                 <span class="ve-range-val" id="veZoomVal">100%</span>
+              </div>
+              <!-- v681: Rotate fine slider -180..180 + quick +90° icon (1d) -->
+              <div class="ve-slider-row ve-slider-row-rotate">
+                <span class="ve-slider-label">Rotate</span>
+                <input type="range" id="veRotate" min="-180" max="180" value="0" step="1" class="ve-range" aria-label="Rotasi sudut bebas"/>
+                <span class="ve-range-val" id="veRotateVal">0°</span>
+                <button type="button" class="ve-icon-btn ve-rot-quick" id="veRotQuick" aria-label="Putar +90°" title="Putar +90°">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
               </div>
             </div>
           </div>
 
-          <div class="ve-grid-2">
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Rotasi</div>
-              <div class="ve-rot-pills" role="radiogroup" aria-label="Rotasi video">
-                <button type="button" class="ve-rot active" data-rot="0">0°</button>
-                <button type="button" class="ve-rot" data-rot="90">90°</button>
-                <button type="button" class="ve-rot" data-rot="180">180°</button>
-                <button type="button" class="ve-rot" data-rot="270">270°</button>
-              </div>
-            </div>
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Flip / Cermin</div>
-              <div class="ve-flip-pills">
-                <button type="button" class="ve-flip" data-flip="h" aria-pressed="false">↔ Horizontal</button>
-                <button type="button" class="ve-flip" data-flip="v" aria-pressed="false">↕ Vertikal</button>
-              </div>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Flip / Cermin</div>
+            <div class="ve-flip-icons">
+              <button type="button" class="ve-icon-btn ve-flip" data-flip="h" aria-pressed="false" aria-label="Flip horizontal" title="Flip horizontal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 8l5 4-5 4V8z"/><path d="M21 8l-5 4 5 4V8z"/></svg>
+              </button>
+              <button type="button" class="ve-icon-btn ve-flip" data-flip="v" aria-pressed="false" aria-label="Flip vertikal" title="Flip vertikal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 3l4 5 4-5H8z"/><path d="M8 21l4-5 4 5H8z"/></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -9016,20 +9052,21 @@
           <div class="ve-section">
             <div class="ve-ctrl-label">Color Adjustment</div>
             <div class="ve-filter-grid">
+              <!-- v681: zero-centered (0 = no change). range -100..100, 0 default -->
               <div class="ve-slider-row">
                 <span class="ve-slider-label">Brightness</span>
-                <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
-                <span class="ve-range-val" id="veBrightnessVal">100%</span>
+                <input type="range" id="veBrightness" min="-100" max="100" value="0" class="ve-range" aria-label="Brightness"/>
+                <span class="ve-range-val" id="veBrightnessVal">0</span>
               </div>
               <div class="ve-slider-row">
                 <span class="ve-slider-label">Contrast</span>
-                <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
-                <span class="ve-range-val" id="veContrastVal">100%</span>
+                <input type="range" id="veContrast" min="-100" max="100" value="0" class="ve-range" aria-label="Contrast"/>
+                <span class="ve-range-val" id="veContrastVal">0</span>
               </div>
               <div class="ve-slider-row">
                 <span class="ve-slider-label">Saturation</span>
-                <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
-                <span class="ve-range-val" id="veSaturationVal">100%</span>
+                <input type="range" id="veSaturation" min="-100" max="100" value="0" class="ve-range" aria-label="Saturation"/>
+                <span class="ve-range-val" id="veSaturationVal">0</span>
               </div>
               <div class="ve-slider-row">
                 <span class="ve-slider-label">Temperature</span>
@@ -9068,40 +9105,67 @@
           </div>
           <div class="ve-section">
             <div class="ve-ctrl-label">Posisi Teks</div>
-            <div class="ve-text-pos-pills" role="radiogroup" aria-label="Posisi teks">
-              <button type="button" class="ve-text-pos" data-text-pos="top">⬆ Atas</button>
-              <button type="button" class="ve-text-pos" data-text-pos="center">⊙ Tengah</button>
-              <button type="button" class="ve-text-pos active" data-text-pos="bottom">⬇ Bawah</button>
-            </div>
+            <!-- v681: pills → themed dropdown -->
+            <select id="veTextPos" class="ve-select" aria-label="Posisi teks">
+              <option value="top">Atas</option>
+              <option value="center">Tengah</option>
+              <option value="bottom" selected>Bawah</option>
+            </select>
           </div>
           <div class="ve-grid-2">
             <div class="ve-section">
               <div class="ve-ctrl-label">Ukuran Teks</div>
-              <div class="ve-slider-row">
-                <input type="range" id="veTextSize" min="14" max="48" value="24" step="1" class="ve-range"/>
-                <span class="ve-range-val" id="veTextSizeVal">24px</span>
+              <!-- v681: slider + number input + preset dropdown (all synced) -->
+              <div class="ve-slider-row ve-textsize-row">
+                <input type="range" id="veTextSize" min="10" max="72" value="24" step="1" class="ve-range" aria-label="Ukuran teks"/>
+                <input type="number" id="veTextSizeNum" min="10" max="72" value="24" step="1" class="ve-num-input" aria-label="Ukuran teks (px)"/>
               </div>
+              <select id="veTextSizePreset" class="ve-select ve-textsize-preset" aria-label="Preset ukuran teks">
+                <option value="">Preset…</option>
+                <option value="14">14 px</option>
+                <option value="18">18 px</option>
+                <option value="24">24 px</option>
+                <option value="32">32 px</option>
+                <option value="40">40 px</option>
+                <option value="48">48 px</option>
+              </select>
             </div>
             <div class="ve-section">
               <div class="ve-ctrl-label">Warna Teks</div>
-              <div class="ve-color-row">
-                <input type="color" id="veTextColor" value="#ffffff" class="ve-text-color"/>
-                <span class="ve-color-hex" id="veTextColorHex">#ffffff</span>
+              <!-- v681: themed custom color picker — swatch button + hex input + in-app popup -->
+              <div class="ve-color-picker" id="veColorPicker">
+                <div class="ve-color-row">
+                  <button type="button" class="ve-color-swatch" id="veColorSwatch" aria-label="Pilih warna teks" style="background:#ffffff"></button>
+                  <input type="text" id="veTextColorHex" class="ve-color-hexinput" value="#ffffff" maxlength="7" spellcheck="false" aria-label="Kode warna hex"/>
+                </div>
+                <div class="ve-color-popup" id="veColorPopup" hidden>
+                  <div class="ve-color-sl" id="veColorSL" aria-label="Saturation / Lightness">
+                    <div class="ve-color-sl-white"></div>
+                    <div class="ve-color-sl-black"></div>
+                    <div class="ve-color-sl-thumb" id="veColorSLThumb"></div>
+                  </div>
+                  <input type="range" id="veColorHue" min="0" max="360" value="0" step="1" class="ve-color-hue" aria-label="Hue"/>
+                  <div class="ve-color-palette" id="veColorPalette"></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- PREVIEW -->
+        <!-- v681: "Putar Preview" dipindah ke bawah stage (ve-stage-bar). -->
         <div class="ve-section ve-preview-section">
-          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">▶ Putar Preview</button>
           <small class="ve-hint">Preview memutar dari "Mulai" sampai "Akhir" dengan semua efek aktif.</small>
         </div>
       </div>
-      <!-- v635 (2026-05-29): Action bar — Reset kiri, Batal tengah, Export Video kanan -->
+      <!-- v681: Action bar — Reset + Batal di kiri (ghost), Export Video kanan (primary) -->
       <div class="ve-actions ve-actions-v635">
-        <button type="button" class="btn ghost ve-action-secondary" id="veReset">↺ Reset</button>
-        <button type="button" class="btn ghost ve-action-secondary" data-close>Batal</button>
+        <div class="ve-actions-left">
+          <button type="button" class="btn ghost ve-action-secondary" id="veReset">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            <span>Reset</span>
+          </button>
+          <button type="button" class="btn ghost ve-action-secondary" data-close>Batal</button>
+        </div>
         <button type="button" class="btn primary ve-action-export" id="veApply">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Export Video</span>
@@ -9120,14 +9184,32 @@
           <div class="ve-export-success-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
           </div>
-          <h4>Berhasil!</h4>
-          <p class="muted">Video kamu sudah berhasil di-edit & disimpan.</p>
+          <h4>Berhasil di-edit</h4>
+          <p class="muted">Video kamu sudah berhasil di-edit &amp; disimpan.</p>
           <div class="ve-export-preview-wrap" id="veExportPreviewWrap">
             <video id="veExportPreview" controls playsinline></video>
           </div>
           <div class="ve-export-done-actions">
-            <button type="button" class="btn ghost" id="veExportBackBtn">↺ Edit Lagi</button>
+            <button type="button" class="btn ghost" id="veExportBackBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Edit Lagi</span>
+            </button>
             <button type="button" class="btn primary" id="veExportCloseBtn">✓ Selesai</button>
+          </div>
+        </div>
+        <!-- v681: failure state -->
+        <div class="ve-export-fail" id="veExportFail" hidden>
+          <div class="ve-export-fail-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h4>Gagal di-edit</h4>
+          <p class="muted" id="veExportFailMsg">Terjadi kesalahan saat memproses video. Coba lagi.</p>
+          <div class="ve-export-done-actions">
+            <button type="button" class="btn ghost" id="veExportFailBackBtn">Kembali</button>
+            <button type="button" class="btn primary" id="veExportRetryBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Coba Lagi</span>
+            </button>
           </div>
         </div>
       </div>
@@ -9281,7 +9363,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260528-search-hashtag-pages-v619" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260601-edit-video-v681" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>

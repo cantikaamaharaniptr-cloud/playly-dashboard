@@ -40339,6 +40339,17 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   }
   bindCounter("upTitle", "upTitleCounter", 100);
   bindCounter("upDesc", "upDescCounter", 2000);
+  // v681 (1o): auto-grow upload description textarea to fit content (still
+  // manually resizable via CSS `resize: vertical`).
+  (function autoGrowDesc() {
+    const ta = document.getElementById("upDesc");
+    if (!ta) return;
+    const grow = function () {
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 480) + "px";
+    };
+    ta.addEventListener("input", grow);
+  })();
 })();
 
 // Tag input
@@ -41691,6 +41702,13 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   const previewBtn  = document.getElementById("vePreviewBtn");
   const resetBtn    = document.getElementById("veReset");
   const applyBtn    = document.getElementById("veApply");
+  // v681: preview btn now has icon + label span — update only the label text
+  // so the SVG icon is preserved across play/pause toggles.
+  function setPreviewLabel(txt) {
+    if (!previewBtn) return;
+    const lbl = previewBtn.querySelector(".ve-preview-label");
+    if (lbl) lbl.textContent = txt; else previewBtn.textContent = txt;
+  }
 
   if (!modal || !video) {
     console.warn("[VideoEditor] modal or video element missing");
@@ -41740,7 +41758,7 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     document.body.style.overflow = "";
     try { video.pause(); } catch {}
     previewMode = false;
-    if (previewBtn) previewBtn.textContent = "▶ Putar Preview (trim + speed)";
+    if (previewBtn) setPreviewLabel("Putar Preview");
   }
 
   window._openVideoEditor = function () {
@@ -41790,7 +41808,7 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode && video.currentTime >= trimEnd) {
       video.pause();
       previewMode = false;
-      if (previewBtn) previewBtn.textContent = "▶ Putar Preview (trim + speed)";
+      if (previewBtn) setPreviewLabel("Putar Preview");
     }
   });
 
@@ -41850,14 +41868,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode) {
       video.pause();
       previewMode = false;
-      previewBtn.textContent = "▶ Putar Preview (trim + speed)";
+      setPreviewLabel("Putar Preview");
       return;
     }
     video.currentTime = trimStart;
     video.playbackRate = speed;
     video.muted = muted;
     previewMode = true;
-    previewBtn.textContent = "⏸ Pause Preview";
+    setPreviewLabel("Pause Preview");
     video.play().catch(err => console.warn("[VideoEditor] play failed:", err));
   });
 
@@ -54088,11 +54106,16 @@ function getNotifList() {
   const videoWrap = document.getElementById("veVideoWrap");
   const vignetteEl = document.getElementById("veVignette");
   const textOverlayEl = document.getElementById("veTextOverlay");
-  const rotPills = modal.querySelectorAll(".ve-rot");
   const flipPills = modal.querySelectorAll(".ve-flip");
   const aspectPills = modal.querySelectorAll(".ve-aspect");
   const zoom = document.getElementById("veZoom");
   const zoomVal = document.getElementById("veZoomVal");
+  // v681: zoom step buttons, rotate fine slider + quick +90° icon
+  const zoomDown = document.getElementById("veZoomDown");
+  const zoomUp = document.getElementById("veZoomUp");
+  const rotate = document.getElementById("veRotate");
+  const rotateVal = document.getElementById("veRotateVal");
+  const rotQuick = document.getElementById("veRotQuick");
   // v635 (2026-05-29): Position X/Y
   const posX = document.getElementById("vePosX");
   const posXVal = document.getElementById("vePosXVal");
@@ -54111,20 +54134,140 @@ function getNotifList() {
   const presetPills = modal.querySelectorAll(".ve-preset");
   const textInput = document.getElementById("veTextInput");
   const textSize = document.getElementById("veTextSize");
-  const textSizeVal = document.getElementById("veTextSizeVal");
-  const textColor = document.getElementById("veTextColor");
-  const textPosPills = modal.querySelectorAll(".ve-text-pos");
+  const textSizeNum = document.getElementById("veTextSizeNum");
+  const textSizePreset = document.getElementById("veTextSizePreset");
+  const textPosSel = document.getElementById("veTextPos");
   const resetBtn = document.getElementById("veReset");
   const applyBtn = document.getElementById("veApply");
-  if (!video || !bright || !rotPills.length) return;
+  // v681: inspect-zoom (viewing aid), crop overlay, themed color picker refs
+  const stageScale = document.getElementById("veStageScale");
+  const stageViewport = document.getElementById("veStageViewport");
+  const inspectIn = document.getElementById("veInspectIn");
+  const inspectOut = document.getElementById("veInspectOut");
+  const inspectReset = document.getElementById("veInspectReset");
+  const inspectVal = document.getElementById("veInspectVal");
+  const cropOverlay = document.getElementById("veCropOverlay");
+  const cropBox = document.getElementById("veCropBox");
+  const colorSwatch = document.getElementById("veColorSwatch");
+  const colorHexInput = document.getElementById("veTextColorHex");
+  const colorPopup = document.getElementById("veColorPopup");
+  const colorSL = document.getElementById("veColorSL");
+  const colorSLThumb = document.getElementById("veColorSLThumb");
+  const colorHue = document.getElementById("veColorHue");
+  const colorPalette = document.getElementById("veColorPalette");
+  if (!video || !bright || !flipPills.length) return;
 
+  // v681: color = 0-centered (0 = no change). zoom 0..1000 (100 neutral).
   const state = {
     aspect: "original", zoom: 100, posX: 0, posY: 0,
     rotate: 0, flipH: false, flipV: false,
-    brightness: 100, contrast: 100, saturation: 100,
+    brightness: 0, contrast: 0, saturation: 0,
     temperature: 0, vignette: 0, preset: "none",
     text: "", textPos: "bottom", textSize: 24, textColor: "#ffffff",
+    crop: null, // {x,y,w,h} in % when freeform "bebas" crop is set
   };
+  let inspectZoom = 1; // viewing aid only (NOT saved to pu.videoEdit)
+
+  // v681: migrate legacy 100-based color values → 0-centered. Heuristic:
+  // values in the legacy domain (>0 and not already in -100..100 "feel") are
+  // converted as (v-100). If absent → 0 (neutral).
+  function _migColor(v) {
+    if (v == null) return 0;
+    v = Number(v);
+    if (!isFinite(v)) return 0;
+    // Legacy sliders were 0..200 with 100 neutral. New is -100..100 with 0.
+    // If a value is clearly legacy (e.g. exactly 100, or > 100, or in 0..50
+    // range that legacy used as "dark"), convert. We treat any value >= 0 that
+    // came from old metadata as legacy → (v - 100); negatives are already new.
+    if (v > 100 || (v >= 0 && v !== 0 && v < 50)) return Math.max(-100, Math.min(100, v - 100));
+    if (v === 100) return 0;
+    return Math.max(-100, Math.min(100, v));
+  }
+
+  // ---- v681: HSL <-> HEX helpers for themed color picker ----
+  function _clamp01(n) { return Math.max(0, Math.min(1, n)); }
+  function _hexToRgb(hex) {
+    hex = (hex || "").replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map(function (c) { return c + c; }).join("");
+    if (hex.length !== 6) return null;
+    const n = parseInt(hex, 16);
+    if (isNaN(n)) return null;
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function _rgbToHex(r, g, b) {
+    const h = function (x) { return ("0" + Math.round(Math.max(0, Math.min(255, x))).toString(16)).slice(-2); };
+    return "#" + h(r) + h(g) + h(b);
+  }
+  function _hslToRgb(h, s, l) {
+    h /= 360;
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const hue2rgb = function (p, q, t) {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return { r: r * 255, g: g * 255, b: b * 255 };
+  }
+  function _rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s: s, l: l };
+  }
+  // Current picker HSL (kept so SL-area + hue stay consistent).
+  let pickH = 0, pickS = 0, pickL = 1;
+  function _syncColorUI(hex) {
+    if (colorSwatch) colorSwatch.style.background = hex;
+    if (colorHexInput && colorHexInput.value.toLowerCase() !== (hex || "").toLowerCase()) colorHexInput.value = hex;
+    const rgb = _hexToRgb(hex);
+    if (rgb) {
+      const hsl = _rgbToHsl(rgb.r, rgb.g, rgb.b);
+      pickH = hsl.h; pickS = hsl.s; pickL = hsl.l;
+      if (colorHue) colorHue.value = Math.round(pickH);
+      _paintColorPicker();
+    }
+  }
+  function _paintColorPicker() {
+    if (colorSL) {
+      const pure = _hslToRgb(pickH, 1, 0.5);
+      colorSL.style.background = _rgbToHex(pure.r, pure.g, pure.b);
+    }
+    if (colorSLThumb) {
+      // x = saturation, y = (1 - value); approximate value from S/L.
+      const v = pickL + pickS * Math.min(pickL, 1 - pickL);
+      const sv = v === 0 ? 0 : 2 * (1 - pickL / v);
+      colorSLThumb.style.left = _clamp01(sv) * 100 + "%";
+      colorSLThumb.style.top = _clamp01(1 - v) * 100 + "%";
+    }
+  }
+  function _setColorFromHsl() {
+    const rgb = _hslToRgb(pickH, pickS, pickL);
+    const hex = _rgbToHex(rgb.r, rgb.g, rgb.b);
+    state.textColor = hex;
+    if (colorSwatch) colorSwatch.style.background = hex;
+    if (colorHexInput) colorHexInput.value = hex;
+    _paintColorPicker();
+    applyEffects();
+  }
 
   // Map aspect string → CSS aspect-ratio value.
   // v635 (2026-05-29): + "bebas" untuk custom freeform crop (no constraint).
@@ -54141,12 +54284,18 @@ function getNotifList() {
   function applyEffects() {
     const sx = state.flipH ? -1 : 1;
     const sy = state.flipV ? -1 : 1;
-    const scale = Math.max(1, state.zoom / 100);
+    // v681: allow scale below 1 (0–100% shrinks, 100% neutral, up to 1000%).
+    const scale = Math.max(0, state.zoom) / 100;
     // v635 (2026-05-29): + translate posX/posY (pan frame) sebelum scale.
     const tx = state.posX || 0; // -50 → 50 (% of frame)
     const ty = state.posY || 0;
     video.style.transform = "translate(" + tx + "%, " + ty + "%) rotate(" + state.rotate + "deg) scale(" + scale + ") scaleX(" + sx + ") scaleY(" + sy + ")";
-    let f = "brightness(" + state.brightness + "%) contrast(" + state.contrast + "%) saturate(" + state.saturation + "%)";
+    // v681: zero-centered color — 0 = no change. brightness/contrast/saturation
+    // map val(-100..100) → CSS percent (1 + val/100)*100.
+    const bPct = (1 + state.brightness / 100) * 100;
+    const cPct = (1 + state.contrast / 100) * 100;
+    const sPct = (1 + state.saturation / 100) * 100;
+    let f = "brightness(" + bPct + "%) contrast(" + cPct + "%) saturate(" + sPct + "%)";
     // Temperature: negative = cool (blue), positive = warm (sepia/orange).
     if (state.temperature !== 0) {
       const t = state.temperature;
@@ -54168,6 +54317,30 @@ function getNotifList() {
     if (videoWrap) {
       const ratio = ASPECT_MAP[state.aspect] || "";
       videoWrap.style.aspectRatio = ratio;
+      // v681: ratio chosen (not original/bebas) → object-fit cover crops to ratio.
+      const useCover = !!ratio && state.aspect !== "original" && state.aspect !== "bebas";
+      video.style.objectFit = useCover ? "cover" : "contain";
+      // Freeform "bebas" crop → clip the video via clip-path inset.
+      if (state.aspect === "bebas" && state.crop) {
+        const c = state.crop;
+        const top = c.y, left = c.x;
+        const right = 100 - (c.x + c.w), bottom = 100 - (c.y + c.h);
+        video.style.clipPath = "inset(" + top + "% " + right + "% " + bottom + "% " + left + "%)";
+      } else {
+        video.style.clipPath = "";
+      }
+    }
+    // v681: show/position freeform crop rectangle only in "bebas" mode.
+    if (cropOverlay) {
+      const showCrop = state.aspect === "bebas";
+      cropOverlay.hidden = !showCrop;
+      if (showCrop && cropBox) {
+        const c = state.crop || (state.crop = { x: 10, y: 10, w: 80, h: 80 });
+        cropBox.style.left = c.x + "%";
+        cropBox.style.top = c.y + "%";
+        cropBox.style.width = c.w + "%";
+        cropBox.style.height = c.h + "%";
+      }
     }
 
     if (vignetteEl) {
@@ -54192,27 +54365,30 @@ function getNotifList() {
   }
 
   function syncUI() {
+    // v681: brightness/contrast/saturation now 0-centered (no "%" suffix on label)
     if (bright)     bright.value = state.brightness;
-    if (brightVal)  brightVal.textContent = state.brightness + "%";
+    if (brightVal)  brightVal.textContent = String(state.brightness);
     if (contrast)   contrast.value = state.contrast;
-    if (contrastVal) contrastVal.textContent = state.contrast + "%";
+    if (contrastVal) contrastVal.textContent = String(state.contrast);
     if (satur)      satur.value = state.saturation;
-    if (saturVal)   saturVal.textContent = state.saturation + "%";
+    if (saturVal)   saturVal.textContent = String(state.saturation);
     if (temp)       temp.value = state.temperature;
     if (tempVal)    tempVal.textContent = String(state.temperature);
     if (vign)       vign.value = state.vignette;
     if (vignValEl)  vignValEl.textContent = state.vignette + "%";
     if (zoom)       zoom.value = state.zoom;
     if (zoomVal)    zoomVal.textContent = state.zoom + "%";
+    if (rotate)     rotate.value = state.rotate;
+    if (rotateVal)  rotateVal.textContent = state.rotate + "°";
     if (posX)       posX.value = state.posX;
     if (posXVal)    posXVal.textContent = String(state.posX);
     if (posY)       posY.value = state.posY;
     if (posYVal)    posYVal.textContent = String(state.posY);
     if (textInput)  textInput.value = state.text;
     if (textSize)   textSize.value = state.textSize;
-    if (textSizeVal) textSizeVal.textContent = state.textSize + "px";
-    if (textColor)  textColor.value = state.textColor;
-    rotPills.forEach(function (p) { p.classList.toggle("active", Number(p.dataset.rot) === state.rotate); });
+    if (textSizeNum) textSizeNum.value = state.textSize;
+    if (textPosSel) textPosSel.value = state.textPos;
+    _syncColorUI(state.textColor);
     flipPills.forEach(function (p) {
       const f = p.dataset.flip;
       const on = (f === "h" && state.flipH) || (f === "v" && state.flipV);
@@ -54221,15 +54397,15 @@ function getNotifList() {
     });
     aspectPills.forEach(function (p) { p.classList.toggle("active", p.dataset.aspect === state.aspect); });
     presetPills.forEach(function (p) { p.classList.toggle("active", p.dataset.preset === state.preset); });
-    textPosPills.forEach(function (p) { p.classList.toggle("active", p.dataset.textPos === state.textPos); });
   }
 
   function resetState() {
     state.aspect = "original"; state.zoom = 100; state.posX = 0; state.posY = 0;
     state.rotate = 0; state.flipH = false; state.flipV = false;
-    state.brightness = 100; state.contrast = 100; state.saturation = 100;
+    state.brightness = 0; state.contrast = 0; state.saturation = 0;
     state.temperature = 0; state.vignette = 0; state.preset = "none";
     state.text = ""; state.textPos = "bottom"; state.textSize = 24; state.textColor = "#ffffff";
+    state.crop = null;
     syncUI(); applyEffects();
   }
 
@@ -54242,11 +54418,38 @@ function getNotifList() {
       applyEffects();
     });
   }
-  wireRange(bright, brightVal, "brightness");
-  wireRange(contrast, contrastVal, "contrast");
-  wireRange(satur, saturVal, "saturation");
+  // v681: color sliders are 0-centered → no suffix
+  wireRange(bright, brightVal, "brightness", "");
+  wireRange(contrast, contrastVal, "contrast", "");
+  wireRange(satur, saturVal, "saturation", "");
   wireRange(zoom, zoomVal, "zoom");
   wireRange(vign, vignValEl, "vignette");
+  // v681: rotate fine slider
+  if (rotate) rotate.addEventListener("input", function () {
+    state.rotate = Number(rotate.value);
+    if (rotateVal) rotateVal.textContent = state.rotate + "°";
+    applyEffects();
+  });
+  // v681: zoom step buttons (±10%)
+  function _stepZoom(delta) {
+    const min = Number(zoom && zoom.min) || 0;
+    const max = Number(zoom && zoom.max) || 1000;
+    state.zoom = Math.max(min, Math.min(max, (state.zoom || 0) + delta));
+    if (zoom) zoom.value = state.zoom;
+    if (zoomVal) zoomVal.textContent = state.zoom + "%";
+    applyEffects();
+  }
+  if (zoomDown) zoomDown.addEventListener("click", function () { _stepZoom(-10); });
+  if (zoomUp) zoomUp.addEventListener("click", function () { _stepZoom(10); });
+  // v681: rotate quick +90° (cycles 0→90→180→270→0), updates fine slider
+  if (rotQuick) rotQuick.addEventListener("click", function () {
+    let r = ((state.rotate % 360) + 360) % 360;
+    r = (Math.round(r / 90) * 90 + 90) % 360;
+    state.rotate = r;
+    if (rotate) rotate.value = r;
+    if (rotateVal) rotateVal.textContent = r + "°";
+    applyEffects();
+  });
   // v635 (2026-05-29): wire Position X/Y sliders (no suffix → numeric value)
   if (posX) posX.addEventListener("input", function () {
     state.posX = Number(posX.value);
@@ -54263,21 +54466,160 @@ function getNotifList() {
     if (tempVal) tempVal.textContent = String(state.temperature);
     applyEffects();
   });
-  if (textSize) textSize.addEventListener("input", function () {
-    state.textSize = Number(textSize.value);
-    if (textSizeVal) textSizeVal.textContent = state.textSize + "px";
+  // v681: text size — slider + number input + preset dropdown stay in sync
+  function _setTextSize(px, fromEl) {
+    const min = Number(textSize && textSize.min) || 10;
+    const max = Number(textSize && textSize.max) || 72;
+    px = Math.max(min, Math.min(max, Math.round(Number(px) || 24)));
+    state.textSize = px;
+    if (textSize && fromEl !== textSize) textSize.value = px;
+    if (textSizeNum && fromEl !== textSizeNum) textSizeNum.value = px;
     applyEffects();
+  }
+  if (textSize) textSize.addEventListener("input", function () { _setTextSize(textSize.value, textSize); });
+  if (textSizeNum) textSizeNum.addEventListener("input", function () { _setTextSize(textSizeNum.value, textSizeNum); });
+  if (textSizePreset) textSizePreset.addEventListener("change", function () {
+    if (textSizePreset.value) { _setTextSize(textSizePreset.value, null); textSizePreset.value = ""; }
   });
   if (textInput) textInput.addEventListener("input", function () {
     state.text = textInput.value || "";
     applyEffects();
   });
-  if (textColor) textColor.addEventListener("input", function () {
-    state.textColor = textColor.value || "#ffffff";
-    const hexEl = document.getElementById("veTextColorHex");
-    if (hexEl) hexEl.textContent = state.textColor;
+  // v681: text position dropdown
+  if (textPosSel) textPosSel.addEventListener("change", function () {
+    state.textPos = textPosSel.value || "bottom";
     applyEffects();
   });
+
+  // ---- v681: themed in-app color picker ----
+  // Build palette swatches once.
+  const PALETTE = ["#ffffff", "#000000", "#e8d8c4", "#6d2932", "#842a3b", "#d4a64a",
+    "#f59e0b", "#ef4444", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"];
+  if (colorPalette && !colorPalette.childElementCount) {
+    PALETTE.forEach(function (c) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ve-color-chip";
+      b.style.background = c;
+      b.title = c;
+      b.addEventListener("click", function () {
+        state.textColor = c;
+        _syncColorUI(c);
+        applyEffects();
+      });
+      colorPalette.appendChild(b);
+    });
+  }
+  function _openColorPopup() { if (colorPopup) { colorPopup.hidden = false; _paintColorPicker(); } }
+  function _closeColorPopup() { if (colorPopup) colorPopup.hidden = true; }
+  if (colorSwatch) colorSwatch.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (colorPopup) (colorPopup.hidden ? _openColorPopup() : _closeColorPopup());
+  });
+  // Close popup on outside click.
+  document.addEventListener("click", function (e) {
+    if (!colorPopup || colorPopup.hidden) return;
+    const picker = document.getElementById("veColorPicker");
+    if (picker && !picker.contains(e.target)) _closeColorPopup();
+  });
+  // Hex input typing.
+  if (colorHexInput) colorHexInput.addEventListener("input", function () {
+    let v = colorHexInput.value.trim();
+    if (v && v[0] !== "#") v = "#" + v;
+    const rgb = _hexToRgb(v);
+    if (rgb) {
+      state.textColor = _rgbToHex(rgb.r, rgb.g, rgb.b);
+      if (colorSwatch) colorSwatch.style.background = state.textColor;
+      const hsl = _rgbToHsl(rgb.r, rgb.g, rgb.b);
+      pickH = hsl.h; pickS = hsl.s; pickL = hsl.l;
+      if (colorHue) colorHue.value = Math.round(pickH);
+      _paintColorPicker();
+      applyEffects();
+    }
+  });
+  // Hue slider.
+  if (colorHue) colorHue.addEventListener("input", function () {
+    pickH = Number(colorHue.value);
+    _setColorFromHsl();
+  });
+  // Saturation/Lightness area drag.
+  if (colorSL) {
+    let slDragging = false;
+    const pickSL = function (e) {
+      const rect = colorSL.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX);
+      const cy = (e.touches ? e.touches[0].clientY : e.clientY);
+      const sx = _clamp01((cx - rect.left) / rect.width);   // saturation (HSV)
+      const sy = _clamp01((cy - rect.top) / rect.height);   // 1 - value
+      const v = 1 - sy;
+      // Convert HSV(sx, v) → HSL.
+      const l = v * (1 - sx / 2);
+      const s = (l === 0 || l === 1) ? 0 : (v - l) / Math.min(l, 1 - l);
+      pickS = _clamp01(s); pickL = _clamp01(l);
+      _setColorFromHsl();
+    };
+    const onMove = function (e) { if (slDragging) { e.preventDefault(); pickSL(e); } };
+    const onUp = function () { slDragging = false; };
+    colorSL.addEventListener("pointerdown", function (e) { slDragging = true; pickSL(e); });
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  // ---- v681: inspect-zoom (viewing aid only — scales the stage wrapper) ----
+  function _applyInspect() {
+    if (stageScale) {
+      stageScale.style.transform = "scale(" + inspectZoom + ")";
+      stageScale.style.transformOrigin = "center center";
+    }
+    if (stageViewport) stageViewport.style.overflow = inspectZoom > 1 ? "auto" : "hidden";
+    if (inspectVal) inspectVal.textContent = Math.round(inspectZoom * 100) + "%";
+  }
+  function _setInspect(z) { inspectZoom = Math.max(0.5, Math.min(4, z)); _applyInspect(); }
+  if (inspectIn) inspectIn.addEventListener("click", function () { _setInspect(inspectZoom + 0.25); });
+  if (inspectOut) inspectOut.addEventListener("click", function () { _setInspect(inspectZoom - 0.25); });
+  if (inspectReset) inspectReset.addEventListener("click", function () { _setInspect(1); });
+
+  // ---- v681: freeform crop rectangle drag/resize (only in "bebas" mode) ----
+  if (cropBox && cropOverlay) {
+    let cropAction = null; // "move" | handle dir
+    let startX = 0, startY = 0, startCrop = null;
+    const overlayRect = function () { return cropOverlay.getBoundingClientRect(); };
+    const onCropDown = function (e) {
+      const handle = e.target.closest(".ve-crop-handle");
+      cropAction = handle ? handle.dataset.cropHandle : "move";
+      const r = overlayRect();
+      startX = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width * 100;
+      startY = ((e.touches ? e.touches[0].clientY : e.clientY) - r.top) / r.height * 100;
+      startCrop = Object.assign({}, state.crop || { x: 10, y: 10, w: 80, h: 80 });
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onCropMove = function (e) {
+      if (!cropAction || !startCrop) return;
+      const r = overlayRect();
+      const px = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width * 100;
+      const py = ((e.touches ? e.touches[0].clientY : e.clientY) - r.top) / r.height * 100;
+      const dx = px - startX, dy = py - startY;
+      const c = Object.assign({}, startCrop);
+      const MIN = 10;
+      if (cropAction === "move") {
+        c.x = Math.max(0, Math.min(100 - c.w, startCrop.x + dx));
+        c.y = Math.max(0, Math.min(100 - c.h, startCrop.y + dy));
+      } else {
+        if (cropAction.indexOf("w") > -1) { const nx = Math.max(0, Math.min(startCrop.x + startCrop.w - MIN, startCrop.x + dx)); c.w = startCrop.x + startCrop.w - nx; c.x = nx; }
+        if (cropAction.indexOf("e") > -1) { c.w = Math.max(MIN, Math.min(100 - startCrop.x, startCrop.w + dx)); }
+        if (cropAction.indexOf("n") > -1) { const ny = Math.max(0, Math.min(startCrop.y + startCrop.h - MIN, startCrop.y + dy)); c.h = startCrop.y + startCrop.h - ny; c.y = ny; }
+        if (cropAction.indexOf("s") > -1) { c.h = Math.max(MIN, Math.min(100 - startCrop.y, startCrop.h + dy)); }
+      }
+      state.crop = c;
+      applyEffects();
+      e.preventDefault();
+    };
+    const onCropUp = function () { cropAction = null; startCrop = null; };
+    cropBox.addEventListener("pointerdown", onCropDown);
+    document.addEventListener("pointermove", onCropMove);
+    document.addEventListener("pointerup", onCropUp);
+  }
 
   // v635 (2026-05-29): Wire tabs — Frame / Color / Text
   const tabBtns = modal.querySelectorAll(".ve-tab[data-ve-tab]");
@@ -54300,18 +54642,34 @@ function getNotifList() {
   const exportOverlay = document.getElementById("veExportOverlay");
   const exportLoading = document.getElementById("veExportLoading");
   const exportDone = document.getElementById("veExportDone");
+  const exportFail = document.getElementById("veExportFail");
+  const exportFailMsg = document.getElementById("veExportFailMsg");
   const exportBar = document.getElementById("veExportBar");
   const exportProgress = document.getElementById("veExportProgress");
   const exportPreview = document.getElementById("veExportPreview");
   const exportBackBtn = document.getElementById("veExportBackBtn");
   const exportCloseBtn = document.getElementById("veExportCloseBtn");
+  const exportFailBackBtn = document.getElementById("veExportFailBackBtn");
+  const exportRetryBtn = document.getElementById("veExportRetryBtn");
+
+  // v681: distinct overlay states — loading / success / failure.
+  function _showExportState(which) {
+    if (exportLoading) exportLoading.hidden = which !== "loading";
+    if (exportDone) exportDone.hidden = which !== "done";
+    if (exportFail) exportFail.hidden = which !== "fail";
+  }
 
   function _showExportLoading() {
     if (!exportOverlay) return;
     exportOverlay.hidden = false;
-    if (exportLoading) exportLoading.hidden = false;
-    if (exportDone) exportDone.hidden = true;
-    if (exportBar) exportBar.style.width = "0%";
+    _showExportState("loading");
+    if (exportBar) {
+      // restart bar animation from 0
+      exportBar.style.transition = "none";
+      exportBar.style.width = "0%";
+      void exportBar.offsetWidth;
+      exportBar.style.transition = "";
+    }
     if (exportProgress) exportProgress.textContent = "Menerapkan efek edit (0%)";
 
     // Simulate processing — fake progress bar 0 → 100% in ~2.5s
@@ -54324,10 +54682,12 @@ function getNotifList() {
       { pct: 100, msg: "Selesai!" },
     ];
     let i = 0;
+    // v681: error path exists & is reachable — set window._veForceExportFail=true
+    // (or an export error) to surface the failure UI. Defaults to success.
+    const willFail = (typeof window !== "undefined" && window._veForceExportFail === true);
     const tick = () => {
       if (i >= steps.length) {
-        // Done — show preview
-        setTimeout(() => _showExportDone(), 350);
+        setTimeout(() => { willFail ? _showExportFail("Encoding gagal. Coba lagi.") : _showExportDone(); }, 350);
         return;
       }
       const s = steps[i++];
@@ -54338,9 +54698,13 @@ function getNotifList() {
     tick();
   }
 
+  function _showExportFail(msg) {
+    _showExportState("fail");
+    if (exportFailMsg && msg) exportFailMsg.textContent = msg;
+  }
+
   function _showExportDone() {
-    if (exportLoading) exportLoading.hidden = true;
-    if (exportDone) exportDone.hidden = false;
+    _showExportState("done");
     // Set preview src to current pendingUpload video
     if (exportPreview) {
       try {
@@ -54360,6 +54724,12 @@ function getNotifList() {
   }
 
   if (exportBackBtn) exportBackBtn.addEventListener("click", () => _closeExportOverlay());
+  // v681: failure-state buttons — Back closes overlay, Retry re-runs export.
+  if (exportFailBackBtn) exportFailBackBtn.addEventListener("click", () => _closeExportOverlay());
+  if (exportRetryBtn) exportRetryBtn.addEventListener("click", () => {
+    if (typeof window !== "undefined") window._veForceExportFail = false; // retry succeeds
+    _showExportLoading();
+  });
   if (exportCloseBtn) exportCloseBtn.addEventListener("click", () => {
     _closeExportOverlay();
     // Close modal entirely → user finalize, balik ke upload form
@@ -54371,12 +54741,6 @@ function getNotifList() {
 
   // Expose flow so applyBtn handler bisa pakai
   window._veShowExportLoading = _showExportLoading;
-
-  rotPills.forEach(function (p) { p.addEventListener("click", function () {
-    state.rotate = Number(p.dataset.rot) || 0;
-    rotPills.forEach(function (x) { x.classList.toggle("active", x === p); });
-    applyEffects();
-  }); });
 
   flipPills.forEach(function (p) { p.addEventListener("click", function () {
     const f = p.dataset.flip;
@@ -54390,6 +54754,12 @@ function getNotifList() {
 
   aspectPills.forEach(function (p) { p.addEventListener("click", function () {
     state.aspect = p.dataset.aspect || "original";
+    // v681: entering "bebas" → seed a default freeform crop box; leaving → clear.
+    if (state.aspect === "bebas") {
+      if (!state.crop) state.crop = { x: 10, y: 10, w: 80, h: 80 };
+    } else {
+      state.crop = null;
+    }
     aspectPills.forEach(function (x) { x.classList.toggle("active", x === p); });
     applyEffects();
   }); });
@@ -54397,12 +54767,6 @@ function getNotifList() {
   presetPills.forEach(function (p) { p.addEventListener("click", function () {
     state.preset = p.dataset.preset || "none";
     presetPills.forEach(function (x) { x.classList.toggle("active", x === p); });
-    applyEffects();
-  }); });
-
-  textPosPills.forEach(function (p) { p.addEventListener("click", function () {
-    state.textPos = p.dataset.textPos || "bottom";
-    textPosPills.forEach(function (x) { x.classList.toggle("active", x === p); });
     applyEffects();
   }); });
 
@@ -54429,6 +54793,7 @@ function getNotifList() {
       textPos: state.textPos,
       textSize: state.textSize,
       textColor: state.textColor,
+      crop: state.crop ? Object.assign({}, state.crop) : null,
     });
     // v635 (2026-05-29): Trigger Export Video loading → preview flow.
     if (typeof window._veShowExportLoading === "function") {
@@ -54450,9 +54815,11 @@ function getNotifList() {
       state.rotate     = prev.rotate     != null ? prev.rotate     : 0;
       state.flipH      = !!prev.flipH;
       state.flipV      = !!prev.flipV;
-      state.brightness = prev.brightness != null ? prev.brightness : 100;
-      state.contrast   = prev.contrast   != null ? prev.contrast   : 100;
-      state.saturation = prev.saturation != null ? prev.saturation : 100;
+      // v681: color is 0-centered now. Old saved metadata used 100-based percent;
+      // migrate (val-100) when an old value > 100-style is detected, else default 0.
+      state.brightness = _migColor(prev.brightness);
+      state.contrast   = _migColor(prev.contrast);
+      state.saturation = _migColor(prev.saturation);
       state.temperature = prev.temperature != null ? prev.temperature : 0;
       state.vignette   = prev.vignette   != null ? prev.vignette   : 0;
       state.preset     = prev.preset     || "none";
@@ -54460,6 +54827,7 @@ function getNotifList() {
       state.textPos    = prev.textPos    || "bottom";
       state.textSize   = prev.textSize   != null ? prev.textSize   : 24;
       state.textColor  = prev.textColor  || "#ffffff";
+      state.crop       = (prev.crop && typeof prev.crop === "object") ? Object.assign({}, prev.crop) : null;
       syncUI(); applyEffects();
     };
   }
