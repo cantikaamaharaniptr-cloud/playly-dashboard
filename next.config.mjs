@@ -4,32 +4,17 @@ const nextConfig = {
   poweredByHeader: false,
   trailingSlash: false,
 
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // Reverted 2026-05-21: user prefer legacy landing (auth-mode + landing
-        // sections sudah di-setup dengan visual + animasi yang nggak ke-rebuild
-        // di Next.js version). React landing & admin pages di app/page.tsx +
-        // app/admin/page.tsx jadi dead code sementara — sengaja dibiarkan untuk
-        // future restore atau referensi.
-        //
-        // Next.js dashboard tetap accessible:
-        //   /dashboard, /dashboard/*  (Supabase auth-gated)
-        //   /auth/reset               (forgot password destination)
-        //   /api/translate-subtitle   (DeepL proxy)
-        { source: '/', destination: '/legacy/index.html' },
-        { source: '/login', destination: '/legacy/index.html' },
-        { source: '/signup', destination: '/legacy/index.html' },
-        { source: '/admin', destination: '/legacy/index.html' },
-        { source: '/watch', destination: '/legacy/watch.html' },
-        { source: '/embed', destination: '/legacy/embed.html' },
-        { source: '/id/:videoId/embed', destination: '/legacy/embed.html?v=:videoId' },
-        { source: '/id/:videoId', destination: '/legacy/watch.html?v=:videoId' },
-        { source: '/id/:username/:videoId/embed', destination: '/legacy/embed.html?v=:videoId&u=:username' },
-        { source: '/id/:username/:videoId', destination: '/legacy/watch.html?v=:videoId&u=:username' },
-      ],
-    };
-  },
+  // 2026-06-01: the legacy HTML bundle (public/legacy/*.html) was converted to
+  // native Next.js routes — there are no .html files anymore, so the old
+  // beforeFiles rewrites to /legacy/*.html are gone. Routes now served by the
+  // App Router:
+  //   /  /login  /signup  /admin          → app/(site)         (styles.css + script.js)
+  //   /watch  /embed                        → app/(player)
+  //   /id/:videoId  /id/:user/:videoId      → app/(player)/id/[...slug]  (watch)
+  //   /id/:videoId/embed  /id/:u/:v/embed   → app/(player)/id/[...slug]  (embed)
+  // The legacy JS/CSS assets (script.js, styles.css, picons.js, particles-bg.js,
+  // cloud-sync.js, supabase-auth-bridge.js, *.css) still live in public/legacy/
+  // and are referenced verbatim by the pages above.
 
   async headers() {
     return [
@@ -38,12 +23,6 @@ const nextConfig = {
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        ],
-      },
-      {
-        source: '/legacy/:path*.html',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
         ],
       },
       {

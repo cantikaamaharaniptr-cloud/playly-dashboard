@@ -1,0 +1,17 @@
+// Public watch page (was watch.html), as a Server Component. Markup verbatim;
+// page CSS via watch.css; the standalone player logic via watch-init.js (moved
+// verbatim from the old inline <script>). supabase-js loaded from CDN first, in
+// the original order.
+import { WATCH_MARKUP } from './watch-markup';
+
+export default function WatchPage() {
+  return (
+    <>
+      <link rel="stylesheet" href="/legacy/watch.css" precedence="high" />
+      <link rel="preconnect" href="https://urfkqcdwcvyzctbtbpwv.supabase.co" crossOrigin="" />
+      <div dangerouslySetInnerHTML={{ __html: WATCH_MARKUP }} />
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" />
+      <script src="/legacy/watch-init.js" />
+    </>
+  );
+}

@@ -47073,7 +47073,7 @@ function setupCustomPlayer() {
   // Expand → open video in public watch tab
   expandBtn?.addEventListener("click", () => {
     const vid = state?.currentVideo;
-    if (vid) window.open(`./watch.html?v=${vid}`, "_blank", "noopener");
+    if (vid) window.open(`/watch?v=${vid}`, "_blank", "noopener");
   });
 
   // ── Zoom / Fullscreen (tombol baru di kanan bawah) ──
