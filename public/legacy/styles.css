@@ -71968,3 +71968,35 @@ textarea#upDesc.upf-desc-textarea {
 .video-editor-panel .ve-adv-row-flip .ve-flip-icons { gap: 10px; }
 .video-editor-panel .ve-adv-row-flip .ve-icon-btn { width: 42px; height: 32px; border-radius: 8px; }
 .video-editor-panel .ve-adv-row-flip .ve-icon-btn svg { width: 18px; height: 18px; }
+
+
+/* ============================================================
+   v691 (2026-06-01): aspect chips — uniform color, only selected
+   differs, no focus ring
+   ============================================================ */
+.video-editor-panel .ve-aspect,
+.video-editor-panel .ve-aspect.ve-aspect-free {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.video-editor-panel .ve-aspect.ve-aspect-free .ve-ar-free { color: var(--text); }
+
+/* selected (only the chosen chip differs) */
+.video-editor-panel .ve-aspect.active,
+.video-editor-panel .ve-aspect.ve-aspect-free.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--cream);
+}
+.video-editor-panel .ve-aspect.active .ve-ar-shape,
+.video-editor-panel .ve-aspect.ve-aspect-free.active .ve-ar-free { color: var(--cream); }
+
+/* no focus ring/outline on the chips */
+.video-editor-panel .ve-aspect:focus,
+.video-editor-panel .ve-aspect:focus-visible,
+.video-editor-panel .ve-aspect:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
