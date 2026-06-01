@@ -54467,56 +54467,39 @@ function getNotifList() {
     if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   });
 
-  // v684: 2D position pad + circular rotate dial drive the hidden range inputs
-  const posPad = document.getElementById("vePosPad");
-  const posDot = document.getElementById("vePosDot");
-  const rotDial = document.getElementById("veRotDial");
-  const rotPointer = document.getElementById("veRotPointer");
-  const rotResetBtn = document.getElementById("veRotReset");
+  // v689: Advance rows — slider <-> editable number <-> ±buttons (replaces pad/dial)
   function _syncAdvanceVisual() {
-    if (posDot) {
-      posDot.style.left = (state.posX + 50) + "%";
-      posDot.style.top = (state.posY + 50) + "%";
+    const map = { vePosXNum: state.posX, vePosYNum: state.posY, veZoomNum: state.zoom, veRotateNum: state.rotate };
+    for (const id in map) {
+      const el = document.getElementById(id);
+      if (el && document.activeElement !== el) el.value = map[id];
     }
-    if (rotPointer) rotPointer.style.transform = "rotate(" + state.rotate + "deg)";
-    if (rotDial) rotDial.setAttribute("aria-valuenow", String(state.rotate));
   }
-  function _evXY(e) { const t = e.touches && e.touches[0]; return { x: t ? t.clientX : e.clientX, y: t ? t.clientY : e.clientY }; }
-  function _setPosFromEvent(e) {
-    const r = posPad.getBoundingClientRect(); const p = _evXY(e);
-    let nx = Math.round(((p.x - r.left) / r.width) * 100 - 50);
-    let ny = Math.round(((p.y - r.top) / r.height) * 100 - 50);
-    nx = Math.max(-50, Math.min(50, nx)); ny = Math.max(-50, Math.min(50, ny));
-    if (posX) { posX.value = nx; posX.dispatchEvent(new Event("input", { bubbles: true })); }
-    if (posY) { posY.value = ny; posY.dispatchEvent(new Event("input", { bubbles: true })); }
-    _syncAdvanceVisual();
-  }
-  function _setRotFromEvent(e) {
-    const r = rotDial.getBoundingClientRect(); const p = _evXY(e);
-    const dx = p.x - (r.left + r.width / 2), dy = p.y - (r.top + r.height / 2);
-    let ang = Math.round(Math.atan2(dx, -dy) * 180 / Math.PI);
-    if (ang > 180) ang -= 360; if (ang < -180) ang += 360;
-    if (rotate) { rotate.value = ang; rotate.dispatchEvent(new Event("input", { bubbles: true })); }
-    _syncAdvanceVisual();
-  }
-  function _dragify(el, handler) {
-    if (!el) return;
-    let on = false;
-    const down = function (e) { on = true; handler(e); e.preventDefault(); };
-    const move = function (e) { if (on) handler(e); };
-    const up = function () { on = false; };
-    el.addEventListener("mousedown", down);
-    el.addEventListener("touchstart", down, { passive: false });
-    window.addEventListener("mousemove", move);
-    window.addEventListener("touchmove", move, { passive: false });
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchend", up);
-  }
-  _dragify(posPad, _setPosFromEvent);
-  _dragify(rotDial, _setRotFromEvent);
-  if (rotResetBtn) rotResetBtn.addEventListener("click", function () {
-    if (rotate) { rotate.value = 0; rotate.dispatchEvent(new Event("input", { bubbles: true })); }
-    _syncAdvanceVisual();
+  [["vePosX", "vePosXNum"], ["vePosY", "vePosYNum"], ["veZoom", "veZoomNum"], ["veRotate", "veRotateNum"]].forEach(function (pair) {
+    const rng = document.getElementById(pair[0]);
+    const num = document.getElementById(pair[1]);
+    if (!rng) return;
+    rng.addEventListener("input", function () { if (num && document.activeElement !== num) num.value = rng.value; });
+    if (num) {
+      num.value = rng.value;
+      const apply = function () {
+        if (num.value === "" || isNaN(Number(num.value))) return;
+        const v = Math.max(Number(rng.min), Math.min(Number(rng.max), Math.round(Number(num.value))));
+        rng.value = v;
+        rng.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      num.addEventListener("input", apply);
+      num.addEventListener("change", function () { apply(); num.value = rng.value; });
+    }
+  });
+  modal.querySelectorAll(".ve-step[data-adj]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const rng = document.getElementById(btn.dataset.adj);
+      if (!rng) return;
+      const v = Math.max(Number(rng.min), Math.min(Number(rng.max), Number(rng.value) + Number(btn.dataset.delta)));
+      rng.value = v;
+      rng.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   });
   _syncAdvanceVisual();
   if (temp) temp.addEventListener("input", function () {

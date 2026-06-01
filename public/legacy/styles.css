@@ -71890,3 +71890,45 @@ textarea#upDesc.upf-desc-textarea {
 .video-editor-panel .ve-mini-btn { height: 30px; padding: 0 10px; }
 .video-editor-panel .ve-adv-readout { gap: 14px; font-size: 11px; }
 .video-editor-panel .ve-adv-title { font-size: 10.5px; }
+
+
+/* ============================================================
+   v689 (2026-06-01): Advance as clean rows — label + ±buttons +
+   slider + editable number (replaces 2D pad + dial)
+   ============================================================ */
+.video-editor-panel .ve-adv-list { display: flex; flex-direction: column; gap: 10px; }
+.video-editor-panel .ve-adv-row {
+  display: grid;
+  grid-template-columns: 66px 28px 1fr 28px 60px;
+  align-items: center;
+  gap: 8px;
+}
+.video-editor-panel .ve-adv-row .ve-slider-label {
+  font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap;
+}
+.video-editor-panel .ve-step {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; font-size: 16px; font-weight: 700; line-height: 1;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.video-editor-panel .ve-step:hover { background: var(--surface-2); border-color: var(--primary); }
+.video-editor-panel .ve-num-wrap {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; padding: 0 7px; height: 28px;
+}
+.video-editor-panel .ve-num {
+  width: 100%; min-width: 0; border: 0; background: transparent;
+  color: var(--text); font-size: 12px; font-weight: 700;
+  text-align: right; font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield; appearance: textfield; outline: none;
+}
+.video-editor-panel .ve-num::-webkit-outer-spin-button,
+.video-editor-panel .ve-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.video-editor-panel .ve-num-unit { font-size: 11px; color: var(--muted); font-weight: 700; }
+/* flip row */
+.video-editor-panel .ve-adv-row-flip { grid-template-columns: 66px 1fr; }
+.video-editor-panel .ve-adv-row-flip .ve-flip-icons { display: flex; gap: 8px; }
