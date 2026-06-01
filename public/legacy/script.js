@@ -19062,20 +19062,18 @@ const _adminPqState = {
   dateFrom: null,                // epoch ms
   dateTo: null,                  // epoch ms
   plan: "all",                   // "all" | "monthly" | "yearly" | "lifetime"
-  type: "all",                   // "all" | "real" | "grant"
   sort: "newest",                // "newest" | "oldest" | "amount_desc" | "amount_asc"
   lastSeenPendingCount: null,    // buat detect payment baru → toast notif
 };
 function _adminPqHasAnyFilter() {
   const s = _adminPqState;
-  return !!(s.search || s.dateFrom || s.dateTo || s.plan !== "all" || s.type !== "all");
+  return !!(s.search || s.dateFrom || s.dateTo || s.plan !== "all");
 }
 function _adminPqResetFilters() {
   _adminPqState.search = "";
   _adminPqState.dateFrom = null;
   _adminPqState.dateTo = null;
   _adminPqState.plan = "all";
-  _adminPqState.type = "all";
   _adminPqState.sort = "newest";
   // Sync UI elements
   const s = (id) => document.getElementById(id);
@@ -19083,7 +19081,6 @@ function _adminPqResetFilters() {
   if (s("pqDateFrom")) s("pqDateFrom").value = "";
   if (s("pqDateTo")) s("pqDateTo").value = "";
   if (s("pqFilterPlan")) s("pqFilterPlan").value = "all";
-  if (s("pqFilterType")) s("pqFilterType").value = "all";
   if (s("pqSort")) s("pqSort").value = "newest";
   if (s("pqDateReset")) s("pqDateReset").hidden = true;
   renderAdminPremiumQueue();
@@ -19107,7 +19104,12 @@ function _pqFmtRpFull(n) {
 function renderAdminPremiumQueue() {
   const list = document.getElementById("premiumQueueList");
   if (!list) return;
-  const all = getPremiumPayments();
+  // Exclude Admin Grant ($0 / method Admin Grant) — halaman ini cuma real payment.
+  // Grant tetep di-store di getPremiumPayments() buat sumber audit; cuma di-hide di UI ini.
+  const all = getPremiumPayments().filter(p => {
+    const amt = Number(p.amount) || 0;
+    return amt > 0 && p.method !== "Admin Grant";
+  });
   const pending  = all.filter(p => p.status === "pending");
   const approved = all.filter(p => p.status === "approved");
   const rejected = all.filter(p => p.status === "rejected");
@@ -19185,11 +19187,6 @@ function renderAdminPremiumQueue() {
   if (f.dateFrom !== null) shown = shown.filter(p => Number(p.paidAt) >= f.dateFrom);
   if (f.dateTo !== null) shown = shown.filter(p => Number(p.paidAt) <= f.dateTo);
   if (f.plan !== "all") shown = shown.filter(p => p.plan === f.plan);
-  if (f.type === "real") {
-    shown = shown.filter(p => (Number(p.amount) || 0) > 0 && p.method !== "Admin Grant");
-  } else if (f.type === "grant") {
-    shown = shown.filter(p => (Number(p.amount) || 0) === 0 || p.method === "Admin Grant");
-  }
   // Sort
   if (f.sort === "newest") shown = shown.slice().sort((a, b) => Number(b.paidAt) - Number(a.paidAt));
   else if (f.sort === "oldest") shown = shown.slice().sort((a, b) => Number(a.paidAt) - Number(b.paidAt));
@@ -19213,7 +19210,6 @@ function renderAdminPremiumQueue() {
         else parts.push(`tanggal sampai: ${fmtDt(f.dateTo)}`);
       }
       if (f.plan !== "all") parts.push(`paket: ${f.plan}`);
-      if (f.type !== "all") parts.push(`tipe: ${f.type === "real" ? "Bayar Real" : "Admin Grant"}`);
       bannerText.textContent = `${shown.length} hasil — Filter: ${parts.join(" · ")}`;
       banner.hidden = false;
     } else {
@@ -19247,7 +19243,6 @@ function renderAdminPremiumQueue() {
       : p.plan === "lifetime" ? "💎 Premium Selamanya"
       : `💎 ${p.plan || "Premium"}`;
     const amountUsd = Number(p.amount) || 0;
-    const isGrant = amountUsd === 0 || p.method === "Admin Grant";
     const amountIdr = _pqAmountIdr(p);
     const statusBadge =
       p.status === "approved" ? '<span class="pq-status pq-status-ok">✓ Disetujui</span>' :
@@ -19285,7 +19280,6 @@ function renderAdminPremiumQueue() {
         <div class="pq-v2-mid">
           <span class="pq-v2-plan">${planLabel}</span>
           <span class="pq-v2-amount">$${amountUsd.toFixed(2)}<span class="pq-v2-amount-idr">≈ ${_pqFmtRpFull(amountIdr)}</span></span>
-          ${isGrant ? '<span class="pq-v2-grant-badge">🎁 Admin Grant</span>' : ''}
         </div>
         <div class="pq-v2-meta">
           <span class="pq-v2-meta-item"><span class="pq-v2-orderid">${escapeHtml(orderDisplay)}</span></span>
@@ -19380,9 +19374,6 @@ function renderAdminPremiumQueue() {
       renderAdminPremiumQueue();
     } else if (t.id === "pqFilterPlan") {
       _adminPqState.plan = t.value;
-      renderAdminPremiumQueue();
-    } else if (t.id === "pqFilterType") {
-      _adminPqState.type = t.value;
       renderAdminPremiumQueue();
     } else if (t.id === "pqSort") {
       _adminPqState.sort = t.value;
