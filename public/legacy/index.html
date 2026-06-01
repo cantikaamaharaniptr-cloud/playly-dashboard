@@ -3149,33 +3149,91 @@
             <p class="muted">Approve atau tolak pembayaran premium. Setiap user mendapat kode unik setelah membayar — verifikasi di sini untuk mengaktifkan tier Premium.</p>
           </div>
         </div>
+        <!-- KPI dengan Rp total (2026-05-30) + SLA avg approval time -->
         <div class="premium-queue-stats">
-          <div class="pq-stat">
+          <div class="pq-stat pq-stat-pending">
             <span class="pq-stat-icon">⏳</span>
-            <div><b id="pqStatPending">0</b><small>Menunggu</small></div>
+            <div>
+              <b id="pqStatPending">0</b>
+              <small>Menunggu</small>
+              <span class="pq-stat-sub" id="pqStatPendingSub">Rp 0</span>
+            </div>
           </div>
-          <div class="pq-stat">
+          <div class="pq-stat pq-stat-approved">
             <span class="pq-stat-icon">✅</span>
-            <div><b id="pqStatApproved">0</b><small>Disetujui</small></div>
+            <div>
+              <b id="pqStatApproved">0</b>
+              <small>Disetujui</small>
+              <span class="pq-stat-sub" id="pqStatApprovedSub">Rp 0</span>
+            </div>
           </div>
-          <div class="pq-stat">
+          <div class="pq-stat pq-stat-rejected">
             <span class="pq-stat-icon">❌</span>
-            <div><b id="pqStatRejected">0</b><small>Ditolak</small></div>
+            <div>
+              <b id="pqStatRejected">0</b>
+              <small>Ditolak</small>
+              <span class="pq-stat-sub" id="pqStatRejectedSub">Rp 0</span>
+            </div>
+          </div>
+          <div class="pq-stat pq-stat-sla">
+            <span class="pq-stat-icon">⏱</span>
+            <div>
+              <b id="pqStatSla">—</b>
+              <small>Avg Approval</small>
+              <span class="pq-stat-sub" id="pqStatSlaSub">target &lt; 1 jam</span>
+            </div>
           </div>
         </div>
+
+        <!-- Filter tabs (dengan counter angka) -->
         <div class="premium-queue-toolbar">
           <div class="pq-tabs">
-            <button class="pq-tab active" data-pq-filter="pending">Menunggu</button>
-            <button class="pq-tab" data-pq-filter="approved">Disetujui</button>
-            <button class="pq-tab" data-pq-filter="rejected">Ditolak</button>
-            <button class="pq-tab" data-pq-filter="all">Semua</button>
+            <button class="pq-tab active" data-pq-filter="pending">Menunggu <span class="pq-tab-count" id="pqTabCountPending">0</span></button>
+            <button class="pq-tab" data-pq-filter="approved">Disetujui <span class="pq-tab-count" id="pqTabCountApproved">0</span></button>
+            <button class="pq-tab" data-pq-filter="rejected">Ditolak <span class="pq-tab-count" id="pqTabCountRejected">0</span></button>
+            <button class="pq-tab" data-pq-filter="all">Semua <span class="pq-tab-count" id="pqTabCountAll">0</span></button>
           </div>
-          <button type="button" class="pq-cloud-sync-btn" id="pqCloudSyncBtn" title="Force pull data terbaru dari Supabase">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 12a9 9 0 0 1-15.36 6.36L3 21"/><path d="M3 12a9 9 0 0 1 15.36-6.36L21 3"/><path d="M21 3v6h-6"/><path d="M3 21v-6h6"/>
-            </svg>
-            <span>Sync dari Cloud</span>
-          </button>
+          <!-- Auto-sync indicator pengganti tombol manual -->
+          <div class="pq-autosync-indicator" id="pqAutoSyncIndicator" title="Otomatis sync dari Cloud tiap 15 detik">
+            <span class="pq-autosync-dot"></span>
+            <span>Auto-sync</span>
+          </div>
+        </div>
+
+        <!-- Filter advanced bar (2026-05-30): search + date filter + dropdown -->
+        <div class="premium-queue-filterbar">
+          <input type="text" class="pq-search" id="pqSearchInput" placeholder="🔍 Cari email atau Order ID..." aria-label="Cari payment"/>
+          <div class="rev-datefilter" id="pqDateFilter" title="Filter berdasarkan tanggal pembayaran">
+            <input type="date" class="rdf-date-input rev-date-input" id="pqDateFrom" placeholder="Dari" aria-label="Dari tanggal" readonly/>
+            <span class="rev-date-sep">→</span>
+            <input type="date" class="rdf-date-input rev-date-input" id="pqDateTo" placeholder="Sampai" aria-label="Sampai tanggal" readonly/>
+            <button class="rev-date-reset" id="pqDateReset" title="Hapus filter tanggal" hidden>✕</button>
+          </div>
+          <select class="pq-filter-select" id="pqFilterPlan" aria-label="Filter paket">
+            <option value="all">💎 Semua Paket</option>
+            <option value="monthly">Bulanan</option>
+            <option value="yearly">Tahunan</option>
+            <option value="lifetime">Selamanya</option>
+          </select>
+          <select class="pq-filter-select" id="pqFilterType" aria-label="Filter tipe transaksi">
+            <option value="all">🔀 Semua Transaksi</option>
+            <option value="real">💳 Bayar Real</option>
+            <option value="grant">🎁 Admin Grant</option>
+          </select>
+          <select class="pq-filter-select" id="pqSort" aria-label="Urutkan">
+            <option value="newest">↓ Terbaru</option>
+            <option value="oldest">↑ Terlama</option>
+            <option value="amount_desc">↓ Amount tinggi</option>
+            <option value="amount_asc">↑ Amount rendah</option>
+          </select>
+          <button type="button" class="pq-filter-reset" id="pqFilterReset" hidden>Reset semua</button>
+        </div>
+
+        <!-- Banner status filter aktif -->
+        <div class="pq-filter-banner" id="pqFilterBanner" hidden>
+          <span class="pq-fb-icon">🔍</span>
+          <span class="pq-fb-text" id="pqFilterBannerText"></span>
+          <button type="button" class="pq-fb-clear" data-pq-clear-filters>Hapus semua filter</button>
         </div>
         <div class="premium-queue-list" id="premiumQueueList">
           <div class="pq-empty">Belum ada pembayaran premium.</div>

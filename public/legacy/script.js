@@ -19055,6 +19055,55 @@ function renderSettingsBilling() {
 
 // =================== ADMIN: PREMIUM VERIFICATION QUEUE ===================
 let _adminPqFilter = "pending";
+// Filter state v2 (2026-05-30) — search, date range, plan, type, sort.
+// Null/empty/all = no filter aktif untuk dimensi tsb.
+const _adminPqState = {
+  search: "",                    // email atau order ID (lowercase)
+  dateFrom: null,                // epoch ms
+  dateTo: null,                  // epoch ms
+  plan: "all",                   // "all" | "monthly" | "yearly" | "lifetime"
+  type: "all",                   // "all" | "real" | "grant"
+  sort: "newest",                // "newest" | "oldest" | "amount_desc" | "amount_asc"
+  lastSeenPendingCount: null,    // buat detect payment baru → toast notif
+};
+function _adminPqHasAnyFilter() {
+  const s = _adminPqState;
+  return !!(s.search || s.dateFrom || s.dateTo || s.plan !== "all" || s.type !== "all");
+}
+function _adminPqResetFilters() {
+  _adminPqState.search = "";
+  _adminPqState.dateFrom = null;
+  _adminPqState.dateTo = null;
+  _adminPqState.plan = "all";
+  _adminPqState.type = "all";
+  _adminPqState.sort = "newest";
+  // Sync UI elements
+  const s = (id) => document.getElementById(id);
+  if (s("pqSearchInput")) s("pqSearchInput").value = "";
+  if (s("pqDateFrom")) s("pqDateFrom").value = "";
+  if (s("pqDateTo")) s("pqDateTo").value = "";
+  if (s("pqFilterPlan")) s("pqFilterPlan").value = "all";
+  if (s("pqFilterType")) s("pqFilterType").value = "all";
+  if (s("pqSort")) s("pqSort").value = "newest";
+  if (s("pqDateReset")) s("pqDateReset").hidden = true;
+  renderAdminPremiumQueue();
+}
+// USD → IDR rate (sama dgn computeRevenueFromLedger)
+const _PQ_USD_TO_IDR = 16000;
+function _pqAmountIdr(p) {
+  return (Number(p.amount) || 0) * _PQ_USD_TO_IDR;
+}
+function _pqFmtRp(n) {
+  if (!n) return "Rp 0";
+  if (n >= 1e9) return `Rp ${(n / 1e9).toFixed(1)}M`;
+  if (n >= 1e6) return `Rp ${(n / 1e6).toFixed(1)}jt`;
+  if (n >= 1e3) return `Rp ${Math.round(n / 1e3)}k`;
+  return `Rp ${n}`;
+}
+function _pqFmtRpFull(n) {
+  if (!n) return "Rp 0";
+  return "Rp " + Math.round(n).toLocaleString("id-ID");
+}
 function renderAdminPremiumQueue() {
   const list = document.getElementById("premiumQueueList");
   if (!list) return;
@@ -19063,11 +19112,37 @@ function renderAdminPremiumQueue() {
   const approved = all.filter(p => p.status === "approved");
   const rejected = all.filter(p => p.status === "rejected");
 
-  // Stats
+  // Stats — count + Rp total per kategori
   const setT = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
   setT("pqStatPending", pending.length);
   setT("pqStatApproved", approved.length);
   setT("pqStatRejected", rejected.length);
+  // Rp totals (sumber: amount USD × 16000)
+  const sumIdr = arr => arr.reduce((s, p) => s + _pqAmountIdr(p), 0);
+  setT("pqStatPendingSub",  _pqFmtRpFull(sumIdr(pending)));
+  setT("pqStatApprovedSub", _pqFmtRpFull(sumIdr(approved)));
+  setT("pqStatRejectedSub", _pqFmtRpFull(sumIdr(rejected)));
+
+  // SLA — avg approval time (waktu antara paidAt → processedAt) di antara payments approved
+  const approvedWithTime = approved.filter(p => p.paidAt && p.processedAt);
+  if (approvedWithTime.length) {
+    const avgMs = approvedWithTime.reduce((s, p) =>
+      s + (Number(p.processedAt) - Number(p.paidAt)), 0) / approvedWithTime.length;
+    const hours = avgMs / 3600000;
+    let slaText;
+    if (hours < 1) slaText = `${Math.round(avgMs / 60000)} mnt`;
+    else if (hours < 24) slaText = `${hours.toFixed(1)} jam`;
+    else slaText = `${(hours / 24).toFixed(1)} hari`;
+    setT("pqStatSla", slaText);
+  } else {
+    setT("pqStatSla", "—");
+  }
+
+  // Tab counters (di tab title — selain stat KPI di atas)
+  setT("pqTabCountPending", pending.length);
+  setT("pqTabCountApproved", approved.length);
+  setT("pqTabCountRejected", rejected.length);
+  setT("pqTabCountAll", all.length);
 
   // Sidebar badge
   const badge = document.getElementById("adminPremiumBadge");
@@ -19076,98 +19151,260 @@ function renderAdminPremiumQueue() {
     badge.style.display = pending.length ? "" : "none";
   }
 
-  // Filter
+  // === Toast notif saat ada pending baru (real-time detection) ===
+  // First render: tetapkan baseline tanpa toast.
+  if (_adminPqState.lastSeenPendingCount === null) {
+    _adminPqState.lastSeenPendingCount = pending.length;
+  } else if (pending.length > _adminPqState.lastSeenPendingCount) {
+    const delta = pending.length - _adminPqState.lastSeenPendingCount;
+    _adminPqState.lastSeenPendingCount = pending.length;
+    if (typeof toast === "function") {
+      toast(`🔔 ${delta} payment Premium baru masuk antrian`, "info");
+    }
+  } else {
+    _adminPqState.lastSeenPendingCount = pending.length;
+  }
+
+  // === Filter pipeline ===
   let shown = all;
   if (_adminPqFilter === "pending")  shown = pending;
   else if (_adminPqFilter === "approved") shown = approved;
   else if (_adminPqFilter === "rejected") shown = rejected;
 
+  // Apply advanced filter state
+  const f = _adminPqState;
+  if (f.search) {
+    const q = f.search.toLowerCase();
+    shown = shown.filter(p =>
+      String(p.email || "").toLowerCase().includes(q) ||
+      String(p.username || "").toLowerCase().includes(q) ||
+      String(p.orderId || "").toLowerCase().includes(q) ||
+      String(p.code || "").toLowerCase().includes(q)
+    );
+  }
+  if (f.dateFrom !== null) shown = shown.filter(p => Number(p.paidAt) >= f.dateFrom);
+  if (f.dateTo !== null) shown = shown.filter(p => Number(p.paidAt) <= f.dateTo);
+  if (f.plan !== "all") shown = shown.filter(p => p.plan === f.plan);
+  if (f.type === "real") {
+    shown = shown.filter(p => (Number(p.amount) || 0) > 0 && p.method !== "Admin Grant");
+  } else if (f.type === "grant") {
+    shown = shown.filter(p => (Number(p.amount) || 0) === 0 || p.method === "Admin Grant");
+  }
+  // Sort
+  if (f.sort === "newest") shown = shown.slice().sort((a, b) => Number(b.paidAt) - Number(a.paidAt));
+  else if (f.sort === "oldest") shown = shown.slice().sort((a, b) => Number(a.paidAt) - Number(b.paidAt));
+  else if (f.sort === "amount_desc") shown = shown.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+  else if (f.sort === "amount_asc") shown = shown.slice().sort((a, b) => (Number(a.amount) || 0) - (Number(b.amount) || 0));
+
+  // Update filter banner status
+  const banner = document.getElementById("pqFilterBanner");
+  const bannerText = document.getElementById("pqFilterBannerText");
+  const filterReset = document.getElementById("pqFilterReset");
+  const dateReset = document.getElementById("pqDateReset");
+  if (banner && bannerText) {
+    const active = _adminPqHasAnyFilter();
+    if (active) {
+      const parts = [];
+      if (f.search) parts.push(`pencarian: "${f.search}"`);
+      if (f.dateFrom || f.dateTo) {
+        const fmtDt = ts => ts ? new Date(ts).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "";
+        if (f.dateFrom && f.dateTo) parts.push(`tanggal: ${fmtDt(f.dateFrom)} → ${fmtDt(f.dateTo)}`);
+        else if (f.dateFrom) parts.push(`tanggal sejak: ${fmtDt(f.dateFrom)}`);
+        else parts.push(`tanggal sampai: ${fmtDt(f.dateTo)}`);
+      }
+      if (f.plan !== "all") parts.push(`paket: ${f.plan}`);
+      if (f.type !== "all") parts.push(`tipe: ${f.type === "real" ? "Bayar Real" : "Admin Grant"}`);
+      bannerText.textContent = `${shown.length} hasil — Filter: ${parts.join(" · ")}`;
+      banner.hidden = false;
+    } else {
+      banner.hidden = true;
+    }
+  }
+  if (filterReset) filterReset.hidden = !_adminPqHasAnyFilter();
+  if (dateReset) dateReset.hidden = !(f.dateFrom || f.dateTo);
+
   const isIDQ = (typeof currentLang === "function") ? (currentLang() === "id") : true;
   if (!shown.length) {
-    const emptyMsg = isIDQ ? "Tidak ada pembayaran di kategori ini." : "No payments in this category.";
+    const emptyMsg = _adminPqHasAnyFilter()
+      ? (isIDQ ? "Tidak ada hasil. Coba hapus filter atau ganti kueri." : "No results. Try clearing filters or different query.")
+      : (isIDQ ? "Tidak ada pembayaran di kategori ini." : "No payments in this category.");
     list.innerHTML = `<div class="pq-empty">${emptyMsg}</div>`;
     return;
   }
 
+  // === Card layout v2 (2026-05-30) ===
   list.innerHTML = shown.map(p => {
     const dt = new Date(p.paidAt);
-    const pad = n => String(n).padStart(2, "0");
-    const dateStr = `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-    const flowLabel = p.flowContext === "signup"
-      ? (isIDQ ? "🆕 Signup baru" : "🆕 New signup")
-      : (isIDQ ? "⬆️ Upgrade existing" : "⬆️ Existing upgrade");
+    const dateStr = dt.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+      + " " + dt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    const relAgo = typeof relTime === "function" ? relTime(Number(p.paidAt)) : "";
     const userLabel = p.email || p.username || (p.flowContext === "signup"
       ? (isIDQ ? "Signup pending" : "Pending signup")
       : (isIDQ ? "Anonim" : "Anonymous"));
-    const statusBadge = isIDQ
-      ? (p.status === "approved" ? '<span class="pq-status pq-status-ok">✓ Disetujui</span>' :
-         p.status === "rejected" ? '<span class="pq-status pq-status-bad">✕ Ditolak</span>' :
-         '<span class="pq-status pq-status-pending">⏳ Pending</span>')
-      : (p.status === "approved" ? '<span class="pq-status pq-status-ok">✓ Approved</span>' :
-         p.status === "rejected" ? '<span class="pq-status pq-status-bad">✕ Rejected</span>' :
-         '<span class="pq-status pq-status-pending">⏳ Pending</span>');
-    // Code verification status indicator
-    let codeIndicator = "";
-    if (p.status === "pending") {
-      if (p.userTypedCode) {
-        const matches = String(p.userTypedCode).trim().toUpperCase() === String(p.code).toUpperCase();
-        const matchTxt = isIDQ ? "✓ Kode user cocok" : "✓ User code matches";
-        const failTxt = isIDQ ? "✗ Kode user salah" : "✗ User code wrong";
-        codeIndicator = matches
-          ? `<span class="pq-status pq-status-ok" style="font-size:10.5px">${matchTxt}</span>`
-          : `<span class="pq-status pq-status-bad" style="font-size:10.5px">${failTxt}</span>`;
-      } else {
-        const waitTxt = isIDQ ? "⏳ Menunggu user ketik kode" : "⏳ Waiting for user to type code";
-        codeIndicator = `<span class="pq-status pq-status-pending" style="font-size:10.5px">${waitTxt}</span>`;
-      }
-    }
-    const orderLbl = isIDQ ? "Order ID" : "Order ID";
-    const userLbl = isIDQ ? "User" : "User";
-    const flowLbl = isIDQ ? "Alur" : "Flow";
-    const methodLbl = isIDQ ? "Metode" : "Method";
-    const amountLbl = isIDQ ? "Jumlah" : "Amount";
-    const paidAtLbl = isIDQ ? "Dibayar pada" : "Paid at";
-    const clickHint = isIDQ
-      ? "🔍 Klik untuk lihat kode verifikasi + bukti pembayaran"
-      : "🔍 Click to view verification code + payment proof";
-    // Code REMOVED from row per user request 2026-05-06 — code only visible
-    // when admin opens detail modal, not in queue row itself.
+    const userInit = String(userLabel || "U").trim().charAt(0).toUpperCase();
+    const planLabel = p.plan === "monthly" ? "💎 Premium Bulanan"
+      : p.plan === "yearly" ? "💎 Premium Tahunan"
+      : p.plan === "lifetime" ? "💎 Premium Selamanya"
+      : `💎 ${p.plan || "Premium"}`;
+    const amountUsd = Number(p.amount) || 0;
+    const isGrant = amountUsd === 0 || p.method === "Admin Grant";
+    const amountIdr = _pqAmountIdr(p);
+    const statusBadge =
+      p.status === "approved" ? '<span class="pq-status pq-status-ok">✓ Disetujui</span>' :
+      p.status === "rejected" ? '<span class="pq-status pq-status-bad">✕ Ditolak</span>' :
+      '<span class="pq-status pq-status-pending">⏳ Menunggu</span>';
     const orderDisplay = p.orderId || (p.code ? `#${String(p.code).slice(-6)}` : "—");
+    // Tombol aksi: untuk pending, tampilkan Approve/Reject inline + Detail.
+    // Untuk approved/rejected, cuma Detail.
+    const actionsHtml = p.status === "pending"
+      ? `
+        <button type="button" class="pq-v2-btn pq-v2-btn-approve" data-pq-act="approve" data-pq-code="${escapeHtml(p.code)}" title="Setujui pembayaran">
+          ✓ Setujui
+        </button>
+        <button type="button" class="pq-v2-btn pq-v2-btn-reject" data-pq-act="reject" data-pq-code="${escapeHtml(p.code)}" title="Tolak pembayaran">
+          ✕ Tolak
+        </button>
+        <button type="button" class="pq-v2-btn pq-v2-btn-detail" data-pq-act="detail" data-pq-code="${escapeHtml(p.code)}" title="Lihat bukti & kode verifikasi">
+          👁 Bukti
+        </button>`
+      : `
+        <button type="button" class="pq-v2-btn pq-v2-btn-detail" data-pq-act="detail" data-pq-code="${escapeHtml(p.code)}" title="Lihat detail lengkap">
+          👁 Lihat Detail
+        </button>`;
     return `
-      <div class="pq-row" data-status="${p.status}" data-pq-code="${escapeHtml(p.code)}" role="button" tabindex="0">
-        <div class="pq-row-head">
-          <div class="pq-code-block">
-            <small class="pq-code-label">${orderLbl}</small>
-            <code class="pq-code">#${escapeHtml(orderDisplay)}</code>
+      <div class="pq-row-v2" data-status="${p.status}" data-pq-code="${escapeHtml(p.code)}">
+        <div class="pq-v2-top">
+          <div class="pq-v2-user">
+            <div class="pq-v2-user-icon">${escapeHtml(userInit)}</div>
+            <span class="pq-v2-user-email" title="${escapeHtml(userLabel)}">${escapeHtml(userLabel)}</span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-            ${codeIndicator}
+          <div style="display:flex;align-items:center;gap:8px">
             ${statusBadge}
           </div>
         </div>
-        <div class="pq-row-detail">
-          <div class="pq-cell"><small>${userLbl}</small><b>${escapeHtml(userLabel)}</b></div>
-          <div class="pq-cell"><small>${flowLbl}</small><b>${flowLabel}</b></div>
-          <div class="pq-cell"><small>${methodLbl}</small><b>${escapeHtml(p.method || "—")}</b></div>
-          <div class="pq-cell"><small>${amountLbl}</small><b>$${(p.amount || 0).toFixed(2)}</b></div>
-          <div class="pq-cell"><small>${paidAtLbl}</small><b>${dateStr}</b></div>
+        <div class="pq-v2-mid">
+          <span class="pq-v2-plan">${planLabel}</span>
+          <span class="pq-v2-amount">$${amountUsd.toFixed(2)}<span class="pq-v2-amount-idr">≈ ${_pqFmtRpFull(amountIdr)}</span></span>
+          ${isGrant ? '<span class="pq-v2-grant-badge">🎁 Admin Grant</span>' : ''}
         </div>
-        <div class="pq-actions pq-actions-done">
-          <small class="muted">${clickHint}</small>
+        <div class="pq-v2-meta">
+          <span class="pq-v2-meta-item"><span class="pq-v2-orderid">${escapeHtml(orderDisplay)}</span></span>
+          <span class="pq-v2-meta-sep">·</span>
+          <span class="pq-v2-meta-item">${escapeHtml(p.method || "—")}</span>
+          <span class="pq-v2-meta-sep">·</span>
+          <span class="pq-v2-meta-item">${escapeHtml(dateStr)}${relAgo ? ` (${relAgo})` : ""}</span>
+        </div>
+        <div class="pq-v2-actions">
+          ${actionsHtml}
         </div>
       </div>`;
   }).join("");
 
-  // Wire row click → open detail modal (replaces inline approve/reject buttons)
-  list.querySelectorAll(".pq-row").forEach(row => {
-    const code = row.dataset.pqCode;
-    const open = () => openPremiumDetailModal(code);
-    row.addEventListener("click", open);
-    row.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+  // === Wire inline action buttons (Approve / Reject / Detail) ===
+  list.querySelectorAll("[data-pq-act]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const act = btn.dataset.pqAct;
+      const code = btn.dataset.pqCode;
+      if (!code) return;
+      if (act === "detail") {
+        openPremiumDetailModal(code);
+        return;
+      }
+      // Approve/Reject inline — konfirmasi dulu via openConfirm
+      const action = act === "approve" ? "setujui" : "tolak";
+      const confirmCls = act === "approve" ? "primary" : "danger";
+      const desc = act === "approve"
+        ? `Setujui pembayaran <b>${escapeHtml(code)}</b>? User akan otomatis di-upgrade ke Premium.`
+        : `Tolak pembayaran <b>${escapeHtml(code)}</b>? Status akan jadi Ditolak.`;
+      if (typeof openConfirm === "function") {
+        openConfirm({
+          icon: act === "approve" ? "✅" : "❌",
+          iconClass: act === "approve" ? "ok" : "warn",
+          title: `Konfirmasi ${action}`,
+          desc,
+          btnText: act === "approve" ? "✓ Setujui" : "✕ Tolak",
+          btnClass: confirmCls,
+          onConfirm: () => {
+            const adminUsername = (typeof user === "object" && user) ? user.username : "admin";
+            const status = act === "approve" ? "approved" : "rejected";
+            setPremiumPaymentStatus(code, status, adminUsername);
+            renderAdminPremiumQueue();
+            if (typeof renderAdminActionCenter === "function") renderAdminActionCenter();
+            if (typeof toast === "function") {
+              toast(act === "approve"
+                ? `✅ Payment ${code} disetujui`
+                : `❌ Payment ${code} ditolak`,
+                act === "approve" ? "success" : "warning");
+            }
+          }
+        });
+      }
+    });
+  });
+
+  // Row klik (di area selain tombol) → open detail
+  list.querySelectorAll(".pq-row-v2").forEach(row => {
+    row.addEventListener("click", e => {
+      if (e.target.closest("[data-pq-act]")) return;
+      const code = row.dataset.pqCode;
+      if (code) openPremiumDetailModal(code);
     });
   });
 }
+
+// === Wiring untuk filter bar v2 (2026-05-30) ===
+(function _wirePqFilterBar() {
+  // Search input (debounce ringan 200ms)
+  let _pqSearchTimer = null;
+  document.addEventListener("input", e => {
+    if (e.target?.id === "pqSearchInput") {
+      clearTimeout(_pqSearchTimer);
+      _pqSearchTimer = setTimeout(() => {
+        _adminPqState.search = String(e.target.value || "").trim();
+        renderAdminPremiumQueue();
+      }, 200);
+    }
+  });
+  // Date inputs (change event dari custom picker)
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === "pqDateFrom") {
+      _adminPqState.dateFrom = typeof _parseDateInput === "function"
+        ? _parseDateInput(t.value, false) : null;
+      renderAdminPremiumQueue();
+    } else if (t.id === "pqDateTo") {
+      _adminPqState.dateTo = typeof _parseDateInput === "function"
+        ? _parseDateInput(t.value, true) : null;
+      renderAdminPremiumQueue();
+    } else if (t.id === "pqFilterPlan") {
+      _adminPqState.plan = t.value;
+      renderAdminPremiumQueue();
+    } else if (t.id === "pqFilterType") {
+      _adminPqState.type = t.value;
+      renderAdminPremiumQueue();
+    } else if (t.id === "pqSort") {
+      _adminPqState.sort = t.value;
+      renderAdminPremiumQueue();
+    }
+  });
+  // Reset buttons
+  document.addEventListener("click", e => {
+    if (e.target.closest("#pqDateReset")) {
+      e.preventDefault();
+      _adminPqState.dateFrom = null;
+      _adminPqState.dateTo = null;
+      const f = document.getElementById("pqDateFrom"); if (f) f.value = "";
+      const t = document.getElementById("pqDateTo"); if (t) t.value = "";
+      renderAdminPremiumQueue();
+    }
+    if (e.target.closest("#pqFilterReset") || e.target.closest("[data-pq-clear-filters]")) {
+      e.preventDefault();
+      _adminPqResetFilters();
+    }
+  });
+})();
 
 // =================== PREMIUM VERIFICATION DETAIL MODAL ===================
 // Click row di queue → open modal. Modal nampilin:

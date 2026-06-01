@@ -37308,14 +37308,351 @@ html body[data-theme="light"]:not([data-role="admin"]) #paymentSuccessCta:disabl
 }
 
 /* =========================================================================
-   ADMIN: PREMIUM VERIFICATION QUEUE (admin-premium-queue view)
+   ADMIN: PREMIUM VERIFICATION QUEUE (admin-premium-queue view) — v2 2026-05-30
+   - 4 KPI dgn Rp sub-text + SLA card
+   - Filter bar: search, date, plan, type, sort
+   - Card baru: hierarchy clear, plan+amount prominent, inline approve/reject
+   - Auto-sync indicator
    ========================================================================= */
 .premium-queue-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
+@media (max-width: 1000px) {
+  .premium-queue-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.pq-stat-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--primary, #C7B7A3);
+  font-weight: 600;
+  margin-top: 3px;
+  opacity: 0.85;
+}
+.pq-stat-pending .pq-stat-sub { color: #f6c660; }
+.pq-stat-approved .pq-stat-sub { color: #6cd99f; }
+.pq-stat-rejected .pq-stat-sub { color: #ff8888; }
+.pq-stat-sla .pq-stat-sub { color: #769eff; opacity: 0.7; font-size: 10.5px; }
+
+/* Tab dengan counter angka */
+.pq-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.pq-tab.active .pq-tab-count {
+  background: var(--primary);
+  color: #1a0e10;
+}
+
+/* Auto-sync indicator (replace tombol manual Sync dari Cloud) */
+.pq-autosync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(108, 217, 159, 0.08);
+  border: 1px solid rgba(108, 217, 159, 0.25);
+  border-radius: 999px;
+  color: #6cd99f;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.pq-autosync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6cd99f;
+  box-shadow: 0 0 8px rgba(108, 217, 159, 0.7);
+  animation: pqAutosyncPulse 2s ease-in-out infinite;
+}
+@keyframes pqAutosyncPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Filter bar — search + date + dropdowns */
+.premium-queue-filterbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+.pq-search {
+  flex: 1 1 220px;
+  min-width: 200px;
+  height: 34px;
+  padding: 0 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  transition: all .15s;
+}
+.pq-search:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+.pq-filter-select {
+  height: 34px;
+  padding: 0 26px 0 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 11.5px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23bfae9e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.pq-filter-select:hover { border-color: rgba(199, 183, 163, 0.4); }
+.pq-filter-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.pq-filter-reset:hover {
+  background: rgba(255, 100, 100, 0.08);
+  color: #ff8888;
+  border-color: #ff8888;
+}
+
+/* Banner saat ada filter aktif */
+.pq-filter-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 0 14px;
+}
+.pq-fb-icon { font-size: 14px; }
+.pq-fb-text { flex: 1; font-size: 12px; color: var(--text); }
+.pq-fb-clear {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.pq-fb-clear:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+/* === Card layout baru — clear hierarchy === */
+.pq-row-v2 {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: all .18s;
+  cursor: default;
+}
+.pq-row-v2:hover {
+  border-color: rgba(199, 183, 163, 0.35);
+  background: rgba(255, 255, 255, 0.015);
+}
+.pq-row-v2[data-status="pending"] {
+  border-left: 3px solid #f6c660;
+}
+.pq-row-v2[data-status="approved"] {
+  border-left: 3px solid #6cd99f;
+  opacity: 0.92;
+}
+.pq-row-v2[data-status="rejected"] {
+  border-left: 3px solid #ff8888;
+  opacity: 0.82;
+}
+
+/* Top row: user + status badge */
+.pq-v2-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.pq-v2-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pq-v2-user-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(199, 183, 163, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.pq-v2-user-email {
+  font-size: 13.5px;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mid row: plan + amount (paling penting!) */
+.pq-v2-mid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.pq-v2-plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(199, 87, 106, 0.18), rgba(122, 35, 48, 0.15));
+  border: 1px solid rgba(199, 87, 106, 0.3);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.pq-v2-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.pq-v2-amount-idr {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+.pq-v2-grant-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: rgba(118, 158, 255, 0.12);
+  border: 1px solid rgba(118, 158, 255, 0.3);
+  border-radius: 6px;
+  color: #b8cfff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Bottom: meta info (Order ID, method, date) */
+.pq-v2-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.pq-v2-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pq-v2-meta-sep {
+  opacity: 0.4;
+}
+.pq-v2-orderid {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* Inline actions — Approve / Reject / Detail */
+.pq-v2-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pq-v2-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid;
+  font-family: inherit;
+}
+.pq-v2-btn-approve {
+  background: rgba(108, 217, 159, 0.12);
+  border-color: rgba(108, 217, 159, 0.4);
+  color: #6cd99f;
+}
+.pq-v2-btn-approve:hover {
+  background: rgba(108, 217, 159, 0.22);
+  border-color: #6cd99f;
+}
+.pq-v2-btn-reject {
+  background: rgba(255, 136, 136, 0.1);
+  border-color: rgba(255, 136, 136, 0.35);
+  color: #ff8888;
+}
+.pq-v2-btn-reject:hover {
+  background: rgba(255, 136, 136, 0.2);
+  border-color: #ff8888;
+}
+.pq-v2-btn-detail {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+.pq-v2-btn-detail:hover {
+  color: var(--text);
+  border-color: rgba(199, 183, 163, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Status badge (sudah ada utility .pq-status) — gak diubah */
 .pq-stat {
   display: flex;
   align-items: center;
