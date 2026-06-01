@@ -37327,6 +37327,11 @@ function _rdfBuildGrid(year, month, selectedYmd) {
 function _rdfRenderPopup(input) {
   const popup = document.createElement("div");
   popup.className = "rdf-datepicker-popup";
+  // Detect context: kalau dipanggil dari admin view → pakai admin theme variant
+  // (navy/blue gantinya wine/burgundy). Class diapply ke popup root.
+  if (input.closest('section.view[data-view^="admin-"]') || input.closest(".rev-datefilter")) {
+    popup.classList.add("rdfp-admin");
+  }
   const sel = input.value;                          // YYYY-MM-DD atau kosong
   if (!_rdfViewMonth) {
     let base;
