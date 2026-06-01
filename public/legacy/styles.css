@@ -71613,3 +71613,81 @@ textarea#upDesc.upf-desc-textarea {
   justify-self: start;
   gap: 8px;
 }
+
+
+/* ============================================================
+   v683 (2026-06-01): Edit Video — review #2
+   wider modal · preview bar · trim simplify · unified tabs ·
+   inspect-zoom removed
+   ============================================================ */
+
+/* wider modal so the layout isn't cramped */
+.modal .video-editor-panel { max-width: 1080px; width: 96%; }
+
+/* #1: Putar Preview = full-width bar directly below the video frame */
+.video-editor-panel .ve-stage .ve-preview-btn {
+  width: 100%;
+  height: 40px;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 11px;
+  margin: 0;
+}
+
+/* #3: trim meta — simple inline (range left · duration right), no boxes */
+.video-editor-panel .ve-trim-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+}
+.video-editor-panel .ve-trim-range,
+.video-editor-panel .ve-trim-dur {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.video-editor-panel .ve-trim-range b { color: var(--text); font-weight: 800; font-size: 13.5px; }
+.video-editor-panel .ve-trim-dur b { color: var(--primary); font-weight: 800; }
+
+/* #4: tabs — one unified segmented track, no inner icon-box */
+.video-editor-panel .ve-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin: 0 0 14px;
+}
+.video-editor-panel .ve-tab {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 12.5px; font-weight: 700;
+  margin: 0;
+}
+.video-editor-panel .ve-tab-ico {
+  background: transparent;
+  border: 0;
+  width: auto; height: auto;
+}
+.video-editor-panel .ve-tab-ico svg { width: 16px; height: 16px; }
+.video-editor-panel .ve-tab:hover { color: var(--text); }
+.video-editor-panel .ve-tab.active {
+  background: var(--primary);
+  color: var(--cream);
+  border: 0;
+}
+.video-editor-panel .ve-tab.active .ve-tab-ico { background: transparent; border: 0; color: var(--cream); }

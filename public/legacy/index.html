@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v682" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v683" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8932,23 +8932,11 @@
             </div>
           </div>
         </div>
-        <!-- v681: inspect-zoom control + Putar Preview moved directly below stage (1g) -->
-        <div class="ve-stage-bar">
-          <div class="ve-inspect" role="group" aria-label="Inspect zoom">
-            <button type="button" class="ve-inspect-btn" id="veInspectOut" aria-label="Perkecil tampilan" title="Perkecil tampilan">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-            </button>
-            <span class="ve-inspect-val" id="veInspectVal">100%</span>
-            <button type="button" class="ve-inspect-btn" id="veInspectIn" aria-label="Perbesar tampilan" title="Perbesar tampilan">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-            </button>
-            <button type="button" class="ve-inspect-btn ve-inspect-reset" id="veInspectReset" title="Reset tampilan">Reset</button>
-          </div>
-          <button type="button" class="btn ghost small ve-preview-btn" id="vePreviewBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-            <span class="ve-preview-label">Putar Preview</span>
-          </button>
-        </div>
+        <!-- v683: Putar Preview = bar full-width langsung di bawah video (inspect-zoom dihapus) -->
+        <button type="button" class="btn ghost ve-preview-btn" id="vePreviewBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          <span class="ve-preview-label">Putar Preview</span>
+        </button>
       </div>
       <div class="ve-controls">
 
@@ -8963,9 +8951,8 @@
               <div class="ve-trim-playhead" id="veTrimPlayhead"></div>
             </div>
             <div class="ve-trim-meta">
-              <span class="ve-trim-meta-item"><small>Mulai</small><b id="veStartTime">0:00</b></span>
-              <span class="ve-trim-meta-item ve-trim-meta-dur"><small>Durasi</small><b id="veDurationTime">0:00</b></span>
-              <span class="ve-trim-meta-item ve-trim-meta-end"><small>Akhir</small><b id="veEndTime">0:00</b></span>
+              <span class="ve-trim-range"><b id="veStartTime">0:00</b> – <b id="veEndTime">0:00</b></span>
+              <span class="ve-trim-dur">Durasi <b id="veDurationTime">0:00</b></span>
             </div>
           </div>
         </div>
@@ -9363,7 +9350,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260601-edit-video-v682" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260601-edit-video-v683" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
