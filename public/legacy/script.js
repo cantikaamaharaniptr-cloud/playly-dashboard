@@ -18403,8 +18403,26 @@ function renderDashboardTierPill() {
       e.preventDefault();
       const t = (user?.tier === "premium") ? "premium" : "free";
       if (t === "free") {
-        if (typeof openPlanPicker === "function") openPlanPicker();
-        else if (typeof openPaymentModal === "function") openPaymentModal("monthly");
+        // BUG FIX 2026-05-30: sebelumnya openPlanPicker() dipanggil tanpa
+        // onPick callback → klik paket di modal cuma close modal tanpa lanjut
+        // ke payment. Sekarang trigger pdUpgradeBtn click yg sudah punya
+        // proper onPick (trial → instant, paid → openPaymentModal).
+        const upgradeBtn = document.getElementById("pdUpgradeBtn");
+        if (upgradeBtn) {
+          upgradeBtn.click();
+        } else if (typeof openPlanPicker === "function") {
+          // Fallback kalau pdUpgradeBtn gak ada
+          openPlanPicker({
+            context: "upgrade",
+            onPick: (planKey) => {
+              if (planKey === "trial") {
+                if (typeof openPaymentModal === "function") openPaymentModal({ planKey });
+              } else {
+                if (typeof openPaymentModal === "function") openPaymentModal({ planKey });
+              }
+            }
+          });
+        }
       } else {
         // Premium → open detail popup with start/end dates
         openPremiumStatusPopup();
