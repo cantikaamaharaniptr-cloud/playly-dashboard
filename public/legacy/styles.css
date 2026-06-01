@@ -40857,65 +40857,78 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 
 /* Halaman Admin Pendapatan — date filter di page-head-actions (2026-05-30).
-   Inline 2 date input + reset, sejajar dgn Live pill + Refresh. */
+   Compact pill bar matching admin navy theme: 1 container dgn 2 input
+   nempel + separator panah, reset di ujung. */
 .rev-datefilter {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.03);
+  gap: 0;
+  padding: 3px;
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
   border-radius: 9px;
+  height: 34px;
+  box-sizing: border-box;
 }
-.rev-date-input {
-  height: 28px !important;
-  width: 110px !important;
-  min-width: 110px !important;
+/* Override input default style buat fit admin compact bar */
+.rev-datefilter .rdf-date-input.rev-date-input {
+  height: 26px !important;
+  width: 108px !important;
+  min-width: 108px !important;
   padding: 0 8px 0 26px !important;
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   background-position: left 8px center !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 6px;
+}
+.rev-datefilter .rdf-date-input.rev-date-input:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 .rev-date-sep {
   color: var(--muted);
-  font-size: 12px;
-  padding: 0 2px;
+  font-size: 11px;
+  padding: 0 4px;
+  opacity: 0.6;
 }
 .rev-date-reset {
   background: transparent;
   border: 0;
   color: var(--muted);
   width: 24px;
-  height: 24px;
+  height: 26px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   transition: all .15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-left: 2px;
 }
 .rev-date-reset:hover {
   background: rgba(255, 100, 100, 0.12);
   color: #ff8888;
 }
 
-/* Status banner saat filter aktif */
+/* Status banner saat filter aktif — compact match admin theme */
 .rev-filter-status {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(90deg, rgba(199, 87, 106, 0.12), rgba(199, 87, 106, 0.06));
-  border: 1px solid rgba(199, 87, 106, 0.3);
-  border-radius: 10px;
-  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  padding: 8px 12px;
   margin: 0 0 14px;
 }
 .rfs-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 .rfs-text {
   flex: 1;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text);
   font-weight: 500;
 }
@@ -40923,9 +40936,9 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--muted);
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
@@ -41041,8 +41054,10 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   display: none;
 }
 /* Date input — readonly (native picker disabled), custom popup yg dirender via JS.
-   Custom calendar icon via background-image (SVG) + cursor pointer. */
-.rdf-field input[type="date"].rdf-date-input {
+   Custom calendar icon via background-image (SVG) + cursor pointer.
+   Selector tanpa parent .rdf-field supaya bisa dipake di mana-mana
+   (.rdf-field di Riwayat, .rev-datefilter di Admin Pendapatan, dst). */
+input[type="date"].rdf-date-input {
   height: 34px;
   padding: 0 30px 0 10px;        /* room buat calendar icon di kanan */
   border-radius: 8px;
@@ -41053,14 +41068,33 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   line-height: 1;
   color-scheme: dark;
   cursor: pointer;
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23C7B7A3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>");
   background-repeat: no-repeat;
   background-position: right 8px center;
 }
+input[type="date"].rdf-date-input:hover {
+  border-color: rgba(199, 183, 163, 0.4);
+}
 /* Native calendar icon hidden — kita pake icon SVG sendiri di background */
-.rdf-field input[type="date"].rdf-date-input::-webkit-calendar-picker-indicator {
+input[type="date"].rdf-date-input::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
+}
+/* Placeholder text saat input kosong (Webkit) — kasih warna muted */
+input[type="date"].rdf-date-input::-webkit-datetime-edit-text,
+input[type="date"].rdf-date-input::-webkit-datetime-edit-month-field,
+input[type="date"].rdf-date-input::-webkit-datetime-edit-day-field,
+input[type="date"].rdf-date-input::-webkit-datetime-edit-year-field {
+  color: var(--text);
+}
+input[type="date"].rdf-date-input[value=""]::-webkit-datetime-edit-text,
+input[type="date"].rdf-date-input:not([value])::-webkit-datetime-edit-text,
+input[type="date"].rdf-date-input[value=""]::-webkit-datetime-edit {
+  color: var(--muted);
+  opacity: 0.5;
 }
 
 /* Custom date picker popup — matching tema wine/dark */
