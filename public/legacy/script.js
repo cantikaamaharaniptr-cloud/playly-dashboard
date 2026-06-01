@@ -16167,16 +16167,36 @@ function openSetTierModal(username) {
   if (!m) return;
   const acc = getAllAccounts().find(a => a.username === username);
   if (!acc) return;
+  const isPremium = acc.tier === "premium";
   const sub = document.getElementById("stModalSub");
-  if (sub) sub.textContent = `@${username} · Tier saat ini: ${acc.tier === "premium" ? "Premium" : "Free"}`;
+  if (sub) sub.textContent = `@${username} · Tier saat ini: ${isPremium ? "Premium" : "Free"}`;
+
+  // Dinamiskan label "Stop Premium" supaya kontekstual: kalau user
+  // sudah Free, ubah jadi "Sudah Free" (informatif, bukan stop) supaya
+  // gak misleading kayak ada tier yg mau di-stop.
+  const stopName = document.getElementById("stFreeName");
+  const stopDesc = document.getElementById("stFreeDesc");
+  const stopOpt = document.getElementById("stOptFree");
+  if (isPremium) {
+    if (stopName) stopName.textContent = "Stop Premium";
+    if (stopDesc) stopDesc.textContent = `Cabut akses Premium · expired ${acc.premiumExpiresAt ? new Date(acc.premiumExpiresAt).toLocaleDateString("id-ID") : "—"}`;
+    if (stopOpt) stopOpt.classList.remove("cu-tier-opt-disabled");
+  } else {
+    if (stopName) stopName.textContent = "Sudah Free";
+    if (stopDesc) stopDesc.textContent = "User ini sudah Free — tidak ada Premium yang dicabut";
+    if (stopOpt) stopOpt.classList.add("cu-tier-opt-disabled");
+  }
+
   const ui = document.getElementById("stUsername");
   if (ui) ui.value = username;
-  const tr = m.querySelector(`input[name="tier"][value="${acc.tier || "free"}"]`);
+  // Default selection: user Premium → preselect "Stop Premium" (paling sering
+  // dipake admin = revoke). User Free → preselect "Grant Premium".
+  const tr = m.querySelector(`input[name="tier"][value="${isPremium ? "free" : "premium"}"]`);
   if (tr) tr.checked = true;
   const pr = m.querySelector(`input[name="premiumPlan"][value="${acc.premiumPlan || "monthly"}"]`);
   if (pr) pr.checked = true;
   const ps = document.getElementById("stPlanSection");
-  if (ps) ps.hidden = (acc.tier !== "premium");
+  if (ps) ps.hidden = isPremium;       // hide PREMIUM PLAN section kalau user udah Premium
   m.classList.add("show");
   document.body.style.overflow = "hidden";
 }

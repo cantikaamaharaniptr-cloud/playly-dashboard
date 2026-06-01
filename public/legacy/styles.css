@@ -40937,6 +40937,48 @@ body.player-view-active .main { padding-bottom: calc(92px + 24px); }
 .cu-tier-name { font-size: 14px; font-weight: 700; color: var(--text); }
 .cu-tier-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
+/* Stop Premium (cabut akses) — visual destructive cue (merah) */
+.cu-tier-opt-stop > .cu-tier-card {
+  border-color: rgba(255, 100, 100, 0.3);
+}
+.cu-tier-opt-stop > .cu-tier-card:hover {
+  border-color: rgba(255, 100, 100, 0.6);
+  background: rgba(255, 100, 100, 0.05);
+}
+.cu-tier-opt-stop input:checked + .cu-tier-card {
+  border-color: #ff6b6b;
+  background: rgba(255, 100, 100, 0.12);
+  box-shadow: 0 0 0 1px rgba(255, 100, 100, 0.25);
+}
+.cu-tier-opt-stop .cu-tier-name { color: #ff8888; }
+/* Disabled state — user udah Free, gak ada premium yg di-stop */
+.cu-tier-opt-disabled > .cu-tier-card {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border);
+}
+.cu-tier-opt-disabled > .cu-tier-card:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.cu-tier-opt-disabled .cu-tier-name { color: var(--muted); }
+.cu-tier-opt-disabled input { pointer-events: none; }
+
+/* Grant Premium — green cue */
+.cu-tier-opt-grant > .cu-tier-card {
+  border-color: rgba(108, 217, 159, 0.3);
+}
+.cu-tier-opt-grant > .cu-tier-card:hover {
+  border-color: rgba(108, 217, 159, 0.6);
+  background: rgba(108, 217, 159, 0.05);
+}
+.cu-tier-opt-grant input:checked + .cu-tier-card {
+  border-color: #6cd99f;
+  background: rgba(108, 217, 159, 0.12);
+  box-shadow: 0 0 0 1px rgba(108, 217, 159, 0.25);
+}
+.cu-tier-opt-grant .cu-tier-name { color: #6cd99f; }
+
 .cu-plan-section { margin-bottom: 4px; }
 .cu-plan-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;

@@ -9086,20 +9086,20 @@
         <input type="hidden" name="username" id="stUsername"/>
 
         <div class="cu-tier-options" style="margin:18px 0">
-          <label class="cu-tier-opt">
+          <label class="cu-tier-opt cu-tier-opt-stop" id="stOptFree">
             <input type="radio" name="tier" value="free"/>
             <span class="cu-tier-card">
-              <span class="cu-tier-icon">🆓</span>
-              <span class="cu-tier-name">Free</span>
-              <span class="cu-tier-desc">Downgrade ke Free</span>
+              <span class="cu-tier-icon">🛑</span>
+              <span class="cu-tier-name" id="stFreeName">Stop Premium</span>
+              <span class="cu-tier-desc" id="stFreeDesc">Cabut akses Premium &amp; downgrade ke Free</span>
             </span>
           </label>
-          <label class="cu-tier-opt">
+          <label class="cu-tier-opt cu-tier-opt-grant" id="stOptPremium">
             <input type="radio" name="tier" value="premium"/>
             <span class="cu-tier-card">
               <span class="cu-tier-icon">⭐</span>
-              <span class="cu-tier-name">Premium</span>
-              <span class="cu-tier-desc">Upgrade ke Premium gratis</span>
+              <span class="cu-tier-name">Grant Premium</span>
+              <span class="cu-tier-desc">Upgrade gratis (perlu approval queue)</span>
             </span>
           </label>
         </div>
@@ -9107,7 +9107,6 @@
         <div class="cu-plan-section" id="stPlanSection" hidden>
           <div class="cu-section-title">Premium Plan</div>
           <div class="cu-plan-grid">
-            <label class="cu-plan-opt"><input type="radio" name="premiumPlan" value="trial"/><span><b>Trial</b><small>7 days</small></span></label>
             <label class="cu-plan-opt"><input type="radio" name="premiumPlan" value="monthly" checked/><span><b>Monthly</b><small>30 days</small></span></label>
             <label class="cu-plan-opt"><input type="radio" name="premiumPlan" value="yearly"/><span><b>Yearly</b><small>365 days</small></span></label>
             <label class="cu-plan-opt"><input type="radio" name="premiumPlan" value="lifetime"/><span><b>Lifetime</b><small>Forever</small></span></label>
