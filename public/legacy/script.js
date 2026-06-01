@@ -54093,6 +54093,11 @@ function getNotifList() {
   const aspectPills = modal.querySelectorAll(".ve-aspect");
   const zoom = document.getElementById("veZoom");
   const zoomVal = document.getElementById("veZoomVal");
+  // v635 (2026-05-29): Position X/Y
+  const posX = document.getElementById("vePosX");
+  const posXVal = document.getElementById("vePosXVal");
+  const posY = document.getElementById("vePosY");
+  const posYVal = document.getElementById("vePosYVal");
   const bright = document.getElementById("veBrightness");
   const brightVal = document.getElementById("veBrightnessVal");
   const contrast = document.getElementById("veContrast");
@@ -54114,15 +54119,18 @@ function getNotifList() {
   if (!video || !bright || !rotPills.length) return;
 
   const state = {
-    aspect: "original", zoom: 100, rotate: 0, flipH: false, flipV: false,
+    aspect: "original", zoom: 100, posX: 0, posY: 0,
+    rotate: 0, flipH: false, flipV: false,
     brightness: 100, contrast: 100, saturation: 100,
     temperature: 0, vignette: 0, preset: "none",
     text: "", textPos: "bottom", textSize: 24, textColor: "#ffffff",
   };
 
   // Map aspect string → CSS aspect-ratio value.
+  // v635 (2026-05-29): + "bebas" untuk custom freeform crop (no constraint).
   const ASPECT_MAP = {
     "original": "",
+    "bebas": "",
     "16:9": "16 / 9",
     "9:16": "9 / 16",
     "1:1":  "1 / 1",
@@ -54134,7 +54142,10 @@ function getNotifList() {
     const sx = state.flipH ? -1 : 1;
     const sy = state.flipV ? -1 : 1;
     const scale = Math.max(1, state.zoom / 100);
-    video.style.transform = "rotate(" + state.rotate + "deg) scale(" + scale + ") scaleX(" + sx + ") scaleY(" + sy + ")";
+    // v635 (2026-05-29): + translate posX/posY (pan frame) sebelum scale.
+    const tx = state.posX || 0; // -50 → 50 (% of frame)
+    const ty = state.posY || 0;
+    video.style.transform = "translate(" + tx + "%, " + ty + "%) rotate(" + state.rotate + "deg) scale(" + scale + ") scaleX(" + sx + ") scaleY(" + sy + ")";
     let f = "brightness(" + state.brightness + "%) contrast(" + state.contrast + "%) saturate(" + state.saturation + "%)";
     // Temperature: negative = cool (blue), positive = warm (sepia/orange).
     if (state.temperature !== 0) {
@@ -54193,6 +54204,10 @@ function getNotifList() {
     if (vignValEl)  vignValEl.textContent = state.vignette + "%";
     if (zoom)       zoom.value = state.zoom;
     if (zoomVal)    zoomVal.textContent = state.zoom + "%";
+    if (posX)       posX.value = state.posX;
+    if (posXVal)    posXVal.textContent = String(state.posX);
+    if (posY)       posY.value = state.posY;
+    if (posYVal)    posYVal.textContent = String(state.posY);
     if (textInput)  textInput.value = state.text;
     if (textSize)   textSize.value = state.textSize;
     if (textSizeVal) textSizeVal.textContent = state.textSize + "px";
@@ -54210,7 +54225,7 @@ function getNotifList() {
   }
 
   function resetState() {
-    state.aspect = "original"; state.zoom = 100;
+    state.aspect = "original"; state.zoom = 100; state.posX = 0; state.posY = 0;
     state.rotate = 0; state.flipH = false; state.flipV = false;
     state.brightness = 100; state.contrast = 100; state.saturation = 100;
     state.temperature = 0; state.vignette = 0; state.preset = "none";
@@ -54232,6 +54247,17 @@ function getNotifList() {
   wireRange(satur, saturVal, "saturation");
   wireRange(zoom, zoomVal, "zoom");
   wireRange(vign, vignValEl, "vignette");
+  // v635 (2026-05-29): wire Position X/Y sliders (no suffix → numeric value)
+  if (posX) posX.addEventListener("input", function () {
+    state.posX = Number(posX.value);
+    if (posXVal) posXVal.textContent = String(state.posX);
+    applyEffects();
+  });
+  if (posY) posY.addEventListener("input", function () {
+    state.posY = Number(posY.value);
+    if (posYVal) posYVal.textContent = String(state.posY);
+    applyEffects();
+  });
   if (temp) temp.addEventListener("input", function () {
     state.temperature = Number(temp.value);
     if (tempVal) tempVal.textContent = String(state.temperature);
@@ -54248,8 +54274,103 @@ function getNotifList() {
   });
   if (textColor) textColor.addEventListener("input", function () {
     state.textColor = textColor.value || "#ffffff";
+    const hexEl = document.getElementById("veTextColorHex");
+    if (hexEl) hexEl.textContent = state.textColor;
     applyEffects();
   });
+
+  // v635 (2026-05-29): Wire tabs — Frame / Color / Text
+  const tabBtns = modal.querySelectorAll(".ve-tab[data-ve-tab]");
+  const tabPanels = modal.querySelectorAll(".ve-tab-panel[data-ve-panel]");
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.veTab;
+      tabBtns.forEach(b => {
+        const on = b.dataset.veTab === key;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      tabPanels.forEach(p => {
+        p.hidden = p.dataset.vePanel !== key;
+      });
+    });
+  });
+
+  // v635 (2026-05-29): Export Video flow — loading → preview → close
+  const exportOverlay = document.getElementById("veExportOverlay");
+  const exportLoading = document.getElementById("veExportLoading");
+  const exportDone = document.getElementById("veExportDone");
+  const exportBar = document.getElementById("veExportBar");
+  const exportProgress = document.getElementById("veExportProgress");
+  const exportPreview = document.getElementById("veExportPreview");
+  const exportBackBtn = document.getElementById("veExportBackBtn");
+  const exportCloseBtn = document.getElementById("veExportCloseBtn");
+
+  function _showExportLoading() {
+    if (!exportOverlay) return;
+    exportOverlay.hidden = false;
+    if (exportLoading) exportLoading.hidden = false;
+    if (exportDone) exportDone.hidden = true;
+    if (exportBar) exportBar.style.width = "0%";
+    if (exportProgress) exportProgress.textContent = "Menerapkan efek edit (0%)";
+
+    // Simulate processing — fake progress bar 0 → 100% in ~2.5s
+    const steps = [
+      { pct: 15, msg: "Membaca metadata video..." },
+      { pct: 30, msg: "Menerapkan trim & crop..." },
+      { pct: 50, msg: "Menerapkan filter warna..." },
+      { pct: 70, msg: "Render text overlay..." },
+      { pct: 88, msg: "Encoding video..." },
+      { pct: 100, msg: "Selesai!" },
+    ];
+    let i = 0;
+    const tick = () => {
+      if (i >= steps.length) {
+        // Done — show preview
+        setTimeout(() => _showExportDone(), 350);
+        return;
+      }
+      const s = steps[i++];
+      if (exportBar) exportBar.style.width = s.pct + "%";
+      if (exportProgress) exportProgress.textContent = s.msg + " (" + s.pct + "%)";
+      setTimeout(tick, 380 + Math.random() * 180);
+    };
+    tick();
+  }
+
+  function _showExportDone() {
+    if (exportLoading) exportLoading.hidden = true;
+    if (exportDone) exportDone.hidden = false;
+    // Set preview src to current pendingUpload video
+    if (exportPreview) {
+      try {
+        const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
+        if (pu && pu.videoUrl) {
+          exportPreview.src = pu.videoUrl;
+          exportPreview.style.aspectRatio = ASPECT_MAP[state.aspect] || "";
+          exportPreview.style.objectFit = state.aspect && state.aspect !== "original" && state.aspect !== "bebas" ? "cover" : "contain";
+        }
+      } catch (e) { console.warn("[ve export preview]", e); }
+    }
+  }
+
+  function _closeExportOverlay() {
+    if (exportOverlay) exportOverlay.hidden = true;
+    if (exportPreview) { try { exportPreview.pause(); exportPreview.removeAttribute("src"); } catch {} }
+  }
+
+  if (exportBackBtn) exportBackBtn.addEventListener("click", () => _closeExportOverlay());
+  if (exportCloseBtn) exportCloseBtn.addEventListener("click", () => {
+    _closeExportOverlay();
+    // Close modal entirely → user finalize, balik ke upload form
+    modal.classList.remove("show");
+    modal.style.display = "";
+    document.body.style.overflow = "";
+    if (typeof toast === "function") toast("✓ Video berhasil di-edit", "success");
+  });
+
+  // Expose flow so applyBtn handler bisa pakai
+  window._veShowExportLoading = _showExportLoading;
 
   rotPills.forEach(function (p) { p.addEventListener("click", function () {
     state.rotate = Number(p.dataset.rot) || 0;
@@ -54293,6 +54414,8 @@ function getNotifList() {
     pu.videoEdit = Object.assign(pu.videoEdit || {}, {
       aspect: state.aspect,
       zoom: state.zoom,
+      posX: state.posX,
+      posY: state.posY,
       rotate: state.rotate,
       flipH: state.flipH,
       flipV: state.flipV,
@@ -54307,6 +54430,10 @@ function getNotifList() {
       textSize: state.textSize,
       textColor: state.textColor,
     });
+    // v635 (2026-05-29): Trigger Export Video loading → preview flow.
+    if (typeof window._veShowExportLoading === "function") {
+      window._veShowExportLoading();
+    }
   });
 
   // Restore saved values saat modal dibuka — wrap _openVideoEditor
@@ -54318,6 +54445,8 @@ function getNotifList() {
       const prev = (pu && pu.videoEdit) || {};
       state.aspect     = prev.aspect     || "original";
       state.zoom       = prev.zoom       != null ? prev.zoom       : 100;
+      state.posX       = prev.posX       != null ? prev.posX       : 0;
+      state.posY       = prev.posY       != null ? prev.posY       : 0;
       state.rotate     = prev.rotate     != null ? prev.rotate     : 0;
       state.flipH      = !!prev.flipH;
       state.flipV      = !!prev.flipV;

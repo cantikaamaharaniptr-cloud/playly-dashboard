@@ -8939,33 +8939,59 @@
           </div>
         </div>
 
-        <!-- v593b (2026-05-28): 2-column layout — LEFT Frame & Transform,
-             RIGHT Color & Filter. Trim/Text/Preview tetap full-width. -->
-        <div class="ve-2col-layout">
-          <div class="ve-col">
-            <div class="ve-col-heading">Frame &amp; Transform</div>
+        <!-- v635 (2026-05-29): TABS layout — no scroll. 3 tab: Frame / Color / Text -->
+        <div class="ve-tabs" role="tablist">
+          <button type="button" class="ve-tab active" data-ve-tab="frame" role="tab" aria-selected="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
+            Frame
+          </button>
+          <button type="button" class="ve-tab" data-ve-tab="color" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9z"/></svg>
+            Color
+          </button>
+          <button type="button" class="ve-tab" data-ve-tab="text" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            Text Overlay
+          </button>
+        </div>
 
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Aspect Ratio / Crop</div>
-              <div class="ve-aspect-pills" role="radiogroup" aria-label="Aspect ratio">
-                <button type="button" class="ve-aspect active" data-aspect="original">Original</button>
-                <button type="button" class="ve-aspect" data-aspect="16:9">16:9</button>
-                <button type="button" class="ve-aspect" data-aspect="9:16">9:16</button>
-                <button type="button" class="ve-aspect" data-aspect="1:1">1:1</button>
-                <button type="button" class="ve-aspect" data-aspect="4:5">4:5</button>
-                <button type="button" class="ve-aspect" data-aspect="4:3">4:3</button>
-              </div>
+        <!-- TAB PANEL: Frame -->
+        <div class="ve-tab-panel" data-ve-panel="frame">
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Aspect Ratio / Crop</div>
+            <div class="ve-aspect-pills" role="radiogroup" aria-label="Aspect ratio">
+              <button type="button" class="ve-aspect active" data-aspect="original">Original</button>
+              <button type="button" class="ve-aspect" data-aspect="16:9">16:9</button>
+              <button type="button" class="ve-aspect" data-aspect="9:16">9:16</button>
+              <button type="button" class="ve-aspect" data-aspect="1:1">1:1</button>
+              <button type="button" class="ve-aspect" data-aspect="4:5">4:5</button>
+              <button type="button" class="ve-aspect ve-aspect-free" data-aspect="bebas">✂ Bebas</button>
             </div>
+          </div>
 
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Zoom</div>
+          <!-- v635: Zoom diganti Position X + Position Y per request user -->
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Posisi Frame (Pan)</div>
+            <div class="ve-pos-grid">
               <div class="ve-slider-row">
-                <span class="ve-slider-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/></svg></span>
+                <span class="ve-slider-label">Posisi X</span>
+                <input type="range" id="vePosX" min="-50" max="50" value="0" step="1" class="ve-range" aria-label="Posisi horizontal"/>
+                <span class="ve-range-val" id="vePosXVal">0</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Posisi Y</span>
+                <input type="range" id="vePosY" min="-50" max="50" value="0" step="1" class="ve-range" aria-label="Posisi vertikal"/>
+                <span class="ve-range-val" id="vePosYVal">0</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Zoom</span>
                 <input type="range" id="veZoom" min="100" max="200" value="100" step="1" class="ve-range" aria-label="Zoom"/>
                 <span class="ve-range-val" id="veZoomVal">100%</span>
               </div>
             </div>
+          </div>
 
+          <div class="ve-grid-2">
             <div class="ve-section">
               <div class="ve-ctrl-label">Rotasi</div>
               <div class="ve-rot-pills" role="radiogroup" aria-label="Rotasi video">
@@ -8975,7 +9001,6 @@
                 <button type="button" class="ve-rot" data-rot="270">270°</button>
               </div>
             </div>
-
             <div class="ve-section">
               <div class="ve-ctrl-label">Flip / Cermin</div>
               <div class="ve-flip-pills">
@@ -8984,81 +9009,85 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="ve-col">
-            <div class="ve-col-heading">Color &amp; Filter</div>
-
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Color Adjustment</div>
-              <div class="ve-filter-grid">
-                <div class="ve-slider-row">
-                  <span class="ve-slider-label">Brightness</span>
-                  <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
-                  <span class="ve-range-val" id="veBrightnessVal">100%</span>
-                </div>
-                <div class="ve-slider-row">
-                  <span class="ve-slider-label">Contrast</span>
-                  <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
-                  <span class="ve-range-val" id="veContrastVal">100%</span>
-                </div>
-                <div class="ve-slider-row">
-                  <span class="ve-slider-label">Saturation</span>
-                  <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
-                  <span class="ve-range-val" id="veSaturationVal">100%</span>
-                </div>
-                <div class="ve-slider-row">
-                  <span class="ve-slider-label">Temperature</span>
-                  <input type="range" id="veTemperature" min="-30" max="30" value="0" class="ve-range" aria-label="Temperature"/>
-                  <span class="ve-range-val" id="veTemperatureVal">0</span>
-                </div>
-                <div class="ve-slider-row">
-                  <span class="ve-slider-label">Vignette</span>
-                  <input type="range" id="veVignetteRange" min="0" max="100" value="0" class="ve-range" aria-label="Vignette"/>
-                  <span class="ve-range-val" id="veVignetteVal">0%</span>
-                </div>
+        <!-- TAB PANEL: Color -->
+        <div class="ve-tab-panel" data-ve-panel="color" hidden>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Color Adjustment</div>
+            <div class="ve-filter-grid">
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Brightness</span>
+                <input type="range" id="veBrightness" min="50" max="150" value="100" class="ve-range" aria-label="Brightness"/>
+                <span class="ve-range-val" id="veBrightnessVal">100%</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Contrast</span>
+                <input type="range" id="veContrast" min="50" max="150" value="100" class="ve-range" aria-label="Contrast"/>
+                <span class="ve-range-val" id="veContrastVal">100%</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Saturation</span>
+                <input type="range" id="veSaturation" min="0" max="200" value="100" class="ve-range" aria-label="Saturation"/>
+                <span class="ve-range-val" id="veSaturationVal">100%</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Temperature</span>
+                <input type="range" id="veTemperature" min="-30" max="30" value="0" class="ve-range" aria-label="Temperature"/>
+                <span class="ve-range-val" id="veTemperatureVal">0</span>
+              </div>
+              <div class="ve-slider-row">
+                <span class="ve-slider-label">Vignette</span>
+                <input type="range" id="veVignetteRange" min="0" max="100" value="0" class="ve-range" aria-label="Vignette"/>
+                <span class="ve-range-val" id="veVignetteVal">0%</span>
               </div>
             </div>
+          </div>
 
-            <div class="ve-section">
-              <div class="ve-ctrl-label">Preset Filter</div>
-              <div class="ve-preset-pills" role="radiogroup" aria-label="Preset filter">
-                <button type="button" class="ve-preset active" data-preset="none">Original</button>
-                <button type="button" class="ve-preset" data-preset="vivid">Vivid</button>
-                <button type="button" class="ve-preset" data-preset="cinematic">Cinematic</button>
-                <button type="button" class="ve-preset" data-preset="dramatic">Dramatic</button>
-                <button type="button" class="ve-preset" data-preset="faded">Faded</button>
-                <button type="button" class="ve-preset" data-preset="vintage">Vintage</button>
-                <button type="button" class="ve-preset" data-preset="bw">B&amp;W</button>
-                <button type="button" class="ve-preset" data-preset="cool">Cool</button>
-                <button type="button" class="ve-preset" data-preset="warm">Warm</button>
-              </div>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Preset Filter</div>
+            <div class="ve-preset-pills" role="radiogroup" aria-label="Preset filter">
+              <button type="button" class="ve-preset active" data-preset="none">Original</button>
+              <button type="button" class="ve-preset" data-preset="vivid">Vivid</button>
+              <button type="button" class="ve-preset" data-preset="cinematic">Cinematic</button>
+              <button type="button" class="ve-preset" data-preset="dramatic">Dramatic</button>
+              <button type="button" class="ve-preset" data-preset="faded">Faded</button>
+              <button type="button" class="ve-preset" data-preset="vintage">Vintage</button>
+              <button type="button" class="ve-preset" data-preset="bw">B&amp;W</button>
+              <button type="button" class="ve-preset" data-preset="cool">Cool</button>
+              <button type="button" class="ve-preset" data-preset="warm">Warm</button>
             </div>
           </div>
         </div>
 
-        <!-- 6. TEXT OVERLAY (v593 2026-05-28) -->
-        <div class="ve-section">
-          <div class="ve-ctrl-label">Text Overlay</div>
-          <div class="ve-text-row">
+        <!-- TAB PANEL: Text Overlay -->
+        <div class="ve-tab-panel" data-ve-panel="text" hidden>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Teks yang Tampil di Video</div>
             <input type="text" id="veTextInput" maxlength="80" placeholder="Tulis teks yang akan muncul di video..." class="ve-text-input"/>
           </div>
-          <div class="ve-text-row ve-text-controls">
-            <div class="ve-text-ctrl">
-              <label class="ve-mini-label" for="veTextPos">Posisi</label>
-              <div class="ve-text-pos-pills" role="radiogroup" aria-label="Posisi teks">
-                <button type="button" class="ve-text-pos" data-text-pos="top">Atas</button>
-                <button type="button" class="ve-text-pos" data-text-pos="center">Tengah</button>
-                <button type="button" class="ve-text-pos active" data-text-pos="bottom">Bawah</button>
+          <div class="ve-section">
+            <div class="ve-ctrl-label">Posisi Teks</div>
+            <div class="ve-text-pos-pills" role="radiogroup" aria-label="Posisi teks">
+              <button type="button" class="ve-text-pos" data-text-pos="top">⬆ Atas</button>
+              <button type="button" class="ve-text-pos" data-text-pos="center">⊙ Tengah</button>
+              <button type="button" class="ve-text-pos active" data-text-pos="bottom">⬇ Bawah</button>
+            </div>
+          </div>
+          <div class="ve-grid-2">
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Ukuran Teks</div>
+              <div class="ve-slider-row">
+                <input type="range" id="veTextSize" min="14" max="48" value="24" step="1" class="ve-range"/>
+                <span class="ve-range-val" id="veTextSizeVal">24px</span>
               </div>
             </div>
-            <div class="ve-text-ctrl">
-              <label class="ve-mini-label" for="veTextSize">Ukuran</label>
-              <input type="range" id="veTextSize" min="14" max="48" value="24" step="1" class="ve-range"/>
-              <span class="ve-range-val" id="veTextSizeVal">24px</span>
-            </div>
-            <div class="ve-text-ctrl">
-              <label class="ve-mini-label" for="veTextColor">Warna</label>
-              <input type="color" id="veTextColor" value="#ffffff" class="ve-text-color"/>
+            <div class="ve-section">
+              <div class="ve-ctrl-label">Warna Teks</div>
+              <div class="ve-color-row">
+                <input type="color" id="veTextColor" value="#ffffff" class="ve-text-color"/>
+                <span class="ve-color-hex" id="veTextColorHex">#ffffff</span>
+              </div>
             </div>
           </div>
         </div>
@@ -9069,10 +9098,38 @@
           <small class="ve-hint">Preview memutar dari "Mulai" sampai "Akhir" dengan semua efek aktif.</small>
         </div>
       </div>
-      <div class="ve-actions">
-        <button type="button" class="btn ghost" id="veReset">↺ Reset</button>
-        <button type="button" class="btn ghost" data-close>Cancel</button>
-        <button type="button" class="btn primary" id="veApply">✓ Apply &amp; Simpan</button>
+      <!-- v635 (2026-05-29): Action bar — Reset kiri, Batal tengah, Export Video kanan -->
+      <div class="ve-actions ve-actions-v635">
+        <button type="button" class="btn ghost ve-action-secondary" id="veReset">↺ Reset</button>
+        <button type="button" class="btn ghost ve-action-secondary" data-close>Batal</button>
+        <button type="button" class="btn primary ve-action-export" id="veApply">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export Video</span>
+        </button>
+      </div>
+
+      <!-- v635: Export loading + preview after success -->
+      <div class="ve-export-overlay" id="veExportOverlay" hidden>
+        <div class="ve-export-loading" id="veExportLoading">
+          <div class="ve-export-spinner" aria-hidden="true"></div>
+          <h4>Memproses Video...</h4>
+          <p class="muted" id="veExportProgress">Menerapkan efek edit (0%)</p>
+          <div class="ve-export-bar"><i id="veExportBar" style="width:0%"></i></div>
+        </div>
+        <div class="ve-export-done" id="veExportDone" hidden>
+          <div class="ve-export-success-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <h4>Berhasil!</h4>
+          <p class="muted">Video kamu sudah berhasil di-edit & disimpan.</p>
+          <div class="ve-export-preview-wrap" id="veExportPreviewWrap">
+            <video id="veExportPreview" controls playsinline></video>
+          </div>
+          <div class="ve-export-done-actions">
+            <button type="button" class="btn ghost" id="veExportBackBtn">↺ Edit Lagi</button>
+            <button type="button" class="btn primary" id="veExportCloseBtn">✓ Selesai</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
