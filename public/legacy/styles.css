@@ -71852,3 +71852,41 @@ textarea#upDesc.upf-desc-textarea {
 .video-editor-panel .ve-adv-title {
   color: var(--muted);
 }
+
+
+/* ============================================================
+   v688 (2026-06-01): Edit Video review #4 — compact aspect ratio,
+   simpler/tighter Advance
+   ============================================================ */
+
+/* Aspect ratio — compact: shape + label inline, shorter chips */
+.video-editor-panel .ve-aspect-pills {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.video-editor-panel .ve-aspect {
+  flex-direction: row;
+  height: auto;
+  min-height: 36px;
+  padding: 7px 10px;
+  gap: 8px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+.video-editor-panel .ve-ar-shape { transform: scale(.8); flex-shrink: 0; }
+.video-editor-panel .ve-ar-free svg { width: 15px; height: 15px; }
+
+/* Advance — simpler & tighter (keep the 2D pad + rotate dial concept) */
+.video-editor-panel .ve-adv-top { gap: 12px; margin-bottom: 12px; }
+.video-editor-panel .ve-adv-cell { padding: 10px; gap: 8px; }
+.video-editor-panel .ve-pad { max-width: 124px; border-radius: 10px; }
+.video-editor-panel .ve-pad-dot { width: 16px; height: 16px; }
+.video-editor-panel .ve-dial { max-width: 104px; }
+.video-editor-panel .ve-dial-center b { font-size: 13px; }
+.video-editor-panel .ve-dial-pointer i { height: 28%; margin-top: 6px; width: 3px; }
+.video-editor-panel .ve-adv-actions { gap: 6px; }
+.video-editor-panel .ve-adv-actions .ve-icon-btn { width: 30px; height: 30px; }
+.video-editor-panel .ve-adv-actions .ve-icon-btn svg { width: 15px; height: 15px; }
+.video-editor-panel .ve-mini-btn { height: 30px; padding: 0 10px; }
+.video-editor-panel .ve-adv-readout { gap: 14px; font-size: 11px; }
+.video-editor-panel .ve-adv-title { font-size: 10.5px; }
