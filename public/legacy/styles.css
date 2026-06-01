@@ -71691,3 +71691,130 @@ textarea#upDesc.upf-desc-textarea {
   border: 0;
 }
 .video-editor-panel .ve-tab.active .ve-tab-ico { background: transparent; border: 0; color: var(--cream); }
+
+
+/* ============================================================
+   v684 (2026-06-01): Advance overhaul — 2D position pad,
+   rotate dial, restyled sliders, 2-column layout
+   ============================================================ */
+.video-editor-panel .ve-hidden-range { display: none !important; }
+
+.video-editor-panel .ve-adv-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.video-editor-panel .ve-adv-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.video-editor-panel .ve-adv-title {
+  align-self: flex-start;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--muted);
+}
+
+/* 2D position pad */
+.video-editor-panel .ve-pad {
+  position: relative;
+  width: 100%; max-width: 160px; aspect-ratio: 1 / 1;
+  background:
+    radial-gradient(circle at center, rgba(190,151,82,.06), transparent 70%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: crosshair;
+  touch-action: none;
+}
+.video-editor-panel .ve-pad-gx,
+.video-editor-panel .ve-pad-gy { position: absolute; background: var(--border); }
+.video-editor-panel .ve-pad-gx { left: 8%; right: 8%; top: 50%; height: 1px; }
+.video-editor-panel .ve-pad-gy { top: 8%; bottom: 8%; left: 50%; width: 1px; }
+.video-editor-panel .ve-pad-dot {
+  position: absolute; left: 50%; top: 50%;
+  width: 18px; height: 18px;
+  transform: translate(-50%, -50%);
+  background: var(--primary);
+  border: 2px solid var(--cream);
+  border-radius: 50%;
+  box-shadow: 0 2px 7px rgba(0,0,0,.45);
+  pointer-events: none;
+}
+.video-editor-panel .ve-adv-readout {
+  display: flex; gap: 16px; font-size: 11.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.video-editor-panel .ve-adv-readout b { color: var(--text); font-weight: 800; }
+
+/* circular rotate dial */
+.video-editor-panel .ve-dial {
+  position: relative;
+  width: 100%; max-width: 132px; aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--surface) 56%, var(--surface-2) 58%);
+  border: 1px solid var(--border);
+  cursor: grab;
+  touch-action: none;
+}
+.video-editor-panel .ve-dial:active { cursor: grabbing; }
+.video-editor-panel .ve-dial-pointer {
+  position: absolute; inset: 0;
+  display: flex; justify-content: center;
+  transform-origin: center center;
+  pointer-events: none;
+}
+.video-editor-panel .ve-dial-pointer i {
+  display: block;
+  width: 4px; height: 30%;
+  margin-top: 7px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+.video-editor-panel .ve-dial-center {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.video-editor-panel .ve-dial-center b {
+  font-size: 15px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.video-editor-panel .ve-adv-actions { display: flex; gap: 8px; align-items: center; }
+.video-editor-panel .ve-mini-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px; padding: 0 12px; height: 34px;
+  font-size: 11.5px; font-weight: 700; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.video-editor-panel .ve-mini-btn:hover { color: var(--text); border-color: var(--primary); }
+
+/* #5: restyle range sliders (track + thumb) — themed */
+.video-editor-panel input[type="range"].ve-range:not(.ve-hidden-range) {
+  -webkit-appearance: none; appearance: none;
+  height: 6px; border-radius: 999px;
+  background: linear-gradient(var(--surface), var(--surface));
+  border: 1px solid var(--border);
+  outline: none;
+  cursor: pointer;
+}
+.video-editor-panel input[type="range"].ve-range:not(.ve-hidden-range)::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--cream);
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  cursor: pointer;
+}
+.video-editor-panel input[type="range"].ve-range:not(.ve-hidden-range)::-moz-range-thumb {
+  width: 17px; height: 17px; border-radius: 50%;
+  background: var(--primary); border: 2px solid var(--cream);
+  box-shadow: 0 1px 4px rgba(0,0,0,.4); cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .video-editor-panel .ve-adv-top { grid-template-columns: 1fr; }
+}

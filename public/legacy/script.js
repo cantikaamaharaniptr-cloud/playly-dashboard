@@ -54397,6 +54397,7 @@ function getNotifList() {
     });
     aspectPills.forEach(function (p) { p.classList.toggle("active", p.dataset.aspect === state.aspect); });
     presetPills.forEach(function (p) { p.classList.toggle("active", p.dataset.preset === state.preset); });
+    if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   }
 
   function resetState() {
@@ -54429,6 +54430,7 @@ function getNotifList() {
     state.rotate = Number(rotate.value);
     if (rotateVal) rotateVal.textContent = state.rotate + "°";
     applyEffects();
+    if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   });
   // v681: zoom step buttons (±10%)
   function _stepZoom(delta) {
@@ -54449,18 +54451,74 @@ function getNotifList() {
     if (rotate) rotate.value = r;
     if (rotateVal) rotateVal.textContent = r + "°";
     applyEffects();
+    if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   });
   // v635 (2026-05-29): wire Position X/Y sliders (no suffix → numeric value)
   if (posX) posX.addEventListener("input", function () {
     state.posX = Number(posX.value);
     if (posXVal) posXVal.textContent = String(state.posX);
     applyEffects();
+    if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   });
   if (posY) posY.addEventListener("input", function () {
     state.posY = Number(posY.value);
     if (posYVal) posYVal.textContent = String(state.posY);
     applyEffects();
+    if (typeof _syncAdvanceVisual === "function") _syncAdvanceVisual();
   });
+
+  // v684: 2D position pad + circular rotate dial drive the hidden range inputs
+  const posPad = document.getElementById("vePosPad");
+  const posDot = document.getElementById("vePosDot");
+  const rotDial = document.getElementById("veRotDial");
+  const rotPointer = document.getElementById("veRotPointer");
+  const rotResetBtn = document.getElementById("veRotReset");
+  function _syncAdvanceVisual() {
+    if (posDot) {
+      posDot.style.left = (state.posX + 50) + "%";
+      posDot.style.top = (state.posY + 50) + "%";
+    }
+    if (rotPointer) rotPointer.style.transform = "rotate(" + state.rotate + "deg)";
+    if (rotDial) rotDial.setAttribute("aria-valuenow", String(state.rotate));
+  }
+  function _evXY(e) { const t = e.touches && e.touches[0]; return { x: t ? t.clientX : e.clientX, y: t ? t.clientY : e.clientY }; }
+  function _setPosFromEvent(e) {
+    const r = posPad.getBoundingClientRect(); const p = _evXY(e);
+    let nx = Math.round(((p.x - r.left) / r.width) * 100 - 50);
+    let ny = Math.round(((p.y - r.top) / r.height) * 100 - 50);
+    nx = Math.max(-50, Math.min(50, nx)); ny = Math.max(-50, Math.min(50, ny));
+    if (posX) { posX.value = nx; posX.dispatchEvent(new Event("input", { bubbles: true })); }
+    if (posY) { posY.value = ny; posY.dispatchEvent(new Event("input", { bubbles: true })); }
+    _syncAdvanceVisual();
+  }
+  function _setRotFromEvent(e) {
+    const r = rotDial.getBoundingClientRect(); const p = _evXY(e);
+    const dx = p.x - (r.left + r.width / 2), dy = p.y - (r.top + r.height / 2);
+    let ang = Math.round(Math.atan2(dx, -dy) * 180 / Math.PI);
+    if (ang > 180) ang -= 360; if (ang < -180) ang += 360;
+    if (rotate) { rotate.value = ang; rotate.dispatchEvent(new Event("input", { bubbles: true })); }
+    _syncAdvanceVisual();
+  }
+  function _dragify(el, handler) {
+    if (!el) return;
+    let on = false;
+    const down = function (e) { on = true; handler(e); e.preventDefault(); };
+    const move = function (e) { if (on) handler(e); };
+    const up = function () { on = false; };
+    el.addEventListener("mousedown", down);
+    el.addEventListener("touchstart", down, { passive: false });
+    window.addEventListener("mousemove", move);
+    window.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("mouseup", up);
+    window.addEventListener("touchend", up);
+  }
+  _dragify(posPad, _setPosFromEvent);
+  _dragify(rotDial, _setRotFromEvent);
+  if (rotResetBtn) rotResetBtn.addEventListener("click", function () {
+    if (rotate) { rotate.value = 0; rotate.dispatchEvent(new Event("input", { bubbles: true })); }
+    _syncAdvanceVisual();
+  });
+  _syncAdvanceVisual();
   if (temp) temp.addEventListener("input", function () {
     state.temperature = Number(temp.value);
     if (tempVal) tempVal.textContent = String(state.temperature);

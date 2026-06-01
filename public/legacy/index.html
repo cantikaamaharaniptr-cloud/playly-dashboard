@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v683" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v685" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8991,17 +8991,36 @@
           <div class="ve-section">
             <div class="ve-ctrl-label">Advance</div>
             <div class="ve-pos-grid">
-              <div class="ve-slider-row">
-                <span class="ve-slider-label">Posisi X</span>
-                <input type="range" id="vePosX" min="-50" max="50" value="0" step="1" class="ve-range" aria-label="Posisi horizontal"/>
-                <span class="ve-range-val" id="vePosXVal">0</span>
+              <!-- v684: 2-col — 2D position pad + rotate dial -->
+              <div class="ve-adv-top">
+                <div class="ve-adv-cell">
+                  <span class="ve-adv-title">Posisi (X / Y)</span>
+                  <div class="ve-pad" id="vePosPad" role="application" aria-label="Geser posisi frame" tabindex="0">
+                    <span class="ve-pad-gx" aria-hidden="true"></span>
+                    <span class="ve-pad-gy" aria-hidden="true"></span>
+                    <span class="ve-pad-dot" id="vePosDot"></span>
+                  </div>
+                  <div class="ve-adv-readout"><span>X <b id="vePosXVal">0</b></span><span>Y <b id="vePosYVal">0</b></span></div>
+                </div>
+                <div class="ve-adv-cell">
+                  <span class="ve-adv-title">Rotate</span>
+                  <div class="ve-dial" id="veRotDial" role="slider" aria-label="Rotasi" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="0" tabindex="0">
+                    <span class="ve-dial-pointer" id="veRotPointer"><i></i></span>
+                    <span class="ve-dial-center"><b id="veRotateVal">0°</b></span>
+                  </div>
+                  <div class="ve-adv-actions">
+                    <button type="button" class="ve-icon-btn ve-rot-quick" id="veRotQuick" aria-label="Putar +90°" title="Putar +90°">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    </button>
+                    <button type="button" class="ve-mini-btn" id="veRotReset" title="Reset rotasi">Reset</button>
+                  </div>
+                </div>
               </div>
-              <div class="ve-slider-row">
-                <span class="ve-slider-label">Posisi Y</span>
-                <input type="range" id="vePosY" min="-50" max="50" value="0" step="1" class="ve-range" aria-label="Posisi vertikal"/>
-                <span class="ve-range-val" id="vePosYVal">0</span>
-              </div>
-              <!-- v681: Zoom 0–1000% (default 100%), with scale −/+ step buttons (1a) -->
+              <!-- hidden source-of-truth inputs (driven by pad/dial; reuse existing handlers + state sync) -->
+              <input type="range" id="vePosX" min="-50" max="50" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
+              <input type="range" id="vePosY" min="-50" max="50" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
+              <input type="range" id="veRotate" min="-180" max="180" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
+              <!-- Zoom 0–1000% (default 100%) with scale −/+ buttons -->
               <div class="ve-slider-row ve-slider-row-zoom">
                 <span class="ve-slider-label">Zoom</span>
                 <button type="button" class="ve-zoom-step" id="veZoomDown" aria-label="Perkecil zoom" title="Perkecil −10%">−</button>
@@ -9009,16 +9028,7 @@
                 <button type="button" class="ve-zoom-step" id="veZoomUp" aria-label="Perbesar zoom" title="Perbesar +10%">+</button>
                 <span class="ve-range-val" id="veZoomVal">100%</span>
               </div>
-              <!-- v681: Rotate fine slider -180..180 + quick +90° icon (1d) -->
-              <div class="ve-slider-row ve-slider-row-rotate">
-                <span class="ve-slider-label">Rotate</span>
-                <input type="range" id="veRotate" min="-180" max="180" value="0" step="1" class="ve-range" aria-label="Rotasi sudut bebas"/>
-                <span class="ve-range-val" id="veRotateVal">0°</span>
-                <button type="button" class="ve-icon-btn ve-rot-quick" id="veRotQuick" aria-label="Putar +90°" title="Putar +90°">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                </button>
-              </div>
-              <!-- v682: Flip / Cermin dipindah ke grid Advance, sejajar dengan slider -->
+              <!-- Flip / Cermin -->
               <div class="ve-slider-row ve-slider-row-flip">
                 <span class="ve-slider-label">Flip / Cermin</span>
                 <div class="ve-flip-icons">
@@ -9350,7 +9360,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260601-edit-video-v683" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260601-edit-video-v685" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
