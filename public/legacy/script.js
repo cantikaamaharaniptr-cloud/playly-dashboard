@@ -25837,7 +25837,19 @@ function computeRevenueFromLedger() {
   // Sumber tambahan: legacy ledger (kalau ada — back-compat dgn data lama).
   const fromPayments = paymentsToLedger();
   const legacyLedger = getRevenueLedger();
-  const ledger = [...fromPayments, ...legacyLedger].sort((a, b) => b.ts - a.ts);
+  let ledger = [...fromPayments, ...legacyLedger].sort((a, b) => b.ts - a.ts);
+
+  // Apply date filter (admin date picker — historical mode).
+  // Filter aktif → semua KPI ngerepresent periode terpilih, bukan all-time.
+  const filterActive = revState.dateFrom !== null || revState.dateTo !== null;
+  if (filterActive) {
+    if (revState.dateFrom !== null) {
+      ledger = ledger.filter(l => l.ts >= revState.dateFrom);
+    }
+    if (revState.dateTo !== null) {
+      ledger = ledger.filter(l => l.ts <= revState.dateTo);
+    }
+  }
 
   const todayStart = new Date().setHours(0, 0, 0, 0);
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
@@ -25855,7 +25867,8 @@ function computeRevenueFromLedger() {
     ledger, total, today, ads, sub,
     rate: recent / 5,        // Rp/menit (sum 5 menit terakhir / 5)
     payout: total * 0.35,    // Share kreator (kontrak: 35%)
-    isEmpty: ledger.length === 0
+    isEmpty: ledger.length === 0,
+    filterActive,            // dipake UI buat ngeganti label & nampilin status banner
   };
 }
 
@@ -25865,7 +25878,10 @@ const revState = {
   lastSeenTxnTs: null,   // marker transaksi terakhir yang sudah masuk feed
   tickTimer: null,
   feedTimer: null,
-  displayed: { total: 0, today: 0, ads: 0, sub: 0, payout: 0, rate: 0 }
+  displayed: { total: 0, today: 0, ads: 0, sub: 0, payout: 0, rate: 0 },
+  // Date filter — null = no filter (real-time mode), value = epoch ms
+  dateFrom: null,
+  dateTo: null,
 };
 
 function fmtRp(n) {
@@ -26125,8 +26141,100 @@ function stopRevenueLive() {
   if (revState.feedTimer) { clearInterval(revState.feedTimer); revState.feedTimer = null; }
 }
 
+// === Admin Pendapatan — date filter handlers (2026-05-30) ===
+// Reuse _parseDateInput helper dari Riwayat (parse YYYY-MM-DD → epoch ms).
+function _revFormatDateLabel(ts) {
+  if (ts === null) return "—";
+  return new Date(ts).toLocaleDateString("id-ID", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+}
+function _revSyncFilterUI() {
+  const statusEl = document.getElementById("revFilterStatus");
+  const statusText = document.getElementById("revFilterStatusText");
+  const resetBtn = document.getElementById("revDateReset");
+  const livePill = document.querySelector(".rev-live-pill");
+  const todaySubEl = document.getElementById("revTodaySub");
+  const todayLabelEl = document.querySelector('[data-kpi="rev-today"] small');
+  const active = revState.dateFrom !== null || revState.dateTo !== null;
+
+  // Status banner
+  if (statusEl && statusText) {
+    if (active) {
+      const from = revState.dateFrom !== null ? _revFormatDateLabel(revState.dateFrom) : null;
+      const to = revState.dateTo !== null ? _revFormatDateLabel(revState.dateTo) : null;
+      let label;
+      if (from && to) {
+        label = from === to
+          ? `Menampilkan pendapatan tanggal ${from}`
+          : `Menampilkan pendapatan dari ${from} sampai ${to}`;
+      } else if (from) {
+        label = `Menampilkan pendapatan sejak ${from}`;
+      } else {
+        label = `Menampilkan pendapatan sampai ${to}`;
+      }
+      statusText.textContent = label;
+      statusEl.hidden = false;
+    } else {
+      statusEl.hidden = true;
+    }
+  }
+
+  // Reset button visibility
+  if (resetBtn) resetBtn.hidden = !active;
+
+  // LIVE pill — hide saat filter aktif (data historikal, bukan real-time)
+  if (livePill) livePill.style.opacity = active ? "0.35" : "";
+
+  // Label "Hari Ini" → "Periode" saat filter aktif
+  if (todayLabelEl) {
+    todayLabelEl.textContent = active ? "Periode Dipilih" : "Hari Ini";
+  }
+  if (todaySubEl) {
+    // Subtext akan diset oleh tickRevenue, di sini kasih placeholder yg konsisten
+  }
+}
+function _revOnDateChange() {
+  const fromEl = document.getElementById("revDateFrom");
+  const toEl = document.getElementById("revDateTo");
+  if (fromEl && typeof _parseDateInput === "function") {
+    revState.dateFrom = _parseDateInput(fromEl.value, false);
+  }
+  if (toEl && typeof _parseDateInput === "function") {
+    revState.dateTo = _parseDateInput(toEl.value, true);
+  }
+  _revSyncFilterUI();
+  // Re-render KPI + chart + breakdown dgn filter baru
+  if (typeof tickRevenue === "function") tickRevenue();
+}
+function _revResetFilter() {
+  revState.dateFrom = null;
+  revState.dateTo = null;
+  const fromEl = document.getElementById("revDateFrom");
+  const toEl = document.getElementById("revDateTo");
+  if (fromEl) fromEl.value = "";
+  if (toEl) toEl.value = "";
+  _revSyncFilterUI();
+  if (typeof tickRevenue === "function") tickRevenue();
+}
+// Document-level delegation supaya aman walaupun elemen di-rebuild
+document.addEventListener("change", e => {
+  if (e.target && (e.target.id === "revDateFrom" || e.target.id === "revDateTo")) {
+    _revOnDateChange();
+  }
+});
+document.addEventListener("click", e => {
+  if (e.target.closest("#revDateReset") || e.target.closest("[data-rev-clear-filter]")) {
+    e.preventDefault();
+    _revResetFilter();
+  }
+});
+
 function renderAdminRevenue() {
   if (!$("#revTotal")) return;
+  // Sync UI date filter dgn revState (saat masuk halaman pertama kali atau
+  // setelah re-render — banner status, label "Hari Ini" → "Periode Dipilih").
+  if (typeof _revSyncFilterUI === "function") _revSyncFilterUI();
   // Initial paint (tanpa animasi panjang dari 0 → total kalau sudah pernah ada)
   // Tick pertama akan animate dari current displayed (default 0) ke nilai sekarang
   tickRevenue();
