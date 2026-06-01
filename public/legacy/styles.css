@@ -71932,3 +71932,39 @@ textarea#upDesc.upf-desc-textarea {
 /* flip row */
 .video-editor-panel .ve-adv-row-flip { grid-template-columns: 66px 1fr; }
 .video-editor-panel .ve-adv-row-flip .ve-flip-icons { display: flex; gap: 8px; }
+
+
+/* ============================================================
+   v690 (2026-06-01): Edit Video review #6 — aspect text bigger
+   & cleaner, visible "Bebas" color, flip column polish
+   ============================================================ */
+
+/* Aspect ratio — bigger/clearer label, clean compact chip */
+.video-editor-panel .ve-aspect {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  gap: 9px;
+  border-radius: 10px;
+}
+.video-editor-panel .ve-ar-shape { transform: scale(.92); }
+
+/* "Bebas" — clearly readable label (was blending into the bg) + gold scissor accent */
+.video-editor-panel .ve-aspect.ve-aspect-free {
+  background: rgba(190,151,82,.14);
+  border-color: rgba(190,151,82,.5);
+  color: var(--cream);
+}
+.video-editor-panel .ve-aspect.ve-aspect-free .ve-ar-free { color: #E0B978; }
+.video-editor-panel .ve-aspect.ve-aspect-free.active {
+  background: linear-gradient(135deg, #BE9752, #7d3640);
+  color: #fff;
+}
+.video-editor-panel .ve-aspect.ve-aspect-free.active .ve-ar-free { color: #fff; }
+
+/* Flip column — clearer, consistent toggle buttons */
+.video-editor-panel .ve-adv-row-flip { align-items: center; }
+.video-editor-panel .ve-adv-row-flip .ve-flip-icons { gap: 10px; }
+.video-editor-panel .ve-adv-row-flip .ve-icon-btn { width: 42px; height: 32px; border-radius: 8px; }
+.video-editor-panel .ve-adv-row-flip .ve-icon-btn svg { width: 18px; height: 18px; }
