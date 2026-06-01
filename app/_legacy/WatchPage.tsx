@@ -9,7 +9,7 @@ export default function WatchPage() {
     <>
       <link rel="stylesheet" href="/legacy/watch.css" precedence="high" />
       <link rel="preconnect" href="https://urfkqcdwcvyzctbtbpwv.supabase.co" crossOrigin="" />
-      <div dangerouslySetInnerHTML={{ __html: WATCH_MARKUP }} />
+      <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: WATCH_MARKUP }} />
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" />
       <script src="/legacy/watch-init.js" />
     </>

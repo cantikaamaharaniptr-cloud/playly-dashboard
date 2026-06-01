@@ -8,7 +8,7 @@ export default function EmbedPage() {
     <>
       <link rel="stylesheet" href="/legacy/embed.css" precedence="high" />
       <link rel="preconnect" href="https://urfkqcdwcvyzctbtbpwv.supabase.co" crossOrigin="" />
-      <div dangerouslySetInnerHTML={{ __html: EMBED_MARKUP }} />
+      <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: EMBED_MARKUP }} />
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" />
       <script src="/legacy/embed-init.js" />
     </>

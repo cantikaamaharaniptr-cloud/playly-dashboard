@@ -51,8 +51,8 @@ export const viewport: Viewport = {
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
-      <body data-theme="dark" className="auth-mode">
+    <html lang="id" suppressHydrationWarning>
+      <body data-theme="dark" className="auth-mode" suppressHydrationWarning>
         {/* React 19 hoists these <link>/<style> resources into <head>. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

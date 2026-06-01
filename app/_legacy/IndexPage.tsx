@@ -24,7 +24,7 @@ export default function IndexPage() {
       <script dangerouslySetInnerHTML={{ __html: INDEX_PREPAINT }} />
 
       {/* Full legacy body markup, byte-identical. */}
-      <div dangerouslySetInnerHTML={{ __html: INDEX_MARKUP }} />
+      <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: INDEX_MARKUP }} />
 
       {/* Scripts in the exact original order. */}
       <script src="/legacy/index-config.js" />
