@@ -32,12 +32,15 @@ const nextConfig = {
   },
 
   async headers() {
-    // Dev mode: hindari cache 1-tahun supaya tiap edit script.js/styles.css
-    // langsung kelihatan tanpa user perlu Ctrl+Shift+R berulang kali.
+    // Dev mode: pakai 'no-cache, must-revalidate' supaya browser CACHE file
+    // tapi SELALU validasi ETag dulu sebelum pake. Kalau file gak berubah →
+    // server return 304 Not Modified (super ringan, ~200 bytes). Kalau berubah
+    // → download baru. Ini jauh lebih cepat dari 'no-store' (yang force full
+    // download 5MB tiap reload).
     // Prod tetep pake immutable (file legacy versi statis).
     const isDev = process.env.NODE_ENV !== 'production';
     const legacyJsCss = isDev
-      ? 'no-store, must-revalidate'
+      ? 'no-cache, must-revalidate'
       : 'public, max-age=31536000, immutable';
     return [
       {
