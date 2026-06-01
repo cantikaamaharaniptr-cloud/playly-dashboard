@@ -17270,7 +17270,6 @@ document.getElementById("pdUpgradeBtn")?.addEventListener("click", () => {
           acc.premiumPlan = planKey;
           acc.premiumStartedAt = Date.now();
           acc.premiumExpiresAt = expiry;
-          if (planKey === "trial") acc.trialUsed = true;
           localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acc));
           localStorage.setItem("playly-user", JSON.stringify(user));
         } catch {}
@@ -17279,12 +17278,7 @@ document.getElementById("pdUpgradeBtn")?.addEventListener("click", () => {
         // planKey === "lifetime" → tampilkan "Selamanya" (durationLabel sudah Indonesia: "Selamanya").
         toast(`⭐ Premium ${plan.name} aktif! ${planKey === "lifetime" ? "Selamanya" : `Sampai ${new Date(expiry).toLocaleDateString("id-ID")}`}`, "success");
       };
-      if (planKey === "trial") {
-        // Trial — instant aktif tanpa payment & admin verify
-        activatePremium("trial");
-        return;
-      }
-      // Paid plans → buka payment modal (price & label disesuaikan dgn planKey)
+      // Trial dihapus — semua paket sekarang berbayar, langsung ke payment modal
       openPaymentModal({
         onSuccess: () => activatePremium(planKey),
         planKey,
@@ -17319,12 +17313,8 @@ const PP_ICON_SVG = {
 };
 
 const PREMIUM_PLANS = {
-  trial: {
-    key: "trial", name: "Uji Coba Gratis", durationLabel: "7 hari",
-    durationMs: 7 * 24 * 60 * 60 * 1000, price: 0, priceLabel: "Gratis",
-    icon: "gift", desc: "Coba Premium 7 hari, tanpa kartu kredit.",
-    features: ["Semua fitur Premium", "Otomatis turun ke Gratis setelah 7 hari", "Sekali per akun"]
-  },
+  // Trial 7 hari dihapus 2026-05-30 (req user): user Free tetep Free,
+  // gak ada free trial. Cuma 3 paket berbayar yg ditawarkan.
   monthly: {
     key: "monthly", name: "Bulanan", durationLabel: "1 bulan",
     durationMs: 30 * 24 * 60 * 60 * 1000, price: 9.99, priceLabel: "$9.99", suffix: "/bulan",
@@ -17368,28 +17358,19 @@ function closePlanPicker() {
 function renderPlanPicker(context) {
   const grid = document.getElementById("planPickerGrid");
   if (!grid) return;
-  // Existing user yang sudah pakai trial — disable trial button
-  const trialUsedByThisAcc = (() => {
-    if (!user?.email) return false;
-    try {
-      const acc = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "{}");
-      return !!acc.trialUsed;
-    } catch { return false; }
-  })();
-  const order = ["trial", "monthly", "yearly", "lifetime"];
+  // Trial dihapus — cuma 3 paket berbayar
+  const order = ["monthly", "yearly", "lifetime"];
   // Inline check icon untuk fitur list (gantikan ✓ teks supaya rapi + warna konsisten via stroke).
   const checkSvg = '<svg class="pp-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>';
   grid.innerHTML = order.map(key => {
     const p = PREMIUM_PLANS[key];
-    const disabled = key === "trial" && trialUsedByThisAcc;
     const badge = p.badge ? `<span class="pp-badge">${p.badge}</span>` : "";
     const recommended = p.recommended ? ' pp-card-recommended' : "";
     const featuresHtml = (p.features || []).map(f => `<li>${checkSvg}<span>${f}</span></li>`).join("");
-    // p.icon adalah key (gift/sparkle/flame/crown) → lookup ke PP_ICON_SVG.
-    // Fallback ke emoji raw kalau key tidak dikenali (backward compat).
+    // p.icon adalah key (sparkle/flame/crown) → lookup ke PP_ICON_SVG.
     const iconHtml = PP_ICON_SVG[p.icon] || p.icon || "";
     return `
-      <button type="button" class="pp-card${recommended}${disabled ? ' pp-disabled' : ''}" data-plan-key="${p.key}"${disabled ? ' disabled' : ''}>
+      <button type="button" class="pp-card${recommended}" data-plan-key="${p.key}">
         ${badge}
         <span class="pp-icon">${iconHtml}</span>
         <strong class="pp-name">${p.name}</strong>
@@ -17397,7 +17378,7 @@ function renderPlanPicker(context) {
         ${p.price > 0 ? `<span class="pp-price-idr">≈ ${fmtUsdAsIdr(p.price)}</span>` : ""}
         <span class="pp-duration">${p.durationLabel}</span>
         <ul class="pp-features">${featuresHtml}</ul>
-        <span class="pp-cta">${disabled ? "Sudah dipakai" : (key === "trial" ? "Mulai uji coba →" : "Pilih paket →")}</span>
+        <span class="pp-cta">Pilih paket →</span>
       </button>`;
   }).join("");
 }
