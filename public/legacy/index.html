@@ -11,7 +11,7 @@
   <title>Playly. — Video Platform</title>
   <!-- Inline SVG favicon — silence /favicon.ico 404 without shipping a binary -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0c10'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23E7D7C4'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v685" />
+  <link rel="stylesheet" href="/legacy/styles.css?v=20260601-edit-video-v687" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -8951,7 +8951,7 @@
               <div class="ve-trim-playhead" id="veTrimPlayhead"></div>
             </div>
             <div class="ve-trim-meta">
-              <span class="ve-trim-range"><b id="veStartTime">0:00</b> – <b id="veEndTime">0:00</b></span>
+              <span class="ve-trim-times"><b id="veStartTime">0:00</b> – <b id="veEndTime">0:00</b></span>
               <span class="ve-trim-dur">Durasi <b id="veDurationTime">0:00</b></span>
             </div>
           </div>
@@ -9000,7 +9000,7 @@
                     <span class="ve-pad-gy" aria-hidden="true"></span>
                     <span class="ve-pad-dot" id="vePosDot"></span>
                   </div>
-                  <div class="ve-adv-readout"><span>X <b id="vePosXVal">0</b></span><span>Y <b id="vePosYVal">0</b></span></div>
+                  <div class="ve-adv-readout" data-no-i18n><span>X&nbsp;<b id="vePosXVal">0</b></span><span>Y&nbsp;<b id="vePosYVal">0</b></span></div>
                 </div>
                 <div class="ve-adv-cell">
                   <span class="ve-adv-title">Rotate</span>
@@ -9020,24 +9020,25 @@
               <input type="range" id="vePosX" min="-50" max="50" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
               <input type="range" id="vePosY" min="-50" max="50" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
               <input type="range" id="veRotate" min="-180" max="180" value="0" step="1" class="ve-range ve-hidden-range" tabindex="-1" aria-hidden="true"/>
-              <!-- Zoom 0–1000% (default 100%) with scale −/+ buttons -->
-              <div class="ve-slider-row ve-slider-row-zoom">
-                <span class="ve-slider-label">Zoom</span>
-                <button type="button" class="ve-zoom-step" id="veZoomDown" aria-label="Perkecil zoom" title="Perkecil −10%">−</button>
-                <input type="range" id="veZoom" min="0" max="1000" value="100" step="10" class="ve-range" aria-label="Zoom"/>
-                <button type="button" class="ve-zoom-step" id="veZoomUp" aria-label="Perbesar zoom" title="Perbesar +10%">+</button>
-                <span class="ve-range-val" id="veZoomVal">100%</span>
-              </div>
-              <!-- Flip / Cermin -->
-              <div class="ve-slider-row ve-slider-row-flip">
-                <span class="ve-slider-label">Flip / Cermin</span>
-                <div class="ve-flip-icons">
-                  <button type="button" class="ve-icon-btn ve-flip" data-flip="h" aria-pressed="false" aria-label="Flip horizontal" title="Flip horizontal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 8l5 4-5 4V8z"/><path d="M21 8l-5 4 5 4V8z"/></svg>
-                  </button>
-                  <button type="button" class="ve-icon-btn ve-flip" data-flip="v" aria-pressed="false" aria-label="Flip vertikal" title="Flip vertikal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 3l4 5 4-5H8z"/><path d="M8 21l4-5 4 5H8z"/></svg>
-                  </button>
+              <!-- v686: Zoom + Flip/Cermin pada satu baris -->
+              <div class="ve-adv-bottom">
+                <div class="ve-slider-row ve-slider-row-zoom">
+                  <span class="ve-slider-label">Zoom</span>
+                  <button type="button" class="ve-zoom-step" id="veZoomDown" aria-label="Perkecil zoom" title="Perkecil −10%">−</button>
+                  <input type="range" id="veZoom" min="0" max="1000" value="100" step="10" class="ve-range" aria-label="Zoom"/>
+                  <button type="button" class="ve-zoom-step" id="veZoomUp" aria-label="Perbesar zoom" title="Perbesar +10%">+</button>
+                  <span class="ve-range-val" id="veZoomVal">100%</span>
+                </div>
+                <div class="ve-flip-inline">
+                  <span class="ve-slider-label">Flip</span>
+                  <div class="ve-flip-icons">
+                    <button type="button" class="ve-icon-btn ve-flip" data-flip="h" aria-pressed="false" aria-label="Flip horizontal" title="Flip horizontal">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 8l5 4-5 4V8z"/><path d="M21 8l-5 4 5 4V8z"/></svg>
+                    </button>
+                    <button type="button" class="ve-icon-btn ve-flip" data-flip="v" aria-pressed="false" aria-label="Flip vertikal" title="Flip vertikal">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 3l4 5 4-5H8z"/><path d="M8 21l4-5 4 5H8z"/></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -9360,7 +9361,7 @@
        interaksi user mungkin trigger ke modal duplicate ini. Modal duplikat
        sudah dihapus seluruhnya. Modal lengkap ada di #videoEditorModal di atas. -->
 
-  <script src="/legacy/script.js?v=20260601-edit-video-v685" data-playly-main="1"></script>
+  <script src="/legacy/script.js?v=20260601-edit-video-v687" data-playly-main="1"></script>
   <script src="/legacy/picons.js?v=20260516-settings-ico-v188"></script>
   <script src="/legacy/particles-bg.js?v=20260516-particles-v2"></script>
   <script>
