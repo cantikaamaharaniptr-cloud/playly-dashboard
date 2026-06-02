@@ -41408,10 +41408,11 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   background-color: #1f2942 !important;
   border-color: rgba(118, 158, 255, 0.3) !important;
 }
+/* Hanya override warna; HEIGHT biarkan auto (32px = padding 3px + input 26px)
+   supaya gak ada clipping. Sebelumnya force 30px → input overflow. */
 .rev-datefilter {
   background: #131b2e !important;
   border-color: rgba(255,255,255,0.06) !important;
-  height: 30px !important;
 }
 .rev-date-sep {
   color: var(--muted);
