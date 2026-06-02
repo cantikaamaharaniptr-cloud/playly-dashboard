@@ -4139,11 +4139,14 @@ function syncAvatarImages() {
 
 // ----------------------- PROFILE EDIT FORM -----------------------
 function populateProfileForm() {
-  const fields = ["username", "name", "email", "bio", "website", "twitter", "instagram", "github"];
+  // v619: + "tiktok", - "website" (no website input exists; display omits it).
+  const fields = ["username", "name", "email", "bio", "tiktok", "twitter", "instagram", "github"];
   fields.forEach(f => {
     const el = document.querySelector(`[data-profile="${f}"]`);
     if (el) el.value = user[f] || "";
   });
+  // Bio character counter (max 160) — init dari nilai yang baru di-set.
+  updateBioCharCount();
   // Avatar preview — admin pakai role icon (super = crown, admin = shield)
   const av = $("#profileAvatarPreview");
   if (av) {
@@ -4215,14 +4218,49 @@ document.getElementById("profileEditForm")?.addEventListener("submit", e => {
   toast("✓ Profil disimpan", "success");
 });
 
+// v619: Live bio character counter (max 160). Subtle warning kalau ≤ 15 sisa.
+function updateBioCharCount() {
+  const ta = document.querySelector('#profileEditForm [data-profile="bio"]');
+  const out = document.getElementById("bioCharCount");
+  if (!ta || !out) return;
+  const max = Number(ta.getAttribute("maxlength")) || 160;
+  const len = (ta.value || "").length;
+  out.textContent = `${len}/${max}`;
+  out.classList.toggle("bio-char-warn", (max - len) <= 15);
+}
+document.querySelector('#profileEditForm [data-profile="bio"]')?.addEventListener("input", updateBioCharCount);
+
+// v619: Normalisasi handle sosial. Buang URL prefix yang umum di-paste user
+// (https://instagram.com/@foo, tiktok.com/foo, x.com/foo, github.com/foo, dst),
+// buang leading "@", collapse spasi, cap 64 char. Hasil = handle bersih saja
+// (display sudah merakit https://platform.com/${handle}). Null-safe; "" → "".
+function normalizeSocialHandle(raw) {
+  let v = String(raw == null ? "" : raw).trim();
+  if (!v) return "";
+  // Strip scheme + www. + known host(/@?) prefixes → handle.
+  v = v.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
+  v = v.replace(/^(?:tiktok\.com|twitter\.com|x\.com|instagram\.com|github\.com)\/@?/i, "");
+  v = v.replace(/^@+/, "");          // leading @ (boleh > 1)
+  v = v.split(/[?#\/]/)[0];          // buang query/hash/trailing path
+  v = v.replace(/\s+/g, "");         // collapse/buang spasi internal
+  return v.slice(0, 64);
+}
+
 document.getElementById("profileSocialForm")?.addEventListener("submit", e => {
   e.preventDefault();
   if (!user) return;
-  ["website", "twitter", "instagram", "github"].forEach(f => {
-    user[f] = (document.querySelector(`[data-profile="${f}"]`)?.value || "").trim();
+  // v619: + "tiktok", - "website". Normalisasi tiap handle sebelum simpan.
+  let normalizedAny = false;
+  ["tiktok", "twitter", "instagram", "github"].forEach(f => {
+    const rawInput = (document.querySelector(`[data-profile="${f}"]`)?.value || "").trim();
+    const clean = normalizeSocialHandle(rawInput);
+    // Deteksi kalau input tadinya URL/punya @ → kasih tahu user.
+    if (rawInput && clean && clean !== rawInput.replace(/^@/, "")) normalizedAny = true;
+    user[f] = clean;
   });
   persistUserAndAccount();
   toast("✓ Tautan sosial disimpan", "success");
+  if (normalizedAny) toast("ℹ️ Tautan dirapikan jadi username", "info");
 });
 
 // Avatar upload — file pick membuka avatar editor (crop + zoom)
@@ -45349,6 +45387,7 @@ document.addEventListener("keydown", e => {
 //   Kanan: My Videos grid (flexible, klik = inline play)
 function renderMyProfile() {
   if (!user) return;
+  myProfileActiveTab = "posts"; // v619: tiap buka My Profile mulai dari tab Postingan.
   // Premium Insight / tier widget dipindah ke My Profile (per request user
   // 2026-05-15 v54). Render di sini supaya keisi tiap kali My Profile dibuka.
   try { renderHomeTierWidget(); } catch (e) { console.warn("[myprofile-tier]", e); }
@@ -45409,14 +45448,18 @@ function renderMyProfile() {
   document.getElementById("myProfileFollowingCount").textContent = fmtNum(followingCount);
   document.getElementById("myProfileLikeCount").textContent = fmtNum(totalLikes);
 
-  // Helper render satu lib-item card
-  const renderTile = v => {
-    const title = escapeHtml(v.title || "Video");
-    const thumb = v.thumb || v.thumbnail || "";
-    const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
-    const duration = v.duration || "";
-    const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
-    return `<div class="lib-item" data-vid="${v.id}">
+  // Render tab yang aktif (default "posts"). v619.
+  renderMyProfileTab(myProfileActiveTab);
+}
+
+// v619: helper render satu lib-item video card (dipakai tab posts + likes).
+function myProfileVideoTile(v) {
+  const title = escapeHtml(v.title || "Video");
+  const thumb = v.thumb || v.thumbnail || "";
+  const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
+  const duration = v.duration || "";
+  const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
+  return `<div class="lib-item" data-vid="${v.id}">
       <div class="lib-thumb" ${thumbBg}>
         ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
         ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
@@ -45426,34 +45469,88 @@ function renderMyProfile() {
         <small>${views} views</small>
       </div>
     </div>`;
+}
+
+// v619: helper render satu baris user (dipakai tab followers + following).
+function myProfileUserRow(username) {
+  const acc = (typeof findAccountByUsername === "function") ? findAccountByUsername(username) : null;
+  const name = (acc && acc.name) || username || "User";
+  const av = acc && acc.avatar;
+  const initials = String(name).trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const avatar = av
+    ? `<img src="${escapeHtml(av)}" alt="" onerror="this.remove()"/><span class="mpu-init">${escapeHtml(initials)}</span>`
+    : `<span class="mpu-init">${escapeHtml(initials)}</span>`;
+  return `<button type="button" class="myprofile-user-row" data-open-user="${escapeHtml(username)}">
+      <span class="mpu-avatar">${avatar}</span>
+      <span class="mpu-text">
+        <strong>${escapeHtml(name)}</strong>
+        <small>@${escapeHtml(username)}</small>
+      </span>
+    </button>`;
+}
+
+// v619: tab aktif My Profile (posts | followers | following | likes). Default posts.
+let myProfileActiveTab = "posts";
+
+// v619: render ONE tab di area #myProfileTabPanel, toggle visibility 3 container
+// (#myProfileVideoGrid / #myProfileLikedGrid / #myProfileUserList) + empty-state.
+function renderMyProfileTab(which) {
+  if (!user) return;
+  const tabs = ["posts", "followers", "following", "likes"];
+  if (!tabs.includes(which)) which = "posts";
+  myProfileActiveTab = which;
+
+  const grid = document.getElementById("myProfileVideoGrid");
+  const liked = document.getElementById("myProfileLikedGrid");
+  const list = document.getElementById("myProfileUserList");
+  const empty = document.getElementById("myProfileTabEmpty");
+  const emptyText = document.getElementById("myProfileTabEmptyText");
+  const emptyIcon = empty ? empty.querySelector(".up-empty-icon") : null;
+
+  // Active state pada tombol tab di header.
+  document.querySelectorAll("[data-myprofile-stat]").forEach(btn => {
+    const on = btn.getAttribute("data-myprofile-stat") === which;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+
+  // Sembunyikan semua container dulu.
+  [grid, liked, list, empty].forEach(el => { if (el) el.hidden = true; });
+
+  const showEmpty = (text, icon) => {
+    if (empty) empty.hidden = false;
+    if (emptyText) emptyText.textContent = text;
+    if (emptyIcon) emptyIcon.textContent = icon;
   };
 
-  // Videos grid — same renderer style sebagai My Library
-  const gridEl = document.getElementById("myProfileVideoGrid");
-  const countEl = document.getElementById("myProfileVideoCount");
-  if (countEl) countEl.textContent = myVideos.length;
-  if (gridEl) {
-    if (!myVideos.length) {
-      gridEl.innerHTML = `<div class="lib-empty"><div class="lib-empty-icon">🎬</div><p>No videos yet — <a href="#" data-jump="upload" style="color:var(--primary)">upload now</a></p></div>`;
-    } else {
-      gridEl.innerHTML = [...myVideos].sort((a, b) => (b.id || 0) - (a.id || 0)).map(renderTile).join("");
+  if (which === "posts") {
+    const vids = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
+    if (!vids.length) return showEmpty("Belum ada postingan", "🎬");
+    if (grid) {
+      grid.hidden = false;
+      grid.innerHTML = vids.sort((a, b) => (b.id || 0) - (a.id || 0)).map(myProfileVideoTile).join("");
     }
-  }
-
-  // Liked Videos grid — kolom kedua di My Profile
-  const likedGrid = document.getElementById("myProfileLikedGrid");
-  const likedCount = document.getElementById("myProfileLikedCount");
-  const likedEmpty = document.getElementById("myProfileLikedEmpty");
-  if (likedGrid) {
+  } else if (which === "likes") {
     const likedIds = Array.isArray(state?.liked) ? state.liked : [];
-    const likedVideos = likedIds.map(id => typeof findVideo === "function" ? findVideo(+id) : null).filter(Boolean);
-    if (likedCount) likedCount.textContent = likedVideos.length;
-    if (!likedVideos.length) {
-      likedGrid.innerHTML = "";
-      if (likedEmpty) likedEmpty.hidden = false;
-    } else {
-      if (likedEmpty) likedEmpty.hidden = true;
-      likedGrid.innerHTML = likedVideos.map(renderTile).join("");
+    const likedVideos = likedIds.map(id => (typeof findVideo === "function" ? findVideo(+id) : null)).filter(Boolean);
+    if (!likedVideos.length) return showEmpty("Belum ada video disukai", "❤️");
+    if (liked) {
+      liked.hidden = false;
+      liked.innerHTML = likedVideos.map(myProfileVideoTile).join("");
+    }
+  } else if (which === "followers") {
+    const users = (typeof getUserFollowers === "function") ? getUserFollowers(user.username) : [];
+    if (!users.length) return showEmpty("Belum ada pengikut", "👥");
+    if (list) {
+      list.hidden = false;
+      list.innerHTML = users.map(myProfileUserRow).join("");
+    }
+  } else if (which === "following") {
+    const users = (typeof getUserFollowing === "function") ? getUserFollowing(user.username) : [];
+    if (!users.length) return showEmpty("Belum mengikuti siapa pun", "👥");
+    if (list) {
+      list.hidden = false;
+      list.innerHTML = users.map(myProfileUserRow).join("");
     }
   }
 }
@@ -45464,6 +45561,20 @@ function renderMyProfile() {
   if (!view || view.__myProfileBound) return;
   view.__myProfileBound = true;
   view.addEventListener("click", e => {
+    // v619: tab switch (Postingan/Pengikut/Mengikuti/Suka).
+    const tabBtn = e.target.closest("[data-myprofile-stat]");
+    if (tabBtn) {
+      const which = tabBtn.getAttribute("data-myprofile-stat");
+      if (typeof renderMyProfileTab === "function") renderMyProfileTab(which);
+      return;
+    }
+    // v619: klik baris user (followers/following) → buka profil mereka.
+    const userRow = e.target.closest("[data-open-user]");
+    if (userRow) {
+      const uname = userRow.getAttribute("data-open-user");
+      if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+      return;
+    }
     const item = e.target.closest(".lib-item");
     if (!item) return;
     const id = Number(item.dataset.vid);
