@@ -4137,6 +4137,20 @@ function syncAvatarImages() {
   });
 }
 
+// Shared avatar markup helper untuk kartu-kartu Home: kembalikan <span> initial
+// (selalu ada, jadi fallback) + <img> dgn onerror yg menghapus dirinya kalau
+// gambar gagal/missing → initial otomatis kelihatan. Tak pernah render kosong.
+// Container harus punya overflow:hidden + place-items:center (mis. .cs-avatar).
+function homeAvatarMarkup(avatar, displayName) {
+  const initials = String(displayName || "?")
+    .trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const safeInit = (typeof escapeHtml === "function") ? escapeHtml(initials) : initials;
+  const initSpan = `<span class="ha-initials">${safeInit}</span>`;
+  if (!avatar) return initSpan;
+  const safeSrc = (typeof escapeHtml === "function") ? escapeHtml(avatar) : avatar;
+  return `${initSpan}<img class="ha-img" src="${safeSrc}" alt="" onerror="this.remove()"/>`;
+}
+
 // ----------------------- PROFILE EDIT FORM -----------------------
 function populateProfileForm() {
   const fields = ["username", "name", "email", "bio", "website", "twitter", "instagram", "github"];
@@ -33161,6 +33175,31 @@ function renderHomeQuickStatsCards() {
     watchEl.textContent = hqsFormatWatchTime(totalWatchSec);
   }
 
+  // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti —
+  // butuh ≥2 titik data (snapshot terkumpul seiring statistik berubah, ±2 hari
+  // aktif). Tampil di bawah kartu untuk user baru supaya tidak bingung lihat
+  // garis datar/kosong; hilang otomatis begitu data cukup.
+  const _hqsMaxLen = Math.max(
+    hist.views.length, hist.likes.length, hist.followers.length, hist.watch.length
+  );
+  let _hqsNote = document.getElementById("hqsSparkNote");
+  if (_hqsMaxLen < 2) {
+    if (!_hqsNote && wrap.parentNode) {
+      _hqsNote = document.createElement("div");
+      _hqsNote.id = "hqsSparkNote";
+      _hqsNote.className = "hqs-spark-note";
+      _hqsNote.innerHTML =
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+        '<span>Grafik tren muncul setelah 2+ hari aktif — data masih dikumpulkan.</span>';
+      wrap.insertAdjacentElement("afterend", _hqsNote);
+    }
+    if (_hqsNote) _hqsNote.hidden = false;
+  } else if (_hqsNote) {
+    _hqsNote.hidden = true;
+  }
+
   // Minimalis bersih (per request user 2026-05-15 v65): no adapt block,
   // cuma value + label. hqsSetAdapt calls dihapus (element-nya gak ada).
 }
@@ -34779,7 +34818,7 @@ function renderHomePerfCard() {
         <small class="hpf-spark-label">Tren views 7 hari</small>
         ${sparkline}
       </div>
-    ` : `<small class="hpf-no-data">Tren 7 hari muncul setelah 2+ hari aktif.</small>`}
+    ` : `<small class="hpf-spark-note">Grafik tren muncul setelah 2+ hari aktif</small>`}
   `;
 }
 
@@ -35477,10 +35516,9 @@ function renderCreatorSpotlight() {
 
   // Slide: avatar + info + stats di atas, plus row "Top Videos" di bawah.
   track.innerHTML = creators.map(c => {
-    const initials = (c.displayName || c.name || "?").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
-    const avatarInner = c.avatar
-      ? `<img src="${c.avatar}" alt=""/>`
-      : `<span>${escapeHtml(initials)}</span>`;
+    // Avatar: pakai shared helper → initial selalu jadi fallback, img dgn
+    // onerror auto-remove kalau gagal load (anti avatar kosong). (7b)
+    const avatarInner = homeAvatarMarkup(c.avatar, c.displayName || c.name);
 
     const topVidsHtml = (c.topVideos && c.topVideos.length)
       ? `<div class="cs-top-videos">
