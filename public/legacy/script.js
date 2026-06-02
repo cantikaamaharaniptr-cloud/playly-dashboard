@@ -27715,7 +27715,6 @@ if (typeof suspendUserAccount !== "function") {
     } catch {}
   };
 }
-}
 
 // Tab switch handler — User / Admin role split di User Management.
 // Sekalian update label tombol Create: "Create User" ↔ "Create Admin".
