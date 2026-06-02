@@ -36628,6 +36628,25 @@ function renderPurchaseHistory() {
   wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}<tbody>${rows}</tbody></table>`;
 }
 
+// 6a (2026-06-02): Populate Riwayat Pencarian User & Video.
+// Helper internal — trim, ignore empty/short (<2), dedupe move-to-front
+// (case-insensitive), cap 30, persist ke state[kind] + saveState().
+function _addSearchHistory(kind, q) {
+  q = String(q == null ? "" : q).trim();
+  if (q.length < 2) return; // abaikan query kosong / terlalu pendek
+  if (!state) return;
+  let arr = Array.isArray(state[kind]) ? state[kind] : [];
+  arr = arr.filter(item => String(item).toLowerCase() !== q.toLowerCase());
+  arr.unshift(q);
+  arr = arr.slice(0, 30);
+  state[kind] = arr;
+  try { saveState?.(); } catch (_) {}
+  // Re-render kalau view Riwayat lagi terbuka.
+  try { if (typeof renderSearchHistorySections === "function") renderSearchHistorySections(); } catch (_) {}
+}
+function addSearchHistoryUser(q)  { _addSearchHistory("searchHistoryUser", q); }
+function addSearchHistoryVideo(q) { _addSearchHistory("searchHistoryVideo", q); }
+
 function renderSearchHistorySections() {
   const userWrap = document.getElementById("searchUserHistoryList");
   const vidWrap  = document.getElementById("searchVideoHistoryList");
@@ -37767,6 +37786,13 @@ function renderDiscoverNewVideos() {
       renderFYP();
     }, 200);
   });
+  // 6a: rekam riwayat VIDEO hanya saat search video di-commit (Enter),
+  // bukan tiap ketukan — biar tidak spam partial query.
+  input.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    const q = input.value.trim();
+    if (q) { try { addSearchHistoryVideo(q); } catch (_) {} }
+  });
 })();
 
 // Tag filter pill bar di atas feed
@@ -37907,6 +37933,8 @@ function bindFypCards(scope) {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const username = btn.dataset.fypCreator;
+      // 6a: klik hasil video feed saat ada query aktif = commit search video.
+      if (discoverQuery && discoverQuery.trim()) { try { addSearchHistoryVideo(discoverQuery.trim()); } catch (_) {} }
       if (username && typeof openUserProfile === "function") openUserProfile(username);
     });
   });
@@ -38876,7 +38904,53 @@ function escapeHtml(s) {
 
 // Pagination state untuk Search User — increment per klik "more >" (30 user
 // per halaman). Reset ke 30 setiap user mengetik query baru.
-const peopleState = { limit: 30 };
+const peopleState = { limit: 30, sort: "name" }; // sort: name | newest | followers (6c)
+
+// 6e (2026-06-02): match query terhadap name + username + bio + socials/website.
+// Null-safe, case-insensitive. q sudah lowercased dari pemanggil.
+function _peopleNameUserMatch(a, q) {
+  return (a.name || "").toLowerCase().includes(q) ||
+         (a.username || "").toLowerCase().includes(q);
+}
+function _peopleSocialMatch(a, q) {
+  const fields = [a.bio, a.website, a.twitter, a.instagram, a.github, a.tiktok];
+  for (const f of fields) {
+    if (f && String(f).toLowerCase().includes(q)) return true;
+  }
+  return false;
+}
+function _peopleMatchesQuery(a, q) {
+  if (!q) return true;
+  return _peopleNameUserMatch(a, q) || _peopleSocialMatch(a, q);
+}
+// True kalau account match query HANYA lewat bio/socials (bukan name/username) —
+// dipakai untuk tag "cocok di bio" di card.
+function _peopleBioOnlyMatch(a, q) {
+  if (!q) return false;
+  return !_peopleNameUserMatch(a, q) && _peopleSocialMatch(a, q);
+}
+// 6d (2026-06-02): video teratas creator untuk preview di card. Baca
+// myVideos dari playly-state-{username} (atau in-memory kalau itu user login).
+// Pilih: kalau ada views, ambil yang views tertinggi; else index 0 (terbaru).
+// Null-safe — return null kalau tidak ada video.
+function _peopleTopVideo(username) {
+  if (!username) return null;
+  let vids = [];
+  try {
+    if (user && user.username === username) {
+      vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+    } else {
+      const s = JSON.parse(localStorage.getItem(`playly-state-${username}`));
+      vids = Array.isArray(s?.myVideos) ? s.myVideos : [];
+    }
+  } catch (_) { return null; }
+  if (!vids.length) return null;
+  let top = vids[0]; // default: terbaru (myVideos di-unshift saat upload)
+  for (const v of vids) {
+    if ((v?.viewsNum || 0) > (top?.viewsNum || 0)) top = v;
+  }
+  return top || null;
+}
 
 function renderPeople() {
   const grid = $("#peopleGrid");
@@ -38914,13 +38988,42 @@ function renderPeople() {
   // - following = akun yang DI-FOLLOW oleh user (ada di
   //   state.followingCreators saya).
   const myUsername = user?.username || "";
+  const myUsernameLc = myUsername.toLowerCase();
   const myFollowing = new Set(Array.isArray(state?.followingCreators) ? state.followingCreators : []);
   const followingAccounts = allAccounts.filter(a => a.username && myFollowing.has(a.username));
-  const followersAccounts = allAccounts.filter(a => {
-    if (!a.username || !myUsername) return false;
+
+  // 6f (2026-06-02): SINGLE-PASS precompute social graph maps. Sebelumnya
+  // tiap account dibaca berkali-kali (followers-tab filter, per-card
+  // "follows you", per-card follower count) → N+1 JSON.parse berulang.
+  // Sekarang: 1x baca playly-state-{username} per account, reuse hasilnya.
+  //   followingMap: username(lc) → Set(usernames lc yang dia follow)
+  //   followerCountMap: username(lc) → jumlah follower akun itu
+  const followingMap = new Map();
+  const followerCountMap = new Map();
+  allAccounts.forEach(a => {
+    const uname = a.username;
+    if (!uname) return;
+    const ulc = uname.toLowerCase();
+    let following = [];
+    let followers = [];
     try {
-      return getUserFollowing(a.username).includes(myUsername);
-    } catch (_) { return false; }
+      if (user && user.username === uname) {
+        // akun yang lagi login → pakai state in-memory (paling fresh)
+        following = Array.isArray(state?.followingCreators) ? state.followingCreators : [];
+        followers = Array.isArray(state?.followers) ? state.followers : [];
+      } else {
+        const s = JSON.parse(localStorage.getItem(`playly-state-${uname}`));
+        following = Array.isArray(s?.followingCreators) ? s.followingCreators : [];
+        followers = Array.isArray(s?.followers) ? s.followers : [];
+      }
+    } catch (_) {}
+    followingMap.set(ulc, new Set(following.map(x => String(x).toLowerCase())));
+    followerCountMap.set(ulc, followers.length);
+  });
+  // followers = akun yang following-set-nya mengandung username saya.
+  const followersAccounts = !myUsernameLc ? [] : allAccounts.filter(a => {
+    const set = a.username && followingMap.get(a.username.toLowerCase());
+    return set ? set.has(myUsernameLc) : false;
   });
   // Update counter di tabs
   const setT = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
@@ -38932,13 +39035,25 @@ function renderPeople() {
   if (activeTab === "followers")      pool = followersAccounts;
   else if (activeTab === "following") pool = followingAccounts;
   else                                pool = allAccounts; // "all"
+  // 6c (2026-06-02): sort mode dari peopleState.sort (kontrol di header).
+  const sortMode = peopleState.sort || "name";
+  const regAt = a => Number(a?.registeredAt) || (a?.joinedAt ? Date.parse(a.joinedAt) : 0) || 0;
   const accounts = pool
-    .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
+    .filter(a => _peopleMatchesQuery(a, q))
     .sort((a, b) => {
-      // Sort: admin di atas saat mode "all" (admin viewer scenario)
+      // Sort: admin di atas saat mode "all" (admin viewer scenario) — selalu,
+      // independen dari sort mode (audit/koordinasi).
       if (activeTab === "all" && isAdminViewer) {
         if (a.role === "admin" && b.role !== "admin") return -1;
         if (a.role !== "admin" && b.role === "admin") return 1;
+      }
+      if (sortMode === "newest") {
+        return regAt(b) - regAt(a) || (a.name || "").localeCompare(b.name || "");
+      }
+      if (sortMode === "followers") {
+        const fa = a.username ? (followerCountMap.get(a.username.toLowerCase()) || 0) : 0;
+        const fb = b.username ? (followerCountMap.get(b.username.toLowerCase()) || 0) : 0;
+        return fb - fa || (a.name || "").localeCompare(b.name || "");
       }
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -38983,8 +39098,31 @@ function renderPeople() {
     const isPremium = !isAdmin && a.tier === "premium";
     const handle = isAdmin ? (isSuperAdminAcc ? "Super Admin" : "Administrator") : `@${escapeHtml(a.username)}`;
     const isFollowing = state.followingCreators.includes(a.username);
-    const theyFollowMe = !isAdmin && !!myUsername && getUserFollowing(a.username).includes(myUsername);
-    const followerCount = getUserFollowers(a.username).length;
+    // 6f: pakai precomputed maps — no per-card localStorage re-read.
+    const aFollowSet = a.username ? followingMap.get(a.username.toLowerCase()) : null;
+    const theyFollowMe = !isAdmin && !!myUsernameLc && !!aFollowSet && aFollowSet.has(myUsernameLc);
+    const followerCount = a.username ? (followerCountMap.get(a.username.toLowerCase()) || 0) : 0;
+    // 6e: tag "cocok di bio" kalau match HANYA lewat bio/socials.
+    const bioOnly = q ? _peopleBioOnlyMatch(a, q) : false;
+    // 6d: preview video teratas creator (null-safe — render nothing kalau kosong).
+    const topVid = (!isAdmin && a.username) ? _peopleTopVideo(a.username) : null;
+    let previewHTML = "";
+    if (topVid) {
+      const vTitle = escapeHtml(topVid.title || "(tanpa judul)");
+      const vThumb = topVid.thumb || topVid.thumbnail || "";
+      const vViews = typeof fmtNum === "function" ? fmtNum(topVid.viewsNum || 0) : (topVid.viewsNum || 0);
+      const vTs = topVid.createdAt || (typeof topVid.id === "number" && topVid.id > 1e12 ? topVid.id : (topVid.publishedAt ? Date.parse(topVid.publishedAt) : 0));
+      const vWhen = vTs && typeof relTime === "function" ? relTime(vTs) : "";
+      const meta = [`${vViews} views`, vWhen].filter(Boolean).join(" • ");
+      previewHTML = `
+        <div class="people-preview" title="${vTitle}">
+          <div class="people-preview-thumb">${vThumb ? `<img src="${escapeHtml(vThumb)}" alt="" loading="lazy"/>` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>'}</div>
+          <div class="people-preview-meta">
+            <span class="people-preview-title">${vTitle}</span>
+            <span class="people-preview-sub">${escapeHtml(meta)}</span>
+          </div>
+        </div>`;
+    }
     // Tombol aksi:
     //   - User biasa: Follow + Pesan
     //   - Backup admin (admin cadangan): Pesan + Email + Bug (3 button → has-3-actions)
@@ -39024,8 +39162,9 @@ function renderPeople() {
       <div class="${cardClasses}" data-people-open="${escapeHtml(a.username)}">
         <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true">★</i>' : ''}</div>
         <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator">★ Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
-        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}</div>
+        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}${bioOnly ? ' <span class="people-bio-tag" title="Cocok di bio / profil">cocok di bio</span>' : ''}</div>
         ${a.bio ? `<p class="people-bio">${escapeHtml(a.bio)}</p>` : ""}
+        ${previewHTML}
         <div class="people-actions">${actions}</div>
       </div>
     `;
@@ -39072,6 +39211,9 @@ function renderPeople() {
   $$("[data-people-open]", grid).forEach(c => {
     c.addEventListener("click", e => {
       if (e.target.closest("button")) return;
+      // 6a: klik hasil = commit search → rekam query (kalau ada).
+      const cq = ($("#peopleSearch")?.value || "").trim();
+      if (cq) { try { addSearchHistoryUser(cq); } catch (_) {} }
       openUserProfile(c.dataset.peopleOpen);
     });
   });
@@ -39123,10 +39265,156 @@ function startChatWithUser(username) {
 $("#peopleSearch")?.addEventListener("input", () => {
   peopleState.limit = 30; // reset pagination saat user ngetik search baru
   renderPeople();
+  // 6b autocomplete suggestions (debounced di dalam helper)
+  _peopleSuggestInput();
+});
+// 6a/6b: keyboard. Arrow up/down → navigasi suggestion. Enter → kalau ada
+// suggestion ter-highlight, pilih itu; else commit search (rekam riwayat USER).
+$("#peopleSearch")?.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (_peopleSuggestKeyNav(e.key)) { e.preventDefault(); return; }
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (_peopleSuggestSelectActive()) return; // pilih suggestion ter-highlight
+    const q = e.target.value.trim();
+    if (q) { try { addSearchHistoryUser(q); } catch (_) {} }
+    _peopleSuggestHide();
+  } else if (e.key === "Escape") {
+    _peopleSuggestHide();
+  }
+});
+$("#peopleSearch")?.addEventListener("blur", () => {
+  // delay supaya klik row sempat ke-handle sebelum dropdown ditutup
+  setTimeout(_peopleSuggestHide, 150);
 });
 $("#peopleMoreBtn")?.addEventListener("click", () => {
   peopleState.limit += 30;
   renderPeople();
+});
+
+// 6c (2026-06-02): sort control di header Pencarian. Segmented buttons.
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-people-sort]");
+  if (!btn) return;
+  const mode = btn.dataset.peopleSort;
+  if (!mode || peopleState.sort === mode) return;
+  peopleState.sort = mode;
+  document.querySelectorAll("[data-people-sort]").forEach(b =>
+    b.classList.toggle("active", b === btn));
+  renderPeople();
+});
+
+// ----------------------- 6b: PEOPLE SEARCH AUTOCOMPLETE -----------------------
+// Dropdown suggestion di bawah #peopleSearch. Reuse _gsSearchCreators(query)
+// untuk data (match username/name, exclude admin, top 4). Themed seperti
+// #searchSuggestions. Debounced. Hide on Escape/blur/empty.
+let _peopleSuggestTimer = null;
+let _peopleSuggestItems = [];   // current creator accounts
+let _peopleSuggestActive = -1;  // index ter-highlight (keyboard nav)
+
+function _peopleSuggestEl() { return document.getElementById("peopleSuggest"); }
+
+function _peopleSuggestHide() {
+  const drop = _peopleSuggestEl();
+  if (drop) { drop.hidden = true; drop.classList.remove("show"); drop.innerHTML = ""; }
+  _peopleSuggestItems = [];
+  _peopleSuggestActive = -1;
+  const inp = document.getElementById("peopleSearch");
+  if (inp) inp.setAttribute("aria-expanded", "false");
+}
+
+function _peopleSuggestInput() {
+  if (_peopleSuggestTimer) clearTimeout(_peopleSuggestTimer);
+  const inp = document.getElementById("peopleSearch");
+  const q = (inp?.value || "").trim();
+  if (q.length < 2) { _peopleSuggestHide(); return; }
+  _peopleSuggestTimer = setTimeout(() => _peopleSuggestRun(q), 160);
+}
+
+function _peopleSuggestRun(q) {
+  const drop = _peopleSuggestEl();
+  const inp = document.getElementById("peopleSearch");
+  if (!drop || !inp) return;
+  if ((inp.value || "").trim() !== q) return; // query berubah saat debounce
+  let creators = [];
+  try { creators = (typeof _gsSearchCreators === "function" ? _gsSearchCreators(q) : []) || []; } catch (_) { creators = []; }
+  // exclude diri sendiri
+  const myUname = (user?.username || "").toLowerCase();
+  creators = creators.filter(a => String(a.username || "").toLowerCase() !== myUname);
+  _peopleSuggestItems = creators;
+  _peopleSuggestActive = -1;
+  if (!creators.length) { _peopleSuggestHide(); return; }
+  const rows = creators.map((a, i) => {
+    const name = a.name || a.username || "user";
+    const init = String(name)[0]?.toUpperCase() || "U";
+    const av = a.avatar
+      ? `<img src="${escapeHtml(a.avatar)}" alt="" loading="lazy"/>`
+      : `<span>${escapeHtml(init)}</span>`;
+    return `<button type="button" class="ps-item" role="option" data-ps-user="${escapeHtml(a.username || "")}" data-ps-idx="${i}">
+      <span class="ps-avatar">${av}</span>
+      <span class="ps-info">
+        <strong>${escapeHtml(name)}</strong>
+        <small>@${escapeHtml(a.username || "")}</small>
+      </span>
+    </button>`;
+  }).join("");
+  drop.innerHTML = rows;
+  drop.hidden = false;
+  drop.classList.add("show");
+  inp.setAttribute("aria-expanded", "true");
+}
+
+function _peopleSuggestSetActive(idx) {
+  const drop = _peopleSuggestEl();
+  if (!drop) return;
+  const items = drop.querySelectorAll(".ps-item");
+  if (!items.length) return;
+  _peopleSuggestActive = (idx + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle("active", i === _peopleSuggestActive));
+  items[_peopleSuggestActive]?.scrollIntoView({ block: "nearest" });
+}
+
+// return true kalau navigasi ditangani (dropdown terbuka), supaya caller preventDefault.
+function _peopleSuggestKeyNav(key) {
+  const drop = _peopleSuggestEl();
+  if (!drop || drop.hidden || !_peopleSuggestItems.length) return false;
+  if (key === "ArrowDown") { _peopleSuggestSetActive(_peopleSuggestActive + 1); return true; }
+  if (key === "ArrowUp")   { _peopleSuggestSetActive(_peopleSuggestActive - 1); return true; }
+  return false;
+}
+
+// Pilih suggestion ter-highlight (Enter). return true kalau ada yang dipilih.
+function _peopleSuggestSelectActive() {
+  if (_peopleSuggestActive < 0 || !_peopleSuggestItems[_peopleSuggestActive]) return false;
+  _peopleSuggestPick(_peopleSuggestItems[_peopleSuggestActive]);
+  return true;
+}
+
+// Klik / pilih sebuah creator row → isi input + render + rekam (6a) + buka profil.
+function _peopleSuggestPick(acc) {
+  if (!acc) return;
+  const inp = document.getElementById("peopleSearch");
+  const uname = acc.username || "";
+  if (inp) { inp.value = acc.name || uname; peopleState.limit = 30; renderPeople(); }
+  try { addSearchHistoryUser(acc.name || uname); } catch (_) {}
+  _peopleSuggestHide();
+  if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+}
+
+// Delegated click pada suggestion row.
+document.addEventListener("mousedown", e => {
+  // mousedown (bukan click) supaya jalan sebelum input blur menutup dropdown.
+  const row = e.target.closest("#peopleSuggest .ps-item");
+  if (!row) return;
+  e.preventDefault();
+  const idx = parseInt(row.dataset.psIdx, 10);
+  const acc = Number.isNaN(idx) ? null : _peopleSuggestItems[idx];
+  if (acc) _peopleSuggestPick(acc);
+});
+// Klik di luar search wrap → tutup dropdown.
+document.addEventListener("click", e => {
+  if (!e.target.closest(".people-search-wrap")) _peopleSuggestHide();
 });
 
 // ----------------------- MESSAGES VIEW -----------------------
