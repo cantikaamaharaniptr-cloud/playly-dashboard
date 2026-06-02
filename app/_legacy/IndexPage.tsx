@@ -9,6 +9,7 @@
 // run on initial load exactly like the legacy page.
 import { INDEX_MARKUP } from './index-markup';
 import { INDEX_PREPAINT } from './index-prepaint';
+import { legacyAsset } from './legacy-asset';
 
 // Cache-bust versions preserved verbatim from legacy index.html.
 const V_MAIN = '20260601-edit-video-v692';
@@ -27,14 +28,14 @@ export default function IndexPage() {
       <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: INDEX_MARKUP }} />
 
       {/* Scripts in the exact original order. */}
-      <script src="/legacy/index-config.js" />
+      <script src={legacyAsset('index-config.js')} />
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" />
-      <script src={`/legacy/cloud-sync.js?v=${V_CLOUD}`} />
-      <script src={`/legacy/supabase-auth-bridge.js?v=${V_CLOUD}`} />
-      <script src={`/legacy/script.js?v=${V_MAIN}`} data-playly-main="1" />
-      <script src={`/legacy/picons.js?v=${V_PICONS}`} />
-      <script src={`/legacy/particles-bg.js?v=${V_PARTICLES}`} />
-      <script src="/legacy/index-ensure.js" />
+      <script src={legacyAsset('cloud-sync.js', V_CLOUD)} />
+      <script src={legacyAsset('supabase-auth-bridge.js', V_CLOUD)} />
+      <script src={legacyAsset('script.js', V_MAIN)} data-playly-main="1" />
+      <script src={legacyAsset('picons.js', V_PICONS)} />
+      <script src={legacyAsset('particles-bg.js', V_PARTICLES)} />
+      <script src={legacyAsset('index-ensure.js')} />
     </>
   );
 }

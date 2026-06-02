@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "minify:legacy": "node scripts/minify-legacy.mjs",
+    "prebuild": "node scripts/minify-legacy.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -22,8 +24,10 @@
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
+    "clean-css": "^5.3.3",
     "eslint": "^9.18.0",
     "eslint-config-next": "15.5.18",
+    "terser": "^5.48.0",
     "typescript": "^5.7.3"
   },
   "engines": {

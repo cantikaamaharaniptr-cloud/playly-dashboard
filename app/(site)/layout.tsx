@@ -6,6 +6,7 @@
 // page body markup itself lives in app/_legacy/IndexPage.tsx (rendered verbatim
 // from the extracted legacy markup) — no .html file involved.
 import type { Metadata, Viewport } from 'next';
+import { legacyAsset } from '@/app/_legacy/legacy-asset';
 
 // Cache-bust version preserved verbatim from legacy index.html.
 const STYLES_V = '20260601-edit-video-v692';
@@ -61,7 +62,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
           precedence="high"
         />
-        <link rel="stylesheet" href={`/legacy/styles.css?v=${STYLES_V}`} precedence="high" />
+        <link rel="stylesheet" href={legacyAsset('styles.css', STYLES_V)} precedence="high" />
         <style href="playly-fouc-guard" precedence="high">
           {FOUC_CSS}
         </style>

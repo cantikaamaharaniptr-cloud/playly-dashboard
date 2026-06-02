@@ -41,6 +41,10 @@ build/
 .next/
 out/
 
+# Generated minified legacy assets (built by scripts/minify-legacy.mjs in prebuild)
+public/legacy/*.min.js
+public/legacy/*.min.css
+
 # TypeScript
 *.tsbuildinfo
 
