@@ -12,7 +12,7 @@ import { INDEX_PREPAINT } from './index-prepaint';
 import { legacyAsset } from './legacy-asset';
 
 // Cache-bust versions preserved verbatim from legacy index.html.
-const V_MAIN = '20260601-edit-video-v692';
+const V_MAIN = '20260602-insight-premium-v694';
 const V_CLOUD = '20260526-audit-user-section-v557';
 const V_PICONS = '20260516-settings-ico-v188';
 const V_PARTICLES = '20260516-particles-v2';
