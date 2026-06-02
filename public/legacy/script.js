@@ -33513,320 +33513,220 @@ function renderPremiumInsightsView() {
     });
     return;
   }
-  // Premium — render REAL insights dari data video user (bukan mock).
-  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-  const totalVideos   = myVideos.length;
-  const totalViews    = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const totalLikes    = myVideos.reduce((s, v) => s + (v.likes || 0), 0);
-  const totalComments = myVideos.reduce((s, v) => s + (Array.isArray(v.comments) ? v.comments.length : (v.comments || 0)), 0);
-  const totalShares   = myVideos.reduce((s, v) => s + (v.shares || 0), 0);
-  const engagement    = totalViews > 0 ? ((totalLikes + totalComments + totalShares) / totalViews * 100) : 0;
-  const avgViews      = totalVideos > 0 ? Math.round(totalViews / totalVideos) : 0;
-  // Top 3 video by views
-  const topVids = [...myVideos]
-    .sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0))
-    .slice(0, 3);
-  // Top tags (count occurrences across all videos)
-  const tagMap = {};
-  myVideos.forEach(v => {
-    (Array.isArray(v.tags) ? v.tags : []).forEach(t => {
-      const tag = String(t || "").trim().toLowerCase();
-      if (!tag) return;
-      tagMap[tag] = (tagMap[tag] || 0) + 1;
-    });
-  });
-  const topTags = Object.entries(tagMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
-  // Upload frequency: minggu ini vs minggu lalu
-  const now = Date.now();
-  const oneWeek = 7 * 86400000;
-  const thisWeek = myVideos.filter(v => (v.createdAt || v.id || 0) >= now - oneWeek).length;
-  const lastWeek = myVideos.filter(v => {
-    const t = v.createdAt || v.id || 0;
-    return t >= now - 2 * oneWeek && t < now - oneWeek;
-  }).length;
-  const uploadDelta = thisWeek - lastWeek;
+  // ============================================================
+  // v637 (2026-05-30): Insight Premium = PERKS PAGE (rombak).
+  // Per user: design sebelumnya terlalu ribet/bertele-tele. Sekarang
+  // FOKUS pada reward konkret untuk user premium video player —
+  // manfaat playback, coin, eksklusif, status langganan.
+  // ============================================================
+  const planKey = user?.premiumPlan || "monthly";
+  const plan = (typeof PREMIUM_PLANS !== "undefined" && PREMIUM_PLANS[planKey]) || { name: "Aktif", priceLabel: "-", suffix: "", durationMs: 30 * 86400000 };
+  const expiresAt = user?.premiumExpiresAt || null;
+  const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000)) : null;
+  const expDateStr = expiresAt
+    ? new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
+  // v661: versi pendek (28 Mei 2027) untuk box hero compact — hindari wrap.
+  const expDateShort = expiresAt
+    ? new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+  const premiumSinceMs = (expiresAt && plan.durationMs) ? expiresAt - plan.durationMs : null;
+  const premiumSinceStr = premiumSinceMs
+    ? new Date(premiumSinceMs).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
 
-  // v605 (2026-05-28): Redesign Insight Premium jadi premium-EXCLUSIVE features
-  // (tidak duplikat dgn Statistik biasa). Per request user.
-  // FOCUS: predictive trends, demographics, best-time forecast, benchmark.
-
-  // 1. Forecast views 7 hari ke depan — linear extrapolation dari past trend
-  const PLATFORM_AVG_ENGAGEMENT = 3.5; // % industry baseline
-  const benchmarkDelta = engagement - PLATFORM_AVG_ENGAGEMENT;
-  const benchmarkPct = PLATFORM_AVG_ENGAGEMENT > 0 ? (benchmarkDelta / PLATFORM_AVG_ENGAGEMENT) * 100 : 0;
-
-  // Past 7 days views (per day): simulate from total
-  const recentDailyViews = [];
-  for (let i = 0; i < 7; i++) {
-    // Distribute totalViews across last 7 days with slight upward trend
-    const ratio = totalViews > 0 ? (0.08 + 0.04 * i) : 0;
-    recentDailyViews.push(Math.round(totalViews * ratio / 7));
+  // v654: hero — sisa masa aktif (untuk bar bawah). Bar = proporsi hari tersisa.
+  let _remainPct = null, _totalDays = null, _remainDays = null;
+  if (premiumSinceMs && expiresAt && expiresAt > premiumSinceMs) {
+    _totalDays = Math.round((expiresAt - premiumSinceMs) / 86400000);
+    _remainDays = Math.max(0, Math.min(_totalDays, daysLeft != null ? daysLeft : 0));
+    _remainPct = Math.max(0, Math.min(100, Math.round((_remainDays / _totalDays) * 100)));
   }
-  // Forecast next 7 days: extrapolate (avg growth)
-  const growthRate = recentDailyViews.length > 1
-    ? (recentDailyViews[6] - recentDailyViews[0]) / (recentDailyViews[0] || 1)
-    : 0;
-  const forecastDailyViews = [];
-  for (let i = 0; i < 7; i++) {
-    const last = recentDailyViews[6] || 0;
-    forecastDailyViews.push(Math.round(last * (1 + (growthRate * (i + 1) / 7))));
-  }
-  const forecastTotal = forecastDailyViews.reduce((s, v) => s + v, 0);
-  const forecastDelta = totalViews > 0
-    ? Math.round(((forecastTotal - recentDailyViews.reduce((s, v) => s + v, 0)) / (recentDailyViews.reduce((s, v) => s + v, 0) || 1)) * 100)
-    : 0;
 
-  // 2. Audience demographics — derived from total followers + reasonable distribution
-  // (Real platform analytics tidak tersedia tanpa backend; gunakan model distribusi)
-  const totalFollowers = (typeof getUserFollowers === "function" && user?.username)
-    ? getUserFollowers(user.username).length : 0;
-  const demoAge = [
-    { label: "13-17", pct: 12 },
-    { label: "18-24", pct: 38 },
-    { label: "25-34", pct: 28 },
-    { label: "35-44", pct: 14 },
-    { label: "45+",   pct:  8 },
-  ];
-  const demoRegion = [
-    { label: "Jakarta",   pct: 32 },
-    { label: "Jawa Barat", pct: 18 },
-    { label: "Jawa Timur", pct: 14 },
-    { label: "Bali",      pct:  8 },
-    { label: "Lainnya",   pct: 28 },
-  ];
-
-  // 3. Best upload time — derived from state.history (audience activity proxy)
-  const activityHours = new Array(24).fill(0);
-  const activityDays = new Array(7).fill(0);
-  try {
-    (state?.history || []).forEach(h => {
-      if (h?.ts) {
-        const d = new Date(h.ts);
-        activityHours[d.getHours()]++;
-        activityDays[d.getDay() === 0 ? 6 : d.getDay() - 1]++; // Sen=0
-      }
-    });
-  } catch {}
-  // Find peak hour bucket (group hours into time slots)
-  const slots = [
-    { label: "Pagi",  range: [6, 11],  start: 6 },
-    { label: "Siang", range: [12, 16], start: 12 },
-    { label: "Sore",  range: [17, 19], start: 17 },
-    { label: "Malam", range: [20, 23], start: 20 },
-  ];
-  const slotScores = slots.map(s => {
-    let score = 0;
-    for (let h = s.range[0]; h <= s.range[1]; h++) score += activityHours[h] || 0;
-    return { ...s, score };
-  });
-  const peakSlot = slotScores.reduce((a, b) => b.score > a.score ? b : a, slotScores[0]);
-  const DAY_NAMES = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-  const peakDayIdx = activityDays.indexOf(Math.max(...activityDays));
-  const peakDay = DAY_NAMES[peakDayIdx >= 0 ? peakDayIdx : 4]; // default Jumat
+  // SVG wine-box icon helper (re-use pattern dari sec-icon-v582)
+  const _iconWrap = (svg) => `<span class="sec-icon-v582 sec-icon-sm" aria-hidden="true">${svg}</span>`;
+  const _icoPlay = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20" fill="currentColor" stroke="none"/></svg>`;
+  const _icoSparkle = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.7L12 14.8 6.9 17.5l1-5.7-4-4 5.6-.8Z"/></svg>`;
+  const _icoCoin = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9 9h4a2 2 0 1 1 0 4H9v2h5"/></svg>`;
+  const _icoStar = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 16l-6.5 4.5 2-7L2 9h7Z"/></svg>`;
+  // v651: filled star untuk badge hero membership
+  const _icoStarSolid = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 17.56l-5.9 3.1 1.13-6.57L2.45 9.44l6.6-.96Z"/></svg>`;
+  // v658: hero pakai _icoStarSolid (ikon premium yang konsisten dgn app).
+  const _icoCard = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>`;
+  const _icoSave = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M6 10l6 6 6-6"/><path d="M5 20h14"/></svg>`;
 
   wrap.innerHTML = `
-    <div class="pi-grid">
+    <div class="pi-grid pi-grid-v637">
 
-      <!-- 1. WATCH TIME FUNNEL — Drop-off Analysis (v613 2026-05-28)
-           Replace Prediksi Tren Views. Tunjukkan retention viewer per
-           segment video (0%/25%/50%/75%/100%). Insight: di mana drop-off
-           paling parah biar creator bisa fix opening/pacing. -->
-      <div class="pi-card pi-card-big">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg></span>Analisis Retensi Tonton</h4>
-            <small>Berapa banyak penonton yang tetap nonton sampai akhir — analisis drop-off.</small>
-          </div>
-          <span class="pi-tag-badge">${(() => {
-            // Compute avg completion rate dari history
-            const hist = Array.isArray(state?.history) ? state.history : [];
-            const avg = hist.length
-              ? Math.round(hist.reduce((s, h) => s + (h.progress || 0), 0) / hist.length)
-              : 0;
-            return `${avg}% rata-rata`;
-          })()}</span>
-        </div>
-        ${(() => {
-          const hist = Array.isArray(state?.history) ? state.history : [];
-          // Compute retention at 5 segments: 0% (start), 25%, 50%, 75%, 100%
-          let buckets;
-          if (hist.length === 0) {
-            // Dummy realistic data
-            buckets = [
-              { label: "0%",   pct: 100, count: 100, note: "Mulai nonton" },
-              { label: "25%",  pct: 78,  count: 78,  note: "Lewat opening" },
-              { label: "50%",  pct: 54,  count: 54,  note: "Tengah video" },
-              { label: "75%",  pct: 38,  count: 38,  note: "Hampir akhir" },
-              { label: "100%", pct: 24,  count: 24,  note: "Selesai tonton" },
-            ];
-          } else {
-            const total = hist.length;
-            const at = (pct) => hist.filter(h => (h.progress || 0) >= pct).length;
-            const c0 = total, c25 = at(25), c50 = at(50), c75 = at(75), c100 = at(95);
-            buckets = [
-              { label: "0%",   pct: 100, count: c0,   note: "Mulai nonton" },
-              { label: "25%",  pct: Math.round((c25 / total) * 100), count: c25, note: "Lewat opening" },
-              { label: "50%",  pct: Math.round((c50 / total) * 100), count: c50, note: "Tengah video" },
-              { label: "75%",  pct: Math.round((c75 / total) * 100), count: c75, note: "Hampir akhir" },
-              { label: "100%", pct: Math.round((c100 / total) * 100), count: c100, note: "Selesai tonton" },
-            ];
-          }
-          // Find biggest drop-off between consecutive buckets
-          let maxDropIdx = 0, maxDrop = 0;
-          for (let i = 1; i < buckets.length; i++) {
-            const d = buckets[i - 1].pct - buckets[i].pct;
-            if (d > maxDrop) { maxDrop = d; maxDropIdx = i; }
-          }
-          const dropMsg = maxDrop > 0
-            ? `⚠️ Drop-off terbesar: <b>${maxDrop}%</b> antara ${buckets[maxDropIdx - 1].label} → ${buckets[maxDropIdx].label}. ${buckets[maxDropIdx].label === "25%" ? "Coba opening lebih engaging." : buckets[maxDropIdx].label === "50%" ? "Pacing tengah video bisa di-optimize." : buckets[maxDropIdx].label === "75%" ? "Tambah call-to-action sebelum akhir." : "Coba ending yang lebih punchy."}`
-            : `✓ Retention bagus — viewer kebanyakan nonton sampai akhir.`;
-
-          return `<div class="pi-funnel">
-            ${buckets.map((b, i) => `
-              <div class="pi-funnel-row${i === maxDropIdx && maxDrop > 0 ? ' has-drop' : ''}">
-                <div class="pi-funnel-label">
-                  <span class="pfl-pos">${b.label}</span>
-                  <span class="pfl-note">${b.note}</span>
-                </div>
-                <div class="pi-funnel-bar-wrap">
-                  <div class="pi-funnel-bar" style="width:${b.pct}%">
-                    <span class="pfb-pct">${b.pct}%</span>
-                  </div>
-                </div>
-                <div class="pi-funnel-count">${fmtNum(b.count)}</div>
-              </div>
-            `).join("")}
-          </div>
-          <div class="pi-funnel-insight">${dropMsg}</div>`;
-        })()}
-      </div>
-
-      <!-- 2a. AUDIENCE DEMOGRAPHICS — Usia (separate card) -->
-      <!-- v614 (2026-05-28): split jadi 2 card terpisah biar pemisahnya lebih jelas. -->
-      <div class="pi-card">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.8 14.6a5 5 0 0 1 5.7 4.5"/></svg></span>Profil Audiens — Usia</h4>
-            <small>Distribusi umur penonton kamu.</small>
-          </div>
-          <span class="pi-tag-badge">${fmtNum(totalFollowers)} jangkauan</span>
-        </div>
-        <div class="pi-demo-list">
-          ${demoAge.map(a => `
-            <div class="pi-demo-row">
-              <span class="pi-demo-label">${a.label}</span>
-              <div class="pi-demo-bar"><i style="width:${a.pct}%"></i></div>
-              <span class="pi-demo-pct">${a.pct}%</span>
+      <!-- HERO MEMBERSHIP STATUS — v658 (full+compact, theme-aligned, star icon) -->
+      <div class="pi-card pi-card-big pi-hero5">
+        <div class="pi-hero5-left">
+          <div class="pi-hero5-avatar-wrap">
+            <div class="pi-hero5-avatar" aria-hidden="true">
+              ${user?.avatar
+                ? `<img src="${escapeHtml(user.avatar)}" alt=""/>`
+                : `<span class="pi-hero5-avatar-fb">${escapeHtml((user?.name || user?.username || "U").charAt(0).toUpperCase())}</span>`}
             </div>
-          `).join("")}
-        </div>
-      </div>
-
-      <!-- 2b. AUDIENCE DEMOGRAPHICS — Lokasi (separate card) -->
-      <div class="pi-card">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>Profil Audiens — Lokasi</h4>
-            <small>5 daerah teratas asal penonton kamu.</small>
+            <span class="pi-hero5-star" aria-hidden="true">${_icoStarSolid}</span>
           </div>
-          <span class="pi-tag-badge">${fmtNum(totalFollowers)} jangkauan</span>
+          <div class="pi-hero5-id">
+            <h3 class="pi-hero5-name" data-no-i18n>${escapeHtml(user?.name || ("@" + (user?.username || "kamu")))}</h3>
+            <small class="pi-hero5-sub" data-no-i18n>Member Playly Premium</small>
+            <span class="pi-hero5-badge" data-no-i18n>Premium ${escapeHtml(plan.name || "Aktif")}</span>
+          </div>
         </div>
-        <div class="pi-demo-list">
-          ${demoRegion.map(r => `
-            <div class="pi-demo-row">
-              <span class="pi-demo-label">${r.label}</span>
-              <div class="pi-demo-bar"><i style="width:${r.pct}%"></i></div>
-              <span class="pi-demo-pct">${r.pct}%</span>
+        <div class="pi-hero5-boxes">
+          <div class="pi-hero5-box">
+            <span class="pi-hero5-box-label" data-no-i18n>Paket</span>
+            <strong class="pi-hero5-box-val">${escapeHtml(plan.name || "Aktif")}</strong>
+            <span class="pi-hero5-box-foot" data-no-i18n>${escapeHtml(plan.priceLabel || "-")}${plan.suffix ? " " + escapeHtml(plan.suffix) : ""}</span>
+          </div>
+          <div class="pi-hero5-box">
+            <span class="pi-hero5-dot" title="Aktif" aria-label="Status: Aktif"></span>
+            <span class="pi-hero5-box-label" data-no-i18n>Aktif hingga</span>
+            <strong class="pi-hero5-box-val">${escapeHtml(expDateShort)}</strong>
+            <span class="pi-hero5-box-foot" data-no-i18n>Berlaku ${_totalDays != null ? _totalDays + " hari" : ""}</span>
+          </div>
+          ${_remainPct != null ? `
+          <div class="pi-hero5-box pi-hero5-box-ring">
+            <div class="pi-hero5-ring-info">
+              <span class="pi-hero5-box-label" data-no-i18n>Sisa masa aktif</span>
+              <strong class="pi-hero5-box-val"><span data-no-i18n>${_remainDays}</span><span class="pi-hero5-box-unit" data-no-i18n>hari</span></strong>
+              <span class="pi-hero5-box-foot" data-no-i18n>dari ${_totalDays} hari</span>
             </div>
-          `).join("")}
+            <div class="pi-hero5-ring-wrap" role="img" aria-label="${_remainPct}% masa aktif tersisa">
+              <div class="pi-hero5-ring" style="--target:${_remainPct}"></div>
+              <span class="pi-hero5-ring-pct" data-no-i18n>${_remainPct}%</span>
+            </div>
+          </div>` : ``}
         </div>
       </div>
 
-      <!-- 3. BEST UPLOAD TIME FORECAST -->
-      <div class="pi-card">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Waktu Upload Terbaik</h4>
-            <small>Jam saat penonton paling aktif menonton.</small>
+      <!-- v641 (2026-05-30): GABUNG — Eksklusif + Manfaat Pemutaran jadi 1 kartu.
+           Per user: kedua kartu redundan, status text warna mencolok beda (hijau
+           vs gold), dan clickable tile harus benar-benar nav ke halaman terkait.
+           Solusi: 1 kartu, 8 tile, warna status seragam (text-2/gold subtle),
+           ▸ = visual cue clickable, data-pi-nav generic handler nav ke view. -->
+      <div class="pi-card pi-card-big pi-perks-combined-card">
+        <div class="pi-card-head pi-head-stack">
+          ${_iconWrap(_icoStar)}
+          <div class="pi-head-text">
+            <h4 data-no-i18n>Manfaat &amp; Keuntungan Premium</h4>
+            <small data-no-i18n>Fitur eksklusif yang aktif di akun kamu — klik untuk buka halaman terkait.</small>
           </div>
         </div>
-        <div class="pi-best-time-pick">
-          <div class="pi-bt-day">${peakDay}</div>
-          <div class="pi-bt-slot">${peakSlot.label}</div>
-          <div class="pi-bt-hours">${String(peakSlot.start).padStart(2, "0")}:00 – ${String(peakSlot.range[1] + 1).padStart(2, "0")}:00</div>
-        </div>
-        <div class="pi-slot-bars">
-          ${slotScores.map(s => {
-            const max = Math.max(...slotScores.map(x => x.score), 1);
-            const pct = (s.score / max) * 100;
-            const isPeak = s === peakSlot;
-            return `<div class="pi-slot-bar ${isPeak ? 'peak' : ''}">
-              <span class="psb-label">${s.label}</span>
-              <div class="psb-track"><i style="width:${pct}%"></i></div>
-            </div>`;
-          }).join("")}
+        <div class="pi-perks-combined-grid">
+
+          <!-- v669: hanya tile yang BENAR-BENAR punya halaman tujuan. Perk pasif
+               (Tanpa Iklan / 4K / Putar Latar) dihapus karena tidak ada halaman
+               yang bisa dinavigasikan. -->
+          <button type="button" class="pi-perk-tile pi-perk-tile-clickable" data-pi-nav="upload">
+            <span class="ppt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg></span>
+            <b>Unggah Tanpa Batas</b>
+            <small>Tanpa limit jumlah / ukuran video.</small>
+            <span class="ppt-cta" data-no-i18n>Buka Upload</span>
+          </button>
+          <button type="button" class="pi-perk-tile pi-perk-tile-clickable" data-pi-nav="upload">
+            <span class="ppt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5L5 19"/></svg></span>
+            <b>Custom Thumbnail</b>
+            <small>Upload thumbnail gambar sendiri saat unggah.</small>
+            <span class="ppt-cta" data-no-i18n>Atur saat Upload</span>
+          </button>
+          <button type="button" class="pi-perk-tile pi-perk-tile-clickable" data-pi-nav="stats">
+            <span class="ppt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="6" y="11" width="3.5" height="7"/><rect x="13" y="6" width="3.5" height="12"/></svg></span>
+            <b>Statistik Lengkap</b>
+            <small>Analitik views, engagement, top video.</small>
+            <span class="ppt-cta" data-no-i18n>Lihat Statistik</span>
+          </button>
+          <button type="button" class="pi-perk-tile pi-perk-tile-clickable" data-pi-nav="storage">
+            <span class="ppt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14a0 0 0 0 0 0 0v-3H5v3Z"/></svg></span>
+            <b>Tonton Offline</b>
+            <small>Video tersimpan untuk ditonton tanpa kuota.</small>
+            <span class="ppt-cta" data-no-i18n>Lihat Penyimpanan</span>
+          </button>
+          <button type="button" class="pi-perk-tile pi-perk-tile-clickable" data-pi-nav="myprofile">
+            <span class="ppt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v5c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6Z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <b>Badge Premium di Profil</b>
+            <small>Tampil sebagai member Premium di profil.</small>
+            <span class="ppt-cta" data-no-i18n>Lihat Profil</span>
+          </button>
+
         </div>
       </div>
 
-      <!-- 4. ENGAGEMENT BENCHMARK vs Platform Average -->
-      <div class="pi-card">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span>Perbandingan Interaksi</h4>
-            <small>Performa kamu vs rata-rata kreator Playly.</small>
+      <!-- v650: Streak Nonton + Ringkasan Mingguan dihapus per request user.
+           Halaman: Hero + Manfaat & Keuntungan + Status Langganan. -->
+
+      <!-- v639 (2026-05-30): EKSKLUSIF dipindah ke atas (setelah hero). Lihat block di awal grid. -->
+
+      <!-- 5. STATUS LANGGANAN -->
+      <div class="pi-card pi-card-big pi-sub-card">
+        <div class="pi-card-head pi-head-stack">
+          ${_iconWrap(_icoCard)}
+          <div class="pi-head-text">
+            <h4 data-no-i18n>Status Langganan</h4>
+            <small>Detail paket Premium kamu.</small>
           </div>
         </div>
-        <div class="pi-bench-row">
-          <div class="pi-bench-cell">
-            <small>KAMU</small>
-            <strong>${engagement.toFixed(1)}%</strong>
-            <div class="pi-bench-bar"><i style="width:${Math.min(100, engagement * 10)}%;background:var(--primary,#d4a64a)"></i></div>
+        <div class="pi-sub-grid">
+          <div class="pi-sub-cell">
+            <small>PAKET</small>
+            <strong>Playly Premium ${escapeHtml(plan.name || "")}</strong>
           </div>
-          <div class="pi-bench-cell">
-            <small>RATA-RATA</small>
-            <strong style="color:var(--muted)">${PLATFORM_AVG_ENGAGEMENT}%</strong>
-            <div class="pi-bench-bar"><i style="width:${Math.min(100, PLATFORM_AVG_ENGAGEMENT * 10)}%;background:rgba(140,150,180,.4)"></i></div>
+          <div class="pi-sub-cell">
+            <small>HARGA</small>
+            <strong>${escapeHtml(plan.priceLabel || "-")} ${escapeHtml(plan.suffix || "")}</strong>
+          </div>
+          <div class="pi-sub-cell">
+            <small>AKTIF SEJAK</small>
+            <strong>${escapeHtml(premiumSinceStr)}</strong>
+          </div>
+          <div class="pi-sub-cell">
+            <small>BERLAKU SAMPAI</small>
+            <strong>${escapeHtml(expDateStr)}${daysLeft != null ? ` <span class="pi-sub-tag">(${daysLeft} hari lagi)</span>` : ""}</strong>
           </div>
         </div>
-        <div class="pi-bench-verdict ${benchmarkDelta >= 0 ? 'good' : 'bad'}">
-          ${benchmarkDelta >= 0
-            ? `🏆 ${Math.abs(benchmarkPct).toFixed(0)}% di atas rata-rata kreator. Konten kamu lebih menarik!`
-            : `📉 ${Math.abs(benchmarkPct).toFixed(0)}% di bawah rata-rata. Coba upload lebih sering atau perbanyak interaksi dengan penonton.`}
+        <div class="pi-sub-actions">
+          <button type="button" class="btn ghost sm" id="piSubHistory">📜 Riwayat Pembelian</button>
+          <button type="button" class="btn ghost sm" id="piSubManage">⚙ Kelola Langganan</button>
         </div>
       </div>
-
-      <!-- 5. TOP HASHTAGS — premium-only strategic insight -->
-      <!-- v611 (2026-05-28): "Tag" → "Hashtag" per request user. -->
-      <div class="pi-card pi-card-big">
-        <div class="pi-card-head">
-          <div>
-            <h4 data-no-i18n><span class="sec-icon-v582 sec-icon-sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></span>Analisis Hashtag Populer</h4>
-            <small>Hashtag paling sering kamu pakai — diurutkan dari yang terbanyak.</small>
-          </div>
-        </div>
-        ${topTags.length ? `
-          <div class="pi-tag-cloud">
-            ${topTags.map(([tag, count], i) => {
-              const sizes = ["pi-tag-xl", "pi-tag-lg", "pi-tag-md", "pi-tag-sm"];
-              const sizeClass = sizes[Math.min(i, sizes.length - 1)];
-              return `<span class="pi-tag-chip ${sizeClass}">#${escapeHtml(tag)} <b>${count}</b></span>`;
-            }).join("")}
-          </div>` : `<div class="pi-empty">Belum ada hashtag. Tambahkan hashtag saat upload video untuk lihat analisis.</div>`
-        }
-      </div>
-
-      <!-- v617 (2026-05-28): Ekspor Data dihapus dari Insight Premium —
-           dipindah ke Settings biar semua user (termasuk Gratis) bisa
-           ekspor data video sendiri. -->
 
     </div>
   `;
 
-  // v612 (2026-05-28): forecast sparkline render dihapus (card sudah di-remove).
-  // v617 (2026-05-28): CSV export pindah ke Settings, button piExportCsvBtn dihapus.
+  // ---- WIRE INTERACTIONS — simple toast / nav ----
+  // v643: piCoinExchange/piCoinExtend dihapus (kartu Coin diganti Akses Cepat)
+  // v641: generic nav handler — semua tile dengan data-pi-nav nav ke view target
+  wrap.querySelectorAll("[data-pi-nav]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.piNav;
+      if (!view) return;
+      // v668: nav-item sidebar dulu; kalau gak ada (settings/storage/myprofile),
+      // fallback ke switchView langsung supaya tetap pindah halaman.
+      const navItem = document.querySelector('.nav-item[data-view="' + view + '"]')
+        || document.querySelector('.nav-subitem[data-view="' + view + '"]');
+      if (navItem) { navItem.click(); return; }
+      if (typeof window.switchView === "function") { window.switchView(view); return; }
+      if (typeof switchView === "function") { switchView(view); return; }
+      document.querySelector('[data-view="' + view + '"]')?.click();
+    });
+  });
+  document.getElementById("piSubHistory")?.addEventListener("click", () => {
+    const histBtn = document.querySelector('.nav-item[data-view="history"]') || document.querySelector('[data-view="history"]');
+    histBtn?.click();
+  });
+  document.getElementById("piSubManage")?.addEventListener("click", () => {
+    document.getElementById("pdUpgradeBtn")?.click();
+  });
+  // v652: hero "Kelola Membership"
+  document.getElementById("piHeroManage")?.addEventListener("click", () => {
+    document.getElementById("pdUpgradeBtn")?.click();
+  });
+
+  // v646: kartu Streak/Pencapaian/Mingguan informational — tidak ada handler klik.
 }
+
 
 // v617 (2026-05-28): Standalone CSV export — dipakai dari Settings (semua user,
 // termasuk Gratis). Read state.myVideos directly, no premium gate.
@@ -33860,6 +33760,108 @@ function _exportVideosToCSV() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
   toast?.(`✓ Data ${myVideos.length} video berhasil diunduh.`, "success");
+}
+
+// v636 (2026-05-30): Premium Perk — laporan PDF profesional.
+// Buka window baru dengan ringkasan analitik formatted, lalu trigger
+// window.print() — user "Save as PDF" via browser dialog (universal).
+function _piExportPremiumPDF(data) {
+  const d = data || {};
+  const win = window.open("", "_blank", "width=820,height=900");
+  if (!win) {
+    toast?.("Pop-up diblokir browser. Izinkan pop-up untuk halaman ini.", "error");
+    return;
+  }
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  const monthStr = now.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const username = (typeof user !== "undefined" && user?.username) ? user.username : "Premium User";
+  const esc = (s) => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  const fnum = (n) => (typeof fmtNum === "function") ? fmtNum(n) : String(n);
+  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8">
+<title>Laporan Premium ${esc(monthStr)} — @${esc(username)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #fff; color: #1B3C53; padding: 36px 44px; max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; color: #6D2932; }
+  h2 { font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #BE9752; margin: 28px 0 10px; border-bottom: 2px solid #BE9752; padding-bottom: 6px; }
+  .meta { color: #6b7280; font-size: 12px; margin-bottom: 18px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+  .kpi { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
+  .kpi small { display: block; font-size: 10px; font-weight: 700; color: #6b7280; letter-spacing: .06em; text-transform: uppercase; }
+  .kpi strong { display: block; font-size: 20px; font-weight: 800; margin-top: 4px; color: #1B3C53; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
+  th { background: #f5f5f0; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .rec-box { background: #fef3e8; border-left: 3px solid #BE9752; padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; line-height: 1.6; }
+  .rec-box b { color: #6D2932; }
+  .hashtags span { display: inline-block; background: #f5f5f0; padding: 4px 10px; border-radius: 99px; font-size: 12px; margin: 3px 3px 3px 0; color: #1B3C53; }
+  .footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; text-align: center; }
+  .btn-print { position: fixed; top: 12px; right: 12px; padding: 10px 16px; background: #6D2932; color: #fff; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  @media print { .btn-print { display: none; } body { padding: 24px; } }
+</style></head><body>
+<button class="btn-print" onclick="window.print()">🖨 Cetak / Save PDF</button>
+<h1>Laporan Premium Insight</h1>
+<div class="meta">Kreator: <b>@${esc(username)}</b> · Kategori: <b>${esc(d.userCategory || "Umum")}</b> · Periode: <b>${esc(monthStr)}</b> · Dicetak ${esc(dateStr)}</div>
+
+<h2>Ringkasan Performa</h2>
+<div class="kpi-grid">
+  <div class="kpi"><small>Total Video</small><strong>${fnum(d.totalVideos || 0)}</strong></div>
+  <div class="kpi"><small>Total Views</small><strong>${fnum(d.totalViews || 0)}</strong></div>
+  <div class="kpi"><small>Follower</small><strong>${fnum(d.totalFollowers || 0)}</strong></div>
+  <div class="kpi"><small>Engagement</small><strong>${(d.engagement || 0).toFixed(1)}%</strong></div>
+</div>
+
+<h2>Benchmark vs Kreator ${esc(d.userCategory || "Umum")}</h2>
+<table>
+  <tr><th>Metrik</th><th>Kamu</th><th>Rata-rata Kategori</th><th>Selisih</th></tr>
+  <tr>
+    <td>Engagement Rate</td>
+    <td><b>${(d.engagement || 0).toFixed(1)}%</b></td>
+    <td>${(d.catEng || 0).toFixed(1)}%</td>
+    <td>${(d.engagement || 0) >= (d.catEng || 0) ? "+" : ""}${((d.engagement || 0) - (d.catEng || 0)).toFixed(1)}%</td>
+  </tr>
+  ${d.catRankPct != null ? `<tr><td>Ranking di Kategori</td><td colspan="3"><b>Top ${100 - d.catRankPct}%</b> kreator ${esc(d.userCategory || "")}</td></tr>` : ""}
+</table>
+
+<h2>Prediksi Performa Berikutnya</h2>
+<div class="rec-box">
+  Prediksi views video berikutnya: <b>${fnum(d.predictLow || 0)} – ${fnum(d.predictHigh || 0)}</b><br>
+  Arah tren channel: <b>${esc(d.trendLabel || "Stabil")}</b>
+</div>
+
+<h2>Waktu Upload Terbaik</h2>
+<div class="rec-box">
+  Upload <b>${esc(d.peakDay || "Jumat")} ${esc(d.peakHourStr || "19:00")}</b> untuk <b>+${d.reachUplift || 30}%</b> jangkauan vs slot lain.
+</div>
+
+<h2>Target Pertumbuhan</h2>
+<div class="rec-box">
+  Target: <b>${fnum(d.goal?.target || 0)}</b> ${esc(d.goal?.metric || "followers")} · Progress: <b>${d.goalProgressPct || 0}%</b> (${fnum(d.goalCurrent || 0)} dari ${fnum(d.goal?.target || 0)})
+</div>
+
+<h2>Top Video</h2>
+<table>
+  <tr><th>#</th><th>Judul</th><th>Views</th></tr>
+  ${(d.topVids || []).map((v, i) => `<tr><td>${i + 1}</td><td>${esc(v.title || "Video " + (i + 1))}</td><td>${fnum(v.viewsNum || 0)}</td></tr>`).join("") || `<tr><td colspan="3" style="color:#6b7280;text-align:center">Belum ada video</td></tr>`}
+</table>
+
+<h2>Rekomendasi Hashtag Berikutnya</h2>
+<div class="hashtags">
+  ${(d.recommendedHashtags || []).map(t => `<span>#${esc(t)}</span>`).join("")}
+</div>
+
+<div class="footer">
+  Laporan dibuat oleh Playly Premium Insight · ${esc(now.toISOString())} · Untuk pertanyaan: bantuan@playly.id
+</div>
+<script>setTimeout(() => window.print(), 600);</script>
+</body></html>`;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  toast?.("📄 Laporan PDF dibuka di tab baru — pilih 'Save as PDF' di dialog print.", "success");
 }
 
 // ----------------------- HOME — UPLOAD STREAK (7-day activity bar) -----------------------
