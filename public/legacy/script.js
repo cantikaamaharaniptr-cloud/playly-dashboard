@@ -27312,6 +27312,38 @@ function renderAdminActionCenter() {
   }).join("");
 }
 
+// === Admin Users — filter advanced + bulk selection state (2026-06-01) ===
+const _auState = {
+  filterTier: "all",        // "all" | "free" | "premium"
+  filterStatus: "all",      // "all" | "online" | "offline" | "deactive" | "suspend"
+  filterJoined: "all",      // "all" | "7" | "30" | "90"
+  selected: new Set(),      // Set of usernames yg di-checkbox
+};
+function _auHasFilter() {
+  return _auState.filterTier !== "all" || _auState.filterStatus !== "all" || _auState.filterJoined !== "all";
+}
+function _auResetFilter() {
+  _auState.filterTier = "all";
+  _auState.filterStatus = "all";
+  _auState.filterJoined = "all";
+  const t = document.getElementById("auFilterTier"); if (t) t.value = "all";
+  const s = document.getElementById("auFilterStatus"); if (s) s.value = "all";
+  const j = document.getElementById("auFilterJoined"); if (j) j.value = "all";
+  renderAdminUsers();
+}
+function _auClearSelection() {
+  _auState.selected.clear();
+  const sa = document.getElementById("auSelectAll"); if (sa) sa.checked = false;
+  renderAdminUsers();
+}
+function _auUpdateBulkBar() {
+  const bar = document.getElementById("auBulkBar");
+  const count = document.getElementById("auBulkCount");
+  const n = _auState.selected.size;
+  if (bar) bar.hidden = n === 0;
+  if (count) count.textContent = `${n} user dipilih`;
+}
+
 function renderAdminUsers() {
   const tbody = $("#adminUserTbody"); if (!tbody) return;
   const search = ($("#adminUserSearch")?.value || "").toLowerCase().trim();
@@ -27387,17 +27419,44 @@ function renderAdminUsers() {
   const activeRoleTab = (document.querySelector('[data-user-role-tab].active')?.dataset.userRoleTab) || "user";
   const roleFiltered = activeRoleTab === "admin" ? adminRows : userRows;
 
-  const filtered = search ? roleFiltered.filter(r =>
+  let filtered = search ? roleFiltered.filter(r =>
     r.name.toLowerCase().includes(search) ||
     r.username.toLowerCase().includes(search) ||
     r.email.toLowerCase().includes(search)
   ) : roleFiltered;
 
+  // Apply advanced filters
+  if (_auState.filterTier !== "all") {
+    filtered = filtered.filter(r => r.tier === _auState.filterTier);
+  }
+  if (_auState.filterStatus !== "all") {
+    filtered = filtered.filter(r => r.status === _auState.filterStatus);
+  }
+  if (_auState.filterJoined !== "all") {
+    const days = parseInt(_auState.filterJoined, 10);
+    const cutoff = Date.now() - days * 86400000;
+    filtered = filtered.filter(r => {
+      const ts = r.joinedAt && r.joinedAt !== "—" ? new Date(r.joinedAt).getTime() : 0;
+      return ts >= cutoff;
+    });
+  }
+
+  // Update filter count display
+  const cntEl = document.getElementById("auFilterCount");
+  if (cntEl) {
+    cntEl.textContent = _auHasFilter() || search
+      ? `Menampilkan ${filtered.length} dari ${roleFiltered.length} user`
+      : `Total ${roleFiltered.length} user`;
+  }
+  const resetBtn = document.getElementById("auFilterReset");
+  if (resetBtn) resetBtn.hidden = !_auHasFilter();
+
   if (!filtered.length) {
-    const emptyMsg = search
-      ? "Tidak ada user yang cocok"
+    const emptyMsg = _auHasFilter() || search
+      ? "Tidak ada user yang cocok dengan filter"
       : (activeRoleTab === "admin" ? "Belum ada akun admin" : "Belum ada user terdaftar");
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">${emptyMsg}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">${emptyMsg}</td></tr>`;
+    _auUpdateBulkBar();
     return;
   }
 
@@ -27425,7 +27484,10 @@ function renderAdminUsers() {
     const showDelete  = !isSuperAdminRow;
     const userCellAction = isAdminRow ? "" : `data-action="detail"`;
     const tierBadgeAction = isAdminRow ? "" : `data-action="set-tier"`;
-    return `<tr data-username="${r.username}">
+    const isSelected = _auState.selected.has(r.username);
+    const canSelect = !isSuperAdminRow; // super admin gak boleh di-bulk-action
+    return `<tr data-username="${r.username}" class="${isSelected ? 'au-row-selected' : ''}">
+      <td class="col-check">${canSelect ? `<input type="checkbox" class="au-check au-row-check" data-username="${escapeHtml(r.username)}" ${isSelected ? "checked" : ""} aria-label="Pilih ${escapeHtml(r.username)}"/>` : ""}</td>
       <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="" referrerpolicy="no-referrer"/>` : init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
       <td>${r.email}</td>
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
@@ -27474,6 +27536,185 @@ function renderAdminUsers() {
       openSetTierModal(tr.dataset.username);
     });
   });
+
+  // Wire per-row checkbox (bulk selection)
+  tbody.querySelectorAll(".au-row-check").forEach(cb => {
+    cb.addEventListener("click", e => {
+      e.stopPropagation();
+      const username = cb.dataset.username;
+      if (cb.checked) _auState.selected.add(username);
+      else _auState.selected.delete(username);
+      const tr = cb.closest("tr");
+      if (tr) tr.classList.toggle("au-row-selected", cb.checked);
+      _auUpdateBulkBar();
+      // Sync "Pilih semua" checkbox
+      const allChecks = tbody.querySelectorAll(".au-row-check");
+      const allChecked = allChecks.length > 0 && [...allChecks].every(c => c.checked);
+      const sa = document.getElementById("auSelectAll");
+      if (sa) sa.checked = allChecked;
+    });
+  });
+
+  // Sync bulk bar setelah render (kalau ada selection dari render sebelumnya)
+  _auUpdateBulkBar();
+}
+
+// === Wiring filter dropdowns + bulk action (one-time, document-level) ===
+(function _wireAdminUsersFilterBulk() {
+  // Filter dropdowns
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === "auFilterTier") {
+      _auState.filterTier = t.value;
+      _auClearSelection();         // reset selection saat filter berubah (avoid stale)
+    } else if (t.id === "auFilterStatus") {
+      _auState.filterStatus = t.value;
+      _auClearSelection();
+    } else if (t.id === "auFilterJoined") {
+      _auState.filterJoined = t.value;
+      _auClearSelection();
+    } else if (t.id === "auSelectAll") {
+      // "Pilih semua" checkbox di header
+      const tbody = document.getElementById("adminUserTbody");
+      if (!tbody) return;
+      const checks = tbody.querySelectorAll(".au-row-check");
+      if (t.checked) {
+        checks.forEach(c => {
+          c.checked = true;
+          _auState.selected.add(c.dataset.username);
+          c.closest("tr")?.classList.add("au-row-selected");
+        });
+      } else {
+        checks.forEach(c => {
+          c.checked = false;
+          _auState.selected.delete(c.dataset.username);
+          c.closest("tr")?.classList.remove("au-row-selected");
+        });
+      }
+      _auUpdateBulkBar();
+    }
+  });
+  // Reset filter button
+  document.addEventListener("click", e => {
+    if (e.target.closest("#auFilterReset")) {
+      e.preventDefault();
+      _auResetFilter();
+    }
+    if (e.target.closest("#auBulkClear")) {
+      e.preventDefault();
+      _auClearSelection();
+    }
+    if (e.target.closest("#auBulkExecute")) {
+      e.preventDefault();
+      _auExecuteBulkAction();
+    }
+  });
+})();
+
+// Execute bulk action — confirm modal lalu apply ke semua user dipilih
+function _auExecuteBulkAction() {
+  const actionSel = document.getElementById("auBulkAction");
+  const action = actionSel?.value || "";
+  const selected = [..._auState.selected];
+  if (!action) {
+    if (typeof toast === "function") toast("⚠ Pilih aksi dulu", "warning");
+    return;
+  }
+  if (!selected.length) {
+    if (typeof toast === "function") toast("⚠ Belum ada user yang dipilih", "warning");
+    return;
+  }
+  const actLabels = {
+    suspend: { icon: "⛔", title: "Suspend Akun", verb: "suspend", danger: true },
+    unsuspend: { icon: "✓", title: "Aktifkan Kembali", verb: "aktifkan kembali", danger: false },
+    delete: { icon: "🗑", title: "Hapus Akun (PERMANEN)", verb: "hapus PERMANEN", danger: true },
+    export: { icon: "📤", title: "Export CSV", verb: "export ke CSV", danger: false },
+  };
+  const meta = actLabels[action];
+  if (!meta) return;
+
+  // Special: export gak butuh konfirmasi
+  if (action === "export") {
+    _auBulkExportCsv(selected);
+    return;
+  }
+
+  if (typeof openConfirm !== "function") return;
+  openConfirm({
+    icon: meta.icon,
+    iconClass: meta.danger ? "warn" : "ok",
+    title: meta.title,
+    desc: `${meta.verb.charAt(0).toUpperCase() + meta.verb.slice(1)} <b>${selected.length} user</b> sekaligus? ${meta.danger ? "Tindakan ini <b>tidak bisa di-undo</b>." : ""}`,
+    btnText: meta.danger ? `${meta.icon} ${meta.verb}` : `${meta.icon} Lanjut`,
+    btnClass: meta.danger ? "danger" : "primary",
+    onConfirm: () => {
+      let okCount = 0;
+      selected.forEach(username => {
+        if (action === "suspend" && typeof suspendUserAccount === "function") {
+          try { suspendUserAccount(username, true); okCount++; } catch {}
+        } else if (action === "unsuspend" && typeof suspendUserAccount === "function") {
+          try { suspendUserAccount(username, false); okCount++; } catch {}
+        } else if (action === "delete" && typeof deleteUserAccount === "function") {
+          // deleteUserAccount nampilin confirm sendiri — bypass dengan flag
+          try { deleteUserAccount(username, { skipConfirm: true }); okCount++; } catch {}
+        }
+      });
+      if (typeof toast === "function") {
+        toast(`✅ ${okCount} dari ${selected.length} user ${meta.verb}`, "success");
+      }
+      _auClearSelection();
+      if (typeof renderAdminUsers === "function") renderAdminUsers();
+    }
+  });
+}
+
+function _auBulkExportCsv(usernames) {
+  try {
+    const accounts = getAllAccounts();
+    const selected = accounts.filter(a => usernames.includes(a.username));
+    const headers = ["Username", "Email", "Name", "Role", "Tier", "Joined", "Suspended"];
+    const rows = selected.map(a => [
+      a.username, a.email, a.name || "", a.role || "user",
+      a.tier || "free", a.joinedAt || "", a.suspended ? "Yes" : "No"
+    ]);
+    const csv = [headers, ...rows].map(r =>
+      r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `playly-users-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (typeof toast === "function") toast(`📤 ${selected.length} user di-export ke CSV`, "success");
+  } catch (err) {
+    console.warn("[bulk-export] failed:", err);
+    if (typeof toast === "function") toast("✕ Export gagal", "error");
+  }
+}
+
+// ⚠ FILLER untuk fungsi-fungsi support kalau gak ada
+if (typeof suspendUserAccount !== "function") {
+  window.suspendUserAccount = function (username, suspend) {
+    const key = Object.keys(localStorage).find(k => {
+      if (!k.startsWith("playly-account-")) return false;
+      try { return JSON.parse(localStorage.getItem(k))?.username === username; } catch { return false; }
+    });
+    if (!key) return;
+    try {
+      const acc = JSON.parse(localStorage.getItem(key));
+      acc.suspended = !!suspend;
+      localStorage.setItem(key, JSON.stringify(acc));
+      if (typeof pushAdminEvent === "function") {
+        pushAdminEvent(suspend ? "⛔" : "✓", `Akun @${escapeHtml(username)} ${suspend ? "di-suspend" : "diaktifkan kembali"}`);
+      }
+    } catch {}
+  };
+}
 }
 
 // Tab switch handler — User / Admin role split di User Management.

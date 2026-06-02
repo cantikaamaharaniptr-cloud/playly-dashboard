@@ -2767,10 +2767,51 @@
           </div>
         </div>
 
+        <!-- Filter bar advanced (2026-06-01): tier/status/joined dropdowns + reset + counter -->
+        <div class="admin-users-filterbar">
+          <select class="au-filter-select" id="auFilterTier" aria-label="Filter Tier">
+            <option value="all">⭐ Semua Tier</option>
+            <option value="free">🌱 Free</option>
+            <option value="premium">⭐ Premium</option>
+          </select>
+          <select class="au-filter-select" id="auFilterStatus" aria-label="Filter Status">
+            <option value="all">🔘 Semua Status</option>
+            <option value="online">● Online</option>
+            <option value="offline">○ Offline</option>
+            <option value="deactive">◌ Tidak aktif</option>
+            <option value="suspend">⛔ Suspended</option>
+          </select>
+          <select class="au-filter-select" id="auFilterJoined" aria-label="Filter Bergabung">
+            <option value="all">📅 Semua waktu</option>
+            <option value="7">7 hari terakhir</option>
+            <option value="30">30 hari terakhir</option>
+            <option value="90">3 bulan terakhir</option>
+          </select>
+          <button type="button" class="au-filter-reset" id="auFilterReset" hidden>✕ Reset</button>
+          <span class="au-filter-count" id="auFilterCount"></span>
+        </div>
+
+        <!-- Bulk action bar — muncul saat ada user dipilih -->
+        <div class="admin-users-bulkbar" id="auBulkBar" hidden>
+          <span class="au-bulk-count" id="auBulkCount">0 user dipilih</span>
+          <select class="au-bulk-action" id="auBulkAction" aria-label="Aksi massal">
+            <option value="">Pilih aksi massal...</option>
+            <option value="suspend">⛔ Suspend</option>
+            <option value="unsuspend">✓ Aktifkan kembali</option>
+            <option value="delete">🗑 Hapus akun</option>
+            <option value="export">📤 Export ke CSV</option>
+          </select>
+          <button type="button" class="btn primary sm" id="auBulkExecute">Jalankan</button>
+          <button type="button" class="btn ghost sm" id="auBulkClear">Batal</button>
+        </div>
+
         <div class="admin-table-wrap">
           <table class="admin-table" id="adminUserTable">
             <thead>
-              <tr><th>User</th><th>Email</th><th>Role</th><th class="col-tier">Tier</th><th class="col-videos">Video</th><th>Bergabung</th><th>Status</th><th></th></tr>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="auSelectAll" class="au-check" aria-label="Pilih semua"/></th>
+                <th>User</th><th>Email</th><th>Role</th><th class="col-tier">Tier</th><th class="col-videos">Video</th><th>Bergabung</th><th>Status</th><th></th>
+              </tr>
             </thead>
             <tbody id="adminUserTbody"></tbody>
           </table>
