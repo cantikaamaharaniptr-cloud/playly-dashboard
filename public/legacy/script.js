@@ -533,6 +533,28 @@ function chatRelTime(ts) {
 // Tidak ada data hardcoded — Discover akan kosong sampai user upload.
 // Konten platform = agregasi dari semua user yang sudah upload video.
 
+// Apakah video boleh tampil ke PUBLIK saat ini — dipakai sebagai SATU sumber
+// kebenaran oleh feed (Discover/Trending/Spotlight/Home) & profil kreator lain.
+// Kriteria:
+//  - adminStatus published (atau video lama tanpa field → anggap published)
+//  - visibility publik (private/unlisted/draft DISEMBUNYIKAN dari listing). Catatan:
+//    "unlisted" tetap bisa dibuka via link langsung karena findVideo() mencari
+//    semua state tanpa filter ini — sesuai semantik unlisted (tak terdaftar,
+//    tapi dapat diakses lewat tautan).
+//  - kalau dijadwalkan (scheduledAt di masa depan) → belum tampil sampai waktunya.
+//    Dihitung live dari Date.now() sehingga otomatis muncul saat waktunya tiba,
+//    tanpa perlu cron/flip status.
+function isPubliclyVisibleVideo(v) {
+  if (!v) return false;
+  const st = v.adminStatus;
+  if (st != null && st !== "published") return false; // pending/rejected/takedown/draft
+  const vis = v.visibility;
+  if (vis === "private" || vis === "unlisted" || vis === "draft") return false;
+  const sched = Number(v.scheduledAt || 0);
+  if (sched && sched > Date.now()) return false;       // terjadwal, belum waktunya
+  return true;
+}
+
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
@@ -563,14 +585,10 @@ function getPlatformVideos() {
       if (Array.isArray(s.myVideos)) videos.push(...s.myVideos);
     } catch {}
   }
-  // Filter: only published videos visible publicly
-  const filtered = videos.filter(v => {
-    const st = v.adminStatus;
-    // Backward-compat: kalau video lama nggak punya field adminStatus,
-    // anggap sudah published (jangan break content yang udah ada).
-    if (st == null) return true;
-    return st === "published";
-  });
+  // Filter: hanya video yang boleh tampil publik (published + visibility publik +
+  // jadwal sudah tiba). Backward-compat video lama tanpa adminStatus ditangani
+  // di dalam isPubliclyVisibleVideo().
+  const filtered = videos.filter(isPubliclyVisibleVideo);
   // Sort by views desc, fallback by id (newest)
   filtered.sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0) || b.id - a.id);
   return filtered;
@@ -4754,7 +4772,7 @@ const I18N = {
     "upload.sub.autogen":        "Auto-generate AI",
     "upload.sub.autogen.desc":   "Auto-generate subtitles from the video's audio using Whisper Tiny.",
     "upload.sub.gen.now":        "Generate Now",
-    "upload.sub.note.locked":    "✨ Auto subtitle from video audio. Try 3 free runs this month.",
+    "upload.sub.note.locked":    "✨ Auto subtitle from your video's audio — available on Premium.",
     "upload.sub.note.quota":     "🎁 {n} of 3 free runs left this month",
     "upload.sub.note.quota.out": "🎁 Free quota used — go Premium for unlimited",
     "upload.sub.manual":         "Manual Upload",
@@ -6304,7 +6322,7 @@ const I18N = {
     "upload.sub.autogen":        "Buat Otomatis AI",
     "upload.sub.autogen.desc":   "Buat subtitle otomatis dari audio video pakai Whisper Tiny.",
     "upload.sub.gen.now":        "Buat Sekarang",
-    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video. Coba 3x gratis bulan ini.",
+    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video — tersedia di Premium.",
     "upload.sub.note.quota":     "🎁 Sisa {n} dari 3 percobaan gratis bulan ini",
     "upload.sub.note.quota.out": "🎁 Kuota gratis habis bulan ini — Premium untuk akses unlimited",
     "upload.sub.manual":         "Unggah Manual",
@@ -41202,6 +41220,76 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
       if (typeof toast === "function") toast("⚠️ Video editor belum siap", "warning");
     }
   });
+
+  // Ikon tombol "Edit Video" diganti dari kamera-video → PENCIL (edit), karena
+  // ikon kamera tidak mewakili aksi EDIT. Per request user 2026-06-03. Markup
+  // tak disentuh — innerHTML svg di-set di sini (tombol overlay statis, sekali set).
+  (function () {
+    var editBtn = document.getElementById("dropzoneEditVideoBtn");
+    var svg = editBtn && editBtn.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.innerHTML = '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>';
+    }
+  })();
+})();
+
+// =====================================================================
+// CUSTOM TOOLTIP utk tombol overlay media (Edit/Ganti/Hapus pada Video,
+// Frame, Thumbnail). Tooltip NATIVE (atribut title) berwarna PUTIH & tak bisa
+// di-style. Per request user 2026-06-03 → diganti tooltip custom dark wine +
+// teks cream (.upf-tip). title dipindah ke data-tip lalu DIHAPUS supaya
+// tooltip native tidak muncul; aria-label tetap utk a11y. Markup tak disentuh.
+// =====================================================================
+(function customMediaTooltips() {
+  var btns = document.querySelectorAll(".dz-pro-overlay .dz-pro-action");
+  if (!btns.length) return;
+  var tip = document.createElement("div");
+  tip.className = "upf-tip";
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  function show(btn) {
+    var label = btn.dataset.tip || btn.getAttribute("aria-label") || "";
+    if (!label) return;
+    tip.textContent = label;
+    var tr = tip.getBoundingClientRect();
+    var r = btn.getBoundingClientRect();
+    var left = r.left + r.width / 2 - tr.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+    var top = r.bottom + 8;
+    if (top + tr.height > window.innerHeight - 8) top = r.top - tr.height - 8; // flip ke atas bila mepet bawah
+    tip.style.left = Math.round(left) + "px";
+    tip.style.top = Math.round(top) + "px";
+    tip.classList.add("is-show");
+  }
+  function hide() { tip.classList.remove("is-show"); }
+  btns.forEach(function (btn) {
+    if (btn.hasAttribute("title")) {
+      btn.dataset.tip = btn.getAttribute("title");
+      btn.removeAttribute("title"); // cegah tooltip native putih
+    }
+    btn.addEventListener("mouseenter", function () { show(btn); });
+    btn.addEventListener("focus", function () { show(btn); });
+    btn.addEventListener("mouseleave", hide);
+    btn.addEventListener("blur", hide);
+    btn.addEventListener("click", hide);
+  });
+})();
+
+// =====================================================================
+// Pindahkan blok progres/status upload (#uploadProgress) — dulu di kolom KIRI
+// (bawah preview video, jauh dari tombol), padahal tombol "Unggah Sekarang"
+// ada di action bar kolom KANAN bawah. Saat klik unggah, progres muncul jauh
+// dari tombol → membingungkan. Reparent #uploadProgress ke TEPAT DI ATAS
+// .upload-actions-bar (kolom kanan) supaya feedback muncul dekat aksinya.
+// Per request user 2026-06-03. Markup tak disentuh (reparent via JS).
+// =====================================================================
+(function relocateUploadProgress() {
+  var prog = document.getElementById("uploadProgress");
+  var bar = document.querySelector(".upload-actions-bar");
+  if (prog && bar && bar.parentElement && prog !== bar.previousElementSibling) {
+    bar.parentElement.insertBefore(prog, bar);
+  }
 })();
 
 // =====================================================================
@@ -41928,7 +42016,26 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   const hidden  = document.getElementById("upCategory");
   if (!wrap || !trigger || !pop || !labelEl || !hidden) return;
 
-  const defaultLabel = "— pilih kategori —";
+  // Opsi "Tanpa kategori" (value kosong) di paling ATAS — supaya user bisa BATAL
+  // memilih kategori (kategori bersifat opsional). Per request user 2026-06-03.
+  // Markup tidak disentuh: opsi di-inject via JS. Ikon = lingkaran + garis miring
+  // (no/ban) pakai class .picon (CSS: fill:none; stroke:currentColor).
+  if (!pop.querySelector('.ucs-option[data-value=""]')) {
+    const none = document.createElement("div");
+    none.className = "ucs-option ucs-option-none";
+    none.setAttribute("role", "option");
+    none.dataset.value = "";
+    none.dataset.label = "Tanpa kategori";
+    none.setAttribute("aria-selected", "false");
+    none.innerHTML =
+      '<span class="picon-w" aria-hidden="true">' +
+      '<svg class="picon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<circle cx="12" cy="12" r="9"></circle><path d="M5.64 5.64l12.72 12.72"></path>' +
+      '</svg></span> Tanpa kategori';
+    pop.insertBefore(none, pop.firstChild);
+  }
+
+  const defaultLabel = "Pilih kategori";
 
   function open() {
     pop.hidden = false;
@@ -41950,6 +42057,9 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   function selectValue(value, label, fireChange = true) {
     hidden.value = value || "";
     labelEl.textContent = label || defaultLabel;
+    // Tandai state placeholder (belum dipilih) → CSS bikin teksnya abu-abu
+    // muted, konsisten dgn placeholder field lain (bukan cream spt value asli).
+    trigger.classList.toggle("is-placeholder", !value);
     pop.querySelectorAll(".ucs-option").forEach(o => {
       o.setAttribute("aria-selected", o.dataset.value === (value || "") ? "true" : "false");
     });
@@ -42029,6 +42139,49 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     }
   });
 })();
+
+// =====================================================================
+// PREMIUM LOCK OVERLAY (per request user 2026-06-03)
+// Kartu fitur premium tampil SAMA untuk semua tier (warna/bentuk identik).
+// Bedanya HANYA saat terkunci di akun free: isi kartu di-blur + overlay
+// gembok "Tersedia di Premium" (klik → toast upgrade). Dipakai kartu AUTO
+// JUDUL (#upAiAssist) & SUBTITLE AI (#upSubtitleAiCard). Overlay = anak <div>
+// absolute (kartu sudah position:relative), CSS .upf-lock-overlay di akhir
+// styles.css mem-blur semua anak kartu kecuali overlay.
+// =====================================================================
+window._applyPremiumLock = function (card, locked, opts) {
+  if (!card) return;
+  opts = opts || {};
+  card.classList.toggle("locked", !!locked);
+  var ov = card.querySelector(":scope > .upf-lock-overlay");
+  if (locked) {
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.className = "upf-lock-overlay";
+      ov.setAttribute("role", "button");
+      ov.setAttribute("tabindex", "0");
+      ov.innerHTML =
+        '<span class="upf-lock-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' +
+        '<span class="upf-lock-title"></span>' +
+        '<span class="upf-lock-sub"></span>';
+      var fire = function () {
+        if (typeof toast === "function") toast("⭐ Fitur Premium. Upgrade dulu yuk untuk membukanya!", "warning");
+      };
+      ov.addEventListener("click", fire);
+      ov.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fire(); }
+      });
+      card.appendChild(ov);
+    }
+    var title = opts.title || "Fitur Premium";
+    var sub = opts.sub || "Tersedia di Premium";
+    ov.querySelector(".upf-lock-title").textContent = title;
+    ov.querySelector(".upf-lock-sub").textContent = sub;
+    ov.setAttribute("aria-label", title + " — " + sub + ". Upgrade ke Premium untuk membuka.");
+  } else if (ov) {
+    ov.remove();
+  }
+};
 
 // =====================================================================
 // UPLOAD — AI ASSIST (Premium-only) — generate title/desc/tags otomatis
@@ -42279,16 +42432,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   // sparkle icon (✨ aspirational) bukan lock icon (🔒 punitive).
   function refreshAiNote() {
     if (topicInput) topicInput.placeholder = t("upload.ai.topic.ph");
-    if (!noteEl) return;
-    if (!isPremium()) {
-      const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-      noteEl.innerHTML = ICO_SPARK + " " + t("upload.ai.note.locked");
-      noteEl.hidden = false;
-      card.classList.add("locked");
+    const locked = !isPremium();
+    // Kartu tampil SAMA untuk semua tier — note gold lama tidak dipakai lagi
+    // (overlay gembok yang memberi info). Free → blur + overlay via helper.
+    if (noteEl) { noteEl.innerHTML = ""; noteEl.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, locked, { title: "Auto Judul & Tag", sub: "Tersedia di Premium" });
     } else {
-      noteEl.innerHTML = "";
-      noteEl.hidden = true;
-      card.classList.remove("locked");
+      card.classList.toggle("locked", locked);
     }
   }
   refreshAiNote();
@@ -43000,30 +43151,19 @@ self.onmessage = async (e) => {
 
   autoBtn?.addEventListener("click", e => {
     e.preventDefault();
-    const isPremium = !!(user && (user.tier === "premium" || user.role === "admin"));
+    // Premium-only feature (per request user 2026-06-03): Free user TIDAK lagi
+    // dapat percobaan gratis — fitur ditampilkan tapi terkunci, sama persis
+    // seperti kartu AUTO JUDUL & TAG. Premium / admin → akses penuh (unlimited).
+    const _u = (typeof user !== "undefined" ? user : null) || window.user;
+    const isPremium =
+      (typeof isPremiumActive === "function" && isPremiumActive(_u)) ||
+      !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
+      document.body.dataset.tier === "premium";
     if (!isPremium) {
-      // Free user: cek quota sebelum gate ke premium prompt.
-      const remaining = getSubFreeQuotaRemaining();
-      if (remaining <= 0) {
-        if (typeof toast === "function") {
-          toast("🎁 Kuota gratis bulan ini habis. Upgrade Premium untuk akses unlimited.", "warning");
-        }
-        return;
+      if (typeof toast === "function") {
+        toast("⭐ Subtitle Otomatis AI hanya untuk Premium. Upgrade dulu yuk!", "warning");
       }
-      // Confirm sekali sebelum konsumsi quota — supaya user sadar ini "dihitung"
-      const willUse = SUB_FREE_QUOTA - remaining + 1;
-      const ok = confirm(
-        "🎁 Kamu masih punya " + remaining + " dari " + SUB_FREE_QUOTA + " percobaan gratis bulan ini.\n\n" +
-        "Lanjut generate subtitle (percobaan ke-" + willUse + ")?\n\n" +
-        "Setelah kuota habis, fitur ini perlu Premium."
-      );
-      if (!ok) return;
-      incrementSubFreeQuota();
-      // Refresh UI counter setelah quota dipakai
-      if (typeof window.refreshSubtitleAiLockedState === "function") {
-        // Tunggu sebentar supaya state localStorage ter-flush
-        setTimeout(window.refreshSubtitleAiLockedState, 50);
-      }
+      return;
     }
     autoGenerateSubtitle();
   });
@@ -43043,50 +43183,29 @@ self.onmessage = async (e) => {
       !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
       document.body.dataset.tier === "premium";
 
-    const remaining = isPremium ? Infinity : getSubFreeQuotaRemaining();
-    const hasFreeQuota = !isPremium && remaining > 0;
-    const quotaExhausted = !isPremium && remaining <= 0;
-
-    // 3-state class system:
-    //  is-unlocked  → Premium / admin (full access, no banner)
-    //  has-quota    → Free user dengan quota tersisa (soft sparkle state)
-    //  locked       → Free user, quota habis (locked, premium prompt)
+    // Premium-only feature (per request user 2026-06-03). Kartu tampil SAMA
+    // untuk semua tier — bedanya HANYA saat free: blur + overlay gembok.
+    //  is-unlocked → Premium / admin (akses penuh)
+    //  locked      → Free user (kartu di-blur + overlay "Tersedia di Premium")
     card.classList.toggle("is-unlocked", isPremium);
-    card.classList.toggle("has-quota", hasFreeQuota);
-    card.classList.toggle("locked", quotaExhausted);
-
-    if (note) {
-      if (isPremium) {
-        note.innerHTML = "";
-        note.hidden = true;
-      } else if (hasFreeQuota) {
-        // Soft sparkle state — tampilkan counter quota
-        const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-        note.innerHTML = ICO_SPARK + " " + t("upload.sub.note.quota").replace("{n}", String(remaining));
-        note.hidden = false;
-      } else {
-        // Kuota habis — soft lock state (bukan harsh)
-        const ICO_GIFT = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8c0-3 3-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>';
-        note.innerHTML = ICO_GIFT + " " + t("upload.sub.note.quota.out");
-        note.hidden = false;
-      }
+    card.classList.remove("has-quota");
+    // Note gold lama disembunyikan utk semua tier (overlay yang kasih info).
+    if (note) { note.innerHTML = ""; note.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, !isPremium, { title: "Subtitle Otomatis AI", sub: "Tersedia di Premium" });
+    } else {
+      card.classList.toggle("locked", !isPremium);
     }
 
-    // Button enable/disable — Premium dan Free-with-quota bisa klik.
-    // Free-no-quota: disabled (tapi click handler tetap kasih friendly toast).
+    // Tombol auto-generate: enabled utk premium; saat free dia ada di bawah
+    // layer blur (pointer-events:none) & overlay yang menangani klik → toast.
     if (btn) {
-      if (isPremium || hasFreeQuota) {
-        btn.removeAttribute("disabled");
-        btn.removeAttribute("aria-disabled");
-        btn.title = isPremium ? "" : ("Sisa " + remaining + " percobaan gratis bulan ini");
-      } else {
-        btn.setAttribute("disabled", "disabled");
-        btn.setAttribute("aria-disabled", "true");
-        btn.title = t("upload.sub.note.quota.out");
-      }
+      btn.removeAttribute("disabled");
+      btn.removeAttribute("aria-disabled");
+      btn.title = isPremium ? "" : "Hanya untuk Premium";
     }
 
-    // Sync AI Assist card juga — selalu locked untuk non-premium (no quota).
+    // Sync AI Assist card juga — unlocked hanya untuk Premium.
     const aiAssistCard = document.getElementById("upAiAssist");
     if (aiAssistCard) aiAssistCard.classList.toggle("is-unlocked", isPremium);
   };
@@ -43773,6 +43892,14 @@ self.onmessage = async (e) => {
 
   // Initialize
   setDisplay();
+
+  // 1d (audit Unggah): reset penuh dipakai startUpload setelah publish supaya
+  // jadwal & tampilannya kembali bersih untuk upload berikutnya.
+  window._resetUpSchedule = function () {
+    selDate = null; selH = 12; selM = 0;
+    setDisplay();
+    if (!pop.hidden) buildPop();
+  };
 })();
 
 function fmtBytes(n) {
@@ -43789,6 +43916,25 @@ function fmtDurationSec(sec) {
 }
 
 // Bikin thumbnail dari frame video (~detik 1) + ukur durasi.
+// 1f (audit Unggah 2026-06-02): fallback thumbnail JUJUR. Sebelumnya saat capture
+// frame gagal kita pakai gambar acak picsum.photos — menyesatkan (gambar tak
+// terkait isi video). Ganti dengan placeholder bermerek Playly (SVG data-URI,
+// tema wine/cream) yang jelas "thumbnail belum dipilih" + ikon play, sehingga
+// user paham harus pilih frame / unggah cover. Deterministik, no network.
+function playlyThumbPlaceholder(label) {
+  const safe = String(label || "Playly").trim().slice(0, 28).replace(/[<>&]/g, "");
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340' viewBox='0 0 600 340'>"
+    + "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+    + "<stop offset='0' stop-color='#2a1218'/><stop offset='1' stop-color='#1a0c10'/></linearGradient></defs>"
+    + "<rect width='600' height='340' fill='url(#g)'/>"
+    + "<circle cx='300' cy='148' r='44' fill='none' stroke='#E7D7C4' stroke-width='3' opacity='0.85'/>"
+    + "<path d='M289 128 v40 l34 -20 z' fill='#E7D7C4'/>"
+    + (safe ? "<text x='300' y='244' text-anchor='middle' font-family='Inter,sans-serif' font-size='22' font-weight='700' fill='#E7D7C4' opacity='0.92'>" + safe + "</text>" : "")
+    + "<text x='300' y='276' text-anchor='middle' font-family='Inter,sans-serif' font-size='13' fill='#E7D7C4' opacity='0.55'>Thumbnail belum dipilih</text>"
+    + "</svg>";
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
 function generateVideoThumb(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -43814,9 +43960,10 @@ function generateVideoThumb(file) {
         ctx.drawImage(v, 0, 0, w, h);
         const thumb = canvas.toDataURL("image/jpeg", 0.72);
         captured = true;
-        const duration = fmtDurationSec(v.duration || 0);
+        const durationSec = Number(v.duration) || 0;
+        const duration = fmtDurationSec(durationSec);
         cleanup();
-        resolve({ thumb, duration });
+        resolve({ thumb, duration, durationSec });
       } catch (err) {
         cleanup();
         reject(err);
@@ -43848,44 +43995,71 @@ function generateVideoThumb(file) {
   });
 }
 
+// 1i (audit Unggah 2026-06-02): batas platform — durasi maks 4 jam
+// (lihat help.upload.formats "durasi maks 4 jam").
+const MAX_VIDEO_DURATION_SEC = 4 * 60 * 60; // 14400 dtk
+
+// 1h (audit Unggah): cek kuota tier-free dipakai DUA kali — saat pilih file & saat
+// submit (mencegah lolos kalau kuota berubah di antara keduanya, mis. upload dari
+// device lain di akun yang sama). Return null kalau boleh upload, atau objek
+// { title, desc } untuk ditampilkan via openConfirm. Premium: unlimited → null.
+function freeTierUploadBlock(fileSize) {
+  const tier = user?.tier || "free";
+  if (tier !== "free") return null;
+  const FREE_MAX_VIDEOS_PER_MONTH = 60;
+  const FREE_QUOTA_BYTES = 1024 * 1024 * 1024; // 1 GB TOTAL akumulatif
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const usedCount = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart).length;
+  const usedBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
+    return {
+      title: "Free upload limit reached",
+      desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
+    };
+  }
+  if (usedBytes + (fileSize || 0) > FREE_QUOTA_BYTES) {
+    const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
+    return {
+      title: "Penyimpanan penuh",
+      desc: `Kamu sudah pakai <b>${usedMB} MB / 1 GB</b> total. File ini (${fmtBytes(fileSize || 0)}) tidak muat.<br><br>Hapus video lama untuk menambah ruang, atau upgrade ke <b>Premium</b> untuk penyimpanan tanpa batas.`,
+    };
+  }
+  return null;
+}
+
+function showFreeTierBlock(block) {
+  return openConfirm({
+    icon: "⭐", iconClass: "warn",
+    title: block.title, desc: block.desc,
+    btnText: "⭐ Upgrade to Premium", btnClass: "primary",
+    onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+  });
+}
+
+function freeTierQuotaWarn(fileSize) {
+  const tier = user?.tier || "free";
+  if (tier !== "free") return;
+  const FREE_QUOTA_BYTES = 1024 * 1024 * 1024;
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const usedBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  const afterPct = ((usedBytes + (fileSize || 0)) / FREE_QUOTA_BYTES) * 100;
+  if (afterPct >= 80) { // 12f: heads-up lebih awal sebelum penuh
+    toast(`⚠️ Penyimpanan ${Math.round(afterPct)}% terpakai setelah upload ini — pertimbangkan hapus video lama atau upgrade.`, "warning");
+  }
+}
+
 async function handlePickedFile(file) {
   if (!file) return;
   if (!file.type.startsWith("video/")) return toast("⚠️ File harus berupa video", "warning");
 
-  // === FREE TIER LIMITS (per request 2026-05-03 — Free vs Premium) ===
-  // Free user: max 60 video upload/bulan, max 1 GB total upload size/bulan.
-  // Premium user: unlimited (skip checks). Limit per calendar month.
-  const tier = user?.tier || "free";
-  if (tier === "free") {
-    const FREE_MAX_VIDEOS_PER_MONTH = 60;
-    const FREE_MAX_BYTES_PER_MONTH = 1024 * 1024 * 1024; // 1 GB
-    const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const thisMonth = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart);
-    const usedCount = thisMonth.length;
-    const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
-
-    if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
-      return openConfirm({
-        icon: "⭐", iconClass: "warn",
-        title: "Free upload limit reached",
-        desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
-      });
-    }
-    if (usedBytes + file.size > FREE_MAX_BYTES_PER_MONTH) {
-      const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
-      return openConfirm({
-        icon: "⭐", iconClass: "warn",
-        title: "Free storage quota exceeded",
-        desc: `You've used <b>${usedMB} MB / 1 GB</b> this month. This file (${fmtBytes(file.size)}) won't fit.<br><br>Upgrade to <b>Premium</b> for unlimited storage.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
-      });
-    }
-  }
+  // === FREE TIER LIMITS (Free vs Premium) ===
+  // 12e/12f: kuota penyimpanan TOTAL akumulatif (bukan per bulan, tanpa reset).
+  // Logika dipindah ke freeTierUploadBlock() supaya dipakai ulang saat submit (1h).
+  const block = freeTierUploadBlock(file.size);
+  if (block) return showFreeTierBlock(block);
+  freeTierQuotaWarn(file.size);
 
   // Browser quota warning (independent dari tier — premium juga tetap warn)
   if (file.size > 2 * 1024 * 1024 * 1024) {
@@ -43893,6 +44067,9 @@ async function handlePickedFile(file) {
   }
 
   $("#upTitle").value = file.name.replace(/\.[^.]+$/, "");
+  // Set .value programatik TIDAK memicu event "input" → counter (& auto-grow)
+  // tidak ikut update. Dispatch manual supaya #upTitleCounter sinkron.
+  $("#upTitle").dispatchEvent(new Event("input", { bubbles: true }));
 
   // Tampilkan preview placeholder dulu, generate thumbnail di background
   uploadPreview.hidden = false;
@@ -43918,20 +44095,29 @@ async function handlePickedFile(file) {
   }
 
   try {
-    const { thumb, duration } = await generateVideoThumb(file);
+    const { thumb, duration, durationSec } = await generateVideoThumb(file);
     pendingUpload.thumb = thumb;
     pendingUpload.duration = duration;
+    pendingUpload.durationSec = durationSec || 0;
+    pendingUpload.thumbIsPlaceholder = false;
     $("#uploadPreviewThumb").src = thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = thumb;
     $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • ${duration}`;
     $("#uploadPreviewDuration").textContent = duration;
+    // 1i: durasi melebihi batas platform (4 jam) → beri tahu user sejak awal.
+    // Hard-block tetap dilakukan saat submit (startUpload).
+    if (durationSec && durationSec > MAX_VIDEO_DURATION_SEC) {
+      toast(`⚠️ Durasi ${duration} melebihi batas maksimum 4 jam. Potong video sebelum upload.`, "warning");
+    }
   } catch (err) {
     console.warn("Gagal generate thumb:", err);
-    // Fallback ke gambar acak
-    pendingUpload.thumb = `https://picsum.photos/seed/u${Date.now()}/600/340`;
+    // 1f: fallback JUJUR — placeholder bermerek Playly (bukan gambar acak picsum
+    // yang menyesatkan). Tandai placeholder supaya user diarahkan pilih frame/cover.
+    pendingUpload.thumb = playlyThumbPlaceholder(file.name.replace(/\.[^.]+$/, ""));
+    pendingUpload.thumbIsPlaceholder = true;
     $("#uploadPreviewThumb").src = pendingUpload.thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = pendingUpload.thumb;
-    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail otomatis`;
+    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail belum tersedia — pilih frame / unggah cover`;
   }
 }
 
@@ -43998,11 +44184,49 @@ $("#dropzoneRemoveBtn")?.addEventListener("click", e => {
   clearPendingUpload();
 });
 
-// Popup konfirmasi setelah upload selesai. Menggantikan inline notice merah +
-// toast simpel sebelumnya. Popup ini menjelaskan ke user bahwa video sudah
-// terkirim ke admin dan sedang menunggu approval, plus shortcut buat lihat
-// status di My Library → Status Videos.
-function showUploadSuccessPopup(title, newVid) {
+// Popup konfirmasi setelah upload selesai.
+// 1c (audit Unggah 2026-06-02): wording dibuat JUJUR sesuai sistem auto-publish
+// (2026-05-25 video langsung LIVE tanpa approval admin). Sebelumnya popup masih
+// bilang "dikirim ke admin untuk di-review / menunggu approval" — kontradiktif.
+// Sekarang pesan menyesuaikan status sebenarnya: live / draft / terjadwal, plus
+// status sinkronisasi cloud (ok/gagal/lokal).
+function showUploadSuccessPopup(title, newVid, opts) {
+  opts = opts || {};
+  const visibility = opts.visibility || (newVid && newVid.visibility) || "public";
+  const scheduledAt = opts.scheduledAt || (newVid && newVid.scheduledAt) || null;
+  const cloud = opts.cloud || "none"; // ok | fail | local | none(url import)
+
+  // Tentukan headline + status sesuai keadaan sebenarnya.
+  let icon = "🎉", heading = "Upload Berhasil!", statusLine = "", desc = "";
+  if (visibility === "draft") {
+    icon = "📝"; heading = "Tersimpan sebagai Draft";
+    statusLine = "📝 Draft — belum tayang ke publik";
+    desc = `Video <b>${escapeHtml(title)}</b> disimpan sebagai <b>draft</b>. Hanya kamu yang bisa melihatnya sampai kamu mempublikasikannya.`;
+  } else if (scheduledAt) {
+    const dt = new Date(scheduledAt);
+    const dstr = dt.toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    icon = "⏰"; heading = "Terjadwal";
+    statusLine = `⏰ Tayang otomatis pada ${dstr}`;
+    desc = `Video <b>${escapeHtml(title)}</b> sudah tersimpan dan akan <b>tayang otomatis</b> pada jadwal di atas. Sebelum itu, video belum tampil di feed publik.`;
+  } else if (visibility === "private") {
+    icon = "🔒"; heading = "Video Tersimpan (Privat)";
+    statusLine = "🔒 Privat — hanya kamu";
+    desc = `Video <b>${escapeHtml(title)}</b> tersimpan sebagai <b>privat</b> dan tidak tampil di feed maupun profil publik.`;
+  } else if (visibility === "unlisted") {
+    icon = "🔗"; heading = "Video Live (Tak Terdaftar)";
+    statusLine = "🔗 Unlisted — hanya via tautan";
+    desc = `Video <b>${escapeHtml(title)}</b> sudah <b>live</b>, tapi tidak muncul di feed/pencarian. Hanya bisa diakses lewat tautan langsung.`;
+  } else {
+    icon = "🎉"; heading = "Video Sudah Live!";
+    statusLine = "✅ Live — sudah tampil di platform";
+    desc = `Video <b>${escapeHtml(title)}</b> berhasil diunggah dan <b>langsung tayang</b> di platform. Tidak perlu menunggu approval admin.`;
+  }
+  // Tambahan status cloud (jujur soal sinkronisasi lintas-device).
+  let cloudNote = "";
+  if (cloud === "fail") cloudNote = `<div class="upload-success-cloud warn">☁️ Sinkronisasi ke cloud gagal — untuk saat ini video hanya bisa diputar di browser ini.</div>`;
+  else if (cloud === "local") cloudNote = `<div class="upload-success-cloud">💾 Tersimpan di browser ini (cloud tidak aktif).</div>`;
+  else if (cloud === "ok") cloudNote = `<div class="upload-success-cloud ok">☁️ Tersimpan di cloud — bisa diputar di device lain.</div>`;
+
   // Hapus modal lama kalau ada (defensif)
   document.getElementById("__uploadSuccessModal")?.remove();
 
@@ -44011,17 +44235,15 @@ function showUploadSuccessPopup(title, newVid) {
   modal.id = "__uploadSuccessModal";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-upload-success-close></div>
-    <div class="hs-popup-panel upload-success-panel">
+    <div class="hs-popup-panel upload-success-panel" role="dialog" aria-modal="true" aria-labelledby="uploadSuccessTitle">
       <button type="button" class="hs-popup-close" data-upload-success-close aria-label="Tutup">✕</button>
-      <div class="upload-success-icon">🎉</div>
-      <h3 class="upload-success-title">Upload Berhasil!</h3>
-      <p class="upload-success-desc">
-        Video <b>${escapeHtml(title)}</b> berhasil diupload dan sudah dikirim ke admin
-        untuk di-review. Kamu akan dapat notifikasi setelah disetujui atau di-reject.
-      </p>
+      <div class="upload-success-icon">${icon}</div>
+      <h3 class="upload-success-title" id="uploadSuccessTitle">${escapeHtml(heading)}</h3>
+      <p class="upload-success-desc">${desc}</p>
       <div class="upload-success-meta">
-        <span class="upload-success-status">⏳ Menunggu approval admin</span>
+        <span class="upload-success-status">${escapeHtml(statusLine)}</span>
       </div>
+      ${cloudNote}
       <div class="upload-success-actions">
         <button type="button" class="btn primary" id="uploadSuccessGoStatus">📋 Lihat Status Videos</button>
         <button type="button" class="btn ghost" data-upload-success-close>Tutup</button>
@@ -44050,6 +44272,169 @@ function showUploadSuccessPopup(title, newVid) {
     }, 80);
   });
 }
+
+// ===================== UPLOAD UI ENHANCEMENTS (audit Unggah 2026-06-02) =====================
+// 1g/1k/1l/1p: aksesibilitas + UX halaman Unggah, dipasang via JS (markup legacy
+// = satu string besar → lebih aman & terlokalisir di sini). Catatan: 1m (aria
+// dropdown kategori) & 1n (alt thumbnail) ternyata SUDAH ada di markup → tidak diulang.
+
+// 1g: tombol "Batalkan" di area progress (dibuat sekali, di-reuse tiap upload).
+function ensureUploadCancelBtn() {
+  const wrap = document.getElementById("uploadProgress");
+  if (!wrap) return null;
+  let btn = document.getElementById("upCancelBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "upCancelBtn";
+    btn.className = "up-cancel-btn";
+    btn.hidden = true;
+    btn.innerHTML = "✕ Batalkan";
+    wrap.appendChild(btn);
+  }
+  return btn;
+}
+
+// 1p: error inline pada field wajib (judul) — bukan cuma toast yang cepat hilang.
+function showUploadFieldError(input, msg) {
+  if (!input) return;
+  input.classList.add("up-field-invalid");
+  input.setAttribute("aria-invalid", "true");
+  let err = document.getElementById(input.id + "Err");
+  if (!err) {
+    err = document.createElement("small");
+    err.id = input.id + "Err";
+    err.className = "up-field-err";
+    err.setAttribute("role", "alert");
+    input.insertAdjacentElement("afterend", err);
+  }
+  err.textContent = msg || "Wajib diisi";
+  err.hidden = false;
+  try { input.focus(); } catch {}
+}
+function clearUploadFieldError(input) {
+  if (!input) return;
+  input.classList.remove("up-field-invalid");
+  input.removeAttribute("aria-invalid");
+  const err = document.getElementById(input.id + "Err");
+  if (err) err.hidden = true;
+}
+
+(function enhanceUploadUI() {
+  try {
+    // 1k: dropzone keyboard-accessible (sebelumnya hanya bisa diklik mouse).
+    const dz = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    if (dz && !dz.dataset.a11yReady) {
+      dz.dataset.a11yReady = "1";
+      if (!dz.hasAttribute("tabindex")) dz.setAttribute("tabindex", "0");
+      if (!dz.hasAttribute("role")) dz.setAttribute("role", "button");
+      if (!dz.hasAttribute("aria-label")) dz.setAttribute("aria-label", "Pilih video atau seret file ke sini untuk diunggah");
+      dz.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          // Hanya buka picker saat belum ada file (state empty).
+          if (dz.dataset.state !== "filled" && fileInput) fileInput.click();
+        }
+      });
+    }
+    // 1l: progress bar semantik untuk screen reader.
+    const bar = document.getElementById("upBar");
+    if (bar) {
+      bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-valuenow", "0");
+      bar.setAttribute("aria-label", "Progres unggah");
+    }
+    const st = document.getElementById("upStatus");
+    if (st) { st.setAttribute("aria-live", "polite"); st.setAttribute("role", "status"); }
+
+    // 1p: tandai field wajib (judul) — bintang + aria-required + bersih saat ngetik.
+    const title = document.getElementById("upTitle");
+    if (title) {
+      title.setAttribute("aria-required", "true"); // a11y only (tak terlihat)
+      // Penanda "*" DIHAPUS atas permintaan user — bersihkan kalau masih ada.
+      document.querySelector('label[for="upTitle"] .up-required')?.remove();
+      title.addEventListener("input", () => clearUploadFieldError(title));
+    }
+
+    // ===== LAYOUT (audit Unggah 2026-06-03): judul berikon + grup engagement =====
+    // Disuntik via JS supaya markup legacy (string besar) tidak disentuh.
+    const upView = document.querySelector('section.view[data-view="upload"]') || document;
+
+    // Matikan autocomplete browser di field teks Unggah supaya dropdown saran
+    // (nilai lama) tidak menutupi form. (Mis. saran judul yang pernah diketik.)
+    upView.querySelectorAll('input[type="text"], textarea').forEach(el => {
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocapitalize', 'off');
+      el.setAttribute('spellcheck', 'false');
+    });
+
+
+    // (a) Satukan section "Engagement": pindahkan .upf-toggle-grid KE DALAM .upf-field
+    //     berlabel Engagement supaya jadi satu kartu (bukan 2 kartu terpisah).
+    const toggleGrid = upView.querySelector('.upf-toggle-grid');
+    if (toggleGrid && !toggleGrid.dataset.merged) {
+      const prev = toggleGrid.previousElementSibling;
+      if (prev && prev.classList && prev.classList.contains('upf-field') && /engagement|komentar/i.test(prev.textContent || '')) {
+        prev.appendChild(toggleGrid);
+        toggleGrid.dataset.merged = "1";
+      }
+    }
+    // (b) Sembunyikan <select> legacy bare (mis. #upAge) yang nyangkut langsung di kolom.
+    upView.querySelectorAll('.upload-col-right > select, .upload-col-left > select').forEach(s => { s.style.display = "none"; });
+
+    // (c) Ikon di tiap judul section (Lucide-style inline SVG, mewarnai --accent).
+    const I = (p) => `<span class="upf-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg></span>`;
+    // Set ikon dinormalkan secara OPTIK: tiap glyph mengisi area ~4–20 (16 unit
+    // di tengah viewBox 24) dengan bobot sama, supaya semua badge tampak seragam
+    // (sebelumnya info/clock/tag mengisi penuh → terlihat lebih besar, hash/pencil
+    // lebih tipis → terlihat kecil → kesan "acak").
+    const ICONS = {
+      pencil: I('<path d="M5 19l1-3.6L15.6 4.8a2 2 0 0 1 3 3L8.6 18 5 19Z"/><path d="M13.8 6.6l3 3"/>'),
+      desc:   I('<path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/>'),
+      hash:   I('<path d="M5.5 9.5h14"/><path d="M4.5 14.5h14"/><path d="M10.5 4.5l-1.5 15"/><path d="M16 4.5l-1.5 15"/>'),
+      tag:    I('<path d="M4 11V5a1 1 0 0 1 1-1h6l8 8a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0Z"/><circle cx="8" cy="8" r="1.2"/>'),
+      ai:     I('<path d="M12 4l1.9 5.1L19 11l-5.1 1.9L12 18l-1.9-5.1L5 11l5.1-1.9Z"/>'),
+      cc:     I('<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 11h3"/><path d="M8 14.5h2"/><path d="M13.5 11h2.5"/><path d="M14.5 14.5h1.5"/>'),
+      eye:    I('<path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Z"/><circle cx="12" cy="12" r="2.4"/>'),
+      users:  I('<circle cx="9.5" cy="8.5" r="2.8"/><path d="M4.5 19a5 5 0 0 1 10 0"/><path d="M16 6.2a2.8 2.8 0 0 1 0 5.6"/><path d="M19.5 19a5 5 0 0 0-3-4.6"/>'),
+      heart:  I('<path d="M12 19.2l-7-7a4.1 4.1 0 0 1 5.8-5.8l1.2 1.2 1.2-1.2a4.1 4.1 0 0 1 5.8 5.8Z"/>'),
+      info:   I('<circle cx="12" cy="12" r="8"/><path d="M12 11.5v4.5"/><path d="M12 8h.01"/>'),
+      image:  I('<rect x="4" y="4" width="16" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="M19.5 15.5 15 11l-8 8.5"/>'),
+      film:   I('<rect x="4" y="6.5" width="12" height="11" rx="2"/><path d="M16 10.5l4-2.5v8l-4-2.5Z"/>'),
+      clock:  I('<circle cx="12" cy="12" r="8"/><path d="M12 8v4.2l2.8 2"/>'),
+    };
+    const pickIcon = (t) => {
+      t = (t || "").toLowerCase();
+      if (/auto judul|assist|\bai\b/.test(t)) return ICONS.ai;
+      if (t.includes("hashtag")) return ICONS.hash;
+      if (t.includes("kategori") || t.includes("category")) return ICONS.tag;
+      if (t.includes("deskripsi") || t.includes("description")) return ICONS.desc;
+      if (t.includes("subtitle")) return ICONS.cc;
+      if (t.includes("visibilit")) return ICONS.eye;
+      if (t.includes("audiens") || t.includes("audience")) return ICONS.users;
+      if (t.includes("engagement")) return ICONS.heart;
+      if (t.includes("info")) return ICONS.info;
+      if (t.includes("frame")) return ICONS.image;
+      if (t.includes("thumbnail")) return ICONS.image;
+      if (/jadwal|schedule|publish/.test(t)) return ICONS.clock;
+      if (t.includes("judul") || t.includes("title")) return ICONS.pencil;
+      if (t.includes("video")) return ICONS.film;
+      return "";
+    };
+    upView.querySelectorAll('.upf-field').forEach(f => {
+      const lbl = f.querySelector(':scope > .upf-label-row > label') || f.querySelector(':scope > label');
+      if (!lbl || lbl.dataset.iconed) return;
+      if (lbl.classList.contains('dz-pro') || lbl.classList.contains('upf-thumb-drop') || lbl.id === 'dropzone' || lbl.querySelector('input[type=file]')) return;
+      const svg = pickIcon(lbl.textContent);
+      if (!svg) return;
+      lbl.insertAdjacentHTML('afterbegin', svg);
+      lbl.dataset.iconed = "1";
+    });
+  } catch (e) { console.warn("[upload] enhanceUploadUI:", e); }
+})();
 
 // ----------------------- URL Video Source -----------------------
 function parseVideoUrl(url) {
@@ -44140,6 +44525,8 @@ function setAutofillField(id, value, isNew) {
   const el = document.getElementById(id);
   if (!el || !value) return;
   el.value = value;
+  // Sinkronkan counter/auto-grow (set .value programatik tak memicu "input").
+  el.dispatchEvent(new Event("input", { bubbles: true }));
   if (isNew) {
     el.style.transition = "box-shadow .3s";
     el.style.boxShadow = "0 0 0 3px rgba(109,41,50,.35)";
@@ -44220,178 +44607,255 @@ document.getElementById("uploadUrlDetect")?.addEventListener("click", async () =
   }
 });
 
-$("#startUpload")?.addEventListener("click", () => {
+// ===================== UPLOAD SUBMIT (audit Unggah 2026-06-02) =====================
+// Ditulis ulang untuk JUJUR (1a/1b): progress diikat ke upload cloud NYATA (XHR
+// R2) — bukan setInterval acak — dan sukses baru dideklarasikan SETELAH upload
+// cloud benar-benar selesai (bukan saat bar palsu 100%). Tambahan: 1d jadwal,
+// 1g batal, 1h cek kuota saat submit, 1i durasi maks 4 jam.
+$("#startUpload")?.addEventListener("click", async () => {
   // URL upload: pendingUpload sudah ada tapi tanpa file. File upload: dengan file.
   const isUrlUpload = pendingUpload && pendingUpload.sourceType && !pendingUpload.file;
   if (!pendingUpload || (!pendingUpload.file && !isUrlUpload)) {
     return toast("⚠️ Pilih video atau detect URL dulu", "warning");
   }
-  const title = $("#upTitle").value.trim();
-  if (!title) return toast("⚠️ Judul wajib diisi", "warning");
-  // Visibility & audience dari radio cards (default public/all kalau tidak terpilih)
+  const titleInput = $("#upTitle");
+  const title = (titleInput?.value || "").trim();
+  if (!title) {
+    if (typeof showUploadFieldError === "function") showUploadFieldError(titleInput, "Judul wajib diisi");
+    return toast("⚠️ Judul wajib diisi", "warning");
+  }
+  if (typeof clearUploadFieldError === "function") clearUploadFieldError(titleInput);
+
+  const captured = pendingUpload; // freeze
+  const fileSize = (captured.file && Number.isFinite(captured.file.size)) ? captured.file.size : null;
+
+  // 1h: cek ulang kuota tier-free SAAT submit (kuota bisa berubah sejak pilih file).
+  if (captured.file) {
+    const block = freeTierUploadBlock(captured.file.size);
+    if (block) return showFreeTierBlock(block);
+  }
+  // 1i: tolak video > 4 jam (kalau durasi terukur).
+  if (captured.durationSec && captured.durationSec > MAX_VIDEO_DURATION_SEC) {
+    return toast("⚠️ Durasi melebihi batas maksimum 4 jam. Potong video sebelum upload.", "warning");
+  }
+
   const visibility = document.querySelector('input[name="upVisibility"]:checked')?.value || "public";
   const audience   = document.querySelector('input[name="upAudience"]:checked')?.value || "all";
-  // Sync ke legacy hidden #upAge supaya code lain yang baca upAge.value tidak break
+  // 1j: #upAge field legacy — sinkron HANYA bila elemennya masih ada (sebagian
+  // code lama membaca upAge.value). Tidak wajib & tak dianggap error kalau hilang.
   const upAgeEl = $("#upAge");
   if (upAgeEl) upAgeEl.value = audience;
-  // Engagement toggles
   const allowComments  = $("#upAllowComments")?.checked  !== false;  // default true
   const allowReactions = $("#upAllowReactions")?.checked !== false;  // default true
   const allowDuet      = !!$("#upAllowDuet")?.checked;
   const allowDownload  = !!$("#upAllowDownload")?.checked;
   const category = $("#upCategory")?.value || "";
   const tags = (typeof window._getUploadTags === "function") ? window._getUploadTags() : [];
-  // Thumbnail final: prioritas _customThumb (yang aktif — bisa dari frame, upload, atau editor)
-  // Fallback ke _frameThumb atau _uploadThumb kalau salah satu valid.
   const customThumb = window._customThumb || window._uploadThumb || window._frameThumb || null;
-  const captured = pendingUpload; // freeze
   const desc = $("#upDesc").value || "Video baru saja diunggah.";
-  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
-  wrap.hidden = false;
+  // Thumbnail final — fallback JUJUR (placeholder bermerek, bukan picsum acak).
+  const finalThumb = customThumb || captured.thumb || playlyThumbPlaceholder(title);
 
-  // Tracking entry untuk tab "Sedang Upload"
-  const uploadId = "u" + Date.now();
-  const uploadEntry = {
-    id: uploadId,
-    title,
-    thumb: captured.thumb,
-    size: captured?.file?.size || 0,
-    progress: 0,
-    status: "uploading",
-    startedAt: Date.now()
-  };
+  // 1d: jadwal publish. #upSchedule = "YYYY-MM-DDTHH:MM" (waktu lokal). Kalau diisi
+  // & masih di masa depan → scheduledAt; video disembunyikan dari feed/profil publik
+  // sampai waktunya (isPubliclyVisibleVideo), muncul otomatis saat tiba (live calc).
+  let scheduledAt = null;
+  const scheduleRaw = ($("#upSchedule")?.value || "").trim();
+  if (scheduleRaw) {
+    const t = Date.parse(scheduleRaw);
+    if (Number.isFinite(t) && t > Date.now()) scheduledAt = t;
+  }
+
+  const vidId = Date.now();           // id final → blob + cloud key + newVid.id
+  const uploadId = "u" + vidId;
+  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
+  const startBtn = $("#startUpload");
+
+  // Entry tracking untuk tab "Sedang Upload"
+  const uploadEntry = { id: uploadId, title, thumb: finalThumb, size: captured?.file?.size || 0, progress: 0, status: "uploading", startedAt: vidId };
   state.uploadingVideos = state.uploadingVideos || [];
   state.uploadingVideos.unshift(uploadEntry);
   saveState();
   syncVideoTabCounts();
 
+  // 1g: abort controller untuk tombol Batal.
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
   window.__activeUploads = window.__activeUploads || {};
-  window.__activeUploads[uploadId] = true;
+  window.__activeUploads[uploadId] = { ctrl, cancelled: false, done: false };
 
-  let p = 0;
-  const tick = setInterval(() => {
-    // Cek kalau upload dibatalkan
-    if (!window.__activeUploads[uploadId]) {
-      clearInterval(tick);
-      wrap.hidden = true; bar.style.width = "0%";
-      return;
-    }
-    p += Math.random() * 12 + 4;
-    uploadEntry.progress = Math.min(100, p);
-    // Update tampilan tab "Sedang Upload" kalau sedang dilihat
+  // 1a/1l: progress JUJUR. Mulai indeterminate (belum ada byte terkirim), jadi
+  // determinate begitu onProgress NYATA pertama tiba.
+  wrap.hidden = false;
+  bar.classList.add("up-bar-indeterminate");
+  bar.style.width = "";
+  bar.setAttribute("aria-valuenow", "0");
+  status.textContent = captured.file ? "Menyiapkan upload…" : "Memproses…";
+  if (startBtn) startBtn.disabled = true;
+  const cancelBtn = (typeof ensureUploadCancelBtn === "function") ? ensureUploadCancelBtn() : null;
+  if (cancelBtn) {
+    cancelBtn.hidden = false;
+    cancelBtn.onclick = () => {
+      const a = window.__activeUploads[uploadId];
+      if (!a || a.done) return;
+      a.cancelled = true;
+      try { a.ctrl && a.ctrl.abort(); } catch {}
+    };
+  }
+
+  const isCancelled = () => !!(window.__activeUploads[uploadId]?.cancelled);
+  const setDeterminate = (frac) => {
+    bar.classList.remove("up-bar-indeterminate");
+    const pct = Math.max(0, Math.min(100, Math.round(frac * 100)));
+    bar.style.width = pct + "%";
+    bar.setAttribute("aria-valuenow", String(pct));
+    uploadEntry.progress = pct;
+    const sz = fileSize ? ` · ${fmtBytes(Math.round(fileSize * (pct / 100)))} / ${fmtBytes(fileSize)}` : "";
+    status.textContent = `Mengunggah ke cloud… ${pct}%${sz}`;
     if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+  };
+  const cleanupUploadUI = () => {
+    if (window.__activeUploads[uploadId]) window.__activeUploads[uploadId].done = true;
+    if (startBtn) startBtn.disabled = false;
+    if (cancelBtn) { cancelBtn.hidden = true; cancelBtn.onclick = null; }
+  };
+  const removeEntry = () => { state.uploadingVideos = (state.uploadingVideos || []).filter(u => u.id !== uploadId); };
+  const abortAndCleanup = () => {
+    removeEntry(); saveState(); syncVideoTabCounts();
+    if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+    wrap.hidden = true; bar.style.width = "0%"; bar.classList.remove("up-bar-indeterminate");
+    cleanupUploadUI();
+    delete window.__activeUploads[uploadId];
+    toast("Upload dibatalkan.", "info");
+  };
 
-    if (p >= 100) {
-      p = 100; clearInterval(tick);
-      delete window.__activeUploads[uploadId];
-      uploadEntry.status = "done";
-      status.textContent = "✓ Upload selesai!";
-      const _now = Date.now();
-      const subtitleData = window._uploadSubtitle || null;
-      const newVid = {
-        id: _now, createdAt: _now, title, creator: user.username, category, tags, visibility,
-        // Audience & engagement (per request user 2026-05-14)
-        audience, allowComments, allowReactions, allowDuet, allowDownload,
-        views: "0", viewsNum: 0,
-        time: "just now", duration: captured.duration || "0:00", likes: 0,
-        thumb: customThumb || captured.thumb || `https://picsum.photos/seed/u${_now}/600/340`,
-        videoUrl: captured.videoUrl,
-        desc,
-        // Source tracking — file (default), url (direct video URL), embed (YouTube/Vimeo/etc)
-        sourceType: captured.sourceType || "file",
-        embedProvider: captured.embedProvider || null,
-        embedVideoId: captured.embedVideoId || null,
-        embedOriginalUrl: captured.embedOriginalUrl || null,
-        // Track file size untuk monthly quota tracking (Free tier limit 1 GB/bulan)
-        fileSize: captured.file?.size || 0,
-        // Subtitle (Opsi 1 manual upload / Opsi 2 auto-generate AI)
-        subtitleVtt: subtitleData?.vtt || null,
-        subtitleLang: subtitleData?.lang || null,
-        // Auto-publish (2026-05-25): video langsung live setelah upload, tidak
-        // perlu admin approval. Sebelumnya default "pending" → user kreator
-        // bingung kenapa video tidak muncul di "Video Saya". Admin tetap bisa
-        // takedown via Kontrol Konten kalau ada masalah (reaktif, bukan
-        // gate). Visibility "draft" tetap respect — user simpan draft sendiri.
-        adminStatus: visibility === "draft" ? "draft" : "published",
-        submittedAt: _now,
-      };
-      state.myVideos.unshift(newVid);
-      // Pindahkan dari uploadingVideos
-      state.uploadingVideos = state.uploadingVideos.filter(u => u.id !== uploadId);
-      state.activities.unshift({ type: "upload", text: `You uploaded <i>${title}</i>`, time: "just now", icon: "🎬", ts: Date.now() });
-      saveState();
-      // Simpan file aslinya ke IndexedDB — skip kalau URL upload (no file to save)
-      if (captured.file) {
-        saveVideoBlob(newVid.id, captured.file).then(() => refreshStorageUsage());
-      }
-      // Cloud sync: upload juga ke Supabase Storage agar bisa diputar di browser lain
-      if (captured.file && window.cloudSync?.uploadVideoBlob) {
-        window.cloudSync.uploadVideoBlob(newVid.id, captured.file).then(result => {
-          if (result && result.ok && result.url) {
-            newVid.videoUrl = result.url;
-            saveState();
-            toast("☁️ Video tersimpan di cloud — bisa diputar di device lain.", "success");
-          } else if (result && !result.ok) {
-            // Upload ke cloud gagal — beritahu user, tapi video tetap aman di lokal
-            const reason =
-              result.message ||
-              (result.error === "file_too_large"
-                ? "File terlalu besar untuk Supabase Storage."
-                : "Upload ke cloud gagal — video disimpan lokal saja.");
-            toast(`⚠️ ${reason} Video kamu masih bisa diputar di browser ini.`, "warning");
-          }
-        }).catch(err => {
-          console.warn("[upload] cloud sync exception:", err);
-          toast("⚠️ Sync video ke cloud gagal — video disimpan lokal saja.", "warning");
-        });
-      }
-      refreshAllVideoGrids();
-      renderUserStats();
-      renderActivityList();
-      renderHomeActivity();
-      renderHomeTrending();
-      renderHomeStats();
-      renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
-      renderTopPerforming();
-      renderDiscoverCreators();
-      refreshHeroGreeting();
-      pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid
-      setTimeout(() => {
-        wrap.hidden = true; bar.style.width = "0%";
-        $("#upTitle").value = ""; $("#upDesc").value = "";
-        // Reset kategori — pakai helper kalau ada (custom dropdown), fallback ke direct value set
-        if (typeof window._resetUpCategory === "function") {
-          window._resetUpCategory();
-        } else if ($("#upCategory")) {
-          $("#upCategory").value = "";
-        }
-        if (typeof window._clearUploadTags === "function") window._clearUploadTags();
-        if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
-        // Reset visibility & audience ke default
-        const visPub = document.querySelector('input[name="upVisibility"][value="public"]');
-        if (visPub) visPub.checked = true;
-        const audAll = document.querySelector('input[name="upAudience"][value="all"]');
-        if (audAll) audAll.checked = true;
-        // Reset engagement toggles ke default
-        if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
-        if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
-        if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
-        if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
-        uploadPreview.hidden = true;
-        dropzone.classList.remove("has-file");
-        fileInput.value = "";
-        // Tampilkan popup konfirmasi (bukan toast saja) supaya user dapat
-        // notifikasi yang jelas + tahu video lagi menunggu approval admin.
-        showUploadSuccessPopup(title, newVid);
-      }, 800);
+  try {
+    // 1) Simpan blob ke IndexedDB (lokal) — playback di device ini.
+    if (captured.file) {
+      status.textContent = "Menyimpan lokal…";
+      try { await saveVideoBlob(vidId, captured.file); } catch (e) { console.warn("[upload] saveVideoBlob:", e); }
+      refreshStorageUsage();
     }
-    bar.style.width = p + "%";
-    const _fileSize = captured?.file?.size || 0;
-    const _sizeText = _fileSize
-      ? ` · ${fmtBytes(Math.floor(_fileSize * (p / 100)))} / ${fmtBytes(_fileSize)}`
-      : "";
-    status.textContent = `Mengunggah... ${Math.floor(p)}%${_sizeText}`;
-  }, 200);
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 2) Upload ke cloud (R2/Supabase) dengan progress NYATA (1a). Sukses baru
+    //    dideklarasikan SETELAH ini selesai (1b).
+    let cloudUrl = null;
+    let cloudStatus = "none"; // none(url import) | ok | fail | local(cloud off)
+    if (captured.file && window.cloudSync?.uploadVideoBlob) {
+      status.textContent = "Mengunggah ke cloud…";
+      let result;
+      try {
+        result = await window.cloudSync.uploadVideoBlob(vidId, captured.file, {
+          onProgress: (frac) => { if (!isCancelled()) setDeterminate(frac); },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+      } catch (e) {
+        console.warn("[upload] cloud sync exception:", e);
+        result = { ok: false, error: "exception" };
+      }
+      if (isCancelled() || (result && result.error === "aborted")) { abortAndCleanup(); return; }
+      if (result && result.ok && result.url) {
+        cloudUrl = result.url; cloudStatus = "ok";
+      } else {
+        cloudStatus = "fail";
+        const reason = (result && result.message) ||
+          (result && result.error === "file_too_large"
+            ? "File terlalu besar untuk cloud storage."
+            : "Upload ke cloud gagal — video disimpan lokal saja.");
+        toast(`⚠️ ${reason} Video kamu tetap bisa diputar di browser ini.`, "warning");
+      }
+    } else if (captured.file) {
+      cloudStatus = "local"; // cloudSync tidak aktif
+    }
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 3) Selesai → buat video & publish.
+    bar.classList.remove("up-bar-indeterminate");
+    bar.style.width = "100%"; bar.setAttribute("aria-valuenow", "100");
+    status.textContent = "✓ Upload selesai!";
+    uploadEntry.status = "done"; uploadEntry.progress = 100;
+
+    const subtitleData = window._uploadSubtitle || null;
+    const newVid = {
+      id: vidId, createdAt: vidId, title, creator: user.username, category, tags, visibility,
+      audience, allowComments, allowReactions, allowDuet, allowDownload,
+      views: "0", viewsNum: 0,
+      time: "just now", duration: captured.duration || "0:00", likes: 0,
+      thumb: finalThumb,
+      videoUrl: cloudUrl || captured.videoUrl,
+      desc,
+      sourceType: captured.sourceType || "file",
+      embedProvider: captured.embedProvider || null,
+      embedVideoId: captured.embedVideoId || null,
+      embedOriginalUrl: captured.embedOriginalUrl || null,
+      // 12d: fileSize null kalau import URL/embed (ukuran tak diketahui) supaya
+      // meter penyimpanan tidak menyesatkan; storage sum tetap pakai (||0).
+      fileSize,
+      subtitleVtt: subtitleData?.vtt || null,
+      subtitleLang: subtitleData?.lang || null,
+      // Auto-publish (2026-05-25): live tanpa approval admin. "draft" → simpan
+      // draft. scheduledAt (1d) → tetap published tapi disembunyikan dari publik
+      // sampai waktunya oleh isPubliclyVisibleVideo().
+      adminStatus: visibility === "draft" ? "draft" : "published",
+      scheduledAt: scheduledAt || null,
+      submittedAt: vidId,
+    };
+    state.myVideos.unshift(newVid);
+    removeEntry();
+    state.activities.unshift({ type: "upload", text: `You uploaded <i>${escapeHtml(title)}</i>`, time: "just now", icon: "🎬", ts: vidId });
+    saveState();
+
+    refreshAllVideoGrids();
+    renderUserStats();
+    renderActivityList();
+    renderHomeActivity();
+    renderHomeTrending();
+    renderHomeStats();
+    renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
+    renderTopPerforming();
+    renderDiscoverCreators();
+    refreshHeroGreeting();
+
+    pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid (kalau lokal)
+    window._uploadSubtitle = null;
+
+    setTimeout(() => {
+      wrap.hidden = true; bar.style.width = "0%"; bar.setAttribute("aria-valuenow", "0");
+      cleanupUploadUI();
+      delete window.__activeUploads[uploadId];
+      // Reset VIDEO + preview + frame DULU (fix user 2026-06-03: video & thumbnail
+      // yang tadi diupload tetap nyangkut di form). Dikerjakan paling awal + tiap
+      // langkah aman, supaya preview pasti bersih walau reset field di bawah error.
+      // _resetVideoInfoAndFrame() (sebelumnya TIDAK dipanggil di sini) yang
+      // membersihkan <video> frame-picker + info pills + frame thumbnail.
+      try { uploadPreview.hidden = true; } catch {}
+      try { dropzone.classList.remove("has-file"); dropzone.dataset.state = "empty"; } catch {}
+      try { fileInput.value = ""; } catch {}
+      try { if (typeof window._resetVideoInfoAndFrame === "function") window._resetVideoInfoAndFrame(); } catch {}
+      // Reset field teks / opsi
+      if (titleInput) titleInput.value = "";
+      const descEl = $("#upDesc"); if (descEl) descEl.value = "";
+      if (typeof window._resetUpCategory === "function") window._resetUpCategory();
+      else if ($("#upCategory")) $("#upCategory").value = "";
+      if (typeof window._clearUploadTags === "function") window._clearUploadTags();
+      if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
+      const visPub = document.querySelector('input[name="upVisibility"][value="public"]'); if (visPub) visPub.checked = true;
+      const audAll = document.querySelector('input[name="upAudience"][value="all"]'); if (audAll) audAll.checked = true;
+      if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
+      if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
+      if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
+      if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
+      // 1d: reset schedule picker (display + internal state)
+      if (typeof window._resetUpSchedule === "function") window._resetUpSchedule();
+      else { const sc = $("#upSchedule"); if (sc) sc.value = ""; }
+      // 1c: popup sukses JUJUR — sesuai status sebenarnya (live/draft/terjadwal + cloud).
+      showUploadSuccessPopup(title, newVid, { visibility, scheduledAt, cloud: cloudStatus });
+    }, 700);
+  } catch (err) {
+    console.warn("[upload] gagal:", err);
+    abortAndCleanup();
+    toast("⚠️ Upload gagal. Coba lagi.", "warning");
+  }
 });
 
 // ----------------------- PLAYER MODAL -----------------------
@@ -48634,11 +49098,9 @@ function getUserVideos(username, { ownView = false } = {}) {
     const s = JSON.parse(localStorage.getItem(`playly-state-${username}`));
     if (!Array.isArray(s?.myVideos)) return [];
     if (isOwn) return s.myVideos;
-    // Publik: hanya video yang sudah di-publish admin
-    return s.myVideos.filter(v => {
-      const st = v.adminStatus;
-      return st === "published" || st == null;
-    });
+    // Publik: hormati status publish + visibility (private/unlisted/draft
+    // disembunyikan) + jadwal. Lihat isPubliclyVisibleVideo().
+    return s.myVideos.filter(isPubliclyVisibleVideo);
   } catch { return []; }
 }
 

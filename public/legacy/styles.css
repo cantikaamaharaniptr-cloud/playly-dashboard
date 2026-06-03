@@ -9056,6 +9056,52 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 }
 .upload-progress small { font-size: 11px; color: var(--muted); }
 
+/* ===== Audit Unggah 2026-06-02 ===== */
+/* 1a/1l: progress indeterminate (saat byte progress belum tersedia / jalur tanpa
+   event progress) — sapuan animasi, JUJUR bahwa progres tak terukur (bukan %palsu). */
+#upBar.up-bar-indeterminate {
+  width: 40% !important;
+  background: var(--grad-primary);
+  border-radius: 99px;
+  animation: upBarIndet 1.1s ease-in-out infinite;
+}
+@keyframes upBarIndet {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+/* 1g: tombol Batalkan saat upload berjalan */
+.up-cancel-btn {
+  margin-top: 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2, rgba(255,255,255,.04));
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.up-cancel-btn:hover { color: var(--cream, #fff); border-color: var(--accent); background: var(--accent-soft); }
+.up-cancel-btn[hidden] { display: none; }
+/* 1p: penanda field wajib + error inline */
+.up-required { color: #e5484d; font-weight: 700; }
+.up-field-invalid { border-color: #e5484d !important; box-shadow: 0 0 0 2px rgba(229,72,77,.18) !important; }
+.up-field-err { display: block; margin-top: 5px; font-size: 11.5px; color: #e5484d; font-weight: 600; }
+.up-field-err[hidden] { display: none; }
+/* 1c: status sinkronisasi cloud di popup sukses (jujur soal lintas-device) */
+.upload-success-cloud {
+  margin: 10px 0 2px;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2, rgba(255,255,255,.04));
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.upload-success-cloud.ok   { color: #2ecc71; border-color: rgba(46,204,113,.35); background: rgba(46,204,113,.10); }
+.upload-success-cloud.warn { color: #f5a623; border-color: rgba(245,166,35,.35); background: rgba(245,166,35,.10); }
+
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 8px;
 }
@@ -14483,8 +14529,8 @@ section[data-view="upload"] .upload-form textarea {
 .upf-field input:focus,
 .upf-field textarea:focus,
 .upf-field select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  /* ring + border wine dihapus per request user 2026-06-03 — border tetap netral */
+  border-color: var(--border);
   outline: none;
 }
 
@@ -14525,8 +14571,8 @@ section[data-view="upload"] .upload-form textarea {
   box-sizing: border-box;
 }
 .upf-tags-wrap:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  /* ring + border wine dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border);
 }
 .upf-tags-list { display: contents; }
 .upf-tag {
@@ -49768,7 +49814,9 @@ body:not([data-role="admin"]):not(.auth-mode) #upTitle:focus,
 body:not([data-role="admin"]):not(.auth-mode) #upDesc:focus,
 body:not([data-role="admin"]):not(.auth-mode) #vemTitleInput:focus,
 body:not([data-role="admin"]):not(.auth-mode) #vemDescInput:focus {
-  border-color: rgba(184, 90, 106, .55) !important;
+  /* border pink + halo focus dihapus per request user 2026-06-03 — border tetap
+     netral (var(--border)), tak berubah saat fokus. */
+  border-color: var(--border) !important;
   box-shadow: none !important;
   outline: none !important;
   outline-offset: 0 !important;
@@ -53820,6 +53868,12 @@ body:not([data-role="admin"]) .upload-col-right .field-hint,
 body:not([data-role="admin"]) .field-hint,
 body:not([data-role="admin"]) .upf-field > small:not(.upf-counter) {
   color: var(--muted) !important;
+  /* FIX (audit Unggah 2026-06-03): placeholder tampak seperti sudah terisi karena
+     -webkit-text-fill-color: var(--text) dari aturan input di atas ikut mewarnai
+     pseudo ::placeholder (di Chrome text-fill MENANG atas color). Override di sini
+     supaya placeholder benar-benar abu-abu (--muted); teks yang DIKETIK tetap
+     --text karena bukan pseudo placeholder. */
+  -webkit-text-fill-color: var(--muted) !important;
   opacity: 1 !important;
 }
 
@@ -54120,7 +54174,13 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
 }
 /* Locked state untuk Free user (per request 2026-05-14): tombol disabled-look
    + lock icon visual cue. Click handler tetap fire untuk show premium toast. */
-.upf-sub-card-ai.locked .upf-sub-card-cta,
+/* Locked-but-clickable (Free) — sama spt kartu AUTO JUDUL: tombol tetap bisa
+   diklik supaya memunculkan toast "hanya Premium"; cuma di-dim + cursor +
+   ikon gembok. pointer-events:none HANYA untuk tombol yg benar-benar [disabled]. */
+.upf-sub-card-ai.locked .upf-sub-card-cta {
+  opacity: .55 !important;
+  cursor: not-allowed !important;
+}
 .upf-sub-card-ai .upf-sub-card-cta:disabled,
 .upf-sub-card-ai .upf-sub-card-cta[disabled] {
   opacity: .55 !important;
@@ -54147,8 +54207,8 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
    Per redesign 2026-05-15 v27: kedua card jadi visually konsisten karena keduanya
    premium feature. */
 .upf-sub-card-ai {
-  background: linear-gradient(135deg, rgba(212, 166, 74, .10), rgba(212, 166, 74, .02)) !important;
-  border-color: rgba(212, 166, 74, .28) !important;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2) !important;
+  border-color: rgba(232, 216, 196, .26) !important;
   position: relative;
   overflow: hidden;
 }
@@ -54159,7 +54219,7 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
   right: -20%;
   width: 180px;
   height: 180px;
-  background: radial-gradient(circle, rgba(240, 200, 120, .10), transparent 60%);
+  background: radial-gradient(circle, rgba(109, 41, 50, .28), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -54421,15 +54481,15 @@ body:not([data-role="admin"]) .upload-layout-bare {
 }
 
 /* Dropzone promo CTA — line ke-2 di bawah Format/Kuota info.
-   Per user 2026-05-10: ganti warna ke #FFC94D (golden yellow). */
+   Warna: emas dibuang (de-gold per user 2026-06-03) → CREAM #E8D8C4. */
 html body #dropzoneLimit .dz-promo,
 html body #dropzoneLimit span.dz-promo,
 html body .dz-pro-empty small#dropzoneLimit .dz-promo {
   display: inline-block !important;
   margin-top: 4px !important;
   font-style: italic !important;
-  color: #FFC94D !important;
-  -webkit-text-fill-color: #FFC94D !important;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
   font-weight: 600 !important;
   letter-spacing: .01em !important;
 }
@@ -63045,8 +63105,8 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 .upf-ai-assist {
   margin-top: 4px;
   padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(212, 166, 74, .10), rgba(212, 166, 74, .02));
-  border: 1px solid rgba(212, 166, 74, .28);
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2);
+  border: 1px solid rgba(232, 216, 196, .26);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -63061,7 +63121,7 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   right: -20%;
   width: 180px;
   height: 180px;
-  background: radial-gradient(circle, rgba(240, 200, 120, .10), transparent 60%);
+  background: radial-gradient(circle, rgba(109, 41, 50, .28), transparent 60%);
   pointer-events: none;
 }
 .upf-ai-head {
@@ -63101,9 +63161,10 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   font-weight: 800;
   letter-spacing: .08em;
   border-radius: 999px;
-  background: linear-gradient(135deg, #f0c878, #d4a64a);
-  color: #2a1a02;
-  box-shadow: 0 2px 6px -2px rgba(212, 166, 74, .5);
+  background: #6D2932;
+  color: #E8D8C4;
+  border: 1px solid rgba(232, 216, 196, .3);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .4);
 }
 .upf-ai-actions {
   display: grid;
@@ -63408,19 +63469,29 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   border-color: var(--border-strong, var(--primary, #6D2932));
 }
 .ucs-trigger[aria-expanded="true"] {
-  border-color: var(--primary, #6D2932);
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15);
+  /* ring + border wine dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border);
 }
 .ucs-trigger:focus-visible {
   outline: 0;
-  border-color: var(--primary, #6D2932);
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15);
+  border-color: var(--border);
 }
 .ucs-trigger-label {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* Placeholder "Pilih kategori" — abu-abu muted (sama spt placeholder field
+   lain), bukan cream seperti value terpilih. Per request user 2026-06-03. */
+.ucs-trigger.is-placeholder .ucs-trigger-label { color: #8f8a84; }
+/* Opsi "Tanpa kategori" (value kosong) — sedikit muted + garis pemisah dari
+   daftar kategori asli supaya jelas ini opsi "batal pilih". Per request user. */
+.ucs-option-none {
+  color: rgba(232, 216, 196, .62);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3px;
+  padding-bottom: 10px;
 }
 .ucs-chevron {
   width: 14px;
@@ -63786,8 +63857,10 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 #upTagsWrap.upf-tags-wrap:focus-within,
 #upCategoryTrigger.ucs-trigger[aria-expanded="true"],
 #upCategoryTrigger.ucs-trigger:focus-visible {
-  border-color: var(--primary, #6D2932) !important;
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15) !important;
+  /* ring + border wine dihapus TOTAL per request user 2026-06-03 (rule id-!important
+     inilah yg memunculkan border wine saat fokus/buka). Border tetap netral. */
+  border-color: var(--border) !important;
+  box-shadow: none !important;
 }
 /* Ikon (picons) di section Kategori diperbesar + opsi sedikit lebih lega. */
 #upCategoryPop .ucs-option .picon,
@@ -64107,17 +64180,14 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
    Hanya VISUAL — logika akses (free terkunci) tak diubah.
    Free user: aturan emas lama dibiarkan (tidak di-scope ulang).
    ============================================================ */
-body[data-tier="premium"] .upload-tier-banner,
+/* Kartu premium = SAMA dengan free (per request user 2026-06-03): wine tint +
+   border cream, identik untuk semua tier. (Dulu premium dibuat netral & free
+   emas — sekarang seragam wine, tanpa emas; penanda premium = label/pill/lock.) */
 body[data-tier="premium"] .upf-ai-assist,
 body[data-tier="premium"] .upf-sub-card-ai {
-  background: var(--bg-elev-2, var(--surface)) !important;
-  background-image: none !important;
-  border-color: var(--border, rgba(232, 216, 196, .14)) !important;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2) !important;
+  border-color: rgba(232, 216, 196, .26) !important;
   box-shadow: none !important;
-}
-/* Glow radial emas di kartu subtitle AI — matikan utk premium */
-body[data-tier="premium"] .upf-sub-card-ai::before {
-  display: none !important;
 }
 /* Premium user: SEMUA penanda teks "premium" di halaman unggah
    disembunyikan (request user 2026-05-17) — user premium tak perlu
@@ -72000,3 +72070,607 @@ textarea#upDesc.upf-desc-textarea {
   box-shadow: none !important;
 }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — LAYOUT FINAL (dipilih user)
+   Susunan "2 kolom 50/50" + gaya bagian "panel/kartu bertema" + judul berikon
+   + field dipoles. (User membandingkan 42/58, 1-kolom, & 50/50 → pilih 50/50.)
+   Pure CSS (ikon disuntik via enhanceUploadUI di script.js). Markup utuh.
+   ============================================================ */
+
+/* Susunan opsi 3: 2 kolom 50/50 (lebar sama). Dibungkus min-width supaya
+   breakpoint 1-kolom (<=900px) bawaan tetap jalan. */
+@media (min-width: 901px) {
+  /* !important untuk melawan aturan rasio 1:1.4 (styles.css ~46063) */
+  .upload-layout-bare {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 18px 28px !important;
+  }
+}
+
+/* Gaya bagian: tiap section dibungkus panel/kartu bertema (TERMASUK section
+   VIDEO). Field di dalam pakai --bg-elev-2 (lebih terang) → "pop" di atas kartu. */
+.upload-col-right > .upf-field,
+.upload-col-right > .upf-grid-2col,
+.upload-col-left > .upf-field {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+/* grup 2-kolom: jaga jarak antar-kolom di dalam kartu */
+.upload-col-right > .upf-grid-2col { gap: 14px 18px !important; }
+
+/* Jarak judul(berikon) ke field di bawahnya jangan dempet. !important untuk
+   melawan `.upload-col-right .upf-field { gap: 3px !important }` (~46121) yang
+   bikin dempet — apalagi sekarang ada badge ikon 24px. */
+.upload-col-left .upf-field,
+.upload-col-right .upf-field { gap: 11px !important; }
+
+/* Judul section berikon (ikon = .upf-ico, disuntik via JS) */
+.upf-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  margin-right: 7px;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.upf-ico svg { width: 15px; height: 15px; display: block; }
+.upf-label-row > label,
+.upf-field > label:not(.upf-thumb-drop):not(.dz-pro) {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Bentuk field dipoles: sudut lebih lembut + focus ring jelas */
+.upload-col-left .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.upload-col-left .upf-field textarea,
+.upload-col-left .upf-field select,
+.upload-col-right .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.upload-col-right .upf-field textarea,
+.upload-col-right .upf-field select {
+  border-radius: 11px;
+}
+.upload-col-left .upf-field input:focus,
+.upload-col-left .upf-field textarea:focus,
+.upload-col-left .upf-field select:focus,
+.upload-col-right .upf-field input:focus,
+.upload-col-right .upf-field textarea:focus,
+.upload-col-right .upf-field select:focus {
+  /* ring accent + border accent dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 (revisi) — placeholder BENAR-BENAR abu-abu
+   + ikon judul jadi BADGE di tiap judul kolom.
+   ============================================================ */
+/* Placeholder masih tampak terang karena -webkit-text-fill-color: var(--text)
+   dari aturan input (spesifisitas (0,6,2)) menang atas color/text-fill di aturan
+   ::placeholder yang lebih rendah. Di sini spesifisitas ::placeholder DINAIKKAN
+   ke (0,6,3) dengan rantai :not yang sama + !important + ditaruh PALING AKHIR,
+   jadi placeholder pasti abu-abu; teks yang DIKETIK tetap --text (bukan pseudo). */
+body:not([data-role="admin"]) .upf-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])::placeholder,
+body:not([data-role="admin"]) .upf-field textarea::placeholder,
+body:not([data-role="admin"]) .upf-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])::-webkit-input-placeholder,
+body:not([data-role="admin"]) .upf-field textarea::-webkit-input-placeholder,
+body:not([data-role="admin"]) .upf-tags-wrap input#upTagsInput::placeholder {
+  color: #8f8a84 !important;
+  -webkit-text-fill-color: #8f8a84 !important;
+  opacity: 1 !important;
+}
+
+/* Ikon judul: dari ikon polos → BADGE kecil (kotak membulat ber-aksen) di setiap
+   judul kolom, supaya jelas terlihat. (.upf-ico sudah disuntik via JS di tiap judul.) */
+.upf-ico {
+  width: 24px !important;
+  height: 24px !important;
+  margin-right: 9px !important;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.upf-ico svg { width: 14px !important; height: 14px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — RAPIKAN UKURAN FONT (konsistensi peran teks)
+   Judul section (12px), input/radio-title (13px), suffix (9.6px) sudah seragam.
+   Yang TIDAK seragam & diperbaiki:
+   - Tombol kecil subtitle (.upf-sub-btn): kartu "Buat Otomatis AI" render 13px
+     tapi kartu "Unggah Manual" 12px (mewarisi font-size kartu yg beda). Paksa
+     12px supaya kedua kartu + tombol kecil lain seragam.
+   - Deskripsi kartu subtitle (.upf-sub-card-desc) 11px → 11.5px = sama dgn
+     deskripsi section AI & helper lain.
+   ============================================================ */
+/* Samakan ukuran tombol kedua kartu subtitle. Aturan lama sengaja beda:
+   kartu AI 13px (~54339), kartu Manual 12px (~54328). Override dgn spesifisitas
+   SAMA (0,4,1) + ditaruh paling akhir → keduanya 12px (sama dgn tombol kecil lain). */
+.upf-sub-2col .upf-sub-card-ai .upf-sub-act3 .upf-sub-btn,
+.upf-sub-2col .upf-sub-card-ai .upf-sub-act3 #upSubtitleAutoBtn,
+.upf-sub-2col .upf-sub-card-manual .upf-sub-act3 .upf-sub-btn {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+.upload-col-right .upf-sub-card-desc { font-size: 11.5px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — SERAGAMKAN TEKS EMPTY-STATE DROPZONE
+   User TIDAK suka huruf besar → pakai huruf NORMAL (sentence case) tapi tetap
+   SERAGAM di 3 kartu (Video, Frame, Thumbnail). text-transform:none di sini
+   menimpa uppercase yang diwarisi dari `.dz-pro` (declaration langsung menang
+   atas warisan). Judul section (label pendek) dibiarkan apa adanya.
+   ============================================================ */
+/* Catatan: di tema ini --muted == --text (#E8D8C4) jadi tidak meredupkan apa-apa.
+   Hierarki dibuat lewat KECERAHAN (alpha cream eksplisit), bukan tebal-tipis,
+   supaya tidak "tebal sebelah". Bobot action vs rest dibikin berdekatan. */
+.upload-col-left .dz-pro-empty p,
+.upload-col-right .dz-pro-empty p {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: .1px !important;
+  color: rgba(232, 216, 196, .62) !important;          /* "atau seret ke sini" → cream redup */
+  -webkit-text-fill-color: rgba(232, 216, 196, .62) !important;
+}
+.upload-col-left .dz-pro-empty p b,
+.upload-col-right .dz-pro-empty p b {
+  font-weight: 700 !important;                          /* dari 800 → 700, tidak terlalu berat */
+  text-transform: none !important;
+  color: #E8D8C4 !important;                            /* "Pilih video" → cream penuh */
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+.upload-col-left .dz-pro-empty small,
+.upload-col-left .dz-pro-empty small#dropzoneLimit,
+.upload-col-right .dz-pro-empty small {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: rgba(232, 216, 196, .5) !important;            /* format/hint → paling redup */
+  -webkit-text-fill-color: rgba(232, 216, 196, .5) !important;
+}
+.upload-col-left .dz-pro-empty small b,
+.upload-col-right .dz-pro-empty small b {
+  font-weight: 700 !important;
+  text-transform: none !important;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+/* Promo "Butuh lebih? Premium..." — emas dibuang per request user 2026-06-03
+   (samakan dgn de-gold tema): jadi CREAM (#E8D8C4), lebih terang dari baris
+   format yg redup → tetap menonjol sbg hint premium, tapi tanpa emas. */
+html body .dz-pro-empty small#dropzoneLimit .dz-promo {
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+
+/* Kartu fitur PREMIUM (AI assist & subtitle "Buat Otomatis AI") sebelumnya
+   transparan/outline sehingga tampak timpang di samping kartu solid (Unggah
+   Manual). Dibuat SOLID seperti kartu biasa — penanda premium cukup lewat
+   border emas, jadi tiap baris kartu terlihat seimbang. */
+.upload-col-right .upf-ai-assist,
+.upload-col-right .upf-sub-card-ai {
+  background-color: var(--bg-elev-2) !important;
+}
+
+/* (1) Judul ganda: di kotak AI, hanya <strong> "Auto Judul & Tag" + pill PREMIUM
+   yg mengulang judul section — sembunyikan ITU SAJA. Ikon + deskripsi
+   ("Masukkan judul/topik…") tetap tampil sebagai konteks. */
+.upload-col-right .upf-ai-assist .upf-ai-head .upf-ai-text > strong { display: none !important; }
+
+/* (2) Tombol kartu subtitle diseragamkan: AI tadinya 5px/8px translucent vs
+   Manual 9px/12px solid (#311c22 = sama dgn kartu → nyaris tak terlihat).
+   Semua jadi padding sama + fill translucent yg KONTRAS dgn kartu #311c22. */
+/* Prefix body:not(admin) section[data-view=upload] supaya menang atas aturan
+   `.btn.ghost` (~54437) yg memaksa bg #311c22 pada "Pilih File" (jadi nyatu kartu). */
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 .upf-sub-btn,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 #upSubtitleAutoBtn,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-manual .upf-sub-act3 .upf-sub-btn {
+  padding: 8px 12px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background: rgba(232, 216, 196, .08) !important;
+  border: 1px solid rgba(232, 216, 196, .2) !important;
+  color: #E8D8C4 !important;
+  border-radius: 9px !important;
+}
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 .upf-sub-btn:hover,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 #upSubtitleAutoBtn:hover {
+  background: rgba(232, 216, 196, .15) !important;
+  border-color: rgba(232, 216, 196, .34) !important;
+}
+
+/* (3) Catatan emas (AI & subtitle) punya DUA ikon di depan: <svg> polos + picon
+   bertema (sparkles/gift) → terlihat dobel/berantakan. Sembunyikan svg polos
+   terdepan, sisakan picon yg bertema saja. */
+.upload-col-right .upf-ai-note > svg,
+.upload-col-right .upf-sub-card-note > svg { display: none !important; }
+
+/* (4) Buang catatan "gratis" + samakan kartu subtitle.
+   - Sembunyikan baris catatan (kuota AI "Sisa 3…gratis" & manual) atas permintaan
+     user → kedua kartu kini struktur sama (ikon+judul / deskripsi / tombol) = rata.
+   - Kartu setinggi isinya (bukan dipaksa sama lalu menyisakan ruang kosong). */
+.upload-col-right .upf-sub-card .upf-sub-card-note,
+.upload-col-right .upf-sub-card .upf-sub-note-free { display: none !important; }
+
+/* (5)+(6) Ikon kartu subtitle diberi KOTAK/badge (kolom kiri) + teks rapi di
+   kolom kanan. Lebarkan kolom ikon jadi 32px (sebelumnya 19px ikon polos). */
+.upload-col-right .upf-sub-card {
+  grid-template-columns: 32px 1fr !important;
+  column-gap: 11px !important;
+  align-content: start !important;
+}
+.upload-col-right .upf-sub-card .upf-sub-card-emoji {
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  align-self: start;
+}
+.upload-col-right .upf-sub-card .upf-sub-card-emoji svg,
+.upload-col-right .upf-sub-card .upf-sub-card-emoji img { width: 16px !important; height: 16px !important; }
+
+/* AUTO JUDUL & TAG — ikon (kaca pembesar) juga diberi badge sama. */
+.upload-col-right .upf-ai-assist .upf-ai-ico {
+  width: 30px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  flex: 0 0 auto !important;
+}
+.upload-col-right .upf-ai-assist .upf-ai-ico svg { width: 16px !important; height: 16px !important; }
+
+/* Besarkan teks deskripsi boks AUTO JUDUL & TAG (11.5px → 13px, kekecilan). */
+.upload-col-right .upf-ai-assist .upf-ai-text small,
+.upload-col-right .upf-ai-assist .upf-ai-text > small { font-size: 13px !important; line-height: 1.4 !important; }
+
+/* (7) Warna kartu subtitle KONSISTEN. Per request user 2026-06-03 tema EMAS
+   dibuang → kartu AI pakai wine tint + border cream (lihat .upf-sub-card-ai
+   di atas); badge ikon disamakan ke accent-soft/accent (tan) seperti ikon
+   AUTO JUDUL & ikon section lain — bukan emas. Border Manual tetap cream .22. */
+.upload-col-right .upf-sub-card-ai .upf-sub-card-emoji {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+.upload-col-right .upf-sub-card-manual {
+  border-color: rgba(232, 216, 196, .22) !important;
+}
+
+/* (8) Lebar tombol kartu subtitle IDENTIK di kedua kartu. Flex sempat selisih
+   ~2px (111 vs 113) karena sub-pixel/flex-basis. Pakai grid 3 kolom sama-rata
+   → lebar tombol pasti sama persis di AI & Manual. */
+.upload-col-right .upf-sub-2col .upf-sub-act3 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+.upload-col-right .upf-sub-2col .upf-sub-act3 > button,
+.upload-col-right .upf-sub-2col .upf-sub-act3 > #upSubtitleAutoBtn {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  /* Tinggi SERAGAM: kartu AI sempat 34px (Buat Sekarang) vs 40px (Lihat/Unggah)
+     karena sisa aturan line-height/min-height/id lama. Paksa semua 36px (id
+     #upSubtitleAutoBtn ditarget eksplisit supaya tidak 34px lagi). */
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 1.2 !important;
+}
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — SKALA TEKS DESKTOP (lebih terbaca)
+   Teks form sebelumnya kekecilan di layar desktop PC. Naikkan skala secara
+   konsisten (label 13px, suffix 11px, counter 12px, input/select/textarea 14px,
+   teks deskripsi/opsi 12.5px). Murni CSS → ikut otomatis di server produksi
+   (lewat cache-bust V_MAIN/STYLES_V; lihat vercel-build-minify gotcha).
+   ============================================================ */
+/* Judul section */
+.upload-col-left .upf-label-row > label,
+.upload-col-right .upf-label-row > label,
+.upload-col-left .upf-field > label:not(.upf-thumb-drop):not(.dz-pro),
+.upload-col-right .upf-field > label:not(.upf-thumb-drop):not(.dz-pro) {
+  font-size: 13px !important;
+}
+/* Suffix "(wajib)/(opsional)/(premium)" */
+.upload-col-left .upf-field label .muted,
+.upload-col-right .upf-field label .muted,
+.upload-col-left .upf-field > label small,
+.upload-col-right .upf-field > label small { font-size: 11px !important; }
+/* Counter 0/100 */
+.upload-col-left .upf-counter,
+.upload-col-right .upf-counter { font-size: 12px !important; }
+/* Input / textarea / select + custom dropdown trigger. Prefix body:not(admin)
+   supaya menang atas aturan font-size input yg juga ber-prefix sama (kalau tidak,
+   #upTitle tetap 13px sementara #upDesc jadi 14px → tidak seragam). */
+body:not([data-role="admin"]) .upload-col-left .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body:not([data-role="admin"]) .upload-col-left .upf-field textarea,
+body:not([data-role="admin"]) .upload-col-left .upf-field select,
+body:not([data-role="admin"]) .upload-col-left .upf-field .ucs-trigger,
+body:not([data-role="admin"]) .upload-col-right .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body:not([data-role="admin"]) .upload-col-right .upf-field textarea,
+body:not([data-role="admin"]) .upload-col-right .upf-field select,
+body:not([data-role="admin"]) .upload-col-right .upf-field .ucs-trigger { font-size: 14px !important; }
+/* Field yg ukurannya di-pin pakai id di ~45877-45895 (menang specificity) —
+   override pakai selector ber-id setara supaya ikut 14px & seragam. */
+.upload-col-right input#upTitle,
+.upload-col-right .upf-field select#upCategory,
+.upload-col-right .upf-field select#upVis,
+.upload-col-right .upf-field select#upComments,
+.upload-col-right .upf-datetime-trigger,
+.upload-col-right #upCategoryTrigger,
+.upload-col-right #upScheduleDisplay,
+.upload-col-right #upAiTopic,
+.upload-col-right .upf-tags-wrap,
+.upload-col-right .upf-tags-wrap input#upTagsInput,
+body:not([data-role="admin"]) .upf-field .upf-tags-wrap input#upTagsInput { font-size: 14px !important; }
+/* Teks deskripsi/opsi (radio cards, AI, subtitle, schedule hint) */
+.upload-col-right .upf-radio-card small,
+.upload-col-right .upf-radio-card .upf-radio-desc,
+.upload-col-right .upf-ai-section .upf-ai-note,
+.upload-col-right .upf-ai-section > label + * small,
+.upload-col-right .upf-sub-card-desc,
+.upload-col-right .field-hint,
+.upload-col-left .field-hint { font-size: 12.5px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — DROPZONE EMPTY-STATE LEBIH MENARIK
+   Hierarki warna sudah dibalik (kata aksi terang, sisanya sekunder). Di sini:
+   ritme jarak lebih lega + ikon punya glow lembut + feedback hover (border
+   menyala, ikon naik, kata aksi digarisbawahi) supaya terasa hidup & "ngajak".
+   ============================================================ */
+/* Ritme jarak ikon → judul → hint */
+.upload-col-left .dz-pro-empty-icon,
+.upload-col-right .dz-pro-empty-icon {
+  margin-bottom: 14px !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .28), 0 0 0 5px rgba(199, 183, 163, .05) !important;
+  transition: transform .16s ease, box-shadow .16s ease !important;
+}
+.upload-col-left .dz-pro-empty p,
+.upload-col-right .dz-pro-empty p { margin-bottom: 6px !important; }
+
+/* Feedback hover (Video & Thumbnail = .dz-pro): border menyala + ikon naik +
+   kata aksi digarisbawahi → terasa interaktif. */
+.upload-col-left .dz-pro:hover,
+.upload-col-right .dz-pro:hover { border-color: var(--accent) !important; }
+.upload-col-left .dz-pro:hover .dz-pro-empty-icon,
+.upload-col-right .dz-pro:hover .dz-pro-empty-icon {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .34), 0 0 0 6px rgba(199, 183, 163, .09) !important;
+}
+/* (garis bawah saat hover dihapus atas permintaan user — kurang sreg) */
+.upload-col-left .dz-pro:hover .dz-pro-empty p b,
+.upload-col-right .dz-pro:hover .dz-pro-empty p b {
+  text-decoration: none !important;
+}
+
+/* ===================================================================
+   PREMIUM LOCK OVERLAY (per request user 2026-06-03)
+   Kartu fitur premium (#upAiAssist, #upSubtitleAiCard) tampil SAMA untuk
+   semua tier — warna & bentuk identik. Bedanya HANYA saat .locked (akun
+   free): seluruh isi kartu di-blur + overlay gembok crisp "Tersedia di
+   Premium". Klik overlay → toast upgrade. (Premium = .is-unlocked, tanpa
+   blur/overlay.)
+   =================================================================== */
+
+/* Clip blur ke radius kartu */
+.upf-ai-assist.locked,
+.upf-sub-card-ai.locked { overflow: hidden; }
+
+/* Matikan interaksi semua anak kartu KECUALI overlay. Blur TIDAK lagi per-anak
+   (dulu bikin judul `.upf-sub-card-head` yg display:contents BOCOR — filter tak
+   berlaku pada elemen display:contents — + tepi tak rata). Sekarang overlay yang
+   mem-blur SELURUH isi kartu lewat backdrop-filter → rata satu lapisan, judul
+   ikut blur. */
+.upf-ai-assist.locked > *:not(.upf-lock-overlay),
+.upf-sub-card-ai.locked > *:not(.upf-lock-overlay) {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Netralkan dekorasi locked lama (ikon gembok ::after + dim per-tombol +
+   note gold) supaya konten di balik blur IDENTIK dengan tampilan premium —
+   overlay-lah yang menandai terkunci, bukan recolor per-elemen. */
+.upf-ai-assist.locked .upf-ai-btn::after,
+.upf-ai-assist.locked .upf-ai-gen-btn::after,
+.upf-sub-card-ai.locked .upf-sub-card-cta::after { content: none !important; }
+.upf-ai-assist.locked .upf-ai-btn,
+.upf-ai-assist.locked .upf-ai-gen-btn,
+.upf-ai-assist.locked .upf-ai-topic,
+.upf-sub-card-ai.locked .upf-sub-card-cta {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+/* Overlay gembok — crisp di atas konten blur */
+.upf-lock-overlay {
+  position: absolute !important;
+  /* Kartu subtitle = display:grid → containing-block overlay abspos terbatas ke
+     1 grid area (sisi kiri/kanan tak ter-cover, gap ~12px). Solusi tahan-banting:
+     over-extend inset ke segala arah, lalu `overflow:hidden` di kartu meng-clip
+     overlay TEPAT ke padding-box (border cream tetap kelihatan, sudut tetap
+     membulat). Berlaku sama utk kartu grid (subtitle) & flex (AUTO JUDUL). */
+  inset: -24px;
+  z-index: 6 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: inherit;
+  /* Frosted glass: blur SELURUH isi kartu di belakang overlay secara seragam
+     (termasuk judul/head) — bukan blur per-anak. Scrim tipis utk kontras teks. */
+  background: rgba(20, 10, 13, .42);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.upf-lock-overlay:focus-visible {
+  outline: 2px solid rgba(232, 216, 196, .8);
+  outline-offset: -3px;
+}
+/* Badge wine (warna brand #6D2932) + ikon & teks cream — pilihan user 2026-06-03
+   (sebelumnya emas, ditolak). Ring cream tipis supaya badge tegas di atas blur. */
+.upf-lock-badge {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #6D2932;
+  border: 1px solid rgba(232, 216, 196, .55);
+  color: #E8D8C4;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+}
+.upf-lock-badge svg { width: 19px; height: 19px; }
+.upf-lock-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E8D8C4;
+  letter-spacing: .01em;
+}
+.upf-lock-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(232, 216, 196, .72);
+}
+
+/* ===================================================================
+   Tombol aksi di overlay media (VIDEO / frame thumbnail / thumbnail kustom)
+   — per request user 2026-06-03. Sebelumnya 2 tombol PUTIH stark + 1 MERAH
+   terang → bentrok dgn tema gelap wine/cream. Disamakan jadi glass gelap +
+   ikon cream; tombol Hapus = ikon merah lembut → solid merah saat hover
+   (tetap jelas "danger" tapi tidak norak). Scope .dz-pro-overlay supaya
+   tombol kecil di baris subtitle (.upf-sub-filled-row) tidak terpengaruh.
+   =================================================================== */
+.dz-pro-overlay .dz-pro-action {
+  background: rgba(25, 12, 16, .62) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 216, 196, .22) !important;
+  color: #E8D8C4 !important;
+}
+.dz-pro-overlay .dz-pro-action:hover {
+  background: rgba(45, 22, 28, .82) !important;
+  border-color: rgba(232, 216, 196, .42) !important;
+  transform: translateY(-1px);
+}
+.dz-pro-overlay .dz-pro-action.danger {
+  background: rgba(25, 12, 16, .62) !important;
+  color: #ff8a8a !important;
+  border-color: rgba(255, 130, 130, .38) !important;
+}
+.dz-pro-overlay .dz-pro-action.danger:hover {
+  background: rgba(216, 58, 58, .9) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, .25) !important;
+}
+
+/* Tooltip custom tombol overlay media — ganti tooltip NATIVE putih (tak bisa
+   di-style) → dark wine + teks cream. Per request user 2026-06-03. Dipasang
+   fixed di <body> oleh customMediaTooltips() di script.js. */
+.upf-tip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  background: rgba(25, 12, 16, .97);
+  color: #E8D8C4;
+  border: 1px solid rgba(232, 216, 196, .22);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.upf-tip.is-show { opacity: 1; transform: translateY(0); }
+
+/* #uploadProgress dipindah ke kolom kanan tepat di atas action bar (lihat
+   relocateUploadProgress di script.js) + REDESAIN panel sesuai tema UI/UX
+   (per request user 2026-06-03): kartu wine lembut, status di atas, bar
+   gradient wine→cream, tombol Batalkan rapi di kanan-bawah. */
+.upload-col-right > #uploadProgress {
+  width: 100%;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .18), rgba(109, 41, 50, .05)), var(--bg-elev-2) !important;
+  border: 1px solid rgba(232, 216, 196, .18) !important;
+  border-radius: 12px !important;
+  padding: 13px 15px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+/* Status (teks "Mengunggah… %" / "✓ Upload selesai!") — di atas, cream tegas */
+.upload-col-right > #uploadProgress > #upStatus {
+  order: 1;
+  margin: 0;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+/* Track bar */
+.upload-col-right > #uploadProgress > .up-bar {
+  order: 2;
+  width: 100%;
+  height: 8px;
+  margin: 0;
+  background: rgba(232, 216, 196, .14);
+  border-radius: 99px;
+  overflow: hidden;
+}
+/* Fill bar — gradient wine→cream + sheen. Transition diperlambat & dihaluskan
+   (per user 2026-06-03: pergerakan terlalu cepat) — .3s → .65s ease-out. */
+.upload-col-right > #uploadProgress > .up-bar > #upBar {
+  height: 100%;
+  background: linear-gradient(90deg, #6D2932, #C7B7A3) !important;
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(199, 183, 163, .25);
+  transition: width .65s cubic-bezier(.25, .8, .25, 1) !important;
+}
+/* Indeterminate sweep — sapuan wine→cream, diperlambat 1.1s → 1.9s biar kalem */
+.upload-col-right > #uploadProgress > .up-bar > #upBar.up-bar-indeterminate {
+  background: linear-gradient(90deg, transparent, #6D2932, #C7B7A3, transparent) !important;
+  box-shadow: none;
+  animation-duration: 1.9s !important;
+  animation-timing-function: ease-in-out !important;
+}
+/* Tombol Batalkan — pill cream ghost, kanan-bawah */
+.upload-col-right > #uploadProgress > .up-cancel-btn {
+  order: 3;
+  align-self: flex-end;
+  margin: 1px 0 0 !important;
+  padding: 5px 13px !important;
+  font-size: 11.5px !important;
+  color: rgba(232, 216, 196, .85) !important;
+  background: rgba(232, 216, 196, .07) !important;
+  border: 1px solid rgba(232, 216, 196, .22) !important;
+}
+.upload-col-right > #uploadProgress > .up-cancel-btn:hover {
+  color: #E8D8C4 !important;
+  background: rgba(232, 216, 196, .14) !important;
+  border-color: rgba(232, 216, 196, .4) !important;
+}

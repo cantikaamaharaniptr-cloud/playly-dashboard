@@ -577,11 +577,19 @@
 
   // Upload video blob — try R2 first, fallback to Supabase Storage.
   // Return { ok, url, error, via: "r2"|"supabase" }.
-  async function uploadVideoBlob(id, blob) {
+  //
+  // opts (opsional, backward-compatible — caller lama panggil tanpa arg ke-3):
+  //   { onProgress(frac 0..1), signal: AbortSignal }
+  // onProgress HANYA dipanggil untuk jalur R2 (XHR mendukung upload.onprogress).
+  // Jalur Supabase TIDAK punya event progress → onProgress tidak dipanggil
+  // (caller harus menampilkan indikator indeterminate, bukan persen palsu).
+  async function uploadVideoBlob(id, blob, opts) {
     if (!blob) return { ok: false, error: "no_blob" };
+    if (opts && opts.signal && opts.signal.aborted) return { ok: false, error: "aborted" };
     if (useR2()) {
-      const r2Res = await uploadViaR2(id, blob);
+      const r2Res = await uploadViaR2(id, blob, opts);
       if (r2Res.ok) return r2Res;
+      if (r2Res.error === "aborted") return r2Res; // dibatalkan user → jangan fallback
       // Soft errors (auth/network) → fallback ke Supabase. Hard errors
       // (file_too_large) → bubble up langsung, jangan retry ke Supabase
       // karena Supabase limit lebih kecil.
@@ -591,9 +599,39 @@
     return uploadViaSupabase(id, blob);
   }
 
+  // PUT blob ke presigned URL via XHR supaya bisa lapor progress byte-level
+  // (fetch tidak expose upload progress) + bisa di-abort. Return Promise
+  // { ok, status, aborted?, network? }.
+  function r2PutWithProgress(uploadUrl, blob, opts) {
+    return new Promise((resolve) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", blob.type || "video/mp4");
+        if (xhr.upload && opts && typeof opts.onProgress === "function") {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable && e.total > 0) {
+              try { opts.onProgress(e.loaded / e.total); } catch {}
+            }
+          };
+        }
+        if (opts && opts.signal) {
+          if (opts.signal.aborted) { try { xhr.abort(); } catch {} }
+          opts.signal.addEventListener("abort", () => { try { xhr.abort(); } catch {} }, { once: true });
+        }
+        xhr.onload = () => resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status });
+        xhr.onerror = () => resolve({ ok: false, status: xhr.status || 0, network: true });
+        xhr.onabort = () => resolve({ ok: false, aborted: true });
+        xhr.send(blob);
+      } catch (err) {
+        resolve({ ok: false, error: String(err) });
+      }
+    });
+  }
+
   // R2 path: POST /api/r2/sign-upload → PUT to presigned URL.
   // Bypass Vercel 4.5MB body limit karena file PUT langsung ke R2.
-  async function uploadViaR2(id, blob) {
+  async function uploadViaR2(id, blob, opts) {
     try {
       const signResp = await fetch("/api/r2/sign-upload", {
         method: "POST",
@@ -621,19 +659,14 @@
         }
         return { ok: false, error: "r2_presign_failed", reason: reason };
       }
-      // PUT file langsung ke R2 presigned URL.
-      const putResp = await fetch(signData.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": blob.type || "video/mp4",
-        },
-        body: blob,
-      });
+      // PUT file langsung ke R2 presigned URL — via XHR untuk progress + abort.
+      const putResp = await r2PutWithProgress(signData.uploadUrl, blob, opts);
+      if (putResp.aborted) return { ok: false, error: "aborted" };
       if (!putResp.ok) {
         return {
           ok: false,
           error: "r2_put_failed",
-          reason: "http_" + putResp.status,
+          reason: putResp.network ? "network" : ("http_" + putResp.status),
         };
       }
       return {
