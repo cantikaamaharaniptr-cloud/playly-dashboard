@@ -533,6 +533,28 @@ function chatRelTime(ts) {
 // Tidak ada data hardcoded — Discover akan kosong sampai user upload.
 // Konten platform = agregasi dari semua user yang sudah upload video.
 
+// Apakah video boleh tampil ke PUBLIK saat ini — dipakai sebagai SATU sumber
+// kebenaran oleh feed (Discover/Trending/Spotlight/Home) & profil kreator lain.
+// Kriteria:
+//  - adminStatus published (atau video lama tanpa field → anggap published)
+//  - visibility publik (private/unlisted/draft DISEMBUNYIKAN dari listing). Catatan:
+//    "unlisted" tetap bisa dibuka via link langsung karena findVideo() mencari
+//    semua state tanpa filter ini — sesuai semantik unlisted (tak terdaftar,
+//    tapi dapat diakses lewat tautan).
+//  - kalau dijadwalkan (scheduledAt di masa depan) → belum tampil sampai waktunya.
+//    Dihitung live dari Date.now() sehingga otomatis muncul saat waktunya tiba,
+//    tanpa perlu cron/flip status.
+function isPubliclyVisibleVideo(v) {
+  if (!v) return false;
+  const st = v.adminStatus;
+  if (st != null && st !== "published") return false; // pending/rejected/takedown/draft
+  const vis = v.visibility;
+  if (vis === "private" || vis === "unlisted" || vis === "draft") return false;
+  const sched = Number(v.scheduledAt || 0);
+  if (sched && sched > Date.now()) return false;       // terjadwal, belum waktunya
+  return true;
+}
+
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
@@ -563,14 +585,10 @@ function getPlatformVideos() {
       if (Array.isArray(s.myVideos)) videos.push(...s.myVideos);
     } catch {}
   }
-  // Filter: only published videos visible publicly
-  const filtered = videos.filter(v => {
-    const st = v.adminStatus;
-    // Backward-compat: kalau video lama nggak punya field adminStatus,
-    // anggap sudah published (jangan break content yang udah ada).
-    if (st == null) return true;
-    return st === "published";
-  });
+  // Filter: hanya video yang boleh tampil publik (published + visibility publik +
+  // jadwal sudah tiba). Backward-compat video lama tanpa adminStatus ditangani
+  // di dalam isPubliclyVisibleVideo().
+  const filtered = videos.filter(isPubliclyVisibleVideo);
   // Sort by views desc, fallback by id (newest)
   filtered.sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0) || b.id - a.id);
   return filtered;
@@ -2282,6 +2300,22 @@ async function getVideoBlob(id) {
   }
 }
 
+// 8a: delete a stored offline blob from IndexedDB (used when user removes a
+// downloaded video from the Library "Unduhan" tab). Null-safe, never throws.
+async function deleteVideoBlob(id) {
+  try {
+    const db = await openVideoDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(VIDEO_STORE, "readwrite");
+      tx.objectStore(VIDEO_STORE).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (err) {
+    console.warn("Gagal hapus video dari IndexedDB:", err);
+  }
+}
+
 // Hitung total ukuran semua video blob di IndexedDB
 async function computeIDBVideosBytes() {
   try {
@@ -3915,19 +3949,19 @@ async function refreshStorageUsage() {
     const ringEl = document.getElementById("storageRingPath");
 
     if (tier === "free" && user?.role !== "admin") {
-      // Hitung monthly upload bytes (bukan total seluruh device)
+      // 12e: TOTAL penyimpanan akumulatif (sum SEMUA video, bukan per bulan).
+      // Konsisten dengan halaman Penyimpanan — tidak ada reset bulanan;
+      // hapus video lama untuk menambah ruang.
       const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-      const monthStart = new Date();
-      monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-      const mTs = monthStart.getTime();
-      const monthlyBytes = myVideos
-        .filter(v => (v.createdAt || v.id || 0) >= mTs)
-        .reduce((s, v) => s + (v.fileSize || 0), 0);
-      const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-      const pct = Math.min(100, Math.max(0, (monthlyBytes / FREE_QUOTA) * 100));
-      const monthlyTxt = fmtStorageBytes(monthlyBytes);
-      if (textEl) textEl.textContent = `${monthlyTxt} / 1 GB`;
-      if (pctEl) pctEl.textContent = `${pct < 1 && monthlyBytes > 0 ? "<1" : Math.round(pct)}%`;
+      const totalVideoBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+      const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB total
+      const pct = Math.min(100, Math.max(0, (totalVideoBytes / FREE_QUOTA) * 100));
+      const totalTxt = fmtStorageBytes(totalVideoBytes);
+      if (textEl) {
+        textEl.textContent = `${totalTxt} / 1 GB`;
+        textEl.title = `${totalTxt} / 1 GB terpakai — hapus video lama untuk menambah ruang.`;
+      }
+      if (pctEl) pctEl.textContent = `${pct < 1 && totalVideoBytes > 0 ? "<1" : Math.round(pct)}%`;
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
     } else {
       if (textEl) textEl.textContent = `${usedTxt} / Unlimited`;
@@ -4137,13 +4171,30 @@ function syncAvatarImages() {
   });
 }
 
+// Shared avatar markup helper untuk kartu-kartu Home: kembalikan <span> initial
+// (selalu ada, jadi fallback) + <img> dgn onerror yg menghapus dirinya kalau
+// gambar gagal/missing → initial otomatis kelihatan. Tak pernah render kosong.
+// Container harus punya overflow:hidden + place-items:center (mis. .cs-avatar).
+function homeAvatarMarkup(avatar, displayName) {
+  const initials = String(displayName || "?")
+    .trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const safeInit = (typeof escapeHtml === "function") ? escapeHtml(initials) : initials;
+  const initSpan = `<span class="ha-initials">${safeInit}</span>`;
+  if (!avatar) return initSpan;
+  const safeSrc = (typeof escapeHtml === "function") ? escapeHtml(avatar) : avatar;
+  return `${initSpan}<img class="ha-img" src="${safeSrc}" alt="" onerror="this.remove()"/>`;
+}
+
 // ----------------------- PROFILE EDIT FORM -----------------------
 function populateProfileForm() {
-  const fields = ["username", "name", "email", "bio", "website", "twitter", "instagram", "github"];
+  // v619: + "tiktok", - "website" (no website input exists; display omits it).
+  const fields = ["username", "name", "email", "bio", "tiktok", "twitter", "instagram", "github"];
   fields.forEach(f => {
     const el = document.querySelector(`[data-profile="${f}"]`);
     if (el) el.value = user[f] || "";
   });
+  // Bio character counter (max 160) — init dari nilai yang baru di-set.
+  updateBioCharCount();
   // Avatar preview — admin pakai role icon (super = crown, admin = shield)
   const av = $("#profileAvatarPreview");
   if (av) {
@@ -4215,14 +4266,49 @@ document.getElementById("profileEditForm")?.addEventListener("submit", e => {
   toast("✓ Profil disimpan", "success");
 });
 
+// v619: Live bio character counter (max 160). Subtle warning kalau ≤ 15 sisa.
+function updateBioCharCount() {
+  const ta = document.querySelector('#profileEditForm [data-profile="bio"]');
+  const out = document.getElementById("bioCharCount");
+  if (!ta || !out) return;
+  const max = Number(ta.getAttribute("maxlength")) || 160;
+  const len = (ta.value || "").length;
+  out.textContent = `${len}/${max}`;
+  out.classList.toggle("bio-char-warn", (max - len) <= 15);
+}
+document.querySelector('#profileEditForm [data-profile="bio"]')?.addEventListener("input", updateBioCharCount);
+
+// v619: Normalisasi handle sosial. Buang URL prefix yang umum di-paste user
+// (https://instagram.com/@foo, tiktok.com/foo, x.com/foo, github.com/foo, dst),
+// buang leading "@", collapse spasi, cap 64 char. Hasil = handle bersih saja
+// (display sudah merakit https://platform.com/${handle}). Null-safe; "" → "".
+function normalizeSocialHandle(raw) {
+  let v = String(raw == null ? "" : raw).trim();
+  if (!v) return "";
+  // Strip scheme + www. + known host(/@?) prefixes → handle.
+  v = v.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
+  v = v.replace(/^(?:tiktok\.com|twitter\.com|x\.com|instagram\.com|github\.com)\/@?/i, "");
+  v = v.replace(/^@+/, "");          // leading @ (boleh > 1)
+  v = v.split(/[?#\/]/)[0];          // buang query/hash/trailing path
+  v = v.replace(/\s+/g, "");         // collapse/buang spasi internal
+  return v.slice(0, 64);
+}
+
 document.getElementById("profileSocialForm")?.addEventListener("submit", e => {
   e.preventDefault();
   if (!user) return;
-  ["website", "twitter", "instagram", "github"].forEach(f => {
-    user[f] = (document.querySelector(`[data-profile="${f}"]`)?.value || "").trim();
+  // v619: + "tiktok", - "website". Normalisasi tiap handle sebelum simpan.
+  let normalizedAny = false;
+  ["tiktok", "twitter", "instagram", "github"].forEach(f => {
+    const rawInput = (document.querySelector(`[data-profile="${f}"]`)?.value || "").trim();
+    const clean = normalizeSocialHandle(rawInput);
+    // Deteksi kalau input tadinya URL/punya @ → kasih tahu user.
+    if (rawInput && clean && clean !== rawInput.replace(/^@/, "")) normalizedAny = true;
+    user[f] = clean;
   });
   persistUserAndAccount();
   toast("✓ Tautan sosial disimpan", "success");
+  if (normalizedAny) toast("ℹ️ Tautan dirapikan jadi username", "info");
 });
 
 // Avatar upload — file pick membuka avatar editor (crop + zoom)
@@ -4564,7 +4650,12 @@ function applyPrefSideEffects(key, val) {
 
   // Privasi
   if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya follower yang lihat detail lengkap", "success");
-  if (key === "privacy.showHistory") toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
+  if (key === "privacy.showHistory") {
+    toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
+    // 10a: re-render view Riwayat seketika kalau sedang aktif (kalau tidak,
+    // efeknya berlaku saat user buka halaman Riwayat berikutnya).
+    if (state?.currentView === "history" && typeof renderHistory === "function") renderHistory();
+  }
   if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim DM" : "✓ DM dibatasi — hanya kreator yang kamu follow yang bisa kirim", "success");
 
   // Bahasa & timezone — apply langsung ke UI
@@ -4754,7 +4845,7 @@ const I18N = {
     "upload.sub.autogen":        "Auto-generate AI",
     "upload.sub.autogen.desc":   "Auto-generate subtitles from the video's audio using Whisper Tiny.",
     "upload.sub.gen.now":        "Generate Now",
-    "upload.sub.note.locked":    "✨ Auto subtitle from video audio. Try 3 free runs this month.",
+    "upload.sub.note.locked":    "✨ Auto subtitle from your video's audio — available on Premium.",
     "upload.sub.note.quota":     "🎁 {n} of 3 free runs left this month",
     "upload.sub.note.quota.out": "🎁 Free quota used — go Premium for unlimited",
     "upload.sub.manual":         "Manual Upload",
@@ -6304,7 +6395,7 @@ const I18N = {
     "upload.sub.autogen":        "Buat Otomatis AI",
     "upload.sub.autogen.desc":   "Buat subtitle otomatis dari audio video pakai Whisper Tiny.",
     "upload.sub.gen.now":        "Buat Sekarang",
-    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video. Coba 3x gratis bulan ini.",
+    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video — tersedia di Premium.",
     "upload.sub.note.quota":     "🎁 Sisa {n} dari 3 percobaan gratis bulan ini",
     "upload.sub.note.quota.out": "🎁 Kuota gratis habis bulan ini — Premium untuk akses unlimited",
     "upload.sub.manual":         "Unggah Manual",
@@ -20166,15 +20257,57 @@ function hashPin(pin) {
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
   return "h:" + (h >>> 0).toString(16);
 }
-function verifyPin(plainPin, storedHash) {
-  // CR-2 fix (2026-05-21): SECURITY — sebelumnya return true kalau storedHash
-  // falsy. Pattern "akun lama tanpa PIN → skip" disalahgunakan kalau
-  // acc.pin pernah ke-clear (race condition / cloud collision / tampering).
-  // Caller (login flow `if (existing.pin) { open2FAModal(...) }`) sudah cek
-  // existence dulu — verifyPin TIDAK seharusnya pernah dipanggil dgn hash
-  // kosong. Kalau dipanggil, perlakukan sebagai INVALID (fail-secure).
+// 10g: PIN 2FA hash KUAT — reuse PBKDF2 hashPassword() (format h3:...). Dipakai
+// saat SETUP/CHANGE PIN. Async karena Web Crypto. Catatan: 2FA/TOTP sungguhan
+// butuh backend (server-side secret + time-based code); ini tetap demo-grade
+// client-side, tapi PIN tidak lagi tersimpan plaintext / djb2 yang lemah.
+async function hashPin2(pin) {
+  return hashPassword(String(pin));
+}
+
+// verifyPin sekarang ASYNC. Mendukung 3 format stored:
+//   h3:salt:iters:hash  → PBKDF2 (verifyPassword)
+//   h:<djb2hex>         → legacy DJB2 (hashPin) — diverifikasi, lalu di-migrate
+//   <plaintext>         → akun sangat lama — diverifikasi, lalu di-migrate
+// onMigrate(newHash) (opsional) dipanggil saat verifikasi sukses pakai format
+// lama, supaya caller bisa persist hash baru (auto-migrate ke h3).
+async function verifyPin(plainPin, storedHash, onMigrate) {
+  // CR-2 fix (2026-05-21): SECURITY — fail-secure kalau hash kosong.
   if (!storedHash) return false;
-  return hashPin(plainPin) === storedHash;
+  if (typeof storedHash !== "string") return false;
+
+  if (storedHash.startsWith("h3:")) {
+    // Format kuat — verifikasi langsung, tidak perlu migrate.
+    return verifyPassword(String(plainPin), storedHash);
+  }
+
+  // Format lama: DJB2 ("h:") atau plaintext. Verifikasi dgn metode legacy.
+  let ok;
+  if (storedHash.startsWith("h:")) ok = (hashPin(plainPin) === storedHash);
+  else ok = (String(plainPin) === storedHash); // plaintext legacy
+  if (!ok) return false;
+
+  // Sukses dgn format lama → re-hash ke h3 + minta caller persist (auto-migrate).
+  if (typeof onMigrate === "function") {
+    try {
+      const upgraded = await hashPin2(plainPin);
+      onMigrate(upgraded);
+    } catch (_) { /* migrate best-effort; verifikasi tetap dianggap sukses */ }
+  }
+  return true;
+}
+
+// Helper migrate: simpan PIN h3 baru ke playly-account-${email} untuk username/email.
+function _persistMigratedPin(accountEmail, newHash) {
+  if (!accountEmail || !newHash) return;
+  try {
+    const k = `playly-account-${String(accountEmail).toLowerCase()}`;
+    const acc = JSON.parse(localStorage.getItem(k) || "null");
+    if (acc && acc.pin && !String(acc.pin).startsWith("h3:")) {
+      acc.pin = newHash;
+      localStorage.setItem(k, JSON.stringify(acc));
+    }
+  } catch (_) {}
 }
 
 // ----------------------- PASSWORD HASH (versi-versi) -----------------------
@@ -20669,7 +20802,12 @@ $("#signinForm").addEventListener("submit", async e => {
   if (existing.pin) {
     console.log("[Auth] opening 2FA modal");
     btn.classList.remove("loading");
-    const enteredPin = await open2FAModal(pin => verifyPin(pin, existing.pin));
+    // 10g: verifier async + auto-migrate PIN lama (djb2/plaintext) ke h3 saat
+    // verifikasi sukses, lalu sinkronkan ke existing.pin in-memory.
+    const enteredPin = await open2FAModal(pin => verifyPin(pin, existing.pin, (newHash) => {
+      existing.pin = newHash;
+      _persistMigratedPin(existing.email, newHash);
+    }));
     console.log("[Auth] 2FA result", enteredPin === null ? "cancel" : "verified");
     if (enteredPin === null) {
       return; // user cancel — tetap di halaman login
@@ -21215,8 +21353,11 @@ function open2FAModal(verifyFn) {
   });
 }
 
-// Auto-verify dipanggil dari input handler saat 6 digit komplet
-function tryAutoVerify2FA() {
+// Auto-verify dipanggil dari input handler saat 6 digit komplet.
+// 10g: verifier sekarang bisa async (PBKDF2) — await hasilnya. Pakai guard
+// supaya verifikasi yang sedang berjalan tidak dobel-trigger.
+let _twoFAVerifying = false;
+async function tryAutoVerify2FA() {
   const modal = $("#twoFAModal");
   if (!modal) return;
   const inputs = $$("[data-pin-idx]", modal);
@@ -21224,7 +21365,12 @@ function tryAutoVerify2FA() {
   if (pin.length !== 6) return;
   // Kalau ada verifier function → cek dulu
   if (twoFAVerifyFn) {
-    const ok = twoFAVerifyFn(pin);
+    if (_twoFAVerifying) return;
+    _twoFAVerifying = true;
+    let ok = false;
+    try { ok = await twoFAVerifyFn(pin); }
+    catch { ok = false; }
+    finally { _twoFAVerifying = false; }
     if (ok) {
       close2FAModal(pin);
     } else {
@@ -21357,7 +21503,7 @@ async function handleTwoFAActivate() {
   const pin = await openSetupPinModal({ context: "settings" });
   if (!pin) return;
   const acc = JSON.parse(localStorage.getItem(`playly-account-${user.email}`) || "{}");
-  acc.pin = hashPin(pin);
+  acc.pin = await hashPin2(pin); // 10g: simpan PIN sebagai PBKDF2 h3:
   localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acc));
   toast("🔐 2FA aktif. PIN akan diminta saat login.", "success");
   refreshTwoFASettings();
@@ -21592,7 +21738,7 @@ $("#signupForm").addEventListener("submit", async e => {
     const newPin = await openSetupPinModal({ context: "signup" });
     if (newPin) {
       const acc = JSON.parse(localStorage.getItem(`playly-account-${email}`) || "{}");
-      acc.pin = hashPin(newPin);
+      acc.pin = await hashPin2(newPin); // 10g: simpan PIN sebagai PBKDF2 h3:
       localStorage.setItem(`playly-account-${email}`, JSON.stringify(acc));
       toast("🔐 2FA aktif. PIN diminta saat login berikutnya.", "success");
     }
@@ -21832,7 +21978,11 @@ $("#forgotPwForm")?.addEventListener("submit", async e => {
       attemptsState = { count: 0, lockedUntil: 0 };
     }
 
-    const pinOk = await verifyPin(_pinInputRaw, existing.pin);
+    // 10g: verify + auto-migrate PIN lama ke h3 saat berhasil.
+    const pinOk = await verifyPin(_pinInputRaw, existing.pin, (newHash) => {
+      existing.pin = newHash;
+      _persistMigratedPin(existing.email, newHash);
+    });
     if (!pinOk) {
       attemptsState.count = (attemptsState.count || 0) + 1;
       if (attemptsState.count >= PIN_MAX_ATTEMPTS) {
@@ -26233,6 +26383,10 @@ function setupUserMessageSync() {
       // Cek tiap thread unread, fire toast hanya kalau pesan terbaru di thread itu BERBEDA
       // dari yang sudah pernah kita lihat (mencegah spam toast).
       const isAdmin = user.role === "admin";
+      // 10b: kumpulkan DM masuk dulu — baru di-addNotification SETELAH blok
+      // sync notifications di bawah (yang me-reassign state.notifications =
+      // fresh.notifications). Kalau dipanggil di sini, notif DM lokal kehapus.
+      var _incomingDmNotifs = [];
       for (const m of fresh.messages) {
         if (!m.unread || !Array.isArray(m.history) || !m.history.length) continue;
         const last = m.history[m.history.length - 1];
@@ -26242,7 +26396,14 @@ function setupUserMessageSync() {
         lastSeenByThread.set(m.name, sig);
         const label = m.isAdmin ? "Admin" : (isAdmin ? "User" : "Kreator");
         toast(`📨 Pesan baru dari <b>@${escapeHtml(m.name)}</b> (${label})`, "info");
+        if (m.name !== user.username) {
+          _incomingDmNotifs.push({
+            init: String(m.init || m.name || "?").slice(0, 2).toUpperCase(),
+            name: m.name
+          });
+        }
       }
+      window.__pendingDmNotifs = _incomingDmNotifs;
     }
     // Notifikasi dari user lain (like / comment / follow) — sync agar lonceng
     // di topbar dan panel notifikasi langsung update.
@@ -26259,6 +26420,17 @@ function setupUserMessageSync() {
         const plain = String(newest.text || "").replace(/<[^>]*>/g, "");
         toast(`🔔 ${plain}`, "info");
       }
+    }
+    // 10b: emit notif DM SETELAH state.notifications ter-sync dari fresh, supaya
+    // notif lokal (yang tidak ada di snapshot cross-tab) tidak ke-overwrite.
+    if (Array.isArray(window.__pendingDmNotifs) && window.__pendingDmNotifs.length
+        && typeof addNotification === "function") {
+      window.__pendingDmNotifs.forEach(d => {
+        addNotification("message",
+          `<b>@${escapeHtml(d.name)}</b> mengirim pesan baru 📨`,
+          { init: d.init, fromUsername: d.name });
+      });
+      window.__pendingDmNotifs = [];
     }
   });
 }
@@ -27769,7 +27941,9 @@ function updateAsmCharCount() {
 }
 
 // Tulis 1 pesan ke inbox `username`. Idempoten per-thread (cari thread by name = admin's username).
-function deliverAdminMessage(username, text) {
+// 5j: param `isBroadcast` menandai thread sebagai broadcast READ-ONLY di sisi
+// user (no reply box). Default false (admin 1:1 message tetap bisa dibalas).
+function deliverAdminMessage(username, text, isBroadcast) {
   const key = `playly-state-${username}`;
   let s;
   try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
@@ -27785,17 +27959,18 @@ function deliverAdminMessage(username, text) {
   let thread = s.messages.find(m => m.name === senderName);
   if (!thread) {
     thread = {
-      name: senderName, init: senderInit, isAdmin: true,
+      name: senderName, init: senderInit, isAdmin: true, isBroadcast: !!isBroadcast,
       preview: "", time: "baru", ts: Date.now(), unread: false, online: true, history: []
     };
     s.messages.unshift(thread);
   } else {
     // Pastikan thread ditandai sebagai admin & pindahkan ke atas
     thread.isAdmin = true;
+    if (isBroadcast) thread.isBroadcast = true;
     s.messages = [thread, ...s.messages.filter(m => m !== thread)];
   }
   const now = Date.now();
-  thread.history.push({ from: "them", text, time: "baru", ts: now, isAdmin: true });
+  thread.history.push({ from: "them", text, time: "baru", ts: now, isAdmin: true, isBroadcast: !!isBroadcast });
   thread.preview = text.length > 60 ? text.slice(0, 57) + "..." : text;
   thread.time = "baru";
   thread.ts = now;
@@ -27845,7 +28020,7 @@ $("#asmSendBtn")?.addEventListener("click", () => {
   if (!text) return toast("⚠️ Pesan kosong", "warning");
   if (!__asmTargets.length) return;
 
-  __asmTargets.forEach(u => deliverAdminMessage(u, text));
+  __asmTargets.forEach(u => deliverAdminMessage(u, text, __asmIsBroadcast));
   logAdminMessageSent(__asmTargets, text);
 
   const n = __asmTargets.length;
@@ -31423,6 +31598,12 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
   }
   if (name === "history") renderHistory();
+  if (name === "activity") {
+    // 10f: reset pagination tiap buka view Activity. try/catch jaga-jaga kalau
+    // const activityState belum ter-init (TDZ) saat boot-path memanggil switchView.
+    try { activityState.limit = ACTIVITY_PAGE; } catch (_) {}
+    if (typeof renderActivityList === "function") renderActivityList();
+  }
   if (name === "notifications") {
     if (typeof renderNotifPage === "function") renderNotifPage();
   }
@@ -31461,6 +31642,10 @@ function switchView(name, { fromNav = false } = {}) {
     }
   }
   if (name === "discover") {
+    // 2b: bind search input (markup di-inject React → bind saat view dibuka).
+    try { initDiscoverSearch(); } catch {}
+    // 2c: render chips kategori + wire klik (filter feed utama).
+    try { renderDiscoverCategories(); } catch {}
     renderFYP();
     renderSuggestUsers();
     renderDiscoverTrending();
@@ -31839,7 +32024,15 @@ function applyFocus(view, value) {
   // page Pustaka Saya juga ikut update active state.
   const tabBtns = view.querySelectorAll("button[data-focus-tab]");
   if (tabBtns.length) {
-    tabBtns.forEach(b => b.classList.toggle("active", b.dataset.focusTab === key));
+    tabBtns.forEach(b => {
+      const active = b.dataset.focusTab === key;
+      b.classList.toggle("active", active);
+      // 8e: keep ARIA + roving tabindex in sync with the active tab.
+      if (b.getAttribute("role") === "tab") {
+        b.setAttribute("aria-selected", active ? "true" : "false");
+        b.tabIndex = active ? 0 : -1;
+      }
+    });
   }
 }
 
@@ -32154,10 +32347,15 @@ function renderUserStats() {
     updEl.dataset.ts = String(Date.now());
   }
 
+  // v604 (2026-06-02): START RECORDING real snapshots now — capture daily +
+  // per-video snapshot idempotently setiap kali stats di-render (4a/4f).
+  try { if (typeof _capturePerfSnapshotIfNew === "function") _capturePerfSnapshotIfNew(); } catch {}
+
   renderStatsRow();
   renderAchievements();
   renderUserCommunityStack();
   renderHomeWeather();
+  if (typeof renderStatMilestones === "function") renderStatMilestones();
 
   // Quick stats (Videos view)
   $("#qsTotal") && ($("#qsTotal").textContent = myUploads);
@@ -32172,7 +32370,25 @@ function renderUserStats() {
   setBadgeMode($("#videoCount"), newUploads24h, myUploads > 0);
 
   // Messages badge: angka kalau ada unread, dot kalau ada thread, hidden kalau kosong
-  const unread = messages.filter(m => m.unread).length;
+  updateDmBadges();
+}
+
+// 5g: hitung & set badge unread DM secara terpusat supaya konsisten dipanggil
+// dari renderUserStats, openDmChat (saat thread dibaca), renderDmList, dan
+// playly:cloud-applied (pesan masuk). Hitung dari localStorage state terbaru
+// supaya akurat lintas-tab. Unread thread = thread BELUM diarsipkan dgn unread.
+function updateDmBadges() {
+  if (typeof setBadgeMode !== "function") return;
+  let messages = Array.isArray(state?.messages) ? state.messages : [];
+  // Re-baca dari localStorage supaya count akurat kalau state in-memory belum
+  // ikut merge pesan baru cross-tab.
+  if (user?.username) {
+    try {
+      const fresh = JSON.parse(localStorage.getItem(`playly-state-${user.username}`) || "{}");
+      if (Array.isArray(fresh.messages)) messages = fresh.messages;
+    } catch {}
+  }
+  const unread = messages.filter(m => m && m.unread && !m.archived).length;
   setBadgeMode($("#msgBadge"), unread, messages.length > 0);
 }
 
@@ -33161,6 +33377,31 @@ function renderHomeQuickStatsCards() {
     watchEl.textContent = hqsFormatWatchTime(totalWatchSec);
   }
 
+  // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti —
+  // butuh ≥2 titik data (snapshot terkumpul seiring statistik berubah, ±2 hari
+  // aktif). Tampil di bawah kartu untuk user baru supaya tidak bingung lihat
+  // garis datar/kosong; hilang otomatis begitu data cukup.
+  const _hqsMaxLen = Math.max(
+    hist.views.length, hist.likes.length, hist.followers.length, hist.watch.length
+  );
+  let _hqsNote = document.getElementById("hqsSparkNote");
+  if (_hqsMaxLen < 2) {
+    if (!_hqsNote && wrap.parentNode) {
+      _hqsNote = document.createElement("div");
+      _hqsNote.id = "hqsSparkNote";
+      _hqsNote.className = "hqs-spark-note";
+      _hqsNote.innerHTML =
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+        '<span>Grafik tren muncul setelah 2+ hari aktif — data masih dikumpulkan.</span>';
+      wrap.insertAdjacentElement("afterend", _hqsNote);
+    }
+    if (_hqsNote) _hqsNote.hidden = false;
+  } else if (_hqsNote) {
+    _hqsNote.hidden = true;
+  }
+
   // Minimalis bersih (per request user 2026-05-15 v65): no adapt block,
   // cuma value + label. hqsSetAdapt calls dihapus (element-nya gak ada).
 }
@@ -33836,7 +34077,9 @@ function _exportVideosToCSV() {
     toast?.("Belum ada data video untuk di-export.", "info");
     return;
   }
-  const headers = ["id", "title", "uploaded_at", "views", "likes", "comments", "shares", "tags", "category"];
+  // 10d: header "created_at" supaya cocok dengan nilai v.createdAt yang ditulis
+  // (sebelumnya "uploaded_at" — mismatch, tidak ada field uploadedAt di video).
+  const headers = ["id", "title", "created_at", "views", "likes", "comments", "shares", "tags", "category"];
   const rows = myVideos.map(v => [
     v.id || "",
     `"${String(v.title || "").replace(/"/g, '""')}"`,
@@ -34621,6 +34864,12 @@ window.addEventListener("playly:cloud-applied", () => {
 // Daily snapshot disimpan di localStorage `playly-daily-snapshot-${username}` —
 // rolling 7 hari terakhir ({date: "YYYY-MM-DD", views, likes, followers}).
 const __PERF_SNAPSHOT_KEY = (username) => `playly-daily-snapshot-${username}`;
+// v604 (2026-06-02): per-video daily snapshot store untuk drill-down (4c).
+// {date:'YYYY-MM-DD', v:{[videoId]:{views,likes,comments}}}
+const __VIDEO_SNAPSHOT_KEY = (username) => `playly-video-snapshot-${username}`;
+// Retensi panjang supaya bucket bulanan/tahunan terisi (≈400 hari).
+const __SNAPSHOT_MAX = 400;
+const __VIDEO_SNAPSHOT_MAX = 180;
 
 function _todayDateStr() {
   const d = new Date();
@@ -34645,13 +34894,59 @@ function _writePerfSnapshots(snaps) {
   if (!user?.username) return;
   try { localStorage.setItem(__PERF_SNAPSHOT_KEY(user.username), JSON.stringify(snaps)); } catch {}
 }
+// v604 (2026-06-02): REAL watch-time helpers (4g). Sum durasi tonton nyata
+// dari state.history. Entry real playback simpan `progress` (0–100 %), seed
+// lama simpan `watchedSec`. Kita derive detik dari watchedSec kalau ada, atau
+// progress × durasi video. Kalau state.history kosong → 0 (honest empty-state).
+function _historyParseDur(d) {
+  if (typeof anParseDuration === "function") return anParseDuration(d) || 0;
+  if (!d) return 0;
+  const p = String(d).split(":").map(Number);
+  if (p.some(isNaN)) return 0;
+  if (p.length === 2) return p[0] * 60 + p[1];
+  if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
+  return Number(d) || 0;
+}
+function _historyWatchedSec(h, vid) {
+  if (!h) return 0;
+  if (Number.isFinite(h.watchedSec) && h.watchedSec > 0) return Number(h.watchedSec);
+  const total = vid ? _historyParseDur(vid.duration) : 0;
+  if (total > 0 && Number.isFinite(h.progress) && h.progress > 0) {
+    // progress disimpan sebagai persen (0–100) di player; clamp & convert.
+    const pct = h.progress > 1 ? h.progress / 100 : h.progress;
+    return total * Math.min(1, Math.max(0, pct));
+  }
+  return 0;
+}
+function realWatchSecByVideo() {
+  const out = {};
+  const hist = Array.isArray(state?.history) ? state.history : [];
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  if (!hist.length || !vids.length) return out;
+  const byId = new Map(vids.map(v => [v.id, v]));
+  hist.forEach(h => {
+    const id = h?.videoId;
+    if (id == null || !byId.has(id)) return;
+    const sec = _historyWatchedSec(h, byId.get(id));
+    if (sec > 0) out[id] = (out[id] || 0) + sec;
+  });
+  return out;
+}
+function realWatchSecTotal() {
+  const by = realWatchSecByVideo();
+  return Object.values(by).reduce((s, n) => s + n, 0);
+}
+
 function _capturePerfSnapshotIfNew() {
   if (!user?.username) return _readPerfSnapshots();
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totals = {
     views:     myVids.reduce((s, v) => s + (Number(v.viewsNum) || 0), 0),
     likes:     myVids.reduce((s, v) => s + (Number(v.likes)    || 0), 0),
-    followers: Array.isArray(state?.followers) ? state.followers.length : 0
+    followers: Array.isArray(state?.followers) ? state.followers.length : 0,
+    // v604 (2026-06-02): + comments + real watch-time per daily snapshot (4a/4f).
+    comments:  myVids.reduce((s, v) => s + ((state?.comments?.[v.id]?.length) || 0), 0),
+    watch:     Math.round(realWatchSecTotal()),
   };
   const today = _todayDateStr();
   let snaps = _readPerfSnapshots();
@@ -34662,10 +34957,46 @@ function _capturePerfSnapshotIfNew() {
   } else {
     snaps.push({ date: today, ...totals });
   }
-  // Rolling 7 hari (urut by date asc, keep last 7)
+  // Rolling retensi panjang (urut by date asc) supaya bucket bulanan/tahunan terisi.
   snaps.sort((a, b) => (a.date > b.date ? 1 : -1));
-  if (snaps.length > 7) snaps = snaps.slice(-7);
+  if (snaps.length > __SNAPSHOT_MAX) snaps = snaps.slice(-__SNAPSHOT_MAX);
   _writePerfSnapshots(snaps);
+  // Sekalian capture per-video snapshot (idempoten per hari).
+  _captureVideoSnapshotIfNew();
+  return snaps;
+}
+
+// v604 (2026-06-02): per-video daily snapshot (4c drill-down). REAL only.
+function _readVideoSnapshots() {
+  if (!user?.username) return [];
+  try {
+    const raw = localStorage.getItem(__VIDEO_SNAPSHOT_KEY(user.username));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function _writeVideoSnapshots(snaps) {
+  if (!user?.username) return;
+  try { localStorage.setItem(__VIDEO_SNAPSHOT_KEY(user.username), JSON.stringify(snaps)); } catch {}
+}
+function _captureVideoSnapshotIfNew() {
+  if (!user?.username) return _readVideoSnapshots();
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const v = {};
+  myVids.forEach(vid => {
+    v[vid.id] = {
+      views:    Number(vid.viewsNum) || 0,
+      likes:    Number(vid.likes)    || 0,
+      comments: (state?.comments?.[vid.id]?.length) || 0,
+    };
+  });
+  const today = _todayDateStr();
+  let snaps = _readVideoSnapshots();
+  const idx = snaps.findIndex(s => s.date === today);
+  if (idx >= 0) snaps[idx] = { date: today, v };
+  else snaps.push({ date: today, v });
+  snaps.sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (snaps.length > __VIDEO_SNAPSHOT_MAX) snaps = snaps.slice(-__VIDEO_SNAPSHOT_MAX);
+  _writeVideoSnapshots(snaps);
   return snaps;
 }
 
@@ -34779,7 +35110,7 @@ function renderHomePerfCard() {
         <small class="hpf-spark-label">Tren views 7 hari</small>
         ${sparkline}
       </div>
-    ` : `<small class="hpf-no-data">Tren 7 hari muncul setelah 2+ hari aktif.</small>`}
+    ` : `<small class="hpf-spark-note">Grafik tren muncul setelah 2+ hari aktif</small>`}
   `;
 }
 
@@ -35314,10 +35645,19 @@ function renderHomeCreatorLevel() {
 function renderSuggestUsers() {
   const wrap = document.querySelector("#suggestUsersList");
   if (!wrap) return;
+  // 2d (2026-06-02): utamakan kreator AKTIF (punya video). Kalau tidak ada
+  // (mis. user baru, belum ada yang upload), FALLBACK ke semua kreator lain
+  // (tanpa video) supaya kolom tidak kosong. Kalau benar2 tidak ada user lain
+  // → empty-state jujur.
   let creators = [];
   try {
     creators = (typeof getPlatformCreators === "function" ? getPlatformCreators({ activeOnly: true }) : []) || [];
   } catch { creators = []; }
+  if (!creators.length) {
+    try {
+      creators = (typeof getPlatformCreators === "function" ? getPlatformCreators({ activeOnly: false }) : []) || [];
+    } catch { creators = []; }
+  }
   // Sort by videoCount/views — kreator yg lebih aktif rank atas; ambil 20 teratas (sisanya bisa di-scroll)
   creators.sort((a, b) => (b.videos || b.videoCount || 0) - (a.videos || a.videoCount || 0));
   const top = creators.slice(0, 20);
@@ -35327,8 +35667,8 @@ function renderSuggestUsers() {
     wrap.innerHTML = `
       <div class="suggest-empty">
         <div class="suggest-empty-icon">👥</div>
-        <p>Belum ada kreator lain</p>
-        <small>Kreator akan muncul di sini setelah ada user yang upload video.</small>
+        <p>Belum ada kreator lain untuk disarankan</p>
+        <small>Kreator akan muncul di sini setelah ada user lain yang bergabung.</small>
       </div>`;
     return;
   }
@@ -35348,7 +35688,7 @@ function renderSuggestUsers() {
       <div class="${avatarCls}"${isFresh ? ' title="Baru upload — &lt; 24 jam"' : ""}>${c.avatar ? `<img src="${escapeHtml(c.avatar)}" alt=""/>` : `<span>${escapeHtml(init)}</span>`}</div>
       <div class="suggest-info">
         <strong>${escapeHtml(display)}</strong>
-        <small>@${escapeHtml(uname)} · ${videoCount} video</small>
+        <small>@${escapeHtml(uname)} · ${videoCount > 0 ? `${videoCount} video` : "Kreator baru"}</small>
       </div>
       <button class="btn ${isFollowing ? "ghost" : "primary"} sm" data-suggest-action="follow" type="button">
         ${isFollowing ? "✓ Following" : "+ Follow"}
@@ -35477,10 +35817,9 @@ function renderCreatorSpotlight() {
 
   // Slide: avatar + info + stats di atas, plus row "Top Videos" di bawah.
   track.innerHTML = creators.map(c => {
-    const initials = (c.displayName || c.name || "?").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
-    const avatarInner = c.avatar
-      ? `<img src="${c.avatar}" alt=""/>`
-      : `<span>${escapeHtml(initials)}</span>`;
+    // Avatar: pakai shared helper → initial selalu jadi fallback, img dgn
+    // onerror auto-remove kalau gagal load (anti avatar kosong). (7b)
+    const avatarInner = homeAvatarMarkup(c.avatar, c.displayName || c.name);
 
     const topVidsHtml = (c.topVideos && c.topVideos.length)
       ? `<div class="cs-top-videos">
@@ -36008,6 +36347,15 @@ function renderMyLibrary() {
         `<button type="button" class="lib-card-action lib-action-perma" data-lib-perma="${id}" title="Hapus permanen">🗑️</button>`
       ];
       actionsHtml = `<div class="lib-card-actions">${restoreActions.join("")}</div>`;
+    } else if (opts.canRemoveDownload) {
+      // 8a: Unduhan tab — tombol hapus per item. kind menentukan apakah ikut
+      // menghapus blob offline dari IndexedDB ("dashboard") atau hanya entri ("file").
+      const kind = opts.removeKind === "file" ? "file" : "dashboard";
+      actionsHtml = `<div class="lib-card-actions">
+        <button type="button" class="lib-card-action lib-action-dlremove" data-lib-dlremove="${id}" data-lib-dlkind="${kind}" title="Hapus dari unduhan" aria-label="Hapus dari unduhan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>`;
     }
     return `<div class="lib-item" data-vid="${id}">
       <div class="lib-thumb" ${thumbBg}>
@@ -36104,7 +36452,13 @@ function renderMyLibrary() {
   setT("statusCntTakedown", takedownVideos.length);
   // Sync active state pada sub-tab buttons
   document.querySelectorAll(".status-sub-tab").forEach(b => {
-    b.classList.toggle("active", b.dataset.statusTab === subTab);
+    const active = b.dataset.statusTab === subTab;
+    b.classList.toggle("active", active);
+    // 8e: ARIA + roving tabindex for status sub-tabs (role=tab in markup).
+    if (b.getAttribute("role") === "tab") {
+      b.setAttribute("aria-selected", active ? "true" : "false");
+      b.tabIndex = active ? 0 : -1;
+    }
   });
 
   // New Videos dipindah ke Discover — lihat renderDiscoverNewVideos()
@@ -36130,10 +36484,13 @@ function renderMyLibrary() {
   const dashList = resolved.filter(r => r.kind !== "file").map(r => r.v);
   const fileList = resolved.filter(r => r.kind === "file").map(r => r.v);
 
+  // 8b: dua section dibedakan secara jelas — offline-in-app vs diunduh ke perangkat.
   renderLibSection(dashList, "downloadDashboardGrid", "downloadVideoCount", LIB_TV,
-    "Belum ada video tersimpan di dashboard. Tonton video kreator lain lalu klik tombol Simpan di player.");
+    "Belum ada video tersimpan di aplikasi. Tonton video kreator lain → tombol Unduh → <b>Simpan di Aplikasi</b> supaya bisa diputar offline di Playly.",
+    { canRemoveDownload: true, removeKind: "dashboard" });
   renderLibSection(fileList, "downloadFileGrid", null, LIB_SAVE,
-    "Belum ada video yang di-download ke file. Buka player video kreator lain → klik Download untuk simpan ke perangkat.");
+    "Belum ada video yang diunduh ke perangkat. Buka player video kreator lain → tombol Unduh → <b>Simpan ke File</b> untuk menyimpan ke folder Download.",
+    { canRemoveDownload: true, removeKind: "file" });
 
   // Total counter = gabungan dua section
   const totalDlEl = document.getElementById("downloadVideoCount");
@@ -36191,19 +36548,13 @@ function renderMyLibrary() {
           }
           menu.hidden = false;
           kebabBtn.setAttribute("aria-expanded", "true");
-          // Posisikan menu pakai fixed coords (sekarang true viewport reference)
-          const r = kebabBtn.getBoundingClientRect();
-          const sp = (k, v) => menu.style.setProperty(k, v, "important");
-          sp("position", "fixed");
-          sp("top", `${r.bottom + 6}px`);
-          const menuW = menu.offsetWidth || 200;
-          let left = r.right - menuW;
-          if (left < 8) left = 8;
-          if (left + menuW > window.innerWidth - 8) left = window.innerWidth - menuW - 8;
-          sp("left", `${left}px`);
-          sp("right", "auto");
-          sp("bottom", "auto");
-          sp("z-index", "9999");
+          menu._libKebabTrigger = kebabBtn;
+          // 8c: robust fixed positioning (flip-above + clamp). Helper measures
+          // the now-visible menu and anchors it near the trigger.
+          if (typeof positionLibCardMenu === "function") positionLibCardMenu(kebabBtn, menu);
+          // 8e: keyboard — focus first menu item on open.
+          const firstItem = menu.querySelector('[role="menuitem"]');
+          if (firstItem) { try { firstItem.focus(); } catch {} }
         }
         return;
       }
@@ -36271,6 +36622,32 @@ function renderMyLibrary() {
         e.stopPropagation();
         const id = +permaBtn.dataset.libPerma;
         if (typeof permaDeleteVideo === "function") permaDeleteVideo(id);
+        return;
+      }
+      // 8a: Remove a downloaded item from the Unduhan tab. For "dashboard"
+      // (offline-in-app) entries, also delete the stored IndexedDB blob.
+      const dlRemoveBtn = e.target.closest("[data-lib-dlremove]");
+      if (dlRemoveBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const id = +dlRemoveBtn.dataset.libDlremove;
+        const kind = dlRemoveBtn.dataset.libDlkind === "file" ? "file" : "dashboard";
+        if (!Array.isArray(state.downloaded)) state.downloaded = [];
+        state.downloaded = state.downloaded.filter(d =>
+          !(d?.videoId === id && (d.kind || "dashboard") === kind));
+        if (typeof saveState === "function") saveState();
+        // Only purge the offline blob if no other entry still references it.
+        if (kind === "dashboard") {
+          const stillSaved = state.downloaded.some(d =>
+            d?.videoId === id && (d.kind || "dashboard") !== "file");
+          if (!stillSaved && typeof deleteVideoBlob === "function") {
+            deleteVideoBlob(id).then(() => {
+              if (typeof refreshStorageUsage === "function") refreshStorageUsage();
+            });
+          }
+        }
+        if (typeof toast === "function") toast("🗑️ Dihapus dari unduhan", "success");
+        renderMyLibrary();
         return;
       }
       const item = e.target.closest(".lib-item");
@@ -36505,6 +36882,43 @@ document.addEventListener("click", e => {
   });
   // Apply focus mode (hide non-matching sections)
   if (typeof applyFocus === "function") applyFocus(view, key);
+  // FIX (8c/8e regression): page tab pills must ALSO sync data-lib-active — the
+  // CSS section visibility (L36579+) keys off data-lib-active, not data-focus.
+  // Without this, non-"my" panels (Status/Unduhan) stay hidden (data-lib-active
+  // stuck at default "my"). Map focus key → lib key, reuse setLibraryTab.
+  const _focusToLib = { "my-video": "my", "status-videos": "status", "download": "download" };
+  if (_focusToLib[key] && typeof setLibraryTab === "function") {
+    try { setLibraryTab(_focusToLib[key]); } catch {}
+  }
+});
+
+// 8e: keyboard roving for the Pustaka Saya tablists (library tabs +
+// status sub-tabs). ArrowLeft/Right (+Home/End) move focus between tabs and
+// activate them; Enter/Space already work via the native <button> click.
+document.addEventListener("keydown", e => {
+  const tab = e.target.closest('[role="tab"]');
+  if (!tab) return;
+  // Only handle tabs inside the library view tablists we set up.
+  const isLibTab = tab.matches("button[data-focus-tab]");
+  const isStatusTab = tab.matches(".status-sub-tab[data-status-tab]");
+  if (!isLibTab && !isStatusTab) return;
+  const list = tab.closest('[role="tablist"]');
+  if (!list) return;
+  const tabs = [...list.querySelectorAll('[role="tab"]')];
+  const i = tabs.indexOf(tab);
+  if (i < 0) return;
+  let next = -1;
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % tabs.length;
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + tabs.length) % tabs.length;
+  else if (e.key === "Home") next = 0;
+  else if (e.key === "End") next = tabs.length - 1;
+  else return;
+  e.preventDefault();
+  const target = tabs[next];
+  if (!target) return;
+  try { target.focus(); } catch {}
+  // Activate the focused tab (follow-focus, standard tablist behavior).
+  target.click();
 });
 
 // On page load, apply default focus untuk views yang punya data-focus attribute.
@@ -36628,6 +37042,25 @@ function renderPurchaseHistory() {
   wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}<tbody>${rows}</tbody></table>`;
 }
 
+// 6a (2026-06-02): Populate Riwayat Pencarian User & Video.
+// Helper internal — trim, ignore empty/short (<2), dedupe move-to-front
+// (case-insensitive), cap 30, persist ke state[kind] + saveState().
+function _addSearchHistory(kind, q) {
+  q = String(q == null ? "" : q).trim();
+  if (q.length < 2) return; // abaikan query kosong / terlalu pendek
+  if (!state) return;
+  let arr = Array.isArray(state[kind]) ? state[kind] : [];
+  arr = arr.filter(item => String(item).toLowerCase() !== q.toLowerCase());
+  arr.unshift(q);
+  arr = arr.slice(0, 30);
+  state[kind] = arr;
+  try { saveState?.(); } catch (_) {}
+  // Re-render kalau view Riwayat lagi terbuka.
+  try { if (typeof renderSearchHistorySections === "function") renderSearchHistorySections(); } catch (_) {}
+}
+function addSearchHistoryUser(q)  { _addSearchHistory("searchHistoryUser", q); }
+function addSearchHistoryVideo(q) { _addSearchHistory("searchHistoryVideo", q); }
+
 function renderSearchHistorySections() {
   const userWrap = document.getElementById("searchUserHistoryList");
   const vidWrap  = document.getElementById("searchVideoHistoryList");
@@ -36691,6 +37124,18 @@ function renderHistory() {
   // Render semua section content (filtering visual diatur via CSS by data-riwayat-tab)
   renderPurchaseHistory();
   renderSearchHistorySections();
+
+  // 10a: hormati setting Privasi → "Tampilkan riwayat tonton". Kalau OFF,
+  // tampilkan empty-state jujur (bukan list "Lanjutkan menonton" + riwayat).
+  // Default true supaya akun lama tetap lihat riwayatnya seperti biasa.
+  if (!getPref("privacy.showHistory", true)) {
+    $("#continueList") && ($("#continueList").innerHTML = "");
+    $("#historyGroups") && ($("#historyGroups").innerHTML = `<table class="riwayat-table">
+      <thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>
+      <tbody><tr class="rwt-empty-row"><td colspan="4">Riwayat tonton disembunyikan. Aktifkan di Pengaturan › Privasi.</td></tr></tbody>
+    </table>`);
+    return;
+  }
 
   if (!state.history.length) {
     // v592 (2026-05-28): tabel empty state (sebelumnya emptyHTML card).
@@ -36888,77 +37333,166 @@ function _chartLabels(range) {
     : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 }
 
-const CHART_DATA_DEMO = {
-  get weekly() { return { labels: _chartLabels("weekly"), values: [120,180,150,240,220,320,280] }; },
-  get monthly() { return { labels: _chartLabels("monthly"), values: [820,1240,980,1680] }; },
-  get yearly() { return { labels: _chartLabels("yearly"), values: [3200,2800,4100,3600,5200,4800,6100,5800,7200,6900,8400,9200] }; },
-};
-
 function emptyChartData(range) {
   const counts = { weekly: 7, monthly: 4, yearly: 12 };
-  return { labels: _chartLabels(range), values: new Array(counts[range] || 7).fill(0) };
+  return { labels: _chartLabels(range), values: new Array(counts[range] || 7).fill(0), total: 0, empty: true };
 }
 
-// Generate data per metric berdasarkan range. Untuk metric Video → jumlah
-// upload per period. Untuk Views → akumulasi viewsNum. Untuk Followers →
-// growth simulasi (real data limited, jadi pakai pattern). Semua berbasis
-// state.myVideos real-time supaya angka match dashboard.
+// v604 (2026-06-02): build daftar bucket {start,end,label} untuk range tertentu.
+// weekly = 7 hari terakhir (per hari), monthly = 4 minggu terakhir (per minggu),
+// yearly = 12 bulan terakhir (per bulan). end exclusive.
+function _statBuckets(range) {
+  const labels = _chartLabels(range);
+  const out = [];
+  const now = new Date();
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (range === "monthly") {
+    // 4 minggu terakhir, paling lama dulu. Minggu = 7 hari.
+    const today = startOfDay(now);
+    for (let i = 3; i >= 0; i--) {
+      const start = new Date(today); start.setDate(start.getDate() - (i + 1) * 7 + 1);
+      const end = new Date(today);   end.setDate(end.getDate() - i * 7 + 1);
+      out.push({ start, end });
+    }
+  } else if (range === "yearly") {
+    // 12 bulan terakhir.
+    for (let i = 11; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      out.push({ start, end });
+    }
+  } else {
+    // weekly: 7 hari terakhir.
+    const today = startOfDay(now);
+    for (let i = 6; i >= 0; i--) {
+      const start = new Date(today); start.setDate(start.getDate() - i);
+      const end = new Date(start);   end.setDate(end.getDate() + 1);
+      out.push({ start, end });
+    }
+  }
+  return out.map((b, i) => ({ ...b, label: labels[i] || "" }));
+}
+
+// Cari snapshot harian dengan tanggal <= ref (paling dekat sebelum/sama).
+// Untuk metric kumulatif (views/likes/followers/comments/watch) nilai per
+// bucket = nilai kumulatif di akhir bucket (snapshot terdekat sebelum bucket.end).
+function _snapValueAt(snaps, beforeDate, field) {
+  let val = null;
+  for (const s of snaps) {
+    const d = new Date(s.date + "T00:00:00");
+    if (isNaN(d)) continue;
+    if (d < beforeDate) {
+      const v = Number(s[field]);
+      if (Number.isFinite(v)) val = v;
+    } else break;
+  }
+  return val; // null kalau belum ada snapshot sebelum tanggal ini
+}
+
+// 4a/4f/4h/4i: REAL series dari snapshot harian, bucketed per range.
+// videos metric = jumlah upload per bucket dari publishedAt (real, tanpa snapshot).
+// Lainnya kumulatif dari snapshot. Kalau seri all-zero/empty → empty:true.
 function generateChartData(metric, range) {
-  const labels = (CHART_DATA_DEMO[range] || CHART_DATA_DEMO.weekly).labels;
+  const buckets = _statBuckets(range);
+  const labels = buckets.map(b => b.label);
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-  const totalVideos = myVideos.length;
-  const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const followerCount = (typeof getUserFollowers === "function" && user?.username)
-    ? getUserFollowers(user.username).length : 0;
-  // v595 (2026-05-28): comments series — total komentar di semua video user.
-  const totalComments = myVideos.reduce((s, v) =>
-    s + ((state.comments?.[v.id]?.length) || 0), 0);
 
-  const total = metric === "videos"   ? totalVideos
-    : metric === "views"              ? totalViews
-    : metric === "comments"           ? totalComments
-    : followerCount;
-  const n = labels.length;
-  const values = [];
-
-  // v602d (2026-05-28): DUMMY DATA preview mode — kalau total 0, inject
-  // realistic varying values per metric biar chart bentuknya kelihatan.
-  // HAPUS block ini kalau data real sudah masuk. Variasi per metric beda
-  // pattern (videos = ascending discrete, views = exponential, followers =
-  // steady growth, comments = spiky).
-  if (total === 0) {
-    const DUMMY = {
-      weekly: {
-        videos:    [2, 1, 3, 2, 4, 5, 3],
-        views:     [120, 280, 180, 420, 380, 680, 520],
-        followers: [45, 52, 58, 67, 78, 84, 92],
-        comments:  [8, 24, 12, 18, 32, 28, 41],
-      },
-      monthly: {
-        videos:    [8, 12, 9, 16],
-        views:     [1200, 2400, 1800, 4200],
-        followers: [120, 180, 230, 310],
-        comments:  [45, 82, 67, 124],
-      },
-      yearly: {
-        videos:    [3, 5, 4, 8, 6, 10, 12, 9, 15, 18, 14, 22],
-        views:     [800, 1200, 980, 2400, 1800, 3600, 5200, 4100, 7800, 9200, 8400, 12400],
-        followers: [50, 80, 120, 180, 240, 320, 410, 520, 680, 820, 980, 1240],
-        comments:  [12, 28, 18, 64, 42, 92, 138, 84, 220, 280, 240, 380],
-      },
-    };
-    const demo = (DUMMY[range] && DUMMY[range][metric]) || new Array(n).fill(0);
-    for (let i = 0; i < n; i++) values.push(demo[i] || 0);
-    const demoTotal = values.reduce((s, v) => s + v, 0);
-    return { labels, values, total: demoTotal, isDummy: true };
+  // --- videos: real count per bucket dari publishedAt ---
+  if (metric === "videos") {
+    const values = buckets.map(b => {
+      let c = 0;
+      myVideos.forEach(v => {
+        const raw = v.publishedAt || v.uploadedAt || v.ts;
+        if (!raw) return;
+        const d = new Date(raw);
+        if (isNaN(d)) return;
+        if (d >= b.start && d < b.end) c++;
+      });
+      return c;
+    });
+    const total = values.reduce((s, v) => s + v, 0);
+    return { labels, values, total, empty: total === 0 };
   }
 
-  // Smooth growth curve, ending at `total`
-  for (let i = 0; i < n; i++) {
-    const ratio = (i + 1) / n;
-    values.push(Math.round(total * (0.4 + 0.6 * ratio)));
+  // --- metrik kumulatif dari snapshot harian ---
+  const fieldMap = { views: "views", followers: "followers", comments: "comments", watch: "watch", likes: "likes" };
+  const field = fieldMap[metric] || "views";
+  const snaps = (typeof _readPerfSnapshots === "function") ? _readPerfSnapshots() : [];
+  // Nilai kumulatif "sekarang" sebagai fallback untuk bucket terakhir kalau
+  // snapshot hari ini belum ke-flush ke storage saat render.
+  const liveNow = (() => {
+    if (metric === "views")     return myVideos.reduce((s, v) => s + (Number(v.viewsNum) || 0), 0);
+    if (metric === "followers") return (typeof getUserFollowers === "function" && user?.username) ? getUserFollowers(user.username).length : (Array.isArray(state?.followers) ? state.followers.length : 0);
+    if (metric === "comments")  return myVideos.reduce((s, v) => s + ((state?.comments?.[v.id]?.length) || 0), 0);
+    if (metric === "watch")     return Math.round((typeof realWatchSecTotal === "function" ? realWatchSecTotal() : 0));
+    return 0;
+  })();
+
+  const values = buckets.map((b, i) => {
+    let v = _snapValueAt(snaps, b.end, field);
+    if (v == null && i === buckets.length - 1) v = liveNow; // bucket terakhir → live
+    return Number.isFinite(v) ? v : 0;
+  });
+  // Total ditampilkan = nilai kumulatif terakhir (atau live).
+  const total = values.length ? (values[values.length - 1] || liveNow || 0) : 0;
+  const allZero = values.every(v => !v);
+  return { labels, values, total, empty: allZero };
+}
+
+// 4b: period comparison — current-period total vs previous-period.
+// Untuk metrik kumulatif: growth = (akhir periode) − (awal periode).
+// videos: jumlah upload di periode. Return {curr, prev, deltaPct, hasPrev}.
+function statPeriodComparison(metric, range) {
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let curStart, curEnd, prevStart, prevEnd;
+  if (range === "monthly") {
+    curEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    curStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    prevEnd = curStart;
+    prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  } else if (range === "yearly") {
+    curEnd = new Date(now.getFullYear() + 1, 0, 1);
+    curStart = new Date(now.getFullYear(), 0, 1);
+    prevEnd = curStart;
+    prevStart = new Date(now.getFullYear() - 1, 0, 1);
+  } else {
+    const today = startOfDay(now);
+    curEnd = new Date(today); curEnd.setDate(curEnd.getDate() + 1);
+    curStart = new Date(today); curStart.setDate(curStart.getDate() - 6);
+    prevEnd = curStart;
+    prevStart = new Date(curStart); prevStart.setDate(prevStart.getDate() - 7);
   }
-  return { labels, values, total };
+
+  if (metric === "videos") {
+    const inRange = (a, b) => myVideos.filter(v => {
+      const raw = v.publishedAt || v.uploadedAt || v.ts;
+      if (!raw) return false;
+      const d = new Date(raw);
+      return !isNaN(d) && d >= a && d < b;
+    }).length;
+    const curr = inRange(curStart, curEnd);
+    const prev = inRange(prevStart, prevEnd);
+    // publishedAt itu real → prev valid kalau ada upload di salah satu periode.
+    const hasPrev = prev > 0 || curr > 0;
+    const deltaPct = prev > 0 ? ((curr - prev) / prev) * 100 : (curr > 0 ? 100 : 0);
+    return { curr, prev, deltaPct, hasPrev };
+  }
+
+  const fieldMap = { views: "views", followers: "followers", comments: "comments", watch: "watch", likes: "likes" };
+  const field = fieldMap[metric] || "views";
+  const snaps = (typeof _readPerfSnapshots === "function") ? _readPerfSnapshots() : [];
+  const valCurEnd  = _snapValueAt(snaps, curEnd, field);
+  const valCurStart = _snapValueAt(snaps, curStart, field);
+  const valPrevStart = _snapValueAt(snaps, prevStart, field);
+  // growth periode = endValue − startValue (butuh dua titik snapshot).
+  const curr = (valCurEnd != null && valCurStart != null) ? Math.max(0, valCurEnd - valCurStart) : null;
+  const prev = (valCurStart != null && valPrevStart != null) ? Math.max(0, valCurStart - valPrevStart) : null;
+  if (curr == null) return { curr: 0, prev: 0, deltaPct: 0, hasPrev: false };
+  if (prev == null) return { curr, prev: 0, deltaPct: 0, hasPrev: false };
+  const deltaPct = prev > 0 ? ((curr - prev) / prev) * 100 : (curr > 0 ? 100 : 0);
+  return { curr, prev, deltaPct, hasPrev: true };
 }
 
 // v602 (2026-05-28): Modern UI/UX redesign — Vercel/Linear/Stripe analytics
@@ -36972,7 +37506,8 @@ function drawMiniChart(metric) {
   const wrap = svg.parentElement;
   const card = wrap?.closest(".mini-chart-card");
   const data = generateChartData(metric, state.chartRange);
-  const hasData = data.total > 0;
+  // 4h/4i: REAL only — empty signal drives the existing empty-state, no fake.
+  const hasData = !data.empty && data.values.some(v => v > 0);
 
   // Modern card layout — find/create headline + delta elements
   const head = card?.querySelector(".mini-chart-head");
@@ -36996,21 +37531,28 @@ function drawMiniChart(metric) {
   }
   if (empty) empty.hidden = true;
 
-  // Compute delta: current period total vs previous period (last half vs first half)
-  const half = Math.floor(data.values.length / 2);
-  const prevSum = data.values.slice(0, half).reduce((s, v) => s + v, 0);
-  const currSum = data.values.slice(half).reduce((s, v) => s + v, 0);
-  let deltaPct = 0;
-  if (prevSum > 0) deltaPct = ((currSum - prevSum) / prevSum) * 100;
-  else if (currSum > 0) deltaPct = 100;
-  const deltaTrend = deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
+  // 4b: REAL period comparison (this period vs previous) dari snapshot. Kalau
+  // belum cukup history untuk "previous" → neutral "—" (honest, bukan fake).
+  const cmp = (typeof statPeriodComparison === "function")
+    ? statPeriodComparison(metric, state.chartRange)
+    : { deltaPct: 0, hasPrev: false };
+  const deltaPct = cmp.deltaPct || 0;
+  const deltaTrend = !cmp.hasPrev ? "flat" : deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
   const deltaSign = deltaPct > 0 ? "+" : "";
   const deltaArrow = deltaTrend === "up" ? "↑" : deltaTrend === "down" ? "↓" : "·";
 
-  if (bigEl) bigEl.textContent = (typeof fmtNum === "function" ? fmtNum(data.total) : String(data.total));
+  const bigText = metric === "watch"
+    ? (typeof hqsFormatWatchTime === "function" ? hqsFormatWatchTime(data.total) : String(data.total))
+    : (typeof fmtNum === "function" ? fmtNum(data.total) : String(data.total));
+  if (bigEl) bigEl.textContent = bigText;
   if (deltaEl) {
-    deltaEl.className = `mc-delta mc-delta-${deltaTrend}`;
-    deltaEl.innerHTML = `<i>${deltaArrow}</i> ${deltaSign}${deltaPct.toFixed(1)}% <small>vs sebelumnya</small>`;
+    if (!cmp.hasPrev) {
+      deltaEl.className = "mc-delta mc-delta-flat";
+      deltaEl.innerHTML = `<i>·</i> — <small>belum cukup data</small>`;
+    } else {
+      deltaEl.className = `mc-delta mc-delta-${deltaTrend}`;
+      deltaEl.innerHTML = `<i>${deltaArrow}</i> ${deltaSign}${deltaPct.toFixed(1)}% <small>vs periode lalu</small>`;
+    }
   }
 
   // === v603 (2026-05-28): Step Chart (stair-step path) ===
@@ -37163,21 +37705,32 @@ function drawChart() {
     }
   }
 
+  if (typeof _syncChartTabsActive === "function") _syncChartTabsActive();
   drawMiniChart("videos");
   drawMiniChart("views");
   drawMiniChart("followers");
   drawMiniChart("comments");
 }
 
-$$("#chartTabs button").forEach(b => {
-  b.addEventListener("click", () => {
-    $$("#chartTabs button").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    state.chartRange = b.dataset.range;
-    drawChart();
-  });
+// 4e/4j: UNIFIED period selector — satu segmented control Mingguan/Bulanan/
+// Tahunan (id="chartTabs", data-range=weekly|monthly|yearly). Broken #statsRange
+// dropdown + toast handler dihapus dari markup. Delegated supaya tahan re-render.
+// Persist pilihan di state.chartRange. Sinkronkan active class lalu redraw chart
+// + comparisons (drawChart memanggil drawMiniChart yang sudah hitung comparison).
+function _syncChartTabsActive() {
+  const r = state?.chartRange || "weekly";
+  document.querySelectorAll("#chartTabs button[data-range]").forEach(x =>
+    x.classList.toggle("active", x.dataset.range === r));
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("#chartTabs button[data-range]");
+  if (!b) return;
+  e.preventDefault();
+  if (typeof state === "object" && state) state.chartRange = b.dataset.range;
+  _syncChartTabsActive();
+  try { if (typeof saveState === "function") saveState(); } catch {}
+  if (typeof drawChart === "function") drawChart();
 });
-$("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.target.options[e.target.selectedIndex].text}</b>`));
 
 // Auto-redraw chart saat lebar container berubah (window resize, sidebar
 // collapse, dll) — viewBox dihitung dari container width jadi tanpa
@@ -37241,11 +37794,13 @@ function renderTopPerforming() {
     return (sec / 86400).toFixed(1) + "d";
   };
 
+  // 4g: REAL watch-time per video dari state.history (bukan estimasi *0.6).
+  const watchById = (typeof realWatchSecByVideo === "function") ? realWatchSecByVideo() : {};
   const enriched = state.myVideos.map(v => ({
     ...v,
     _views: v.viewsNum || 0,
     _likes: v.likes || 0,
-    _watch: (v.viewsNum || 0) * parseDur(v.duration) * 0.6,
+    _watch: watchById[v.id] || 0,
     _comments: (state.comments?.[v.id]?.length) || 0,
   }));
 
@@ -37275,14 +37830,211 @@ function renderTopPerforming() {
       ? topComments.map((v, i) => renderRow(v, i, fmtNum, "_comments")).join("") : empty;
   }
 
-  $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
+  // 4c: klik row → drill-down detail per-video (bukan langsung play).
+  $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => {
+    const vid = +c.dataset.vid;
+    if (typeof renderVideoStatDetail === "function") renderVideoStatDetail(vid);
+    else if (typeof openPlayer === "function") openPlayer(vid);
+  }));
+}
+
+// =====================================================================
+// 4c: VIDEO STAT DETAIL — drill-down modal per video. REAL data dari
+// playly-video-snapshot (per-tanggal views/likes/comments) + totals saat ini +
+// publish date + real watch-time video itu. Empty-state "data mulai terkumpul"
+// kalau snapshot belum cukup (baru mulai recording).
+// =====================================================================
+function _vsdFmtWatch(sec) {
+  if (typeof hqsFormatWatchTime === "function") return hqsFormatWatchTime(sec);
+  if (!sec || sec < 60) return Math.round(sec || 0) + " detik";
+  if (sec < 3600) return Math.round(sec / 60) + " menit";
+  return (sec / 3600).toFixed(1) + " jam";
+}
+// Build mini multi-line SVG dari series harian (3 metrik). Empty kalau < 2 titik.
+function _vsdBuildChart(series) {
+  // series: { dates:[], views:[], likes:[], comments:[] }
+  const n = series.dates.length;
+  if (n < 2) return null;
+  const W = 320, H = 110, PADX = 6, PADY = 8;
+  const metrics = [
+    { key: "views",    color: "#7d3640", label: "Views" },
+    { key: "likes",    color: "#BE9752", label: "Likes" },
+    { key: "comments", color: "#10b981", label: "Komentar" },
+  ];
+  const all = [].concat(series.views, series.likes, series.comments).map(Number).filter(Number.isFinite);
+  const max = Math.max(...all, 1);
+  const stepX = (W - PADX * 2) / Math.max(1, n - 1);
+  let paths = "";
+  metrics.forEach(m => {
+    const vals = series[m.key];
+    const pts = vals.map((v, i) => {
+      const x = PADX + i * stepX;
+      const y = H - PADY - ((Number(v) || 0) / max) * (H - PADY * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    paths += `<polyline points="${pts}" fill="none" stroke="${m.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  const legend = metrics.map(m => `<span class="vsd-leg"><i style="background:${m.color}"></i>${m.label}</span>`).join("");
+  return { svg: `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="vsd-chart">${paths}</svg>`, legend };
+}
+function renderVideoStatDetail(videoId) {
+  const modal = document.getElementById("videoStatDetail");
+  if (!modal) { if (typeof openPlayer === "function") openPlayer(videoId); return; }
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const v = myVids.find(x => x.id === videoId || x.id === +videoId);
+  if (!v) { modal.hidden = true; return; }
+
+  const views = Number(v.viewsNum) || 0;
+  const likes = Number(v.likes) || 0;
+  const comments = (state?.comments?.[v.id]?.length) || 0;
+  const watchById = (typeof realWatchSecByVideo === "function") ? realWatchSecByVideo() : {};
+  const watchSec = watchById[v.id] || 0;
+  const pub = v.publishedAt || v.uploadedAt || v.ts;
+  let pubStr = "—";
+  if (pub) { const d = new Date(pub); if (!isNaN(d)) pubStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }); }
+
+  // Build series dari per-video snapshot store (REAL, per tanggal).
+  const snaps = (typeof _readVideoSnapshots === "function") ? _readVideoSnapshots() : [];
+  const series = { dates: [], views: [], likes: [], comments: [] };
+  snaps.forEach(s => {
+    const rec = s?.v?.[v.id] || s?.v?.[String(v.id)];
+    if (!rec) return;
+    series.dates.push(s.date);
+    series.views.push(Number(rec.views) || 0);
+    series.likes.push(Number(rec.likes) || 0);
+    series.comments.push(Number(rec.comments) || 0);
+  });
+  const chart = _vsdBuildChart(series);
+
+  const titleEl = modal.querySelector("[data-vsd-title]");
+  const thumbEl = modal.querySelector("[data-vsd-thumb]");
+  const bodyEl  = modal.querySelector("[data-vsd-body]");
+  if (titleEl) titleEl.textContent = v.title || "Video";
+  if (thumbEl) thumbEl.innerHTML = v.thumb ? `<img src="${escapeHtml(v.thumb)}" alt=""/>` : "";
+
+  const totalsHtml = `
+    <div class="vsd-totals">
+      <div class="vsd-stat"><span class="vsd-stat-k">Views</span><b>${fmtNum(views)}</b></div>
+      <div class="vsd-stat"><span class="vsd-stat-k">Likes</span><b>${fmtNum(likes)}</b></div>
+      <div class="vsd-stat"><span class="vsd-stat-k">Komentar</span><b>${fmtNum(comments)}</b></div>
+      <div class="vsd-stat"><span class="vsd-stat-k">Watch-time</span><b>${watchSec > 0 ? escapeHtml(_vsdFmtWatch(watchSec)) : "—"}</b></div>
+    </div>
+    <p class="vsd-meta">Dipublikasikan: <b>${escapeHtml(pubStr)}</b></p>`;
+
+  const chartHtml = chart
+    ? `<div class="vsd-chart-wrap">${chart.svg}<div class="vsd-legend">${chart.legend}</div></div>`
+    : `<div class="vsd-chart-empty">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9 11l4 4 8-8"/><path d="M14 7h7v7"/></svg>
+         <p>Data mulai terkumpul</p>
+         <small>Grafik per-tanggal akan muncul setelah beberapa hari snapshot tercatat.</small>
+       </div>`;
+
+  if (bodyEl) bodyEl.innerHTML = totalsHtml + chartHtml;
+
+  // Tombol "Tonton video" → buka player.
+  const playBtn = modal.querySelector("[data-vsd-play]");
+  if (playBtn) playBtn.onclick = () => { modal.hidden = true; if (typeof openPlayer === "function") openPlayer(v.id); };
+
+  modal.hidden = false;
+}
+// Close wiring (idempoten — bind sekali).
+(function wireVideoStatDetailClose() {
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-vsd-close]")) {
+      const m = document.getElementById("videoStatDetail");
+      if (m) m.hidden = true;
+    }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      const m = document.getElementById("videoStatDetail");
+      if (m && !m.hidden) m.hidden = true;
+    }
+  });
+})();
+
+// =====================================================================
+// 4d: MILESTONE & PENCAPAIAN — growth journey. Tier per metrik dihitung dari
+// REAL totals + dates. Achieved = badge; next target = progress bar real.
+// =====================================================================
+function renderStatMilestones() {
+  const wrap = document.getElementById("statMilestones");
+  if (!wrap) return;
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const views = myVids.reduce((s, v) => s + (Number(v.viewsNum) || 0), 0);
+  const likes = myVids.reduce((s, v) => s + (Number(v.likes) || 0), 0);
+  const comments = myVids.reduce((s, v) => s + ((state?.comments?.[v.id]?.length) || 0), 0);
+  const videos = myVids.length;
+  const followers = (typeof getUserFollowers === "function" && user?.username)
+    ? getUserFollowers(user.username).length
+    : (Array.isArray(state?.followers) ? state.followers.length : 0);
+  const watchSec = (typeof realWatchSecTotal === "function") ? realWatchSecTotal() : 0;
+  const watchHours = watchSec / 3600;
+
+  const icon = {
+    views:     `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`,
+    followers: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>`,
+    videos:    `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/>`,
+    likes:     `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>`,
+    watch:     `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+  };
+  const defs = [
+    { key: "views",     label: "Views",      cur: views,      tiers: [100, 1000, 10000, 100000], fmt: fmtNum },
+    { key: "followers", label: "Followers",  cur: followers,  tiers: [10, 100, 1000, 10000],     fmt: fmtNum },
+    { key: "videos",    label: "Video",      cur: videos,     tiers: [1, 10, 50, 100],           fmt: (n) => String(n) },
+    { key: "likes",     label: "Likes",      cur: likes,      tiers: [10, 100, 1000],            fmt: fmtNum },
+    { key: "watch",     label: "Watch-time", cur: watchHours, tiers: [1, 10, 100],               fmt: (n) => (typeof hqsFormatWatchTime === "function" ? hqsFormatWatchTime(n * 3600) : n.toFixed(1) + " jam") },
+  ];
+
+  let achievedCount = 0, totalTiers = 0;
+  const cardsHtml = defs.map(d => {
+    totalTiers += d.tiers.length;
+    const achieved = d.tiers.filter(tt => d.cur >= tt);
+    achievedCount += achieved.length;
+    const next = d.tiers.find(tt => d.cur < tt) || null;
+    const prevBase = achieved.length ? d.tiers[achieved.length - 1] : 0;
+    let progPct = 100, progLabel = "Maksimal tercapai 🎉";
+    if (next != null) {
+      const span = next - prevBase || next;
+      progPct = Math.max(0, Math.min(100, ((d.cur - prevBase) / span) * 100));
+      progLabel = `${d.fmt(d.cur)} / ${d.fmt(next)}`;
+    }
+    const badges = d.tiers.map(tt => {
+      const ok = d.cur >= tt;
+      return `<span class="ms-badge ${ok ? "earned" : ""}" title="${d.label} ${d.fmt(tt)}">${d.fmt(tt)}</span>`;
+    }).join("");
+    return `
+      <div class="ms-card">
+        <div class="ms-card-head">
+          <span class="ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon[d.key]}</svg></span>
+          <div class="ms-card-title"><b>${d.label}</b><small>${d.fmt(d.cur)} saat ini</small></div>
+        </div>
+        <div class="ms-badges">${badges}</div>
+        <div class="ms-prog"><div class="ms-prog-bar" style="--w:${progPct.toFixed(1)}%"></div></div>
+        <div class="ms-prog-label">${next != null ? `Target berikutnya: ${progLabel}` : progLabel}</div>
+      </div>`;
+  }).join("");
+
+  const subEl = document.getElementById("statMilestonesSub");
+  if (subEl) {
+    subEl.textContent = achievedCount === 0
+      ? "Perjalanan kamu baru dimulai — unggah & bagikan untuk membuka pencapaian pertama."
+      : `${achievedCount} dari ${totalTiers} pencapaian terbuka. Terus tumbuh!`;
+  }
+  wrap.innerHTML = cardsHtml;
 }
 
 // ----------------------- ACTIVITY VIEW -----------------------
+// 10f: pagination. Entri lama TIDAK di-trim saat ditulis (tetap disimpan) —
+// pagination cuma membatasi berapa yang ditampilkan, "Lihat lebih" reveal sisanya.
+const activityState = { limit: 30 };
+const ACTIVITY_PAGE = 30;
+
 function renderActivityList() {
   const list = $("#activityList");
   if (!list) return;
-  const filtered = state.actFilter === "all" ? state.activities : state.activities.filter(a => a.type === state.actFilter);
+  const all = Array.isArray(state?.activities) ? state.activities : [];
+  const filtered = state.actFilter === "all" ? all : all.filter(a => a.type === state.actFilter);
   if (!filtered.length) {
     list.innerHTML = emptyHTML("📡", state.activities.length === 0 ? "Belum ada aktivitas" : "Tidak ada aktivitas di kategori ini",
       state.activities.length === 0 ? "Aktivitas akun seperti suka, follow, dan komentar akan muncul di sini." : "Coba ubah filter atau lihat semua.",
@@ -37311,21 +38063,53 @@ function renderActivityList() {
     return a.text || "";
   };
 
+  // 10f: tampilkan hanya sampai limit; sisanya di-reveal lewat "Lihat lebih".
+  if (!Number.isFinite(activityState.limit) || activityState.limit < ACTIVITY_PAGE) {
+    activityState.limit = ACTIVITY_PAGE;
+  }
+  const total = filtered.length;
+  const visible = filtered.slice(0, activityState.limit);
+  const remaining = Math.max(0, total - visible.length);
+
   // relTime(a.ts) hitung "just now / 5 min ago / 2 hr ago / 3 days ago" dari
   // ts. Fallback ke a.time string lama kalau ts belum ada (legacy entries).
-  list.innerHTML = filtered.map(a => `
+  let html = visible.map(a => `
     <div class="activity-item">
       <div class="act-icon ${a.type}">${a.icon}</div>
       <div class="act-text">${buildActText(a)}</div>
       <div class="act-time">${a.ts ? relTime(a.ts) : t("common.justnow")}</div>
     </div>
   `).join("");
+
+  if (remaining > 0) {
+    html += `<div class="activity-more-wrap">
+      <span class="activity-more-count">Menampilkan ${visible.length} dari ${total}</span>
+      <button type="button" id="activityMoreBtn">
+        <span>Lihat lebih (+${remaining})</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>`;
+  } else if (total > ACTIVITY_PAGE) {
+    // Semua sudah tampil (setelah di-expand) → kasih konteks hitungan jujur.
+    html += `<div class="activity-more-wrap"><span class="activity-more-count">Menampilkan ${total} dari ${total}</span></div>`;
+  }
+
+  list.innerHTML = html;
+
+  const moreBtn = document.getElementById("activityMoreBtn");
+  if (moreBtn) {
+    moreBtn.addEventListener("click", () => {
+      activityState.limit += ACTIVITY_PAGE;
+      renderActivityList();
+    });
+  }
 }
 $$("#activityFilters button").forEach(b => {
   b.addEventListener("click", () => {
     $$("#activityFilters button").forEach(x => x.classList.remove("active"));
     b.classList.add("active");
     state.actFilter = b.dataset.actFilter;
+    activityState.limit = ACTIVITY_PAGE; // 10f: reset pagination saat ganti filter
     renderActivityList();
   });
 });
@@ -37378,46 +38162,64 @@ const CATEGORIES = [
   { key: "travel",        emoji: "✈️", label: "Travel",      color: "#06b6d4" }
 ];
 
+// 2c (2026-06-02): chips kategori untuk feed Jelajahi. Klik chip → set
+// discoverCatFilter → renderFYP() (filter feed UTAMA #fypFeed). Chip "Semua"
+// menghapus filter. Hanya tampilkan kategori yang punya ≥1 video kreator lain
+// (memakai getFypVideos() basis-nya supaya konsisten dengan apa yang user lihat).
 function renderDiscoverCategories() {
   const grid = $("#discoverCategories");
   const card = $("#discoverCategoriesCard");
   if (!grid || !card) return;
-  const platform = getPlatformVideos();
-  if (!platform.length) {
+
+  // Basis hitung kategori = video yang BISA tampil di feed (kreator lain),
+  // mengabaikan filter kategori aktif supaya chip tidak hilang setelah dipilih.
+  const me = (user?.username || "").toLowerCase();
+  const base = (typeof allVideos === "function" ? allVideos() : [])
+    .filter(v => v && v.thumb && (v.creator || "").toLowerCase() !== me);
+
+  if (!base.length) {
     card.style.display = "none";
+    grid.innerHTML = "";
     return;
   }
-  card.style.display = "";
 
   // Hitung jumlah video per kategori
   const counts = {};
   CATEGORIES.forEach(c => counts[c.key] = 0);
-  platform.forEach(v => { if (counts[v.category] != null) counts[v.category]++; });
+  base.forEach(v => { if (counts[v.category] != null) counts[v.category]++; });
 
-  // Hanya tampilkan kategori yang punya minimal 1 video
+  // Hanya kategori yang punya minimal 1 video
   const visible = CATEGORIES.filter(c => counts[c.key] > 0);
-
   if (!visible.length) {
     card.style.display = "none";
+    grid.innerHTML = "";
     return;
   }
+  card.style.display = "";
 
-  grid.innerHTML = visible.map(c => `
-    <div class="cat-card" data-cat-filter="${c.key}" style="--cc:${c.color}">
-      <span>${c.emoji}</span><b>${c.label}</b><small>${counts[c.key]} video</small>
-    </div>
-  `).join("");
-  $$(".cat-card", grid).forEach(c => {
-    c.addEventListener("click", () => {
-      const cat = c.dataset.catFilter;
-      const meta = CATEGORIES.find(x => x.key === cat);
-      const filtered = platform.filter(v => v.category === cat);
-      const dvGrid = $("#discoverVideos");
-      if (!filtered.length) { toast(`Belum ada video di kategori <b>${meta?.label || cat}</b>`); return; }
-      dvGrid.innerHTML = filtered.map(videoCardHTML).join("");
-      bindVideoCards(dvGrid);
-      dvGrid.scrollIntoView({ behavior: "smooth", block: "center" });
-      toast(`📂 Kategori: <b>${meta?.emoji || ""} ${meta?.label || cat}</b> (${filtered.length} video)`);
+  // Reset filter kalau kategori aktif tidak lagi punya video (mis. video dihapus)
+  if (discoverCatFilter && !counts[discoverCatFilter]) discoverCatFilter = null;
+
+  const allActive = discoverCatFilter == null;
+  const chips = [
+    `<button type="button" class="cat-chip${allActive ? " active" : ""}" data-cat-filter="__all__">
+      <span class="cat-chip-emoji">✨</span><span class="cat-chip-label">Semua</span>
+    </button>`
+  ].concat(visible.map(c => {
+    const on = discoverCatFilter === c.key;
+    return `<button type="button" class="cat-chip${on ? " active" : ""}" data-cat-filter="${c.key}" style="--cc:${c.color}">
+      <span class="cat-chip-emoji">${c.emoji}</span><span class="cat-chip-label">${escapeHtml(c.label)}</span><span class="cat-chip-count">${counts[c.key]}</span>
+    </button>`;
+  }));
+  grid.innerHTML = chips.join("");
+
+  $$(".cat-chip", grid).forEach(chip => {
+    chip.addEventListener("click", () => {
+      const cat = chip.dataset.catFilter;
+      discoverCatFilter = (cat === "__all__") ? null : cat;
+      renderDiscoverCategories(); // refresh active state
+      renderFYP();                // filter feed utama
+      $("#fypFeed")?.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
 }
@@ -37464,6 +38266,18 @@ let fypTab = "foryou";
 let fypObserver = null;
 let fypTagFilter = null;  // null = no filter, string = filter by hashtag (without #)
 
+// 2a (2026-06-02): batas preview 10 detik per video di feed Jelajahi. Setelah
+// preview mencapai PREVIEW_LIMIT detik kumulatif, video di-pause + di-blur +
+// muncul overlay "Lanjut nonton" yang membuka full player. Gate PERSISTEN per
+// sesi: id video yang sudah kena gate disimpan di Set ini sehingga scroll
+// keluar/masuk tidak memberi 10 detik baru — card langsung tampil ter-blur.
+const FYP_PREVIEW_LIMIT = 10; // detik
+const fypGatedIds = new Set();
+// Akumulasi waktu tonton per video id (persist antar-recreate video element oleh
+// observer). Tanpa ini, scroll keluar→masuk akan reset hitungan dan user bisa
+// nonton >10 detik total tanpa kena gate. Map: videoId → detik kumulatif.
+const fypWatchedById = new Map();
+
 // Ekstrak semua hashtag dari teks (#word). Lowercase, unique.
 function extractHashtags(text) {
   if (!text) return [];
@@ -37488,6 +38302,7 @@ function videoMatchesTag(v, tag) {
 }
 
 let discoverQuery = "";
+let discoverCatFilter = null; // 2c: null = semua kategori; string key (CATEGORIES.key) = filter
 
 function getFypVideos() {
   // Discover hanya menampilkan video dari kreator LAIN — bukan video sendiri.
@@ -37496,6 +38311,10 @@ function getFypVideos() {
   let all = allVideos().filter(v => v.thumb && (v.creator || "").toLowerCase() !== me);
   if (fypTagFilter) {
     all = all.filter(v => videoMatchesTag(v, fypTagFilter));
+  }
+  // 2c: filter kategori — integrasi ke feed utama (#fypFeed) yang user lihat.
+  if (discoverCatFilter) {
+    all = all.filter(v => (v.category || "") === discoverCatFilter);
   }
   if (discoverQuery) {
     const q = discoverQuery.toLowerCase();
@@ -37685,6 +38504,15 @@ async function renderTrendingNews(listId, category = "top", opts = {}) {
     </${tag}>`;
   }).join("");
 
+  // 2e: saat OFFLINE (RSS gagal → curated fallback), tampilkan note JUJUR di
+  // atas list supaya user tahu item ini kurasi statis, BUKAN real-time. Plus
+  // retry button di bawah. Cache/live tidak perlu note.
+  const offlineNoteHtml = dataSource === "fallback"
+    ? `<div class="trending-offline-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg>
+        <span>Berita kurasi (offline) — bukan real-time. Koneksi ke sumber berita gagal.</span>
+      </div>`
+    : "";
   // Retry button — hanya muncul saat data dari fallback (RSS gagal). User bisa
   // coba refresh manual tanpa reload halaman. Cache hit tidak perlu retry.
   const retryHtml = dataSource === "fallback"
@@ -37693,7 +38521,7 @@ async function renderTrendingNews(listId, category = "top", opts = {}) {
         <span>Coba muat ulang</span>
       </button>`
     : "";
-  list.innerHTML = itemsHtml + retryHtml;
+  list.innerHTML = offlineNoteHtml + itemsHtml + retryHtml;
 }
 
 // Delegated handler — klik retry button di trending list → force refresh
@@ -37755,10 +38583,16 @@ function renderDiscoverNewVideos() {
   }
 }
 
-// Search input — filter feed real-time (debounced)
-(function initDiscoverSearch() {
+// Search input — filter feed real-time (debounced). Dulu IIFE (jalan sekali
+// saat load), tapi markup discover di-inject React → #discoverSearch belum ada
+// saat itu. Sekarang named function yang dipanggil tiap view discover dibuka.
+// Idempotent: bind handler hanya sekali per element (flag dataset).
+function initDiscoverSearch() {
   const input = $("#discoverSearch");
-  if (!input) return;
+  if (!input || input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+  // Sinkronkan nilai input dgn query aktif (kalau view dibuka ulang)
+  input.value = discoverQuery || "";
   let timer;
   input.addEventListener("input", () => {
     clearTimeout(timer);
@@ -37767,7 +38601,14 @@ function renderDiscoverNewVideos() {
       renderFYP();
     }, 200);
   });
-})();
+  // 6a: rekam riwayat VIDEO hanya saat search video di-commit (Enter),
+  // bukan tiap ketukan — biar tidak spam partial query.
+  input.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    const q = input.value.trim();
+    if (q) { try { addSearchHistoryVideo(q); } catch (_) {} }
+  });
+}
 
 // Tag filter pill bar di atas feed
 function syncFypTagBar() {
@@ -37907,6 +38748,8 @@ function bindFypCards(scope) {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const username = btn.dataset.fypCreator;
+      // 6a: klik hasil video feed saat ada query aktif = commit search video.
+      if (discoverQuery && discoverQuery.trim()) { try { addSearchHistoryVideo(discoverQuery.trim()); } catch (_) {} }
       if (username && typeof openUserProfile === "function") openUserProfile(username);
     });
   });
@@ -37929,6 +38772,18 @@ function bindFypCards(scope) {
     w.addEventListener("click", e => {
       if (e.target.closest("[data-fyp-mute]")) return;
       if (e.target.closest("[data-fyp-vol]")) return;
+      // 2a: klik tombol/area "Lanjut nonton" (gate) → buka full player langsung,
+      // tanpa double-tap detection. Juga: kalau card SUDAH ter-gate, klik di mana
+      // saja di area video = lanjut nonton (single-tap langsung, no 280ms delay).
+      const wid = +w.dataset.vid;
+      if (e.target.closest("[data-fyp-continue]") || isFypGated(wid)) {
+        if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+        if (Number.isFinite(wid) && typeof openPlayer === "function") {
+          pauseAllFypVideos?.();
+          openPlayer(wid);
+        }
+        return;
+      }
       // Double-tap detection: 2 clicks within 280ms = like + heart pop
       if (tapTimer) {
         clearTimeout(tapTimer);
@@ -38144,10 +38999,52 @@ function toggleFypPlay(wrap) {
   }
 }
 
+// 2a: render state ter-gate pada sebuah .fyp-video-wrap — blur + overlay
+// "Lanjut nonton" yang membuka full player. Null-safe; idempotent (kalau
+// overlay sudah ada tidak dobel). Dipanggil saat video mencapai 10 detik
+// ATAU saat card ter-gate di-render ulang oleh observer (scroll balik).
+function applyFypGate(wrap) {
+  if (!wrap) return;
+  const id = +wrap.dataset.vid;
+  if (Number.isFinite(id)) fypGatedIds.add(id);
+  // Pause + buang video element supaya tidak lanjut play di belakang blur.
+  const video = wrap.querySelector("video");
+  if (video) {
+    try { video.pause(); } catch {}
+    try { video.removeAttribute("src"); video.load(); } catch {}
+    video.remove();
+  }
+  wrap.classList.add("fyp-gated");
+  wrap.classList.remove("playing");
+  wrap.classList.add("paused");
+  // Overlay "Lanjut nonton" — sekali saja
+  if (!wrap.querySelector(".fyp-gate-overlay")) {
+    const overlay = document.createElement("div");
+    overlay.className = "fyp-gate-overlay";
+    overlay.innerHTML =
+      '<button type="button" class="fyp-gate-btn" data-fyp-continue>' +
+        '<span class="fyp-gate-ico">▶</span>' +
+        '<span class="fyp-gate-label">Lanjut nonton</span>' +
+        '<span class="fyp-gate-sub">Preview 10 detik selesai</span>' +
+      '</button>';
+    wrap.appendChild(overlay);
+  }
+}
+
+// 2a: cek apakah video ini sudah ter-gate sebelumnya (sesi ini). Dipakai
+// observer supaya scroll balik ke card yang sudah lewat 10 detik tidak
+// memutar ulang dari awal — langsung tampil ter-blur.
+function isFypGated(id) {
+  return fypGatedIds.has(+id);
+}
+
 async function createFypVideo(wrap) {
   const id = +wrap.dataset.vid;
   const v = findVideo(id);
   if (!v) return null;
+  // 2a: kalau video ini sudah lewat 10 detik di sesi ini → jangan buat ulang
+  // video element, cukup tampilkan state ter-gate (blur + overlay).
+  if (isFypGated(id)) { applyFypGate(wrap); return null; }
   const SAMPLE_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const src = (await resolveVideoSource(v).catch(() => null)) || SAMPLE_URL;
 
@@ -38180,6 +39077,30 @@ async function createFypVideo(wrap) {
   });
   video.addEventListener("play", () => { wrap.classList.add("playing"); wrap.classList.remove("paused"); });
   video.addEventListener("pause", () => { wrap.classList.add("paused"); wrap.classList.remove("playing"); });
+
+  // 2a: 10-DETIK PREVIEW GATE. Lacak waktu tonton KUMULATIF (bukan currentTime,
+  // karena user bisa seek) memakai delta antar timeupdate saat sedang play.
+  // Di ~10 detik → pause + blur + overlay "Lanjut nonton" via applyFypGate.
+  // Timer cleanup: tidak ada interval terpisah (pakai event timeupdate video),
+  // jadi saat observer destroy <video> (removeAttribute+remove) listener ikut
+  // hilang bersama element — tidak perlu clearInterval manual.
+  let fypLastTime = null;    // currentTime pada timeupdate sebelumnya
+  video.addEventListener("timeupdate", () => {
+    if (isFypGated(id)) return;
+    const t = video.currentTime;
+    if (fypLastTime != null) {
+      const delta = t - fypLastTime;
+      // Hanya hitung maju normal (0 < delta < 1.5s) — abaikan loncatan akibat seek.
+      if (delta > 0 && delta < 1.5) {
+        const acc = (fypWatchedById.get(id) || 0) + delta;
+        fypWatchedById.set(id, acc);
+      }
+    }
+    fypLastTime = t;
+    if ((fypWatchedById.get(id) || 0) >= FYP_PREVIEW_LIMIT) {
+      applyFypGate(wrap);
+    }
+  });
   // Sync wrap aspect-ratio dengan video saat metadata loaded — eliminates letterbox
   // sehingga slider/controls tidak appear di area kosong di luar video frame.
   video.addEventListener("loadedmetadata", () => {
@@ -38565,10 +39486,23 @@ function openDownloadOptionsModal(v) {
     const action = opt.dataset.dlOpt;
     opt.disabled = true;
     opt.style.opacity = "0.5";
+    // 8a: record an HONEST entry in state.downloaded so it shows up in the
+    // Library "Unduhan" tab — but ONLY after the operation actually succeeds.
+    const recordDownload = (kind) => {
+      if (!v?.id) return;
+      if (!Array.isArray(state.downloaded)) state.downloaded = [];
+      // Keep both kinds if a video is saved to file AND offline: dedupe per kind.
+      state.downloaded = state.downloaded.filter(d => !(d.videoId === v.id && (d.kind || "dashboard") === kind));
+      state.downloaded.unshift({ videoId: v.id, ts: Date.now(), kind });
+      if (typeof saveState === "function") saveState();
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+      if (typeof renderDownloadedList === "function") renderDownloadedList();
+    };
     try {
       const file = await getShareableVideoFile(v.id, v);
       if (!file) {
-        toast("⚠️ Video tidak tersedia di device ini — coba sambil online dulu", "warning");
+        // CORS-blocked fetch / no local blob — be HONEST: nothing was saved.
+        toast("⚠️ Tidak bisa menyimpan video (dibatasi server). Coba tonton dulu sambil online.", "warning");
         modal.remove();
         return;
       }
@@ -38582,15 +39516,19 @@ function openDownloadOptionsModal(v) {
         a.remove();
         setTimeout(() => URL.revokeObjectURL(objUrl), 60000);
         toast(`💾 <b>${escapeHtml(v.title)}</b> tersimpan ke folder Downloads`, "success");
+        recordDownload("file");
       } else if (action === "app") {
+        // saveVideoBlob persists to IndexedDB (throws on quota/IDB error).
         await saveVideoBlob(v.id, file);
         toast(`📱 <b>${escapeHtml(v.title)}</b> tersimpan di aplikasi — bisa diputar offline`, "success");
         if (typeof refreshStorageUsage === "function") refreshStorageUsage();
+        recordDownload("dashboard");
       }
       if (typeof incrementShareCount === "function") incrementShareCount(v.id);
     } catch (err) {
       console.warn("[download]", err);
-      toast("❌ Gagal download video", "error");
+      // Don't claim success on failure — no entry recorded.
+      toast("❌ Gagal menyimpan video", "error");
     }
     modal.remove();
   });
@@ -38825,6 +39763,10 @@ function setupFypObserver(feed) {
       if (!wrap) return;
       const ratio = entry.intersectionRatio;
       if (ratio > 0.6) {
+        // 2a: video sudah lewat 10 detik → tampilkan state ter-gate (blur +
+        // "Lanjut nonton"), JANGAN beri preview baru / autoplay ulang.
+        const wid = +wrap.dataset.vid;
+        if (isFypGated(wid)) { applyFypGate(wrap); return; }
         // Active — play (autoplay pref)
         const autoplayOn = getPref("display.autoplay", true);
         let video = wrap.querySelector("video");
@@ -38876,7 +39818,53 @@ function escapeHtml(s) {
 
 // Pagination state untuk Search User — increment per klik "more >" (30 user
 // per halaman). Reset ke 30 setiap user mengetik query baru.
-const peopleState = { limit: 30 };
+const peopleState = { limit: 30, sort: "name" }; // sort: name | newest | followers (6c)
+
+// 6e (2026-06-02): match query terhadap name + username + bio + socials/website.
+// Null-safe, case-insensitive. q sudah lowercased dari pemanggil.
+function _peopleNameUserMatch(a, q) {
+  return (a.name || "").toLowerCase().includes(q) ||
+         (a.username || "").toLowerCase().includes(q);
+}
+function _peopleSocialMatch(a, q) {
+  const fields = [a.bio, a.website, a.twitter, a.instagram, a.github, a.tiktok];
+  for (const f of fields) {
+    if (f && String(f).toLowerCase().includes(q)) return true;
+  }
+  return false;
+}
+function _peopleMatchesQuery(a, q) {
+  if (!q) return true;
+  return _peopleNameUserMatch(a, q) || _peopleSocialMatch(a, q);
+}
+// True kalau account match query HANYA lewat bio/socials (bukan name/username) —
+// dipakai untuk tag "cocok di bio" di card.
+function _peopleBioOnlyMatch(a, q) {
+  if (!q) return false;
+  return !_peopleNameUserMatch(a, q) && _peopleSocialMatch(a, q);
+}
+// 6d (2026-06-02): video teratas creator untuk preview di card. Baca
+// myVideos dari playly-state-{username} (atau in-memory kalau itu user login).
+// Pilih: kalau ada views, ambil yang views tertinggi; else index 0 (terbaru).
+// Null-safe — return null kalau tidak ada video.
+function _peopleTopVideo(username) {
+  if (!username) return null;
+  let vids = [];
+  try {
+    if (user && user.username === username) {
+      vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+    } else {
+      const s = JSON.parse(localStorage.getItem(`playly-state-${username}`));
+      vids = Array.isArray(s?.myVideos) ? s.myVideos : [];
+    }
+  } catch (_) { return null; }
+  if (!vids.length) return null;
+  let top = vids[0]; // default: terbaru (myVideos di-unshift saat upload)
+  for (const v of vids) {
+    if ((v?.viewsNum || 0) > (top?.viewsNum || 0)) top = v;
+  }
+  return top || null;
+}
 
 function renderPeople() {
   const grid = $("#peopleGrid");
@@ -38914,13 +39902,42 @@ function renderPeople() {
   // - following = akun yang DI-FOLLOW oleh user (ada di
   //   state.followingCreators saya).
   const myUsername = user?.username || "";
+  const myUsernameLc = myUsername.toLowerCase();
   const myFollowing = new Set(Array.isArray(state?.followingCreators) ? state.followingCreators : []);
   const followingAccounts = allAccounts.filter(a => a.username && myFollowing.has(a.username));
-  const followersAccounts = allAccounts.filter(a => {
-    if (!a.username || !myUsername) return false;
+
+  // 6f (2026-06-02): SINGLE-PASS precompute social graph maps. Sebelumnya
+  // tiap account dibaca berkali-kali (followers-tab filter, per-card
+  // "follows you", per-card follower count) → N+1 JSON.parse berulang.
+  // Sekarang: 1x baca playly-state-{username} per account, reuse hasilnya.
+  //   followingMap: username(lc) → Set(usernames lc yang dia follow)
+  //   followerCountMap: username(lc) → jumlah follower akun itu
+  const followingMap = new Map();
+  const followerCountMap = new Map();
+  allAccounts.forEach(a => {
+    const uname = a.username;
+    if (!uname) return;
+    const ulc = uname.toLowerCase();
+    let following = [];
+    let followers = [];
     try {
-      return getUserFollowing(a.username).includes(myUsername);
-    } catch (_) { return false; }
+      if (user && user.username === uname) {
+        // akun yang lagi login → pakai state in-memory (paling fresh)
+        following = Array.isArray(state?.followingCreators) ? state.followingCreators : [];
+        followers = Array.isArray(state?.followers) ? state.followers : [];
+      } else {
+        const s = JSON.parse(localStorage.getItem(`playly-state-${uname}`));
+        following = Array.isArray(s?.followingCreators) ? s.followingCreators : [];
+        followers = Array.isArray(s?.followers) ? s.followers : [];
+      }
+    } catch (_) {}
+    followingMap.set(ulc, new Set(following.map(x => String(x).toLowerCase())));
+    followerCountMap.set(ulc, followers.length);
+  });
+  // followers = akun yang following-set-nya mengandung username saya.
+  const followersAccounts = !myUsernameLc ? [] : allAccounts.filter(a => {
+    const set = a.username && followingMap.get(a.username.toLowerCase());
+    return set ? set.has(myUsernameLc) : false;
   });
   // Update counter di tabs
   const setT = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
@@ -38932,13 +39949,25 @@ function renderPeople() {
   if (activeTab === "followers")      pool = followersAccounts;
   else if (activeTab === "following") pool = followingAccounts;
   else                                pool = allAccounts; // "all"
+  // 6c (2026-06-02): sort mode dari peopleState.sort (kontrol di header).
+  const sortMode = peopleState.sort || "name";
+  const regAt = a => Number(a?.registeredAt) || (a?.joinedAt ? Date.parse(a.joinedAt) : 0) || 0;
   const accounts = pool
-    .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
+    .filter(a => _peopleMatchesQuery(a, q))
     .sort((a, b) => {
-      // Sort: admin di atas saat mode "all" (admin viewer scenario)
+      // Sort: admin di atas saat mode "all" (admin viewer scenario) — selalu,
+      // independen dari sort mode (audit/koordinasi).
       if (activeTab === "all" && isAdminViewer) {
         if (a.role === "admin" && b.role !== "admin") return -1;
         if (a.role !== "admin" && b.role === "admin") return 1;
+      }
+      if (sortMode === "newest") {
+        return regAt(b) - regAt(a) || (a.name || "").localeCompare(b.name || "");
+      }
+      if (sortMode === "followers") {
+        const fa = a.username ? (followerCountMap.get(a.username.toLowerCase()) || 0) : 0;
+        const fb = b.username ? (followerCountMap.get(b.username.toLowerCase()) || 0) : 0;
+        return fb - fa || (a.name || "").localeCompare(b.name || "");
       }
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -38983,8 +40012,31 @@ function renderPeople() {
     const isPremium = !isAdmin && a.tier === "premium";
     const handle = isAdmin ? (isSuperAdminAcc ? "Super Admin" : "Administrator") : `@${escapeHtml(a.username)}`;
     const isFollowing = state.followingCreators.includes(a.username);
-    const theyFollowMe = !isAdmin && !!myUsername && getUserFollowing(a.username).includes(myUsername);
-    const followerCount = getUserFollowers(a.username).length;
+    // 6f: pakai precomputed maps — no per-card localStorage re-read.
+    const aFollowSet = a.username ? followingMap.get(a.username.toLowerCase()) : null;
+    const theyFollowMe = !isAdmin && !!myUsernameLc && !!aFollowSet && aFollowSet.has(myUsernameLc);
+    const followerCount = a.username ? (followerCountMap.get(a.username.toLowerCase()) || 0) : 0;
+    // 6e: tag "cocok di bio" kalau match HANYA lewat bio/socials.
+    const bioOnly = q ? _peopleBioOnlyMatch(a, q) : false;
+    // 6d: preview video teratas creator (null-safe — render nothing kalau kosong).
+    const topVid = (!isAdmin && a.username) ? _peopleTopVideo(a.username) : null;
+    let previewHTML = "";
+    if (topVid) {
+      const vTitle = escapeHtml(topVid.title || "(tanpa judul)");
+      const vThumb = topVid.thumb || topVid.thumbnail || "";
+      const vViews = typeof fmtNum === "function" ? fmtNum(topVid.viewsNum || 0) : (topVid.viewsNum || 0);
+      const vTs = topVid.createdAt || (typeof topVid.id === "number" && topVid.id > 1e12 ? topVid.id : (topVid.publishedAt ? Date.parse(topVid.publishedAt) : 0));
+      const vWhen = vTs && typeof relTime === "function" ? relTime(vTs) : "";
+      const meta = [`${vViews} views`, vWhen].filter(Boolean).join(" • ");
+      previewHTML = `
+        <div class="people-preview" title="${vTitle}">
+          <div class="people-preview-thumb">${vThumb ? `<img src="${escapeHtml(vThumb)}" alt="" loading="lazy"/>` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>'}</div>
+          <div class="people-preview-meta">
+            <span class="people-preview-title">${vTitle}</span>
+            <span class="people-preview-sub">${escapeHtml(meta)}</span>
+          </div>
+        </div>`;
+    }
     // Tombol aksi:
     //   - User biasa: Follow + Pesan
     //   - Backup admin (admin cadangan): Pesan + Email + Bug (3 button → has-3-actions)
@@ -39024,8 +40076,9 @@ function renderPeople() {
       <div class="${cardClasses}" data-people-open="${escapeHtml(a.username)}">
         <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true">★</i>' : ''}</div>
         <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator">★ Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
-        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}</div>
+        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}${bioOnly ? ' <span class="people-bio-tag" title="Cocok di bio / profil">cocok di bio</span>' : ''}</div>
         ${a.bio ? `<p class="people-bio">${escapeHtml(a.bio)}</p>` : ""}
+        ${previewHTML}
         <div class="people-actions">${actions}</div>
       </div>
     `;
@@ -39072,6 +40125,9 @@ function renderPeople() {
   $$("[data-people-open]", grid).forEach(c => {
     c.addEventListener("click", e => {
       if (e.target.closest("button")) return;
+      // 6a: klik hasil = commit search → rekam query (kalau ada).
+      const cq = ($("#peopleSearch")?.value || "").trim();
+      if (cq) { try { addSearchHistoryUser(cq); } catch (_) {} }
       openUserProfile(c.dataset.peopleOpen);
     });
   });
@@ -39123,10 +40179,156 @@ function startChatWithUser(username) {
 $("#peopleSearch")?.addEventListener("input", () => {
   peopleState.limit = 30; // reset pagination saat user ngetik search baru
   renderPeople();
+  // 6b autocomplete suggestions (debounced di dalam helper)
+  _peopleSuggestInput();
+});
+// 6a/6b: keyboard. Arrow up/down → navigasi suggestion. Enter → kalau ada
+// suggestion ter-highlight, pilih itu; else commit search (rekam riwayat USER).
+$("#peopleSearch")?.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (_peopleSuggestKeyNav(e.key)) { e.preventDefault(); return; }
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (_peopleSuggestSelectActive()) return; // pilih suggestion ter-highlight
+    const q = e.target.value.trim();
+    if (q) { try { addSearchHistoryUser(q); } catch (_) {} }
+    _peopleSuggestHide();
+  } else if (e.key === "Escape") {
+    _peopleSuggestHide();
+  }
+});
+$("#peopleSearch")?.addEventListener("blur", () => {
+  // delay supaya klik row sempat ke-handle sebelum dropdown ditutup
+  setTimeout(_peopleSuggestHide, 150);
 });
 $("#peopleMoreBtn")?.addEventListener("click", () => {
   peopleState.limit += 30;
   renderPeople();
+});
+
+// 6c (2026-06-02): sort control di header Pencarian. Segmented buttons.
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-people-sort]");
+  if (!btn) return;
+  const mode = btn.dataset.peopleSort;
+  if (!mode || peopleState.sort === mode) return;
+  peopleState.sort = mode;
+  document.querySelectorAll("[data-people-sort]").forEach(b =>
+    b.classList.toggle("active", b === btn));
+  renderPeople();
+});
+
+// ----------------------- 6b: PEOPLE SEARCH AUTOCOMPLETE -----------------------
+// Dropdown suggestion di bawah #peopleSearch. Reuse _gsSearchCreators(query)
+// untuk data (match username/name, exclude admin, top 4). Themed seperti
+// #searchSuggestions. Debounced. Hide on Escape/blur/empty.
+let _peopleSuggestTimer = null;
+let _peopleSuggestItems = [];   // current creator accounts
+let _peopleSuggestActive = -1;  // index ter-highlight (keyboard nav)
+
+function _peopleSuggestEl() { return document.getElementById("peopleSuggest"); }
+
+function _peopleSuggestHide() {
+  const drop = _peopleSuggestEl();
+  if (drop) { drop.hidden = true; drop.classList.remove("show"); drop.innerHTML = ""; }
+  _peopleSuggestItems = [];
+  _peopleSuggestActive = -1;
+  const inp = document.getElementById("peopleSearch");
+  if (inp) inp.setAttribute("aria-expanded", "false");
+}
+
+function _peopleSuggestInput() {
+  if (_peopleSuggestTimer) clearTimeout(_peopleSuggestTimer);
+  const inp = document.getElementById("peopleSearch");
+  const q = (inp?.value || "").trim();
+  if (q.length < 2) { _peopleSuggestHide(); return; }
+  _peopleSuggestTimer = setTimeout(() => _peopleSuggestRun(q), 160);
+}
+
+function _peopleSuggestRun(q) {
+  const drop = _peopleSuggestEl();
+  const inp = document.getElementById("peopleSearch");
+  if (!drop || !inp) return;
+  if ((inp.value || "").trim() !== q) return; // query berubah saat debounce
+  let creators = [];
+  try { creators = (typeof _gsSearchCreators === "function" ? _gsSearchCreators(q) : []) || []; } catch (_) { creators = []; }
+  // exclude diri sendiri
+  const myUname = (user?.username || "").toLowerCase();
+  creators = creators.filter(a => String(a.username || "").toLowerCase() !== myUname);
+  _peopleSuggestItems = creators;
+  _peopleSuggestActive = -1;
+  if (!creators.length) { _peopleSuggestHide(); return; }
+  const rows = creators.map((a, i) => {
+    const name = a.name || a.username || "user";
+    const init = String(name)[0]?.toUpperCase() || "U";
+    const av = a.avatar
+      ? `<img src="${escapeHtml(a.avatar)}" alt="" loading="lazy"/>`
+      : `<span>${escapeHtml(init)}</span>`;
+    return `<button type="button" class="ps-item" role="option" data-ps-user="${escapeHtml(a.username || "")}" data-ps-idx="${i}">
+      <span class="ps-avatar">${av}</span>
+      <span class="ps-info">
+        <strong>${escapeHtml(name)}</strong>
+        <small>@${escapeHtml(a.username || "")}</small>
+      </span>
+    </button>`;
+  }).join("");
+  drop.innerHTML = rows;
+  drop.hidden = false;
+  drop.classList.add("show");
+  inp.setAttribute("aria-expanded", "true");
+}
+
+function _peopleSuggestSetActive(idx) {
+  const drop = _peopleSuggestEl();
+  if (!drop) return;
+  const items = drop.querySelectorAll(".ps-item");
+  if (!items.length) return;
+  _peopleSuggestActive = (idx + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle("active", i === _peopleSuggestActive));
+  items[_peopleSuggestActive]?.scrollIntoView({ block: "nearest" });
+}
+
+// return true kalau navigasi ditangani (dropdown terbuka), supaya caller preventDefault.
+function _peopleSuggestKeyNav(key) {
+  const drop = _peopleSuggestEl();
+  if (!drop || drop.hidden || !_peopleSuggestItems.length) return false;
+  if (key === "ArrowDown") { _peopleSuggestSetActive(_peopleSuggestActive + 1); return true; }
+  if (key === "ArrowUp")   { _peopleSuggestSetActive(_peopleSuggestActive - 1); return true; }
+  return false;
+}
+
+// Pilih suggestion ter-highlight (Enter). return true kalau ada yang dipilih.
+function _peopleSuggestSelectActive() {
+  if (_peopleSuggestActive < 0 || !_peopleSuggestItems[_peopleSuggestActive]) return false;
+  _peopleSuggestPick(_peopleSuggestItems[_peopleSuggestActive]);
+  return true;
+}
+
+// Klik / pilih sebuah creator row → isi input + render + rekam (6a) + buka profil.
+function _peopleSuggestPick(acc) {
+  if (!acc) return;
+  const inp = document.getElementById("peopleSearch");
+  const uname = acc.username || "";
+  if (inp) { inp.value = acc.name || uname; peopleState.limit = 30; renderPeople(); }
+  try { addSearchHistoryUser(acc.name || uname); } catch (_) {}
+  _peopleSuggestHide();
+  if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+}
+
+// Delegated click pada suggestion row.
+document.addEventListener("mousedown", e => {
+  // mousedown (bukan click) supaya jalan sebelum input blur menutup dropdown.
+  const row = e.target.closest("#peopleSuggest .ps-item");
+  if (!row) return;
+  e.preventDefault();
+  const idx = parseInt(row.dataset.psIdx, 10);
+  const acc = Number.isNaN(idx) ? null : _peopleSuggestItems[idx];
+  if (acc) _peopleSuggestPick(acc);
+});
+// Klik di luar search wrap → tutup dropdown.
+document.addEventListener("click", e => {
+  if (!e.target.closest(".people-search-wrap")) _peopleSuggestHide();
 });
 
 // ----------------------- MESSAGES VIEW -----------------------
@@ -39185,8 +40387,17 @@ function renderDmList() {
 
   const allMsgs = state.messages || [];
   const q = ($("#msgSearch")?.value || "").toLowerCase().trim();
+  // 5b: cocokkan query ke name, preview, DAN isi tiap pesan di m.history[*].text.
+  // Tandai thread yang hanya cocok lewat body (bukan name/preview) supaya bisa
+  // tampil hint "cocok di pesan". Cek body lewat helper supaya tetap efisien
+  // (short-circuit some()).
+  const matchBody = m => Array.isArray(m.history) &&
+    m.history.some(h => h && typeof h.text === "string" && h.text.toLowerCase().includes(q));
   const filterByQ = arr => q
-    ? arr.filter(m => (m.name || "").toLowerCase().includes(q) || (m.preview || "").toLowerCase().includes(q))
+    ? arr.filter(m =>
+        (m.name || "").toLowerCase().includes(q) ||
+        (m.preview || "").toLowerCase().includes(q) ||
+        matchBody(m))
     : arr;
 
   // Sync filter tab visual
@@ -39298,6 +40509,10 @@ function renderDmList() {
     const preview = lastMsg
       ? (lastMsg.from === "me" ? "Kamu: " : "") + (lastMsg.text || "[pesan]")
       : (m.preview || "Start a conversation...");
+    // 5b: hint kalau query cuma cocok di isi pesan (bukan name/preview)
+    const nameOrPrevMatch = q && ((m.name || "").toLowerCase().includes(q) || (m.preview || "").toLowerCase().includes(q));
+    const bodyOnlyMatch = q && !nameOrPrevMatch && matchBody(m);
+    const matchHint = bodyOnlyMatch ? '<span class="dm-thread-bodymatch">🔎 cocok di pesan</span>' : '';
     return `
       <div class="dm-thread ${isActive ? 'is-active' : ''} ${m.unread ? 'is-unread' : ''} ${m.isAdmin ? 'is-admin' : ''}" data-dm-thread="${idx}">
         <div class="avatar"><span>${escapeHtml(m.init || "U")}</span>${m.online ? '<i class="status"></i>' : ''}</div>
@@ -39307,6 +40522,7 @@ function renderDmList() {
             <span class="dm-thread-time">${timeLabel}</span>
           </div>
           <div class="dm-thread-preview">${escapeHtml(String(preview).slice(0, 80))}${String(preview).length > 80 ? '…' : ''}</div>
+          ${matchHint}
         </div>
         ${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}
       </div>
@@ -39319,6 +40535,11 @@ function renderDmList() {
       openDmChat(idx);
     });
   });
+
+  // 5g: jaga badge unread sidebar selalu sinkron dgn list yang baru di-render.
+  if (typeof updateDmBadges === "function") updateDmBadges();
+  // 5k: refleksikan status sync terakhir saat list di-render.
+  if (typeof dmRenderSyncStatus === "function") dmRenderSyncStatus();
 }
 
 // Buka chat thread di panel kanan
@@ -39328,10 +40549,11 @@ function openDmChat(idx) {
   dmState.openIdx = idx;
   state.chatOpen = idx;          // backward-compat dengan sendChat()
 
-  // Mark as read
+  // Mark as read — HANYA saat thread benar-benar dibuka (5g).
   if (m.unread) {
     m.unread = false;
     saveState();
+    if (typeof updateDmBadges === "function") updateDmBadges();
   }
 
   const empty = document.getElementById("dmChatEmpty");
@@ -39357,6 +40579,26 @@ function openDmChat(idx) {
   // Tombol "Terima" muncul HANYA kalau thread ini = Permintaan
   const acceptBtn = document.getElementById("dmChatAccept");
   if (acceptBtn) acceptBtn.hidden = !dmIsRequest(m);
+
+  // 5j: broadcast READ-ONLY di sisi user — sembunyikan reply box + tampilkan
+  // catatan. User tidak bisa membalas pengumuman broadcast admin.
+  const inputWrap = active ? active.querySelector(".dm-chat-input") : null;
+  const isBroadcastThread = !!m.isBroadcast;
+  if (inputWrap) {
+    inputWrap.style.display = isBroadcastThread ? "none" : "";
+  }
+  let roNote = active ? active.querySelector(".dm-chat-readonly-note") : null;
+  if (isBroadcastThread) {
+    if (!roNote && active) {
+      roNote = document.createElement("div");
+      roNote.className = "dm-chat-readonly-note";
+      roNote.innerHTML = '📢 Ini pengumuman broadcast dari admin — kamu tidak bisa membalas.';
+      if (inputWrap) inputWrap.insertAdjacentElement("afterend", roNote);
+      else active.appendChild(roNote);
+    }
+  } else if (roNote) {
+    roNote.remove();
+  }
 
   // Render history
   renderDmChatBody();
@@ -39398,6 +40640,11 @@ function renderDmChatBody() {
       const ts = h.ts ? chatRelTime(h.ts) : (h.time || "");
       const fromMe = h.from === "me";
       const adminTag = h.isAdmin ? '<span class="bubble-admin-tag">ADMIN</span>' : '';
+      const editedTag = h.edited ? '<span class="dm-bubble-edited" title="Pesan ini sudah diedit">diedit</span>' : '';
+      const reactions = renderBubbleReactions(h, hIdx);
+      const reactBtn = `<button type="button" class="dm-bubble-react-btn" data-dm-react-btn="${hIdx}" title="Beri reaksi" aria-label="Beri reaksi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </button>`;
       if (h.videoId) {
         return `
           <div class="dm-bubble ${fromMe ? 'me' : 'them'}" data-dm-msg-idx="${hIdx}">
@@ -39413,7 +40660,8 @@ function renderDmChatBody() {
               </div>
             </button>
             ${h.text ? `<p class="bubble-video-note">${escapeHtml(h.text)}</p>` : ''}
-            <small class="dm-bubble-time">${escapeHtml(ts)}</small>
+            <small class="dm-bubble-time">${escapeHtml(ts)}${editedTag}</small>
+            ${reactBtn}${reactions}
           </div>
         `;
       }
@@ -39421,11 +40669,14 @@ function renderDmChatBody() {
         <div class="dm-bubble ${fromMe ? 'me' : 'them'} ${h.isAdmin ? 'is-admin' : ''}" data-dm-msg-idx="${hIdx}">
           ${adminTag}
           <div class="dm-bubble-text">${escapeHtml(h.text || "")}</div>
-          <small class="dm-bubble-time">${escapeHtml(ts)}</small>
+          <small class="dm-bubble-time">${escapeHtml(ts)}${editedTag}</small>
           ${fromMe ? `<button type="button" class="dm-bubble-del" data-dm-bubble-del="${hIdx}" title="Hapus pesan" aria-label="Delete">×</button>` : ''}
+          ${reactBtn}${reactions}
         </div>
       `;
     }).join("");
+    // Typing indicator placeholder (5c) — diisi/dikosongkan oleh dmRefreshTyping()
+    body.insertAdjacentHTML("beforeend", '<div class="dm-typing" id="dmTypingIndicator" hidden><span class="dm-typing-dots"><i></i><i></i><i></i></span></div>');
     body.scrollTop = body.scrollHeight;
   }
 
@@ -39443,12 +40694,134 @@ function renderDmChatBody() {
       const hIdx = +b.dataset.dmBubbleDel;
       const cm = state.messages?.[dmState.openIdx];
       if (!cm || !Array.isArray(cm.history)) return;
-      cm.history.splice(hIdx, 1);
-      saveState();
-      renderDmChatBody();
-      renderDmList();
+      confirmDeleteMessageForMe(dmState.openIdx, hIdx);
     });
   });
+  // Bind reaction picker button (5d)
+  body.querySelectorAll("[data-dm-react-btn]").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      showReactionPicker(b, +b.dataset.dmReactBtn);
+    });
+  });
+  // Bind toggle existing reaction chip (5d)
+  body.querySelectorAll("[data-dm-react-toggle]").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      const chip = e.currentTarget;
+      toggleBubbleReaction(+chip.dataset.dmMsg, chip.dataset.dmReactToggle);
+    });
+  });
+  // Wire per-bubble context menu (5d/5e): right-click (desktop) + long-press (mobile)
+  body.querySelectorAll("[data-dm-msg-idx]").forEach(bub => {
+    const hIdx = +bub.dataset.dmMsgIdx;
+    bub.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      showMessageContextMenu(bub, dmState.openIdx, hIdx);
+    });
+    let lpTimer = null;
+    bub.addEventListener("touchstart", () => {
+      lpTimer = setTimeout(() => showMessageContextMenu(bub, dmState.openIdx, hIdx), 500);
+    }, { passive: true });
+    const clearLp = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+    bub.addEventListener("touchend", clearLp);
+    bub.addEventListener("touchmove", clearLp);
+    bub.addEventListener("touchcancel", clearLp);
+  });
+
+  // Refresh typing indicator state on each render (5c)
+  if (typeof dmRefreshTyping === "function") dmRefreshTyping();
+}
+
+// ===== 5d: Emoji reactions =================================================
+// Reaksi disimpan di message object: h.reactions = { "👍": ["alice","bob"], ... }
+// Render chip per emoji + count, highlight kalau current user sudah react.
+var DM_REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢"];
+
+function renderBubbleReactions(h, hIdx) {
+  if (!h || !h.reactions || typeof h.reactions !== "object") return "";
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  const chips = [];
+  Object.keys(h.reactions).forEach(emo => {
+    const users = Array.isArray(h.reactions[emo]) ? h.reactions[emo] : [];
+    if (!users.length) return;
+    const mine = users.includes(me) ? " is-mine" : "";
+    const who = users.map(u => "@" + u).join(", ");
+    chips.push(`<button type="button" class="dm-react-chip${mine}" data-dm-react-toggle="${escapeHtml(emo)}" data-dm-msg="${hIdx}" title="${escapeHtml(who)}">${emo}<span>${users.length}</span></button>`);
+  });
+  return chips.length ? `<div class="dm-react-row">${chips.join("")}</div>` : "";
+}
+
+// Small floating emoji palette anchored to a bubble's react button.
+function showReactionPicker(anchorBtn, msgIdx) {
+  document.getElementById("__dmReactPalette")?.remove();
+  const pal = document.createElement("div");
+  pal.id = "__dmReactPalette";
+  pal.className = "dm-react-palette";
+  pal.innerHTML = DM_REACTION_EMOJIS.map(e =>
+    `<button type="button" data-emo="${e}">${e}</button>`).join("");
+  document.body.appendChild(pal);
+  const r = anchorBtn.getBoundingClientRect();
+  const pw = pal.offsetWidth, ph = pal.offsetHeight;
+  let top = r.top - ph - 6;
+  if (top < 8) top = r.bottom + 6;
+  let left = r.left + r.width / 2 - pw / 2;
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  pal.style.top = top + "px";
+  pal.style.left = left + "px";
+  pal.querySelectorAll("[data-emo]").forEach(b => {
+    b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      toggleBubbleReaction(msgIdx, b.dataset.emo);
+      pal.remove();
+    });
+  });
+  const onDoc = ev => {
+    if (ev.target.closest("#__dmReactPalette")) return;
+    pal.remove();
+    document.removeEventListener("click", onDoc, true);
+  };
+  setTimeout(() => document.addEventListener("click", onDoc, true), 0);
+}
+
+// Toggle a reaction by current user on a message; null-safe; sync ke partner.
+function toggleBubbleReaction(msgIdx, emoji) {
+  const tIdx = dmState.openIdx;
+  const m = state.messages?.[tIdx];
+  const h = m?.history?.[msgIdx];
+  if (!h || !emoji) return;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!me) return;
+  if (!h.reactions || typeof h.reactions !== "object") h.reactions = {};
+  let arr = Array.isArray(h.reactions[emoji]) ? h.reactions[emoji] : [];
+  const i = arr.indexOf(me);
+  if (i >= 0) { arr.splice(i, 1); } else { arr.push(me); }
+  if (arr.length) h.reactions[emoji] = arr; else delete h.reactions[emoji];
+  saveState();
+  renderDmChatBody();
+  // Sync ke salinan partner (cross-device via playly-state-{partner})
+  syncReactionToPartner(m, h);
+}
+
+// Update reaksi pada salinan thread di sisi partner (match by ts).
+function syncReactionToPartner(m, h) {
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me || !h?.ts) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || !Array.isArray(ps.messages)) return;
+  const pt = ps.messages.find(t => t.name === me);
+  if (!pt || !Array.isArray(pt.history)) return;
+  const ph = pt.history.find(x => x.ts === h.ts);
+  if (!ph) return;
+  ph.reactions = h.reactions ? JSON.parse(JSON.stringify(h.reactions)) : {};
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch (e) { console.warn("[dm] sync reaction gagal:", e); }
 }
 
 function closeDmChat() {
@@ -39462,17 +40835,9 @@ function closeDmChat() {
   document.body.classList.remove("dm-show-chat");
   renderDmList();
 }
-// Mobile: klik header chat (back arrow ::before) → tutup chat & balik ke list
-document.addEventListener("click", e => {
-  const header = e.target.closest(".dm-chat-header");
-  if (!header) return;
-  if (window.innerWidth > 768) return;
-  // Klik tepat di area kiri (back arrow ::before) — di-detect via offsetX
-  const rect = header.getBoundingClientRect();
-  if (e.clientX - rect.left < 40) {
-    closeDmChat();
-  }
-});
+// 5f: back ke list mobile pakai tombol #dmChatBack yang jelas (di-handle oleh
+// listener #dmChatBack di bawah). Hack lama "klik 40px kiri header" dihapus —
+// itu janky & tidak ada afordansi visual.
 
 // Tab handlers
 document.addEventListener("click", e => {
@@ -39559,6 +40924,9 @@ function sendChat() {
   m.ts = sentTs;
   m.archived = false; // sender unarchive otomatis kalau lagi kirim
   input.value = "";
+  // 5c: berhenti mengetik begitu pesan terkirim
+  if (typeof _dmTypingClearTimer !== "undefined" && _dmTypingClearTimer) { clearTimeout(_dmTypingClearTimer); _dmTypingClearTimer = null; }
+  if (typeof dmSetTypingToPartner === "function") dmSetTypingToPartner(false);
   saveState();
   renderDmChatBody();
   renderDmList();
@@ -39568,6 +40936,308 @@ function sendChat() {
     deliverChatToRecipient(m.name, txt, senderIsAdmin);
   }
 }
+
+// ===== 5a: Lampirkan / kirim video di DM ===================================
+// Buka picker video milik user sendiri (state.myVideos), pilih satu → kirim
+// lewat sendChat path yang sama supaya bubble video render di kedua sisi.
+function openDmVideoPicker() {
+  if (dmState.openIdx == null) {
+    toast("⚠️ Buka percakapan dulu sebelum kirim video", "warning");
+    return;
+  }
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  let modal = document.getElementById("dmVideoPickerModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "dmVideoPickerModal";
+    modal.className = "modal dm-vidpick-modal";
+    modal.innerHTML = `
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-panel dm-vidpick-panel">
+        <button class="modal-close" data-close aria-label="Tutup">✕</button>
+        <h3>🎬 Kirim Video</h3>
+        <p class="confirm-desc">Pilih salah satu video kamu untuk dikirim di chat ini.</p>
+        <input type="search" id="dmVidPickSearch" class="dm-vidpick-search" placeholder="Cari video..." autocomplete="off"/>
+        <div class="dm-vidpick-list" id="dmVidPickList"></div>
+        <label class="dm-vidpick-caption">
+          <span>Caption (opsional)</span>
+          <input type="text" id="dmVidPickCaption" maxlength="200" placeholder="Tulis caption..."/>
+        </label>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => {
+      if (e.target.closest("[data-close]")) closeDmVideoPicker();
+      const row = e.target.closest("[data-dm-pick-vid]");
+      if (row) {
+        const id = row.dataset.dmPickVid;
+        const v = (Array.isArray(state?.myVideos) ? state.myVideos : [])
+          .find(x => String(x.id) === String(id));
+        if (v) {
+          const cap = document.getElementById("dmVidPickCaption")?.value.trim() || "";
+          sendVideoInDm(v, cap);
+          closeDmVideoPicker();
+        }
+      }
+    });
+    modal.addEventListener("input", e => {
+      if (e.target?.id === "dmVidPickSearch") renderDmVideoPickerList(e.target.value);
+    });
+  }
+  const cap = document.getElementById("dmVidPickCaption");
+  if (cap) cap.value = "";
+  const srch = document.getElementById("dmVidPickSearch");
+  if (srch) srch.value = "";
+  renderDmVideoPickerList("");
+  modal.classList.add("show");
+  setTimeout(() => document.getElementById("dmVidPickSearch")?.focus(), 80);
+}
+
+function closeDmVideoPicker() {
+  document.getElementById("dmVideoPickerModal")?.classList.remove("show");
+}
+
+function renderDmVideoPickerList(query) {
+  const listEl = document.getElementById("dmVidPickList");
+  if (!listEl) return;
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const q = (query || "").trim().toLowerCase();
+  const filtered = q ? vids.filter(v => (v.title || "").toLowerCase().includes(q)) : vids;
+  if (!vids.length) {
+    listEl.innerHTML = `<div class="dm-vidpick-empty">Kamu belum punya video untuk dikirim.</div>`;
+    return;
+  }
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="dm-vidpick-empty">Tidak ada video cocok "${escapeHtml(query)}".</div>`;
+    return;
+  }
+  listEl.innerHTML = filtered.map(v => `
+    <button type="button" class="dm-vidpick-row" data-dm-pick-vid="${escapeHtml(String(v.id))}">
+      <span class="dm-vidpick-thumb">
+        ${v.thumb ? `<img src="${escapeHtml(v.thumb)}" alt=""/>` : '<span class="dm-vidpick-noimg">🎬</span>'}
+        ${v.duration ? `<span class="dm-vidpick-dur">${escapeHtml(v.duration)}</span>` : ''}
+      </span>
+      <span class="dm-vidpick-meta">
+        <strong>${escapeHtml(v.title || "Video")}</strong>
+        <small>@${escapeHtml(v.creator || user?.username || "")}</small>
+      </span>
+    </button>`).join("");
+}
+
+// Kirim video lewat path yang sama dgn sendChat (push history + deliver).
+function sendVideoInDm(video, caption) {
+  const idx = dmState.openIdx;
+  const m = state.messages?.[idx];
+  if (!m || !video) return;
+  const senderIsAdmin = user?.role === "admin";
+  const sentTs = Date.now();
+  m.history = m.history || [];
+  m.history.push({
+    from: "me", text: caption || "", time: "baru", ts: sentTs, isAdmin: senderIsAdmin,
+    videoId: video.id,
+    videoThumb: video.thumb || "",
+    videoDuration: video.duration || "",
+    videoTitle: video.title || "Video",
+    videoCreator: video.creator || user?.username || ""
+  });
+  m.preview = "Kamu: 🎬 " + (video.title || "Video");
+  m.time = "baru";
+  m.ts = sentTs;
+  m.archived = false;
+  if (typeof dmSetTypingToPartner === "function") dmSetTypingToPartner(false);
+  saveState();
+  renderDmChatBody();
+  renderDmList();
+  // Antar ke inbox penerima — bawa metadata video lewat thread copy
+  if (m.name && m.name !== user?.username) {
+    deliverVideoToRecipient(m.name, video, caption || "", senderIsAdmin);
+  }
+}
+
+// Antar bubble video ke inbox penerima (tulis ke playly-state-{recipient}).
+function deliverVideoToRecipient(recipientUsername, video, caption, fromAdmin) {
+  if (!fromAdmin && user?.role !== "admin") {
+    const allowDM = getOtherUserPrefByUsername(recipientUsername, "privacy.allowDM", true);
+    if (!allowDM) {
+      const recFollowing = getUserFollowing(recipientUsername);
+      const senderName = user?.username || "";
+      if (!recFollowing.includes(senderName)) {
+        toast(`⚠️ @${recipientUsername} membatasi DM`, "warning");
+        return;
+      }
+    }
+  }
+  const key = `playly-state-${recipientUsername}`;
+  let s;
+  try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
+  if (!s) s = { messages: [] };
+  if (!Array.isArray(s.messages)) s.messages = [];
+  const senderName = user?.username || "user";
+  const senderInit = (user?.name || senderName).slice(0, 2).toUpperCase();
+  const deliverTs = Date.now();
+  let thread = s.messages.find(m => m.name === senderName);
+  if (!thread) {
+    thread = { name: senderName, init: senderInit, isAdmin: !!fromAdmin, preview: "", time: "baru", ts: deliverTs, unread: false, online: true, history: [] };
+    s.messages.unshift(thread);
+  } else {
+    thread.isAdmin = !!fromAdmin;
+    s.messages = [thread, ...s.messages.filter(t => t !== thread)];
+  }
+  thread.history.push({
+    from: "them", text: caption || "", time: "baru", ts: deliverTs, isAdmin: !!fromAdmin,
+    videoId: video.id,
+    videoThumb: video.thumb || "",
+    videoDuration: video.duration || "",
+    videoTitle: video.title || "Video",
+    videoCreator: video.creator || senderName
+  });
+  thread.preview = "🎬 " + (video.title || "Video");
+  thread.time = "baru";
+  thread.ts = deliverTs;
+  thread.unread = true;
+  localStorage.setItem(key, JSON.stringify(s));
+  try {
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch {}
+}
+
+// Klik tombol attach video (delegasi)
+document.addEventListener("click", e => {
+  if (e.target.closest("#dmChatAttachVideo")) {
+    e.preventDefault();
+    openDmVideoPicker();
+  }
+  // 5j: tombol "Tulis Broadcast" di tab Broadcast (admin-only)
+  if (e.target.closest("#dmComposeBroadcastBtn")) {
+    e.preventDefault();
+    if (user?.role === "admin" && typeof openAdminSendMsg === "function") {
+      openAdminSendMsg({ broadcast: true });
+    }
+  }
+});
+
+// ===== 5c: Indikator "sedang mengetik" (cross-tab/device, REAL only) =======
+// Mekanisme: saat user mengetik di #dmChatField, kita tulis flag {by,ts} ke
+// playly-state-{partner}._typing. Partner yg sedang buka chat dgn kita akan
+// membaca flag itu (fresh < 6s) lewat storage / playly:cloud-applied event &
+// menampilkan dots. Kalau tidak ada sinyal nyata → tidak menampilkan apa-apa
+// (TIDAK pernah disimulasikan).
+var DM_TYPING_FRESH_MS = 6000;
+var _dmTypingClearTimer = null;
+
+function dmSetTypingToPartner(active) {
+  const m = state.messages?.[dmState.openIdx];
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me) return;
+  // Jangan tulis flag mengetik ke thread admin/broadcast (read-only).
+  if (m.isAdmin || m.isBroadcast) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || typeof ps !== "object") return; // hanya kalau partner punya state nyata
+  if (active) {
+    ps._typing = { by: me, ts: Date.now() };
+  } else if (ps._typing && ps._typing.by === me) {
+    delete ps._typing;
+  } else {
+    return;
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch {}
+}
+
+// Baca flag mengetik dari state SAYA (partner menulis ke sini) → tampilkan.
+function dmRefreshTyping() {
+  const ind = document.getElementById("dmTypingIndicator");
+  if (!ind) return;
+  const m = state.messages?.[dmState.openIdx];
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  let show = false;
+  if (m && me) {
+    // Re-baca state SAYA dari localStorage supaya flag terbaru dari partner kebaca.
+    let mine;
+    try { mine = JSON.parse(localStorage.getItem(`playly-state-${me}`) || "{}"); } catch { mine = {}; }
+    const tp = mine && mine._typing;
+    if (tp && tp.by === m.name && (Date.now() - (tp.ts || 0)) < DM_TYPING_FRESH_MS) {
+      show = true;
+    }
+  }
+  ind.hidden = !show;
+  if (show) {
+    const body = document.getElementById("dmChatBody");
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+}
+
+// Input handler: tandai mengetik (debounced clear), kirim flag ke partner.
+document.addEventListener("input", e => {
+  if (e.target?.id !== "dmChatField") return;
+  dmSetTypingToPartner(true);
+  if (_dmTypingClearTimer) clearTimeout(_dmTypingClearTimer);
+  _dmTypingClearTimer = setTimeout(() => dmSetTypingToPartner(false), 3000);
+});
+// Blur → langsung clear flag mengetik.
+document.addEventListener("blur", e => {
+  if (e.target?.id !== "dmChatField") return;
+  if (_dmTypingClearTimer) { clearTimeout(_dmTypingClearTimer); _dmTypingClearTimer = null; }
+  dmSetTypingToPartner(false);
+}, true);
+
+// Saat state partner berubah (cross-tab/device), refresh indikator + body.
+window.addEventListener("playly:cloud-applied", () => {
+  if (dmState.openIdx != null) dmRefreshTyping();
+  // 5g: pesan baru bisa masuk lewat cloud-applied → segarkan badge unread.
+  if (typeof updateDmBadges === "function") updateDmBadges();
+});
+window.addEventListener("storage", e => {
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (me && e.key === `playly-state-${me}` && dmState.openIdx != null) dmRefreshTyping();
+});
+// Auto-expire indikator (kalau partner berhenti tanpa kirim clear).
+setInterval(() => { if (dmState.openIdx != null) dmRefreshTyping(); }, 2000);
+
+// ===== 5k: Indikator status sync yang JUJUR =================================
+// Cerminkan hasil NYATA push state ke Supabase bridge:
+//   "synced"  → push terakhir sukses (200 ok)        → "Tersinkron ✓"
+//   "local"   → push 401/gagal, fallback localStorage → "Tersimpan lokal"
+//   "pending" → belum ada push (belum ada perubahan)  → "Menunggu sinkronisasi…"
+// TIDAK pernah menampilkan "synced" tanpa sinyal sukses nyata dari bridge.
+// Tidak memperbaiki auth backend — hanya menyuarakan kebenarannya.
+function dmRenderSyncStatus(detail) {
+  const el = document.getElementById("dmSyncStatus");
+  if (!el) return;
+  let st = detail;
+  if (!st) {
+    try { st = window.supabaseAuthBridge?.getSyncStatus?.(); } catch {}
+  }
+  // Kalau bridge tidak ada sama sekali → memang tidak ada cloud sync.
+  if (!window.supabaseAuthBridge) {
+    el.className = "dm-sync-status is-local";
+    el.querySelector(".dm-sync-label").textContent = "Tersimpan lokal";
+    el.title = "Bridge cloud tidak tersedia — data hanya di perangkat ini.";
+    return;
+  }
+  const state2 = (st && st.state) || "pending";
+  const label = el.querySelector(".dm-sync-label");
+  el.classList.remove("is-synced", "is-local", "is-pending");
+  if (state2 === "synced") {
+    el.classList.add("is-synced");
+    if (label) label.textContent = "Tersinkron ✓";
+    el.title = "Perubahan terakhir berhasil dikirim ke cloud.";
+  } else if (state2 === "local") {
+    el.classList.add("is-local");
+    if (label) label.textContent = "Tersimpan lokal";
+    el.title = "Cloud sync gagal (mis. sesi belum terautentikasi / 401) — "
+      + "data tersimpan di perangkat ini saja" + (st && st.reason ? " (" + st.reason + ")" : "") + ".";
+  } else {
+    el.classList.add("is-pending");
+    if (label) label.textContent = "Menunggu sinkronisasi…";
+    el.title = "Belum ada perubahan yang dikirim ke cloud sejak halaman dibuka.";
+  }
+}
+window.addEventListener("playly:sync-status", e => dmRenderSyncStatus(e.detail));
 
 // Search input → re-render thread list
 document.addEventListener("input", e => {
@@ -39611,8 +41281,15 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
   menu.className = "msg-ctx-menu";
 
   const items = [];
+  // Reaksi cepat (5d) — baris emoji di atas menu.
+  items.push(`<div class="msg-ctx-reactions">${DM_REACTION_EMOJIS.map(e =>
+    `<button type="button" class="msg-ctx-react" data-react="${e}">${e}</button>`).join("")}</div>`);
   if (h.text) {
     items.push(`<button type="button" data-act="copy">📋 Salin teks</button>`);
+  }
+  // Edit (5e) — hanya pesan teks milik sendiri (bukan video bubble).
+  if (isOwn && h.text && !h.videoId) {
+    items.push(`<button type="button" data-act="edit">✏️ Edit pesan</button>`);
   }
   items.push(`<button type="button" data-act="del-me">🗑️ Hapus pesan untuk saya</button>`);
   if (isOwn) {
@@ -39643,6 +41320,10 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
     } catch { toast("❌ Gagal salin", "error"); }
     closeMessageContextMenu();
   });
+  menu.querySelector("[data-act='edit']")?.addEventListener("click", () => {
+    closeMessageContextMenu();
+    startEditMessage(threadIdx, msgIdx);
+  });
   menu.querySelector("[data-act='del-me']")?.addEventListener("click", () => {
     closeMessageContextMenu();
     confirmDeleteMessageForMe(threadIdx, msgIdx);
@@ -39650,6 +41331,15 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
   menu.querySelector("[data-act='del-all']")?.addEventListener("click", () => {
     closeMessageContextMenu();
     confirmDeleteMessageForEveryone(threadIdx, msgIdx);
+  });
+  // Quick reactions row (5d)
+  menu.querySelectorAll(".msg-ctx-react").forEach(b => {
+    b.addEventListener("click", () => {
+      closeMessageContextMenu();
+      if (threadIdx === dmState.openIdx) {
+        toggleBubbleReaction(msgIdx, b.dataset.react);
+      }
+    });
   });
 
   // Tutup saat klik di luar / tekan Esc
@@ -39683,6 +41373,79 @@ function confirmDeleteMessageForEveryone(threadIdx, msgIdx) {
     btnText: "Hapus untuk semuanya", btnClass: "danger",
     onConfirm: () => deleteMessageForEveryone(threadIdx, msgIdx)
   });
+}
+
+// ===== 5e: Edit pesan sendiri =============================================
+// Inline edit: ganti bubble text dgn textarea + Simpan/Batal. Update h.text,
+// set h.edited=true, render label "diedit", sync ke salinan partner.
+function startEditMessage(threadIdx, msgIdx) {
+  const m = state.messages?.[threadIdx];
+  const h = m?.history?.[msgIdx];
+  if (!h || h.from !== "me" || !h.text || h.videoId) return;
+  const body = document.getElementById("dmChatBody");
+  const bubble = body?.querySelector(`.dm-bubble[data-dm-msg-idx="${msgIdx}"]`);
+  const textEl = bubble?.querySelector(".dm-bubble-text");
+  if (!textEl) return;
+  if (bubble.querySelector(".dm-edit-box")) return; // sudah dalam mode edit
+  const original = h.text;
+  const editor = document.createElement("div");
+  editor.className = "dm-edit-box";
+  editor.innerHTML = `
+    <textarea class="dm-edit-field" rows="2"></textarea>
+    <div class="dm-edit-actions">
+      <button type="button" class="dm-edit-cancel">Batal</button>
+      <button type="button" class="dm-edit-save">Simpan</button>
+    </div>`;
+  textEl.style.display = "none";
+  textEl.insertAdjacentElement("afterend", editor);
+  const field = editor.querySelector(".dm-edit-field");
+  field.value = original;
+  field.focus();
+  field.setSelectionRange(original.length, original.length);
+  const cancel = () => { editor.remove(); textEl.style.display = ""; };
+  const save = () => {
+    const next = field.value.trim();
+    if (!next) { cancel(); return; }
+    if (next !== original) {
+      h.text = next;
+      h.edited = true;
+      const last = m.history[m.history.length - 1];
+      if (last === h) m.preview = (h.from === "me" ? "Kamu: " : "") + next;
+      saveState();
+      syncEditToPartner(m, h, next);
+      renderDmList();
+    }
+    renderDmChatBody();
+  };
+  editor.querySelector(".dm-edit-cancel").addEventListener("click", cancel);
+  editor.querySelector(".dm-edit-save").addEventListener("click", save);
+  field.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save(); }
+    if (e.key === "Escape") { e.preventDefault(); cancel(); }
+  });
+}
+
+// Sinkron hasil edit ke salinan thread di sisi partner (match by ts).
+function syncEditToPartner(m, h, newText) {
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me || !h?.ts) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || !Array.isArray(ps.messages)) return;
+  const pt = ps.messages.find(t => t.name === me);
+  if (!pt || !Array.isArray(pt.history)) return;
+  const ph = pt.history.find(x => x.ts === h.ts);
+  if (!ph) return;
+  ph.text = newText;
+  ph.edited = true;
+  const plast = pt.history[pt.history.length - 1];
+  if (plast === ph) pt.preview = newText;
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch (e) { console.warn("[dm] sync edit gagal:", e); }
 }
 
 function deleteMessageForMe(threadIdx, msgIdx) {
@@ -39970,6 +41733,29 @@ document.addEventListener("click", function (e) {
 function renderDmBroadcast() {
   var wrap = document.getElementById("dmBroadcastList");
   if (!wrap) return;
+  // 5j: entri "Compose Broadcast" admin-only di atas feed broadcast.
+  var bar = document.getElementById("dmAdminBroadcastBar");
+  var isAdmin = (typeof user !== "undefined" && user && user.role === "admin");
+  if (isAdmin) {
+    var recCount = 0;
+    try {
+      recCount = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
+        .filter(function (a) { return a && a.email && !(typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(a.email)); }).length;
+    } catch (e) {}
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "dm-admin-bc-bar";
+      bar.id = "dmAdminBroadcastBar";
+      wrap.parentNode.insertBefore(bar, wrap);
+    }
+    bar.innerHTML =
+      '<div class="dm-admin-bc-text"><strong>📢 Compose Broadcast</strong>' +
+      '<small>Kirim pengumuman ke semua user terdaftar (' + recCount + ' penerima). Read-only di sisi user.</small></div>' +
+      '<button type="button" class="btn primary small" id="dmComposeBroadcastBtn">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg> Tulis Broadcast</button>';
+  } else if (bar) {
+    bar.remove();
+  }
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var bc = all.filter(function (m) { return m.isAdmin || m.isBroadcast; });
   var items = [];
@@ -41202,6 +42988,76 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
       if (typeof toast === "function") toast("⚠️ Video editor belum siap", "warning");
     }
   });
+
+  // Ikon tombol "Edit Video" diganti dari kamera-video → PENCIL (edit), karena
+  // ikon kamera tidak mewakili aksi EDIT. Per request user 2026-06-03. Markup
+  // tak disentuh — innerHTML svg di-set di sini (tombol overlay statis, sekali set).
+  (function () {
+    var editBtn = document.getElementById("dropzoneEditVideoBtn");
+    var svg = editBtn && editBtn.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.innerHTML = '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>';
+    }
+  })();
+})();
+
+// =====================================================================
+// CUSTOM TOOLTIP utk tombol overlay media (Edit/Ganti/Hapus pada Video,
+// Frame, Thumbnail). Tooltip NATIVE (atribut title) berwarna PUTIH & tak bisa
+// di-style. Per request user 2026-06-03 → diganti tooltip custom dark wine +
+// teks cream (.upf-tip). title dipindah ke data-tip lalu DIHAPUS supaya
+// tooltip native tidak muncul; aria-label tetap utk a11y. Markup tak disentuh.
+// =====================================================================
+(function customMediaTooltips() {
+  var btns = document.querySelectorAll(".dz-pro-overlay .dz-pro-action");
+  if (!btns.length) return;
+  var tip = document.createElement("div");
+  tip.className = "upf-tip";
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  function show(btn) {
+    var label = btn.dataset.tip || btn.getAttribute("aria-label") || "";
+    if (!label) return;
+    tip.textContent = label;
+    var tr = tip.getBoundingClientRect();
+    var r = btn.getBoundingClientRect();
+    var left = r.left + r.width / 2 - tr.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+    var top = r.bottom + 8;
+    if (top + tr.height > window.innerHeight - 8) top = r.top - tr.height - 8; // flip ke atas bila mepet bawah
+    tip.style.left = Math.round(left) + "px";
+    tip.style.top = Math.round(top) + "px";
+    tip.classList.add("is-show");
+  }
+  function hide() { tip.classList.remove("is-show"); }
+  btns.forEach(function (btn) {
+    if (btn.hasAttribute("title")) {
+      btn.dataset.tip = btn.getAttribute("title");
+      btn.removeAttribute("title"); // cegah tooltip native putih
+    }
+    btn.addEventListener("mouseenter", function () { show(btn); });
+    btn.addEventListener("focus", function () { show(btn); });
+    btn.addEventListener("mouseleave", hide);
+    btn.addEventListener("blur", hide);
+    btn.addEventListener("click", hide);
+  });
+})();
+
+// =====================================================================
+// Pindahkan blok progres/status upload (#uploadProgress) — dulu di kolom KIRI
+// (bawah preview video, jauh dari tombol), padahal tombol "Unggah Sekarang"
+// ada di action bar kolom KANAN bawah. Saat klik unggah, progres muncul jauh
+// dari tombol → membingungkan. Reparent #uploadProgress ke TEPAT DI ATAS
+// .upload-actions-bar (kolom kanan) supaya feedback muncul dekat aksinya.
+// Per request user 2026-06-03. Markup tak disentuh (reparent via JS).
+// =====================================================================
+(function relocateUploadProgress() {
+  var prog = document.getElementById("uploadProgress");
+  var bar = document.querySelector(".upload-actions-bar");
+  if (prog && bar && bar.parentElement && prog !== bar.previousElementSibling) {
+    bar.parentElement.insertBefore(prog, bar);
+  }
 })();
 
 // =====================================================================
@@ -41928,7 +43784,26 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   const hidden  = document.getElementById("upCategory");
   if (!wrap || !trigger || !pop || !labelEl || !hidden) return;
 
-  const defaultLabel = "— pilih kategori —";
+  // Opsi "Tanpa kategori" (value kosong) di paling ATAS — supaya user bisa BATAL
+  // memilih kategori (kategori bersifat opsional). Per request user 2026-06-03.
+  // Markup tidak disentuh: opsi di-inject via JS. Ikon = lingkaran + garis miring
+  // (no/ban) pakai class .picon (CSS: fill:none; stroke:currentColor).
+  if (!pop.querySelector('.ucs-option[data-value=""]')) {
+    const none = document.createElement("div");
+    none.className = "ucs-option ucs-option-none";
+    none.setAttribute("role", "option");
+    none.dataset.value = "";
+    none.dataset.label = "Tanpa kategori";
+    none.setAttribute("aria-selected", "false");
+    none.innerHTML =
+      '<span class="picon-w" aria-hidden="true">' +
+      '<svg class="picon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<circle cx="12" cy="12" r="9"></circle><path d="M5.64 5.64l12.72 12.72"></path>' +
+      '</svg></span> Tanpa kategori';
+    pop.insertBefore(none, pop.firstChild);
+  }
+
+  const defaultLabel = "Pilih kategori";
 
   function open() {
     pop.hidden = false;
@@ -41950,6 +43825,9 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   function selectValue(value, label, fireChange = true) {
     hidden.value = value || "";
     labelEl.textContent = label || defaultLabel;
+    // Tandai state placeholder (belum dipilih) → CSS bikin teksnya abu-abu
+    // muted, konsisten dgn placeholder field lain (bukan cream spt value asli).
+    trigger.classList.toggle("is-placeholder", !value);
     pop.querySelectorAll(".ucs-option").forEach(o => {
       o.setAttribute("aria-selected", o.dataset.value === (value || "") ? "true" : "false");
     });
@@ -42029,6 +43907,49 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     }
   });
 })();
+
+// =====================================================================
+// PREMIUM LOCK OVERLAY (per request user 2026-06-03)
+// Kartu fitur premium tampil SAMA untuk semua tier (warna/bentuk identik).
+// Bedanya HANYA saat terkunci di akun free: isi kartu di-blur + overlay
+// gembok "Tersedia di Premium" (klik → toast upgrade). Dipakai kartu AUTO
+// JUDUL (#upAiAssist) & SUBTITLE AI (#upSubtitleAiCard). Overlay = anak <div>
+// absolute (kartu sudah position:relative), CSS .upf-lock-overlay di akhir
+// styles.css mem-blur semua anak kartu kecuali overlay.
+// =====================================================================
+window._applyPremiumLock = function (card, locked, opts) {
+  if (!card) return;
+  opts = opts || {};
+  card.classList.toggle("locked", !!locked);
+  var ov = card.querySelector(":scope > .upf-lock-overlay");
+  if (locked) {
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.className = "upf-lock-overlay";
+      ov.setAttribute("role", "button");
+      ov.setAttribute("tabindex", "0");
+      ov.innerHTML =
+        '<span class="upf-lock-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' +
+        '<span class="upf-lock-title"></span>' +
+        '<span class="upf-lock-sub"></span>';
+      var fire = function () {
+        if (typeof toast === "function") toast("⭐ Fitur Premium. Upgrade dulu yuk untuk membukanya!", "warning");
+      };
+      ov.addEventListener("click", fire);
+      ov.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fire(); }
+      });
+      card.appendChild(ov);
+    }
+    var title = opts.title || "Fitur Premium";
+    var sub = opts.sub || "Tersedia di Premium";
+    ov.querySelector(".upf-lock-title").textContent = title;
+    ov.querySelector(".upf-lock-sub").textContent = sub;
+    ov.setAttribute("aria-label", title + " — " + sub + ". Upgrade ke Premium untuk membuka.");
+  } else if (ov) {
+    ov.remove();
+  }
+};
 
 // =====================================================================
 // UPLOAD — AI ASSIST (Premium-only) — generate title/desc/tags otomatis
@@ -42279,16 +44200,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   // sparkle icon (✨ aspirational) bukan lock icon (🔒 punitive).
   function refreshAiNote() {
     if (topicInput) topicInput.placeholder = t("upload.ai.topic.ph");
-    if (!noteEl) return;
-    if (!isPremium()) {
-      const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-      noteEl.innerHTML = ICO_SPARK + " " + t("upload.ai.note.locked");
-      noteEl.hidden = false;
-      card.classList.add("locked");
+    const locked = !isPremium();
+    // Kartu tampil SAMA untuk semua tier — note gold lama tidak dipakai lagi
+    // (overlay gembok yang memberi info). Free → blur + overlay via helper.
+    if (noteEl) { noteEl.innerHTML = ""; noteEl.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, locked, { title: "Auto Judul & Tag", sub: "Tersedia di Premium" });
     } else {
-      noteEl.innerHTML = "";
-      noteEl.hidden = true;
-      card.classList.remove("locked");
+      card.classList.toggle("locked", locked);
     }
   }
   refreshAiNote();
@@ -43000,30 +44919,19 @@ self.onmessage = async (e) => {
 
   autoBtn?.addEventListener("click", e => {
     e.preventDefault();
-    const isPremium = !!(user && (user.tier === "premium" || user.role === "admin"));
+    // Premium-only feature (per request user 2026-06-03): Free user TIDAK lagi
+    // dapat percobaan gratis — fitur ditampilkan tapi terkunci, sama persis
+    // seperti kartu AUTO JUDUL & TAG. Premium / admin → akses penuh (unlimited).
+    const _u = (typeof user !== "undefined" ? user : null) || window.user;
+    const isPremium =
+      (typeof isPremiumActive === "function" && isPremiumActive(_u)) ||
+      !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
+      document.body.dataset.tier === "premium";
     if (!isPremium) {
-      // Free user: cek quota sebelum gate ke premium prompt.
-      const remaining = getSubFreeQuotaRemaining();
-      if (remaining <= 0) {
-        if (typeof toast === "function") {
-          toast("🎁 Kuota gratis bulan ini habis. Upgrade Premium untuk akses unlimited.", "warning");
-        }
-        return;
+      if (typeof toast === "function") {
+        toast("⭐ Subtitle Otomatis AI hanya untuk Premium. Upgrade dulu yuk!", "warning");
       }
-      // Confirm sekali sebelum konsumsi quota — supaya user sadar ini "dihitung"
-      const willUse = SUB_FREE_QUOTA - remaining + 1;
-      const ok = confirm(
-        "🎁 Kamu masih punya " + remaining + " dari " + SUB_FREE_QUOTA + " percobaan gratis bulan ini.\n\n" +
-        "Lanjut generate subtitle (percobaan ke-" + willUse + ")?\n\n" +
-        "Setelah kuota habis, fitur ini perlu Premium."
-      );
-      if (!ok) return;
-      incrementSubFreeQuota();
-      // Refresh UI counter setelah quota dipakai
-      if (typeof window.refreshSubtitleAiLockedState === "function") {
-        // Tunggu sebentar supaya state localStorage ter-flush
-        setTimeout(window.refreshSubtitleAiLockedState, 50);
-      }
+      return;
     }
     autoGenerateSubtitle();
   });
@@ -43043,50 +44951,29 @@ self.onmessage = async (e) => {
       !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
       document.body.dataset.tier === "premium";
 
-    const remaining = isPremium ? Infinity : getSubFreeQuotaRemaining();
-    const hasFreeQuota = !isPremium && remaining > 0;
-    const quotaExhausted = !isPremium && remaining <= 0;
-
-    // 3-state class system:
-    //  is-unlocked  → Premium / admin (full access, no banner)
-    //  has-quota    → Free user dengan quota tersisa (soft sparkle state)
-    //  locked       → Free user, quota habis (locked, premium prompt)
+    // Premium-only feature (per request user 2026-06-03). Kartu tampil SAMA
+    // untuk semua tier — bedanya HANYA saat free: blur + overlay gembok.
+    //  is-unlocked → Premium / admin (akses penuh)
+    //  locked      → Free user (kartu di-blur + overlay "Tersedia di Premium")
     card.classList.toggle("is-unlocked", isPremium);
-    card.classList.toggle("has-quota", hasFreeQuota);
-    card.classList.toggle("locked", quotaExhausted);
-
-    if (note) {
-      if (isPremium) {
-        note.innerHTML = "";
-        note.hidden = true;
-      } else if (hasFreeQuota) {
-        // Soft sparkle state — tampilkan counter quota
-        const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-        note.innerHTML = ICO_SPARK + " " + t("upload.sub.note.quota").replace("{n}", String(remaining));
-        note.hidden = false;
-      } else {
-        // Kuota habis — soft lock state (bukan harsh)
-        const ICO_GIFT = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8c0-3 3-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>';
-        note.innerHTML = ICO_GIFT + " " + t("upload.sub.note.quota.out");
-        note.hidden = false;
-      }
+    card.classList.remove("has-quota");
+    // Note gold lama disembunyikan utk semua tier (overlay yang kasih info).
+    if (note) { note.innerHTML = ""; note.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, !isPremium, { title: "Subtitle Otomatis AI", sub: "Tersedia di Premium" });
+    } else {
+      card.classList.toggle("locked", !isPremium);
     }
 
-    // Button enable/disable — Premium dan Free-with-quota bisa klik.
-    // Free-no-quota: disabled (tapi click handler tetap kasih friendly toast).
+    // Tombol auto-generate: enabled utk premium; saat free dia ada di bawah
+    // layer blur (pointer-events:none) & overlay yang menangani klik → toast.
     if (btn) {
-      if (isPremium || hasFreeQuota) {
-        btn.removeAttribute("disabled");
-        btn.removeAttribute("aria-disabled");
-        btn.title = isPremium ? "" : ("Sisa " + remaining + " percobaan gratis bulan ini");
-      } else {
-        btn.setAttribute("disabled", "disabled");
-        btn.setAttribute("aria-disabled", "true");
-        btn.title = t("upload.sub.note.quota.out");
-      }
+      btn.removeAttribute("disabled");
+      btn.removeAttribute("aria-disabled");
+      btn.title = isPremium ? "" : "Hanya untuk Premium";
     }
 
-    // Sync AI Assist card juga — selalu locked untuk non-premium (no quota).
+    // Sync AI Assist card juga — unlocked hanya untuk Premium.
     const aiAssistCard = document.getElementById("upAiAssist");
     if (aiAssistCard) aiAssistCard.classList.toggle("is-unlocked", isPremium);
   };
@@ -43773,9 +45660,22 @@ self.onmessage = async (e) => {
 
   // Initialize
   setDisplay();
+
+  // 1d (audit Unggah): reset penuh dipakai startUpload setelah publish supaya
+  // jadwal & tampilannya kembali bersih untuk upload berikutnya.
+  window._resetUpSchedule = function () {
+    selDate = null; selH = 12; selM = 0;
+    setDisplay();
+    if (!pop.hidden) buildPop();
+  };
 })();
 
 function fmtBytes(n) {
+  // 12d: ukuran tidak diketahui (null/undefined/NaN, mis. video import via URL
+  // yang tidak punya File asli) → "—", BUKAN "0 B" yang menyesatkan. Angka 0
+  // asli (mis. total kategori kosong) tetap tampil "0 B".
+  if (n == null || !Number.isFinite(Number(n))) return "—";
+  n = Number(n);
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
@@ -43789,6 +45689,25 @@ function fmtDurationSec(sec) {
 }
 
 // Bikin thumbnail dari frame video (~detik 1) + ukur durasi.
+// 1f (audit Unggah 2026-06-02): fallback thumbnail JUJUR. Sebelumnya saat capture
+// frame gagal kita pakai gambar acak picsum.photos — menyesatkan (gambar tak
+// terkait isi video). Ganti dengan placeholder bermerek Playly (SVG data-URI,
+// tema wine/cream) yang jelas "thumbnail belum dipilih" + ikon play, sehingga
+// user paham harus pilih frame / unggah cover. Deterministik, no network.
+function playlyThumbPlaceholder(label) {
+  const safe = String(label || "Playly").trim().slice(0, 28).replace(/[<>&]/g, "");
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340' viewBox='0 0 600 340'>"
+    + "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+    + "<stop offset='0' stop-color='#2a1218'/><stop offset='1' stop-color='#1a0c10'/></linearGradient></defs>"
+    + "<rect width='600' height='340' fill='url(#g)'/>"
+    + "<circle cx='300' cy='148' r='44' fill='none' stroke='#E7D7C4' stroke-width='3' opacity='0.85'/>"
+    + "<path d='M289 128 v40 l34 -20 z' fill='#E7D7C4'/>"
+    + (safe ? "<text x='300' y='244' text-anchor='middle' font-family='Inter,sans-serif' font-size='22' font-weight='700' fill='#E7D7C4' opacity='0.92'>" + safe + "</text>" : "")
+    + "<text x='300' y='276' text-anchor='middle' font-family='Inter,sans-serif' font-size='13' fill='#E7D7C4' opacity='0.55'>Thumbnail belum dipilih</text>"
+    + "</svg>";
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
 function generateVideoThumb(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -43814,9 +45733,10 @@ function generateVideoThumb(file) {
         ctx.drawImage(v, 0, 0, w, h);
         const thumb = canvas.toDataURL("image/jpeg", 0.72);
         captured = true;
-        const duration = fmtDurationSec(v.duration || 0);
+        const durationSec = Number(v.duration) || 0;
+        const duration = fmtDurationSec(durationSec);
         cleanup();
-        resolve({ thumb, duration });
+        resolve({ thumb, duration, durationSec });
       } catch (err) {
         cleanup();
         reject(err);
@@ -43848,44 +45768,71 @@ function generateVideoThumb(file) {
   });
 }
 
+// 1i (audit Unggah 2026-06-02): batas platform — durasi maks 4 jam
+// (lihat help.upload.formats "durasi maks 4 jam").
+const MAX_VIDEO_DURATION_SEC = 4 * 60 * 60; // 14400 dtk
+
+// 1h (audit Unggah): cek kuota tier-free dipakai DUA kali — saat pilih file & saat
+// submit (mencegah lolos kalau kuota berubah di antara keduanya, mis. upload dari
+// device lain di akun yang sama). Return null kalau boleh upload, atau objek
+// { title, desc } untuk ditampilkan via openConfirm. Premium: unlimited → null.
+function freeTierUploadBlock(fileSize) {
+  const tier = user?.tier || "free";
+  if (tier !== "free") return null;
+  const FREE_MAX_VIDEOS_PER_MONTH = 60;
+  const FREE_QUOTA_BYTES = 1024 * 1024 * 1024; // 1 GB TOTAL akumulatif
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const usedCount = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart).length;
+  const usedBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
+    return {
+      title: "Free upload limit reached",
+      desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
+    };
+  }
+  if (usedBytes + (fileSize || 0) > FREE_QUOTA_BYTES) {
+    const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
+    return {
+      title: "Penyimpanan penuh",
+      desc: `Kamu sudah pakai <b>${usedMB} MB / 1 GB</b> total. File ini (${fmtBytes(fileSize || 0)}) tidak muat.<br><br>Hapus video lama untuk menambah ruang, atau upgrade ke <b>Premium</b> untuk penyimpanan tanpa batas.`,
+    };
+  }
+  return null;
+}
+
+function showFreeTierBlock(block) {
+  return openConfirm({
+    icon: "⭐", iconClass: "warn",
+    title: block.title, desc: block.desc,
+    btnText: "⭐ Upgrade to Premium", btnClass: "primary",
+    onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+  });
+}
+
+function freeTierQuotaWarn(fileSize) {
+  const tier = user?.tier || "free";
+  if (tier !== "free") return;
+  const FREE_QUOTA_BYTES = 1024 * 1024 * 1024;
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const usedBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  const afterPct = ((usedBytes + (fileSize || 0)) / FREE_QUOTA_BYTES) * 100;
+  if (afterPct >= 80) { // 12f: heads-up lebih awal sebelum penuh
+    toast(`⚠️ Penyimpanan ${Math.round(afterPct)}% terpakai setelah upload ini — pertimbangkan hapus video lama atau upgrade.`, "warning");
+  }
+}
+
 async function handlePickedFile(file) {
   if (!file) return;
   if (!file.type.startsWith("video/")) return toast("⚠️ File harus berupa video", "warning");
 
-  // === FREE TIER LIMITS (per request 2026-05-03 — Free vs Premium) ===
-  // Free user: max 60 video upload/bulan, max 1 GB total upload size/bulan.
-  // Premium user: unlimited (skip checks). Limit per calendar month.
-  const tier = user?.tier || "free";
-  if (tier === "free") {
-    const FREE_MAX_VIDEOS_PER_MONTH = 60;
-    const FREE_MAX_BYTES_PER_MONTH = 1024 * 1024 * 1024; // 1 GB
-    const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const thisMonth = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart);
-    const usedCount = thisMonth.length;
-    const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
-
-    if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
-      return openConfirm({
-        icon: "⭐", iconClass: "warn",
-        title: "Free upload limit reached",
-        desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
-      });
-    }
-    if (usedBytes + file.size > FREE_MAX_BYTES_PER_MONTH) {
-      const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
-      return openConfirm({
-        icon: "⭐", iconClass: "warn",
-        title: "Free storage quota exceeded",
-        desc: `You've used <b>${usedMB} MB / 1 GB</b> this month. This file (${fmtBytes(file.size)}) won't fit.<br><br>Upgrade to <b>Premium</b> for unlimited storage.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
-      });
-    }
-  }
+  // === FREE TIER LIMITS (Free vs Premium) ===
+  // 12e/12f: kuota penyimpanan TOTAL akumulatif (bukan per bulan, tanpa reset).
+  // Logika dipindah ke freeTierUploadBlock() supaya dipakai ulang saat submit (1h).
+  const block = freeTierUploadBlock(file.size);
+  if (block) return showFreeTierBlock(block);
+  freeTierQuotaWarn(file.size);
 
   // Browser quota warning (independent dari tier — premium juga tetap warn)
   if (file.size > 2 * 1024 * 1024 * 1024) {
@@ -43893,6 +45840,9 @@ async function handlePickedFile(file) {
   }
 
   $("#upTitle").value = file.name.replace(/\.[^.]+$/, "");
+  // Set .value programatik TIDAK memicu event "input" → counter (& auto-grow)
+  // tidak ikut update. Dispatch manual supaya #upTitleCounter sinkron.
+  $("#upTitle").dispatchEvent(new Event("input", { bubbles: true }));
 
   // Tampilkan preview placeholder dulu, generate thumbnail di background
   uploadPreview.hidden = false;
@@ -43918,20 +45868,29 @@ async function handlePickedFile(file) {
   }
 
   try {
-    const { thumb, duration } = await generateVideoThumb(file);
+    const { thumb, duration, durationSec } = await generateVideoThumb(file);
     pendingUpload.thumb = thumb;
     pendingUpload.duration = duration;
+    pendingUpload.durationSec = durationSec || 0;
+    pendingUpload.thumbIsPlaceholder = false;
     $("#uploadPreviewThumb").src = thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = thumb;
     $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • ${duration}`;
     $("#uploadPreviewDuration").textContent = duration;
+    // 1i: durasi melebihi batas platform (4 jam) → beri tahu user sejak awal.
+    // Hard-block tetap dilakukan saat submit (startUpload).
+    if (durationSec && durationSec > MAX_VIDEO_DURATION_SEC) {
+      toast(`⚠️ Durasi ${duration} melebihi batas maksimum 4 jam. Potong video sebelum upload.`, "warning");
+    }
   } catch (err) {
     console.warn("Gagal generate thumb:", err);
-    // Fallback ke gambar acak
-    pendingUpload.thumb = `https://picsum.photos/seed/u${Date.now()}/600/340`;
+    // 1f: fallback JUJUR — placeholder bermerek Playly (bukan gambar acak picsum
+    // yang menyesatkan). Tandai placeholder supaya user diarahkan pilih frame/cover.
+    pendingUpload.thumb = playlyThumbPlaceholder(file.name.replace(/\.[^.]+$/, ""));
+    pendingUpload.thumbIsPlaceholder = true;
     $("#uploadPreviewThumb").src = pendingUpload.thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = pendingUpload.thumb;
-    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail otomatis`;
+    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail belum tersedia — pilih frame / unggah cover`;
   }
 }
 
@@ -43998,11 +45957,49 @@ $("#dropzoneRemoveBtn")?.addEventListener("click", e => {
   clearPendingUpload();
 });
 
-// Popup konfirmasi setelah upload selesai. Menggantikan inline notice merah +
-// toast simpel sebelumnya. Popup ini menjelaskan ke user bahwa video sudah
-// terkirim ke admin dan sedang menunggu approval, plus shortcut buat lihat
-// status di My Library → Status Videos.
-function showUploadSuccessPopup(title, newVid) {
+// Popup konfirmasi setelah upload selesai.
+// 1c (audit Unggah 2026-06-02): wording dibuat JUJUR sesuai sistem auto-publish
+// (2026-05-25 video langsung LIVE tanpa approval admin). Sebelumnya popup masih
+// bilang "dikirim ke admin untuk di-review / menunggu approval" — kontradiktif.
+// Sekarang pesan menyesuaikan status sebenarnya: live / draft / terjadwal, plus
+// status sinkronisasi cloud (ok/gagal/lokal).
+function showUploadSuccessPopup(title, newVid, opts) {
+  opts = opts || {};
+  const visibility = opts.visibility || (newVid && newVid.visibility) || "public";
+  const scheduledAt = opts.scheduledAt || (newVid && newVid.scheduledAt) || null;
+  const cloud = opts.cloud || "none"; // ok | fail | local | none(url import)
+
+  // Tentukan headline + status sesuai keadaan sebenarnya.
+  let icon = "🎉", heading = "Upload Berhasil!", statusLine = "", desc = "";
+  if (visibility === "draft") {
+    icon = "📝"; heading = "Tersimpan sebagai Draft";
+    statusLine = "📝 Draft — belum tayang ke publik";
+    desc = `Video <b>${escapeHtml(title)}</b> disimpan sebagai <b>draft</b>. Hanya kamu yang bisa melihatnya sampai kamu mempublikasikannya.`;
+  } else if (scheduledAt) {
+    const dt = new Date(scheduledAt);
+    const dstr = dt.toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    icon = "⏰"; heading = "Terjadwal";
+    statusLine = `⏰ Tayang otomatis pada ${dstr}`;
+    desc = `Video <b>${escapeHtml(title)}</b> sudah tersimpan dan akan <b>tayang otomatis</b> pada jadwal di atas. Sebelum itu, video belum tampil di feed publik.`;
+  } else if (visibility === "private") {
+    icon = "🔒"; heading = "Video Tersimpan (Privat)";
+    statusLine = "🔒 Privat — hanya kamu";
+    desc = `Video <b>${escapeHtml(title)}</b> tersimpan sebagai <b>privat</b> dan tidak tampil di feed maupun profil publik.`;
+  } else if (visibility === "unlisted") {
+    icon = "🔗"; heading = "Video Live (Tak Terdaftar)";
+    statusLine = "🔗 Unlisted — hanya via tautan";
+    desc = `Video <b>${escapeHtml(title)}</b> sudah <b>live</b>, tapi tidak muncul di feed/pencarian. Hanya bisa diakses lewat tautan langsung.`;
+  } else {
+    icon = "🎉"; heading = "Video Sudah Live!";
+    statusLine = "✅ Live — sudah tampil di platform";
+    desc = `Video <b>${escapeHtml(title)}</b> berhasil diunggah dan <b>langsung tayang</b> di platform. Tidak perlu menunggu approval admin.`;
+  }
+  // Tambahan status cloud (jujur soal sinkronisasi lintas-device).
+  let cloudNote = "";
+  if (cloud === "fail") cloudNote = `<div class="upload-success-cloud warn">☁️ Sinkronisasi ke cloud gagal — untuk saat ini video hanya bisa diputar di browser ini.</div>`;
+  else if (cloud === "local") cloudNote = `<div class="upload-success-cloud">💾 Tersimpan di browser ini (cloud tidak aktif).</div>`;
+  else if (cloud === "ok") cloudNote = `<div class="upload-success-cloud ok">☁️ Tersimpan di cloud — bisa diputar di device lain.</div>`;
+
   // Hapus modal lama kalau ada (defensif)
   document.getElementById("__uploadSuccessModal")?.remove();
 
@@ -44011,17 +46008,15 @@ function showUploadSuccessPopup(title, newVid) {
   modal.id = "__uploadSuccessModal";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-upload-success-close></div>
-    <div class="hs-popup-panel upload-success-panel">
+    <div class="hs-popup-panel upload-success-panel" role="dialog" aria-modal="true" aria-labelledby="uploadSuccessTitle">
       <button type="button" class="hs-popup-close" data-upload-success-close aria-label="Tutup">✕</button>
-      <div class="upload-success-icon">🎉</div>
-      <h3 class="upload-success-title">Upload Berhasil!</h3>
-      <p class="upload-success-desc">
-        Video <b>${escapeHtml(title)}</b> berhasil diupload dan sudah dikirim ke admin
-        untuk di-review. Kamu akan dapat notifikasi setelah disetujui atau di-reject.
-      </p>
+      <div class="upload-success-icon">${icon}</div>
+      <h3 class="upload-success-title" id="uploadSuccessTitle">${escapeHtml(heading)}</h3>
+      <p class="upload-success-desc">${desc}</p>
       <div class="upload-success-meta">
-        <span class="upload-success-status">⏳ Menunggu approval admin</span>
+        <span class="upload-success-status">${escapeHtml(statusLine)}</span>
       </div>
+      ${cloudNote}
       <div class="upload-success-actions">
         <button type="button" class="btn primary" id="uploadSuccessGoStatus">📋 Lihat Status Videos</button>
         <button type="button" class="btn ghost" data-upload-success-close>Tutup</button>
@@ -44050,6 +46045,169 @@ function showUploadSuccessPopup(title, newVid) {
     }, 80);
   });
 }
+
+// ===================== UPLOAD UI ENHANCEMENTS (audit Unggah 2026-06-02) =====================
+// 1g/1k/1l/1p: aksesibilitas + UX halaman Unggah, dipasang via JS (markup legacy
+// = satu string besar → lebih aman & terlokalisir di sini). Catatan: 1m (aria
+// dropdown kategori) & 1n (alt thumbnail) ternyata SUDAH ada di markup → tidak diulang.
+
+// 1g: tombol "Batalkan" di area progress (dibuat sekali, di-reuse tiap upload).
+function ensureUploadCancelBtn() {
+  const wrap = document.getElementById("uploadProgress");
+  if (!wrap) return null;
+  let btn = document.getElementById("upCancelBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "upCancelBtn";
+    btn.className = "up-cancel-btn";
+    btn.hidden = true;
+    btn.innerHTML = "✕ Batalkan";
+    wrap.appendChild(btn);
+  }
+  return btn;
+}
+
+// 1p: error inline pada field wajib (judul) — bukan cuma toast yang cepat hilang.
+function showUploadFieldError(input, msg) {
+  if (!input) return;
+  input.classList.add("up-field-invalid");
+  input.setAttribute("aria-invalid", "true");
+  let err = document.getElementById(input.id + "Err");
+  if (!err) {
+    err = document.createElement("small");
+    err.id = input.id + "Err";
+    err.className = "up-field-err";
+    err.setAttribute("role", "alert");
+    input.insertAdjacentElement("afterend", err);
+  }
+  err.textContent = msg || "Wajib diisi";
+  err.hidden = false;
+  try { input.focus(); } catch {}
+}
+function clearUploadFieldError(input) {
+  if (!input) return;
+  input.classList.remove("up-field-invalid");
+  input.removeAttribute("aria-invalid");
+  const err = document.getElementById(input.id + "Err");
+  if (err) err.hidden = true;
+}
+
+(function enhanceUploadUI() {
+  try {
+    // 1k: dropzone keyboard-accessible (sebelumnya hanya bisa diklik mouse).
+    const dz = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    if (dz && !dz.dataset.a11yReady) {
+      dz.dataset.a11yReady = "1";
+      if (!dz.hasAttribute("tabindex")) dz.setAttribute("tabindex", "0");
+      if (!dz.hasAttribute("role")) dz.setAttribute("role", "button");
+      if (!dz.hasAttribute("aria-label")) dz.setAttribute("aria-label", "Pilih video atau seret file ke sini untuk diunggah");
+      dz.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          // Hanya buka picker saat belum ada file (state empty).
+          if (dz.dataset.state !== "filled" && fileInput) fileInput.click();
+        }
+      });
+    }
+    // 1l: progress bar semantik untuk screen reader.
+    const bar = document.getElementById("upBar");
+    if (bar) {
+      bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-valuenow", "0");
+      bar.setAttribute("aria-label", "Progres unggah");
+    }
+    const st = document.getElementById("upStatus");
+    if (st) { st.setAttribute("aria-live", "polite"); st.setAttribute("role", "status"); }
+
+    // 1p: tandai field wajib (judul) — bintang + aria-required + bersih saat ngetik.
+    const title = document.getElementById("upTitle");
+    if (title) {
+      title.setAttribute("aria-required", "true"); // a11y only (tak terlihat)
+      // Penanda "*" DIHAPUS atas permintaan user — bersihkan kalau masih ada.
+      document.querySelector('label[for="upTitle"] .up-required')?.remove();
+      title.addEventListener("input", () => clearUploadFieldError(title));
+    }
+
+    // ===== LAYOUT (audit Unggah 2026-06-03): judul berikon + grup engagement =====
+    // Disuntik via JS supaya markup legacy (string besar) tidak disentuh.
+    const upView = document.querySelector('section.view[data-view="upload"]') || document;
+
+    // Matikan autocomplete browser di field teks Unggah supaya dropdown saran
+    // (nilai lama) tidak menutupi form. (Mis. saran judul yang pernah diketik.)
+    upView.querySelectorAll('input[type="text"], textarea').forEach(el => {
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocapitalize', 'off');
+      el.setAttribute('spellcheck', 'false');
+    });
+
+
+    // (a) Satukan section "Engagement": pindahkan .upf-toggle-grid KE DALAM .upf-field
+    //     berlabel Engagement supaya jadi satu kartu (bukan 2 kartu terpisah).
+    const toggleGrid = upView.querySelector('.upf-toggle-grid');
+    if (toggleGrid && !toggleGrid.dataset.merged) {
+      const prev = toggleGrid.previousElementSibling;
+      if (prev && prev.classList && prev.classList.contains('upf-field') && /engagement|komentar/i.test(prev.textContent || '')) {
+        prev.appendChild(toggleGrid);
+        toggleGrid.dataset.merged = "1";
+      }
+    }
+    // (b) Sembunyikan <select> legacy bare (mis. #upAge) yang nyangkut langsung di kolom.
+    upView.querySelectorAll('.upload-col-right > select, .upload-col-left > select').forEach(s => { s.style.display = "none"; });
+
+    // (c) Ikon di tiap judul section (Lucide-style inline SVG, mewarnai --accent).
+    const I = (p) => `<span class="upf-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg></span>`;
+    // Set ikon dinormalkan secara OPTIK: tiap glyph mengisi area ~4–20 (16 unit
+    // di tengah viewBox 24) dengan bobot sama, supaya semua badge tampak seragam
+    // (sebelumnya info/clock/tag mengisi penuh → terlihat lebih besar, hash/pencil
+    // lebih tipis → terlihat kecil → kesan "acak").
+    const ICONS = {
+      pencil: I('<path d="M5 19l1-3.6L15.6 4.8a2 2 0 0 1 3 3L8.6 18 5 19Z"/><path d="M13.8 6.6l3 3"/>'),
+      desc:   I('<path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/>'),
+      hash:   I('<path d="M5.5 9.5h14"/><path d="M4.5 14.5h14"/><path d="M10.5 4.5l-1.5 15"/><path d="M16 4.5l-1.5 15"/>'),
+      tag:    I('<path d="M4 11V5a1 1 0 0 1 1-1h6l8 8a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0Z"/><circle cx="8" cy="8" r="1.2"/>'),
+      ai:     I('<path d="M12 4l1.9 5.1L19 11l-5.1 1.9L12 18l-1.9-5.1L5 11l5.1-1.9Z"/>'),
+      cc:     I('<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 11h3"/><path d="M8 14.5h2"/><path d="M13.5 11h2.5"/><path d="M14.5 14.5h1.5"/>'),
+      eye:    I('<path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Z"/><circle cx="12" cy="12" r="2.4"/>'),
+      users:  I('<circle cx="9.5" cy="8.5" r="2.8"/><path d="M4.5 19a5 5 0 0 1 10 0"/><path d="M16 6.2a2.8 2.8 0 0 1 0 5.6"/><path d="M19.5 19a5 5 0 0 0-3-4.6"/>'),
+      heart:  I('<path d="M12 19.2l-7-7a4.1 4.1 0 0 1 5.8-5.8l1.2 1.2 1.2-1.2a4.1 4.1 0 0 1 5.8 5.8Z"/>'),
+      info:   I('<circle cx="12" cy="12" r="8"/><path d="M12 11.5v4.5"/><path d="M12 8h.01"/>'),
+      image:  I('<rect x="4" y="4" width="16" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="M19.5 15.5 15 11l-8 8.5"/>'),
+      film:   I('<rect x="4" y="6.5" width="12" height="11" rx="2"/><path d="M16 10.5l4-2.5v8l-4-2.5Z"/>'),
+      clock:  I('<circle cx="12" cy="12" r="8"/><path d="M12 8v4.2l2.8 2"/>'),
+    };
+    const pickIcon = (t) => {
+      t = (t || "").toLowerCase();
+      if (/auto judul|assist|\bai\b/.test(t)) return ICONS.ai;
+      if (t.includes("hashtag")) return ICONS.hash;
+      if (t.includes("kategori") || t.includes("category")) return ICONS.tag;
+      if (t.includes("deskripsi") || t.includes("description")) return ICONS.desc;
+      if (t.includes("subtitle")) return ICONS.cc;
+      if (t.includes("visibilit")) return ICONS.eye;
+      if (t.includes("audiens") || t.includes("audience")) return ICONS.users;
+      if (t.includes("engagement")) return ICONS.heart;
+      if (t.includes("info")) return ICONS.info;
+      if (t.includes("frame")) return ICONS.image;
+      if (t.includes("thumbnail")) return ICONS.image;
+      if (/jadwal|schedule|publish/.test(t)) return ICONS.clock;
+      if (t.includes("judul") || t.includes("title")) return ICONS.pencil;
+      if (t.includes("video")) return ICONS.film;
+      return "";
+    };
+    upView.querySelectorAll('.upf-field').forEach(f => {
+      const lbl = f.querySelector(':scope > .upf-label-row > label') || f.querySelector(':scope > label');
+      if (!lbl || lbl.dataset.iconed) return;
+      if (lbl.classList.contains('dz-pro') || lbl.classList.contains('upf-thumb-drop') || lbl.id === 'dropzone' || lbl.querySelector('input[type=file]')) return;
+      const svg = pickIcon(lbl.textContent);
+      if (!svg) return;
+      lbl.insertAdjacentHTML('afterbegin', svg);
+      lbl.dataset.iconed = "1";
+    });
+  } catch (e) { console.warn("[upload] enhanceUploadUI:", e); }
+})();
 
 // ----------------------- URL Video Source -----------------------
 function parseVideoUrl(url) {
@@ -44140,6 +46298,8 @@ function setAutofillField(id, value, isNew) {
   const el = document.getElementById(id);
   if (!el || !value) return;
   el.value = value;
+  // Sinkronkan counter/auto-grow (set .value programatik tak memicu "input").
+  el.dispatchEvent(new Event("input", { bubbles: true }));
   if (isNew) {
     el.style.transition = "box-shadow .3s";
     el.style.boxShadow = "0 0 0 3px rgba(109,41,50,.35)";
@@ -44220,178 +46380,255 @@ document.getElementById("uploadUrlDetect")?.addEventListener("click", async () =
   }
 });
 
-$("#startUpload")?.addEventListener("click", () => {
+// ===================== UPLOAD SUBMIT (audit Unggah 2026-06-02) =====================
+// Ditulis ulang untuk JUJUR (1a/1b): progress diikat ke upload cloud NYATA (XHR
+// R2) — bukan setInterval acak — dan sukses baru dideklarasikan SETELAH upload
+// cloud benar-benar selesai (bukan saat bar palsu 100%). Tambahan: 1d jadwal,
+// 1g batal, 1h cek kuota saat submit, 1i durasi maks 4 jam.
+$("#startUpload")?.addEventListener("click", async () => {
   // URL upload: pendingUpload sudah ada tapi tanpa file. File upload: dengan file.
   const isUrlUpload = pendingUpload && pendingUpload.sourceType && !pendingUpload.file;
   if (!pendingUpload || (!pendingUpload.file && !isUrlUpload)) {
     return toast("⚠️ Pilih video atau detect URL dulu", "warning");
   }
-  const title = $("#upTitle").value.trim();
-  if (!title) return toast("⚠️ Judul wajib diisi", "warning");
-  // Visibility & audience dari radio cards (default public/all kalau tidak terpilih)
+  const titleInput = $("#upTitle");
+  const title = (titleInput?.value || "").trim();
+  if (!title) {
+    if (typeof showUploadFieldError === "function") showUploadFieldError(titleInput, "Judul wajib diisi");
+    return toast("⚠️ Judul wajib diisi", "warning");
+  }
+  if (typeof clearUploadFieldError === "function") clearUploadFieldError(titleInput);
+
+  const captured = pendingUpload; // freeze
+  const fileSize = (captured.file && Number.isFinite(captured.file.size)) ? captured.file.size : null;
+
+  // 1h: cek ulang kuota tier-free SAAT submit (kuota bisa berubah sejak pilih file).
+  if (captured.file) {
+    const block = freeTierUploadBlock(captured.file.size);
+    if (block) return showFreeTierBlock(block);
+  }
+  // 1i: tolak video > 4 jam (kalau durasi terukur).
+  if (captured.durationSec && captured.durationSec > MAX_VIDEO_DURATION_SEC) {
+    return toast("⚠️ Durasi melebihi batas maksimum 4 jam. Potong video sebelum upload.", "warning");
+  }
+
   const visibility = document.querySelector('input[name="upVisibility"]:checked')?.value || "public";
   const audience   = document.querySelector('input[name="upAudience"]:checked')?.value || "all";
-  // Sync ke legacy hidden #upAge supaya code lain yang baca upAge.value tidak break
+  // 1j: #upAge field legacy — sinkron HANYA bila elemennya masih ada (sebagian
+  // code lama membaca upAge.value). Tidak wajib & tak dianggap error kalau hilang.
   const upAgeEl = $("#upAge");
   if (upAgeEl) upAgeEl.value = audience;
-  // Engagement toggles
   const allowComments  = $("#upAllowComments")?.checked  !== false;  // default true
   const allowReactions = $("#upAllowReactions")?.checked !== false;  // default true
   const allowDuet      = !!$("#upAllowDuet")?.checked;
   const allowDownload  = !!$("#upAllowDownload")?.checked;
   const category = $("#upCategory")?.value || "";
   const tags = (typeof window._getUploadTags === "function") ? window._getUploadTags() : [];
-  // Thumbnail final: prioritas _customThumb (yang aktif — bisa dari frame, upload, atau editor)
-  // Fallback ke _frameThumb atau _uploadThumb kalau salah satu valid.
   const customThumb = window._customThumb || window._uploadThumb || window._frameThumb || null;
-  const captured = pendingUpload; // freeze
   const desc = $("#upDesc").value || "Video baru saja diunggah.";
-  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
-  wrap.hidden = false;
+  // Thumbnail final — fallback JUJUR (placeholder bermerek, bukan picsum acak).
+  const finalThumb = customThumb || captured.thumb || playlyThumbPlaceholder(title);
 
-  // Tracking entry untuk tab "Sedang Upload"
-  const uploadId = "u" + Date.now();
-  const uploadEntry = {
-    id: uploadId,
-    title,
-    thumb: captured.thumb,
-    size: captured?.file?.size || 0,
-    progress: 0,
-    status: "uploading",
-    startedAt: Date.now()
-  };
+  // 1d: jadwal publish. #upSchedule = "YYYY-MM-DDTHH:MM" (waktu lokal). Kalau diisi
+  // & masih di masa depan → scheduledAt; video disembunyikan dari feed/profil publik
+  // sampai waktunya (isPubliclyVisibleVideo), muncul otomatis saat tiba (live calc).
+  let scheduledAt = null;
+  const scheduleRaw = ($("#upSchedule")?.value || "").trim();
+  if (scheduleRaw) {
+    const t = Date.parse(scheduleRaw);
+    if (Number.isFinite(t) && t > Date.now()) scheduledAt = t;
+  }
+
+  const vidId = Date.now();           // id final → blob + cloud key + newVid.id
+  const uploadId = "u" + vidId;
+  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
+  const startBtn = $("#startUpload");
+
+  // Entry tracking untuk tab "Sedang Upload"
+  const uploadEntry = { id: uploadId, title, thumb: finalThumb, size: captured?.file?.size || 0, progress: 0, status: "uploading", startedAt: vidId };
   state.uploadingVideos = state.uploadingVideos || [];
   state.uploadingVideos.unshift(uploadEntry);
   saveState();
   syncVideoTabCounts();
 
+  // 1g: abort controller untuk tombol Batal.
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
   window.__activeUploads = window.__activeUploads || {};
-  window.__activeUploads[uploadId] = true;
+  window.__activeUploads[uploadId] = { ctrl, cancelled: false, done: false };
 
-  let p = 0;
-  const tick = setInterval(() => {
-    // Cek kalau upload dibatalkan
-    if (!window.__activeUploads[uploadId]) {
-      clearInterval(tick);
-      wrap.hidden = true; bar.style.width = "0%";
-      return;
-    }
-    p += Math.random() * 12 + 4;
-    uploadEntry.progress = Math.min(100, p);
-    // Update tampilan tab "Sedang Upload" kalau sedang dilihat
+  // 1a/1l: progress JUJUR. Mulai indeterminate (belum ada byte terkirim), jadi
+  // determinate begitu onProgress NYATA pertama tiba.
+  wrap.hidden = false;
+  bar.classList.add("up-bar-indeterminate");
+  bar.style.width = "";
+  bar.setAttribute("aria-valuenow", "0");
+  status.textContent = captured.file ? "Menyiapkan upload…" : "Memproses…";
+  if (startBtn) startBtn.disabled = true;
+  const cancelBtn = (typeof ensureUploadCancelBtn === "function") ? ensureUploadCancelBtn() : null;
+  if (cancelBtn) {
+    cancelBtn.hidden = false;
+    cancelBtn.onclick = () => {
+      const a = window.__activeUploads[uploadId];
+      if (!a || a.done) return;
+      a.cancelled = true;
+      try { a.ctrl && a.ctrl.abort(); } catch {}
+    };
+  }
+
+  const isCancelled = () => !!(window.__activeUploads[uploadId]?.cancelled);
+  const setDeterminate = (frac) => {
+    bar.classList.remove("up-bar-indeterminate");
+    const pct = Math.max(0, Math.min(100, Math.round(frac * 100)));
+    bar.style.width = pct + "%";
+    bar.setAttribute("aria-valuenow", String(pct));
+    uploadEntry.progress = pct;
+    const sz = fileSize ? ` · ${fmtBytes(Math.round(fileSize * (pct / 100)))} / ${fmtBytes(fileSize)}` : "";
+    status.textContent = `Mengunggah ke cloud… ${pct}%${sz}`;
     if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+  };
+  const cleanupUploadUI = () => {
+    if (window.__activeUploads[uploadId]) window.__activeUploads[uploadId].done = true;
+    if (startBtn) startBtn.disabled = false;
+    if (cancelBtn) { cancelBtn.hidden = true; cancelBtn.onclick = null; }
+  };
+  const removeEntry = () => { state.uploadingVideos = (state.uploadingVideos || []).filter(u => u.id !== uploadId); };
+  const abortAndCleanup = () => {
+    removeEntry(); saveState(); syncVideoTabCounts();
+    if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+    wrap.hidden = true; bar.style.width = "0%"; bar.classList.remove("up-bar-indeterminate");
+    cleanupUploadUI();
+    delete window.__activeUploads[uploadId];
+    toast("Upload dibatalkan.", "info");
+  };
 
-    if (p >= 100) {
-      p = 100; clearInterval(tick);
-      delete window.__activeUploads[uploadId];
-      uploadEntry.status = "done";
-      status.textContent = "✓ Upload selesai!";
-      const _now = Date.now();
-      const subtitleData = window._uploadSubtitle || null;
-      const newVid = {
-        id: _now, createdAt: _now, title, creator: user.username, category, tags, visibility,
-        // Audience & engagement (per request user 2026-05-14)
-        audience, allowComments, allowReactions, allowDuet, allowDownload,
-        views: "0", viewsNum: 0,
-        time: "just now", duration: captured.duration || "0:00", likes: 0,
-        thumb: customThumb || captured.thumb || `https://picsum.photos/seed/u${_now}/600/340`,
-        videoUrl: captured.videoUrl,
-        desc,
-        // Source tracking — file (default), url (direct video URL), embed (YouTube/Vimeo/etc)
-        sourceType: captured.sourceType || "file",
-        embedProvider: captured.embedProvider || null,
-        embedVideoId: captured.embedVideoId || null,
-        embedOriginalUrl: captured.embedOriginalUrl || null,
-        // Track file size untuk monthly quota tracking (Free tier limit 1 GB/bulan)
-        fileSize: captured.file?.size || 0,
-        // Subtitle (Opsi 1 manual upload / Opsi 2 auto-generate AI)
-        subtitleVtt: subtitleData?.vtt || null,
-        subtitleLang: subtitleData?.lang || null,
-        // Auto-publish (2026-05-25): video langsung live setelah upload, tidak
-        // perlu admin approval. Sebelumnya default "pending" → user kreator
-        // bingung kenapa video tidak muncul di "Video Saya". Admin tetap bisa
-        // takedown via Kontrol Konten kalau ada masalah (reaktif, bukan
-        // gate). Visibility "draft" tetap respect — user simpan draft sendiri.
-        adminStatus: visibility === "draft" ? "draft" : "published",
-        submittedAt: _now,
-      };
-      state.myVideos.unshift(newVid);
-      // Pindahkan dari uploadingVideos
-      state.uploadingVideos = state.uploadingVideos.filter(u => u.id !== uploadId);
-      state.activities.unshift({ type: "upload", text: `You uploaded <i>${title}</i>`, time: "just now", icon: "🎬", ts: Date.now() });
-      saveState();
-      // Simpan file aslinya ke IndexedDB — skip kalau URL upload (no file to save)
-      if (captured.file) {
-        saveVideoBlob(newVid.id, captured.file).then(() => refreshStorageUsage());
-      }
-      // Cloud sync: upload juga ke Supabase Storage agar bisa diputar di browser lain
-      if (captured.file && window.cloudSync?.uploadVideoBlob) {
-        window.cloudSync.uploadVideoBlob(newVid.id, captured.file).then(result => {
-          if (result && result.ok && result.url) {
-            newVid.videoUrl = result.url;
-            saveState();
-            toast("☁️ Video tersimpan di cloud — bisa diputar di device lain.", "success");
-          } else if (result && !result.ok) {
-            // Upload ke cloud gagal — beritahu user, tapi video tetap aman di lokal
-            const reason =
-              result.message ||
-              (result.error === "file_too_large"
-                ? "File terlalu besar untuk Supabase Storage."
-                : "Upload ke cloud gagal — video disimpan lokal saja.");
-            toast(`⚠️ ${reason} Video kamu masih bisa diputar di browser ini.`, "warning");
-          }
-        }).catch(err => {
-          console.warn("[upload] cloud sync exception:", err);
-          toast("⚠️ Sync video ke cloud gagal — video disimpan lokal saja.", "warning");
-        });
-      }
-      refreshAllVideoGrids();
-      renderUserStats();
-      renderActivityList();
-      renderHomeActivity();
-      renderHomeTrending();
-      renderHomeStats();
-      renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
-      renderTopPerforming();
-      renderDiscoverCreators();
-      refreshHeroGreeting();
-      pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid
-      setTimeout(() => {
-        wrap.hidden = true; bar.style.width = "0%";
-        $("#upTitle").value = ""; $("#upDesc").value = "";
-        // Reset kategori — pakai helper kalau ada (custom dropdown), fallback ke direct value set
-        if (typeof window._resetUpCategory === "function") {
-          window._resetUpCategory();
-        } else if ($("#upCategory")) {
-          $("#upCategory").value = "";
-        }
-        if (typeof window._clearUploadTags === "function") window._clearUploadTags();
-        if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
-        // Reset visibility & audience ke default
-        const visPub = document.querySelector('input[name="upVisibility"][value="public"]');
-        if (visPub) visPub.checked = true;
-        const audAll = document.querySelector('input[name="upAudience"][value="all"]');
-        if (audAll) audAll.checked = true;
-        // Reset engagement toggles ke default
-        if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
-        if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
-        if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
-        if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
-        uploadPreview.hidden = true;
-        dropzone.classList.remove("has-file");
-        fileInput.value = "";
-        // Tampilkan popup konfirmasi (bukan toast saja) supaya user dapat
-        // notifikasi yang jelas + tahu video lagi menunggu approval admin.
-        showUploadSuccessPopup(title, newVid);
-      }, 800);
+  try {
+    // 1) Simpan blob ke IndexedDB (lokal) — playback di device ini.
+    if (captured.file) {
+      status.textContent = "Menyimpan lokal…";
+      try { await saveVideoBlob(vidId, captured.file); } catch (e) { console.warn("[upload] saveVideoBlob:", e); }
+      refreshStorageUsage();
     }
-    bar.style.width = p + "%";
-    const _fileSize = captured?.file?.size || 0;
-    const _sizeText = _fileSize
-      ? ` · ${fmtBytes(Math.floor(_fileSize * (p / 100)))} / ${fmtBytes(_fileSize)}`
-      : "";
-    status.textContent = `Mengunggah... ${Math.floor(p)}%${_sizeText}`;
-  }, 200);
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 2) Upload ke cloud (R2/Supabase) dengan progress NYATA (1a). Sukses baru
+    //    dideklarasikan SETELAH ini selesai (1b).
+    let cloudUrl = null;
+    let cloudStatus = "none"; // none(url import) | ok | fail | local(cloud off)
+    if (captured.file && window.cloudSync?.uploadVideoBlob) {
+      status.textContent = "Mengunggah ke cloud…";
+      let result;
+      try {
+        result = await window.cloudSync.uploadVideoBlob(vidId, captured.file, {
+          onProgress: (frac) => { if (!isCancelled()) setDeterminate(frac); },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+      } catch (e) {
+        console.warn("[upload] cloud sync exception:", e);
+        result = { ok: false, error: "exception" };
+      }
+      if (isCancelled() || (result && result.error === "aborted")) { abortAndCleanup(); return; }
+      if (result && result.ok && result.url) {
+        cloudUrl = result.url; cloudStatus = "ok";
+      } else {
+        cloudStatus = "fail";
+        const reason = (result && result.message) ||
+          (result && result.error === "file_too_large"
+            ? "File terlalu besar untuk cloud storage."
+            : "Upload ke cloud gagal — video disimpan lokal saja.");
+        toast(`⚠️ ${reason} Video kamu tetap bisa diputar di browser ini.`, "warning");
+      }
+    } else if (captured.file) {
+      cloudStatus = "local"; // cloudSync tidak aktif
+    }
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 3) Selesai → buat video & publish.
+    bar.classList.remove("up-bar-indeterminate");
+    bar.style.width = "100%"; bar.setAttribute("aria-valuenow", "100");
+    status.textContent = "✓ Upload selesai!";
+    uploadEntry.status = "done"; uploadEntry.progress = 100;
+
+    const subtitleData = window._uploadSubtitle || null;
+    const newVid = {
+      id: vidId, createdAt: vidId, title, creator: user.username, category, tags, visibility,
+      audience, allowComments, allowReactions, allowDuet, allowDownload,
+      views: "0", viewsNum: 0,
+      time: "just now", duration: captured.duration || "0:00", likes: 0,
+      thumb: finalThumb,
+      videoUrl: cloudUrl || captured.videoUrl,
+      desc,
+      sourceType: captured.sourceType || "file",
+      embedProvider: captured.embedProvider || null,
+      embedVideoId: captured.embedVideoId || null,
+      embedOriginalUrl: captured.embedOriginalUrl || null,
+      // 12d: fileSize null kalau import URL/embed (ukuran tak diketahui) supaya
+      // meter penyimpanan tidak menyesatkan; storage sum tetap pakai (||0).
+      fileSize,
+      subtitleVtt: subtitleData?.vtt || null,
+      subtitleLang: subtitleData?.lang || null,
+      // Auto-publish (2026-05-25): live tanpa approval admin. "draft" → simpan
+      // draft. scheduledAt (1d) → tetap published tapi disembunyikan dari publik
+      // sampai waktunya oleh isPubliclyVisibleVideo().
+      adminStatus: visibility === "draft" ? "draft" : "published",
+      scheduledAt: scheduledAt || null,
+      submittedAt: vidId,
+    };
+    state.myVideos.unshift(newVid);
+    removeEntry();
+    state.activities.unshift({ type: "upload", text: `You uploaded <i>${escapeHtml(title)}</i>`, time: "just now", icon: "🎬", ts: vidId });
+    saveState();
+
+    refreshAllVideoGrids();
+    renderUserStats();
+    renderActivityList();
+    renderHomeActivity();
+    renderHomeTrending();
+    renderHomeStats();
+    renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
+    renderTopPerforming();
+    renderDiscoverCreators();
+    refreshHeroGreeting();
+
+    pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid (kalau lokal)
+    window._uploadSubtitle = null;
+
+    setTimeout(() => {
+      wrap.hidden = true; bar.style.width = "0%"; bar.setAttribute("aria-valuenow", "0");
+      cleanupUploadUI();
+      delete window.__activeUploads[uploadId];
+      // Reset VIDEO + preview + frame DULU (fix user 2026-06-03: video & thumbnail
+      // yang tadi diupload tetap nyangkut di form). Dikerjakan paling awal + tiap
+      // langkah aman, supaya preview pasti bersih walau reset field di bawah error.
+      // _resetVideoInfoAndFrame() (sebelumnya TIDAK dipanggil di sini) yang
+      // membersihkan <video> frame-picker + info pills + frame thumbnail.
+      try { uploadPreview.hidden = true; } catch {}
+      try { dropzone.classList.remove("has-file"); dropzone.dataset.state = "empty"; } catch {}
+      try { fileInput.value = ""; } catch {}
+      try { if (typeof window._resetVideoInfoAndFrame === "function") window._resetVideoInfoAndFrame(); } catch {}
+      // Reset field teks / opsi
+      if (titleInput) titleInput.value = "";
+      const descEl = $("#upDesc"); if (descEl) descEl.value = "";
+      if (typeof window._resetUpCategory === "function") window._resetUpCategory();
+      else if ($("#upCategory")) $("#upCategory").value = "";
+      if (typeof window._clearUploadTags === "function") window._clearUploadTags();
+      if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
+      const visPub = document.querySelector('input[name="upVisibility"][value="public"]'); if (visPub) visPub.checked = true;
+      const audAll = document.querySelector('input[name="upAudience"][value="all"]'); if (audAll) audAll.checked = true;
+      if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
+      if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
+      if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
+      if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
+      // 1d: reset schedule picker (display + internal state)
+      if (typeof window._resetUpSchedule === "function") window._resetUpSchedule();
+      else { const sc = $("#upSchedule"); if (sc) sc.value = ""; }
+      // 1c: popup sukses JUJUR — sesuai status sebenarnya (live/draft/terjadwal + cloud).
+      showUploadSuccessPopup(title, newVid, { visibility, scheduledAt, cloud: cloudStatus });
+    }, 700);
+  } catch (err) {
+    console.warn("[upload] gagal:", err);
+    abortAndCleanup();
+    toast("⚠️ Upload gagal. Coba lagi.", "warning");
+  }
 });
 
 // ----------------------- PLAYER MODAL -----------------------
@@ -45349,6 +47586,7 @@ document.addEventListener("keydown", e => {
 //   Kanan: My Videos grid (flexible, klik = inline play)
 function renderMyProfile() {
   if (!user) return;
+  myProfileActiveTab = "posts"; // v619: tiap buka My Profile mulai dari tab Postingan.
   // Premium Insight / tier widget dipindah ke My Profile (per request user
   // 2026-05-15 v54). Render di sini supaya keisi tiap kali My Profile dibuka.
   try { renderHomeTierWidget(); } catch (e) { console.warn("[myprofile-tier]", e); }
@@ -45409,14 +47647,18 @@ function renderMyProfile() {
   document.getElementById("myProfileFollowingCount").textContent = fmtNum(followingCount);
   document.getElementById("myProfileLikeCount").textContent = fmtNum(totalLikes);
 
-  // Helper render satu lib-item card
-  const renderTile = v => {
-    const title = escapeHtml(v.title || "Video");
-    const thumb = v.thumb || v.thumbnail || "";
-    const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
-    const duration = v.duration || "";
-    const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
-    return `<div class="lib-item" data-vid="${v.id}">
+  // Render tab yang aktif (default "posts"). v619.
+  renderMyProfileTab(myProfileActiveTab);
+}
+
+// v619: helper render satu lib-item video card (dipakai tab posts + likes).
+function myProfileVideoTile(v) {
+  const title = escapeHtml(v.title || "Video");
+  const thumb = v.thumb || v.thumbnail || "";
+  const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
+  const duration = v.duration || "";
+  const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
+  return `<div class="lib-item" data-vid="${v.id}">
       <div class="lib-thumb" ${thumbBg}>
         ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
         ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
@@ -45426,34 +47668,88 @@ function renderMyProfile() {
         <small>${views} views</small>
       </div>
     </div>`;
+}
+
+// v619: helper render satu baris user (dipakai tab followers + following).
+function myProfileUserRow(username) {
+  const acc = (typeof findAccountByUsername === "function") ? findAccountByUsername(username) : null;
+  const name = (acc && acc.name) || username || "User";
+  const av = acc && acc.avatar;
+  const initials = String(name).trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const avatar = av
+    ? `<img src="${escapeHtml(av)}" alt="" onerror="this.remove()"/><span class="mpu-init">${escapeHtml(initials)}</span>`
+    : `<span class="mpu-init">${escapeHtml(initials)}</span>`;
+  return `<button type="button" class="myprofile-user-row" data-open-user="${escapeHtml(username)}">
+      <span class="mpu-avatar">${avatar}</span>
+      <span class="mpu-text">
+        <strong>${escapeHtml(name)}</strong>
+        <small>@${escapeHtml(username)}</small>
+      </span>
+    </button>`;
+}
+
+// v619: tab aktif My Profile (posts | followers | following | likes). Default posts.
+let myProfileActiveTab = "posts";
+
+// v619: render ONE tab di area #myProfileTabPanel, toggle visibility 3 container
+// (#myProfileVideoGrid / #myProfileLikedGrid / #myProfileUserList) + empty-state.
+function renderMyProfileTab(which) {
+  if (!user) return;
+  const tabs = ["posts", "followers", "following", "likes"];
+  if (!tabs.includes(which)) which = "posts";
+  myProfileActiveTab = which;
+
+  const grid = document.getElementById("myProfileVideoGrid");
+  const liked = document.getElementById("myProfileLikedGrid");
+  const list = document.getElementById("myProfileUserList");
+  const empty = document.getElementById("myProfileTabEmpty");
+  const emptyText = document.getElementById("myProfileTabEmptyText");
+  const emptyIcon = empty ? empty.querySelector(".up-empty-icon") : null;
+
+  // Active state pada tombol tab di header.
+  document.querySelectorAll("[data-myprofile-stat]").forEach(btn => {
+    const on = btn.getAttribute("data-myprofile-stat") === which;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+
+  // Sembunyikan semua container dulu.
+  [grid, liked, list, empty].forEach(el => { if (el) el.hidden = true; });
+
+  const showEmpty = (text, icon) => {
+    if (empty) empty.hidden = false;
+    if (emptyText) emptyText.textContent = text;
+    if (emptyIcon) emptyIcon.textContent = icon;
   };
 
-  // Videos grid — same renderer style sebagai My Library
-  const gridEl = document.getElementById("myProfileVideoGrid");
-  const countEl = document.getElementById("myProfileVideoCount");
-  if (countEl) countEl.textContent = myVideos.length;
-  if (gridEl) {
-    if (!myVideos.length) {
-      gridEl.innerHTML = `<div class="lib-empty"><div class="lib-empty-icon">🎬</div><p>No videos yet — <a href="#" data-jump="upload" style="color:var(--primary)">upload now</a></p></div>`;
-    } else {
-      gridEl.innerHTML = [...myVideos].sort((a, b) => (b.id || 0) - (a.id || 0)).map(renderTile).join("");
+  if (which === "posts") {
+    const vids = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
+    if (!vids.length) return showEmpty("Belum ada postingan", "🎬");
+    if (grid) {
+      grid.hidden = false;
+      grid.innerHTML = vids.sort((a, b) => (b.id || 0) - (a.id || 0)).map(myProfileVideoTile).join("");
     }
-  }
-
-  // Liked Videos grid — kolom kedua di My Profile
-  const likedGrid = document.getElementById("myProfileLikedGrid");
-  const likedCount = document.getElementById("myProfileLikedCount");
-  const likedEmpty = document.getElementById("myProfileLikedEmpty");
-  if (likedGrid) {
+  } else if (which === "likes") {
     const likedIds = Array.isArray(state?.liked) ? state.liked : [];
-    const likedVideos = likedIds.map(id => typeof findVideo === "function" ? findVideo(+id) : null).filter(Boolean);
-    if (likedCount) likedCount.textContent = likedVideos.length;
-    if (!likedVideos.length) {
-      likedGrid.innerHTML = "";
-      if (likedEmpty) likedEmpty.hidden = false;
-    } else {
-      if (likedEmpty) likedEmpty.hidden = true;
-      likedGrid.innerHTML = likedVideos.map(renderTile).join("");
+    const likedVideos = likedIds.map(id => (typeof findVideo === "function" ? findVideo(+id) : null)).filter(Boolean);
+    if (!likedVideos.length) return showEmpty("Belum ada video disukai", "❤️");
+    if (liked) {
+      liked.hidden = false;
+      liked.innerHTML = likedVideos.map(myProfileVideoTile).join("");
+    }
+  } else if (which === "followers") {
+    const users = (typeof getUserFollowers === "function") ? getUserFollowers(user.username) : [];
+    if (!users.length) return showEmpty("Belum ada pengikut", "👥");
+    if (list) {
+      list.hidden = false;
+      list.innerHTML = users.map(myProfileUserRow).join("");
+    }
+  } else if (which === "following") {
+    const users = (typeof getUserFollowing === "function") ? getUserFollowing(user.username) : [];
+    if (!users.length) return showEmpty("Belum mengikuti siapa pun", "👥");
+    if (list) {
+      list.hidden = false;
+      list.innerHTML = users.map(myProfileUserRow).join("");
     }
   }
 }
@@ -45464,6 +47760,20 @@ function renderMyProfile() {
   if (!view || view.__myProfileBound) return;
   view.__myProfileBound = true;
   view.addEventListener("click", e => {
+    // v619: tab switch (Postingan/Pengikut/Mengikuti/Suka).
+    const tabBtn = e.target.closest("[data-myprofile-stat]");
+    if (tabBtn) {
+      const which = tabBtn.getAttribute("data-myprofile-stat");
+      if (typeof renderMyProfileTab === "function") renderMyProfileTab(which);
+      return;
+    }
+    // v619: klik baris user (followers/following) → buka profil mereka.
+    const userRow = e.target.closest("[data-open-user]");
+    if (userRow) {
+      const uname = userRow.getAttribute("data-open-user");
+      if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+      return;
+    }
     const item = e.target.closest(".lib-item");
     if (!item) return;
     const id = Number(item.dataset.vid);
@@ -45624,10 +47934,23 @@ async function openLibInlinePlayer(id) {
   videoEl.style.display = "";
   const SAMPLE = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   let src = null;
-  if (v.sourceType === "url" && v.videoUrl) {
-    src = v.videoUrl;
-  } else {
-    src = await (typeof resolveVideoSource === "function" ? resolveVideoSource(v) : Promise.resolve(null));
+  // 8a: OFFLINE-FIRST for downloaded videos. If this video was saved to the
+  // app (kind:"dashboard" → IndexedDB blob), play from the stored blob so it
+  // works without internet — even if sourceType is "url". Fall back to network.
+  const isOfflineSaved = Array.isArray(state?.downloaded)
+    && state.downloaded.some(d => d?.videoId === id && (d.kind || "dashboard") !== "file");
+  if (isOfflineSaved && typeof getVideoBlob === "function") {
+    try {
+      const storedBlob = await getVideoBlob(id);
+      if (storedBlob) src = URL.createObjectURL(storedBlob);
+    } catch {}
+  }
+  if (!src) {
+    if (v.sourceType === "url" && v.videoUrl) {
+      src = v.videoUrl;
+    } else {
+      src = await (typeof resolveVideoSource === "function" ? resolveVideoSource(v) : Promise.resolve(null));
+    }
   }
   videoEl.src = src || SAMPLE;
 
@@ -45774,11 +48097,28 @@ document.addEventListener("click", e => {
   e.preventDefault();
   setLibraryTab(btn.dataset.libTab);
 });
-// Sync counts saat library view di-render
+// Sync counts saat library view di-render.
+// 8d FIX: dulu observer ini memanggil syncLibTabCounts() SECARA SINKRON pada
+// SETIAP mutasi characterData/childchild di 3 subtree count — dan renderMyLibrary()
+// menulis count berkali-kali per render (tiap renderLibSection + total counter),
+// jadi observer fire berkali-kali per render → churn berlebih (terasa "lag/
+// stuck", terutama saat library kosong di mana re-render empty-state sering
+// terjadi). Sekarang di-throttle pakai rAF + skip kalau view tidak aktif,
+// supaya hanya jalan SEKALI per frame, setelah DOM settle.
 (function watchLibCounts() {
   const view = document.querySelector('section.view[data-view="videos"]');
   if (!view || !window.MutationObserver) return;
-  const ro = new MutationObserver(() => syncLibTabCounts());
+  let raf = 0;
+  const schedule = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      // Skip kerja kalau view tidak aktif / tab di-background (no visible churn).
+      if (document.hidden || !view.classList.contains("active")) return;
+      syncLibTabCounts();
+    });
+  };
+  const ro = new MutationObserver(schedule);
   ["myVideoCount", "statusVideoCount", "downloadVideoCount"].forEach(id => {
     const el = document.getElementById(id);
     if (el) ro.observe(el, { childList: true, characterData: true, subtree: true });
@@ -46526,9 +48866,12 @@ async function openPlayer(id) {
   } catch (_) {}
 
   state.currentVideo = id;
-  $("#playerTitle").textContent = v.title;
-  $("#playerCreator").textContent = "@" + v.creator;
-  $("#playerCreatorInit").textContent = v.creator.slice(0, 2).toUpperCase();
+  // Null-safe: sebagian video bisa tak punya field creator (data lama / impor).
+  // Hindari crash v.creator.slice(...) + tampilan "@undefined".
+  const _vCreator = String(v.creator || v.creatorName || v._owner || v.owner || "").trim();
+  $("#playerTitle").textContent = v.title || "Video";
+  $("#playerCreator").textContent = _vCreator ? "@" + _vCreator : "@—";
+  $("#playerCreatorInit").textContent = (_vCreator || v.title || "V").slice(0, 2).toUpperCase();
   $("#playerViewCount").textContent = v.views || fmtNum(v.viewsNum || 0);
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
@@ -46598,6 +48941,41 @@ async function openPlayer(id) {
   }
   // Reset player toolbar state untuk video baru
   resetPlayerToolbar(videoEl, v);
+
+  // 9a — re-sync FX (Penguat suara / Pencahayaan sinematik) toggle buttons +
+  // re-apply cinematic visual for the freshly opened video. Audio boost re-applies
+  // on next play() via the engine's play hook. Null-safe.
+  try { window.playlyMainPlayerFx?.refresh(); } catch {}
+
+  // 9d — Share count display di player utama (honest, dari getShareCount).
+  {
+    const scEl = document.getElementById("playerShareCount");
+    if (scEl) {
+      const sc = (typeof getShareCount === "function") ? (getShareCount(id) || 0) : 0;
+      scEl.textContent = (typeof fmtNum === "function") ? fmtNum(sc) : String(sc);
+      // Tag dengan id supaya incrementShareCount() meng-update live (lihat 38795).
+      scEl.dataset.fypShareCount = String(id);
+    }
+  }
+
+  // 9g — Hitung jumlah video kreator ini di platform (DINAMIS, bukan hardcoded).
+  {
+    const metaEl = document.getElementById("playerCreatorMeta");
+    if (metaEl) {
+      let count = 0;
+      try {
+        const all = (typeof getPlatformVideos === "function") ? getPlatformVideos() : [];
+        count = all.filter(x => x && x.creator === v.creator).length;
+      } catch {}
+      metaEl.textContent = `${count} video di platform`;
+    }
+  }
+
+  // 9e — Bangun menu subtitle (CC) dari subtitle REAL milik video (honest).
+  try { if (typeof buildMainSubMenu === "function") buildMainSubMenu(v); } catch {}
+
+  // 9f — Pastikan judul fullscreen ter-isi sebelum user masuk fullscreen.
+  try { window.plySyncFsTitle?.(); } catch {}
 
   renderDownloadedList(id);
   // Sidebar — role-aware:
@@ -46702,14 +49080,19 @@ function resetPlayerToolbar(videoEl, vid) {
   $$("[data-q]").forEach(b => b.classList.toggle("active", b.dataset.q === "auto"));
   videoEl.style.filter = "";
 
-  // Subtitle off — buang track lama
-  videoEl.querySelectorAll("track").forEach(t => t.remove());
+  // Subtitle off — buang track lama (revoke blob URL biar tidak bocor). 9e.
+  if (typeof clearMainSubTracks === "function") clearMainSubTracks(videoEl);
+  else videoEl.querySelectorAll("track").forEach(t => t.remove());
   $("#subBtn")?.classList.remove("active");
+  $("#cplCCBtn")?.classList.remove("cpl-active");
   videoEl.dataset.subOn = "";
+  videoEl.dataset.subLang = "";
 
   // Tutup menu
   $("#speedMenu") && ($("#speedMenu").hidden = true);
   $("#qualityMenu") && ($("#qualityMenu").hidden = true);
+  $("#subMenu") && ($("#subMenu").hidden = true);
+  $("#subBtn")?.setAttribute("aria-expanded", "false");
 
   // Reset toolbar & settings button state untuk video baru
   $("#playerToolbar")?.classList.remove("cpl-toolbar-open");
@@ -46761,24 +49144,55 @@ function setupPlayerToolbar() {
     });
   });
 
-  // ----- Subtitle / CC (auto-generate VTT dari deskripsi & judul) -----
-  $("#subBtn")?.addEventListener("click", () => {
-    const isOn = v.dataset.subOn === "1";
-    if (isOn) {
-      for (const t of v.textTracks) t.mode = "hidden";
-      v.dataset.subOn = "";
-      $("#subBtn").classList.remove("active");
-      toast("💬 Subtitle <b>OFF</b>", "info");
-    } else {
-      ensureSubtitleTrack(v);
-      // Tunggu track ready, lalu show
-      const showTrack = () => { for (const t of v.textTracks) t.mode = "showing"; };
-      if (v.textTracks.length) showTrack();
-      else v.addEventListener("loadedmetadata", showTrack, { once: true });
-      v.dataset.subOn = "1";
-      $("#subBtn").classList.add("active");
-      toast("💬 Auto-subtitle <b>ON</b>", "success");
+  // ----- 9c: Volume slider + mute button (player utama) -----
+  // Pola mengikuti library #lvcVol. Persist last volume di localStorage.
+  {
+    const VOL_KEY = "playly-player-volume";
+    const volSl = $("#playerVolume");
+    const volBtn = $("#playerVolBtn");
+    function syncVolUi() {
+      const muted = v.muted || v.volume === 0;
+      if (volSl && document.activeElement !== volSl) volSl.value = muted ? 0 : v.volume;
+      volBtn?.querySelector(".ptb-icon-vol")?.toggleAttribute("hidden", muted);
+      volBtn?.querySelector(".ptb-icon-mute")?.toggleAttribute("hidden", !muted);
+      if (volBtn) volBtn.setAttribute("aria-label", muted ? "Suarakan" : "Bisukan");
     }
+    // Restore persisted volume (best-effort).
+    try {
+      const saved = parseFloat(localStorage.getItem(VOL_KEY));
+      if (isFinite(saved) && saved >= 0 && saved <= 1) v.volume = saved;
+    } catch {}
+    volSl?.addEventListener("input", () => {
+      const val = parseFloat(volSl.value);
+      v.volume = isFinite(val) ? val : v.volume;
+      v.muted = v.volume === 0;
+      try { localStorage.setItem(VOL_KEY, String(v.volume)); } catch {}
+      syncVolUi();
+    });
+    volBtn?.addEventListener("click", () => {
+      v.muted = !v.muted;
+      // Kalau unmute tapi volume 0 → naikkan ke nilai wajar.
+      if (!v.muted && v.volume === 0) v.volume = 0.5;
+      try { localStorage.setItem(VOL_KEY, String(v.muted ? 0 : v.volume)); } catch {}
+      syncVolUi();
+    });
+    v.addEventListener("volumechange", syncVolUi);
+    syncVolUi();
+  }
+
+  // ----- 9e: Subtitle / CC (REAL tracks dari v.subtitles; upload .srt/.vtt) -----
+  // Tombol CC = buka menu (#subMenu). Menu di-isi oleh buildMainSubMenu(v).
+  $("#subBtn")?.addEventListener("click", e => {
+    e.stopPropagation();
+    const m = $("#subMenu");
+    if (!m) return;
+    // Rebuild dari video aktif tiap buka (supaya track baru ke-reflect).
+    const cur = (typeof findVideo === "function") ? findVideo(state?.currentVideo) : null;
+    if (cur) buildMainSubMenu(cur);
+    m.hidden = !m.hidden;
+    $("#subBtn")?.setAttribute("aria-expanded", m.hidden ? "false" : "true");
+    $("#speedMenu") && ($("#speedMenu").hidden = true);
+    $("#qualityMenu") && ($("#qualityMenu").hidden = true);
   });
 
   // ----- Picture-in-picture -----
@@ -46824,23 +49238,23 @@ function setupPlayerToolbar() {
     }
     const titleEl = $("#playerTitle");
     const safeName = (titleEl?.textContent || "video").replace(/[^\w\s.-]+/g, "").trim().slice(0, 80) || "video";
-    try {
-      // Untuk blob URL atau cross-origin yang allow download, fetch lalu trigger anchor download
-      const isBlob = src.startsWith("blob:");
-      let url = src, revokeAfter = false;
-      if (!isBlob) {
-        // Fetch supaya nama file bisa di-set (anchor download tidak override filename utk cross-origin)
-        try {
-          const r = await fetch(src, { mode: "cors" });
-          if (!r.ok) throw new Error("fetch failed");
-          const blob = await r.blob();
-          url = URL.createObjectURL(blob);
-          revokeAfter = true;
-        } catch {
-          // Fallback: pakai src langsung — browser akan navigasi/download tergantung CORS
-        }
-      }
-      const ext = (src.match(/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i)?.[1] || "mp4").toLowerCase();
+    const ext = (src.match(/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i)?.[1] || "mp4").toLowerCase();
+    // 8a: HONEST device download. blob: URLs always work via <a download>. For
+    // cross-origin http(s), we MUST fetch→blob first (anchor download attribute
+    // is ignored cross-origin). If that fetch is blocked by CORS, we do NOT
+    // pretend success: we open the video in a new tab so the user can save it
+    // manually, and we DON'T record a fake "file" entry.
+    const isBlob = src.startsWith("blob:");
+    const recordFileDownload = () => {
+      if (!curId) return;
+      if (!Array.isArray(state.downloaded)) state.downloaded = [];
+      state.downloaded = state.downloaded.filter(d => d.videoId !== curId);
+      state.downloaded.unshift({ videoId: curId, ts: Date.now(), kind: "file" });
+      if (typeof saveState === "function") saveState();
+      if (typeof renderDownloadedList === "function") renderDownloadedList();
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+    };
+    const triggerAnchorDownload = (url, revokeAfter) => {
       const a = document.createElement("a");
       a.href = url;
       a.download = `${safeName}.${ext}`;
@@ -46848,17 +49262,29 @@ function setupPlayerToolbar() {
       a.click();
       a.remove();
       if (revokeAfter) setTimeout(() => URL.revokeObjectURL(url), 1500);
+    };
+    if (isBlob) {
+      // Local blob — guaranteed to download.
+      triggerAnchorDownload(src, false);
       toast(`📥 <b>${escapeHtml(safeName)}</b> sedang diunduh...`, "success");
-      // Catat ke daftar "Diunduh" — kind: "file" karena di-download ke device.
-      if (curId) {
-        if (!Array.isArray(state.downloaded)) state.downloaded = [];
-        state.downloaded = state.downloaded.filter(d => d.videoId !== curId);
-        state.downloaded.unshift({ videoId: curId, ts: Date.now(), kind: "file" });
-        saveState();
-        if (typeof renderDownloadedList === "function") renderDownloadedList();
-      }
+      recordFileDownload();
+      return;
+    }
+    // Cross-origin / remote URL — try fetch→blob (real download).
+    try {
+      const r = await fetch(src, { mode: "cors" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      triggerAnchorDownload(url, true);
+      toast(`📥 <b>${escapeHtml(safeName)}</b> sedang diunduh...`, "success");
+      recordFileDownload();
     } catch (err) {
-      toast(`❌ Gagal unduh: ${err.message}`, "error");
+      // CORS / network blocked direct download. Be HONEST: don't claim success,
+      // don't record a "file" entry. Open in a new tab for manual save.
+      console.warn("[download] direct download blocked, falling back to new tab:", err);
+      toast("⚠️ Tidak bisa unduh langsung (dibatasi server). Membuka video di tab baru — simpan manual.", "warning");
+      try { window.open(src, "_blank", "noopener"); } catch {}
     }
   });
 
@@ -46880,48 +49306,191 @@ function setupPlayerToolbar() {
     if (!e.target.closest(".ptb-group")) {
       $("#speedMenu") && ($("#speedMenu").hidden = true);
       $("#qualityMenu") && ($("#qualityMenu").hidden = true);
+      if ($("#subMenu")) { $("#subMenu").hidden = true; $("#subBtn")?.setAttribute("aria-expanded", "false"); }
     }
   });
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       $("#speedMenu") && ($("#speedMenu").hidden = true);
       $("#qualityMenu") && ($("#qualityMenu").hidden = true);
+      if ($("#subMenu")) { $("#subMenu").hidden = true; $("#subBtn")?.setAttribute("aria-expanded", "false"); }
     }
   });
 }
 
-// Bikin auto-subtitle dari deskripsi+judul, encode ke WebVTT, attach sebagai <track>.
+// ============== 9e: REAL SUBTITLE (player utama) ==============
+// Subtitle disimpan di v.subtitles = [{ lang, label, vtt }] (WebVTT text).
+// Tidak ada lagi auto-generate dari judul+deskripsi (HONEST: kalau tidak ada
+// subtitle → tampil "Belum ada subtitle"). Pemilik video bisa upload .srt/.vtt.
+
+// Konversi SubRip (.srt) → WebVTT. Null-safe; balik "" kalau input kosong.
+function srtToVtt(srt) {
+  if (!srt || typeof srt !== "string") return "";
+  let s = srt.replace(/\r+/g, "").trim();
+  if (!s) return "";
+  // Kalau sudah WEBVTT, kembalikan apa adanya (normalisasi koma timestamp tetap aman).
+  const isVtt = /^WEBVTT/i.test(s);
+  // SRT timestamps pakai koma untuk ms (00:00:01,000) → VTT pakai titik (00:00:01.000)
+  s = s.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
+  if (isVtt) return s;
+  // Buang index angka di awal tiap blok cue (baris yang isinya cuma angka).
+  const blocks = s.split(/\n\s*\n/).map(b => {
+    const lines = b.split("\n");
+    if (lines.length && /^\d+$/.test(lines[0].trim())) lines.shift();
+    return lines.join("\n").trim();
+  }).filter(Boolean);
+  return "WEBVTT\n\n" + blocks.join("\n\n") + "\n";
+}
+// Validasi minimal isi VTT (ada cue timestamp).
+function looksLikeSubtitle(vtt) {
+  return /\d{2}:\d{2}(:\d{2})?[.,]\d{3}\s*-->/.test(vtt || "");
+}
+
+// Buang semua <track> dari #videoEl + revoke object URL lama.
+function clearMainSubTracks(videoEl) {
+  videoEl.querySelectorAll("track").forEach(t => {
+    if (t.src && t.src.startsWith("blob:")) { try { URL.revokeObjectURL(t.src); } catch {} }
+    t.remove();
+  });
+}
+// Pasang satu track VTT (string) ke #videoEl & tampilkan.
+function attachMainSubTrack(videoEl, track) {
+  clearMainSubTracks(videoEl);
+  if (!track || !track.vtt) { videoEl.dataset.subOn = ""; $("#subBtn")?.classList.remove("active"); return; }
+  const blob = new Blob([track.vtt], { type: "text/vtt" });
+  const el = document.createElement("track");
+  el.kind = "subtitles";
+  el.label = track.label || (window.LIB_CC_LANG_LABELS?.[track.lang]) || track.lang || "Subtitle";
+  el.srclang = track.lang || "id";
+  el.default = true;
+  el.src = URL.createObjectURL(blob);
+  videoEl.appendChild(el);
+  const show = () => { for (const t of videoEl.textTracks) t.mode = "showing"; };
+  if (videoEl.textTracks.length) show();
+  el.addEventListener("load", show, { once: true });
+  videoEl.dataset.subOn = "1";
+  videoEl.dataset.subLang = track.lang || "";
+  $("#subBtn")?.classList.add("active");
+}
+
+// Compat shim — kode lama memanggil ensureSubtitleTrack(); sekarang TIDAK
+// memfabrikasi subtitle. Hanya pasang track pertama yang real, kalau ada.
 function ensureSubtitleTrack(videoEl) {
   if (videoEl.querySelector("track")) return;
-  const vid = videoEl._currentVid || {};
-  const text = `${vid.title || ""}. ${vid.desc || ""}`.trim();
-  let sentences = text.split(/[.!?]\s+/).map(s => s.trim()).filter(Boolean);
-  if (!sentences.length) sentences = ["Auto-subtitle untuk demonstrasi."];
-  // Distribusi cue tiap 3 detik, ulang kalau perlu sampai durasi habis
-  const totalDur = isFinite(videoEl.duration) && videoEl.duration > 0 ? videoEl.duration : sentences.length * 3;
-  const step = 3;
-  const pad = t => {
-    const m = Math.floor(t / 60), s = Math.floor(t % 60), ms = Math.floor((t % 1) * 1000);
-    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${String(ms).padStart(3,"0")}`;
-  };
-  let vtt = "WEBVTT\n\n";
-  let t = 0, i = 0;
-  while (t < totalDur) {
-    const end = Math.min(t + step, totalDur);
-    const line = sentences[i % sentences.length];
-    vtt += `${pad(t)} --> ${pad(end)}\n${line}\n\n`;
-    t = end;
-    i++;
-    if (i > 200) break; // safety
+  const v = (typeof findVideo === "function") ? findVideo(state?.currentVideo) : null;
+  const list = Array.isArray(v?.subtitles) ? v.subtitles : [];
+  if (list.length) attachMainSubTrack(videoEl, list[0]);
+}
+
+// Cek apakah video dimiliki user aktif (ada di state.myVideos).
+function isOwnedVideo(v) {
+  if (!v) return false;
+  const mine = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  return mine.some(x => x && x.id === v.id);
+}
+
+// Bangun isi #subMenu dari subtitle REAL milik video + (kalau pemilik) item upload.
+function buildMainSubMenu(v) {
+  const menu = document.getElementById("subMenu");
+  const videoEl = $("#videoEl");
+  if (!menu || !videoEl) return;
+  const list = Array.isArray(v?.subtitles) ? v.subtitles : [];
+  const owned = isOwnedVideo(v);
+  const curLang = videoEl.dataset.subLang || "";
+  const subOn = videoEl.dataset.subOn === "1";
+
+  let html = "";
+  // Item "Mati"
+  html += `<button type="button" class="ptb-cc-item${!subOn ? " active" : ""}" data-cc-pick="off">Mati</button>`;
+  if (list.length) {
+    list.forEach((t, idx) => {
+      const lbl = t.label || (window.LIB_CC_LANG_LABELS?.[t.lang]) || t.lang || `Subtitle ${idx + 1}`;
+      const on = subOn && (t.lang || "") === curLang;
+      html += `<button type="button" class="ptb-cc-item${on ? " active" : ""}" data-cc-pick="${idx}">${escapeHtml(lbl)}</button>`;
+    });
+  } else {
+    html += `<div class="ptb-cc-empty">Belum ada subtitle</div>`;
   }
-  const blob = new Blob([vtt], { type: "text/vtt" });
-  const track = document.createElement("track");
-  track.kind = "subtitles";
-  track.label = "Auto-subtitle (ID)";
-  track.srclang = "id";
-  track.default = true;
-  track.src = URL.createObjectURL(blob);
-  videoEl.appendChild(track);
+  if (owned) {
+    html += `<div class="ptb-cc-sep"></div>`;
+    html += `<button type="button" class="ptb-cc-item ptb-cc-upload" data-cc-upload="1">⬆ Upload subtitle (.srt/.vtt)</button>`;
+  }
+  menu.innerHTML = html;
+
+  // Wire item clicks (rebind tiap build supaya selalu sinkron list terbaru).
+  menu.querySelectorAll("[data-cc-pick]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const pick = btn.dataset.ccPick;
+      if (pick === "off") {
+        clearMainSubTracks(videoEl);
+        videoEl.dataset.subOn = ""; videoEl.dataset.subLang = "";
+        $("#subBtn")?.classList.remove("active");
+        toast("💬 Subtitle <b>Mati</b>", "info");
+      } else {
+        const t = list[+pick];
+        if (t) { attachMainSubTrack(videoEl, t); toast(`💬 Subtitle: <b>${escapeHtml(t.label || t.lang || "")}</b>`, "success"); }
+      }
+      buildMainSubMenu(v);
+      menu.hidden = true;
+      $("#subBtn")?.setAttribute("aria-expanded", "false");
+    });
+  });
+  const upBtn = menu.querySelector("[data-cc-upload]");
+  if (upBtn) upBtn.addEventListener("click", () => { menu.hidden = true; openSubtitleUpload(v); });
+}
+
+// Dialog upload subtitle (pemilik video). Pilih bahasa + file .srt/.vtt.
+function openSubtitleUpload(v) {
+  if (!v) return;
+  if (!isOwnedVideo(v)) { toast("⚠️ Hanya pemilik video yang bisa upload subtitle.", "warning"); return; }
+  // Pilih bahasa via select sederhana (reuse LIB_CC_LANG_LABELS, tanpa "Mati").
+  const labels = window.LIB_CC_LANG_LABELS || { id: "Bahasa Indonesia", en: "English" };
+  const langCodes = Object.keys(labels).filter(k => k !== "off");
+  // File input
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".srt,.vtt,text/vtt,application/x-subrip";
+  input.style.display = "none";
+  document.body.appendChild(input);
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    input.remove();
+    if (!file) return;
+    // Validasi ekstensi + ukuran (maks 1 MB — subtitle teks pasti kecil).
+    const name = (file.name || "").toLowerCase();
+    if (!/\.(srt|vtt)$/.test(name)) { toast("❌ Format harus .srt atau .vtt", "error"); return; }
+    if (file.size > 1024 * 1024) { toast("❌ File subtitle terlalu besar (maks 1 MB)", "error"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      let vtt = "";
+      try { vtt = name.endsWith(".srt") ? srtToVtt(String(reader.result)) : String(reader.result); }
+      catch { vtt = ""; }
+      if (!looksLikeSubtitle(vtt)) { toast("❌ Isi subtitle tidak valid (tidak ada timestamp)", "error"); return; }
+      // Tanya bahasa (prompt sederhana — honest & ringan).
+      const promptList = langCodes.map(c => `${c} = ${labels[c]}`).join("\n");
+      const langRaw = (window.prompt(`Kode bahasa subtitle?\n\n${promptList}`, "id") || "").trim().toLowerCase();
+      if (!langRaw) { toast("Dibatalkan.", "info"); return; }
+      const lang = langCodes.includes(langRaw) ? langRaw : langRaw.slice(0, 5);
+      const label = labels[lang] || lang;
+      // Cari objek video REAL di state.myVideos lalu simpan.
+      const mine = Array.isArray(state?.myVideos) ? state.myVideos : [];
+      const target = mine.find(x => x && x.id === v.id) || v;
+      if (!Array.isArray(target.subtitles)) target.subtitles = [];
+      // Replace kalau bahasa sama sudah ada.
+      target.subtitles = target.subtitles.filter(t => (t.lang || "") !== lang);
+      target.subtitles.push({ lang, label, vtt });
+      // Sinkronkan ke objek v yang sedang dipakai render.
+      v.subtitles = target.subtitles;
+      try { saveState(); } catch {}
+      // Pasang track baru & re-render menu.
+      attachMainSubTrack($("#videoEl"), { lang, label, vtt });
+      buildMainSubMenu(v);
+      toast(`💬 Subtitle <b>${escapeHtml(label)}</b> ditambahkan`, "success");
+    };
+    reader.onerror = () => { toast("❌ Gagal membaca file subtitle", "error"); };
+    reader.readAsText(file);
+  });
+  input.click();
 }
 
 setupPlayerToolbar();
@@ -47031,14 +49600,23 @@ function setupCustomPlayer() {
   // Mute toggle
   muteBtn?.addEventListener("click", () => { v.muted = !v.muted; });
 
-  // Subtitle (CC) bar button — reuse tombol #subBtn lama (sudah toggle
-  // on/off + auto-VTT). Tetap berfungsi sesuai setup sebelumnya.
+  // Subtitle (CC) bar button — toggle subtitle REAL on/off (9e). Kalau video
+  // belum punya subtitle → honest toast, tidak ada lagi auto-VTT palsu.
   $("#cplCCBtn")?.addEventListener("click", () => {
-    $("#subBtn")?.click();
-    setTimeout(() => {
-      const on = $("#subBtn")?.classList.contains("active");
-      $("#cplCCBtn")?.classList.toggle("cpl-active", !!on);
-    }, 30);
+    const cur = (typeof findVideo === "function") ? findVideo(state?.currentVideo) : null;
+    const list = Array.isArray(cur?.subtitles) ? cur.subtitles : [];
+    const on = v.dataset.subOn === "1";
+    if (on) {
+      if (typeof clearMainSubTracks === "function") clearMainSubTracks(v);
+      v.dataset.subOn = ""; v.dataset.subLang = "";
+      $("#subBtn")?.classList.remove("active");
+      $("#cplCCBtn")?.classList.remove("cpl-active");
+    } else {
+      if (!list.length) { toast("💬 Belum ada subtitle untuk video ini", "info"); return; }
+      if (typeof attachMainSubTrack === "function") attachMainSubTrack(v, list[0]);
+      $("#cplCCBtn")?.classList.add("cpl-active");
+    }
+    if (typeof buildMainSubMenu === "function" && cur) buildMainSubMenu(cur);
   });
   // Kecepatan bar button → buka POPUP pilihan (bukan auto-cycle).
   // Ditangani initPlySpeedPopups (delegasi di .ply-spd-wrap).
@@ -47137,7 +49715,8 @@ function setupCustomPlayer() {
     const el = $("#cdSubVal");
     if (el) el.textContent = on ? "AKTIF" : "MATI";
   }
-  $("#cdSub")?.addEventListener("click", () => { $("#subBtn")?.click(); setTimeout(syncSubVal, 50); });
+  // 9e — Subtitle item di dots menu = toggle subtitle real (sama seperti cpl CC bar).
+  $("#cdSub")?.addEventListener("click", () => { $("#cplCCBtn")?.click(); setTimeout(syncSubVal, 50); });
 
   // Sync title whenever player opens
   const playerTitleEl = $("#playerTitle");
@@ -48221,21 +50800,53 @@ document.addEventListener("click", (e) => {
         })
       : confirm("Hapus akun permanen? Semua data hilang dan tidak bisa dipulihkan.");
     if (!proceed) return;
-    // Nuke user-specific data
+    // 10e: Nuke HANYA data milik akun ini. Sebelumnya `k.includes(email)` +
+    // `startsWith("playly-state-")` over-broad: substring-match bisa kena akun
+    // lain (mis. email "a@x.com" cocok di dalam "aa@x.com"), dan playly-state-
+    // menghapus state SEMUA user. Sekarang exact/prefix-match ketat per akun.
     try {
       const email = String(user?.email || "").toLowerCase();
+      const username = String(user?.username || "");
       if (email) {
+        // Set kunci eksplisit untuk akun ini (lowercase email key + username key).
+        const exact = new Set([
+          `playly-account-${email}`,
+          `playly-prefs-${email}`,
+          `playly-state-${username}`,
+        ]);
+        // Prefix-match: kunci yang DIAWALI pola ini (mis. -extra suffix versi).
+        const prefixes = [
+          `playly-sessions-${email}`,
+          `playly-login-attempts-${email}`,
+          `playly-user-audit-${email}`,
+          `playly-2fa-${username}`,
+          `playly-forgot-pin-attempts-${email}`,
+        ];
+        // Suffix yang HARUS persis di akhir kunci (anti substring-match email).
+        const suffixEmail = `-${email}`;
+        const suffixUser = username ? `-${username}` : null;
+
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i) || "";
-          if (k.includes(email) || k.startsWith("playly-acc-") || k.startsWith("playly-state-")) {
-            keysToRemove.push(k);
-          }
+          const raw = localStorage.key(i);
+          if (!raw) continue;
+          const k = raw;
+          const kl = k.toLowerCase();
+          if (!kl.startsWith("playly-")) continue;
+          let match = false;
+          if (exact.has(k)) match = true;
+          else if (prefixes.some(p => k === p || k.startsWith(p + "-"))) match = true;
+          // END-WITH exact `-${email}` (lowercase-compare) — bukan substring.
+          else if (kl.endsWith(suffixEmail)) match = true;
+          // END-WITH exact `-${username}` (case-sensitive: username case-sensitive).
+          else if (suffixUser && k.endsWith(suffixUser)) match = true;
+          if (match) keysToRemove.push(k);
         }
         keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch {} });
       }
-      // Logout flag
+      // Logout flag / session markers untuk user ini.
       sessionStorage.clear();
+      try { localStorage.removeItem("playly-user"); } catch {}
       try { localStorage.removeItem("playly-current-user"); } catch {}
       try { localStorage.removeItem("playly-session-active"); } catch {}
     } catch (e) { console.warn("[delete-account] cleanup error:", e); }
@@ -48528,6 +51139,71 @@ $("#followBtn")?.addEventListener("click", () => {
   }
 });
 
+// ----------------------- IN-APP NOTIFICATION (untuk current user) -----------------------
+// 10b: buat 1 notifikasi UNTUK user yang sedang login, hormati toggle Settings →
+// Notifikasi. Dipakai untuk event yang menyasar DIRI SENDIRI (komentar di video
+// kita, follower baru, DM masuk).
+//
+// HONEST LIMITATION: delivery real-time lintas-device terbatas (sama seperti
+// cloud-sync) — notifikasi ini cuma muncul di sesi/tab yang aktif saat event
+// terjadi (atau lewat event cross-tab `storage`/`playly:cloud-applied`). Tidak
+// ada push server yang menjamin sampai ke semua device.
+function addNotification(type, text, meta) {
+  if (!user || !Array.isArray(state?.notifications)) return null;
+  meta = meta || {};
+  // type → pref via activityToPrefMap/NOTIF_TYPE_PREF. Default ALLOW kalau tidak
+  // ada mapping (mis. broadcast/system tetap masuk).
+  const prefMap = (typeof activityToPrefMap !== "undefined" && activityToPrefMap)
+    ? activityToPrefMap
+    : NOTIF_TYPE_PREF;
+  const prefKey = prefMap[type];
+  if (prefKey && !getPref(prefKey, true)) return null; // user matikan kategori ini
+
+  // Dedupe repeat jelas: id+text sama dengan notif teratau yang belum dibaca.
+  const top = state.notifications[0];
+  if (top && top.type === type && top.text === text && top.unread &&
+      (Date.now() - (top.ts || 0)) < 5000) {
+    return null;
+  }
+
+  const n = {
+    id: Date.now() + Math.random(),
+    type: type || "generic",
+    text: text || "",
+    ts: Date.now(),
+    time: "just now",
+    unread: true,
+    init: meta.init || "?",
+    fromUsername: meta.fromUsername || null,
+    videoId: meta.videoId
+  };
+  state.notifications.unshift(n);
+  state.notifications = state.notifications.slice(0, 100); // cap 100 terakhir
+  saveState();
+  // Refresh bell panel + dropdown + badge dot.
+  try { if (typeof renderNotifications === "function") renderNotifications(); } catch {}
+  try {
+    const dd = document.getElementById("notifDropdown");
+    if (dd && !dd.hidden && typeof renderNotifDropdownContent === "function") renderNotifDropdownContent();
+  } catch {}
+  try { if (typeof renderHomeNotifLatest === "function") renderHomeNotifLatest(); } catch {}
+  try { if (state?.currentView === "notifications" && typeof renderNotifPage === "function") renderNotifPage(); } catch {}
+  try { if (typeof refreshNotifBellBadge === "function") refreshNotifBellBadge(); } catch {}
+  return n;
+}
+
+// 10b: badge dot di bell topbar — tampil HANYA kalau ada notif belum dibaca.
+// Sebelumnya `.dot-indicator` statis (selalu nyala). Sekarang honest: hidden
+// kalau zero unread.
+function refreshNotifBellBadge() {
+  const dot = document.querySelector("#openNotif .dot-indicator");
+  if (!dot) return;
+  const unread = Array.isArray(state?.notifications)
+    ? state.notifications.filter(n => n && n.unread).length
+    : 0;
+  dot.style.display = unread > 0 ? "" : "none";
+}
+
 // ----------------------- CROSS-USER NOTIFICATION DELIVERY -----------------------
 // Tulis 1 notifikasi ke state user lain (lewat localStorage). Kalau penerima
 // adalah user yang sedang login (test di tab yang sama), langsung sync UI.
@@ -48634,11 +51310,9 @@ function getUserVideos(username, { ownView = false } = {}) {
     const s = JSON.parse(localStorage.getItem(`playly-state-${username}`));
     if (!Array.isArray(s?.myVideos)) return [];
     if (isOwn) return s.myVideos;
-    // Publik: hanya video yang sudah di-publish admin
-    return s.myVideos.filter(v => {
-      const st = v.adminStatus;
-      return st === "published" || st == null;
-    });
+    // Publik: hormati status publish + visibility (private/unlisted/draft
+    // disembunyikan) + jadwal. Lihat isPubliclyVisibleVideo().
+    return s.myVideos.filter(isPubliclyVisibleVideo);
   } catch { return []; }
 }
 
@@ -49005,6 +51679,8 @@ const NOTIF_CATEGORY_MAP = {
 const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
 
 function renderNotifications() {
+  // 10b: jaga badge dot di bell selalu konsisten dengan jumlah unread.
+  try { refreshNotifBellBadge(); } catch {}
   const list = $("#notifList");
   if (!list) return;
   if (!state.notifications.length) {
@@ -49788,6 +52464,8 @@ $("#openHelp")?.addEventListener("click", () => {
     if (searchInput) searchInput.value = "";
     $$(".help-section .faq").forEach(f => f.style.display = "");
     applyHelpRoleFilter();
+    // 12c: refresh "Riwayat Laporan Saya" tiap kali panel dibuka.
+    if (typeof renderMyReports === "function") renderMyReports();
   }
 });
 
@@ -49820,11 +52498,107 @@ function closeHelpPanel() {
   $("#helpPanel")?.classList.remove("open");
 }
 
+// ----------------------- 12c: RIWAYAT LAPORAN SAYA -----------------------
+// Tampilkan tiket (email) + laporan bug yang user kirim, beserta STATUS-nya.
+// Read-only — user cuma melacak status. Sumber: playly-admin-tickets (filter
+// fromEmail === user.email, reuse getAdminEmailsForUser) + playly-admin-bugs
+// (filter reporterEmail === user.email). Honest empty-state kalau kosong.
+function _myReportStatusBadge(kind, rawStatus) {
+  // Map ticket status (new/progress/resolved) & bug status (open/assigned/
+  // resolved/closed) → label user-friendly + class warna.
+  const st = String(rawStatus || "").toLowerCase();
+  let lbl = "Baru", cls = "new";
+  if (kind === "bug") {
+    if (st === "resolved" || st === "closed") { lbl = "Selesai"; cls = "done"; }
+    else if (st === "assigned" || st === "progress" || st === "in-progress") { lbl = "Diproses"; cls = "progress"; }
+    else { lbl = "Baru"; cls = "new"; } // open / unknown
+  } else {
+    if (st === "resolved" || st === "closed" || st === "done") { lbl = "Selesai"; cls = "done"; }
+    else if (st === "progress" || st === "in-progress" || st === "open" || st === "read") { lbl = "Diproses"; cls = "progress"; }
+    else { lbl = "Baru"; cls = "new"; } // new / unknown
+  }
+  return `<span class="myr-badge myr-${cls}">${lbl}</span>`;
+}
+
+function renderMyReports() {
+  const box = document.getElementById("myReportsList");
+  if (!box) return;
+  const emailRaw = (user?.email || "").toLowerCase();
+
+  // Tickets (email/contact) yang user kirim ke admin.
+  let tickets = [];
+  try {
+    tickets = (typeof getAdminEmailsForUser === "function") ? getAdminEmailsForUser() : [];
+  } catch { tickets = []; }
+
+  // Bug reports yang user lapor.
+  let bugs = [];
+  try {
+    const all = (typeof getAdminData === "function") ? getAdminData("bugs") : [];
+    bugs = (Array.isArray(all) ? all : []).filter(b => (String(b?.reporterEmail || "").toLowerCase()) === emailRaw && emailRaw);
+  } catch { bugs = []; }
+
+  const items = [];
+  (Array.isArray(tickets) ? tickets : []).forEach(t => {
+    if (!t) return;
+    items.push({
+      kind: "email",
+      icon: "📧",
+      title: (t.title || "").trim() || "Tanpa subjek",
+      createdAt: Number(t.createdAt) || 0,
+      status: t.status,
+      replies: Array.isArray(t.replies) ? t.replies.length : 0,
+    });
+  });
+  bugs.forEach(b => {
+    items.push({
+      kind: "bug",
+      icon: "🐛",
+      title: (b.title || "").trim() || "Tanpa judul",
+      createdAt: Number(b.createdAt) || 0,
+      status: b.status,
+      replies: 0,
+    });
+  });
+
+  if (!items.length) {
+    box.innerHTML = `<div class="my-reports-empty">Belum ada laporan.</div>`;
+    return;
+  }
+
+  items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const rel = (ts) => (typeof relTime === "function" ? relTime(ts) : "");
+  box.innerHTML = items.map(it => {
+    const replyTxt = it.replies > 0
+      ? `<span class="myr-replies">💬 ${it.replies} balasan</span>`
+      : "";
+    return `
+      <div class="myr-item">
+        <span class="myr-icon" aria-hidden="true">${it.icon}</span>
+        <div class="myr-info">
+          <strong>${escapeHtml(it.title)}</strong>
+          <small>${it.kind === "bug" ? "Bug" : "Email"} · ${escapeHtml(rel(it.createdAt))}${it.replies > 0 ? " · " : ""}${replyTxt}</small>
+        </div>
+        ${_myReportStatusBadge(it.kind, it.status)}
+      </div>`;
+  }).join("");
+}
+
 // Bangun URL Gmail compose — bypass mailto: handler picker, langsung buka
 // Gmail di browser (asumsi user sudah login Gmail).
 function gmailComposeUrl({ to, subject, body }) {
   const params = new URLSearchParams({ view: "cm", fs: "1", to, su: subject, body });
   return `https://mail.google.com/mail/?${params.toString()}`;
+}
+
+// 12b: Status berbasis jam operasional (BUKAN presence real-time palsu).
+// Jam buka 09:00–22:00 waktu lokal user (label "WIB"). Honest: ini jadwal,
+// bukan deteksi admin sedang online.
+const SUPPORT_OPEN_HOUR = 9;   // 09:00
+const SUPPORT_CLOSE_HOUR = 22; // 22:00
+function supportIsOpen() {
+  const h = new Date().getHours();
+  return h >= SUPPORT_OPEN_HOUR && h < SUPPORT_CLOSE_HOUR;
 }
 
 // Modal pemilih admin untuk Live Chat. Tampilkan super admin + semua admin
@@ -49867,12 +52641,25 @@ function openLiveChatPicker() {
     `;
   }).join("");
 
+  // 12b: status row berdasarkan jam operasional (honest, schedule-based).
+  const open = supportIsOpen();
+  const statusRow = open
+    ? `<div class="lcp-status lcp-status-open">
+         <span class="lcp-dot"></span>
+         <span class="lcp-status-text"><b>Online</b> · biasanya dibalas dalam beberapa jam</span>
+       </div>`
+    : `<div class="lcp-status lcp-status-closed">
+         <span class="lcp-dot"></span>
+         <span class="lcp-status-text"><b>Offline</b> (jam operasional 09:00–22:00 WIB) · pesanmu tetap terkirim &amp; dibalas saat jam buka</span>
+       </div>`;
+
   modal.innerHTML = `
     <div class="modal-backdrop" data-lcp-close></div>
     <div class="modal-panel" style="max-width:440px;padding:22px">
       <button class="modal-close" data-lcp-close>✕</button>
       <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px">💬 Live Chat dengan Admin</h3>
-      <p class="muted" style="margin:0 0 16px;font-size:13px">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung lewat in-app messaging.</p>
+      <p class="muted" style="margin:0 0 12px;font-size:13px">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung lewat in-app messaging.</p>
+      ${statusRow}
       <div class="lcp-list" style="max-height:60vh;overflow-y:auto">${itemsHtml}</div>
     </div>
   `;
@@ -50073,6 +52860,10 @@ $("#supportComposeForm")?.addEventListener("submit", e => {
   const fromEmail = user?.email || "—";
   const fromLabel = `${fromName} (@${fromUsername})`;
 
+  // TODO(backend): POST laporan ini ke /api/support saat backend siap supaya
+  // notifikasi email otomatis terkirim. Untuk sekarang HANYA disimpan lokal
+  // ke localStorage admin (playly-admin-tickets / playly-admin-bugs) — admin
+  // melihatnya di Inbox in-app, TIDAK ada email yang benar-benar dikirim.
   if (type === "bug") {
     const bugs = getAdminData("bugs");
     bugs.unshift({
@@ -50089,7 +52880,7 @@ $("#supportComposeForm")?.addEventListener("submit", e => {
     });
     saveAdminData("bugs", bugs);
     pushAdminEvent("🐛", `New bug report from <b>${fromLabel}</b>`);
-    toast("🐛 Bug report sent to admin Inbox", "success");
+    toast("🐛 Laporan bug tersimpan & masuk ke Inbox admin. (Notifikasi email aktif saat backend siap.)", "success");
   } else {
     const tickets = getAdminData("tickets");
     const paymentCode = String(fd.get("paymentCode") || "").trim();
@@ -50116,8 +52907,8 @@ $("#supportComposeForm")?.addEventListener("submit", e => {
     saveAdminData("tickets", tickets);
     pushAdminEvent("📧", `New Inbox message from <b>${fromLabel}</b>${ticket.proofImage ? " (📎 dengan lampiran)" : ""}`);
     toast(ticket.proofImage
-      ? "📧 Pesan + bukti pembayaran terkirim ke admin Inbox"
-      : "📧 Message sent to admin Inbox", "success");
+      ? "📨 Laporan + bukti pembayaran tersimpan & masuk ke Inbox admin. (Notifikasi email aktif saat backend siap.)"
+      : "📨 Laporan tersimpan & masuk ke Inbox admin. (Notifikasi email aktif saat backend siap.)", "success");
   }
 
   closeSupportCompose();
@@ -51236,13 +54027,17 @@ async function renderStoragePage() {
     : `${fmtBytes(totalBytes)} / 1 GB`;
   if (statusEl) {
     if (isPremium) {
-      statusEl.textContent = "Akun Premium — tanpa batas penyimpanan & kuota bulanan.";
+      statusEl.textContent = "Akun Premium — penyimpanan tanpa batas.";
     } else if (pct >= 90) {
-      statusEl.innerHTML = "⚠️ Kuota hampir penuh — hapus file lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade ke Premium</a>.";
+      // 12f: warning terkuat — hampir penuh.
+      statusEl.innerHTML = "⚠️ Penyimpanan hampir penuh — hapus video lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade ke Premium</a>.";
+    } else if (pct >= 80) {
+      // 12f: heads-up lebih awal di 80%.
+      statusEl.innerHTML = "⚠️ Penyimpanan 80% terpakai — pertimbangkan hapus video lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade</a>.";
     } else if (pct >= 60) {
-      statusEl.textContent = `${Math.round(100 - pct)}% kuota tersisa bulan ini.`;
+      statusEl.textContent = "Sisa ruang menipis — hapus video lama atau upgrade.";
     } else {
-      statusEl.textContent = "Penggunaan masih sehat. Lanjutkan upload!";
+      statusEl.textContent = "Penyimpanan masih lega.";
     }
   }
   if (barEl) barEl.style.width = `${pct}%`;
@@ -51304,9 +54099,9 @@ async function renderStoragePage() {
           <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
           <div class="storage-file-info">
             <strong>${escapeHtml(title)}</strong>
-            <small><span class="sf-status sf-${s.cls}">${s.lbl}</span> · ${fmtBytes(v.fileSize || 0)} · ${v.viewsNum || 0} tontonan</small>
+            <small><span class="sf-status sf-${s.cls}">${s.lbl}</span> · ${fmtBytes(v.fileSize)} · ${v.viewsNum || 0} tontonan</small>
           </div>
-          <span class="storage-file-size">${fmtBytes(v.fileSize || 0)}</span>
+          <span class="storage-file-size">${fmtBytes(v.fileSize)}</span>
           <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">🗑️ Hapus</button>
         </div>`;
       }).join("");
@@ -51344,8 +54139,8 @@ async function renderStoragePage() {
 function setStatsTab(tab) {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
-  // v595 (2026-05-28): drop "pencapaian" tab — section dihapus dari Statistik.
-  const valid = ["all", "ringkasan", "top-video", "grafik"];
+  // v604 (2026-06-02): re-add "pencapaian" tab — Milestone section kembali (4d).
+  const valid = ["all", "ringkasan", "top-video", "grafik", "pencapaian"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.statsTab = key;
   if (typeof state === "object" && state) state.statsTab = key;
@@ -51361,6 +54156,7 @@ function setStatsTab(tab) {
     "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
     "top-video":  { title: "Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, ditonton lama, dan dikomentari.", crumb: "Top Video" },
     "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },
+    "pencapaian": { title: "Milestone & Pencapaian", desc: "Perjalanan pertumbuhan channel kamu — milestone tercapai dan target berikutnya.", crumb: "Pencapaian" },
   }[key];
   const titleEl = document.getElementById("statsPageTitle");
   const descEl  = document.getElementById("statsPageDesc");
@@ -51601,25 +54397,36 @@ function maybeOfferSaveCard() {
     }
     popover.dataset.composeMode = mode;
     popover.hidden = false;
-    // Anchor popover ke button — position fixed via getBoundingClientRect
-    if (anchorBtn) {
-      const rect = anchorBtn.getBoundingClientRect();
-      const popoverWidth = 360;
-      const margin = 8;
-      // Default: align right edge of popover ke right edge of button (popover open ke kiri)
-      let left = rect.right - popoverWidth;
-      let top = rect.bottom + margin;
-      // Clamp ke viewport
-      if (left < 16) left = 16;
-      if (left + popoverWidth > window.innerWidth - 16) left = window.innerWidth - popoverWidth - 16;
-      // Auto-flip ke atas kalau ga muat di bawah
-      const popoverHeight = 480; // estimasi
-      if (top + popoverHeight > window.innerHeight - 16) {
-        top = rect.top - popoverHeight - margin;
-        if (top < 16) top = 16;
+    // 5h: di mobile (<=600px) render sebagai bottom-sheet full-width (lihat CSS
+    // .inbox-picker-popover di media query). JS anchor di-skip + inline style
+    // di-clear supaya CSS sheet yang berlaku & tidak pernah overflow.
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (isMobile) {
+      popover.classList.add("inbox-picker-sheet");
+      popover.style.left = "";
+      popover.style.top = "";
+    } else {
+      popover.classList.remove("inbox-picker-sheet");
+      // Anchor popover ke button — position fixed via getBoundingClientRect
+      if (anchorBtn) {
+        const rect = anchorBtn.getBoundingClientRect();
+        const popoverWidth = 360;
+        const margin = 8;
+        // Default: align right edge of popover ke right edge of button (popover open ke kiri)
+        let left = rect.right - popoverWidth;
+        let top = rect.bottom + margin;
+        // Clamp ke viewport (kanan, kiri, atas, bawah)
+        if (left + popoverWidth > window.innerWidth - 16) left = window.innerWidth - popoverWidth - 16;
+        if (left < 16) left = 16;
+        // Auto-flip ke atas kalau ga muat di bawah
+        const popoverHeight = Math.min(480, window.innerHeight - 32);
+        if (top + popoverHeight > window.innerHeight - 16) {
+          top = rect.top - popoverHeight - margin;
+          if (top < 16) top = 16;
+        }
+        popover.style.left = left + "px";
+        popover.style.top = top + "px";
       }
-      popover.style.left = left + "px";
-      popover.style.top = top + "px";
     }
     renderInboxPickerList("");
     setTimeout(() => document.getElementById("inboxPickerSearch")?.focus(), 80);
@@ -51723,7 +54530,7 @@ function maybeOfferSaveCard() {
 (function setupVideoEditModal() {
   // Close kebab menus when clicking outside any kebab/menu (document-level).
   // Saat menutup, restore menu ke parent asli kalau sebelumnya pindah ke body.
-  function _libCloseAllCardMenus() {
+  function _libCloseAllCardMenus(opts = {}) {
     document.querySelectorAll(".lib-card-menu").forEach(m => {
       m.hidden = true;
       if (m._libOrigParent && m.parentElement === document.body) {
@@ -51733,23 +54540,105 @@ function maybeOfferSaveCard() {
       }
       // Clear inline positioning supaya fresh saat next open
       ["position", "top", "left", "right", "bottom", "z-index"].forEach(p => m.style.removeProperty(p));
+      m._libKebabTrigger = null;
     });
     document.querySelectorAll(".lib-card-kebab").forEach(b => b.setAttribute("aria-expanded", "false"));
+    // 8e: return focus to the triggering kebab button (e.g. on Escape).
+    if (opts.returnFocus && opts.returnFocus.isConnected) {
+      try { opts.returnFocus.focus(); } catch {}
+    }
   }
+
+  // 8c: robust fixed positioning for the lib-card kebab menu. The menu is moved
+  // to <body> on open (to escape the .lib-item transform stacking context), so
+  // position:fixed is true viewport-relative here. Measure the (visible) menu,
+  // then: open below the trigger, but FLIP ABOVE if it would overflow the
+  // viewport bottom; clamp BOTH left and top into [8, vp-8].
+  window.positionLibCardMenu = function(triggerBtn, menu) {
+    if (!triggerBtn || !menu || menu.hidden) return;
+    const PAD = 8, GAP = 6;
+    const sp = (k, v) => menu.style.setProperty(k, v, "important");
+    // Ensure measurable: fixed + reset offsets before reading size.
+    sp("position", "fixed");
+    sp("right", "auto");
+    sp("bottom", "auto");
+    sp("z-index", "9999");
+    const r = triggerBtn.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const menuW = menu.offsetWidth || 200;
+    const menuH = menu.offsetHeight || 160;
+    // Vertical: prefer below; flip above if it would overflow the bottom.
+    let top = r.bottom + GAP;
+    if (top + menuH > vh - PAD) {
+      const above = r.top - menuH - GAP;
+      top = above >= PAD ? above : Math.max(PAD, vh - menuH - PAD);
+    }
+    if (top < PAD) top = PAD;
+    // Horizontal: right-align to trigger, then clamp.
+    let left = r.right - menuW;
+    if (left + menuW > vw - PAD) left = vw - menuW - PAD;
+    if (left < PAD) left = PAD;
+    sp("top", `${top}px`);
+    sp("left", `${left}px`);
+  };
+
+  // 8c: keep open menu correctly positioned on scroll/resize; close it if the
+  // trigger scrolls off-screen. rAF-throttled so scrolling stays smooth.
+  let _libCardRepoRaf = 0;
+  function _repositionOpenLibCardMenu() {
+    if (_libCardRepoRaf) return;
+    _libCardRepoRaf = requestAnimationFrame(() => {
+      _libCardRepoRaf = 0;
+      document.querySelectorAll(".lib-card-menu:not([hidden])").forEach(menu => {
+        const trig = menu._libKebabTrigger;
+        if (!trig || !trig.isConnected) { _libCloseAllCardMenus(); return; }
+        const r = trig.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) { _libCloseAllCardMenus(); return; }
+        window.positionLibCardMenu(trig, menu);
+      });
+    });
+  }
+
   document.addEventListener("click", e => {
     if (e.target.closest(".lib-card-kebab") || e.target.closest(".lib-card-menu")) return;
     _libCloseAllCardMenus();
   });
-  // Escape closes both kebab menus AND edit modal
+  // 8e: keyboard inside the kebab menu — Arrow Up/Down cycle items, Escape
+  // closes + returns focus to the kebab button, Tab closes (focus leaves menu).
   document.addEventListener("keydown", e => {
-    if (e.key !== "Escape") return;
-    _libCloseAllCardMenus();
-    const modal = document.getElementById("videoEditModal");
-    if (modal && !modal.hidden) closeVideoEditModal();
+    const openMenu = document.querySelector(".lib-card-menu:not([hidden])");
+    if (e.key === "Escape") {
+      const trig = openMenu?._libKebabTrigger || null;
+      _libCloseAllCardMenus({ returnFocus: trig });
+      const modal = document.getElementById("videoEditModal");
+      if (modal && !modal.hidden) closeVideoEditModal();
+      return;
+    }
+    if (!openMenu) return;
+    const inMenu = e.target.closest(".lib-card-menu") === openMenu;
+    if (e.key === "Tab") { _libCloseAllCardMenus(); return; }
+    if (!inMenu) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const items = [...openMenu.querySelectorAll('[role="menuitem"]:not([disabled])')];
+      if (!items.length) return;
+      const cur = items.indexOf(document.activeElement);
+      const next = e.key === "ArrowDown"
+        ? (cur + 1) % items.length
+        : (cur - 1 + items.length) % items.length;
+      try { items[next].focus(); } catch {}
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      openMenu.querySelector('[role="menuitem"]:not([disabled])')?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      const items = openMenu.querySelectorAll('[role="menuitem"]:not([disabled])');
+      items[items.length - 1]?.focus();
+    }
   });
-  // Saat scroll page, tutup menu (sama kayak player kebab) — supaya menu nggak
-  // floating di posisi salah saat user scroll.
-  window.addEventListener("scroll", _libCloseAllCardMenus, { passive: true, capture: true });
+  // Reposition (not close) the open menu on scroll/resize.
+  window.addEventListener("scroll", _repositionOpenLibCardMenu, { passive: true, capture: true });
+  window.addEventListener("resize", _repositionOpenLibCardMenu, { passive: true });
 
   // Menu items (Edit/Draft/Hapus) — handler di document level karena menu
   // dipindah ke document.body saat open (escape transform stacking context).
@@ -53531,11 +56420,19 @@ function getNotifList() {
     sleepMap.set(video, { timeout });
   }
 
-  function targetsFor(isAdmin) {
-    if (isAdmin) {
+  // scope: "admin" | "user" (library inline) | "user-main" (MAIN player utama).
+  // Accepts a legacy boolean (true=admin) for back-compat with existing callers.
+  function targetsFor(scope) {
+    if (scope === true || scope === "admin") {
       return {
         video: document.getElementById("apVideo"),
         stage: document.getElementById("apStage"),
+      };
+    }
+    if (scope === "user-main") {
+      return {
+        video: document.getElementById("videoEl"),
+        stage: document.querySelector(".player-screen"),
       };
     }
     return {
@@ -53543,8 +56440,14 @@ function getNotifList() {
       stage: document.querySelector(".lib-inline-screen"),
     };
   }
-  function applyFx(isAdmin, kind, on) {
-    const { video, stage } = targetsFor(isAdmin);
+  // Normalize legacy boolean scope → string scope key.
+  function scopeKey(scope) {
+    if (scope === true || scope === "admin") return "admin";
+    if (scope === "user-main") return "user-main";
+    return "user";
+  }
+  function applyFx(scope, kind, on) {
+    const { video, stage } = targetsFor(scope);
     if (kind === "volStable") setVolStable(video, on);
     else if (kind === "boost") setBoost(video, on);
     else if (kind === "cinematic") setCinematic(stage, on);
@@ -53625,11 +56528,65 @@ function getNotifList() {
     }
   });
 
+  // ----- MAIN player utama (#videoEl / .player-screen) -----
+  // Reuse the same engine via the "user-main" scope. Buttons carry
+  // [data-main-fx-toggle="boost|cinematic"] in #playerToolbar.
+  function restoreMainToggles() {
+    const st = readState()["user-main"] || {};
+    document.querySelectorAll('[data-main-fx-toggle]').forEach(b => {
+      const kind = b.dataset.mainFxToggle;
+      const on = !!st[kind];
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.classList.toggle("active", on);
+      // Visual effect (cinematic) can apply immediately; audio (boost) waits for play gesture.
+      if (kind === "cinematic") applyFx("user-main", kind, on);
+    });
+  }
+  function attachMainPlayHook() {
+    const v = document.getElementById("videoEl");
+    if (!v || v.__fxMainHooked) return;
+    v.__fxMainHooked = true;
+    v.addEventListener("play", () => {
+      const st = readState()["user-main"] || {};
+      if (st.boost) applyFx("user-main", "boost", true);
+    });
+  }
+
+  // Click delegator for the MAIN player FX toggle buttons.
+  document.addEventListener("click", e => {
+    const tog = e.target.closest("[data-main-fx-toggle]");
+    if (!tog) return;
+    const kind = tog.dataset.mainFxToggle;
+    const next = tog.getAttribute("aria-pressed") !== "true";
+    tog.setAttribute("aria-pressed", next ? "true" : "false");
+    tog.classList.toggle("active", next);
+    // boost needs a live AudioContext (user gesture present from the click); apply now.
+    applyFx("user-main", kind, next);
+    saveState("user-main", { [kind]: next });
+    const labels = { boost: "Penguat suara", cinematic: "Pencahayaan sinematik" };
+    if (typeof toast === "function") toast(`${labels[kind] || kind}: ${next ? "Aktif" : "Mati"}`, "success");
+  });
+
+  // Public hook: called by openPlayer() when a new video opens so FX
+  // (cinematic visual + boost audio) re-apply to the fresh source and the
+  // toolbar buttons reflect the persisted state.
+  window.playlyMainPlayerFx = {
+    refresh() {
+      restoreMainToggles();
+      attachMainPlayHook();
+      // Re-apply cinematic visual immediately (boost re-applies on next play).
+      const st = readState()["user-main"] || {};
+      applyFx("user-main", "cinematic", !!st.cinematic);
+    }
+  };
+
   function boot() {
     restoreToggles(false);
     restoreToggles(true);
+    restoreMainToggles();
     attachPlayHook("libInlineVideo", false);
     attachPlayHook("apVideo", true);
+    attachMainPlayHook();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
