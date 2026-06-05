@@ -41524,7 +41524,7 @@ section[data-view="upload"] > .upload-tier-banner {
 }
 .storage-cat-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 .storage-cat-row {
@@ -41670,9 +41670,22 @@ section[data-view="upload"] > .upload-tier-banner {
   .storage-ov-footer { flex-direction: column; gap: 10px; }
   .storage-meter-top { flex-wrap: wrap; }
 }
+/* Rincian Penggunaan tetap 1 baris (3 kolom) — sembunyikan elemen bertahap agar muat */
+@media (max-width: 1150px) {
+  .storage-stat-label small { display: none; }   /* sembunyikan deskripsi */
+}
+@media (max-width: 1040px) {
+  /* sembunyikan badge % HANYA di kartu Cache (yang ada tombol Bersihkan) */
+  .storage-stat-card:has(.storage-cache-clear) .storage-stat-pct { display: none; }
+  .storage-stat-val { font-size: 1.3rem; }
+}
 /* Tablet & laptop kecil */
 @media (max-width: 820px) {
-  .storage-stat-val { font-size: 1.35rem; }
+  .storage-stat-val { font-size: 1.25rem; }
+  /* baru di sini stack jadi 1 kolom (HP/tablet sempit) + tampilkan lagi desc & badge */
+  .storage-cat-list { grid-template-columns: 1fr; }
+  .storage-stat-label small { display: inline; }
+  .storage-stat-card:has(.storage-cache-clear) .storage-stat-pct { display: inline-block; }
   /* toolbar File Tersimpan: ringkasan di atas, kontrol di bawah penuh */
   .storage-file-toolbar { flex-direction: column; align-items: stretch; }
   .storage-file-controls { width: 100%; }
