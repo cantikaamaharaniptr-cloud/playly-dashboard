@@ -41414,6 +41414,19 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-trash-head h3 { margin: 0; }
 .storage-trash-count { color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .storage-trash .storage-file-restore { white-space: nowrap; }
+/* Rincian Penggunaan: bar proporsi + % per kategori */
+.storage-cat-bar { height: 5px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 7px; max-width: 340px; }
+.storage-cat-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 99px; transition: width .35s; }
+.storage-cat-size { text-align: right; white-space: nowrap; }
+.storage-cat-pct { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; font-style: normal; margin-top: 3px; }
+/* File Tersimpan: toolbar ringkasan + urutkan */
+.storage-file-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.storage-file-summary { font-size: .8rem; color: var(--muted); }
+.storage-file-summary strong { color: var(--text); }
+.storage-sort { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+.storage-sort-btn { padding: 5px 13px; border-radius: 7px; font-size: .76rem; font-weight: 700; color: var(--muted); background: transparent; border: 0; cursor: pointer; transition: background .12s, color .12s; }
+.storage-sort-btn.active { background: var(--primary); color: var(--cream); }
+.storage-sort-btn:hover:not(.active) { color: var(--text); }
 
 .storage-breakdown,
 .storage-files {

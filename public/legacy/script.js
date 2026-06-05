@@ -51308,16 +51308,21 @@ async function renderStoragePage() {
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes },
     ];
-    catList.innerHTML = cats.map(c => `
+    const totForPct = Math.max(1, totalBytes);
+    catList.innerHTML = cats.map(c => {
+      const pct = Math.min(100, (c.size / totForPct) * 100);
+      const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
+      return `
       <div class="storage-cat-row">
         <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
         <div class="storage-cat-info">
           <strong>${c.label}</strong>
           <small>${c.desc}</small>
+          <div class="storage-cat-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
         </div>
-        <span class="storage-cat-size">${fmtBytes(c.size)}</span>
-      </div>
-    `).join("");
+        <span class="storage-cat-size">${fmtBytes(c.size)}<em class="storage-cat-pct">${pctLabel}</em></span>
+      </div>`;
+    }).join("");
   }
 
   // File list — semua video user dengan tombol hapus
@@ -51334,7 +51339,19 @@ async function renderStoragePage() {
           })
         : `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
     } else {
-      const sorted = [...myVideos].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0));
+      const sortMode = window._storageFileSort === "newest" ? "newest" : "size";
+      const sorted = [...myVideos].sort((a, b) => sortMode === "newest"
+        ? ((b.createdAt || b.id || 0) - (a.createdAt || a.id || 0))
+        : ((b.fileSize || 0) - (a.fileSize || 0)));
+      const totalFileBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+      const toolbar = `
+        <div class="storage-file-toolbar">
+          <span class="storage-file-summary"><strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong></span>
+          <div class="storage-sort">
+            <button type="button" class="storage-sort-btn ${sortMode === "size" ? "active" : ""}" data-sort="size">Terbesar</button>
+            <button type="button" class="storage-sort-btn ${sortMode === "newest" ? "active" : ""}" data-sort="newest">Terbaru</button>
+          </div>
+        </div>`;
       // Status label per admin status — biar user jelas tau video ini lagi
       // pending/published/takedown/draft (sebelumnya cuma filename mentah).
       const statusInfo = (st) => {
@@ -51347,7 +51364,7 @@ async function renderStoragePage() {
         };
         return map[st] || { lbl: "✓ Live", cls: "ok" };
       };
-      fileList.innerHTML = sorted.map(v => {
+      fileList.innerHTML = toolbar + sorted.map(v => {
         const s = statusInfo(v.adminStatus || "published");
         const title = (v.title || "").trim() || "Video Tanpa Judul";
         return `
@@ -51361,6 +51378,10 @@ async function renderStoragePage() {
           <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">🗑️ Hapus</button>
         </div>`;
       }).join("");
+      // Wire sort toggle
+      fileList.querySelectorAll("[data-sort]").forEach(btn => {
+        btn.addEventListener("click", () => { window._storageFileSort = btn.dataset.sort; renderStoragePage(); });
+      });
       // Wire delete buttons
       fileList.querySelectorAll("[data-storage-del]").forEach(btn => {
         btn.addEventListener("click", e => {
