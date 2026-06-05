@@ -41593,16 +41593,19 @@ section[data-view="upload"] > .upload-tier-banner {
   background-position: center;
   flex-shrink: 0;
 }
-.storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 9px; }
 .sf-title {
+  flex: 0 1 auto;
   font-size: .88rem; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
-.sf-views {
-  flex: 0 0 auto; width: 124px; text-align: right;
-  color: var(--text-2); font-size: .78rem; white-space: nowrap;
+.sf-meta {
+  flex: 0 0 auto;
+  color: var(--text-2); font-size: .8rem; white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.sf-meta b { color: var(--text); font-weight: 700; }
+.sf-dot { opacity: .5; margin: 0 1px; }
 /* Status pill di storage row — wajib visible biar user tau ini video pending/
    published/draft/takedown (per request user 2026-05-07: clarity > minimalism). */
 .sf-status {
