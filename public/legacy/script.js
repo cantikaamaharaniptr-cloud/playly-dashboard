@@ -29721,8 +29721,8 @@ function renderAnBusinessKPI() {
   setT("anBizSubscribers", String(subscribers));
   setT("anBizTotalUsers", String(totalUsers));
   setT("anBizConversionRate", conversionRate.toFixed(1) + "%");
-  setT("anBizMrr", "$" + mrr.toFixed(2));
-  setT("anBizArrSub", "ARR: $" + arr.toFixed(2));
+  setT("anBizMrr", fmtRp(mrr * USD_TO_IDR_RATE));
+  setT("anBizArrSub", "ARR: " + fmtRp(arr * USD_TO_IDR_RATE));
   setT("anBizMonthly", String(monthly));
   setT("anBizYearly", String(yearly));
   setT("anBizLifetime", String(lifetime));
@@ -32421,13 +32421,13 @@ function switchView(name, { fromNav = false } = {}) {
     let crumbLabel = trCrumb(name);
     if (name === "videos") {
       const labelMap = {
-        all:      "My Library",
+        all:      "Pustaka Saya",
         my:       "Video Saya",
         status:   "Status Video",
-        new:      "New Videos",
+        new:      "Video Baru",
         download: "Unduhan",
       };
-      crumbLabel = labelMap[state?.libTab || "all"] || "My Library";
+      crumbLabel = labelMap[state?.libTab || "all"] || "Pustaka Saya";
     }
     parts.push(`<span class="sep">/</span><a href="#" class="active">${crumbLabel}</a>`);
     crumb.innerHTML = parts.join("");
@@ -37113,7 +37113,7 @@ function renderMyLibrary() {
 
   // 1. My Videos — hanya yang sudah disetujui admin (+ delete button)
   renderLibSection(myVideos, "myVideoGrid", "myVideoCount", LIB_FILM,
-    "No videos are live yet. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload now</a>",
+    t("library.empty.live", "Belum ada video yang sudah live.") + " <a href='#' data-jump='upload' style='color:var(--primary)'>Upload sekarang</a>",
     { showStatus: true, canDelete: true });
 
   // 2. Status Videos — render section sesuai sub-tab aktif.
@@ -47133,12 +47133,12 @@ function setLibraryTab(tabKey) {
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast) {
     const labelMap = {
-      all:      "My Library",
+      all:      "Pustaka Saya",
       my:       "Video Saya",
       status:   "Status Video",
       download: "Unduhan",
     };
-    activeBcLast.textContent = labelMap[key] || "My Library";
+    activeBcLast.textContent = labelMap[key] || "Pustaka Saya";
   }
   // Auto-close inline player saat ganti tab
   try { closeLibInlinePlayer(); } catch {}
