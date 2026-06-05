@@ -41560,14 +41560,14 @@ section[data-view="upload"] > .upload-tier-banner {
 }
 .storage-stat-info { flex: 1 1 auto; min-width: 0; overflow: hidden; }
 .storage-stat-val { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: var(--text); white-space: nowrap; }
-.storage-stat-label { font-size: .92rem; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.storage-stat-label small { color: var(--text-2); font-weight: 500; font-size: .82rem; }
+.storage-stat-label { font-size: 1rem; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.storage-stat-label small { color: var(--text-2); font-weight: 500; font-size: .88rem; }
 .storage-stat-end { display: flex; align-items: center; gap: 9px; flex: 0 0 auto; }
 .storage-stat-pct {
-  font-size: .78rem; font-weight: 700; color: var(--text-2);
+  font-size: .76rem; font-weight: 700; color: var(--text-2);
   background: var(--surface-2); padding: 3px 10px; border-radius: 99px;
 }
-.storage-stat-end .storage-cache-clear { font-size: .78rem; padding: 4px 11px; white-space: nowrap; }
+.storage-stat-end .storage-cache-clear { font-size: .8rem; padding: 5px 12px; white-space: nowrap; }
 
 .storage-file-list {
   display: flex;
@@ -41599,12 +41599,12 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 11px; }
 .sf-title {
   flex: 0 1 auto;
-  font-size: 1.15rem; font-weight: 700;
+  font-size: 1rem; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .sf-meta {
   flex: 0 0 auto;
-  color: var(--text-2); font-size: 1.02rem; white-space: nowrap;
+  color: var(--text-2); font-size: .88rem; white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .sf-meta b { color: var(--text); font-weight: 700; }
@@ -41614,9 +41614,9 @@ section[data-view="upload"] > .upload-tier-banner {
 .sf-status {
   display: inline-block;
   flex: 0 0 auto;
-  padding: 4px 11px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: .8rem;
+  font-size: .76rem;
   font-weight: 700;
   letter-spacing: .02em;
   vertical-align: middle;
@@ -41640,9 +41640,9 @@ section[data-view="upload"] > .upload-tier-banner {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 7px 13px;
   cursor: pointer;
-  font-size: .94rem;
+  font-size: .88rem;
   color: var(--text-2);
   transition: all .15s;
 }
@@ -41656,6 +41656,46 @@ section[data-view="upload"] > .upload-tier-banner {
   padding: 28px 12px;
   color: var(--text-2);
   font-size: .9rem;
+}
+
+/* === Responsif halaman Penyimpanan (mobile / tablet / laptop / pc) === */
+/* Overview card: tumpuk vertikal saat sempit (ring di atas, meter & footer full) */
+@media (max-width: 760px) {
+  .storage-overview-card { flex-direction: column; align-items: stretch; gap: 18px; padding: 20px; }
+  .storage-overview-ring { width: 140px; height: 140px; margin: 0 auto; }
+  .storage-overview-ring svg { width: 140px; height: 140px; }
+  .storage-overview-ring span { left: 50%; font-size: 1.9rem; }
+  .storage-overview-ring::after { display: none; }
+  .storage-meters { flex-direction: column; gap: 10px; }
+  .storage-ov-footer { flex-direction: column; gap: 10px; }
+  .storage-meter-top { flex-wrap: wrap; }
+}
+/* Tablet & laptop kecil */
+@media (max-width: 820px) {
+  .storage-stat-val { font-size: 1.35rem; }
+  /* toolbar File Tersimpan: ringkasan di atas, kontrol di bawah penuh */
+  .storage-file-toolbar { flex-direction: column; align-items: stretch; }
+  .storage-file-controls { width: 100%; }
+  .storage-file-search { flex: 1 1 auto; width: auto; max-width: none; }
+  .storage-file-filter { flex: 0 0 auto; }
+}
+/* Mobile */
+@media (max-width: 560px) {
+  .storage-file-row { gap: 10px; padding: 9px 11px; }
+  .storage-file-thumb { width: 52px; height: 33px; }
+  .storage-stat-val { font-size: 1.25rem; }
+  .storage-stat-card { gap: 11px; padding: 12px 13px; }
+  /* sembunyikan "tontonan" (kurang penting) — sisakan ukuran file */
+  .sf-meta .sf-views-inline, .sf-meta .sf-dot { display: none; }
+  .sf-title { font-size: .94rem; }
+  .sf-meta { font-size: .84rem; }
+}
+/* Mobile sempit — tombol Hapus jadi ikon saja */
+@media (max-width: 430px) {
+  .storage-file-del span { display: none; }
+  .storage-file-del { padding: 7px 9px; }
+  .storage-file-thumb { width: 44px; height: 28px; }
+  .sf-status { font-size: .72rem; padding: 2px 8px; }
 }
 
 /* Statistik page — show/hide section by data-stats-tab.

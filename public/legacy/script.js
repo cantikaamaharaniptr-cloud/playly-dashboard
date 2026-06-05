@@ -51435,7 +51435,7 @@ async function renderStoragePage() {
             <strong class="sf-title">${escapeHtml(title)}</strong>
             <span class="sf-status sf-${s.cls}">${s.ic}${s.lbl}</span>
           </div>
-          <span class="sf-meta">${(v.viewsNum || 0).toLocaleString("id-ID")} tontonan <span class="sf-dot">·</span> <b>${fmtBytes(v.fileSize || 0)}</b></span>
+          <span class="sf-meta"><span class="sf-views-inline">${(v.viewsNum || 0).toLocaleString("id-ID")} tontonan</span> <span class="sf-dot">·</span> <b>${fmtBytes(v.fileSize || 0)}</b></span>
           <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">${STO_IC.trash}<span>Hapus</span></button>
         </div>`;
       }).join("");
