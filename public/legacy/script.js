@@ -51332,14 +51332,16 @@ async function renderStoragePage() {
       const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
       return `
       <div class="storage-cat-row">
-        <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
-        <div class="storage-cat-info">
-          <strong>${c.label}</strong>
-          <small>${c.desc}</small>
+        <div class="storage-cat-head">
+          <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
+          <div class="storage-cat-info">
+            <strong>${c.label}</strong>
+            <small>${c.desc}</small>
+          </div>
+          <span class="storage-cat-size">${fmtBytes(c.size)}<em class="storage-cat-pct">${pctLabel}</em></span>
+          ${clearBtn}
         </div>
         <div class="storage-cat-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
-        <span class="storage-cat-size">${fmtBytes(c.size)}<em class="storage-cat-pct">${pctLabel}</em></span>
-        ${clearBtn}
       </div>`;
     }).join("");
     // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +
