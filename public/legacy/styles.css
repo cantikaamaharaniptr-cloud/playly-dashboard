@@ -41444,7 +41444,7 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-trash-count { color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .storage-trash .storage-file-restore { white-space: nowrap; }
 /* Rincian Penggunaan: bar proporsi + % per kategori */
-.storage-cat-bar { height: 5px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 7px; max-width: 340px; }
+.storage-cat-bar { height: 5px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 2px 0 0 50px; }
 .storage-cat-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 99px; transition: width .35s; }
 .storage-cat-size { text-align: right; white-space: nowrap; }
 .storage-cat-pct { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; font-style: normal; margin-top: 3px; }
@@ -41529,13 +41529,14 @@ section[data-view="upload"] > .upload-tier-banner {
 }
 .storage-cat-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 14px;
   background: var(--surface);
   border-radius: 10px;
   border: 1px solid var(--border);
 }
+.storage-cat-main { display: flex; align-items: center; gap: 14px; }
 .storage-cat-icon {
   width: 36px; height: 36px;
   border-radius: 10px;
