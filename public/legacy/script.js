@@ -51321,29 +51321,37 @@ async function renderStoragePage() {
     // v585 (2026-05-27): icon emoji → SVG dengan wine gradient box
     // (.sec-icon-v582 sec-icon-sm pattern). Konsisten dgn section headers.
     const cats = [
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes, color: "var(--primary)" },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes, color: "color-mix(in srgb, var(--primary) 48%, var(--cream))" },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true, color: "color-mix(in srgb, var(--cream) 82%, var(--primary))" },
     ];
     const totForPct = Math.max(1, totalBytes);
-    catList.innerHTML = cats.map(c => {
+    const withPct = cats.map(c => {
       const pct = Math.min(100, (c.size / totForPct) * 100);
       const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
+      return { ...c, pct, pctLabel };
+    });
+    // konsep: SATU bar segmen (proporsi tiap kategori dari total tersimpan) + legenda
+    const segHtml = withPct
+      .filter(c => c.pct > 0)
+      .map(c => `<i class="storage-seg" style="width:${c.pct.toFixed(2)}%;background:${c.color}" title="${c.label} · ${c.pctLabel}"></i>`)
+      .join("");
+    const legendHtml = withPct.map(c => {
       const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
       return `
-      <div class="storage-cat-row">
-        <div class="storage-cat-head">
-          <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
-          <div class="storage-cat-info">
-            <strong>${c.label}</strong>
-            <small>${c.desc}</small>
-          </div>
-          <span class="storage-cat-size">${fmtBytes(c.size)}<em class="storage-cat-pct">${pctLabel}</em></span>
-          ${clearBtn}
+      <div class="storage-leg-row">
+        <span class="storage-leg-dot" style="background:${c.color}"></span>
+        <div class="storage-leg-info">
+          <strong>${c.label}</strong>
+          <small>${c.desc}</small>
         </div>
-        <div class="storage-cat-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+        <span class="storage-leg-size">${fmtBytes(c.size)}<em class="storage-leg-pct">${c.pctLabel}</em></span>
+        ${clearBtn}
       </div>`;
     }).join("");
+    catList.innerHTML = `
+      <div class="storage-seg-bar">${segHtml}</div>
+      <div class="storage-seg-legend">${legendHtml}</div>`;
     // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +
     // sessionStorage). TIDAK menyentuh akun, sesi, state, video, prefs, tema.
     document.getElementById("storageCacheClear")?.addEventListener("click", () => {
