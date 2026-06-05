@@ -41577,7 +41577,7 @@ section[data-view="upload"] > .upload-tier-banner {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  padding: 9px 14px;
   background: var(--surface);
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -41585,33 +41585,32 @@ section[data-view="upload"] > .upload-tier-banner {
 }
 .storage-file-row:hover { border-color: var(--border-strong); }
 .storage-file-thumb {
-  width: 56px; height: 36px;
-  border-radius: 6px;
+  width: 62px; height: 40px;
+  border-radius: 7px;
   background: var(--surface-2);
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
 }
 .storage-file-info { flex: 1; min-width: 0; }
-.storage-file-info strong {
-  display: block;
-  font-size: .88rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.sf-title-row { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 3px; }
+.sf-title-row strong {
+  font-size: .9rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
-.storage-file-info small { color: var(--text-2); font-size: .74rem; }
+.storage-file-info small { color: var(--text-2); font-size: .76rem; }
 /* Status pill di storage row — wajib visible biar user tau ini video pending/
    published/draft/takedown (per request user 2026-05-07: clarity > minimalism). */
 .sf-status {
   display: inline-block;
+  flex: 0 0 auto;
   padding: 2px 8px;
-  margin-right: 4px;
   border-radius: 999px;
   font-size: .68rem;
   font-weight: 700;
   letter-spacing: .02em;
   vertical-align: middle;
+  white-space: nowrap;
 }
 .sf-status.sf-warn   { background: rgba(245, 158, 11, .15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, .3); }
 .sf-status.sf-ok     { background: rgba(16, 185, 129, .15); color: #86efac; border: 1px solid rgba(16, 185, 129, .3); }

@@ -51432,8 +51432,11 @@ async function renderStoragePage() {
         <div class="storage-file-row" data-vid="${v.id}">
           <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
           <div class="storage-file-info">
-            <strong>${escapeHtml(title)}</strong>
-            <small><span class="sf-status sf-${s.cls}">${s.ic}${s.lbl}</span> · ${fmtBytes(v.fileSize || 0)} · ${v.viewsNum || 0} tontonan</small>
+            <div class="sf-title-row">
+              <strong>${escapeHtml(title)}</strong>
+              <span class="sf-status sf-${s.cls}">${s.ic}${s.lbl}</span>
+            </div>
+            <small>${(v.viewsNum || 0).toLocaleString("id-ID")} tontonan</small>
           </div>
           <span class="storage-file-size">${fmtBytes(v.fileSize || 0)}</span>
           <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">${STO_IC.trash}<span>Hapus</span></button>
