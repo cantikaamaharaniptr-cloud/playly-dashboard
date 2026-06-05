@@ -41598,12 +41598,12 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 11px; }
 .sf-title {
   flex: 0 1 auto;
-  font-size: 1.02rem; font-weight: 700;
+  font-size: 1.15rem; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .sf-meta {
   flex: 0 0 auto;
-  color: var(--text-2); font-size: .92rem; white-space: nowrap;
+  color: var(--text-2); font-size: 1.02rem; white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .sf-meta b { color: var(--text); font-weight: 700; }
@@ -41613,9 +41613,9 @@ section[data-view="upload"] > .upload-tier-banner {
 .sf-status {
   display: inline-block;
   flex: 0 0 auto;
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: 999px;
-  font-size: .74rem;
+  font-size: .8rem;
   font-weight: 700;
   letter-spacing: .02em;
   vertical-align: middle;
@@ -41639,9 +41639,9 @@ section[data-view="upload"] > .upload-tier-banner {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 7px 13px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-size: .86rem;
+  font-size: .94rem;
   color: var(--text-2);
   transition: all .15s;
 }
