@@ -41453,8 +41453,20 @@ section[data-view="upload"] > .upload-tier-banner {
 #storagePageStatus .sto-ic { width: 13px; height: 13px; }
 .storage-file-search {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a08a90' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: 11px center; background-size: 14px; padding-left: 33px;
+  background-repeat: no-repeat; background-size: 14px;
 }
+/* Rapikan header File Tersimpan + SAMAKAN bentuk semua kontrol toolbar */
+.storage-files > h3 { margin-bottom: 6px; }
+.storage-file-search,
+.storage-file-filter,
+.storage-sort {
+  height: 38px; box-sizing: border-box; border-radius: 10px;
+  background-color: var(--surface); border: 1px solid var(--border);
+}
+.storage-file-search { width: 200px; padding: 0 12px 0 34px; background-position: 12px center; }
+.storage-file-filter { padding: 0 14px 0 12px; }
+.storage-sort { padding: 4px; gap: 4px; }
+.storage-sort-btn { height: 100%; padding: 0 15px; display: inline-flex; align-items: center; border-radius: 7px; }
 
 .storage-breakdown,
 .storage-files {
