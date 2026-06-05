@@ -41577,45 +41577,45 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-file-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 5px 10px;
+  gap: 15px;
+  padding: 11px 16px;
   background: var(--surface);
-  border-radius: 9px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   transition: border-color .15s;
 }
 /* pemisah halus antara meta & tombol di sisi kanan */
-.storage-file-row .sf-meta { margin-right: 4px; }
+.storage-file-row .sf-meta { margin-right: 6px; }
 .storage-file-row:hover { border-color: var(--border-strong); }
 .storage-file-thumb {
-  width: 46px; height: 28px;
-  border-radius: 5px;
+  width: 64px; height: 40px;
+  border-radius: 7px;
   background: var(--surface-2);
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
 }
-.storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 9px; }
+.storage-file-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 11px; }
 .sf-title {
   flex: 0 1 auto;
-  font-size: .88rem; font-weight: 700;
+  font-size: 1.02rem; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .sf-meta {
   flex: 0 0 auto;
-  color: var(--text-2); font-size: .8rem; white-space: nowrap;
+  color: var(--text-2); font-size: .92rem; white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .sf-meta b { color: var(--text); font-weight: 700; }
-.sf-dot { opacity: .5; margin: 0 1px; }
+.sf-dot { opacity: .5; margin: 0 2px; }
 /* Status pill di storage row — wajib visible biar user tau ini video pending/
    published/draft/takedown (per request user 2026-05-07: clarity > minimalism). */
 .sf-status {
   display: inline-block;
   flex: 0 0 auto;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: .68rem;
+  font-size: .74rem;
   font-weight: 700;
   letter-spacing: .02em;
   vertical-align: middle;
@@ -41638,10 +41638,10 @@ section[data-view="upload"] > .upload-tier-banner {
   flex: 0 0 auto;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 4px 9px;
+  border-radius: 8px;
+  padding: 7px 13px;
   cursor: pointer;
-  font-size: .76rem;
+  font-size: .86rem;
   color: var(--text-2);
   transition: all .15s;
 }
