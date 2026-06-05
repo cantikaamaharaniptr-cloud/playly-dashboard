@@ -41578,12 +41578,14 @@ section[data-view="upload"] > .upload-tier-banner {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 5px 12px;
+  padding: 5px 10px;
   background: var(--surface);
   border-radius: 9px;
   border: 1px solid var(--border);
   transition: border-color .15s;
 }
+/* pemisah halus antara meta & tombol di sisi kanan */
+.storage-file-row .sf-meta { margin-right: 4px; }
 .storage-file-row:hover { border-color: var(--border-strong); }
 .storage-file-thumb {
   width: 46px; height: 28px;
