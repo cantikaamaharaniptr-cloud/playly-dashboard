@@ -41409,10 +41409,6 @@ section[data-view="upload"] > .upload-tier-banner {
   color: var(--muted); font-size: 12px; line-height: 1.55;
 }
 .storage-total-strip strong { color: var(--text); font-weight: 700; }
-/* PREMIUM: sembunyikan bar limit → meter jadi statistik saja */
-#storageOverviewCard.is-premium .storage-overview-bar { display: none; }
-#storageOverviewCard.is-premium .storage-meter { margin-top: 10px; }
-#storageOverviewCard.is-premium .storage-meter-top { font-size: 13px; }
 
 .storage-breakdown,
 .storage-files {

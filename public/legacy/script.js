@@ -2481,15 +2481,14 @@ function applyRoleToUI() {
       utb.hidden = true;
     } else if ((user?.tier || "free") === "premium") {
       utb.hidden = false;
-      if (utbTitle) utbTitle.textContent = "Premium · Upload Tanpa Batas";
-      if (utbDesc)  utbDesc.textContent  = "Tanpa batas ukuran file, tanpa batas durasi, tanpa kuota bulanan — upload video > 1 GB dan > 1 jam dengan bebas.";
-      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV<br/><span class="dz-promo">( Kamu Premium — upload tanpa batas ukuran, durasi &amp; kuota <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      if (utbTitle) utbTitle.textContent = "Premium · Kuota 100 GB/bulan";
+      if (utbDesc)  utbDesc.textContent  = "Tanpa batas ukuran file & durasi — kuota 100 GB + 100 video / bulan (10x lipat Free). Reset tiap tanggal 1.";
+      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV · 100 GB + 100 video/bulan<br/><span class="dz-promo">( Kamu Premium — tanpa batas ukuran file &amp; durasi <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     } else {
       utb.hidden = true;
-      // G audit (2026-05-25): copy lebih informatif (kasih konteks "cukup
-      // untuk ~10 video pendek") + framing "Butuh lebih?" instead of
-      // "Upgrade untuk tanpa batas" supaya tidak terasa limit-pressure.
-      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 1 GB/bulan (cukup untuk ~10 video pendek)<br/><span class="dz-promo">( Butuh lebih? Premium punya kuota tanpa batas <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      // G audit (2026-05-25): copy informatif + framing "Butuh lebih?" supaya
+      // tidak terasa limit-pressure. (5 Jun 2026: kuota free 10 GB + 30 video.)
+      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 10 GB + 30 video/bulan<br/><span class="dz-promo">( Butuh lebih? Premium 100 GB + 100 video/bulan <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     }
   }
 
@@ -3864,8 +3863,16 @@ function bootDashboard() {
 // Sumber data:
 //   - Video blob di IndexedDB (`playly-videos`) — biasanya bagian terbesar
 //   - Semua key `playly-*` di localStorage (akun, state, admin data, dll.)
-// Kapasitas: 1 GB (cap visualisasi sesuai Supabase free tier).
-const STORAGE_CAPACITY_BYTES = 1024 * 1024 * 1024; // 1 GB
+// Kuota BULANAN per tier (5 Jun 2026): Free = 10 GB + 30 video, Premium = 100 GB
+// + 100 video. Reset tiap tgl 1; video lama tetap tersimpan selamanya. Premium
+// SENGAJA dibatasi (bukan unlimited) supaya biaya storage terkendali. Satu sumber
+// kebenaran untuk semua meter (ring sidebar, halaman penyimpanan, hint upload).
+function playlyQuota(tier) {
+  return (tier === "premium")
+    ? { bytes: 100 * 1024 * 1024 * 1024, videos: 100, gbLabel: "100 GB" }
+    : { bytes: 10 * 1024 * 1024 * 1024, videos: 30, gbLabel: "10 GB" };
+}
+const STORAGE_CAPACITY_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB (free base, viz)
 
 function computeLocalStorageBytes() {
   let total = 0;
@@ -3914,8 +3921,8 @@ async function refreshStorageUsage() {
     const pctEl = document.getElementById("storageRingPct");
     const ringEl = document.getElementById("storageRingPath");
 
-    if (tier === "free" && user?.role !== "admin") {
-      // Hitung monthly upload bytes (bukan total seluruh device)
+    if (user?.role !== "admin") {
+      // Monthly upload bytes (free & premium sama-sama berkuota bulanan)
       const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
       const monthStart = new Date();
       monthStart.setDate(1); monthStart.setHours(0,0,0,0);
@@ -3923,13 +3930,14 @@ async function refreshStorageUsage() {
       const monthlyBytes = myVideos
         .filter(v => (v.createdAt || v.id || 0) >= mTs)
         .reduce((s, v) => s + (v.fileSize || 0), 0);
-      const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-      const pct = Math.min(100, Math.max(0, (monthlyBytes / FREE_QUOTA) * 100));
+      const q = playlyQuota(tier); // free 10GB / premium 100GB
+      const pct = Math.min(100, Math.max(0, (monthlyBytes / q.bytes) * 100));
       const monthlyTxt = fmtStorageBytes(monthlyBytes);
-      if (textEl) textEl.textContent = `${monthlyTxt} / 1 GB`;
+      if (textEl) textEl.textContent = `${monthlyTxt} / ${q.gbLabel}`;
       if (pctEl) pctEl.textContent = `${pct < 1 && monthlyBytes > 0 ? "<1" : Math.round(pct)}%`;
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
     } else {
+      // Admin: lihat total bucket cloud, tanpa kuota.
       if (textEl) textEl.textContent = `${usedTxt} / Unlimited`;
       if (pctEl) pctEl.textContent = "∞";
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `0, 100`);
@@ -5372,7 +5380,7 @@ const I18N = {
     "pm.feature.priority":        "Priority",
     // FREE features bullets
     "pf.free.1":                 "\"Free\" tier badge in profile",
-    "pf.free.2":                 "Monthly quota meter (60 videos / 1 GB)",
+    "pf.free.2":                 "Monthly quota meter (30 videos / 10 GB)",
     "pf.free.3":                 "Sponsored ads visible while watching",
     "pf.free.4":                 "Basic analytics (last 7 days only)",
     "pf.free.5":                 "\"Upgrade\" prompts in dropdown & sidebar",
@@ -5395,7 +5403,7 @@ const I18N = {
     "howit.step2.title":         "Customize your profile",
     "howit.step2.desc":          "Add an avatar, banner, bio, and links to your other socials. Build the brand that makes fans remember you.",
     "howit.step3.title":         "Upload your video",
-    "howit.step3.desc":          "Drag & drop any video file. Auto-thumbnail, auto-encode, instant preview. Free up to 1 GB/month, Premium unlimited.",
+    "howit.step3.desc":          "Drag & drop any video file. Auto-thumbnail, auto-encode, instant preview. Free up to 10 GB/month, Premium 100 GB/month.",
     "howit.step4.title":         "Share & engage",
     "howit.step4.desc":          "Share on socials with one click. Reply to comments, DM fans, build your community right inside the dashboard.",
     "howit.step5.title":         "Grow with insights",
@@ -5409,7 +5417,7 @@ const I18N = {
     "faq.q1":                    "Can I switch between Free and Premium anytime?",
     "faq.a1":                    "Yes! Upgrade to Premium any time from the profile menu. Your videos, followers, and stats stay the same. Downgrade back to Free is also available — you keep all uploaded content.",
     "faq.q2":                    "What happens if I hit the Free upload limit?",
-    "faq.a2":                    "You'll see a friendly prompt suggesting Premium when you reach 60 videos or 1 GB this month. Existing videos stay live forever — no auto-deletion. The quota simply resets on the 1st of next month.",
+    "faq.a2":                    "You'll see a friendly prompt suggesting Premium when you reach 30 videos or 10 GB this month. Existing videos stay live forever — no auto-deletion. The quota simply resets on the 1st of next month.",
     "faq.q3":                    "Are my videos really stored privately?",
     "faq.a3":                    "All uploads are encrypted at rest and in transit. We never share or sell your data. You control visibility (public, unlisted, private) per video.",
     "faq.q4":                    "Do Premium subscribers see ads while watching?",
@@ -5429,7 +5437,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Free forever option",
     "finalcta.live.tail":        "creators online right now",
     "finalcta.perks.title":      "What you get instantly",
-    "finalcta.perk1":            "60 free uploads / month — no credit card",
+    "finalcta.perk1":            "30 free uploads / month — no credit card",
     "finalcta.perk2":            "Cloud sync across all your devices",
     "finalcta.perk3":            "Real-time analytics & viewer insights",
     "finalcta.perk4":            "Unlimited views, followers & community DMs",
@@ -5440,8 +5448,8 @@ const I18N = {
     "testi.title":               "Loved by 12,000+ creators",
     "testi.subtitle":            "Real creators, real growth. Here's what they say about Playly.",
     "testi.q1":                  "\"Switched from YouTube to Playly Premium 3 months ago. My engagement rate jumped from 2% to 8%. The Premium Insights dashboard is gold.\"",
-    "testi.q2":                  "\"Free tier is more than enough to start. Hit 60 video limit in 2 weeks, upgraded to Premium, never looked back. Live streaming feature is super smooth.\"",
-    "testi.q3":                  "\"As a hobby gamer, the Free plan is perfect. 60 videos a month is exactly what I need. The dashboard is clean & no ads ruin the experience for my fans on Premium.\"",
+    "testi.q2":                  "\"Free tier is more than enough to start. Hit 30 video limit in 2 weeks, upgraded to Premium, never looked back. Live streaming feature is super smooth.\"",
+    "testi.q3":                  "\"As a hobby gamer, the Free plan is perfect. 30 videos a month is exactly what I need. The dashboard is clean & no ads ruin the experience for my fans on Premium.\"",
     // ===== AUTH / LANDING MISC =====
     "auth.welcome":              "Welcome to Playly",
     "auth.choose.continue":      "Choose how you want to continue",
@@ -5704,10 +5712,10 @@ const I18N = {
     "help.about.copy":            "© 2026 Playly. Made with 💜 in Indonesia.",
     // ===== USER VIEWS — empty / desc =====
     "user.upload.share":          "Share your creations with the world.",
-    "user.upload.nofilecap":      "No file-size cap, no duration limit, no monthly quota — upload videos > 1 GB and > 1 hour freely.",
+    "user.upload.nofilecap":      "No file-size or duration cap — upload files > 1 GB & > 1 hour freely. Quota 100 GB + 100 videos/month.",
     "user.upload.fromurl":        "From URL",
     "user.upload.dropor":         "or drag it here",
-    "user.upload.formats":        "MP4, MOV, MKV — Free: up to 1 GB/month · Premium: unlimited",
+    "user.upload.formats":        "MP4, MOV, MKV — Free: 10 GB + 30 video/month · Premium: 100 GB + 100 video/month",
     "user.upload.url.supported":  "Supported: YouTube, Vimeo, TikTok, Dailymotion, Twitch, direct .mp4/.webm URLs.",
     "user.upload.public.tail":    "— everyone can find & watch.",
     "user.live.desc":             "Stream live to your followers in real-time. Premium feature.",
@@ -6986,7 +6994,7 @@ const I18N = {
     "pm.feature.priority":        "Prioritas",
     // FREE features bullets
     "pf.free.1":                 "Badge \"Gratis\" di profil",
-    "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
+    "pf.free.2":                 "Meter kuota bulanan (30 video / 10 GB)",
     "pf.free.3":                 "Iklan sponsor saat menonton",
     "pf.free.4":                 "Analitik dasar (7 hari terakhir saja)",
     "pf.free.5":                 "Ajakan \"Upgrade\" di dropdown & sidebar",
@@ -7009,7 +7017,7 @@ const I18N = {
     "howit.step2.title":         "Atur profil kamu",
     "howit.step2.desc":          "Tambah avatar, banner, bio, dan link ke media sosial lainmu. Bangun brand yang bikin fans ingat kamu.",
     "howit.step3.title":         "Unggah video kamu",
-    "howit.step3.desc":          "Tarik & lepas file video apa saja. Thumbnail & encode otomatis, preview instan. Gratis hingga 1 GB/bulan, Premium tanpa batas.",
+    "howit.step3.desc":          "Tarik & lepas file video apa saja. Thumbnail & encode otomatis, preview instan. Gratis hingga 10 GB/bulan, Premium 100 GB/bulan.",
     "howit.step4.title":         "Bagikan & berinteraksi",
     "howit.step4.desc":          "Bagikan ke media sosial dengan satu klik. Balas komentar, DM fans, bangun komunitas langsung dari dashboard.",
     "howit.step5.title":         "Tumbuh dengan insight",
@@ -7023,7 +7031,7 @@ const I18N = {
     "faq.q1":                    "Bisakah saya pindah antara Gratis dan Premium kapan saja?",
     "faq.a1":                    "Ya! Upgrade ke Premium kapan saja dari menu profil. Video, follower, dan stats kamu tetap sama. Downgrade kembali ke Gratis juga tersedia — semua konten yang sudah diunggah tetap kamu miliki.",
     "faq.q2":                    "Apa yang terjadi jika saya mencapai batas unggah Gratis?",
-    "faq.a2":                    "Kamu akan melihat prompt ramah yang menyarankan Premium saat mencapai 60 video atau 1 GB bulan ini. Video yang sudah ada tetap online selamanya — tidak ada penghapusan otomatis. Kuota direset setiap tanggal 1 bulan berikutnya.",
+    "faq.a2":                    "Kamu akan melihat prompt ramah yang menyarankan Premium saat mencapai 30 video atau 10 GB bulan ini. Video yang sudah ada tetap online selamanya — tidak ada penghapusan otomatis. Kuota direset setiap tanggal 1 bulan berikutnya.",
     "faq.q3":                    "Apakah video saya benar-benar disimpan secara privat?",
     "faq.a3":                    "Semua unggahan dienkripsi saat tersimpan dan dalam transit. Kami tidak pernah membagikan atau menjual data kamu. Kamu mengontrol visibilitas (publik, tidak terdaftar, privat) per video.",
     "faq.q4":                    "Apakah pelanggan Premium melihat iklan saat menonton?",
@@ -7043,7 +7051,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Opsi gratis selamanya",
     "finalcta.live.tail":        "kreator online sekarang",
     "finalcta.perks.title":      "Yang langsung kamu dapatkan",
-    "finalcta.perk1":            "60 unggah gratis / bulan — tanpa kartu kredit",
+    "finalcta.perk1":            "30 unggah gratis / bulan — tanpa kartu kredit",
     "finalcta.perk2":            "Cloud sync di semua perangkat kamu",
     "finalcta.perk3":            "Analytics real-time & insight penonton",
     "finalcta.perk4":            "Tayangan, follower & DM komunitas tanpa batas",
@@ -7054,8 +7062,8 @@ const I18N = {
     "testi.title":                "Disukai oleh 12.000+ kreator",
     "testi.subtitle":            "Kreator nyata, pertumbuhan nyata. Inilah yang mereka katakan tentang Playly.",
     "testi.q1":                  "\"Pindah dari YouTube ke Playly Premium 3 bulan lalu. Engagement rate saya naik dari 2% ke 8%. Dashboard Premium Insights itu emas.\"",
-    "testi.q2":                  "\"Tier Gratis lebih dari cukup untuk mulai. Capai limit 60 video dalam 2 minggu, upgrade ke Premium, tidak pernah menyesal. Fitur live streaming-nya super mulus.\"",
-    "testi.q3":                  "\"Sebagai gamer hobi, paket Gratis itu sempurna. 60 video sebulan persis yang saya butuh. Dashboard-nya bersih & tanpa iklan merusak pengalaman fans saya yang Premium.\"",
+    "testi.q2":                  "\"Tier Gratis lebih dari cukup untuk mulai. Capai limit 30 video dalam 2 minggu, upgrade ke Premium, tidak pernah menyesal. Fitur live streaming-nya super mulus.\"",
+    "testi.q3":                  "\"Sebagai gamer hobi, paket Gratis itu sempurna. 30 video sebulan persis yang saya butuh. Dashboard-nya bersih & tanpa iklan merusak pengalaman fans saya yang Premium.\"",
     // ===== AUTH / LANDING MISC =====
     "auth.welcome":              "Selamat datang di Playly",
     "auth.choose.continue":      "Pilih cara kamu untuk lanjut",
@@ -7317,10 +7325,10 @@ const I18N = {
     "help.about.copy":            "© 2026 Playly. Dibuat dengan 💜 di Indonesia.",
     // ===== USER VIEWS =====
     "user.upload.share":          "Bagikan karyamu ke dunia.",
-    "user.upload.nofilecap":      "Tanpa batas ukuran file, tanpa batas durasi, tanpa kuota bulanan — unggah video > 1 GB dan > 1 jam dengan bebas.",
+    "user.upload.nofilecap":      "Tanpa batas ukuran file & durasi — unggah file > 1 GB & > 1 jam bebas. Kuota 100 GB + 100 video/bulan.",
     "user.upload.fromurl":        "Dari URL",
     "user.upload.dropor":         "atau seret ke sini",
-    "user.upload.formats":        "MP4, MOV, MKV — Gratis: hingga 1 GB/bulan · Premium: tanpa batas",
+    "user.upload.formats":        "MP4, MOV, MKV — Gratis: 10 GB + 30 video/bulan · Premium: 100 GB + 100 video/bulan",
     "user.upload.url.supported":  "Didukung: YouTube, Vimeo, TikTok, Dailymotion, Twitch, URL .mp4/.webm langsung.",
     "user.upload.public.tail":    "— semua orang bisa cari & tonton.",
     "user.live.desc":             "Stream live ke followers kamu real-time. Fitur Premium.",
@@ -8329,7 +8337,7 @@ const I18N = {
     "pm.feature.live":            "Langsung",
     "pm.feature.priority":        "Keutamaan",
     "pf.free.1":                 "Lencana tahap \"Percuma\" dalam profil",
-    "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
+    "pf.free.2":                 "Meter kuota bulanan (30 video / 10 GB)",
     "pf.free.3":                 "Iklan tajaan kelihatan ketika menonton",
     "pf.free.4":                 "Analitik asas (7 hari lepas sahaja)",
     "pf.free.5":                 "Petunjuk \"Naik taraf\" dalam dropdown & bar sisi",
@@ -8357,7 +8365,7 @@ const I18N = {
     "faq.q1":                    "Bolehkah saya bertukar antara Percuma dan Premium bila-bila masa?",
     "faq.a1":                    "Ya! Naik taraf ke Premium bila-bila masa daripada menu profil. Video, pengikut, dan stats anda kekal sama. Turun taraf kembali ke Percuma juga tersedia — anda kekalkan semua kandungan yang dimuat naik.",
     "faq.q2":                    "Apa berlaku jika saya capai had muat naik Percuma?",
-    "faq.a2":                    "Anda akan lihat petunjuk mesra yang mencadangkan Premium apabila anda mencapai 60 video atau 1 GB bulan ini. Video sedia ada kekal aktif selama-lamanya — tiada penghapusan automatik. Kuota akan ditetapkan semula pada 1hb bulan berikutnya.",
+    "faq.a2":                    "Anda akan lihat petunjuk mesra yang mencadangkan Premium apabila anda mencapai 30 video atau 10 GB bulan ini. Video sedia ada kekal aktif selama-lamanya — tiada penghapusan automatik. Kuota akan ditetapkan semula pada 1hb bulan berikutnya.",
     "faq.q3":                    "Adakah video saya benar-benar disimpan secara peribadi?",
     "faq.a3":                    "Semua muat naik disulitkan semasa diam dan dalam transit. Kami tidak pernah berkongsi atau menjual data anda. Anda kawal keterlihatan (awam, tidak tersenarai, peribadi) setiap video.",
     "faq.q4":                    "Adakah pelanggan Premium nampak iklan ketika menonton?",
@@ -34060,8 +34068,9 @@ function renderHomeTierWidget() {
     const thisMonth = myVideos.filter(v => (v.createdAt || v.id || 0) >= mStartTs);
     const usedCount = thisMonth.length;
     const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
-    const MAX_COUNT = 60;
-    const MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+    const _q = playlyQuota("free");
+    const MAX_COUNT = _q.videos;          // 30
+    const MAX_BYTES = _q.bytes;           // 10 GB
     const pctCount = Math.min(100, Math.round((usedCount / MAX_COUNT) * 100));
     const pctBytes = Math.min(100, Math.round((usedBytes / MAX_BYTES) * 100));
     const usedMB = (usedBytes / (1024 * 1024)).toFixed(usedBytes < 1024*1024*100 ? 1 : 0);
@@ -34079,11 +34088,11 @@ function renderHomeTierWidget() {
             <div class="tw-bar"><i style="width:${pctCount}%"></i></div>
           </div>
           <div class="tw-meter">
-            <div class="tw-meter-row"><span>Storage used</span><b>${usedMB} MB / 1 GB</b></div>
+            <div class="tw-meter-row"><span>Storage used</span><b>${usedMB} MB / ${_q.gbLabel}</b></div>
             <div class="tw-bar"><i style="width:${pctBytes}%"></i></div>
           </div>
         </div>
-        <p class="tw-hint">Quota resets on the 1st of each month. Upgrade to Premium for unlimited uploads.</p>
+        <p class="tw-hint">Quota resets on the 1st of each month. Upgrade to Premium for 100 GB + 100 videos/month.</p>
       </div>
     `;
     wrap.querySelector("[data-tw-upgrade]")?.addEventListener("click", () => {
@@ -43853,12 +43862,14 @@ async function handlePickedFile(file) {
   if (!file.type.startsWith("video/")) return toast("⚠️ File harus berupa video", "warning");
 
   // === FREE TIER LIMITS (per request 2026-05-03 — Free vs Premium) ===
-  // Free user: max 60 video upload/bulan, max 1 GB total upload size/bulan.
-  // Premium user: unlimited (skip checks). Limit per calendar month.
+  // Kuota BULANAN (per request 2026-05-03; angka diperbarui 5 Jun 2026):
+  // Free = 30 video + 10 GB/bulan, Premium = 100 video + 100 GB/bulan (premium
+  // dibatasi supaya biaya storage terkendali). Admin = tanpa batas. Per kalender
+  // bulan; video lama tetap tersimpan & tidak ikut kuota bulan berikutnya.
   const tier = user?.tier || "free";
-  if (tier === "free") {
-    const FREE_MAX_VIDEOS_PER_MONTH = 60;
-    const FREE_MAX_BYTES_PER_MONTH = 1024 * 1024 * 1024; // 1 GB
+  if ((tier === "free" || tier === "premium") && user?.role !== "admin") {
+    const q = playlyQuota(tier);
+    const isFree = tier !== "premium";
     const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -43866,23 +43877,26 @@ async function handlePickedFile(file) {
     const usedCount = thisMonth.length;
     const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
 
-    if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
+    if (usedCount >= q.videos) {
       return openConfirm({
         icon: "⭐", iconClass: "warn",
-        title: "Free upload limit reached",
-        desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+        title: isFree ? "Kuota video Free bulan ini penuh" : "Kuota video Premium bulan ini penuh",
+        desc: isFree
+          ? `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini.<br><br>Upgrade ke <b>Premium</b> untuk kuota 10x lebih besar (100 video + 100 GB).`
+          : `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini. Kuota reset otomatis tanggal 1 — video lama tetap aman.`,
+        btnText: isFree ? "⭐ Upgrade ke Premium" : "Mengerti", btnClass: "primary",
+        onConfirm: () => { if (isFree) document.getElementById("pdUpgradeBtn")?.click(); }
       });
     }
-    if (usedBytes + file.size > FREE_MAX_BYTES_PER_MONTH) {
-      const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
+    if (usedBytes + file.size > q.bytes) {
       return openConfirm({
         icon: "⭐", iconClass: "warn",
-        title: "Free storage quota exceeded",
-        desc: `You've used <b>${usedMB} MB / 1 GB</b> this month. This file (${fmtBytes(file.size)}) won't fit.<br><br>Upgrade to <b>Premium</b> for unlimited storage.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+        title: isFree ? "Kuota penyimpanan Free bulan ini penuh" : "Kuota penyimpanan Premium bulan ini penuh",
+        desc: isFree
+          ? `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(file.size)}) tidak muat.<br><br>Upgrade ke <b>Premium</b> untuk 100 GB + 100 video/bulan.`
+          : `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(file.size)}) tidak muat. Kuota reset tanggal 1.`,
+        btnText: isFree ? "⭐ Upgrade ke Premium" : "Mengerti", btnClass: "primary",
+        onConfirm: () => { if (isFree) document.getElementById("pdUpgradeBtn")?.click(); }
       });
     }
   }
@@ -51217,16 +51231,16 @@ async function renderStoragePage() {
   }
   const totalBytes = videoBytes + thumbBytes + cacheBytes;
 
-  // ===== Kuota BULANAN. Free = 60 video + 1 GB / bulan (reset tgl 1; video lama
-  // tetap tersimpan, tidak ikut kuota bulan berikutnya). Premium = tanpa batas. =====
-  const FREE_BYTES = 1024 * 1024 * 1024; // 1 GB / bulan
-  const FREE_VIDEOS = 60;                // 60 video / bulan
+  // ===== Kuota BULANAN per tier (reset tgl 1; video lama tetap tersimpan, tidak
+  // ikut kuota bulan berikutnya). Free = 10 GB + 30 video, Premium = 100 GB +
+  // 100 video (premium dibatasi supaya biaya terkendali). =====
+  const q = playlyQuota(tier); // { bytes, videos, gbLabel }
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
   const mTs = monthStart.getTime();
   const monthVideos = myVideos.filter(v => (v.createdAt || v.id || 0) >= mTs);
   const monthBytes = monthVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
-  const bytePct = isPremium ? 0 : Math.min(100, (monthBytes / FREE_BYTES) * 100);
-  const videoPct = isPremium ? 0 : Math.min(100, (monthVideos.length / FREE_VIDEOS) * 100);
+  const bytePct = Math.min(100, (monthBytes / q.bytes) * 100);
+  const videoPct = Math.min(100, (monthVideos.length / q.videos) * 100);
   const quotaPct = Math.max(bytePct, videoPct); // faktor pembatas (mana yg lebih dulu penuh)
 
   const card = document.getElementById("storageOverviewCard");
@@ -51252,45 +51266,35 @@ async function renderStoragePage() {
     else if (p >= 80) el.classList.add("is-warn");
   };
 
+  // Kedua tier kini pakai meter berkuota (premium = kuota lebih besar, bukan ∞).
   if (card) card.classList.toggle("is-premium", isPremium);
-  if (premiumPill) premiumPill.hidden = !isPremium;
+  if (premiumPill) { premiumPill.hidden = !isPremium; premiumPill.textContent = "⭐ Premium"; }
   if (headUpgrade) headUpgrade.style.display = isPremium ? "none" : "";
 
-  if (isPremium) {
-    if (ovTitle) ovTitle.textContent = "Penyimpanan Tak Terbatas";
-    if (videoLabel) videoLabel.textContent = "Total video";
-    if (bytesLabel) bytesLabel.textContent = "Total penyimpanan terpakai";
-    if (ring) ring.setAttribute("stroke-dasharray", "0, 100");
-    if (pctEl) pctEl.textContent = "∞";
-    if (usedEl) usedEl.textContent = fmtBytes(totalBytes);
-    if (videoText) videoText.textContent = `${myVideos.length} video`;
-    setBar(barEl, 0); setBar(videoBar, 0);
-    if (statusEl) statusEl.textContent = "Akun Premium — unggah & penyimpanan tanpa batas, kualitas hingga 4K.";
-  } else {
-    if (ovTitle) ovTitle.textContent = "Kuota Bulan Ini";
-    if (videoLabel) videoLabel.textContent = "Video bulan ini";
-    if (bytesLabel) bytesLabel.textContent = "Penyimpanan bulan ini";
-    if (ring) ring.setAttribute("stroke-dasharray", `${quotaPct.toFixed(1)}, 100`);
-    if (pctEl) pctEl.textContent = `${quotaPct > 0 && quotaPct < 1 ? "<1" : Math.round(quotaPct)}%`;
-    if (usedEl) usedEl.textContent = `${fmtBytes(monthBytes)} / 1 GB`;
-    if (videoText) videoText.textContent = `${monthVideos.length} / ${FREE_VIDEOS}`;
-    setBar(barEl, bytePct); setBar(videoBar, videoPct);
-    const remVideos = Math.max(0, FREE_VIDEOS - monthVideos.length);
-    const remBytes = Math.max(0, FREE_BYTES - monthBytes);
-    if (statusEl) {
-      if (quotaPct >= 100) {
-        statusEl.innerHTML = "⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> untuk unggah tanpa batas.";
-      } else if (quotaPct >= 80) {
-        statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini. Reset tanggal 1.`;
-      } else {
-        statusEl.textContent = `Sisa ${remVideos} video & ${fmtBytes(remBytes)} bulan ini · kuota reset tiap tanggal 1.`;
-      }
+  if (ovTitle) ovTitle.textContent = isPremium ? "Kuota Premium Bulan Ini" : "Kuota Bulan Ini";
+  if (videoLabel) videoLabel.textContent = "Video bulan ini";
+  if (bytesLabel) bytesLabel.textContent = "Penyimpanan bulan ini";
+  if (ring) ring.setAttribute("stroke-dasharray", `${quotaPct.toFixed(1)}, 100`);
+  if (pctEl) pctEl.textContent = `${quotaPct > 0 && quotaPct < 1 ? "<1" : Math.round(quotaPct)}%`;
+  if (usedEl) usedEl.textContent = `${fmtBytes(monthBytes)} / ${q.gbLabel}`;
+  if (videoText) videoText.textContent = `${monthVideos.length} / ${q.videos}`;
+  setBar(barEl, bytePct); setBar(videoBar, videoPct);
+
+  const remVideos = Math.max(0, q.videos - monthVideos.length);
+  const remBytes = Math.max(0, q.bytes - monthBytes);
+  if (statusEl) {
+    if (quotaPct >= 100) {
+      statusEl.innerHTML = isPremium
+        ? "⚠️ Kuota Premium bulan ini penuh. Video lama tetap aman — kuota reset otomatis tanggal 1."
+        : "⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).";
+    } else if (quotaPct >= 80) {
+      statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini. Reset tanggal 1.`;
+    } else {
+      statusEl.textContent = `Sisa ${remVideos} video & ${fmtBytes(remBytes)} bulan ini · kuota reset tiap tanggal 1.`;
     }
   }
   if (totalStrip) {
-    totalStrip.innerHTML = isPremium
-      ? `Total tersimpan: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video.`
-      : `Total tersimpan sepanjang waktu: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video — disimpan selamanya, tidak dihitung ke kuota bulan depan.`;
+    totalStrip.innerHTML = `Total tersimpan sepanjang waktu: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video — disimpan selamanya, tidak dihitung ke kuota bulan depan.`;
   }
 
   // Breakdown by category
