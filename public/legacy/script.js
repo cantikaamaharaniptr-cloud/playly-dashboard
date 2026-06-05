@@ -51217,35 +51217,81 @@ async function renderStoragePage() {
   }
   const totalBytes = videoBytes + thumbBytes + cacheBytes;
 
-  // Quota
-  const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-  const quotaBytes = isPremium ? Infinity : FREE_QUOTA;
-  const pct = isPremium ? 0 : Math.min(100, (totalBytes / FREE_QUOTA) * 100);
+  // ===== Kuota BULANAN. Free = 60 video + 1 GB / bulan (reset tgl 1; video lama
+  // tetap tersimpan, tidak ikut kuota bulan berikutnya). Premium = tanpa batas. =====
+  const FREE_BYTES = 1024 * 1024 * 1024; // 1 GB / bulan
+  const FREE_VIDEOS = 60;                // 60 video / bulan
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const mTs = monthStart.getTime();
+  const monthVideos = myVideos.filter(v => (v.createdAt || v.id || 0) >= mTs);
+  const monthBytes = monthVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  const bytePct = isPremium ? 0 : Math.min(100, (monthBytes / FREE_BYTES) * 100);
+  const videoPct = isPremium ? 0 : Math.min(100, (monthVideos.length / FREE_VIDEOS) * 100);
+  const quotaPct = Math.max(bytePct, videoPct); // faktor pembatas (mana yg lebih dulu penuh)
 
-  // Update overview ring + bar
+  const card = document.getElementById("storageOverviewCard");
+  const premiumPill = document.getElementById("storagePremiumPill");
+  const ovTitle = document.getElementById("storageOvTitle");
+  const videoLabel = document.getElementById("storageVideoLabel");
+  const bytesLabel = document.getElementById("storageBytesLabel");
+  const videoText = document.getElementById("storageVideoText");
+  const videoBar = document.getElementById("storageVideoBar");
+  const totalStrip = document.getElementById("storageTotalStrip");
+  const headUpgrade = document.getElementById("storageUpgradeBtn");
   const ring = document.getElementById("storagePageRing");
   const pctEl = document.getElementById("storagePagePct");
   const usedEl = document.getElementById("storagePageUsed");
   const statusEl = document.getElementById("storagePageStatus");
   const barEl = document.getElementById("storagePageBar");
 
-  if (ring) ring.setAttribute("stroke-dasharray", `${pct}, 100`);
-  if (pctEl) pctEl.textContent = isPremium ? "∞" : `${Math.round(pct)}%`;
-  if (usedEl) usedEl.textContent = isPremium
-    ? `${fmtBytes(totalBytes)} / Unlimited`
-    : `${fmtBytes(totalBytes)} / 1 GB`;
-  if (statusEl) {
-    if (isPremium) {
-      statusEl.textContent = "Akun Premium — tanpa batas penyimpanan & kuota bulanan.";
-    } else if (pct >= 90) {
-      statusEl.innerHTML = "⚠️ Kuota hampir penuh — hapus file lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade ke Premium</a>.";
-    } else if (pct >= 60) {
-      statusEl.textContent = `${Math.round(100 - pct)}% kuota tersisa bulan ini.`;
-    } else {
-      statusEl.textContent = "Penggunaan masih sehat. Lanjutkan upload!";
+  const setBar = (el, p) => {
+    if (!el) return;
+    el.style.width = p + "%";
+    el.classList.remove("is-warn", "is-full");
+    if (p >= 95) el.classList.add("is-full");
+    else if (p >= 80) el.classList.add("is-warn");
+  };
+
+  if (card) card.classList.toggle("is-premium", isPremium);
+  if (premiumPill) premiumPill.hidden = !isPremium;
+  if (headUpgrade) headUpgrade.style.display = isPremium ? "none" : "";
+
+  if (isPremium) {
+    if (ovTitle) ovTitle.textContent = "Penyimpanan Tak Terbatas";
+    if (videoLabel) videoLabel.textContent = "Total video";
+    if (bytesLabel) bytesLabel.textContent = "Total penyimpanan terpakai";
+    if (ring) ring.setAttribute("stroke-dasharray", "0, 100");
+    if (pctEl) pctEl.textContent = "∞";
+    if (usedEl) usedEl.textContent = fmtBytes(totalBytes);
+    if (videoText) videoText.textContent = `${myVideos.length} video`;
+    setBar(barEl, 0); setBar(videoBar, 0);
+    if (statusEl) statusEl.textContent = "Akun Premium — unggah & penyimpanan tanpa batas, kualitas hingga 4K.";
+  } else {
+    if (ovTitle) ovTitle.textContent = "Kuota Bulan Ini";
+    if (videoLabel) videoLabel.textContent = "Video bulan ini";
+    if (bytesLabel) bytesLabel.textContent = "Penyimpanan bulan ini";
+    if (ring) ring.setAttribute("stroke-dasharray", `${quotaPct.toFixed(1)}, 100`);
+    if (pctEl) pctEl.textContent = `${quotaPct > 0 && quotaPct < 1 ? "<1" : Math.round(quotaPct)}%`;
+    if (usedEl) usedEl.textContent = `${fmtBytes(monthBytes)} / 1 GB`;
+    if (videoText) videoText.textContent = `${monthVideos.length} / ${FREE_VIDEOS}`;
+    setBar(barEl, bytePct); setBar(videoBar, videoPct);
+    const remVideos = Math.max(0, FREE_VIDEOS - monthVideos.length);
+    const remBytes = Math.max(0, FREE_BYTES - monthBytes);
+    if (statusEl) {
+      if (quotaPct >= 100) {
+        statusEl.innerHTML = "⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> untuk unggah tanpa batas.";
+      } else if (quotaPct >= 80) {
+        statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini. Reset tanggal 1.`;
+      } else {
+        statusEl.textContent = `Sisa ${remVideos} video & ${fmtBytes(remBytes)} bulan ini · kuota reset tiap tanggal 1.`;
+      }
     }
   }
-  if (barEl) barEl.style.width = `${pct}%`;
+  if (totalStrip) {
+    totalStrip.innerHTML = isPremium
+      ? `Total tersimpan: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video.`
+      : `Total tersimpan sepanjang waktu: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video — disimpan selamanya, tidak dihitung ke kuota bulan depan.`;
+  }
 
   // Breakdown by category
   const catList = document.getElementById("storageCategoryList");

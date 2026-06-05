@@ -41382,6 +41382,37 @@ section[data-view="upload"] > .upload-tier-banner {
   background: linear-gradient(90deg, var(--primary), var(--accent));
   transition: width .35s;
 }
+/* === Storage page redesign (din/penyimpanan, 5 Jun 2026):
+   kuota BULANAN free (60 video + 1 GB) dual-meter + warna status, premium = unlimited. === */
+.storage-ov-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.storage-ov-head h3 { margin: 0 !important; }
+.storage-premium-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 11px; border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 22%, var(--bg-elev));
+  border: 1px solid var(--primary);
+  color: var(--cream); font-size: 11px; font-weight: 800; letter-spacing: .03em;
+}
+.storage-meter { margin-top: 14px; }
+.storage-meter-top {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  margin-bottom: 6px; font-size: 12.5px; color: var(--text-2);
+}
+.storage-meter-top .storage-meter-val { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+/* warna status meter */
+.storage-overview-bar i.is-warn { background: linear-gradient(90deg, #d3a64a, #b5832c) !important; }
+.storage-overview-bar i.is-full { background: linear-gradient(90deg, #cf5b44, #93302f) !important; }
+/* strip total tersimpan (info) */
+.storage-total-strip {
+  margin-top: 16px; padding: 10px 13px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; line-height: 1.55;
+}
+.storage-total-strip strong { color: var(--text); font-weight: 700; }
+/* PREMIUM: sembunyikan bar limit → meter jadi statistik saja */
+#storageOverviewCard.is-premium .storage-overview-bar { display: none; }
+#storageOverviewCard.is-premium .storage-meter { margin-top: 10px; }
+#storageOverviewCard.is-premium .storage-meter-top { font-size: 13px; }
 
 .storage-breakdown,
 .storage-files {
