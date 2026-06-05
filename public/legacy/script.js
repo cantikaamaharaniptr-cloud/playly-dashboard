@@ -51331,18 +51331,17 @@ async function renderStoragePage() {
       const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
       return { ...c, pct, pctLabel };
     });
-    // konsep: kartu statistik 3 kolom compact (ikon, angka besar, label, persen)
+    // konsep: kartu statistik 3 kolom, layout horizontal compact (mengisi lebar)
     catList.innerHTML = withPct.map(c => {
       const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
       return `
       <div class="storage-stat-card" style="--cat-color:${c.color}">
-        <div class="storage-stat-top">
-          <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
-          <div class="storage-stat-top-end">${clearBtn}<span class="storage-stat-pct">${c.pctLabel}</span></div>
+        <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
+        <div class="storage-stat-info">
+          <div class="storage-stat-val">${fmtBytes(c.size)}</div>
+          <div class="storage-stat-label">${c.label} <small>${c.desc}</small></div>
         </div>
-        <div class="storage-stat-val">${fmtBytes(c.size)}</div>
-        <div class="storage-stat-label">${c.label}</div>
-        <small class="storage-stat-desc">${c.desc}</small>
+        <div class="storage-stat-end">${clearBtn}<span class="storage-stat-pct">${c.pctLabel}</span></div>
       </div>`;
     }).join("");
     // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +

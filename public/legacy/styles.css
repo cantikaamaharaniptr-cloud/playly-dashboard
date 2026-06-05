@@ -41552,24 +41552,21 @@ section[data-view="upload"] > .upload-tier-banner {
 
 /* === Konsep v830: kartu statistik 3 kolom === */
 .storage-stat-card {
-  display: flex; flex-direction: column;
+  display: flex; align-items: center; gap: 14px;
   padding: 14px 16px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
-  border-top: 3px solid var(--cat-color, var(--primary));
+  border-left: 3px solid var(--cat-color, var(--primary));
 }
-.storage-stat-top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 11px;
-}
+.storage-stat-info { flex: 1 1 auto; min-width: 0; }
+.storage-stat-val { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: var(--text); }
+.storage-stat-label { font-size: .92rem; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.storage-stat-label small { color: var(--text-2); font-weight: 500; font-size: .82rem; }
+.storage-stat-end { display: flex; align-items: center; gap: 9px; flex: 0 0 auto; }
 .storage-stat-pct {
   font-size: .78rem; font-weight: 700; color: var(--text-2);
   background: var(--surface-2); padding: 3px 10px; border-radius: 99px;
 }
-.storage-stat-val { font-size: 1.75rem; font-weight: 800; line-height: 1.05; color: var(--text); }
-.storage-stat-label { font-size: 1.02rem; font-weight: 700; margin-top: 5px; }
-.storage-stat-desc { color: var(--text-2); font-size: .82rem; margin-top: 2px; }
-.storage-stat-top-end { display: flex; align-items: center; gap: 8px; }
-.storage-stat-top-end .storage-cache-clear { font-size: .78rem; padding: 4px 11px; white-space: nowrap; }
+.storage-stat-end .storage-cache-clear { font-size: .78rem; padding: 4px 11px; white-space: nowrap; }
 
 .storage-file-list {
   display: flex;
