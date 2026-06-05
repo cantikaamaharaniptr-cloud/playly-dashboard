@@ -41409,6 +41409,11 @@ section[data-view="upload"] > .upload-tier-banner {
   color: var(--muted); font-size: 12px; line-height: 1.55;
 }
 .storage-total-strip strong { color: var(--text); font-weight: 700; }
+/* Sampah section (halaman Penyimpanan) */
+.storage-trash-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 2px; }
+.storage-trash-head h3 { margin: 0; }
+.storage-trash-count { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.storage-trash .storage-file-restore { white-space: nowrap; }
 
 .storage-breakdown,
 .storage-files {

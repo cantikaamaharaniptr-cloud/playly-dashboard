@@ -43787,7 +43787,8 @@ self.onmessage = async (e) => {
 function fmtBytes(n) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function fmtDurationSec(sec) {
@@ -51386,6 +51387,81 @@ async function renderStoragePage() {
     if (typeof switchView === "function") switchView("settings");
     setTimeout(() => document.getElementById("pdUpgradeBtn")?.click(), 80);
   });
+
+  // ===== SAMPAH (trash) — kelola video terhapus langsung dari sini utk bebaskan ruang.
+  // Hapus video memindah ke state.deletedVideos; di sini bisa Pulihkan / Hapus permanen /
+  // Kosongkan. (Konsisten dgn tab Sampah di Pustaka — data & fungsi sama.) =====
+  function _storageTrashPerma(id) {
+    const v = (state.deletedVideos || []).find(x => x.id === id);
+    if (!v) return;
+    if (typeof openConfirm !== "function") return;
+    openConfirm({
+      icon: "🗑️", iconClass: "danger", title: "Hapus permanen?",
+      desc: `Video <b>${escapeHtml(v.title || "video")}</b> akan dihapus permanen dan tidak bisa dipulihkan.`,
+      btnText: "Hapus permanen", btnClass: "danger",
+      onConfirm: () => {
+        state.deletedVideos = (state.deletedVideos || []).filter(x => x.id !== id);
+        saveState?.();
+        try { openVideoDB?.().then(db => { const tx = db.transaction(VIDEO_STORE, "readwrite"); tx.objectStore(VIDEO_STORE).delete(id); }); } catch {}
+        toast?.("🗑️ Video dihapus permanen", "error");
+        renderStoragePage(); refreshStorageUsage?.();
+      }
+    });
+  }
+  function _storageTrashEmpty() {
+    const list = state.deletedVideos || [];
+    if (!list.length || typeof openConfirm !== "function") return;
+    const n = list.length, freed = fmtBytes(list.reduce((s, v) => s + (v.fileSize || 0), 0));
+    openConfirm({
+      icon: "🗑️", iconClass: "danger", title: "Kosongkan Sampah?",
+      desc: `<b>${n}</b> video di Sampah akan dihapus permanen — membebaskan <b>${freed}</b>.`,
+      btnText: "Kosongkan", btnClass: "danger",
+      onConfirm: () => {
+        const ids = list.map(v => v.id);
+        state.deletedVideos = [];
+        saveState?.();
+        try { openVideoDB?.().then(db => { const tx = db.transaction(VIDEO_STORE, "readwrite"); const os = tx.objectStore(VIDEO_STORE); ids.forEach(id => os.delete(id)); }); } catch {}
+        toast?.(`🗑️ Sampah dikosongkan (${n} video)`, "success");
+        renderStoragePage(); refreshStorageUsage?.();
+      }
+    });
+  }
+
+  const trash = Array.isArray(state.deletedVideos) ? state.deletedVideos : [];
+  const trashWrap = document.getElementById("storageTrash");
+  if (trashWrap) {
+    if (!trash.length) {
+      trashWrap.hidden = true;
+    } else {
+      trashWrap.hidden = false;
+      const trashBytes = trash.reduce((s, v) => s + (v.fileSize || 0), 0);
+      const cnt = document.getElementById("storageTrashCount");
+      if (cnt) cnt.textContent = `· ${trash.length} video · ${fmtBytes(trashBytes)}`;
+      const tList = document.getElementById("storageTrashList");
+      if (tList) {
+        tList.innerHTML = trash.map(v => {
+          const title = (v.title || "").trim() || "Video Tanpa Judul";
+          return `
+          <div class="storage-file-row" data-trash="${v.id}">
+            <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
+            <div class="storage-file-info">
+              <strong>${escapeHtml(title)}</strong>
+              <small>${fmtBytes(v.fileSize || 0)} · di Sampah</small>
+            </div>
+            <button class="btn ghost sm storage-file-restore" data-trash-restore="${v.id}" title="Pulihkan video ini">↻ Pulihkan</button>
+            <button class="storage-file-del" data-trash-perma="${v.id}" title="Hapus permanen">🗑️ Hapus</button>
+          </div>`;
+        }).join("");
+        tList.querySelectorAll("[data-trash-restore]").forEach(b => b.addEventListener("click", () => {
+          if (typeof restoreVideo === "function") restoreVideo(+b.dataset.trashRestore);
+          renderStoragePage(); refreshStorageUsage?.();
+        }));
+        tList.querySelectorAll("[data-trash-perma]").forEach(b => b.addEventListener("click", () => _storageTrashPerma(+b.dataset.trashPerma)));
+      }
+      const emptyBtn = document.getElementById("storageTrashEmpty");
+      if (emptyBtn) emptyBtn.onclick = _storageTrashEmpty;
+    }
+  }
 }
 
 // =====================================================================
