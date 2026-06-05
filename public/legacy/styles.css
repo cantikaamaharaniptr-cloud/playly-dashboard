@@ -41421,7 +41421,12 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-cat-pct { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; font-style: normal; margin-top: 3px; }
 /* File Tersimpan: toolbar ringkasan + urutkan */
 .storage-file-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-.storage-file-summary { font-size: .8rem; color: var(--muted); }
+.storage-file-summary {
+  display: inline-block;
+  height: 38px; line-height: 36px; box-sizing: border-box; padding: 0 14px;
+  background-color: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  font-size: .8rem; color: var(--muted); white-space: nowrap;
+}
 .storage-file-summary strong { color: var(--text); }
 .storage-sort { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
 .storage-sort-btn { padding: 5px 13px; border-radius: 7px; font-size: .76rem; font-weight: 700; color: var(--muted); background: transparent; border: 0; cursor: pointer; transition: background .12s, color .12s; }
