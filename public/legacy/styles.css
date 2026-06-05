@@ -41444,7 +41444,7 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-trash-count { color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .storage-trash .storage-file-restore { white-space: nowrap; }
 /* Rincian Penggunaan: bar proporsi + % per kategori */
-.storage-cat-bar { flex: 1 1 auto; height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 0; }
+.storage-cat-bar { flex: 0 0 240px; height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 0; }
 .storage-cat-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 99px; transition: width .35s; }
 .storage-cat-size { text-align: right; white-space: nowrap; }
 .storage-cat-pct { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; font-style: normal; margin-top: 3px; }
@@ -41547,7 +41547,7 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-cat-info { flex: 0 0 auto; width: 200px; min-width: 0; }
 .storage-cat-info strong { font-size: .9rem; display: block; }
 .storage-cat-info small  { color: var(--text-2); font-size: .76rem; }
-.storage-cat-size { flex: 0 0 auto; min-width: 64px; text-align: right; font-weight: 700; font-size: .92rem; }
+.storage-cat-size { flex: 0 0 auto; margin-left: auto; min-width: 64px; text-align: right; font-weight: 700; font-size: .92rem; }
 
 .storage-file-list {
   display: flex;
