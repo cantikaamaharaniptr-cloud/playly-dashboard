@@ -51283,15 +51283,20 @@ async function renderStoragePage() {
 
   const remVideos = Math.max(0, q.videos - monthVideos.length);
   const remBytes = Math.max(0, q.bytes - monthBytes);
+  // Hitung mundur reset kuota (tanggal 1 bulan berikutnya).
+  const _now = new Date();
+  const _nextReset = new Date(_now.getFullYear(), _now.getMonth() + 1, 1);
+  const daysToReset = Math.max(1, Math.ceil((_nextReset - _now) / 86400000));
+  const resetTxt = `kuota reset dalam <strong>${daysToReset} hari</strong>`;
   if (statusEl) {
     if (quotaPct >= 100) {
       statusEl.innerHTML = isPremium
-        ? "⚠️ Kuota Premium bulan ini penuh. Video lama tetap aman — kuota reset otomatis tanggal 1."
-        : "⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).";
+        ? `⚠️ Kuota Premium bulan ini penuh. Video lama tetap aman — ${resetTxt}.`
+        : `⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).`;
     } else if (quotaPct >= 80) {
-      statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini. Reset tanggal 1.`;
+      statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> · ${resetTxt}.`;
     } else {
-      statusEl.textContent = `Sisa ${remVideos} video & ${fmtBytes(remBytes)} bulan ini · kuota reset tiap tanggal 1.`;
+      statusEl.innerHTML = `Sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini · ${resetTxt}.`;
     }
   }
   if (totalStrip) {
@@ -51306,12 +51311,13 @@ async function renderStoragePage() {
     const cats = [
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes },
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true },
     ];
     const totForPct = Math.max(1, totalBytes);
     catList.innerHTML = cats.map(c => {
       const pct = Math.min(100, (c.size / totForPct) * 100);
       const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
+      const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
       return `
       <div class="storage-cat-row">
         <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
@@ -51321,8 +51327,32 @@ async function renderStoragePage() {
           <div class="storage-cat-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
         </div>
         <span class="storage-cat-size">${fmtBytes(c.size)}<em class="storage-cat-pct">${pctLabel}</em></span>
+        ${clearBtn}
       </div>`;
     }).join("");
+    // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +
+    // sessionStorage). TIDAK menyentuh akun, sesi, state, video, prefs, tema.
+    document.getElementById("storageCacheClear")?.addEventListener("click", () => {
+      const SAFE = /^playly-(daily-snapshot-|video-snapshot-|hqs-history|cloud-retry|cloud-last-sync|ad-seq-rt|mini-pip-pos|welcomed-|login-attempts-)/;
+      const before = (() => { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += (k.length + (localStorage.getItem(k) || "").length) * 2; } return n; })();
+      const doClear = () => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && SAFE.test(k)) keys.push(k); }
+        keys.forEach(k => localStorage.removeItem(k));
+        try { sessionStorage.clear(); } catch {}
+        const after = (() => { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += (k.length + (localStorage.getItem(k) || "").length) * 2; } return n; })();
+        const freed = Math.max(0, before - after);
+        toast?.(`✓ Cache dibersihkan${freed > 0 ? " — bebas " + fmtBytes(freed) : ""} (${keys.length} item)`, "success");
+        renderStoragePage(); refreshStorageUsage?.();
+      };
+      if (typeof openConfirm === "function") {
+        openConfirm({
+          icon: "🧹", iconClass: "warn", title: "Bersihkan cache?",
+          desc: "Menghapus data cache non-penting (snapshot, riwayat, onboarding). <b>Akun, video, pengaturan & sesi login tetap aman.</b>",
+          btnText: "Bersihkan", btnClass: "primary", onConfirm: doClear
+        });
+      } else { doClear(); }
+    });
   }
 
   // File list — semua video user dengan tombol hapus
@@ -51340,16 +51370,30 @@ async function renderStoragePage() {
         : `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
     } else {
       const sortMode = window._storageFileSort === "newest" ? "newest" : "size";
-      const sorted = [...myVideos].sort((a, b) => sortMode === "newest"
+      const search = (window._storageFileSearch || "").trim().toLowerCase();
+      const statusFilter = window._storageFileStatus || "all";
+      const totalFileBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+      // Filter: cari judul + status
+      let filtered = myVideos.filter(v =>
+        (!search || (v.title || "").toLowerCase().includes(search)) &&
+        (statusFilter === "all" || (v.adminStatus || "published") === statusFilter));
+      const sorted = [...filtered].sort((a, b) => sortMode === "newest"
         ? ((b.createdAt || b.id || 0) - (a.createdAt || a.id || 0))
         : ((b.fileSize || 0) - (a.fileSize || 0)));
-      const totalFileBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+      const isFiltering = !!search || statusFilter !== "all";
+      const opt = (val, lbl) => `<option value="${val}" ${statusFilter === val ? "selected" : ""}>${lbl}</option>`;
       const toolbar = `
         <div class="storage-file-toolbar">
-          <span class="storage-file-summary"><strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong></span>
-          <div class="storage-sort">
-            <button type="button" class="storage-sort-btn ${sortMode === "size" ? "active" : ""}" data-sort="size">Terbesar</button>
-            <button type="button" class="storage-sort-btn ${sortMode === "newest" ? "active" : ""}" data-sort="newest">Terbaru</button>
+          <span class="storage-file-summary">${isFiltering ? `<strong>${sorted.length}</strong> dari ${myVideos.length} file` : `<strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong>`}</span>
+          <div class="storage-file-controls">
+            <input type="search" class="storage-file-search" id="storageFileSearch" placeholder="🔎 Cari judul…" value="${escapeHtml(window._storageFileSearch || "")}" autocomplete="off">
+            <select class="storage-file-filter" id="storageFileFilter" aria-label="Filter status">
+              ${opt("all", "Semua status")}${opt("published", "Live")}${opt("pending", "Pending")}${opt("draft", "Draft")}${opt("rejected", "Ditolak")}
+            </select>
+            <div class="storage-sort">
+              <button type="button" class="storage-sort-btn ${sortMode === "size" ? "active" : ""}" data-sort="size">Terbesar</button>
+              <button type="button" class="storage-sort-btn ${sortMode === "newest" ? "active" : ""}" data-sort="newest">Terbaru</button>
+            </div>
           </div>
         </div>`;
       // Status label per admin status — biar user jelas tau video ini lagi
@@ -51378,9 +51422,26 @@ async function renderStoragePage() {
           <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">🗑️ Hapus</button>
         </div>`;
       }).join("");
+      if (isFiltering && !sorted.length) {
+        fileList.innerHTML = toolbar + `<div class="storage-empty" style="padding:22px;text-align:center;color:var(--muted)">Tidak ada file yang cocok dengan pencarian/filter.</div>`;
+      }
       // Wire sort toggle
       fileList.querySelectorAll("[data-sort]").forEach(btn => {
         btn.addEventListener("click", () => { window._storageFileSort = btn.dataset.sort; renderStoragePage(); });
+      });
+      // Wire search (jaga fokus + caret setelah re-render)
+      const searchEl = document.getElementById("storageFileSearch");
+      if (searchEl) {
+        searchEl.addEventListener("input", () => {
+          window._storageFileSearch = searchEl.value;
+          renderStoragePage();
+          const ne = document.getElementById("storageFileSearch");
+          if (ne) { ne.focus(); ne.setSelectionRange(ne.value.length, ne.value.length); }
+        });
+      }
+      // Wire status filter
+      document.getElementById("storageFileFilter")?.addEventListener("change", e => {
+        window._storageFileStatus = e.target.value; renderStoragePage();
       });
       // Wire delete buttons
       fileList.querySelectorAll("[data-storage-del]").forEach(btn => {
