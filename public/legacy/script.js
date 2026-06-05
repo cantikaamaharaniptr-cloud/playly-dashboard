@@ -51331,27 +51331,21 @@ async function renderStoragePage() {
       const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
       return { ...c, pct, pctLabel };
     });
-    // konsep: SATU bar segmen (proporsi tiap kategori dari total tersimpan) + legenda
-    const segHtml = withPct
-      .filter(c => c.pct > 0)
-      .map(c => `<i class="storage-seg" style="width:${c.pct.toFixed(2)}%;background:${c.color}" title="${c.label} · ${c.pctLabel}"></i>`)
-      .join("");
-    const legendHtml = withPct.map(c => {
-      const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
+    // konsep: kartu statistik 3 kolom (ikon, angka ukuran besar, label, persen)
+    catList.innerHTML = withPct.map(c => {
+      const clearBtn = c.clearable ? `<div class="storage-stat-action"><button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button></div>` : "";
       return `
-      <div class="storage-leg-row">
-        <span class="storage-leg-dot" style="background:${c.color}"></span>
-        <div class="storage-leg-info">
-          <strong>${c.label}</strong>
-          <small>${c.desc}</small>
+      <div class="storage-stat-card" style="--cat-color:${c.color}">
+        <div class="storage-stat-top">
+          <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
+          <span class="storage-stat-pct">${c.pctLabel}</span>
         </div>
-        <span class="storage-leg-size">${fmtBytes(c.size)}<em class="storage-leg-pct">${c.pctLabel}</em></span>
+        <div class="storage-stat-val">${fmtBytes(c.size)}</div>
+        <div class="storage-stat-label">${c.label}</div>
+        <small class="storage-stat-desc">${c.desc}</small>
         ${clearBtn}
       </div>`;
     }).join("");
-    catList.innerHTML = `
-      <div class="storage-seg-bar">${segHtml}</div>
-      <div class="storage-seg-legend">${legendHtml}</div>`;
     // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +
     // sessionStorage). TIDAK menyentuh akun, sesi, state, video, prefs, tema.
     document.getElementById("storageCacheClear")?.addEventListener("click", () => {
