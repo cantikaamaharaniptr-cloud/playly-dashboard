@@ -51393,10 +51393,13 @@ async function renderStoragePage() {
         ? ((b.createdAt || b.id || 0) - (a.createdAt || a.id || 0))
         : ((b.fileSize || 0) - (a.fileSize || 0)));
       const isFiltering = !!search || statusFilter !== "all";
+      const avgBytes = myVideos.length ? totalFileBytes / myVideos.length : 0;
       const opt = (val, lbl) => `<option value="${val}" ${statusFilter === val ? "selected" : ""}>${lbl}</option>`;
       const toolbar = `
         <div class="storage-file-toolbar">
-          <span class="storage-file-summary">${isFiltering ? `<strong>${sorted.length}</strong> dari ${myVideos.length} file` : `<strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong>`}</span>
+          <span class="storage-file-summary">${isFiltering
+            ? `<strong>${sorted.length}</strong> dari ${myVideos.length} file`
+            : `<span class="sfs-label">Total</span> <strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong> <span class="sfs-sep">·</span> rata-rata <strong>${fmtBytes(avgBytes)}</strong> <span class="sfs-sep">·</span> kuota <strong>${q.gbLabel}/bln</strong>`}</span>
           <div class="storage-file-controls">
             <input type="search" class="storage-file-search" id="storageFileSearch" placeholder="Cari judul…" value="${escapeHtml(window._storageFileSearch || "")}" autocomplete="off">
             <select class="storage-file-filter" id="storageFileFilter" aria-label="Filter status">

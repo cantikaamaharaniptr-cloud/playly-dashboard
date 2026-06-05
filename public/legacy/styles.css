@@ -41428,6 +41428,8 @@ section[data-view="upload"] > .upload-tier-banner {
   font-size: .8rem; color: var(--muted); white-space: nowrap;
 }
 .storage-file-summary strong { color: var(--text); }
+.storage-file-summary .sfs-label { font-size: .66rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin-right: 3px; }
+.storage-file-summary .sfs-sep { color: var(--border-strong); margin: 0 2px; }
 .storage-sort { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
 .storage-sort-btn { padding: 5px 13px; border-radius: 7px; font-size: .76rem; font-weight: 700; color: var(--muted); background: transparent; border: 0; cursor: pointer; transition: background .12s, color .12s; }
 .storage-sort-btn.active { background: var(--primary); color: var(--cream); }
