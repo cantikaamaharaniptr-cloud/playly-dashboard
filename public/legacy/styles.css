@@ -41444,6 +41444,17 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-tips-list li { position: relative; padding-left: 22px; font-size: .85rem; color: var(--text-2); line-height: 1.5; }
 .storage-tips-list li::before { content: "✓"; position: absolute; left: 0; color: var(--primary); font-weight: 800; }
 .storage-tips-list b { color: var(--text); }
+/* Ikon minimalist (line SVG) — ganti emoji warna di halaman Penyimpanan */
+.sto-ic { width: 13px; height: 13px; flex: 0 0 auto; vertical-align: -2px; }
+.storage-file-del, .storage-trash .storage-file-restore { display: inline-flex; align-items: center; gap: 6px; }
+.sf-status { display: inline-flex; align-items: center; gap: 4px; }
+.sf-status .sto-ic { width: 11px; height: 11px; vertical-align: 0; }
+.storage-premium-pill .sto-ic { width: 12px; height: 12px; vertical-align: 0; }
+#storagePageStatus .sto-ic { width: 13px; height: 13px; }
+.storage-file-search {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a08a90' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 11px center; background-size: 14px; padding-left: 33px;
+}
 
 .storage-breakdown,
 .storage-files {

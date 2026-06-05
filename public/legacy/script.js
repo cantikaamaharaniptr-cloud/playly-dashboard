@@ -51215,6 +51215,18 @@ document.getElementById("playerBackBtn")?.addEventListener("click", () => {
 // =====================================================================
 // STORAGE PAGE — render halaman manajemen penyimpanan (clickable storage)
 // =====================================================================
+// Ikon minimalist (line SVG monokrom, ikut currentColor) — ganti emoji warna.
+const STO_IC = {
+  trash:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  restore: '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  star:    '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.4 5.8 21 7.2 14 2 9.3 8.9 8.6 12 2"/></svg>',
+  alert:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  clock:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  check:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:       '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  ban:     '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.64" y1="5.64" x2="18.36" y2="18.36"/></svg>',
+  pencil:  '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+};
 async function renderStoragePage() {
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const tier = user?.tier || "free";
@@ -51269,7 +51281,7 @@ async function renderStoragePage() {
 
   // Kedua tier kini pakai meter berkuota (premium = kuota lebih besar, bukan ∞).
   if (card) card.classList.toggle("is-premium", isPremium);
-  if (premiumPill) { premiumPill.hidden = !isPremium; premiumPill.textContent = "⭐ Premium"; }
+  if (premiumPill) { premiumPill.hidden = !isPremium; premiumPill.innerHTML = `${STO_IC.star}<span>Premium</span>`; }
   if (headUpgrade) headUpgrade.style.display = isPremium ? "none" : "";
 
   if (ovTitle) ovTitle.textContent = isPremium ? "Kuota Premium Bulan Ini" : "Kuota Bulan Ini";
@@ -51291,10 +51303,10 @@ async function renderStoragePage() {
   if (statusEl) {
     if (quotaPct >= 100) {
       statusEl.innerHTML = isPremium
-        ? `⚠️ Kuota Premium bulan ini penuh. Video lama tetap aman — ${resetTxt}.`
-        : `⚠️ Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).`;
+        ? `${STO_IC.alert} Kuota Premium bulan ini penuh. Video lama tetap aman — ${resetTxt}.`
+        : `${STO_IC.alert} Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).`;
     } else if (quotaPct >= 80) {
-      statusEl.innerHTML = `⚠️ Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> · ${resetTxt}.`;
+      statusEl.innerHTML = `${STO_IC.alert} Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> · ${resetTxt}.`;
     } else {
       statusEl.innerHTML = `Sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini · ${resetTxt}.`;
     }
@@ -51386,7 +51398,7 @@ async function renderStoragePage() {
         <div class="storage-file-toolbar">
           <span class="storage-file-summary">${isFiltering ? `<strong>${sorted.length}</strong> dari ${myVideos.length} file` : `<strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong>`}</span>
           <div class="storage-file-controls">
-            <input type="search" class="storage-file-search" id="storageFileSearch" placeholder="🔎 Cari judul…" value="${escapeHtml(window._storageFileSearch || "")}" autocomplete="off">
+            <input type="search" class="storage-file-search" id="storageFileSearch" placeholder="Cari judul…" value="${escapeHtml(window._storageFileSearch || "")}" autocomplete="off">
             <select class="storage-file-filter" id="storageFileFilter" aria-label="Filter status">
               ${opt("all", "Semua status")}${opt("published", "Live")}${opt("pending", "Pending")}${opt("draft", "Draft")}${opt("rejected", "Ditolak")}
             </select>
@@ -51400,13 +51412,13 @@ async function renderStoragePage() {
       // pending/published/takedown/draft (sebelumnya cuma filename mentah).
       const statusInfo = (st) => {
         const map = {
-          pending:   { lbl: "⏳ Menunggu approval admin", cls: "warn" },
-          published: { lbl: "✓ Sudah dipublish",          cls: "ok" },
-          rejected:  { lbl: "✕ Ditolak admin",            cls: "bad" },
-          takedown:  { lbl: "⛔ Di-takedown admin",       cls: "bad" },
-          draft:     { lbl: "📝 Draft",                   cls: "muted" },
+          pending:   { ic: STO_IC.clock,  lbl: "Menunggu approval", cls: "warn" },
+          published: { ic: STO_IC.check,  lbl: "Sudah dipublish",   cls: "ok" },
+          rejected:  { ic: STO_IC.x,      lbl: "Ditolak admin",     cls: "bad" },
+          takedown:  { ic: STO_IC.ban,    lbl: "Di-takedown",       cls: "bad" },
+          draft:     { ic: STO_IC.pencil, lbl: "Draft",             cls: "muted" },
         };
-        return map[st] || { lbl: "✓ Live", cls: "ok" };
+        return map[st] || { ic: STO_IC.check, lbl: "Live", cls: "ok" };
       };
       fileList.innerHTML = toolbar + sorted.map(v => {
         const s = statusInfo(v.adminStatus || "published");
@@ -51416,10 +51428,10 @@ async function renderStoragePage() {
           <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
           <div class="storage-file-info">
             <strong>${escapeHtml(title)}</strong>
-            <small><span class="sf-status sf-${s.cls}">${s.lbl}</span> · ${fmtBytes(v.fileSize || 0)} · ${v.viewsNum || 0} tontonan</small>
+            <small><span class="sf-status sf-${s.cls}">${s.ic}${s.lbl}</span> · ${fmtBytes(v.fileSize || 0)} · ${v.viewsNum || 0} tontonan</small>
           </div>
           <span class="storage-file-size">${fmtBytes(v.fileSize || 0)}</span>
-          <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">🗑️ Hapus</button>
+          <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">${STO_IC.trash}<span>Hapus</span></button>
         </div>`;
       }).join("");
       if (isFiltering && !sorted.length) {
@@ -51530,8 +51542,8 @@ async function renderStoragePage() {
               <strong>${escapeHtml(title)}</strong>
               <small>${fmtBytes(v.fileSize || 0)} · di Sampah</small>
             </div>
-            <button class="btn ghost sm storage-file-restore" data-trash-restore="${v.id}" title="Pulihkan video ini">↻ Pulihkan</button>
-            <button class="storage-file-del" data-trash-perma="${v.id}" title="Hapus permanen">🗑️ Hapus</button>
+            <button class="btn ghost sm storage-file-restore" data-trash-restore="${v.id}" title="Pulihkan video ini">${STO_IC.restore}<span>Pulihkan</span></button>
+            <button class="storage-file-del" data-trash-perma="${v.id}" title="Hapus permanen">${STO_IC.trash}<span>Hapus</span></button>
           </div>`;
         }).join("");
         tList.querySelectorAll("[data-trash-restore]").forEach(b => b.addEventListener("click", () => {
