@@ -51312,7 +51312,7 @@ async function renderStoragePage() {
     }
   }
   if (totalStrip) {
-    totalStrip.innerHTML = `Total tersimpan sepanjang waktu: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video — disimpan selamanya, tidak dihitung ke kuota bulan depan.`;
+    totalStrip.innerHTML = `Total tersimpan: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video <span class="storage-total-note">(disimpan selamanya, di luar kuota bulanan)</span>`;
   }
 
   // Breakdown by category

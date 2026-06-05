@@ -41335,15 +41335,17 @@ section[data-view="upload"] > .upload-tier-banner {
 }
 
 .storage-overview-card {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+  display: block;
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
 }
+/* baris atas: ring + (judul + meter) */
+.storage-ov-top { display: flex; align-items: center; gap: 24px; }
+/* status & total = footer ringan di bawah, full-width */
+#storagePageStatus.storage-ov-status { margin: 18px 0 0; color: var(--text-2); font-size: .88rem; }
 .storage-overview-ring {
   position: relative;
   width: 120px;
@@ -41404,11 +41406,11 @@ section[data-view="upload"] > .upload-tier-banner {
 .storage-overview-bar i.is-full { background: linear-gradient(90deg, #cf5b44, #93302f) !important; }
 /* strip total tersimpan (info) */
 .storage-total-strip {
-  margin-top: 16px; padding: 10px 13px; border-radius: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--muted); font-size: 12px; line-height: 1.55;
+  margin-top: 6px; padding: 0;
+  color: var(--muted); font-size: 12.5px; line-height: 1.5;
 }
 .storage-total-strip strong { color: var(--text); font-weight: 700; }
+.storage-total-note { opacity: .75; }
 /* Sampah section (halaman Penyimpanan) */
 .storage-trash-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 2px; }
 .storage-trash-head h3 { margin: 0; }
