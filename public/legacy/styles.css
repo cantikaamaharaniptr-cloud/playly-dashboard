@@ -12650,6 +12650,17 @@ body.compact-mode .admin-section-divider { margin: 18px 0 10px; }
   box-shadow: 0 4px 12px rgba(239, 68, 68, .3);
 }
 .btn.danger:hover { background: #dc2626; transform: translateY(-1px); }
+/* Admin (navy): tombol danger pakai merah-dalam, bukan #ef4444 terang yg clash
+   dgn tema navy. Selaras dgn override admin-light (#DC2626→#B91C1C). Light-admin
+   punya rule sendiri yg lebih spesifik + !important, jadi tetap menang. */
+body[data-role="admin"] .btn.danger {
+  background: linear-gradient(135deg, #C0392B 0%, #8E2532 100%);
+  box-shadow: 0 4px 12px rgba(142, 37, 50, .32);
+}
+body[data-role="admin"] .btn.danger:hover {
+  background: linear-gradient(135deg, #D24536 0%, #A32E3E 100%);
+  box-shadow: 0 6px 18px rgba(163, 46, 62, .42);
+}
 .btn.danger:disabled, .btn.warn:disabled {
   opacity: .4;
   cursor: not-allowed;
