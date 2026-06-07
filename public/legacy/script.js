@@ -5738,7 +5738,7 @@ const I18N = {
     // ===== PLAN PICKER / PAYMENT =====
     "pp.eyebrow":                 "CHOOSE YOUR PLAN",
     "pp.title":                   "Unlock Playly Premium",
-    "pp.subtitle":                "Start free for 7 days, upgrade anytime. Cancel whenever.",
+    "pp.subtitle":                "Pick the plan that fits — upgrade anytime, cancel whenever.",
     "pp.foot":                    "All paid plans include 10 GB/day upload quota, 4K quality, ad-free, priority support.",
     "pay.upgrade.title":          "Upgrade to Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Monthly",
@@ -7351,7 +7351,7 @@ const I18N = {
     // ===== PLAN PICKER / PAYMENT =====
     "pp.eyebrow":                 "PILIH PAKET KAMU",
     "pp.title":                   "Buka Playly Premium",
-    "pp.subtitle":                "Mulai gratis 7 hari, upgrade kapan saja. Batal kapan pun.",
+    "pp.subtitle":                "Pilih paket yang cocok — upgrade kapan saja, batal kapan pun.",
     "pp.foot":                    "Semua paket berbayar dapat kuota harian 10 GB upload, kualitas 4K, bebas iklan, dukungan prioritas.",
     "pay.upgrade.title":          "Upgrade ke Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Bulanan",
