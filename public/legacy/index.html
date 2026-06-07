@@ -2302,6 +2302,7 @@
           <button type="button" class="nav-toggle" aria-label="Expand" data-nav-toggle><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5l3 3 3-3"/></svg></button>
         </a>
         <ul class="nav-sub">
+          <li><a href="#" class="nav-subitem" data-view="admin-analytics" data-sub-action="focus:monitoring">Status Sistem</a></li>
           <li><a href="#" class="nav-subitem" data-view="admin-analytics" data-sub-action="focus:grafik">Grafik Trafik</a></li>
           <li><a href="#" class="nav-subitem" data-view="admin-analytics" data-sub-action="focus:ach-video">Pencapaian Video</a></li>
           <li><a href="#" class="nav-subitem" data-view="admin-analytics" data-sub-action="focus:ach-user">Pencapaian User</a></li>
@@ -2527,7 +2528,7 @@
         </div>
         <button class="icon-btn" id="openNotif" title="Notifications">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 21a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <i class="dot-indicator pulse"></i>
+          <i class="notif-count-badge" id="notifBellBadge" hidden></i>
         </button>
         <button class="user-chip" id="openProfile">
           <div class="avatar small"><span>CM</span></div>
@@ -2844,6 +2845,12 @@
             <button class="gv-tab" data-gv-filter="takedown">Take down</button>
           </div>
           <div class="gv-filters">
+            <div class="rev-datefilter" id="gvDateFilter" title="Filter berdasarkan tanggal upload">
+              <input type="date" class="rdf-date-input rev-date-input" id="gvDateFrom" placeholder="Dari" aria-label="Dari tanggal" readonly/>
+              <span class="rev-date-sep">→</span>
+              <input type="date" class="rdf-date-input rev-date-input" id="gvDateTo" placeholder="Sampai" aria-label="Sampai tanggal" readonly/>
+              <button class="rev-date-reset" id="gvDateReset" title="Hapus filter tanggal" hidden>✕</button>
+            </div>
             <select id="gvSortBy" class="gv-select">
               <option value="newest">Terbaru</option>
               <option value="oldest">Terlama</option>
@@ -2852,6 +2859,12 @@
               <option value="title">Judul A-Z</option>
             </select>
           </div>
+        </div>
+
+        <div class="gv-filter-banner" id="gvFilterBanner" hidden>
+          <span class="gv-fb-icon">🔍</span>
+          <span class="gv-fb-text" id="gvFilterBannerText"></span>
+          <button type="button" class="gv-fb-clear" data-gv-clear-filters>Hapus filter tanggal</button>
         </div>
 
         <div class="gv-bulkbar" id="gvBulkBar" hidden>
@@ -3572,6 +3585,25 @@
               <b id="anPulseMod">0</b>
               <span class="apc-sub">video pending review</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Monitoring: Status Sistem — sinyal kesehatan platform yang NYATA
+             (koneksi, kapasitas storage, antrian moderasi, beban konten).
+             Auto-refresh ikut renderAdminAnalytics. -->
+        <div style="margin-top:18px" data-focus-target="monitoring">
+          <div class="card an-card an-mon-card">
+            <div class="card-head">
+              <div>
+                <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Status Sistem &amp; Monitoring</h3>
+                <small class="muted">Kesehatan platform real-time — koneksi, kapasitas, dan antrian operasional.</small>
+              </div>
+              <div class="an-mon-overall">
+                <span class="an-mon-badge" id="anMonOverall">—</span>
+                <span class="an-mon-updated" id="anMonUpdated"></span>
+              </div>
+            </div>
+            <div class="an-mon-grid" id="anMonGrid"></div>
           </div>
         </div>
 
@@ -6595,6 +6627,17 @@
               <label class="tog">
                 <span>Comments enabled<small class="muted-mini" style="display:block;margin-top:2px">Allow users to comment on videos</small></span>
                 <input type="checkbox" data-platform="commentsEnabled" checked/><i></i>
+              </label>
+            </div>
+            <!-- Kapasitas storage platform — dipakai panel "Status Sistem & Monitoring"
+                 di Analitik. Ganti angka 5 GB hardcoded jadi bisa diatur admin. -->
+            <div class="settings-storage-cap" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <label style="display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:default">
+                <span>Kapasitas Storage Platform<small class="muted-mini" style="display:block;margin-top:2px">Batas total penyimpanan — dipakai panel Monitoring</small></span>
+                <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
+                  <input type="number" id="adminStorageCapGb" min="1" step="1" value="5" style="width:84px;text-align:right"/>
+                  <b class="muted-mini">GB</b>
+                </span>
               </label>
             </div>
           </div>

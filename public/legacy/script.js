@@ -15994,6 +15994,22 @@ function populatePlatformSettings() {
       });
     }
   });
+  // Field kapasitas storage platform (#adminStorageCapGb) — bukan data-platform,
+  // disimpan terpisah di STORAGE_CAP_KEY, dipakai panel Monitoring.
+  const capInput = document.getElementById("adminStorageCapGb");
+  if (capInput) {
+    capInput.value = String(Number(localStorage.getItem(STORAGE_CAP_KEY)) || 5);
+    if (!capInput.dataset.bound) {
+      capInput.dataset.bound = "1";
+      capInput.addEventListener("change", () => {
+        const gb = Math.max(1, Math.floor(Number(capInput.value) || 5));
+        capInput.value = String(gb);
+        localStorage.setItem(STORAGE_CAP_KEY, String(gb));
+        if (typeof toast === "function") toast(`✓ Kapasitas storage platform diset ${gb} GB`, "success");
+        try { renderAnMonitoring(); } catch {}
+      });
+    }
+  }
   // Card "Buat Admin" disembunyikan via CSS [data-super-admin-only].
   // Cuma render daftar admin tambahan kalau super admin yang buka.
   if (isSuperAdmin(user)) renderExtraAdminList();
@@ -17791,6 +17807,20 @@ function setPremiumPaymentStatus(code, status, processedBy) {
         }
       }
     } catch (err) { console.warn("[setPremiumPaymentStatus] notify user failed:", err); }
+  }
+  // Audit log — catat keputusan moderasi pembayaran (sebelumnya tidak tercatat)
+  if (status === "approved" || status === "rejected") {
+    try {
+      if (typeof pushAdminEvent === "function") {
+        const who = payment.username ? "@" + payment.username : (payment.email || code);
+        const label = status === "approved" ? "disetujui" : "ditolak";
+        pushAdminEvent(
+          status === "approved" ? "⭐" : "🚫",
+          `Pembayaran Premium <b>${escapeHtml(code)}</b> ${label} untuk <b>${escapeHtml(who)}</b> (${escapeHtml(payment.plan || "—")})`,
+          { action: "premium-" + status, target: code, reason: payment.plan || null }
+        );
+      }
+    } catch {}
   }
   return true;
 }
@@ -25671,6 +25701,9 @@ function initAdManagerEvents() {
         } catch {}
         saveAdConfig(defaultAdConfig());
         loadAdManagerForm();
+        if (typeof pushAdminEvent === "function")
+          pushAdminEvent("🧹", "Semua iklan di-reset (running text, banner, pre-roll dihapus)", { action: "ad-reset", target: "all-ads" });
+        renderAdminLiveFeed?.();
         toast("Semua iklan di-reset", "");
       }
     });
@@ -29607,6 +29640,7 @@ function renderAdminAnalytics() {
   }
   // v620 (2026-05-28): pulse banner + business KPI + growth + hashtag + geo
   try { renderAnPulseBanner(); } catch (e) { console.warn("[an pulse]", e); }
+  try { renderAnMonitoring(); } catch (e) { console.warn("[an monitoring]", e); }
   try { renderAnBusinessKPI(); } catch (e) { console.warn("[an biz]", e); }
   try { renderAnGrowthChart(); } catch (e) { console.warn("[an growth]", e); }
   try { renderAnHashtagCloud(); } catch (e) { console.warn("[an hashtag]", e); }
@@ -29694,6 +29728,113 @@ function renderAnPulseBanner() {
   setT("anPulseSignup", String(signupToday));
   setT("anPulseSignupSub", signupDeltaText);
   setT("anPulseMod", String(pendingMod));
+}
+
+// Monitoring — panel "Status Sistem". Menampilkan sinyal kesehatan platform
+// yang NYATA (bukan dummy): koneksi browser, kapasitas storage, antrian
+// moderasi, dan beban konten. Self-contained supaya gampang dihapus kalau
+// tidak dipakai. Ikut auto-refresh renderAdminAnalytics.
+// Kapasitas storage platform — bisa diatur admin di Pengaturan (field
+// #adminStorageCapGb). Default 5 GB kalau belum diset. Dipakai panel Monitoring.
+const STORAGE_CAP_KEY = "playly-storage-cap-gb";
+function getPlatformStorageCapBytes() {
+  const gb = Number(localStorage.getItem(STORAGE_CAP_KEY)) || 5;
+  return Math.max(1, gb) * 1e9;
+}
+function renderAnMonitoring() {
+  const grid = document.getElementById("anMonGrid");
+  if (!grid) return;
+  const STORAGE_CAP = getPlatformStorageCapBytes();
+
+  // --- Hitung sinyal nyata dari localStorage ---
+  let totalStorage = 0, totalVideos = 0, pendingMod = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("playly-state-")) continue;
+    try {
+      const s = JSON.parse(localStorage.getItem(key));
+      if (!Array.isArray(s?.myVideos)) continue;
+      s.myVideos.forEach(v => {
+        totalVideos++;
+        const sz = Number(v.sizeBytes || v.size || 0);
+        if (sz > 0) {
+          totalStorage += sz;
+        } else if (v.duration) {
+          const p = String(v.duration).split(":").map(Number);
+          const sec = p.length === 2 ? p[0] * 60 + p[1]
+            : p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : 0;
+          totalStorage += sec * 125 * 1024; // ~125 KB/sec (samakan dgn pulse banner)
+        }
+        if (v.adminStatus === "pending") pendingMod++;
+      });
+    } catch {}
+  }
+  const fmtB = b => b >= 1e9 ? (b / 1e9).toFixed(2) + " GB"
+    : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB"
+    : b >= 1e3 ? (b / 1e3).toFixed(0) + " KB" : b + " B";
+
+  // --- Tentukan status tiap item: 'ok' | 'warn' | 'crit' ---
+  const online = navigator.onLine;
+  const storagePct = Math.min(100, Math.round((totalStorage / STORAGE_CAP) * 100));
+  const storageStatus = storagePct >= 90 ? "crit" : storagePct >= 70 ? "warn" : "ok";
+  const modStatus = pendingMod >= 10 ? "crit" : pendingMod >= 1 ? "warn" : "ok";
+  const connStatus = online ? "ok" : "crit";
+
+  const items = [
+    {
+      status: connStatus,
+      label: "Koneksi Server",
+      value: online ? "Online" : "Offline",
+      detail: online ? "Terhubung ke jaringan" : "Tidak ada koneksi — sinkronisasi tertunda",
+    },
+    {
+      status: storageStatus,
+      label: "Kapasitas Storage",
+      value: storagePct + "% terpakai",
+      detail: fmtB(totalStorage) + " / " + fmtB(STORAGE_CAP),
+      bar: storagePct,
+    },
+    {
+      status: modStatus,
+      label: "Antrian Moderasi",
+      value: pendingMod === 0 ? "Bersih" : pendingMod + " menunggu",
+      detail: pendingMod >= 10 ? "Backlog menumpuk — segera tinjau"
+        : pendingMod >= 1 ? "Ada video menunggu review" : "Tidak ada antrian",
+    },
+    {
+      status: "ok",
+      label: "Beban Konten",
+      value: totalVideos + " video",
+      detail: "Total aset di platform",
+    },
+  ];
+
+  // --- Overall = status terburuk ---
+  const rank = { ok: 0, warn: 1, crit: 2 };
+  const worst = items.reduce((w, it) => rank[it.status] > rank[w] ? it.status : w, "ok");
+  const overallEl = document.getElementById("anMonOverall");
+  if (overallEl) {
+    const map = { ok: ["Sehat", "an-mon-ok"], warn: ["Perlu Perhatian", "an-mon-warn"], crit: ["Kritis", "an-mon-crit"] };
+    overallEl.textContent = map[worst][0];
+    overallEl.className = "an-mon-badge " + map[worst][1];
+  }
+  const updEl = document.getElementById("anMonUpdated");
+  if (updEl) {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    updEl.textContent = "diperbarui " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+
+  grid.innerHTML = items.map(it => `
+    <div class="an-mon-item an-mon-${it.status}">
+      <span class="an-mon-dot" aria-hidden="true"></span>
+      <div class="an-mon-meta">
+        <small>${it.label}</small>
+        <b>${it.value}</b>
+        ${it.bar != null ? `<div class="an-mon-bar"><span style="width:${it.bar}%"></span></div>` : ""}
+        <span class="an-mon-detail">${it.detail}</span>
+      </div>
+    </div>`).join("");
 }
 
 // v620 (2026-05-28): ROW 4 (left) — Business KPI: subscriber + MRR
@@ -29898,9 +30039,17 @@ const adminVideoState = {
   search: _persistedAvs?.search || "",
   category: _persistedAvs?.category || "",
   sort: _persistedAvs?.sort || "newest",
+  dateFrom: null,     // epoch ms — filter tanggal upload (Dari)
+  dateTo: null,       // epoch ms — filter tanggal upload (Sampai)
   selectMode: false,  // checkbox column hidden until admin opts in
   selected: new Set() // ids of selected videos
 };
+
+// Timestamp upload yang dipakai kolom "Upload" — sumber kebenaran tunggal
+// supaya filter tanggal & tampilan kolom konsisten.
+function _adminVideoUploadTs(v) {
+  return Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0)) || 0;
+}
 
 // Read all videos across every user's state, tagged with their owner key.
 function getAllAdminVideos() {
@@ -30058,6 +30207,35 @@ function renderAdminVideos() {
       (v.tags || "").toLowerCase().includes(q)
     );
   }
+  // Filter tanggal upload (Dari → Sampai) — pakai ts yang sama dgn kolom "Upload"
+  if (adminVideoState.dateFrom !== null) {
+    list = list.filter(v => _adminVideoUploadTs(v) >= adminVideoState.dateFrom);
+  }
+  if (adminVideoState.dateTo !== null) {
+    list = list.filter(v => _adminVideoUploadTs(v) <= adminVideoState.dateTo);
+  }
+
+  // Banner status filter tanggal
+  (() => {
+    const banner = document.getElementById("gvFilterBanner");
+    const bannerText = document.getElementById("gvFilterBannerText");
+    const dateReset = document.getElementById("gvDateReset");
+    const fFrom = adminVideoState.dateFrom, fTo = adminVideoState.dateTo;
+    if (dateReset) dateReset.hidden = !(fFrom || fTo);
+    if (banner && bannerText) {
+      if (fFrom || fTo) {
+        const fmtDt = ts => ts ? new Date(ts).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "";
+        let txt;
+        if (fFrom && fTo) txt = `tanggal: ${fmtDt(fFrom)} → ${fmtDt(fTo)}`;
+        else if (fFrom) txt = `tanggal sejak: ${fmtDt(fFrom)}`;
+        else txt = `tanggal sampai: ${fmtDt(fTo)}`;
+        bannerText.textContent = `${list.length} hasil — Filter: ${txt}`;
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
+    }
+  })();
 
   // Sort
   const sorters = {
@@ -30432,6 +30610,28 @@ function setupAdminVideoEvents() {
     adminVideoState.sort = e.target.value;
     _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
+  });
+  // Filter tanggal upload (Dari → Sampai)
+  $("#gvDateFrom")?.addEventListener("change", e => {
+    adminVideoState.dateFrom = typeof _parseDateInput === "function"
+      ? _parseDateInput(e.target.value, false) : null;
+    renderAdminVideos();
+  });
+  $("#gvDateTo")?.addEventListener("change", e => {
+    adminVideoState.dateTo = typeof _parseDateInput === "function"
+      ? _parseDateInput(e.target.value, true) : null;
+    renderAdminVideos();
+  });
+  // Reset filter tanggal (tombol ✕ di dalam datefilter, atau "Hapus" di banner)
+  document.addEventListener("click", e => {
+    if (e.target.closest("#gvDateReset") || e.target.closest("[data-gv-clear-filters]")) {
+      e.preventDefault();
+      adminVideoState.dateFrom = null;
+      adminVideoState.dateTo = null;
+      const f = document.getElementById("gvDateFrom"); if (f) f.value = "";
+      const t = document.getElementById("gvDateTo"); if (t) t.value = "";
+      renderAdminVideos();
+    }
   });
   // Toggle select mode — checkbox column tampil hanya saat dibutuhkan
   $("#adminVideoSelectToggle")?.addEventListener("click", () => {
@@ -48986,7 +49186,7 @@ function _gsRenderHistoryDropdown() {
   drop.classList.add("show");
 }
 
-function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatches) {
+function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatches, adminMatches) {
   const drop = document.getElementById("searchSuggestions");
   if (!drop) return;
   if (!query) {
@@ -48995,13 +49195,59 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   }
   hashtagMatches = hashtagMatches || [];
   pageMatches = pageMatches || [];
-  if (!videoMatches.length && !creatorMatches.length && !hashtagMatches.length && !pageMatches.length) {
+  const am = adminMatches || { users: [], tickets: [], bugs: [], pages: [] };
+  const adminCount = am.users.length + am.tickets.length + am.bugs.length + am.pages.length;
+  if (!videoMatches.length && !creatorMatches.length && !hashtagMatches.length && !pageMatches.length && !adminCount) {
     drop.innerHTML = `<div class="ss-empty">Tidak ada hasil untuk "<b>${escapeHtml(query)}</b>"</div>`;
     drop.classList.add("show");
     return;
   }
-  const totalCount = videoMatches.length + creatorMatches.length + hashtagMatches.length + pageMatches.length;
+  const totalCount = videoMatches.length + creatorMatches.length + hashtagMatches.length + pageMatches.length + adminCount;
   let html = "";
+  // Admin sections (di paling atas — paling relevan buat admin)
+  if (am.pages.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">HALAMAN ADMIN</div>
+      ${am.pages.map(p => `
+        <button type="button" class="ss-item" data-ss-admin-nav="${escapeHtml(p.view)}">
+          <div class="ss-page-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+          <div class="ss-info"><strong>${_gsHighlight(p.label, query)}</strong><small>Buka halaman admin</small></div>
+        </button>`).join("")}
+    </div>`;
+  }
+  if (am.users.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">USER</div>
+      ${am.users.map(u => {
+        const init = String(u.name || u.username || "?")[0].toUpperCase();
+        const badge = u.role === "admin" ? "Admin" : (u.tier === "premium" ? "Premium" : "Free");
+        return `<button type="button" class="ss-item" data-ss-admin-nav="admin-users" data-ss-admin-q="${escapeHtml(u.username)}">
+          <div class="ss-avatar">${escapeHtml(init)}</div>
+          <div class="ss-info"><strong>${_gsHighlight(u.name || u.username, query)}</strong><small>@${escapeHtml(u.username)} · ${escapeHtml(badge)}</small></div>
+        </button>`;
+      }).join("")}
+    </div>`;
+  }
+  if (am.tickets.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">TIKET</div>
+      ${am.tickets.map(t => `
+        <button type="button" class="ss-item" data-ss-admin-nav="admin-inbox" data-ss-admin-q="${escapeHtml(t.id)}">
+          <div class="ss-avatar">🎫</div>
+          <div class="ss-info"><strong>${_gsHighlight(t.subject, query)}</strong><small>${escapeHtml(t.id)}${t.status ? " · " + escapeHtml(t.status) : ""}</small></div>
+        </button>`).join("")}
+    </div>`;
+  }
+  if (am.bugs.length) {
+    html += `<div class="ss-section">
+      <div class="ss-section-title">BUG REPORT</div>
+      ${am.bugs.map(b => `
+        <button type="button" class="ss-item" data-ss-admin-nav="admin-inbox" data-ss-admin-q="${escapeHtml(b.id)}">
+          <div class="ss-avatar">🐞</div>
+          <div class="ss-info"><strong>${_gsHighlight(b.title, query)}</strong><small>${escapeHtml(b.id)}${b.status ? " · " + escapeHtml(b.status) : ""}</small></div>
+        </button>`).join("")}
+    </div>`;
+  }
   // v619 (2026-05-28): + HALAMAN section (quick-nav) di top
   if (pageMatches.length) {
     html += `<div class="ss-section">
@@ -49073,17 +49319,78 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   drop.classList.add("show");
 }
 
+// Admin-only topbar search. Placeholder admin menjanjikan "user, tiket, bug
+// report, laporan" tapi sebelumnya search cuma cari video/kreator (sisi user)
+// → di admin selalu "tidak ada hasil". Fungsi ini menambah pencarian akun
+// user, tiket, bug report, dan halaman admin.
+function _gsSearchAdmin(query) {
+  const q = (query || "").toLowerCase().trim();
+  const out = { users: [], tickets: [], bugs: [], pages: [] };
+  if (!q) return out;
+
+  // 1. Akun user
+  try {
+    for (let i = 0; i < localStorage.length && out.users.length < 6; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith("playly-account-")) continue;
+      let a; try { a = JSON.parse(localStorage.getItem(k)); } catch { continue; }
+      if (!a) continue;
+      const hay = `${a.username || ""} ${a.name || ""} ${a.email || ""}`.toLowerCase();
+      if (hay.includes(q)) out.users.push({ username: a.username || "", name: a.name || a.username || "", email: a.email || "", tier: a.tier || "free", role: a.role || "user" });
+    }
+  } catch {}
+
+  // 2. Tiket support
+  try {
+    (getAdminData("tickets") || []).forEach(t => {
+      if (out.tickets.length >= 4) return;
+      const hay = `${t.subject || t.title || ""} ${t.user || ""} ${t.id || ""}`.toLowerCase();
+      if (hay.includes(q)) out.tickets.push({ id: t.id || "", subject: t.subject || t.title || "(tanpa subjek)", user: t.user || "", status: t.status || "" });
+    });
+  } catch {}
+
+  // 3. Bug report
+  try {
+    (getAdminData("bugs") || []).forEach(b => {
+      if (out.bugs.length >= 4) return;
+      const hay = `${b.title || b.subject || ""} ${b.id || ""}`.toLowerCase();
+      if (hay.includes(q)) out.bugs.push({ id: b.id || "", title: b.title || b.subject || "(tanpa judul)", status: b.status || "" });
+    });
+  } catch {}
+
+  // 4. Halaman admin (quick-nav)
+  const ADMIN_PAGES = [
+    { view: "admin-users",         label: "Manajemen Akun",        keywords: ["user", "akun", "manajemen", "account", "member"] },
+    { view: "admin-videos",        label: "Kontrol Konten",        keywords: ["video", "konten", "content", "moderasi", "takedown"] },
+    { view: "admin-analytics",     label: "Analitik & Monitoring", keywords: ["analitik", "analytics", "monitoring", "statistik", "grafik", "trafik"] },
+    { view: "admin-ads",           label: "Kelola Iklan",          keywords: ["iklan", "ads", "banner", "preroll"] },
+    { view: "admin-premium-queue", label: "Verifikasi Premium",    keywords: ["premium", "verifikasi", "pembayaran", "payment", "approve"] },
+    { view: "admin-revenue",       label: "Pendapatan",            keywords: ["pendapatan", "revenue", "uang", "mrr", "income"] },
+    { view: "admin-inbox",         label: "Inbox",                 keywords: ["inbox", "tiket", "ticket", "bug", "laporan", "report", "pesan"] },
+    { view: "admin-audit",         label: "Log Audit",             keywords: ["audit", "log", "jejak"] },
+    { view: "settings",            label: "Pengaturan",            keywords: ["pengaturan", "settings", "config", "platform", "admin baru"] },
+  ];
+  ADMIN_PAGES.forEach(p => {
+    if (out.pages.length >= 5) return;
+    if (p.label.toLowerCase().includes(q) || p.keywords.some(k => k.includes(q))) out.pages.push(p);
+  });
+
+  return out;
+}
+
 function _gsRun(query) {
   query = (query || "").trim();
   if (!query || query.length < 1) {
     _gsRender("", [], [], [], []);
     return;
   }
+  const isAdmin = (document.body.dataset.role === "admin") || (typeof user === "object" && user && user.role === "admin");
   const videos = _gsSearchVideos(query);
   const creators = _gsSearchCreators(query);
   const hashtags = _gsSearchHashtags(query);
   const pages = _gsSearchPages(query);
-  _gsRender(query, videos, creators, hashtags, pages);
+  const adminMatches = isAdmin ? _gsSearchAdmin(query) : null;
+  _gsRender(query, videos, creators, hashtags, pages, adminMatches);
 }
 
 // ============ SEARCH RESULTS FULL PAGE v573 ============
@@ -49353,6 +49660,26 @@ document.addEventListener("click", e => {
     const search = document.getElementById("globalSearch");
     if (search) search.value = "";
     if (typeof switchView === "function") switchView(view);
+    return;
+  }
+  // Admin search result → switchView ke halaman admin + isi filter (best-effort)
+  const adminNav = e.target.closest("[data-ss-admin-nav]");
+  if (adminNav) {
+    e.preventDefault();
+    const view = adminNav.dataset.ssAdminNav;
+    const q = adminNav.dataset.ssAdminQ || "";
+    document.getElementById("searchSuggestions")?.classList.remove("show");
+    const search = document.getElementById("globalSearch");
+    if (search) search.value = "";
+    if (typeof switchView === "function") switchView(view);
+    if (q) {
+      setTimeout(() => {
+        const box = view === "admin-users" ? document.getElementById("adminUserSearch")
+          : view === "admin-inbox" ? document.querySelector("#adminInboxSearch, #inboxSearch, [data-inbox-search]")
+          : null;
+        if (box) { box.value = q; box.dispatchEvent(new Event("input", { bubbles: true })); }
+      }, 150);
+    }
     return;
   }
 });
@@ -50391,7 +50718,23 @@ const NOTIF_CATEGORY_MAP = {
 };
 const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
 
+// Badge angka di lonceng topbar (#openNotif). Tampilkan jumlah notif belum
+// dibaca; cap "9+" kalau ≥9; sembunyikan kalau 0. Dipanggil tiap notif berubah.
+function updateNotifBellBadge() {
+  const badge = document.getElementById("notifBellBadge");
+  if (!badge) return;
+  const list = Array.isArray(state?.notifications) ? state.notifications : [];
+  const unread = list.filter(n => n && n.unread).length;
+  if (unread > 0) {
+    badge.textContent = unread >= 9 ? "9+" : String(unread);
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
+  }
+}
+
 function renderNotifications() {
+  updateNotifBellBadge();
   const list = $("#notifList");
   if (!list) return;
   if (!state.notifications.length) {
@@ -50497,7 +50840,7 @@ function renderNotifications() {
       const nid = el.dataset.notifId;
       const n = state.notifications.find(x => String(x.id) === String(nid));
       if (!n) return;
-      if (n.unread) { n.unread = false; saveState(); el.classList.remove("unread"); }
+      if (n.unread) { n.unread = false; saveState(); el.classList.remove("unread"); updateNotifBellBadge(); }
       handleNotificationClick(n);
     });
   });
@@ -50576,7 +50919,7 @@ function renderNotifPage() {
       const id = row.dataset.notifId;
       const n = all.find(x => String(x.id) === String(id));
       if (!n) return;
-      if (n.unread) { n.unread = false; try { saveState(); } catch {} row.classList.remove("unread"); }
+      if (n.unread) { n.unread = false; try { saveState(); } catch {} row.classList.remove("unread"); updateNotifBellBadge(); }
       try { handleNotificationClick(n); } catch {}
     });
   });
