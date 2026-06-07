@@ -50968,6 +50968,20 @@ document.addEventListener("click", (e) => {
     toggleNotifDropdown();
     return;
   }
+  // Tombol "Tandai semua dibaca" di dropdown → mark semua notif read + refresh
+  if (t.closest("#notifDropdownMarkAll")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications.forEach(n => { if (n) n.unread = false; });
+      try { saveState(); } catch {}
+    }
+    try { updateNotifBellBadge?.(); } catch {}
+    try { renderNotifDropdownContent(); } catch {}
+    try { renderNotifications?.(); } catch {}
+    try { renderNotifPage?.(); } catch {}
+    if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
+    return;
+  }
   // Tombol "Lihat detail" di dropdown → buka side panel + close dropdown
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
