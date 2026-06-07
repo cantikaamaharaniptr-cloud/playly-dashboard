@@ -27879,6 +27879,49 @@ body[data-role="admin"] .ad-count {
 }
 .ad-banner-close:hover { background: rgba(0,0,0,.9); }
 
+/* === Popup Iklan (interstitial) — overlay tengah layar + backdrop === */
+.ad-popup-wrap {
+  position: absolute; inset: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+}
+.ad-popup-wrap.ad-popup-dim { background: rgba(0,0,0,.62); backdrop-filter: blur(1px); }
+.ad-popup-card {
+  position: relative;
+  max-width: 90%; max-height: 86%;
+  display: inline-block;
+}
+.ad-popup-card.ad-popup-size-small  { width: 280px; }
+.ad-popup-card.ad-popup-size-medium { width: 420px; }
+.ad-popup-card.ad-popup-size-large  { width: 560px; }
+.ad-popup-img {
+  display: block; width: 100%; height: auto; max-height: 86vh;
+  object-fit: contain;
+  box-shadow: 0 18px 50px rgba(0,0,0,.5);
+}
+.ad-popup-link { display: block; cursor: pointer; }
+.ad-popup-close {
+  position: absolute; top: -12px; right: -12px;
+  width: 28px; height: 28px;
+  border-radius: 50%; border: 2px solid #fff;
+  background: rgba(0,0,0,.85); color: #fff;
+  cursor: pointer; font-size: 14px;
+  display: grid; place-items: center;
+  z-index: 1;
+}
+.ad-popup-close:hover { background: #000; transform: scale(1.08); }
+@media (max-width: 560px) {
+  .ad-popup-card.ad-popup-size-medium,
+  .ad-popup-card.ad-popup-size-large { width: 86%; }
+}
+/* Animasi masuk */
+.ad-popup-anim-zoom    { animation: adPopupZoom .28s ease; }
+.ad-popup-anim-fade    { animation: adPopupFade .3s ease; }
+.ad-popup-anim-slide-up{ animation: adPopupSlideUp .32s ease; }
+@keyframes adPopupZoom    { from { opacity:0; transform: scale(.82); } to { opacity:1; transform: scale(1); } }
+@keyframes adPopupFade    { from { opacity:0; } to { opacity:1; } }
+@keyframes adPopupSlideUp { from { opacity:0; transform: translateY(28px); } to { opacity:1; transform: translateY(0); } }
+
 /* (Global banner CSS dihapus — banner sekarang hanya muncul di dalam player) */
 
 /* Pre-roll overlay */

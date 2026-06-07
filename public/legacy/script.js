@@ -24353,6 +24353,17 @@ function defaultSbItem() {
     imageUrl: ""
   };
 }
+// Popup Iklan (interstitial) — gambar popup di tengah layar + backdrop gelap,
+// bisa ditutup. Muncul saat nonton (user non-premium). "po".
+function defaultPoItem() {
+  return {
+    id: adUid(), name: "", enabled: true,
+    imageUrl: "", linkUrl: "",
+    showAfterSec: 3, closable: true,
+    size: "medium", radius: 14, animation: "zoom",
+    dimBackdrop: true
+  };
+}
 function defaultSideBannerConfig() {
   // Format baru: array items (bisa banyak banner samping). Multi-item.
   return { rotation: "random", items: [] };
@@ -24362,7 +24373,8 @@ function defaultAdConfig() {
     runningText: { rotation: "random", items: [] },
     banner:      { rotation: "random", items: [] },
     preroll:     { rotation: "random", items: [] },
-    sideBanner:  defaultSideBannerConfig()
+    sideBanner:  defaultSideBannerConfig(),
+    popup:       { rotation: "random", items: [] }
   };
 }
 
@@ -24372,6 +24384,7 @@ function migrateAdConfig(c) {
   function defaultsFor(type) {
     if (type === "rt") return defaultRtItem();
     if (type === "bn") return defaultBnItem();
+    if (type === "po") return defaultPoItem();
     return defaultPrItem();
   }
   function fillDefaults(it, type) {
@@ -24389,7 +24402,7 @@ function migrateAdConfig(c) {
     }
     if (section && typeof section === "object" && "enabled" in section) {
       const hasContent = type === "rt" ? !!section.text
-                       : type === "bn" ? !!section.imageUrl
+                       : (type === "bn" || type === "po") ? !!section.imageUrl
                        : !!(section.videoUrl || section.hasBlob);
       if (hasContent) {
         const base = defaultsFor(type);
@@ -24435,7 +24448,8 @@ function migrateAdConfig(c) {
     runningText: asList(c?.runningText, "rt"),
     banner:      asList(c?.banner,      "bn"),
     preroll:     asList(c?.preroll,     "pr"),
-    sideBanner:  asSbList(c?.sideBanner)
+    sideBanner:  asSbList(c?.sideBanner),
+    popup:       asList(c?.popup,       "po")
   };
 }
 
@@ -24535,6 +24549,7 @@ function adSection(cfg, type) {
   if (type === "bn") return cfg.banner;
   if (type === "pr") return cfg.preroll;
   if (type === "sb") return cfg.sideBanner;
+  if (type === "po") return cfg.popup;
   return null;
 }
 
@@ -24546,6 +24561,7 @@ function adItemHasContent(type, it) {
     return !!(it.videoUrl || it.hasBlob);
   }
   if (type === "sb") return !!(it.title || it.imageUrl || it.ctaUrl);
+  if (type === "po") return !!it.imageUrl;
   return false;
 }
 
@@ -24587,10 +24603,12 @@ function loadAdManagerForm() {
   if ($("#adBnRotation")) $("#adBnRotation").value = cfg.banner.rotation;
   if ($("#adPrRotation")) $("#adPrRotation").value = cfg.preroll.rotation;
   if ($("#adSbRotation")) $("#adSbRotation").value = (cfg.sideBanner?.rotation) || "random";
+  if ($("#adPoRotation")) $("#adPoRotation").value = (cfg.popup?.rotation) || "random";
   renderAdItems("rt");
   renderAdItems("bn");
   renderAdItems("pr");
   if ($("#adSbList")) renderAdItems("sb");
+  if ($("#adPoList")) renderAdItems("po");
 }
 
 /* === Side Banner form bindings (admin Ad Manager) === */
@@ -25142,6 +25160,90 @@ function adItemFormHtml(type, it) {
       </section>
     `;
   }
+  if (type === "po") {
+    const urlVal = it.imageUrl?.startsWith("data:") ? "" : (it.imageUrl || "");
+    const dzState = it.imageUrl ? "filled" : "empty";
+    const previewSrc = it.imageUrl ? escapeHtml(it.imageUrl) : "";
+    return `
+      <section class="ad-section-block">
+        <header class="ad-section-block-head">
+          <span class="ad-section-block-icon">🖼️</span>
+          <span class="ad-section-block-title">Gambar Popup</span>
+        </header>
+        <label class="dz-pro" data-dz-role="banner" data-state="${dzState}">
+          <input type="file" accept="image/*" hidden data-action="upload-image"/>
+          <div class="dz-pro-empty">
+            <div class="dz-pro-empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <p><b>Pilih gambar</b> atau seret ke sini</p>
+            <small>PNG/JPG, maks 500 MB</small>
+          </div>
+          <div class="dz-pro-filled" data-preview="image">
+            <img class="dz-pro-preview" src="${previewSrc}" alt="popup preview"/>
+            <div class="dz-pro-overlay">
+              <button type="button" class="dz-pro-action" data-action="reupload-image" title="Ganti gambar">↻</button>
+              <button type="button" class="dz-pro-action danger" data-action="clear-image" title="Hapus gambar">✕</button>
+            </div>
+          </div>
+        </label>
+        <div class="ad-form-row cols-2">
+          <label class="ad-field">
+            <span class="ad-field-label">Atau URL gambar</span>
+            <input type="url" data-field="imageUrl" value="${escapeHtml(urlVal)}" placeholder="https://example.com/popup.png"/>
+          </label>
+          <label class="ad-field">
+            <span class="ad-field-label">Link saat di-klik <em>(opsional)</em></span>
+            <input type="url" data-field="linkUrl" value="${escapeHtml(it.linkUrl || "")}" placeholder="https://example.com/promo"/>
+          </label>
+        </div>
+      </section>
+
+      <section class="ad-section-block">
+        <header class="ad-section-block-head">
+          <span class="ad-section-block-icon">🎯</span>
+          <span class="ad-section-block-title">Waktu &amp; Tampilan</span>
+        </header>
+        <div class="ad-form-row cols-4">
+          <label class="ad-field">
+            <span class="ad-field-label">Muncul setelah <em data-label="showAfterSec">${it.showAfterSec} detik</em></span>
+            <input type="range" min="0" max="30" value="${it.showAfterSec}" data-field="showAfterSec"/>
+          </label>
+          <label class="ad-field">
+            <span class="ad-field-label">Ukuran</span>
+            <select data-field="size">
+              <option value="small" ${(it.size || "medium") === "small" ? "selected" : ""}>Kecil</option>
+              <option value="medium" ${(it.size || "medium") === "medium" ? "selected" : ""}>Sedang</option>
+              <option value="large" ${(it.size || "medium") === "large" ? "selected" : ""}>Besar</option>
+            </select>
+          </label>
+          <label class="ad-field">
+            <span class="ad-field-label">Animasi</span>
+            <select data-field="animation">
+              <option value="zoom" ${(it.animation || "zoom") === "zoom" ? "selected" : ""}>Zoom In</option>
+              <option value="fade" ${it.animation === "fade" ? "selected" : ""}>Fade In</option>
+              <option value="slide-up" ${it.animation === "slide-up" ? "selected" : ""}>Slide Up</option>
+              <option value="none" ${it.animation === "none" ? "selected" : ""}>Tanpa animasi</option>
+            </select>
+          </label>
+          <label class="ad-field">
+            <span class="ad-field-label">Sudut bulat <em data-label="radius">${it.radius != null ? it.radius : 14}px</em></span>
+            <input type="range" min="0" max="32" value="${it.radius != null ? it.radius : 14}" data-field="radius"/>
+          </label>
+        </div>
+        <div class="ad-form-row cols-2">
+          <label class="ad-checkbox-label ad-field-checkbox">
+            <input type="checkbox" data-field="closable" ${it.closable !== false ? "checked" : ""}/>
+            <span>Bisa ditutup user</span>
+          </label>
+          <label class="ad-checkbox-label ad-field-checkbox">
+            <input type="checkbox" data-field="dimBackdrop" ${it.dimBackdrop !== false ? "checked" : ""}/>
+            <span>Latar gelap (backdrop)</span>
+          </label>
+        </div>
+      </section>
+    `;
+  }
   if (type === "pr") {
     const mediaType = it.mediaType === "image" ? "image" : "video";
     const radioName = `prMediaType-${it.id}`;
@@ -25369,8 +25471,11 @@ function addAdItem(type) {
   const it = type === "rt" ? defaultRtItem()
            : type === "bn" ? defaultBnItem()
            : type === "sb" ? defaultSbItem()
+           : type === "po" ? defaultPoItem()
            : defaultPrItem();
-  it.name = type === "sb" ? `Banner Samping #${sec.items.length + 1}` : `Iklan #${sec.items.length + 1}`;
+  it.name = type === "sb" ? `Banner Samping #${sec.items.length + 1}`
+          : type === "po" ? `Popup #${sec.items.length + 1}`
+          : `Iklan #${sec.items.length + 1}`;
   sec.items.push(it);
   saveAdConfig(cfg);
   renderAdItems(type);
@@ -25669,6 +25774,7 @@ function initAdManagerEvents() {
   bindAdSectionEvents("bn");
   bindAdSectionEvents("pr");
   if ($("#adSbList")) bindAdSectionEvents("sb");
+  if ($("#adPoList")) bindAdSectionEvents("po");
 
   // Header Save button → cuma feedback "tersimpan" + log (auto-save sebenarnya per perubahan)
   $("#adSaveBtn")?.addEventListener("click", () => {
@@ -25787,6 +25893,15 @@ async function applyAdOverlays(videoEl) {
     }, (bnItem.showAfterSec || 0) * 1000);
   }
 
+  // Popup Iklan (interstitial) — gambar popup di tengah layar + backdrop gelap.
+  const poItem = pickAdItemForPlay(cfg.popup, "po");
+  if (poItem) {
+    setTimeout(() => {
+      if (!screen.isConnected) return;
+      injectPopup(screen, poItem);
+    }, (poItem.showAfterSec || 0) * 1000);
+  }
+
   // Banner Samping — full player surface punya slot dedicated di #playerSidebar
   // .ps-ad-hero (di-render lewat renderUserPlayerSideBanner). Inline player
   // (lib-inline-screen) tidak punya sidebar, jadi inject sebagai card di luar
@@ -25795,6 +25910,41 @@ async function applyAdOverlays(videoEl) {
     const sbItem = pickAdItemForPlay(cfg.sideBanner, "sb");
     if (sbItem) injectSideBanner(screen, sbItem);
   }
+}
+
+// Popup Iklan (interstitial) — overlay tengah layar dgn backdrop. Muncul di
+// atas video; user non-premium. Tutup via tombol ✕ atau klik backdrop.
+function injectPopup(screen, c) {
+  if (!c.imageUrl) return;
+  const target = screen.closest(".player-page") || screen;
+  // Hindari dobel popup
+  target.querySelectorAll(":scope > .ad-popup-wrap").forEach(el => el.remove());
+
+  const wrap = document.createElement("div");
+  const animCls = `ad-popup-anim-${c.animation || "zoom"}`;
+  const sizeCls = `ad-popup-size-${c.size || "medium"}`;
+  wrap.className = `ad-overlay ad-popup-wrap ${c.dimBackdrop !== false ? "ad-popup-dim" : ""}`.trim();
+  const radius = c.radius != null ? c.radius : 14;
+  const closeBtn = c.closable !== false ? `<button class="ad-popup-close" title="Tutup" aria-label="Tutup">✕</button>` : "";
+  const img = `<img class="ad-popup-img" src="${c.imageUrl}" alt="iklan" style="border-radius:${radius}px"/>`;
+  const inner = c.linkUrl
+    ? `<a class="ad-popup-link" href="${c.linkUrl}" target="_blank" rel="noopener">${img}</a>`
+    : img;
+  wrap.innerHTML = `<div class="ad-popup-card ${sizeCls} ${animCls}">${inner}${closeBtn}</div>`;
+
+  // Pastikan target bisa jadi anchor posisi
+  if (getComputedStyle(target).position === "static") target.style.position = "relative";
+  target.appendChild(wrap);
+
+  const close = () => { try { wrap.remove(); } catch {} };
+  if (c.closable !== false) {
+    wrap.querySelector(".ad-popup-close")?.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); close(); });
+  }
+  // Klik backdrop (di luar card) → tutup, hanya kalau closable
+  wrap.addEventListener("click", e => {
+    if (c.closable === false) return;
+    if (!e.target.closest(".ad-popup-card")) close();
+  });
 }
 
 function injectSideBanner(screen, sb) {
