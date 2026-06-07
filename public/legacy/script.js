@@ -31378,17 +31378,10 @@ function renderAuditTimeline(filter, query) {
       _openAuditDetailModal(e);
     });
   });
-
-  // v631 (2026-05-29): Wire role tab click (delegated dari host) — only once
-  if (tabsHost && !tabsHost._wired) {
-    tabsHost._wired = true;
-    tabsHost.addEventListener("click", (ev) => {
-      const btn = ev.target.closest(".audit-role-tab");
-      if (!btn) return;
-      window.__auditRoleTab = btn.dataset.roleTab || "all";
-      if (typeof renderAdminAudit === "function") renderAdminAudit();
-    });
-  }
+  // NOTE: blok lama "role tab click (v631)" dihapus — tab peran sudah diganti
+  // dropdown #auditRoleSelect (v632, di-handle di listener change global).
+  // Blok itu masih refer variabel `tabsHost` yang sudah tidak ada → bikin
+  // ReferenceError yang nge-crash render Log Audit. Fix: dihapus.
 }
 
 // v626 (2026-05-29): Detail modal — show full event context
