@@ -32490,6 +32490,16 @@ function renderAdminBugs() {
 function switchView(name, { fromNav = false } = {}) {
   const homeView = user?.role === "admin" ? "admin-dashboard" : "home";
 
+  // "premium" BUKAN view section — itu modal (openPremium). Tanpa guard ini,
+  // klik hasil search "Premium" / deep-link #/premium / nav → switchView ke
+  // section yang tidak ada → layar BLANK tanpa view aktif. Fix: buka modal.
+  // Tetap pastikan ada view dasar di belakang modal kalau dibuka fresh.
+  if (name === "premium") {
+    if (typeof openPlanPicker === "function") { try { openPlanPicker({ context: "upgrade" }); } catch {} }
+    if (document.querySelector(".view.active")) return;
+    name = homeView; // fallback background view (deep-link fresh) lalu lanjut
+  }
+
   // Access guard — admin-revenue HANYA boleh diakses super admin (per user
   // 2026-05-06). Admin biasa yang nyoba (lewat URL/deep-link/sidebar leak)
   // di-redirect ke admin-dashboard + dikasih toast.
