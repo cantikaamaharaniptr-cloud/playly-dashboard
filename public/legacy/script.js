@@ -50992,6 +50992,37 @@ document.addEventListener("click", (e) => {
     if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
     return;
   }
+  // Tombol "Hapus semua" di dropdown → kosongkan semua notif
+  if (t.closest("#notifDropdownClearAll")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications = [];
+      try { saveState(); } catch {}
+    }
+    try { updateNotifBellBadge?.(); } catch {}
+    try { renderNotifDropdownContent(); } catch {}
+    try { renderNotifications?.(); } catch {}
+    try { renderNotifPage?.(); } catch {}
+    if (typeof toast === "function") toast("🗑️ Semua notifikasi dihapus", "success");
+    return;
+  }
+  // Hapus 1 notif (tombol ✕ di item dropdown)
+  const delBtn = t.closest(".ndd-del");
+  if (delBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const item = delBtn.closest(".ndd-item");
+    const id = item?.getAttribute("data-notif-id");
+    if (id != null && Array.isArray(state?.notifications)) {
+      state.notifications = state.notifications.filter(n => String(n?.id) !== String(id));
+      try { saveState(); } catch {}
+      try { updateNotifBellBadge?.(); } catch {}
+      try { renderNotifDropdownContent(); } catch {}
+      try { renderNotifications?.(); } catch {}
+      try { renderNotifPage?.(); } catch {}
+    }
+    return;
+  }
   // Tombol "Lihat detail" di dropdown → buka side panel + close dropdown
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
@@ -55078,14 +55109,20 @@ function renderNotifDropdownContent() {
       }));
     } catch {}
   } else {
-    // User: ambil notif list standard
+    // User: render LANGSUNG dari state.notifications supaya tiap item punya
+    // id → bisa dihapus per-item (sebelumnya pakai getNotifList yg scrape DOM
+    // tanpa id, jadi hapus 1-1 mustahil).
     try {
-      const list = (typeof getNotifList === "function") ? getNotifList().slice(0, 5) : [];
-      list.forEach(n => items.push({
-        icon: n.icon || NI_BELL,
-        text: n.text || n.title || "Notification",
-        time: n.time || ""
-      }));
+      const list = Array.isArray(state?.notifications) ? state.notifications : [];
+      list.slice(0, 5).forEach(n => {
+        const cat = (typeof NOTIF_CATEGORY_MAP !== "undefined" && NOTIF_CATEGORY_MAP[n.type]) || null;
+        items.push({
+          id: n.id,
+          icon: cat ? cat.icon : (typeof NI_BELL !== "undefined" ? NI_BELL : "🔔"),
+          text: n.text || n.title || "Notification",
+          time: n.ts ? (typeof relTime === "function" ? relTime(n.ts) : "") : (n.time || "")
+        });
+      });
     } catch {}
   }
   if (!items.length) {
@@ -55093,10 +55130,11 @@ function renderNotifDropdownContent() {
     return;
   }
   body.innerHTML = items.map(it => `
-    <div class="ndd-item">
+    <div class="ndd-item"${it.id != null ? ` data-notif-id="${escapeHtml(String(it.id))}"` : ""}>
       <span class="ndd-icon">${it.icon}</span>
       <div class="ndd-text">${it.text}</div>
       ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
+      ${it.id != null ? `<button type="button" class="ndd-del" title="Hapus notifikasi" aria-label="Hapus">✕</button>` : ""}
     </div>
   `).join("");
 }

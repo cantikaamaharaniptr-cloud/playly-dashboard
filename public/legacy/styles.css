@@ -56494,20 +56494,40 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   flex-shrink: 0;
   white-space: nowrap;
 }
+/* Tombol hapus per-item (✕) */
+.notif-dropdown .ndd-del {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: .5;
+  transition: all .15s;
+}
+.notif-dropdown .ndd-item:hover .ndd-del { opacity: 1; }
+.notif-dropdown .ndd-del:hover { background: rgba(239, 68, 68, .15); color: #ef4444; }
 
-/* Footer button "Lihat detail" */
+/* Footer actions: Tandai dibaca + Hapus semua (baris 1), Lihat detail (baris 2) */
 .notif-dropdown .ndd-foot {
   padding: 10px 16px;
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
   background: var(--surface);
 }
 .notif-dropdown .ndd-foot .btn {
-  width: 100%;
-  font-size: 12.5px;
-  padding: 8px 14px;
+  flex: 1 1 calc(50% - 3px);
+  width: auto;
+  font-size: 12px;
+  padding: 7px 8px;
+  white-space: nowrap;
 }
+.notif-dropdown .ndd-foot #notifDropdownOpenPanel { flex-basis: 100%; }
 
 /* Admin theme override — slate accent untuk dropdown */
 body[data-role="admin"] .notif-dropdown {
