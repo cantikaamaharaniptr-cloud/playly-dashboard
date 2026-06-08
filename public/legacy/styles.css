@@ -41507,6 +41507,28 @@ section[data-view="upload"] > .upload-tier-banner {
 .view[data-view="stats"][data-stats-tab="pencapaian"]  [data-stats-section]:not([data-stats-section="pencapaian"])  { display: none; }
 .view[data-view="stats"][data-stats-tab="top-video"]   [data-stats-section]:not([data-stats-section="top-video"])   { display: none; }
 .view[data-view="stats"][data-stats-tab="grafik"]      [data-stats-section]:not([data-stats-section="grafik"])      { display: none; }
+/* v742: filter Sumber Trafik / Audiens (traffic/geo ada di dalam .stats-extra-grid) */
+.view[data-view="stats"][data-stats-tab="traffic"]     [data-stats-section]:not([data-stats-section="traffic"])     { display: none; }
+.view[data-view="stats"][data-stats-tab="geo"]         [data-stats-section]:not([data-stats-section="geo"])         { display: none; }
+/* Saat filter ke 1 section di dalam grid → tampil full-width (1 kolom) */
+.view[data-view="stats"][data-stats-tab="traffic"] .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="geo"]     .stats-extra-grid { grid-template-columns: 1fr !important; }
+/* Saat filter ke section DI LUAR grid → sembunyikan wrapper grid (hindari gap kosong) */
+.view[data-view="stats"][data-stats-tab="ringkasan"] .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="grafik"]    .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="top-video"] .stats-extra-grid { display: none !important; }
+/* Ringkasan punya 2 elemen (head .stats-section-head + #statsRow KPI) yang
+   keduanya di-set display !important di tempat lain → override saat filter ke
+   section SELAIN Ringkasan/all. Head: pakai [data-stats-section]; #statsRow:
+   butuh selector ber-ID (kalah spesifisitas kalau cuma atribut). */
+.view[data-view="stats"][data-stats-tab="grafik"]    [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="top-video"] [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="traffic"]   [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="geo"]       [data-stats-section="ringkasan"] { display: none !important; }
+.view[data-view="stats"][data-stats-tab="grafik"]    #statsRow,
+.view[data-view="stats"][data-stats-tab="top-video"] #statsRow,
+.view[data-view="stats"][data-stats-tab="traffic"]   #statsRow,
+.view[data-view="stats"][data-stats-tab="geo"]       #statsRow { display: none !important; }
 
 /* Mode "all" — beri jarak antar section + horizontal divider */
 .view[data-view="stats"][data-stats-tab="all"] [data-stats-section] {

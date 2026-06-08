@@ -31752,15 +31752,11 @@ function runSubAction(action) {
     return;
   }
   if (kind === "stats-tab") {
-    // Sidebar sub-item Statistik → buka Statistik & scroll ke section terkait
-    // (sinkron dgn tab bar scroll-jump; semua section tetap tampil).
-    if (typeof switchView === "function") switchView("stats");
-    const scrollToSec = (tries) => {
-      const el = document.querySelector(`section.view[data-view="stats"] [data-stats-section="${value}"]`);
-      if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); }
-      else if (tries > 0) setTimeout(() => scrollToSec(tries - 1), 120);
-    };
-    setTimeout(() => scrollToSec(6), 120);
+    // Sidebar sub-item Statistik → FILTER: tampilkan HANYA section yang dipilih
+    // (Ringkasan/Grafik/Performa Video/Sumber Trafik/Audiens). View "stats"
+    // sudah dibuka oleh handler nav (switchView dipanggil sebelum runSubAction),
+    // jadi JANGAN switchView lagi di sini (itu me-reset tab ke "all").
+    if (typeof setStatsTab === "function") setStatsTab(value);
     return;
   }
   if (kind === "gv-filter") {
@@ -51498,7 +51494,9 @@ function setStatsTab(tab) {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
   // v595 (2026-05-28): drop "pencapaian" tab — section dihapus dari Statistik.
-  const valid = ["all", "ringkasan", "top-video", "grafik"];
+  // v742: tambah "traffic" & "geo" supaya sub-item sidebar bisa filter ke
+  // Sumber Trafik / Audiens juga.
+  const valid = ["all", "ringkasan", "top-video", "grafik", "traffic", "geo"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.statsTab = key;
   if (typeof state === "object" && state) state.statsTab = key;
@@ -51512,8 +51510,10 @@ function setStatsTab(tab) {
   const meta = {
     "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.", crumb: "Statistik" },
     "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
-    "top-video":  { title: "Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, ditonton lama, dan dikomentari.", crumb: "Top Video" },
     "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },
+    "top-video":  { title: "Performa Video",       desc: "Tabel performa tiap video — tontonan, suka, komentar, dan engagement.",       crumb: "Performa Video" },
+    "traffic":    { title: "Sumber Trafik",        desc: "Dari mana penonton menemukan video kamu.",                                    crumb: "Sumber Trafik" },
+    "geo":        { title: "Audiens per Negara",   desc: "Sebaran lokasi penonton berdasarkan negara.",                                 crumb: "Audiens" },
   }[key];
   const titleEl = document.getElementById("statsPageTitle");
   const descEl  = document.getElementById("statsPageDesc");
