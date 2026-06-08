@@ -73002,3 +73002,22 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
   padding-bottom: 14px !important;
   margin-bottom: 10px !important;
 }
+
+/* ===================================================================
+   STATISTIK v766 — header chart terlalu tinggi (chip Total bikin row 87px →
+   ikon+judul ke-center jadi turun). Padatkan chip + ramping-kan header.
+   =================================================================== */
+/* chip lebih ringkas (tinggi turun) */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  padding: 6px 12px !important;
+  font-size: 22px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 11px !important; margin-bottom: 2px !important;
+}
+/* header ramping + konten rata atas-tengah supaya ikon+judul tidak turun */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  align-items: center !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 10px !important;
+}
