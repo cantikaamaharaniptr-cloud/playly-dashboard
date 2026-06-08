@@ -72582,3 +72582,33 @@ section[data-view="stats"] .chart-metric-tabs { margin: 2px 0 14px !important; }
 /* Jarak bawah heading section seragam (compact) */
 section[data-view="stats"] [data-stats-section] > h3,
 section[data-view="stats"] [data-stats-section] > .card-head h3 { margin-bottom: 12px !important; }
+
+/* ===================================================================
+   STATISTIK v729 — declutter header Grafik + kolom tabel rapi
+   =================================================================== */
+/* Buang baris subtitle "Belum ada data"/"Performa minggu ini" yg nyangkut
+   mepet di bawah judul Grafik (redundan: empty-state asli ada di dlm chart). */
+section[data-view="stats"] #chartSubtitle { display: none !important; }
+/* Heading Grafik & tab metrik: ritme bernapas, tidak dempet */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin-bottom: 14px !important; }
+section[data-view="stats"] .chart-metric-tabs { margin: 0 0 16px !important; }
+
+/* ---- Tabel Performa Video: kolom rapi, lebar tetap, sejajar ---- */
+section[data-view="stats"] .tp-table { table-layout: fixed; width: 100%; }
+/* Kolom Video fleksibel (sisa lebar), kolom angka lebar tetap & seragam */
+section[data-view="stats"] .tp-table th.tp-num-h,
+section[data-view="stats"] .tp-table td.tp-num { width: 132px !important; }
+section[data-view="stats"] .tp-table th.tp-th-vid,
+section[data-view="stats"] .tp-table td.tp-vid { width: auto !important; }
+/* Padding sel lebih lega + sejajar kiri/kanan */
+section[data-view="stats"] .tp-table th,
+section[data-view="stats"] .tp-table td { padding: 13px 16px !important; }
+section[data-view="stats"] .tp-table th:first-child,
+section[data-view="stats"] .tp-table td:first-child { padding-left: 4px !important; }
+section[data-view="stats"] .tp-table th:last-child,
+section[data-view="stats"] .tp-table td:last-child { padding-right: 4px !important; }
+/* Judul video boleh truncate rapi saat sempit */
+section[data-view="stats"] .tp-title { min-width: 0; }
+/* Header tabel: garis bawah lebih jelas, baris zebra halus */
+section[data-view="stats"] .tp-table thead th { border-bottom: 1.5px solid color-mix(in srgb, var(--cream, #E8D8C4) 26%, transparent) !important; }
+section[data-view="stats"] .tp-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--cream, #E8D8C4) 3%, transparent); }
