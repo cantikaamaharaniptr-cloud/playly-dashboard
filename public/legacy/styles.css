@@ -72393,3 +72393,13 @@ section[data-view="stats"] .src-val b { color: var(--text); font-weight: 800; ma
   section[data-view="stats"] .src-row { grid-template-columns: 1fr auto; }
   section[data-view="stats"] .src-bar { grid-column: 1 / -1; order: 3; }
 }
+
+/* ===== STATISTIK — empty-state jujur + hapus kolom Top Durasi (estimasi) ===== */
+section[data-view="stats"] .src-empty { text-align: center; padding: 22px 14px; }
+section[data-view="stats"] .src-empty-ic { width: 40px; height: 40px; margin: 0 auto 10px; color: var(--primary); opacity: .6; }
+section[data-view="stats"] .src-empty-ic svg { width: 100%; height: 100%; }
+section[data-view="stats"] .src-empty p { font-weight: 700; color: var(--text); margin: 0 0 4px; font-size: 14px; }
+section[data-view="stats"] .src-empty small { color: var(--muted); font-size: 12px; }
+/* Top Durasi (watch time) = estimasi, bukan data nyata → sembunyikan; sisakan 3 kolom */
+section[data-view="stats"] .top-perf-col:has(#topPerformWatch) { display: none !important; }
+section[data-view="stats"] .top-perf-4col { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }

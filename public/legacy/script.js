@@ -37183,29 +37183,14 @@ function renderStatsExtras() {
   if (!view) return;
   const grafik = view.querySelector('[data-stats-section="grafik"]');
   if (!grafik || !grafik.parentElement) return;
-  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-  const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0) || 0;
-  const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
-  const barList = (items) => items.map(it => `
-    <div class="src-row">
-      <div class="src-label">${escapeHtml(it.label)}</div>
-      <div class="src-bar"><i style="width:${it.pct}%"></i></div>
-      <div class="src-val"><b>${fmt(Math.round(totalViews * it.pct / 100))}</b><span>${it.pct}%</span></div>
-    </div>`).join("");
-  const sources = [
-    { label: "Pencarian Playly", pct: 38 },
-    { label: "Beranda / Jelajahi", pct: 24 },
-    { label: "Profil kreator", pct: 15 },
-    { label: "Dibagikan (link)", pct: 13 },
-    { label: "Situs eksternal", pct: 10 },
-  ];
-  const countries = [
-    { label: "🇮🇩 Indonesia", pct: 62 },
-    { label: "🇲🇾 Malaysia", pct: 12 },
-    { label: "🇸🇬 Singapura", pct: 8 },
-    { label: "🇺🇸 Amerika Serikat", pct: 6 },
-    { label: "🌍 Lainnya", pct: 12 },
-  ];
+  // JUJUR: app belum melacak sumber trafik & lokasi penonton → tampilkan
+  // empty-state "Belum ada data" (bukan angka karangan).
+  const emptyHtml = (msg, hint) => `
+    <div class="src-empty">
+      <div class="src-empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg></div>
+      <p>${escapeHtml(msg)}</p>
+      <small>${escapeHtml(hint)}</small>
+    </div>`;
   const ensure = (key, title) => {
     let sec = view.querySelector(`.stats-extra-section[data-stats-section="${key}"]`);
     if (!sec) {
@@ -37218,8 +37203,10 @@ function renderStatsExtras() {
     sec.querySelector("h3").textContent = title;
     return sec;
   };
-  ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML = barList(sources);
-  ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML = barList(countries);
+  ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML =
+    emptyHtml("Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
+  ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
+    emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
 }
 
 function drawChart() {
