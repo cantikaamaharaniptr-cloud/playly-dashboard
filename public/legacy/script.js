@@ -31258,6 +31258,10 @@ function renderAdminBugs() {
 // ----------------------- VIEW SWITCHING -----------------------
 function switchView(name, { fromNav = false } = {}) {
   const homeView = user?.role === "admin" ? "admin-dashboard" : "home";
+  // v753: sembunyikan tombol "← Statistik" tiap pindah view (kpiNavigate akan
+  // memunculkannya lagi setelah drill-down, jadi tombol hanya tampil di
+  // halaman tujuan KPI — tidak nyangkut di halaman lain).
+  { const _bb = document.getElementById("statsBackBtn"); if (_bb) _bb.style.display = "none"; }
 
   // Access guard — admin-revenue HANYA boleh diakses super admin (per user
   // 2026-05-06). Admin biasa yang nyoba (lewat URL/deep-link/sidebar leak)
@@ -31632,6 +31636,14 @@ document.addEventListener("click", e => {
   // Mark active sub-item dalam group-nya
   const group = sub.closest(".nav-group");
   if (group) {
+    // v753: sidebar harus mencerminkan HALAMAN AKTIF saja. Bersihkan highlight
+    // & tutup grup LAIN supaya tidak ada sub-item nyangkut aktif/terbuka
+    // (mis. "Ringkasan" tetap nyala padahal sudah pindah ke Video Saya).
+    document.querySelectorAll('.sidebar .nav-group').forEach(g => {
+      if (g === group) return;
+      g.querySelectorAll('.nav-subitem.active').forEach(x => x.classList.remove('active'));
+      if (g.classList.contains('expanded') && typeof toggleNavGroup === 'function') toggleNavGroup(g, false);
+    });
     group.querySelectorAll(".nav-subitem").forEach(x => x.classList.toggle("active", x === sub));
     if (!group.classList.contains("expanded")) toggleNavGroup(group, true);
   }
@@ -32054,8 +32066,44 @@ function kpiNavigate(key) {
   };
   const action = map[key];
   if (!action) return;
+  // Tontonan & Engagement tetap di dalam Statistik (filter Grafik) → tak perlu
+  // tombol back. Sisanya pindah view lain → simpan tab asal & munculkan back.
+  const leavesStats = !action.startsWith("stats-tab:");
+  if (leavesStats) {
+    const sv = document.querySelector('section.view[data-view="stats"]');
+    window._statsReturnTab = (sv && sv.dataset.statsTab) || "ringkasan";
+  }
   const link = document.querySelector(`.sidebar .nav-subitem[data-sub-action="${action}"]`);
   if (link) link.click();
+  if (leavesStats) {
+    const btn = ensureStatsBackBtn();
+    if (btn) setTimeout(() => { btn.style.display = ""; }, 130);
+  }
+}
+
+// v753: tombol "← Statistik" di topbar — balik 1 klik ke Statistik (tab asal)
+// setelah drill-down dari kartu KPI. Disuntik sekali, di-toggle visibilitasnya.
+function ensureStatsBackBtn() {
+  let btn = document.getElementById("statsBackBtn");
+  if (btn) return btn;
+  const topbar = document.querySelector("header.topbar");
+  if (!topbar) return null;
+  btn = document.createElement("button");
+  btn.id = "statsBackBtn";
+  btn.type = "button";
+  btn.className = "stats-back-btn";
+  btn.setAttribute("title", "Kembali ke Statistik");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span>Statistik</span>';
+  btn.style.display = "none";
+  btn.addEventListener("click", () => {
+    const tab = window._statsReturnTab || "ringkasan";
+    const subLink = document.querySelector(`.sidebar .nav-subitem[data-sub-action="stats-tab:${tab}"]`);
+    if (subLink) subLink.click();
+    else if (typeof switchView === "function") switchView("stats");
+    btn.style.display = "none";
+  });
+  topbar.insertBefore(btn, topbar.firstChild);
+  return btn;
 }
 
 function renderAchievements() {
