@@ -72080,3 +72080,27 @@ section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
 section[data-view="stats"] .stats-section-head h3,
 section[data-view="stats"] [data-stats-section] > h3 { font-size: 15px !important; font-weight: 700 !important; }
 section[data-view="stats"] .stats-section-head small { color: var(--text-2, var(--muted)) !important; }
+
+/* ===== STATISTIK — bedakan STRUKTUR judul section dari header halaman ===== */
+/* Section: buang ikon kotak, ganti jadi garis aksen kiri + label uppercase
+   (gaya 'eyebrow'/penanda section) — struktur beda jelas dari header halaman. */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head {
+  border-left: 3px solid var(--primary) !important;
+  padding-left: 11px !important;
+  display: block !important;
+}
+section[data-view="stats"] [data-stats-section] > h3 {
+  border-left: 3px solid var(--primary) !important;
+  padding-left: 11px !important;
+}
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: var(--text-2, var(--muted)) !important;
+  margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head small { color: var(--muted) !important; font-size: 12px; }
