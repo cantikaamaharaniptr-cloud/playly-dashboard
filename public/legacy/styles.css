@@ -72195,3 +72195,40 @@ section[data-view="stats"] [data-stats-section] > h3 {
   align-self: flex-start !important;
   background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
 }
+
+/* ===== STATISTIK — judul section KONSEP NOMOR BESAR (editorial) ===== */
+section[data-view="stats"] { counter-reset: statsec; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  counter-increment: statsec;
+  display: flex !important; align-items: baseline; gap: 12px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; color: var(--text) !important;
+  margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before {
+  content: counter(statsec, decimal-leading-zero) !important;
+  font-size: 28px !important; font-weight: 800 !important; line-height: 1;
+  color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after { content: none !important; }
+
+/* Grafik: heading di .grafik-head-text (bukan direct child) → ikutkan ke nomor editorial */
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: statsec;
+  display: flex !important; align-items: baseline; gap: 12px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 !important;
+}
+section[data-view="stats"] .grafik-head-text h3::before {
+  content: counter(statsec, decimal-leading-zero) !important;
+  font-size: 28px !important; font-weight: 800 !important; line-height: 1;
+  color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
