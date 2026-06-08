@@ -72775,3 +72775,25 @@ section[data-view="stats"] #statsRow .stat-label {
   font-size: 10.5px !important; letter-spacing: .12em !important; margin: 0 0 4px !important;
 }
 section[data-view="stats"] #statsRow .stat-value { font-size: 27px !important; }
+
+/* ===================================================================
+   STATISTIK v748 — hierarki ukuran ikon (per user).
+   Sebelumnya kebalik: ikon judul halaman 40px, KPI 46px, section 30px.
+   Diatur per tingkat kepentingan:
+     Judul halaman "Statistik"      = 54px (TERBESAR)
+     Judul section "Ringkasan dst"  = 40px (SEDANG)
+     Ikon KPI per-metrik            = 36px (lebih kecil dari judul)
+   =================================================================== */
+/* 1) Ikon judul halaman — paling besar */
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg {
+  width: 54px !important; height: 54px !important; border-radius: 15px !important;
+}
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 27px !important; height: 27px !important; }
+/* 2) Ikon judul section — sedang (sebelumnya 30px, terlalu kecil) */
+section[data-view="stats"] .st-ico {
+  width: 40px !important; height: 40px !important; border-radius: 11px !important;
+}
+section[data-view="stats"] .st-ico svg { width: 21px !important; height: 21px !important; }
+/* 3) Ikon KPI — lebih kecil dari judul halaman */
+section[data-view="stats"] #statsRow .stat-icon { width: 36px !important; height: 36px !important; border-radius: 10px !important; }
+section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; height: 19px !important; }
