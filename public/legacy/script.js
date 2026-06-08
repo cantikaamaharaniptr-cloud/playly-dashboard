@@ -37274,82 +37274,67 @@ $("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.ta
 })();
 
 function renderTopPerforming() {
+  // v717 (2026-06-08): gaya tabel media Wistia/Vidyard — SATU tabel performa
+  // video yang bisa di-sort per kolom (Tontonan/Suka/Komentar/Engagement).
   const card = $("#topPerfCard");
-  const colViews    = $("#topPerformViews");
-  const colLikes    = $("#topPerformLikes");
-  const colWatch    = $("#topPerformWatch");
-  const colComments = $("#topPerformComments"); // v595 (2026-05-28): kolom ke-4
-  if (!card || !colViews || !colLikes || !colWatch) return;
-  if (!state.myVideos.length) {
-    card.style.display = "";
-    const empty = `<div class="top-perf-empty-rich">
+  const list = $("#topPerformList");
+  if (!card || !list) return;
+  card.style.display = "";
+  const sec = list.closest("[data-stats-section]");
+  const secHead = sec && sec.querySelector("h3");
+  if (secHead) secHead.textContent = "Performa Video";
+
+  const vids = Array.isArray(state.myVideos) ? state.myVideos : [];
+  if (!vids.length) {
+    list.innerHTML = `<div class="top-perf-empty-rich">
       <div class="tpe-icon">📊</div>
       <h4>${escapeHtml(t("topperf.empty.title"))}</h4>
       <p>${escapeHtml(t("topperf.empty.desc"))}</p>
       <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">${escapeHtml(t("topperf.empty.cta"))}</button>
     </div>`;
-    colViews.innerHTML = empty;
-    colLikes.innerHTML = "";
-    colWatch.innerHTML = "";
-    if (colComments) colComments.innerHTML = "";
-    card.querySelector("[data-jump-view]")?.addEventListener("click", () => {
-      const link = document.querySelector('.nav-item[data-view="upload"]');
-      if (link) link.click();
+    list.querySelector("[data-jump-view]")?.addEventListener("click", () => {
+      const link = document.querySelector('.nav-item[data-view="upload"]'); if (link) link.click();
     });
     return;
   }
-  card.style.display = "";
 
-  const parseDur = (d) => {
-    if (!d) return 0;
-    const p = String(d).split(":").map(Number);
-    if (p.some(isNaN)) return 0;
-    if (p.length === 2) return p[0] * 60 + p[1];
-    if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
-    return 0;
-  };
-  const fmtWatch = (sec) => {
-    if (sec < 60) return Math.round(sec) + " dtk";
-    if (sec < 3600) return Math.round(sec / 60) + " mnt";
-    const jam = Math.round(sec / 3600);
-    return (jam < 1000 ? String(jam) : (typeof fmtNum === "function" ? fmtNum(jam) : String(jam))) + " jam";
-  };
+  const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
+  const rows = vids.map(v => {
+    const views = v.viewsNum || 0;
+    const likes = v.likes || 0;
+    const comments = (state.comments?.[v.id]?.length) || 0;
+    const eng = views > 0 ? ((likes + comments) / views * 100) : 0;
+    return { v, views, likes, comments, eng };
+  });
+  const sort = state.topSort || (state.topSort = { key: "views", dir: "desc" });
+  const dir = sort.dir === "asc" ? 1 : -1;
+  rows.sort((a, b) => (a[sort.key] - b[sort.key]) * dir);
 
-  const enriched = state.myVideos.map(v => ({
-    ...v,
-    _views: v.viewsNum || 0,
-    _likes: v.likes || 0,
-    _watch: (v.viewsNum || 0) * parseDur(v.duration) * 0.6,
-    _comments: (state.comments?.[v.id]?.length) || 0,
+  const arrow = k => sort.key === k ? (sort.dir === "asc" ? " ↑" : " ↓") : "";
+  const th = (k, label) => `<th class="tp-th tp-num-h${sort.key === k ? " active" : ""}" data-sort="${k}">${label}${arrow(k)}</th>`;
+  const thead = `<thead><tr>
+    <th class="tp-th-vid">Video</th>
+    ${th("views", "Tontonan")}
+    ${th("likes", "Suka")}
+    ${th("comments", "Komentar")}
+    ${th("eng", "Engagement")}
+  </tr></thead>`;
+  const body = rows.slice(0, 20).map(r => `<tr class="tp-row" data-vid="${r.v.id}">
+    <td class="tp-vid"><div class="tp-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div><span class="tp-title">${escapeHtml(r.v.title || "")}</span></td>
+    <td class="tp-num">${fmt(r.views)}</td>
+    <td class="tp-num">${fmt(r.likes)}</td>
+    <td class="tp-num">${fmt(r.comments)}</td>
+    <td class="tp-num">${r.eng > 0 ? r.eng.toFixed(1) + "%" : "—"}</td>
+  </tr>`).join("");
+  list.innerHTML = `<table class="tp-table">${thead}<tbody>${body}</tbody></table>`;
+
+  list.querySelectorAll("th[data-sort]").forEach(thEl => thEl.addEventListener("click", () => {
+    const k = thEl.dataset.sort;
+    if (sort.key === k) sort.dir = sort.dir === "asc" ? "desc" : "asc";
+    else { sort.key = k; sort.dir = "desc"; }
+    renderTopPerforming();
   }));
-
-  const renderRow = (v, i, valFmt, valSrc) => `
-    <div class="top-perf-item" data-vid="${v.id}">
-      <div class="top-perf-rank ${i === 0 ? 'first' : ''}">#${i + 1}</div>
-      <div class="mini-thumb">${v.thumb ? `<img src="${escapeHtml(v.thumb)}" alt="" loading="lazy" onerror="this.remove()"/>` : ""}</div>
-      <div class="info"><h5>${escapeHtml(v.title || "")}</h5><div class="meta">${escapeHtml(v.duration || "0:00")}</div></div>
-      <div class="views">${valFmt(v[valSrc])}</div>
-    </div>
-  `;
-
-  const topViews    = [...enriched].sort((a, b) => b._views    - a._views).slice(0, 5);
-  const topLikes    = [...enriched].sort((a, b) => b._likes    - a._likes).slice(0, 5);
-  const topWatch    = [...enriched].sort((a, b) => b._watch    - a._watch).slice(0, 5);
-  const topComments = [...enriched].sort((a, b) => b._comments - a._comments).slice(0, 5);
-
-  const empty = `<div class="top-perf-empty">${escapeHtml(t("topperf.empty.col"))}</div>`;
-  colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
-    ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
-  colLikes.innerHTML = topLikes.length && topLikes.some(v => v._likes > 0)
-    ? topLikes.map((v, i) => renderRow(v, i, fmtNum, "_likes")).join("") : empty;
-  colWatch.innerHTML = topWatch.length && topWatch.some(v => v._watch > 0)
-    ? topWatch.map((v, i) => renderRow(v, i, fmtWatch, "_watch")).join("") : empty;
-  if (colComments) {
-    colComments.innerHTML = topComments.length && topComments.some(v => v._comments > 0)
-      ? topComments.map((v, i) => renderRow(v, i, fmtNum, "_comments")).join("") : empty;
-  }
-
-  $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
+  list.querySelectorAll(".tp-row").forEach(row => row.addEventListener("click", () => openPlayer(+row.dataset.vid)));
 }
 
 // ----------------------- ACTIVITY VIEW -----------------------

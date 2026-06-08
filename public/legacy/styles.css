@@ -72426,3 +72426,19 @@ section[data-view="stats"] .grafik-head-text h3::before,
 section[data-view="stats"] .stats-section-head h3::after,
 section[data-view="stats"] [data-stats-section] > h3::after,
 section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+
+/* ===== STATISTIK — Top Video jadi TABEL MEDIA sortable (gaya Wistia/Vidyard) ===== */
+section[data-view="stats"] #topPerformList { display: block !important; }
+section[data-view="stats"] .tp-table { width: 100%; border-collapse: collapse; }
+section[data-view="stats"] .tp-table th { text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 0 12px 11px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; transition: color .12s; }
+section[data-view="stats"] .tp-table th.tp-th-vid { text-align: left; cursor: default; }
+section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) { color: var(--text); }
+section[data-view="stats"] .tp-table th.active { color: var(--primary); }
+section[data-view="stats"] .tp-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+section[data-view="stats"] .tp-table tbody tr { cursor: pointer; transition: background .12s; }
+section[data-view="stats"] .tp-table tbody tr:hover td { background: var(--surface-2); }
+section[data-view="stats"] .tp-table tbody tr:last-child td { border-bottom: 0; }
+section[data-view="stats"] .tp-vid { display: flex; align-items: center; gap: 12px; min-width: 0; }
+section[data-view="stats"] .tp-thumb { width: 64px; height: 36px; border-radius: 6px; flex: 0 0 auto; background: var(--surface-2) center / cover no-repeat; background-image: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932)); }
+section[data-view="stats"] .tp-title { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+section[data-view="stats"] .tp-num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
