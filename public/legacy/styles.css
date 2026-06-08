@@ -72744,3 +72744,12 @@ html body:not([data-role="admin"]):not(.auth-mode) .main { padding-top: 86px !im
    tab bar scroll-jump redundan. Disembunyikan khusus di view stats.
    =================================================================== */
 section[data-view="stats"] .riwayat-tab-bar { display: none !important; }
+
+/* ===================================================================
+   STATISTIK v745 — beri napas setelah tab bar dihapus.
+   Tab bar dulu menyediakan jarak title card -> konten; setelah dihapus,
+   "Statistik" card nempel (2px) ke "Ringkasan Performa". Tambah margin.
+   =================================================================== */
+section[data-view="stats"] .view-header { margin-bottom: 22px !important; }
+/* Heading section -> isi sedikit lebih lega */
+section[data-view="stats"] #statsRow { margin-top: 14px !important; }
