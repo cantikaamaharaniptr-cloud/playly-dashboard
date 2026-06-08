@@ -72403,3 +72403,26 @@ section[data-view="stats"] .src-empty small { color: var(--muted); font-size: 12
 /* Top Durasi (watch time) = estimasi, bukan data nyata → sembunyikan; sisakan 3 kolom */
 section[data-view="stats"] .top-perf-col:has(#topPerformWatch) { display: none !important; }
 section[data-view="stats"] .top-perf-4col { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+
+/* ===== STATISTIK — header & judul section LEAN (ala YouTube Studio) ===== */
+/* Hilangkan paragraf deskripsi halaman & subtitle section yg bertele (biar teks tidak menumpuk) */
+section[data-view="stats"] #statsPageDesc { display: none !important; }
+section[data-view="stats"] .stats-section-head small { display: none !important; }
+/* Judul section: teks bold bersih saja — tanpa bar aksen, ikon, nomor, hairline */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: block !important; width: auto !important; max-width: none !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  padding: 0 !important; margin: 0 0 14px !important;
+  font-size: 16px !important; font-weight: 700 !important; letter-spacing: 0 !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
