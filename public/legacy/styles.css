@@ -68179,6 +68179,11 @@ body[data-theme="light"][data-role="admin"] .admin-bg-particles {
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar {
   /* v737: bar diberi background SOLID (bukan transparan lagi) karena topbar
      kini STICKY/fixed — supaya konten tidak tembus saat di-scroll. */
+  /* v739: width auto — batalkan calc(100%+48px) lama yg bikin topbar lebih
+     lebar dari viewport saat fixed (tombol kanan kepotong). left+right yg
+     menentukan lebar. */
+  width: auto !important;
+  min-width: 0 !important;
   background-color: var(--bg, #1a0c10) !important;
   background-image: none !important;
   border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
