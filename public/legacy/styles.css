@@ -72353,3 +72353,23 @@ section[data-view="stats"] .mini-chart-card {
   border-radius: 14px !important;
   box-shadow: 0 8px 22px rgba(0,0,0,.24) !important;
 }
+
+/* ===== STATISTIK — GRAFIK: 1 chart besar + tab metrik (adaptasi YouTube Overview) ===== */
+section[data-view="stats"] .chart-metric-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+section[data-view="stats"] .chart-metric-tabs .cmt-btn {
+  height: 32px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-elev);
+  color: var(--text-2, var(--muted)); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+section[data-view="stats"] .chart-metric-tabs .cmt-btn:hover { border-color: var(--primary); color: var(--text); }
+section[data-view="stats"] .chart-metric-tabs .cmt-btn.active { background: var(--primary); border-color: var(--primary); color: var(--cream, #fff); }
+/* tampilkan hanya chart metrik aktif (besar), sembunyikan sisanya */
+section[data-view="stats"] [data-active-metric] .charts-stack { display: block !important; }
+section[data-view="stats"] [data-active-metric] .mini-chart-card { display: none !important; }
+section[data-view="stats"] [data-active-metric="views"] .mini-chart-card:has(.chart-wrap[data-chart-metric="views"]),
+section[data-view="stats"] [data-active-metric="videos"] .mini-chart-card:has(.chart-wrap[data-chart-metric="videos"]),
+section[data-view="stats"] [data-active-metric="followers"] .mini-chart-card:has(.chart-wrap[data-chart-metric="followers"]),
+section[data-view="stats"] [data-active-metric="comments"] .mini-chart-card:has(.chart-wrap[data-chart-metric="comments"]) { display: block !important; }
+/* chart aktif jadi BESAR */
+section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 200px !important; }

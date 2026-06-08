@@ -37146,9 +37146,39 @@ function drawMiniChart(metric) {
   });
 }
 
+// v713 (2026-06-08): adaptasi pola YouTube Studio Overview — SATU grafik besar
+// + tab metrik (Tontonan/Video/Followers/Komentar) ganti 4 grafik kecil sejajar.
+// Reuse 4 mini-chart yg sudah ada: tampilkan yg aktif (besar), sembunyikan sisanya.
+function buildChartMetricTabs() {
+  const sec = document.querySelector('section.view[data-view="stats"] [data-stats-section="grafik"]');
+  if (!sec) return;
+  const stack = sec.querySelector(".charts-stack");
+  if (!stack) return;
+  if (!state.chartMetric) state.chartMetric = "views";
+  const active = state.chartMetric;
+  sec.dataset.activeMetric = active;
+  let bar = sec.querySelector(".chart-metric-tabs");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.className = "chart-metric-tabs";
+    const metrics = [["views", "Tontonan"], ["videos", "Video"], ["followers", "Followers"], ["comments", "Komentar"]];
+    bar.innerHTML = metrics.map(([m, l]) => `<button type="button" class="cmt-btn" data-chart-metric-tab="${m}">${l}</button>`).join("");
+    stack.parentElement.insertBefore(bar, stack);
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-chart-metric-tab]"); if (!b) return;
+      state.chartMetric = b.dataset.chartMetricTab;
+      sec.dataset.activeMetric = state.chartMetric;
+      bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === state.chartMetric));
+      if (typeof drawMiniChart === "function") drawMiniChart(state.chartMetric); // redraw saat baru terlihat (dapat lebar benar)
+    });
+  }
+  bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === active));
+}
+
 function drawChart() {
   // Render 4 chart sekaligus + update total angka di header.
   // v595 (2026-05-28): + Comments chart.
+  buildChartMetricTabs(); // set metrik aktif & tab dulu (biar chart aktif punya lebar saat digambar)
   const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
