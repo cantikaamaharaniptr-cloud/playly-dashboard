@@ -72942,3 +72942,33 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card {
   width: 100% !important;
 }
+
+/* ===================================================================
+   STATISTIK v763 — perbesar header DALAM kotak chart (ikon+judul kecil)
+   + perjelas angka total ("2") dgn label "TOTAL".
+   =================================================================== */
+/* ikon metrik di kotak chart */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon {
+  width: 38px !important; height: 38px !important; border-radius: 11px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon .picon,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon svg {
+  width: 20px !important; height: 20px !important;
+}
+/* judul chart */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title { gap: 10px !important; }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title h4 {
+  font-size: 16px !important; font-weight: 700 !important;
+}
+/* angka TOTAL di kanan + label penjelas */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  font-size: 26px !important; font-weight: 800 !important; line-height: 1 !important;
+  text-align: right !important; color: var(--text) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  content: "TOTAL"; display: block;
+  font-size: 9.5px !important; letter-spacing: .14em; font-weight: 700;
+  color: var(--muted) !important; margin-bottom: 3px;
+}
