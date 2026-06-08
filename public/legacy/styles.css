@@ -72612,3 +72612,19 @@ section[data-view="stats"] .tp-title { min-width: 0; }
 /* Header tabel: garis bawah lebih jelas, baris zebra halus */
 section[data-view="stats"] .tp-table thead th { border-bottom: 1.5px solid color-mix(in srgb, var(--cream, #E8D8C4) 26%, transparent) !important; }
 section[data-view="stats"] .tp-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--cream, #E8D8C4) 3%, transparent); }
+
+/* ===================================================================
+   STATISTIK v730 — rapikan AREA ATAS (judul + tab bar) yg masih dempet
+   Masalah: judul "Statistik" -> tab bar cuma 6px (nempel), tab pill
+   padding vertikal 0 (pendek/sempit).
+   =================================================================== */
+/* Jarak judul -> tab bar -> konten lebih lega */
+section[data-view="stats"] .riwayat-tab-bar { margin: 18px 0 22px !important; gap: 10px !important; }
+/* Tab pill: lebih tinggi & lega, sudut lembut */
+section[data-view="stats"] .riwayat-tab-bar .stat-tab {
+  padding: 9px 15px !important; height: auto !important; line-height: 1.1 !important;
+  font-size: 12.5px !important; border-radius: 11px !important;
+}
+/* Heading section pertama tidak mepet ke tab bar */
+section[data-view="stats"] [data-stats-section]:first-of-type > h3,
+section[data-view="stats"] [data-stats-section]:first-of-type > .card-head h3 { margin-top: 2px !important; }
