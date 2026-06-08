@@ -72797,3 +72797,17 @@ section[data-view="stats"] .st-ico svg { width: 21px !important; height: 21px !i
 /* 3) Ikon KPI — lebih kecil dari judul halaman */
 section[data-view="stats"] #statsRow .stat-icon { width: 36px !important; height: 36px !important; border-radius: 10px !important; }
 section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; height: 19px !important; }
+
+/* ===================================================================
+   STATISTIK v749 — pertegas 3 tingkat WARNA kotak ikon (per user).
+   Judul = solid pekat (tetap) > Section = wine sedang > KPI = wine lembut.
+   =================================================================== */
+/* Judul halaman: tetap gradient wine solid (paling menonjol) — tak diubah. */
+/* Section: wine sedang (sebelumnya ~26%) */
+section[data-view="stats"] .st-ico {
+  background: color-mix(in srgb, var(--primary) 46%, transparent) !important;
+}
+/* KPI: wine paling lembut (sebelumnya ~24%) */
+section[data-view="stats"] #statsRow .stat-icon {
+  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+}
