@@ -27943,6 +27943,17 @@ body[data-role="admin"] .ad-count {
   pointer-events: none;
   background: linear-gradient(180deg, rgba(0,0,0,.4), transparent 25%, transparent 75%, rgba(0,0,0,.4));
 }
+/* Pre-roll GAMBAR — gambar mengisi player, label + tombol Lewati melayang di atas */
+.ad-preroll-image { padding: 0; background: #000; }
+.ad-preroll-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: auto;
+}
+.ad-preroll-imglink { position: absolute; inset: 0; pointer-events: auto; }
+.ad-preroll-image > .ad-preroll-label { position: absolute; top: 14px; left: 14px; z-index: 2; }
+.ad-preroll-image > .ad-preroll-skip { position: absolute; bottom: 14px; right: 14px; z-index: 2; align-self: auto; }
 .ad-preroll-label {
   pointer-events: auto;
   display: inline-flex; align-items: center; gap: 6px;
