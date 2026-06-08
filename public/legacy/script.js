@@ -37281,6 +37281,39 @@ function buildChartMetricTabs() {
   bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === active));
 }
 
+// v764: chip "Total" tiap metrik di kotak chart bisa diklik → fitur terkait.
+function wireChartTotals() {
+  const map = {
+    chartTotalViews: "views",
+    chartTotalVideos: "videos",
+    chartTotalFollowers: "followers",
+    chartTotalComments: "comments",
+  };
+  Object.entries(map).forEach(([id, metric]) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.navWired) return;
+    el.dataset.navWired = "1";
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("title", "Lihat detail");
+    const go = () => chartTotalNavigate(metric);
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+}
+function chartTotalNavigate(metric) {
+  // Tontonan → Performa Video (tontonan per video, tetap di Statistik).
+  if (metric === "views") {
+    const link = document.querySelector('.sidebar .nav-subitem[data-sub-action="stats-tab:top-video"]');
+    if (link) link.click();
+    return;
+  }
+  // Video/Pengikut/Komentar → halaman terkait (reuse kpiNavigate + tombol back).
+  if (typeof kpiNavigate === "function") kpiNavigate(metric);
+}
+
 // v714 (2026-06-08): adaptasi doodstream — section "Sumber Trafik" & "Audiens
 // per Negara" (daftar bar %). Data representatif diturunkan dari total tontonan
 // (proporsi tetap) supaya konsisten dgn angka dashboard.
@@ -37371,6 +37404,7 @@ function drawChart() {
   setT("chartTotalViews", totalViews);
   setT("chartTotalFollowers", followerCount);
   setT("chartTotalComments", totalComments);
+  wireChartTotals(); // v764: chip total bisa diklik → fitur terkait
 
   const subtitle = $("#chartSubtitle");
   if (subtitle) {

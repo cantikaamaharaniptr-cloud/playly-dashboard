@@ -72962,13 +72962,22 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title h4 {
   font-size: 16px !important; font-weight: 700 !important;
 }
-/* angka TOTAL di kanan + label penjelas */
+/* angka total = KOLOM/chip rapi, clickable, label "Total" (bukan KAPITAL) */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
-  font-size: 26px !important; font-weight: 800 !important; line-height: 1 !important;
-  text-align: right !important; color: var(--text) !important;
+  display: inline-flex !important; flex-direction: column !important; align-items: flex-end !important;
+  padding: 8px 14px !important; border-radius: 12px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 15%, transparent) !important;
+  font-size: 24px !important; font-weight: 800 !important; line-height: 1 !important;
+  color: var(--text) !important; cursor: pointer !important;
+  transition: background .12s ease, border-color .12s ease !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
-  content: "TOTAL"; display: block;
-  font-size: 9.5px !important; letter-spacing: .14em; font-weight: 700;
-  color: var(--muted) !important; margin-bottom: 3px;
+  content: "Total"; display: block;
+  font-size: 10px !important; letter-spacing: .02em !important; font-weight: 600 !important;
+  text-transform: none !important; color: var(--muted) !important; margin-bottom: 4px !important;
 }
