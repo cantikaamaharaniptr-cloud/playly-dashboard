@@ -72066,3 +72066,17 @@ section[data-view="stats"] .riwayat-tab {
   border-radius: 8px !important; gap: 6px;
 }
 section[data-view="stats"] .riwayat-tab svg { width: 14px !important; height: 14px !important; }
+
+/* ===== STATISTIK — hierarki header halaman vs judul section ===== */
+/* Header halaman (sec-icon-lg, kotak wine) tetap menonjol; ikon judul SECTION
+   dibuat flat & netral supaya jelas level-nya di bawah judul halaman. */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
+  background: var(--surface-2) !important;
+  color: var(--text-2, var(--muted)) !important;
+  box-shadow: none !important;
+}
+/* Judul halaman sedikit lebih besar; judul section lebih kecil & subtitle muted */
+#statsPageTitle { font-size: 24px !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 { font-size: 15px !important; font-weight: 700 !important; }
+section[data-view="stats"] .stats-section-head small { color: var(--text-2, var(--muted)) !important; }
