@@ -72470,3 +72470,20 @@ section[data-view="stats"] .stats-section-head { margin: 4px 0 14px !important; 
 section[data-view="stats"] .stats-extra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
 section[data-view="stats"] .stats-extra-grid .stats-extra-section { margin-top: 0 !important; }
 @media (max-width: 820px) { section[data-view="stats"] .stats-extra-grid { grid-template-columns: 1fr; } }
+
+/* ===== STATISTIK — judul section: ikon kotak lembut kecil + judul (beda dari header halaman) ===== */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  display: flex !important; align-items: center; gap: 11px !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important;
+  margin: 0 0 16px !important;
+}
+section[data-view="stats"] .st-ico {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+  color: var(--cream, #E8D8C4);
+}
+section[data-view="stats"] .st-ico svg { width: 16px; height: 16px; }
+section[data-view="stats"] .st-txt { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0; }

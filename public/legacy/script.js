@@ -37220,6 +37220,32 @@ function renderStatsExtras() {
   const gEl = view.querySelector('.stats-extra-section[data-stats-section="geo"]');
   if (tEl) grid.appendChild(tEl);
   if (gEl) grid.appendChild(gEl);
+  decorateStatsHeadings();
+}
+
+// v719 (2026-06-08): kasih ikon (kotak lembut kecil) ke tiap judul section,
+// beda jelas dari ikon kotak wine besar di header halaman. Idempotent.
+function decorateStatsHeadings() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const ICO = {
+    ringkasan: `<svg ${S}><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12.5" y="7" width="3" height="10"/><rect x="18" y="13" width="3" height="4"/></svg>`,
+    "top-video": `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>`,
+    grafik: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>`,
+    traffic: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>`,
+    geo: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>`,
+  };
+  const setIco = (h3, key) => {
+    if (!h3 || !ICO[key]) return;
+    const text = h3.querySelector(".st-txt")?.textContent || h3.textContent.trim();
+    h3.innerHTML = `<span class="st-ico">${ICO[key]}</span><span class="st-txt">${escapeHtml(text)}</span>`;
+  };
+  setIco(view.querySelector('.stats-section-head h3'), "ringkasan");
+  setIco(view.querySelector('[data-stats-section="grafik"] .grafik-head-text h3, [data-stats-section="grafik"] h3'), "grafik");
+  setIco(view.querySelector('#topPerfCard h3'), "top-video");
+  setIco(view.querySelector('[data-stats-section="traffic"] h3'), "traffic");
+  setIco(view.querySelector('[data-stats-section="geo"] h3'), "geo");
 }
 
 function drawChart() {
@@ -37348,6 +37374,7 @@ function renderTopPerforming() {
     renderTopPerforming();
   }));
   list.querySelectorAll(".tp-row").forEach(row => row.addEventListener("click", () => openPlayer(+row.dataset.vid)));
+  if (typeof decorateStatsHeadings === "function") decorateStatsHeadings();
 }
 
 // ----------------------- ACTIVITY VIEW -----------------------
