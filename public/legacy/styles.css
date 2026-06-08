@@ -72303,3 +72303,53 @@ section[data-view="stats"] .stat-value { font-size: 24px !important; margin: 5px
 /* (4) Kartu Top Video & Grafik: lebih ringan (border tipis, bg transparan) */
 section[data-view="stats"] .top-perf-3col,
 section[data-view="stats"] .charts-stack { gap: 12px !important; }
+
+/* ===================================================================
+   STATISTIK — REDESIGN: PREMIUM / ELEGAN (opsi 2)
+   =================================================================== */
+/* Judul section: bar aksen gradient wine->krem + judul elegan (tanpa hairline) */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: flex !important; align-items: center; gap: 12px !important;
+  background: none !important; border: 0 !important; border-bottom: 0 !important;
+  border-radius: 0 !important; padding: 0 !important; margin: 0 0 16px !important;
+  width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; letter-spacing: .01em !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before {
+  content: "" !important; flex: 0 0 auto;
+  width: 4px !important; height: 20px !important; border-radius: 3px !important;
+  background: linear-gradient(180deg, var(--accent, #C7B7A3), var(--primary)) !important;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head small { display:block; color: var(--muted) !important; margin: -8px 0 6px 16px !important; font-size: 12px; }
+
+/* Kartu ringkasan: gradient wine lembut + shadow halus + label krem */
+section[data-view="stats"] .stat-card {
+  display: block !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 14%, var(--bg-elev)), var(--bg-elev)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border)) !important;
+  border-radius: 14px !important; padding: 15px 17px !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
+}
+section[data-view="stats"] .stat-card:hover { transform: translateY(-2px) !important; box-shadow: 0 12px 28px rgba(0,0,0,.34) !important; }
+section[data-view="stats"] .stat-icon { display: none !important; }
+section[data-view="stats"] .stat-label { font-size: 10px !important; letter-spacing: .14em !important; text-transform: uppercase; color: var(--accent, #C7B7A3) !important; }
+section[data-view="stats"] .stat-value { font-size: 25px !important; margin: 6px 0 0 !important; line-height: 1.1 !important; color: var(--text) !important; }
+
+/* Kartu Top Video & Grafik: gradient lembut + shadow agar senada premium */
+section[data-view="stats"] .top-perf-col,
+section[data-view="stats"] .mini-chart-card {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 10%, var(--bg-elev)), var(--bg-elev)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.24) !important;
+}
