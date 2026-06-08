@@ -31744,8 +31744,15 @@ function runSubAction(action) {
     return;
   }
   if (kind === "stats-tab") {
-    // Sidebar sub-item Statistik → set tab spesifik
-    if (typeof setStatsTab === "function") setStatsTab(value);
+    // Sidebar sub-item Statistik → buka Statistik & scroll ke section terkait
+    // (sinkron dgn tab bar scroll-jump; semua section tetap tampil).
+    if (typeof switchView === "function") switchView("stats");
+    const scrollToSec = (tries) => {
+      const el = document.querySelector(`section.view[data-view="stats"] [data-stats-section="${value}"]`);
+      if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      else if (tries > 0) setTimeout(() => scrollToSec(tries - 1), 120);
+    };
+    setTimeout(() => scrollToSec(6), 120);
     return;
   }
   if (kind === "gv-filter") {
