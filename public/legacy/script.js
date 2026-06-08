@@ -51499,7 +51499,7 @@ function setStatsTab(tab) {
   });
   // Update title + breadcrumb sesuai tab.
   const meta = {
-    "all":        { title: "Statistik",            desc: "Performa channel kamu — Ringkasan, Top Video, dan Grafik dalam satu halaman.", crumb: "Statistik" },
+    "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.", crumb: "Statistik" },
     "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
     "top-video":  { title: "Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, ditonton lama, dan dikomentari.", crumb: "Top Video" },
     "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },

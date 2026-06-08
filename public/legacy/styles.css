@@ -72628,3 +72628,18 @@ section[data-view="stats"] .riwayat-tab-bar .stat-tab {
 /* Heading section pertama tidak mepet ke tab bar */
 section[data-view="stats"] [data-stats-section]:first-of-type > h3,
 section[data-view="stats"] [data-stats-section]:first-of-type > .card-head h3 { margin-top: 2px !important; }
+
+/* ===================================================================
+   STATISTIK v731 — judul "Kotak + deskripsi" (per pilihan user)
+   Tampilkan kembali deskripsi di bawah judul; ikon align ke atas.
+   =================================================================== */
+section[data-view="stats"] .lib-header-flex { align-items: flex-start !important; gap: 12px !important; }
+section[data-view="stats"] .lib-header-flex .lib-header-text { padding-top: 1px; }
+/* Deskripsi tampil lagi sebagai subtitle muted */
+section[data-view="stats"] #statsPageDesc {
+  display: block !important;
+  margin: 4px 0 0 !important;
+  font-size: 13px !important; line-height: 1.4 !important;
+  color: var(--muted) !important; font-weight: 500 !important;
+  max-width: 640px;
+}
