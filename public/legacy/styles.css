@@ -72487,3 +72487,35 @@ section[data-view="stats"] .st-ico {
 }
 section[data-view="stats"] .st-ico svg { width: 16px; height: 16px; }
 section[data-view="stats"] .st-txt { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0; }
+
+/* ===== STATISTIK — rapatkan jarak + kartu menonjol (pemisah jelas) ===== */
+/* Kartu section: bg lebih terang dari halaman + border tegas + rapat */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section {
+  background: var(--bg-elev-2, #311c22) !important;
+  border: 1px solid var(--border-strong, rgba(232,216,196,.16)) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  margin-top: 14px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18) !important;
+}
+/* KPI cards juga menonjol & rapat */
+section[data-view="stats"] .stat-card {
+  background: var(--bg-elev-2, #311c22) !important;
+  border: 1px solid var(--border-strong, rgba(232,216,196,.16)) !important;
+  padding: 13px 15px !important;
+}
+section[data-view="stats"] #statsRow { gap: 10px !important; margin: 0 !important; }
+/* judul section rapat */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] h3,
+section[data-view="stats"] .grafik-head-text h3 { margin: 0 0 12px !important; }
+section[data-view="stats"] .stats-section-head { margin: 2px 0 10px !important; }
+section[data-view="stats"] .grafik-head-text + * { margin-top: 0; }
+/* hapus kartu-dalam-kartu: chart inner transparan */
+section[data-view="stats"] .mini-chart-card { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+section[data-view="stats"] .chart-metric-tabs { margin: 0 0 10px !important; }
+section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 150px !important; }
+/* grid trafik/audiens rapat */
+section[data-view="stats"] .stats-extra-grid { gap: 14px !important; margin-top: 14px !important; }
