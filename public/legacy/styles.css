@@ -72547,3 +72547,9 @@ section[data-view="stats"] .stats-ringkasan-card .stat-card {
 }
 section[data-view="stats"] .stats-ringkasan-card #statsRow { gap: 0 !important; }
 section[data-view="stats"] .stats-ringkasan-card .stat-card + .stat-card { border-left: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important; }
+
+/* ===== STATISTIK — tab bar lengkap (ikon + label, sinkron section) ===== */
+section[data-view="stats"] .riwayat-tab-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+section[data-view="stats"] .stat-tab { display: inline-flex !important; align-items: center; gap: 7px; }
+section[data-view="stats"] .stat-tab-ico { display: inline-flex; flex: 0 0 auto; }
+section[data-view="stats"] .stat-tab-ico svg { width: 15px; height: 15px; }
