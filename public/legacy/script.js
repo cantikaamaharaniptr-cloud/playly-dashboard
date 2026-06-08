@@ -31748,6 +31748,12 @@ function runSubAction(action) {
     if (typeof setStatsTab === "function") setStatsTab(value);
     return;
   }
+  if (kind === "riwayat-tab") {
+    // Sidebar sub-item Riwayat → tampilkan section spesifik (aktivitas/pembelian/
+    // search-user/search-video/all) via mekanisme tab yang sudah ada.
+    if (typeof setRiwayatTab === "function") setRiwayatTab(value);
+    return;
+  }
   if (kind === "gv-filter") {
     const tab = document.querySelector(`.gv-tab[data-gv-filter="${value}"]`);
     tab?.click();
@@ -32766,17 +32772,19 @@ async function playVideoInline(card) {
   // Klik di video element (kecuali kontrol native) jangan trigger card click
   videoEl.addEventListener("click", e => e.stopPropagation());
 
-  // Catat ke history seperti openPlayer
-  const existing = state.history.findIndex(h => h.videoId === id && h.group === "Today");
-  if (existing >= 0) {
-    state.history[existing].time = "just now";
-    state.history[existing].ts = Date.now();
-    const [item] = state.history.splice(existing, 1);
-    state.history.unshift(item);
-  } else {
-    state.history.unshift({ videoId: id, group: "Today", time: "just now", ts: Date.now(), progress: 0 });
+  // Catat ke history seperti openPlayer (skip bila Jeda Riwayat aktif)
+  if (!state.historyPaused) {
+    const existing = state.history.findIndex(h => h.videoId === id && h.group === "Today");
+    if (existing >= 0) {
+      state.history[existing].time = "just now";
+      state.history[existing].ts = Date.now();
+      const [item] = state.history.splice(existing, 1);
+      state.history.unshift(item);
+    } else {
+      state.history.unshift({ videoId: id, group: "Today", time: "just now", ts: Date.now(), progress: 0 });
+    }
+    saveState();
   }
-  saveState();
   if (state?.currentView === "history" && typeof renderHistory === "function") renderHistory();
 }
 
@@ -36476,6 +36484,17 @@ function setRiwayatTab(tab) {
   const descEl  = document.getElementById("riwayatPageDesc");
   if (titleEl && meta) titleEl.textContent = meta.title;
   if (descEl  && meta) descEl.textContent  = meta.desc;
+  // Kotak "Cari di riwayat..." hanya relevan utk Tontonan (filter riwayat tonton).
+  // Di tab Pencarian kotak ini tidak berfungsi → sembunyikan (per request user).
+  const searchBox = document.getElementById("historySearch");
+  if (searchBox) {
+    const hideSearch = (key === "search-user" || key === "search-video");
+    searchBox.style.display = hideSearch ? "none" : "";
+    if (hideSearch && searchBox.value) { searchBox.value = ""; }
+  }
+  // "Bersihkan Semua" tidak relevan di Pembelian (transaksi tak bisa dihapus user).
+  const clearBtn = document.getElementById("clearHistory");
+  if (clearBtn) clearBtn.style.display = (key === "pembelian") ? "none" : "";
   // Update breadcrumb (label active)
   const crumb = document.getElementById("breadcrumb");
   const activeBcLast = crumb?.querySelector("a.active");
@@ -36575,13 +36594,22 @@ function renderPurchaseHistory() {
           code: p.code,
           method: p.method,
         }))
-        .sort((a, b) => b.ts - a.ts);
+        .sort((a, b) => (historyState.paySort === "oldest" ? a.ts - b.ts : b.ts - a.ts));
     }
   } catch {}
   const netSpent = totalCharged - totalRefunded;
-  // Summary cards (Total Charge / Refund / Net Spent) — merged dari Settings billing.
+  const approvedCount = purchases.filter(p => p.status === "approved").length;
+  // Summary cards (kolom): Transaksi · Disetujui · Total Charge · Refund · Net Spent.
   const summaryHtml = `
     <div class="rwt-billing-summary">
+      <div class="rbs-cell">
+        <small>Transaksi</small>
+        <b>${purchases.length}</b>
+      </div>
+      <div class="rbs-cell">
+        <small>Disetujui</small>
+        <b>${approvedCount}</b>
+      </div>
       <div class="rbs-cell">
         <small>Total Charge</small>
         <b>$${totalCharged.toFixed(2)}</b>
@@ -36595,37 +36623,51 @@ function renderPurchaseHistory() {
         <b>$${netSpent.toFixed(2)}</b>
       </div>
     </div>`;
-  // v592 (2026-05-28): table list — per request user.
-  const tableHead = `<thead><tr>
-      <th style="width:20%">Tanggal</th>
-      <th style="width:34%">Item</th>
-      <th style="width:16%">Metode</th>
-      <th style="width:16%">Status</th>
-      <th style="width:14%">Jumlah</th>
-    </tr></thead>`;
+  // LIST seragam (per request user) — baris item + jumlah di kanan.
   if (!purchases.length) {
-    wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}
-      <tbody><tr class="rwt-empty-row"><td colspan="5">Belum ada riwayat pembelian. Upgrade premium akan tampil di sini.</td></tr></tbody>
-    </table>`;
+    wrap.innerHTML = summaryHtml + ((typeof window._emptyRichV24 === "function")
+      ? window._emptyRichV24({ kind: "purchase", title: "Belum ada pembelian", copy: "Transaksi premium & upgrade tier akan tampil di sini." })
+      : `<div class="rhl-empty">Belum ada riwayat pembelian.</div>`);
     return;
   }
   const statusBadge = (st) => {
-    if (st === "approved") return '<span class="riwayat-status-badge ok">✓ Approved</span>';
-    if (st === "rejected") return '<span class="riwayat-status-badge bad">✕ Rejected</span>';
-    if (st === "pending")  return '<span class="riwayat-status-badge warn">⏳ Pending</span>';
-    return '<span class="rwt-when">—</span>';
+    if (st === "approved") return '<span class="riwayat-status-badge ok">✓ Disetujui</span>';
+    if (st === "rejected") return '<span class="riwayat-status-badge bad">✕ Ditolak</span>';
+    if (st === "pending")  return '<span class="riwayat-status-badge warn">⏳ Menunggu</span>';
+    return '';
   };
-  const rows = purchases.slice(0, 30).map(p => {
+  // ===== Filter status + pencarian (kotak "Cari di riwayat" aktif di tab Pembelian) =====
+  // Ringkasan kartu di atas tetap dari SEMUA transaksi; filter & cari hanya
+  // memengaruhi isi tabel.
+  const STX = { all: "Semua status", approved: "Disetujui", pending: "Menunggu", rejected: "Ditolak" };
+  const payFilter = ["approved", "pending", "rejected"].includes(historyState.payFilter) ? historyState.payFilter : "all";
+  const tabNow = document.querySelector('section.view[data-view="history"]')?.dataset.riwayatTab;
+  const q = (tabNow === "pembelian") ? (document.getElementById("historySearch")?.value || "").toLowerCase().trim() : "";
+  let filtered = purchases;
+  if (payFilter !== "all") filtered = filtered.filter(p => p.status === payFilter);
+  if (q) filtered = filtered.filter(p => `${p.label} ${p.method || ""} ${p.code || ""} ${STX[p.status] || ""} ${p.amount}`.toLowerCase().includes(q));
+  // Pembelian = TABEL berkolom (No. · Tanggal · Item · Metode · Status · Jumlah).
+  const rows = filtered.slice(0, 30).map((p, i) => {
     const when = p.ts ? new Date(p.ts).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
     return `<tr>
+      <td class="rwt-srch-no">${i + 1}</td>
       <td class="rwt-when">${escapeHtml(when)}</td>
       <td><strong>${escapeHtml(p.label)}</strong>${p.code ? `<br><small class="rwt-method">${escapeHtml(p.code)}</small>` : ""}</td>
       <td class="rwt-method">${p.method ? escapeHtml(p.method) : "—"}</td>
       <td>${statusBadge(p.status)}</td>
-      <td class="rwt-amount" style="text-align:right">${escapeHtml(p.amount)}</td>
+      <td class="rwt-amount">${escapeHtml(p.amount)}</td>
     </tr>`;
   }).join("");
-  wrap.innerHTML = summaryHtml + `<table class="riwayat-table">${tableHead}<tbody>${rows}</tbody></table>`;
+  const paySort = historyState.paySort === "oldest" ? "oldest" : "newest";
+  const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  const ddFilter = `<div class="hdd" data-hdd="pay-filter"><button type="button" class="hdd-btn" aria-haspopup="listbox" aria-expanded="false"><span>${STX[payFilter]}</span>${CHEV}</button><ul class="hdd-menu" role="listbox" hidden>${["all", "approved", "pending", "rejected"].map(v => `<li role="option" data-val="${v}"${v === payFilter ? ' class="active"' : ""}>${STX[v]}</li>`).join("")}</ul></div>`;
+  const ddSort = `<div class="hdd" data-hdd="pay-sort"><button type="button" class="hdd-btn" aria-haspopup="listbox" aria-expanded="false"><span>${paySort === "oldest" ? "Terlama" : "Terbaru"}</span>${CHEV}</button><ul class="hdd-menu" role="listbox" hidden><li role="option" data-val="newest"${paySort !== "oldest" ? ' class="active"' : ""}>Terbaru</li><li role="option" data-val="oldest"${paySort === "oldest" ? ' class="active"' : ""}>Terlama</li></ul></div>`;
+  const payToolbar = `<div class="hist-toolbar-mini hist-toolbar-end"><div class="hist-controls">${ddFilter}${ddSort}</div></div>`;
+  const tableHead = `<thead><tr><th class="rwt-srch-no-h">No.</th><th>Tanggal</th><th>Item</th><th>Metode</th><th>Status</th><th class="rwt-pay-amt-h">Jumlah</th></tr></thead>`;
+  const body = filtered.length
+    ? `<table class="riwayat-table riwayat-table-pay"><colgroup><col style="width:54px"><col style="width:16%"><col><col style="width:13%"><col style="width:15%"><col style="width:13%"></colgroup>${tableHead}<tbody>${rows}</tbody></table>`
+    : `<div class="rhl-empty">Tidak ada transaksi yang cocok${q ? ` dengan "${escapeHtml(q)}"` : ""}${payFilter !== "all" ? ` (status: ${STX[payFilter]})` : ""}.</div>`;
+  wrap.innerHTML = summaryHtml + payToolbar + body;
 }
 
 function renderSearchHistorySections() {
@@ -36633,32 +36675,45 @@ function renderSearchHistorySections() {
   const vidWrap  = document.getElementById("searchVideoHistoryList");
   const userQs = Array.isArray(state?.searchHistoryUser)  ? state.searchHistoryUser  : [];
   const vidQs  = Array.isArray(state?.searchHistoryVideo) ? state.searchHistoryVideo : [];
-  // v592 (2026-05-28): table list — per request user.
-  const renderTable = (wrap, items, kind) => {
+  // Ikon chip per jenis section: orang utk Pencarian User, video utk Pencarian Video.
+  const userIco  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
+  const videoIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg>';
+  const trashIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
+  const renderList = (wrap, items, kind) => {
     if (!wrap) return;
     const isUser = kind === "user";
-    const head = `<thead><tr><th style="width:62%">Kueri</th><th style="width:18%">Tipe</th><th style="width:20%">Aksi</th></tr></thead>`;
     if (!items.length) {
-      wrap.innerHTML = `<table class="riwayat-table">${head}
-        <tbody><tr class="rwt-empty-row"><td colspan="3">${isUser ? "Belum ada pencarian user." : "Belum ada pencarian video."}</td></tr></tbody>
-      </table>`;
+      wrap.innerHTML = (typeof window._emptyRichV24 === "function")
+        ? window._emptyRichV24({
+            kind: isUser ? "search-user" : "search-video",
+            title: isUser ? "Belum ada pencarian user" : "Belum ada pencarian video",
+            copy: isUser ? "Username/nama yang pernah kamu cari akan muncul di sini." : "Kata kunci / tag yang pernah kamu cari akan muncul di sini.",
+            cta: isUser ? { label: "Cari pengguna", view: "people" } : { label: "Cari video", view: "discover" },
+          })
+        : `<div class="rhl-empty">${isUser ? "Belum ada pencarian user." : "Belum ada pencarian video."}</div>`;
       return;
     }
+    // DAFTAR BARIS vertikal (per request user) — tiap kata kunci satu baris penuh:
+    // ikon + teks di kiri, aksi teks (Cari lagi / Hapus) di kanan. Klik baris = cari lagi.
+    const chipIco = isUser ? userIco : videoIco;
+    const againIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
     const rows = items.slice(0, 30).map(q => {
       const qe = escapeHtml(String(q));
-      return `<tr class="riwayat-chip" data-kind="${kind}" data-q="${qe}" style="cursor:pointer">
-        <td><span class="rwt-query">${qe}</span></td>
-        <td class="rwt-method">${isUser ? "User" : "Video"}</td>
-        <td style="text-align:right">
-          <button type="button" class="rwt-act rwt-act-play" data-kind="${kind}" data-q="${qe}" title="Cari ulang" aria-label="Cari ulang">↗</button>
-          <button type="button" class="rwt-act" data-kind="${kind}-rm" data-q="${qe}" title="Hapus" aria-label="Hapus">✕</button>
-        </td>
-      </tr>`;
+      return `<div class="rhl-row riwayat-chip srch-list-row" data-kind="${kind}" data-q="${qe}" role="button" tabindex="0" title="Cari lagi: ${qe}">
+        <span class="rhl-ico">${chipIco}</span>
+        <div class="rhl-info"><strong>${qe}</strong></div>
+        <div class="srch-list-act">
+          <button type="button" class="rwt-act-btn rwt-act-play" data-kind="${kind}" data-q="${qe}" title="Cari lagi">${againIco}<span>Cari lagi</span></button>
+          <button type="button" class="rwt-act-btn rwt-act-del" data-kind="${kind}-rm" data-q="${qe}" title="Hapus">${trashIco}<span>Hapus</span></button>
+        </div>
+      </div>`;
     }).join("");
-    wrap.innerHTML = `<table class="riwayat-table">${head}<tbody>${rows}</tbody></table>`;
+    // Toolbar per-section ("X kata kunci · Hapus Semua") DIHAPUS — sudah ada
+    // "Bersihkan Semua" di header atas (dibuat context-aware utk tab Pencarian).
+    wrap.innerHTML = `<div class="rhl-list">${rows}</div>`;
   };
-  renderTable(userWrap, userQs, "user");
-  renderTable(vidWrap,  vidQs,  "video");
+  renderList(userWrap, userQs, "user");
+  renderList(vidWrap,  vidQs,  "video");
 }
 
 // Hapus chip pencarian / klik chip
@@ -36675,7 +36730,7 @@ document.addEventListener("click", e => {
     }
     return;
   }
-  const chip = e.target.closest(".riwayat-chip[data-kind]");
+  const chip = e.target.closest(".riwayat-chip[data-kind], tr.rwt-srch-row[data-kind]");
   if (chip) {
     const q = chip.dataset.q;
     const kind = chip.dataset.kind;
@@ -36686,143 +36741,263 @@ document.addEventListener("click", e => {
 
 function renderHistory() {
   // Setiap masuk halaman Riwayat → reset ke "all" (semua section terlihat).
-  // User pilih pill spesifik kalau mau filter — bukan memori tab terakhir.
   setRiwayatTab("all");
-  // Render semua section content (filtering visual diatur via CSS by data-riwayat-tab)
   renderPurchaseHistory();
   renderSearchHistorySections();
 
+  // Rapikan header tiap section: ikon dipisah ke samping, judul+subjudul ditumpuk
+  // rapat, DAN judul disamakan dgn label sub-item sidebar (Tontonan/Pembelian/dst).
+  const SECTION_LABEL = { aktivitas: "Tontonan", pembelian: "Pembelian", "search-user": "Pencarian User", "search-video": "Pencarian Video" };
+  document.querySelectorAll('section[data-view="history"] .riwayat-section-head').forEach(head => {
+    const h3 = head.querySelector("h3"); if (!h3) return;
+    const secKey = head.closest(".riwayat-section")?.dataset.section;
+    const label = SECTION_LABEL[secKey];
+    if (head.querySelector(".rsh-text")) {            // sudah dirapikan → cukup pastikan judul benar
+      if (label) h3.textContent = label;
+      return;
+    }
+    const small = head.querySelector("small");
+    const ico = h3.querySelector('.sec-icon-v582, [class*="sec-icon"]');
+    if (ico) head.insertBefore(ico, h3);              // pindahkan ikon keluar h3
+    if (label) h3.textContent = label;                // samakan judul dgn sidebar
+    const txt = document.createElement("div");
+    txt.className = "rsh-text";
+    head.insertBefore(txt, h3);
+    txt.appendChild(h3);
+    if (small) txt.appendChild(small);
+  });
+
+  const GROUP_LABEL = { "Today": "Hari ini", "Yesterday": "Kemarin", "This week": "Minggu ini", "Older": "Lebih lama" };
+  const HIC = {
+    pauseOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    pauseOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+    undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/></svg>',
+  };
+  const parseDurSec = (v) => {
+    let d = v && (v.durationSec != null ? v.durationSec : v.duration);
+    if (typeof d === "number" && isFinite(d)) return d;
+    if (typeof d === "string" && d.indexOf(":") >= 0) return d.split(":").map(Number).reduce((a, b) => a * 60 + (b || 0), 0);
+    const n = Number(d); return isFinite(n) && n > 0 ? n : 0;
+  };
+  const remainLabel = (h, v) => {
+    const dur = parseDurSec(v); if (!dur || (h.progress || 0) >= 100) return "";
+    const rem = Math.round(dur * (100 - (h.progress || 0)) / 100); if (rem <= 0) return "";
+    const m = Math.round(rem / 60); return m >= 1 ? ` · ~${m} mnt tersisa` : " · <1 mnt tersisa";
+  };
+
+  // ===== Toolbar: ringkasan + filter + urutkan + Jeda Riwayat =====
+  const actSec = document.querySelector('section.view[data-view="history"] .riwayat-section[data-section="aktivitas"]');
+  let toolbar = document.getElementById("historyToolbar");
+  if (actSec && !toolbar) {
+    toolbar = document.createElement("div");
+    toolbar.id = "historyToolbar";
+    toolbar.className = "history-toolbar";
+    toolbar.setAttribute("data-no-i18n", ""); // teks toolbar sudah lokal — jangan auto-translate
+    const head = actSec.querySelector(".riwayat-section-head");
+    (head || actSec).insertAdjacentElement(head ? "afterend" : "afterbegin", toolbar);
+  }
+  const filter = historyState.filter || "all";
+  const sortMode = historyState.sort || "newest";
+  const paused = !!state.historyPaused;
+  const totalAll = state.history.length;
+  const inProg = state.history.filter(h => (h.progress || 0) < 100).length;
+  const doneCnt = totalAll - inProg;
+  if (toolbar) {
+    // Dropdown custom bertema (ganti <select> native yg chevron-nya numpuk teks)
+    const dd = (id, cur, opts) => {
+      const curLabel = (opts.find(o => o[0] === cur) || opts[0])[1];
+      const items = opts.map(o => `<li role="option" data-val="${o[0]}"${o[0] === cur ? ' class="active"' : ""}>${o[1]}</li>`).join("");
+      return `<div class="hdd" data-hdd="${id}">
+        <button type="button" class="hdd-btn" aria-haspopup="listbox" aria-expanded="false"><span>${curLabel}</span>${HIC.chevron}</button>
+        <ul class="hdd-menu" role="listbox" hidden>${items}</ul>
+      </div>`;
+    };
+    const undo = window._histUndo
+      ? `<div class="hist-undo"><span>Item dihapus.</span><button type="button" data-hist-undo>${HIC.undo}<span>Urungkan</span></button></div>` : "";
+    toolbar.innerHTML = `
+      <div class="hist-summary">
+        <button type="button" class="hist-stat total${filter === "all" ? " is-active" : ""}" data-hist-filter="all"><b>${totalAll}</b> Total</button>
+        <button type="button" class="hist-stat prog${filter === "progress" ? " is-active" : ""}" data-hist-filter="progress"><b>${inProg}</b> Belum selesai</button>
+        <button type="button" class="hist-stat done${filter === "done" ? " is-active" : ""}" data-hist-filter="done"><b>${doneCnt}</b> Selesai</button>
+      </div>
+      <div class="hist-controls">
+        ${dd("filter", filter, [["all", "Semua"], ["progress", "Belum selesai"], ["done", "Selesai"]])}
+        ${dd("sort", sortMode, [["newest", "Terbaru"], ["oldest", "Terlama"]])}
+      </div>${undo}`;
+  }
+
   if (!state.history.length) {
-    // v592 (2026-05-28): tabel empty state (sebelumnya emptyHTML card).
     $("#continueList") && ($("#continueList").innerHTML = "");
-    $("#historyGroups") && ($("#historyGroups").innerHTML = `<table class="riwayat-table">
-      <thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>
-      <tbody><tr class="rwt-empty-row"><td colspan="4">Riwayat masih kosong. Video yang kamu tonton akan muncul di sini.</td></tr></tbody>
-    </table>`);
+    if ($("#historyGroups")) {
+      $("#historyGroups").innerHTML = (typeof window._emptyRichV24 === "function")
+        ? window._emptyRichV24({ kind: "history", title: "Riwayat masih kosong", copy: "Video yang kamu tonton akan muncul di sini.", cta: { label: "Jelajahi video", view: "discover" } })
+        : `<div class="riwayat-empty">Riwayat masih kosong.</div>`;
+    }
     return;
   }
 
-  // Lanjutkan Nonton — max contLimit (default 10)
-  const allCont = state.history.filter(h => h.progress < 100);
-  const contLimit = historyState.contLimit;
-  const cont = allCont.slice(0, contLimit);
-  const contRemaining = Math.max(0, allCont.length - cont.length);
-  $("#continueList").innerHTML = cont.length ? cont.map(h => {
-    const v = findVideo(h.videoId);
-    if (!v) return "";
-    const histIdx = state.history.indexOf(h);
-    return `
-      <div class="continue-card" data-vid="${v.id}">
-        <div class="mini-thumb">
-          <img src="${v.thumb}" alt=""/>
-          <div class="progress-bar"><i style="width:${h.progress}%"></i></div>
-        </div>
-        <div class="info">
-          <h5>${v.title}</h5>
-          <p class="meta">@${v.creator}</p>
-          <div class="pct">▶ ${h.progress}% selesai</div>
-        </div>
-        <button class="remove-btn" data-cont-rm="${histIdx}" title="Hapus dari Lanjutkan Tontonan" aria-label="Hapus">✕</button>
-      </div>
-    `;
-  }).join("") : `<div style="grid-column:1/-1; padding:20px; text-align:center; color:var(--muted); font-size:13px">No videos in progress.</div>`;
+  // "Lanjutkan Nonton" (kartu preview thumbnail) dihapus per request user —
+  // status & tombol Lanjutkan sudah tersedia di tabel Tontonan di bawah.
+  if ($("#continueList")) $("#continueList").innerHTML = "";
 
-  // "more >" button untuk Lanjutkan Nonton kalau total > limit
-  if (contRemaining > 0) {
-    $("#continueList").innerHTML += `
-      <button type="button" class="people-more-btn history-more-btn" data-history-more="cont">
-        <span>more (+${contRemaining})</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </button>`;
-  }
-
-  // Riwayat Tontonan — flat list, batas riwayatLimit (default 10)
+  // ===== Riwayat Tontonan: search + filter + sort =====
   const q = ($("#historySearch")?.value || "").toLowerCase();
-  const filteredAll = state.history.filter(h => {
+  let list = state.history.filter(h => {
+    if (filter === "progress" && (h.progress || 0) >= 100) return false;
+    if (filter === "done" && (h.progress || 0) < 100) return false;
     if (!q) return true;
     const v = findVideo(h.videoId);
     return v && (v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q));
   });
-  const riwayatLimit = historyState.riwayatLimit;
-  const riwayatVisible = filteredAll.slice(0, riwayatLimit);
-  const riwayatRemaining = Math.max(0, filteredAll.length - riwayatVisible.length);
+  list = list.slice().sort((a, b) => sortMode === "oldest" ? ((a.ts || 0) - (b.ts || 0)) : ((b.ts || 0) - (a.ts || 0)));
+  const visible = list.slice(0, historyState.riwayatLimit);
+  const riwayatRemaining = Math.max(0, list.length - visible.length);
 
-  // Group by date for visible items
-  const groups = {};
-  riwayatVisible.forEach(h => {
-    if (!groups[h.group]) groups[h.group] = [];
-    groups[h.group].push(h);
-  });
-  const groupOrder = ["Today", "Yesterday", "This week", "Older"];
-
-  // v592 (2026-05-28): Tabel list — Tanggal | Video | Progress | Aksi.
-  // Group dibuat jadi rwt-group-row (separator row di dalam tabel).
-  const tableRows = groupOrder.filter(g => groups[g]).map(g => {
-    const items = groups[g];
-    const groupRow = `<tr class="rwt-group-row"><td colspan="4">${g}</td></tr>`;
-    const itemRows = items.map(h => {
-      const v = findVideo(h.videoId);
-      if (!v) return "";
-      const idx = state.history.indexOf(h);
-      const pct = Math.max(0, Math.min(100, Math.round(h.progress || 0)));
-      return `<tr class="history-item" data-vid="${v.id}">
-        <td class="rwt-when">${escapeHtml(h.time || "")}</td>
-        <td>
-          <div class="rwt-video-cell">
-            <img class="rwt-thumb" src="${escapeHtml(v.thumb)}" alt=""/>
-            <div class="rwt-video-meta">
-              <strong>${escapeHtml(v.title)}</strong>
-              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} views</small>
-            </div>
-          </div>
-        </td>
-        <td>
-          <span class="rwt-progress">${pct}% ditonton<i><span style="width:${pct}%"></span></i></span>
-        </td>
-        <td style="text-align:right">
-          <button class="rwt-act" data-rm="${idx}" title="Hapus" aria-label="Hapus">✕</button>
-        </td>
-      </tr>`;
-    }).join("");
-    return groupRow + itemRows;
+  // DAFTAR KARTU BARIS (bukan tabel) — gaya "continue watching": ikon play +
+  // judul + (kreator · waktu · status) + bar progress menonjol + tombol berwarna.
+  const ythPlay = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  // Format detik → m:ss / h:mm:ss
+  const fmtTime = (s) => {
+    s = Math.max(0, Math.round(s || 0));
+    const hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+    const m2 = hh ? String(mm).padStart(2, "0") : String(mm);
+    return (hh ? hh + ":" : "") + m2 + ":" + String(ss).padStart(2, "0");
+  };
+  const watchRows = visible.map(h => {
+    const v = findVideo(h.videoId); if (!v) return "";
+    const idx = state.history.indexOf(h);
+    const pct = Math.max(0, Math.min(100, Math.round(h.progress || 0)));
+    const done = pct >= 100;
+    const statusTxt = done ? "Selesai" : `${pct}% ditonton`;
+    const barW = done ? 100 : pct;
+    const resumeTxt = done ? "Tonton lagi" : "Lanjutkan";
+    const meta = `@${escapeHtml(v.creator)}${h.time ? ` <b>·</b> ${escapeHtml(h.time)}` : ""} <b>·</b> <span class="wh-stat${done ? " done" : ""}">${statusTxt}</span>`;
+    // Thumbnail preview BESAR + badge durasi; seekbar fungsional (track + isian +
+    // knob) + label posisi tonton (mm:ss / total) di bawah meta — gaya pemutar nyata.
+    const dur = parseDurSec(v);
+    const watched = Math.round(dur * pct / 100);
+    const timeLabel = dur ? `${fmtTime(watched)} / ${fmtTime(dur)}` : "";
+    const thumbStyle = v.thumb ? ` style="background-image:url('${escapeHtml(v.thumb)}')"` : "";
+    return `<div class="wh-row" data-vid="${v.id}" role="button" tabindex="0">
+      <div class="wh-thumb${v.thumb ? "" : " wh-thumb-empty"}"${thumbStyle}>
+        ${v.thumb ? "" : `<span class="wh-thumb-ico">${ythPlay}</span>`}
+        <span class="wh-thumb-play">${ythPlay}</span>
+        ${dur ? `<span class="wh-thumb-dur">${fmtTime(dur)}</span>` : ""}
+      </div>
+      <div class="wh-main">
+        <div class="wh-title">${escapeHtml(v.title)}</div>
+        <div class="wh-meta">${meta}</div>
+        <div class="wh-seek">
+          <span class="wh-bar${done ? " done" : ""}"><i style="width:${barW}%"></i><span class="wh-knob" style="left:${barW}%"></span></span>
+          ${timeLabel ? `<span class="wh-time">${timeLabel}</span>` : ""}
+        </div>
+      </div>
+      <div class="wh-actions">
+        <button type="button" class="rwt-act-btn rwt-act-play wh-resume">${ythPlay}<span>${resumeTxt}</span></button>
+        <button type="button" class="rwt-act-btn rwt-act-del" data-rm="${idx}" title="Hapus dari riwayat">${HIC.trash}<span>Hapus</span></button>
+      </div>
+    </div>`;
   }).join("");
-
-  const tableHead = `<thead><tr><th style="width:18%">Tanggal</th><th style="width:48%">Video</th><th style="width:22%">Progress</th><th style="width:12%">Aksi</th></tr></thead>`;
-  $("#historyGroups").innerHTML = tableRows
-    ? `<table class="riwayat-table">${tableHead}<tbody>${tableRows}</tbody></table>`
-    : `<table class="riwayat-table">${tableHead}<tbody><tr class="rwt-empty-row"><td colspan="4">Tidak ada riwayat yang cocok.</td></tr></tbody></table>`;
-
-  // "more >" untuk Riwayat Tontonan
+  $("#historyGroups").innerHTML = watchRows
+    ? `<div class="wh-list">${watchRows}</div>`
+    : `<div class="yth-empty">Tidak ada riwayat yang cocok dengan pencarian/filter.</div>`;
   if (riwayatRemaining > 0) {
-    $("#historyGroups").innerHTML += `
-      <button type="button" class="people-more-btn history-more-btn" data-history-more="riwayat" style="margin-top:10px">
-        <span>more (+${riwayatRemaining})</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </button>`;
+    $("#historyGroups").innerHTML += `<button type="button" class="people-more-btn history-more-btn" data-history-more="riwayat" style="margin-top:14px"><span>Muat lebih banyak (${riwayatRemaining})</span>${HIC.chevron}</button>`;
   }
 
-  $$("#continueList .continue-card, #historyGroups .history-item").forEach(c => {
+  // ===== Wire interaksi =====
+  $$("#continueList .continue-card, #historyGroups .wh-row").forEach(c => {
     c.addEventListener("click", e => {
-      if (e.target.closest(".remove-btn") || e.target.closest(".rwt-act")) return;
+      if (e.target.closest(".remove-btn") || e.target.closest(".rwt-act-del")) return;
       openPlayer(+c.dataset.vid);
     });
   });
-  $$("[data-rm]").forEach(b => b.addEventListener("click", e => {
-    e.stopPropagation();
-    state.history.splice(+b.dataset.rm, 1);
+  const histDelWithUndo = (idx, msg) => {
+    if (idx < 0 || idx >= state.history.length) return;
+    const item = state.history[idx];
+    state.history.splice(idx, 1);
+    window._histUndo = { item, idx };
+    if (window._histUndoTimer) clearTimeout(window._histUndoTimer);
+    window._histUndoTimer = setTimeout(() => { window._histUndo = null; if (state?.currentView === "history") renderHistory(); }, 7000);
     saveState();
     renderHistory();
-    toast("🗑️ Item dihapus dari riwayat");
-  }));
-  // Delete handler khusus Lanjutkan Tontonan
-  $$("[data-cont-rm]").forEach(b => b.addEventListener("click", e => {
-    e.stopPropagation();
-    state.history.splice(+b.dataset.contRm, 1);
-    saveState();
-    renderHistory();
-    toast("🗑️ Dihapus dari Lanjutkan Tontonan");
-  }));
+    toast(msg, "success");
+  };
+  $$("[data-rm]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); histDelWithUndo(+b.dataset.rm, "🗑️ Item dihapus — bisa diurungkan"); }));
+  $$("[data-cont-rm]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); histDelWithUndo(+b.dataset.contRm, "🗑️ Dihapus dari Lanjutkan Nonton"); }));
 }
+
+// Riwayat: dropdown custom (Filter & Urutkan) + jeda / bersihkan grup / urungkan
+document.addEventListener("click", e => {
+  // Pill ringkasan Tontonan = filter cepat (Total/Belum selesai/Selesai)
+  const pillFilter = e.target.closest("[data-hist-filter]");
+  if (pillFilter) {
+    historyState.filter = pillFilter.dataset.histFilter;
+    historyState.riwayatLimit = 10;
+    renderHistory();
+    return;
+  }
+  // toggle buka/tutup dropdown
+  const ddBtn = e.target.closest(".hdd-btn");
+  if (ddBtn) {
+    const menu = ddBtn.parentElement.querySelector(".hdd-menu");
+    const willOpen = menu.hidden;
+    document.querySelectorAll(".hdd-menu").forEach(m => (m.hidden = true));
+    document.querySelectorAll(".hdd-btn").forEach(b => b.setAttribute("aria-expanded", "false"));
+    menu.hidden = !willOpen;
+    ddBtn.setAttribute("aria-expanded", String(willOpen));
+    return;
+  }
+  // pilih item dropdown
+  const ddItem = e.target.closest(".hdd-menu li");
+  if (ddItem) {
+    const which = ddItem.closest(".hdd")?.dataset.hdd;
+    const val = ddItem.dataset.val;
+    if (which === "pay-sort") { historyState.paySort = val; if (typeof renderPurchaseHistory === "function") renderPurchaseHistory(); return; }
+    if (which === "pay-filter") { historyState.payFilter = val; if (typeof renderPurchaseHistory === "function") renderPurchaseHistory(); return; }
+    if (which === "filter") { historyState.filter = val; historyState.riwayatLimit = 10; }
+    else if (which === "sort") { historyState.sort = val; }
+    renderHistory();
+    return;
+  }
+  // klik di luar dropdown → tutup semua menu
+  if (!e.target.closest(".hdd")) document.querySelectorAll(".hdd-menu").forEach(m => (m.hidden = true));
+  if (e.target.closest("#historyPauseBtn")) {
+    state.historyPaused = !state.historyPaused; saveState?.(); renderHistory();
+    toast(state.historyPaused ? "⏸ Riwayat tontonan dijeda" : "▶ Riwayat tontonan aktif lagi", "success");
+    return;
+  }
+  if (e.target.closest("[data-hist-undo]")) {
+    const u = window._histUndo;
+    if (u && Array.isArray(state.history)) {
+      state.history.splice(Math.min(u.idx, state.history.length), 0, u.item);
+      window._histUndo = null; if (window._histUndoTimer) clearTimeout(window._histUndoTimer);
+      saveState?.(); renderHistory(); toast("↩ Dikembalikan", "success");
+    }
+    return;
+  }
+  const csr = e.target.closest("[data-clear-srch]");
+  if (csr) {
+    const kind = csr.dataset.clearSrch;
+    const key = kind === "user" ? "searchHistoryUser" : "searchHistoryVideo";
+    const cnt = (state[key] || []).length;
+    const doIt = () => { state[key] = []; saveState?.(); renderSearchHistorySections(); toast("✓ Riwayat pencarian dibersihkan", "success"); };
+    if (typeof openConfirm === "function") openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus semua pencarian?", desc: `<b>${cnt}</b> kata kunci akan dihapus.`, btnText: "Hapus", btnClass: "danger", onConfirm: doIt });
+    else doIt();
+    return;
+  }
+  const cg = e.target.closest("[data-hist-clear-group]");
+  if (cg) {
+    const g = cg.dataset.histClearGroup;
+    const cnt = state.history.filter(h => h.group === g).length;
+    const doIt = () => { state.history = state.history.filter(h => h.group !== g); saveState?.(); renderHistory(); toast("✓ Grup riwayat dibersihkan", "success"); };
+    if (typeof openConfirm === "function") openConfirm({ icon: "🗑️", iconClass: "danger", title: "Bersihkan grup ini?", desc: `<b>${cnt}</b> riwayat pada grup ini akan dihapus.`, btnText: "Hapus", btnClass: "danger", onConfirm: doIt });
+    else doIt();
+    return;
+  }
+});
 
 // Re-render History view tiap kali state.history berubah (mis. user nonton
 // video baru dari sub-section lain). Polling cepat: bind sekali, listen
@@ -36835,6 +37010,10 @@ window.addEventListener("playly:cloud-applied", () => {
 
 $("#historySearch")?.addEventListener("input", () => {
   historyState.riwayatLimit = 10; // reset pagination saat search
+  // Tab-aware: di Pembelian cukup re-render tabelnya (jangan lewat renderHistory
+  // yg reset tab ke "all" → bikin pencarian Pembelian gagal & tab lompat).
+  const tab = document.querySelector('section.view[data-view="history"]')?.dataset.riwayatTab;
+  if (tab === "pembelian") { if (typeof renderPurchaseHistory === "function") renderPurchaseHistory(); return; }
   renderHistory();
 });
 // Klik "more >" di kolom history → tambah 10 lagi
@@ -36847,13 +37026,27 @@ document.addEventListener("click", e => {
   renderHistory();
 });
 $("#clearHistory")?.addEventListener("click", () => {
+  // Context-aware: ikut section/tab Riwayat yang sedang aktif.
+  const tab = document.querySelector('section.view[data-view="history"]')?.dataset.riwayatTab || "all";
+  if (tab === "search-user" || tab === "search-video") {
+    const keyName = tab === "search-user" ? "searchHistoryUser" : "searchHistoryVideo";
+    const arr = Array.isArray(state[keyName]) ? state[keyName] : [];
+    if (!arr.length) return toast("Riwayat pencarian sudah kosong");
+    const doIt = () => { state[keyName] = []; saveState?.(); renderSearchHistorySections(); toast("✓ Riwayat pencarian dibersihkan", "success"); };
+    if (typeof openConfirm === "function") openConfirm({ icon: "🗑️", iconClass: "danger", title: "Bersihkan Semua Pencarian?", desc: `<b>${arr.length}</b> kata kunci akan dihapus.`, btnText: "Hapus Semua", btnClass: "danger", onConfirm: doIt });
+    else doIt();
+    return;
+  }
+  if (tab === "pembelian") {
+    return toast("Riwayat pembelian tidak bisa dihapus (catatan transaksi).");
+  }
   if (!state.history.length) return toast("Riwayat sudah kosong");
   // Pakai openConfirm modal in-app, bukan browser confirm() (yang muncul
   // sebagai pop-up native browser di luar dashboard).
   if (typeof openConfirm === "function") {
     openConfirm({
       icon: "🗑️", iconClass: "danger",
-      title: "Clear All History?",
+      title: "Hapus Semua Riwayat?",
       desc: `Semua <b>${state.history.length}</b> riwayat tonton akan dihapus dan tidak bisa dipulihkan.`,
       btnText: "Hapus Semua", btnClass: "danger",
       onConfirm: () => {
@@ -46659,17 +46852,20 @@ async function openPlayer(id) {
   // Sebelumnya pakai random progress yang bikin Lanjutkan Tontonan tampil
   // angka tidak masuk akal (mis. 39% padahal baru buka). Diganti progress 0 +
   // ts supaya bisa real-time update dari timeupdate event di player.
-  const existing = state.history.findIndex(h => h.videoId === id && h.group === "Today");
-  if (existing >= 0) {
-    state.history[existing].time = "just now";
-    state.history[existing].ts = Date.now();
-    // Pindahkan ke depan supaya tampil di atas Riwayat
-    const [item] = state.history.splice(existing, 1);
-    state.history.unshift(item);
-  } else {
-    state.history.unshift({ videoId: id, group: "Today", time: "just now", ts: Date.now(), progress: 0 });
+  // Jeda Riwayat: jika user menjeda perekaman, jangan catat tontonan baru.
+  if (!state.historyPaused) {
+    const existing = state.history.findIndex(h => h.videoId === id && h.group === "Today");
+    if (existing >= 0) {
+      state.history[existing].time = "just now";
+      state.history[existing].ts = Date.now();
+      // Pindahkan ke depan supaya tampil di atas Riwayat
+      const [item] = state.history.splice(existing, 1);
+      state.history.unshift(item);
+    } else {
+      state.history.unshift({ videoId: id, group: "Today", time: "just now", ts: Date.now(), progress: 0 });
+    }
+    saveState();
   }
-  saveState();
   // Refresh History view kalau sedang dibuka — supaya data real-time
   if (state?.currentView === "history" && typeof renderHistory === "function") renderHistory();
 
@@ -55005,6 +55201,7 @@ document.addEventListener("click", function(e) {
   e.preventDefault();
   try {
     // Coba berbagai entry-point yang sudah ada di codebase ini
+    if (typeof switchView === "function")           return switchView(view);
     if (typeof window.setView === "function")       return window.setView(view);
     if (typeof window.showView === "function")      return window.showView(view);
     if (typeof window.openView === "function")      return window.openView(view);
