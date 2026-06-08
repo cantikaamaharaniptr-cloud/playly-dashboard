@@ -72862,3 +72862,19 @@ section[data-view="stats"] #statsRow .stat-icon {
   border-color: color-mix(in srgb, var(--cream, #E8D8C4) 40%, transparent);
 }
 .stats-back-btn svg { flex: 0 0 auto; opacity: .85; }
+
+/* ===================================================================
+   STATISTIK v755 — (1) rapatkan jarak heading Ringkasan -> kartu KPI
+   (gap 44px: h3 margin-bottom 12 + subtitle hidden + margin head/row),
+   (2) label kartu KPI JANGAN uppercase (teks aslinya sudah title-case).
+   =================================================================== */
+/* (1) gap heading -> kartu */
+section[data-view="stats"] .stats-section-head[data-stats-section="ringkasan"] { margin-bottom: 6px !important; }
+section[data-view="stats"] .stats-section-head[data-stats-section="ringkasan"] h3 { margin-bottom: 0 !important; }
+section[data-view="stats"] #statsRow { margin-top: 8px !important; }
+/* (2) label kartu KPI: title-case, bukan KAPITAL semua */
+section[data-view="stats"] #statsRow .stat-label {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+  font-size: 11px !important;
+}
