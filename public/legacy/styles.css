@@ -68177,12 +68177,14 @@ body[data-theme="light"][data-role="admin"] .admin-bg-particles {
    Ditaruh di akhir file + selector `header.topbar` → pasti menang cascade.
    ========================================================================= */
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar {
-  background: transparent !important;
+  /* v737: bar diberi background SOLID (bukan transparan lagi) karena topbar
+     kini STICKY/fixed — supaya konten tidak tembus saat di-scroll. */
+  background-color: var(--bg, #1a0c10) !important;
   background-image: none !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar .breadcrumb,
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar .topbar-search,
@@ -68204,9 +68206,18 @@ html body:not([data-role="admin"]):not(.auth-mode) header.topbar .user-chip {
       Tontonan/Suka/Video/Pengikut di bawah → redundant clutter.
    ========================================================= */
 html body:not([data-role="admin"]):not(.auth-mode) .topbar {
-  position: static !important;
-  top: auto !important;
+  /* v734 (2026-06-08): user minta topbar STICKY lagi (search/akun selalu
+     kejangkau). App pakai sidebar fixed + body-scroll -> sticky-in-body
+     tidak reliable di Chrome, jadi pakai position:fixed meniru sidebar
+     (left:var(--sb-w) otomatis 0 di <=900px). Clearance via .main padding. */
+  position: fixed !important;
+  top: 0 !important;
+  left: var(--sb-w) !important;
+  right: 0 !important;
+  margin: 0 !important;
+  z-index: 55 !important;
   gap: 6px !important;
+  /* background/border/shadow di blok "header.topbar" (spesifisitas lebih tinggi) */
 }
 html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-actions {
   gap: 6px !important;
@@ -72691,3 +72702,11 @@ section[data-view="stats"] #statsRow .stat-label {
   line-height: 1.2 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 section[data-view="stats"] #statsRow .stat-value { font-size: 20px !important; margin: 0 !important; line-height: 1.1 !important; }
+
+/* ===================================================================
+   TOP BAR STICKY v734 — clearance konten (lihat rule .topbar di blok
+   "USER FIX 2026-05-22" yg sudah diubah jadi position:fixed).
+   Topbar keluar dari flow → beri padding-top ke .main agar konten tak
+   tertutup (tinggi topbar ~69px + jarak).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) .main { padding-top: 86px !important; }
