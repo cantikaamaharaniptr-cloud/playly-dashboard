@@ -72827,9 +72827,9 @@ section[data-view="stats"] #statsRow .stat-card:active {
   box-shadow: none !important;
   transform: none !important;
 }
-/* (2) Kotak ikon KPI: fill sedikit lebih pekat + border tipis supaya tidak
-   menyatu dgn kartu (tetap tingkat paling lembut, < section 46%). */
+/* (2) Kotak ikon KPI: cukup naikkan FILL supaya tak menyatu dgn kartu —
+   TANPA border (border tipis tadi malah terbaca seperti "ring"). */
 section[data-view="stats"] #statsRow .stat-icon {
-  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--primary) 52%, transparent) !important;
+  background: color-mix(in srgb, var(--primary) 34%, transparent) !important;
+  border: 0 !important;
 }
