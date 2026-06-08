@@ -32056,7 +32056,7 @@ function renderStatsRow() {
 }
 
 // v757: gabung judul section Ringkasan + #statsRow ke dalam satu kartu
-// (.stats-ringkasan-card). data-stats-section="ringkasan" supaya ikut logika
+// (.stats-ringkasan-block). data-stats-section="ringkasan" supaya ikut logika
 // filter (tampil saat tab ringkasan/all, sembunyi saat tab lain).
 function wrapRingkasanCard() {
   const view = document.querySelector('section.view[data-view="stats"]');
@@ -32064,10 +32064,10 @@ function wrapRingkasanCard() {
   const head = view.querySelector('.stats-section-head[data-stats-section="ringkasan"]');
   const row = document.getElementById("statsRow");
   if (!head || !row) return;
-  let card = view.querySelector(".stats-ringkasan-card");
+  let card = view.querySelector(".stats-ringkasan-block");
   if (!card) {
     card = document.createElement("div");
-    card.className = "stats-ringkasan-card";
+    card.className = "stats-ringkasan-block";
     card.setAttribute("data-stats-section", "ringkasan");
     head.parentNode.insertBefore(card, head);
   }

@@ -72568,23 +72568,8 @@ section[data-view="stats"] .stat-card {
   box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
 }
 
-/* ===== STATISTIK — Ringkasan jadi 1 kartu blok; KPI flat di dalamnya ===== */
-section[data-view="stats"] .stats-ringkasan-card {
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, var(--bg, #1a0c10)) !important;
-  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
-  padding: 16px !important;
-  margin-top: 14px !important;
-}
-section[data-view="stats"] .stats-ringkasan-card .stats-section-head { margin: 0 0 12px !important; }
-/* KPI di dalam kartu Ringkasan = sel flat (tanpa kartu sendiri) */
-section[data-view="stats"] .stats-ringkasan-card .stat-card {
-  background: transparent !important; border: 0 !important; box-shadow: none !important;
-  padding: 4px 16px !important;
-}
-section[data-view="stats"] .stats-ringkasan-card #statsRow { gap: 0 !important; }
-section[data-view="stats"] .stats-ringkasan-card .stat-card + .stat-card { border-left: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important; }
+/* (blok lama "Ringkasan jadi 1 kartu / KPI flat" dihapus di v758 — diganti
+   .stats-ringkasan-block di blok v757 dgn sel KPI boxed + gap normal) */
 
 /* ===== STATISTIK — tab bar lengkap (ikon + label, sinkron section) ===== */
 section[data-view="stats"] .riwayat-tab-bar { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -72895,7 +72880,7 @@ section[data-view="stats"] #statsRow .stat-value { font-size: 26px !important; }
    STATISTIK v757 — judul "Ringkasan Performa" + KPI digabung jadi 1 kartu
    (per user). Kartu luar lembut; kartu KPI di dalamnya tetap distinct.
    =================================================================== */
-section[data-view="stats"] .stats-ringkasan-card {
+section[data-view="stats"] .stats-ringkasan-block {
   background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
   border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
   border-radius: 16px !important;
@@ -72903,11 +72888,15 @@ section[data-view="stats"] .stats-ringkasan-card {
   box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
 }
 /* judul di dalam kartu */
-section[data-view="stats"] .stats-ringkasan-card .stats-section-head { margin: 2px 2px 14px !important; }
-section[data-view="stats"] .stats-ringkasan-card #statsRow { margin-top: 0 !important; }
+section[data-view="stats"] .stats-ringkasan-block .stats-section-head { margin: 2px 2px 14px !important; }
+section[data-view="stats"] .stats-ringkasan-block #statsRow {
+  margin-top: 0 !important;
+  gap: 12px !important;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)) !important;
+}
 /* kartu KPI di dalam: sedikit lebih terang dari kartu luar supaya tetap terbaca
    sebagai sel terpisah (bukan menyatu) tanpa terkesan berat. */
-section[data-view="stats"] .stats-ringkasan-card #statsRow .stat-card {
+section[data-view="stats"] .stats-ringkasan-block #statsRow .stat-card {
   background: color-mix(in srgb, var(--cream, #E8D8C4) 9%, var(--bg, #1a0c10)) !important;
   border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
 }
