@@ -2933,6 +2933,25 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
 
+/* === Scroll reveal (AOS-like) untuk landing — animasi muncul saat di-scroll.
+   no-preference: kalau user pilih reduced-motion, elemen tetap terlihat penuh
+   tanpa animasi (rule penyembunyi tidak aktif). === */
+@media (prefers-reduced-motion: no-preference) {
+  [data-aos] {
+    opacity: 0;
+    transition-property: opacity, transform;
+    transition-duration: .7s;
+    transition-timing-function: cubic-bezier(.22, .61, .36, 1);
+    will-change: opacity, transform;
+  }
+  [data-aos="fade-up"]    { transform: translateY(40px); }
+  [data-aos="fade-down"]  { transform: translateY(-40px); }
+  [data-aos="fade-left"]  { transform: translateX(44px); }
+  [data-aos="fade-right"] { transform: translateX(-44px); }
+  [data-aos="zoom-in"]    { transform: scale(.88); }
+  [data-aos].aos-in { opacity: 1; transform: none; }
+}
+
 /* Badge angka notif di lonceng (#openNotif). Tampil angka unread, cap "9+". */
 .notif-count-badge {
   position: absolute;

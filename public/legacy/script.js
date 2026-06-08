@@ -56562,3 +56562,60 @@ document.addEventListener("click", function(e) {
   } catch {}
 }, false);
 
+// === Scroll reveal (AOS-like) untuk landing page admin =======================
+// Auto-tag section + kartu landing dgn data-aos, lalu reveal via
+// IntersectionObserver saat masuk viewport. Re-animate saat scroll balik
+// (mirip AOS once:false). Self-contained — gampang dihapus.
+(function initLandingScrollReveal() {
+  if (window.__aosBooted) return;
+  window.__aosBooted = true;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let observer = null;
+
+  function tag() {
+    document.querySelectorAll(".admin-landing-section").forEach(sec => {
+      const head = sec.querySelector(".admin-landing-head");
+      if (head && !head.hasAttribute("data-aos")) head.setAttribute("data-aos", "fade-up");
+      // Kartu/step/item di dalam section → stagger biar muncul beruntun
+      const items = sec.querySelectorAll('article, [class*="-card"], [class*="-step"], [class*="-item"], .admin-preview-frame');
+      let i = 0;
+      items.forEach(el => {
+        if (el.closest(".admin-landing-head")) return;
+        if (el.closest("[data-aos]") && el.closest("[data-aos]") !== el) return; // skip nested
+        if (!el.hasAttribute("data-aos")) {
+          el.setAttribute("data-aos", "fade-up");
+          const delay = (i % 4) * 90;
+          if (delay) el.style.transitionDelay = delay + "ms";
+          i++;
+        }
+      });
+    });
+  }
+
+  function reveal() {
+    const els = document.querySelectorAll("[data-aos]");
+    if (reduce || !("IntersectionObserver" in window)) {
+      els.forEach(el => el.classList.add("aos-in"));
+      return;
+    }
+    if (!observer) {
+      observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add("aos-in");
+          // exit lewat bawah (scroll balik ke atas) → reset supaya re-animate
+          else if (e.boundingClientRect.top > 0) e.target.classList.remove("aos-in");
+        });
+      }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    }
+    els.forEach(el => observer.observe(el));
+  }
+
+  function boot() { try { tag(); reveal(); } catch {} }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+  // Re-scan kalau landing baru tampil (mis. setelah logout / view berubah)
+  window.addEventListener("playly:app-booted", boot);
+  window.addEventListener("playly:view-changed", boot);
+})();
+
