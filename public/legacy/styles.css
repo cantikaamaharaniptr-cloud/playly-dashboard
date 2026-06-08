@@ -72930,3 +72930,15 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 /* rapikan jarak internal */
 section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin: 2px 2px 12px !important; }
 section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs { margin: 0 0 12px !important; }
+
+/* ===================================================================
+   STATISTIK v762 — chart FULL-WIDTH (charts-stack jangan 2 kolom →
+   chart tadinya cuma ~setengah, ada ruang kosong di kanan).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .charts-stack {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card {
+  width: 100% !important;
+}

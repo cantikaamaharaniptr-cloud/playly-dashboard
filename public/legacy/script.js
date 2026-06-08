@@ -37154,41 +37154,37 @@ function drawMiniChart(metric) {
     H - PAD_Y - ((v - min) / range) * (H - PAD_Y * 2),
   ]);
 
-  // Palet diselaraskan dgn tema wine/cream — lebih lembut & harmonis.
+  // v762: palet HANGAT yang selaras tema wine/cream (bukan gold/teal "asal").
+  // Tiap metrik tetap punya warna sendiri (sesuai fungsi) tapi 1 keluarga warna
+  // hangat: tontonan = wine (metrik utama), lainnya turunan hangatnya.
   const colors = {
-    videos:    "#C9A24B",
-    views:     "#A3485A",
-    followers: "#C97C5A",
-    comments:  "#5A9E8C",
+    views:     "#B14A60", // Tontonan — wine (primary)
+    videos:    "#C27A4E", // Video — terracotta
+    followers: "#C9926A", // Pengikut — warm sand
+    comments:  "#B06A86", // Komentar — rose
   };
-  const c = colors[metric] || colors.videos;
+  const c = colors[metric] || colors.views;
   const fillId = `chartFill-${metric}`;
 
-  // Build stair-step path:
-  // M startX,startY → H (next segment edge) → V (newY) → H (next segment edge) → V (newY) ...
-  let stepPath = "";
+  // v762: garis HALUS (smooth) — bukan lagi tangga (step). Catmull-Rom→bezier.
+  // Titik direntang ke tepi kiri/kanan supaya garis penuh selebar chart.
+  let stepPath = "";   // nama dipertahankan; kini berisi path halus
   let areaPath = "";
   if (n > 0) {
-    // Start at left edge of first segment, height = first value
-    const firstY = points[0][1];
-    const startX = PAD_X;
-    stepPath = `M ${startX} ${firstY.toFixed(2)} `;
-    let prevY = firstY;
-    for (let i = 0; i < n; i++) {
-      // Segment runs from i*stepX to (i+1)*stepX, height = points[i][1]
-      const segLeft = PAD_X + i * stepX;
-      const segRight = PAD_X + (i + 1) * stepX;
-      const y = points[i][1];
-      if (i > 0 && y !== prevY) {
-        // Vertical step at boundary
-        stepPath += `L ${segLeft.toFixed(2)} ${y.toFixed(2)} `;
-      }
-      // Horizontal across segment
-      stepPath += `L ${segRight.toFixed(2)} ${y.toFixed(2)} `;
-      prevY = y;
+    const pts = [[PAD_X, points[0][1]], ...points, [W - PAD_X, points[n - 1][1]]];
+    stepPath = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+      const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+      const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+      stepPath += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
     }
-    // Area = step + close to bottom
-    areaPath = stepPath + `L ${(PAD_X + n * stepX).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;
+    areaPath = stepPath + ` L ${(W - PAD_X).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;
   }
 
   // Markers at each step's right edge (data point indicator)
@@ -37217,7 +37213,7 @@ function drawMiniChart(metric) {
       </linearGradient>
     </defs>
     <path class="chart-area-anim" d="${areaPath}" fill="url(#${fillId})"/>
-    <path class="chart-line-anim" d="${stepPath}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="miter" stroke-linecap="square" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
+    <path class="chart-line-anim" d="${stepPath}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
     ${markers}
   `;
 
