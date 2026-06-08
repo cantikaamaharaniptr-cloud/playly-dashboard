@@ -72715,3 +72715,10 @@ section[data-view="stats"] #statsRow .stat-value { font-size: 20px !important; m
    tertutup (tinggi topbar ~69px + jarak).
    =================================================================== */
 html body:not([data-role="admin"]):not(.auth-mode) .main { padding-top: 86px !important; }
+
+/* ===================================================================
+   STATISTIK v741 — hapus tab bar (per user). Semua section sudah tampil
+   stacked + bisa di-scroll, dan navigasi section juga ada di sidebar →
+   tab bar scroll-jump redundan. Disembunyikan khusus di view stats.
+   =================================================================== */
+section[data-view="stats"] .riwayat-tab-bar { display: none !important; }
