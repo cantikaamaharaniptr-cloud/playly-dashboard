@@ -72660,3 +72660,34 @@ section[data-view="stats"] .view-header {
 section[data-view="stats"] .view-header .lib-header-flex { align-items: center !important; }
 /* Tab bar keluar dari kartu, beri jarak dari kartu */
 section[data-view="stats"] .riwayat-tab-bar { margin: 18px 0 22px !important; }
+
+/* ===================================================================
+   STATISTIK v733 — KPI cards DIPADATKAN (per pilihan user)
+   Tampilkan ikon kecil + label + angka, layout horizontal rapat,
+   kurangi ruang kosong. Tetap kartu sejajar (bukan list).
+   =================================================================== */
+section[data-view="stats"] #statsRow {
+  grid-template-columns: repeat(auto-fit, minmax(162px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] #statsRow .stat-card {
+  display: flex !important; align-items: center !important; gap: 12px !important;
+  padding: 12px 14px !important;
+}
+/* Ikon: kotak lembut wine kecil (sebelumnya disembunyikan) */
+section[data-view="stats"] #statsRow .stat-icon {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 38px !important; height: 38px !important; flex: 0 0 auto !important;
+  border-radius: 10px !important; margin: 0 !important;
+  background: color-mix(in srgb, var(--primary) 24%, transparent) !important;
+  color: var(--cream, #E8D8C4) !important;
+}
+section[data-view="stats"] #statsRow .stat-icon::before,
+section[data-view="stats"] #statsRow .stat-icon::after { display: none !important; }
+section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; height: 19px !important; }
+section[data-view="stats"] #statsRow .stat-body { min-width: 0 !important; }
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 9.5px !important; letter-spacing: .1em !important; margin: 0 0 2px !important;
+  line-height: 1.2 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 20px !important; margin: 0 !important; line-height: 1.1 !important; }
