@@ -72906,21 +72906,26 @@ section[data-view="stats"] .stats-ringkasan-block #statsRow .stat-card {
    heading "Grafik Stats" + tab metrik + chart dalam satu kartu.
    =================================================================== */
 /* Selektor spesifisitas tinggi — kalahkan rule .chart-card-bare (transparan)
-   di L50316 (0,5,2). Pakai html body ...:not(...) + .chart-card-bare → (0,5,3). */
-html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"].chart-card-bare {
+   di L50316 (0,5,2). Pakai html body ...:not(...) + .chart-card-bare → (0,5,3).
+   v761: TAMBAH :hover supaya kartu luar TIDAK hilang saat di-hover. */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"].chart-card-bare,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"].chart-card-bare:hover {
   background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
   border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
   border-radius: 16px !important;
   padding: 16px !important;
   box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+  transform: none !important;
 }
-/* chart di dalam → FLAT (jangan card-in-card) */
-html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card {
-  background: transparent !important;
-  border: 0 !important;
+/* v761: chart punya KOTAK sendiri (terpisah) di dalam kartu luar — bukan flat.
+   Sedikit lebih terang dari kartu luar (spt sel KPI Ringkasan). */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 9%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
   box-shadow: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
 }
 /* rapikan jarak internal */
 section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin: 2px 2px 12px !important; }
