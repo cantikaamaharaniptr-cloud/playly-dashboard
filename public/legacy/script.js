@@ -37241,10 +37241,10 @@ function renderTopPerforming() {
     return 0;
   };
   const fmtWatch = (sec) => {
-    if (sec < 60) return Math.floor(sec) + "s";
-    if (sec < 3600) return Math.floor(sec / 60) + "m";
-    if (sec < 86400) return (sec / 3600).toFixed(1) + "h";
-    return (sec / 86400).toFixed(1) + "d";
+    if (sec < 60) return Math.round(sec) + " dtk";
+    if (sec < 3600) return Math.round(sec / 60) + " mnt";
+    const jam = Math.round(sec / 3600);
+    return (jam < 1000 ? String(jam) : (typeof fmtNum === "function" ? fmtNum(jam) : String(jam))) + " jam";
   };
 
   const enriched = state.myVideos.map(v => ({
@@ -37258,7 +37258,7 @@ function renderTopPerforming() {
   const renderRow = (v, i, valFmt, valSrc) => `
     <div class="top-perf-item" data-vid="${v.id}">
       <div class="top-perf-rank ${i === 0 ? 'first' : ''}">#${i + 1}</div>
-      <div class="mini-thumb"><img src="${v.thumb}" alt=""/></div>
+      <div class="mini-thumb">${v.thumb ? `<img src="${escapeHtml(v.thumb)}" alt="" loading="lazy" onerror="this.remove()"/>` : ""}</div>
       <div class="info"><h5>${escapeHtml(v.title || "")}</h5><div class="meta">${escapeHtml(v.duration || "0:00")}</div></div>
       <div class="views">${valFmt(v[valSrc])}</div>
     </div>

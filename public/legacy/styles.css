@@ -72024,3 +72024,17 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-c
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts-stack > .mini-chart-card {
   min-height: 0 !important;
 }
+
+/* ===== STATISTIK TOP VIDEO — judul tampil + thumbnail placeholder ===== */
+section[data-view="stats"] .top-perf-item { gap: 10px; align-items: center; }
+section[data-view="stats"] .top-perf-item .info { flex: 1 1 auto !important; min-width: 0 !important; }
+section[data-view="stats"] .top-perf-item .info h5 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+section[data-view="stats"] .top-perf-item .info .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+section[data-view="stats"] .top-perf-item .mini-thumb {
+  flex: 0 0 auto; border-radius: 6px; overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932));
+}
+section[data-view="stats"] .top-perf-item .mini-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+section[data-view="stats"] .top-perf-item .views { flex: 0 0 auto; white-space: nowrap; }
+/* nilai Top Video pakai class .views yg bentrok dgn .views{width:100%} global → paksa auto */
+section[data-view="stats"] .top-perf-item .views { width: auto !important; max-width: 40% !important; margin-left: auto !important; flex: 0 0 auto !important; text-align: right; }
