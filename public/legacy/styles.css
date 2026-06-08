@@ -72148,3 +72148,21 @@ section[data-view="stats"] [data-stats-section] > h3::before {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--primary); margin-right: 10px;
 }
+
+/* ===== STATISTIK — judul section OPSI 3: judul + garis bawah aksen ===== */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before { content: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  display: block !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important;
+  border-left: 0 !important; padding-left: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after {
+  content: ""; display: block;
+  width: 30px; height: 3px; border-radius: 2px;
+  background: var(--primary); margin-top: 7px;
+}
