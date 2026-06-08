@@ -72981,3 +72981,24 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
   font-size: 10px !important; letter-spacing: .02em !important; font-weight: 600 !important;
   text-transform: none !important; color: var(--muted) !important; margin-bottom: 4px !important;
 }
+
+/* ===================================================================
+   STATISTIK v765 — (1) chip Total: teks dibesarkan + rata tengah,
+   (2) judul chart "Grafik Stats Views" diberi garis pemisah header.
+   =================================================================== */
+/* (1) chip total: konten rata tengah + label "Total" lebih besar */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  align-items: center !important;
+  text-align: center !important;
+  min-width: 64px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 12px !important; font-weight: 700 !important; letter-spacing: .03em !important;
+  margin-bottom: 4px !important;
+}
+/* (2) garis pemisah di bawah header chart → jelas "Grafik Stats Views" = judul */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  padding-bottom: 14px !important;
+  margin-bottom: 10px !important;
+}
