@@ -72104,3 +72104,31 @@ section[data-view="stats"] [data-stats-section] > h3 {
   margin: 0 !important;
 }
 section[data-view="stats"] .stats-section-head small { color: var(--muted) !important; font-size: 12px; }
+
+/* ===== STATISTIK — judul section OPSI 1: ikon bulat lembut + judul normal ===== */
+/* batalkan gaya eyebrow (uppercase + garis aksen) sebelumnya */
+section[data-view="stats"] .stats-section-head,
+section[data-view="stats"] [data-stats-section] > h3 {
+  border-left: 0 !important;
+  padding-left: 0 !important;
+}
+section[data-view="stats"] [data-stats-section] > h3 { display: flex !important; align-items: center; gap: 9px; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+/* ikon section: BULAT, wine lembut, ikon krem — jelas beda & lebih kecil dari header halaman (kotak wine besar) */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
+  display: inline-flex !important; align-items: center; justify-content: center;
+  width: 30px !important; height: 30px !important; flex: 0 0 auto;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--primary) 32%, transparent) !important;
+  color: var(--cream, #E8D8C4) !important;
+  box-shadow: none !important;
+}
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) svg { width: 15px !important; height: 15px !important; }
+section[data-view="stats"] .stats-section-head small { color: var(--text-2, var(--muted)) !important; font-size: 12px; }
