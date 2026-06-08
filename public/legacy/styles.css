@@ -72876,5 +72876,17 @@ section[data-view="stats"] #statsRow { margin-top: 8px !important; }
 section[data-view="stats"] #statsRow .stat-label {
   text-transform: none !important;
   letter-spacing: .01em !important;
-  font-size: 11px !important;
 }
+
+/* ===================================================================
+   STATISTIK v756 — label KPI diperbesar agar proporsional dgn angka
+   (label 11px terlalu kecil dibanding angka 27px).
+   =================================================================== */
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 80%, transparent) !important;
+  margin: 0 0 3px !important;
+  line-height: 1.2 !important;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 26px !important; }
