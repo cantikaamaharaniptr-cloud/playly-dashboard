@@ -72753,3 +72753,25 @@ section[data-view="stats"] .riwayat-tab-bar { display: none !important; }
 section[data-view="stats"] .view-header { margin-bottom: 22px !important; }
 /* Heading section -> isi sedikit lebih lega */
 section[data-view="stats"] #statsRow { margin-top: 14px !important; }
+
+/* ===================================================================
+   STATISTIK v746 — perbesar kartu KPI (per user: sebelumnya terlalu kecil).
+   Kartu lebih tinggi & lega, angka jadi hero, ikon lebih besar.
+   =================================================================== */
+section[data-view="stats"] #statsRow {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 12px !important;
+}
+section[data-view="stats"] #statsRow .stat-card {
+  gap: 14px !important;
+  padding: 18px 18px !important;
+  border-radius: 14px !important;
+}
+section[data-view="stats"] #statsRow .stat-icon {
+  width: 46px !important; height: 46px !important; border-radius: 12px !important;
+}
+section[data-view="stats"] #statsRow .stat-icon svg { width: 23px !important; height: 23px !important; }
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 10.5px !important; letter-spacing: .12em !important; margin: 0 0 4px !important;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 27px !important; }
