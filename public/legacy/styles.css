@@ -72253,3 +72253,53 @@ section[data-view="stats"] .grafik-head-text h3::after {
   height: 1px !important; width: auto !important; border-radius: 0 !important; margin: 0 !important;
   background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 45%, var(--border)), transparent) !important;
 }
+
+/* ===================================================================
+   STATISTIK — REDESIGN: MINIMALIS & LEGA (opsi 1)
+   =================================================================== */
+/* (1) Judul section: bersih, hairline tipis full-width, tanpa ikon/nomor/pill */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: block !important; width: 100% !important; max-width: none !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0 0 9px !important; margin: 0 0 16px !important;
+  font-size: 15px !important; font-weight: 600 !important; letter-spacing: .01em !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head small { display: block; color: var(--muted) !important; margin: -10px 0 6px !important; font-size: 12px; }
+
+/* (2) Ruang antar section lebih lega */
+section[data-view="stats"] .stats-section-head,
+section[data-view="stats"] [data-stats-section="top-video"],
+section[data-view="stats"] [data-stats-section="grafik"] { margin-top: 30px !important; }
+
+/* (3) Kartu Ringkasan: ringan (tanpa ikon), angka besar bersih, border tipis */
+section[data-view="stats"] #statsRow {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] .stat-card {
+  display: block !important; background: transparent !important;
+  border: 1px solid var(--border) !important; border-radius: 12px !important;
+  padding: 14px 16px !important;
+}
+section[data-view="stats"] .stat-card:hover { transform: none !important; box-shadow: none !important; border-color: var(--border-strong, var(--border)) !important; }
+section[data-view="stats"] .stat-icon { display: none !important; }
+section[data-view="stats"] .stat-body { min-width: 0; }
+section[data-view="stats"] .stat-label { font-size: 10px !important; letter-spacing: .12em !important; text-transform: uppercase; color: var(--muted) !important; }
+section[data-view="stats"] .stat-value { font-size: 24px !important; margin: 5px 0 0 !important; line-height: 1.1 !important; }
+
+/* (4) Kartu Top Video & Grafik: lebih ringan (border tipis, bg transparan) */
+section[data-view="stats"] .top-perf-3col,
+section[data-view="stats"] .charts-stack { gap: 12px !important; }
