@@ -37108,6 +37108,12 @@ function drawMiniChart(metric) {
     ${markers}
   `;
 
+  // Label periode (sumbu-X) di bawah grafik — biar jelas tiap titik mewakili apa.
+  let axis = wrap.querySelector(".mc-axis");
+  if (!axis) { axis = document.createElement("div"); axis.className = "mc-axis"; }
+  axis.innerHTML = (data.labels || []).map(l => `<span>${escapeHtml(String(l))}</span>`).join("");
+  wrap.appendChild(axis);
+
   const tip = $("#chartTip");
   const unitLabel = metric === "videos" ? "video"
     : metric === "views" ? "views"

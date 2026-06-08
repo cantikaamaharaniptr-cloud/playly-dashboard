@@ -41688,8 +41688,10 @@ section[data-view="stats"] .mini-chart-card .chart-wrap .chart-ring-wrap {
    v602, kembalikan .mini-chart-total original di header. */
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap {
   display: block !important;
+  height: auto !important;
   min-height: 0 !important;
-  padding: 6px 18px 16px !important;
+  margin-top: 4px !important;
+  padding: 2px 16px 12px !important;
 }
 /* Hide modern bezier headline — pakai .mini-chart-total original di head */
 section[data-view="stats"] .mini-chart-card .mc-headline { display: none !important; }
@@ -50051,8 +50053,16 @@ body:not([data-role="admin"]):not(.auth-mode) .riwayat-row::after {
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap > svg.lineChart {
   display: block !important;
   width: 100% !important;
-  height: 120px !important;
+  height: 92px !important;
 }
+/* Label periode (sumbu-X) di bawah grafik biar jelas */
+section[data-view="stats"] .mini-chart-card .mc-axis {
+  display: flex; justify-content: space-between; gap: 2px;
+  margin-top: 7px; padding: 0 1px;
+  font-size: 10px; font-weight: 600; color: var(--text-2, var(--muted));
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .mini-chart-card .mc-axis span { flex: 1 1 0; text-align: center; white-space: nowrap; overflow: hidden; }
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap {
   background-image: none !important;
 }
@@ -71996,3 +72006,21 @@ textarea#upDesc.upf-desc-textarea {
   box-shadow: none !important;
 }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+
+/* ===== STATISTIK GRAFIK — line chart compact (override sisa ring-chart-v4) ===== */
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin-top: 4px !important;
+  padding: 2px 16px 12px !important;
+  gap: 0 !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap > svg.lineChart {
+  display: block !important;
+  width: 100% !important;
+  height: 92px !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts-stack > .mini-chart-card {
+  min-height: 0 !important;
+}
