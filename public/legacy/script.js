@@ -19383,6 +19383,11 @@ function renderAdminPremiumQueue() {
         openPremiumDetailModal(code);
         return;
       }
+      // Gate: approve/reject pembayaran hanya untuk super admin (admin2 dilarang).
+      // Lihat detail (di atas) tetap boleh.
+      if ((act === "approve" || act === "reject") && typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+        return toast("🔒 Hanya super admin yang bisa approve/reject pembayaran Premium", "warning");
+      }
       // Approve/Reject inline — konfirmasi dulu via openConfirm
       const action = act === "approve" ? "setujui" : "tolak";
       const confirmCls = act === "approve" ? "primary" : "danger";
@@ -28121,6 +28126,10 @@ document.addEventListener("keydown", (e) => {
 // dilindungi (sama seperti suspend dulu). Cleanup localStorage account + state +
 // welcome flag, lalu push event ke audit log + toast.
 function deleteUserAccount(username) {
+  // Gate: hapus user PERMANEN hanya untuk super admin (admin biasa/admin2 dilarang).
+  if (typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+    return toast("🔒 Hanya super admin yang bisa menghapus user permanen", "warning");
+  }
   const accountKey = Object.keys(localStorage).find(k => {
     if (!k.startsWith("playly-account-")) return false;
     try { return JSON.parse(localStorage.getItem(k))?.username === username; } catch { return false; }
@@ -28622,6 +28631,11 @@ let __asmTargets = [];   // array of usernames to deliver to
 let __asmIsBroadcast = false;
 
 function openAdminSendMsg({ targets = [], broadcast = false } = {}) {
+  // Gate: BROADCAST massal hanya untuk super admin (admin biasa/admin2 dilarang).
+  // Kirim pesan ke 1 user tetap boleh.
+  if (broadcast && typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+    return toast("🔒 Hanya super admin yang bisa broadcast ke semua user", "warning");
+  }
   if (broadcast) {
     const accounts = getAllAccounts().filter(a => !isAllowedAdminEmail(a.email));
     targets = accounts.map(a => a.username);
