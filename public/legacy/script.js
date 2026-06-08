@@ -37208,17 +37208,6 @@ function renderStatsExtras() {
   ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
     emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
 
-  // Bungkus Ringkasan (judul + KPI) jadi SATU kartu blok (seragam dgn section lain).
-  const rHead = view.querySelector(".stats-section-head");
-  const rRow = view.querySelector("#statsRow");
-  if (rHead && rRow && !rHead.closest(".stats-ringkasan-card")) {
-    const wrapR = document.createElement("div");
-    wrapR.className = "stats-ringkasan-card";
-    rHead.parentElement.insertBefore(wrapR, rHead);
-    wrapR.appendChild(rHead);
-    wrapR.appendChild(rRow);
-  }
-
   // ROMBAK SUSUNAN: Grafik (chart) naik jadi hero — sebelum Performa Video.
   const topCard = view.querySelector("#topPerfCard");
   if (grafik && topCard && topCard.previousElementSibling !== grafik) {
