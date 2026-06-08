@@ -72166,3 +72166,32 @@ section[data-view="stats"] [data-stats-section] > h3::after {
   width: 30px; height: 3px; border-radius: 2px;
   background: var(--primary); margin-top: 7px;
 }
+
+/* ===== STATISTIK — judul section KONSEP PILL/BADGE ===== */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head { display: block !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  display: inline-flex !important; align-items: center;
+  background: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border)) !important;
+  color: var(--cream, #E8D8C4) !important;
+  padding: 5px 13px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important; font-weight: 700 !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  margin: 0 0 6px !important;
+}
+
+/* fix: pill section harus selebar teks (bukan full width) + bg lebih jelas */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  width: fit-content !important;
+  max-width: max-content !important;
+  align-self: flex-start !important;
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+}
