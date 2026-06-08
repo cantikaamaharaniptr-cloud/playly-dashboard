@@ -72442,3 +72442,31 @@ section[data-view="stats"] .tp-vid { display: flex; align-items: center; gap: 12
 section[data-view="stats"] .tp-thumb { width: 64px; height: 36px; border-radius: 6px; flex: 0 0 auto; background: var(--surface-2) center / cover no-repeat; background-image: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932)); }
 section[data-view="stats"] .tp-title { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 section[data-view="stats"] .tp-num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+
+/* ===================================================================
+   STATISTIK — ROMBAK TOTAL: layout kohesif (kartu seragam + susunan baru)
+   Susunan: KPI -> Grafik (hero) -> Performa Video -> [Sumber Trafik | Audiens]
+   =================================================================== */
+/* Kartu section SERAGAM (flat, bersih) — grafik, performa video, trafik, audiens */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 20px 22px !important;
+  box-shadow: none !important;
+  margin-top: 24px !important;
+}
+section[data-view="stats"] #topPerfCard h3,
+section[data-view="stats"] [data-stats-section="grafik"] h3,
+section[data-view="stats"] .stats-extra-section h3 { margin: 0 0 16px !important; }
+/* KPI cards: samakan (flat bg-elev) */
+section[data-view="stats"] .stat-card { background: var(--bg-elev) !important; border: 1px solid var(--border) !important; box-shadow: none !important; }
+section[data-view="stats"] .stat-card:hover { box-shadow: none !important; transform: none !important; border-color: var(--border-strong, var(--border)) !important; }
+/* Ringkasan spacing */
+section[data-view="stats"] .stats-section-head { margin: 4px 0 14px !important; }
+/* Sumber Trafik + Audiens = 2 kolom berdampingan */
+section[data-view="stats"] .stats-extra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+section[data-view="stats"] .stats-extra-grid .stats-extra-section { margin-top: 0 !important; }
+@media (max-width: 820px) { section[data-view="stats"] .stats-extra-grid { grid-template-columns: 1fr; } }

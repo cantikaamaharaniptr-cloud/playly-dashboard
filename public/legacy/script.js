@@ -37207,6 +37207,19 @@ function renderStatsExtras() {
     emptyHtml("Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
   ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
     emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
+
+  // ROMBAK SUSUNAN: Grafik (chart) naik jadi hero — sebelum Performa Video.
+  const topCard = view.querySelector("#topPerfCard");
+  if (grafik && topCard && topCard.previousElementSibling !== grafik) {
+    view.insertBefore(grafik, topCard);
+  }
+  // Sumber Trafik + Audiens per Negara → 2 kolom berdampingan.
+  let grid = view.querySelector(".stats-extra-grid");
+  if (!grid) { grid = document.createElement("div"); grid.className = "stats-extra-grid"; view.appendChild(grid); }
+  const tEl = view.querySelector('.stats-extra-section[data-stats-section="traffic"]');
+  const gEl = view.querySelector('.stats-extra-section[data-stats-section="geo"]');
+  if (tEl) grid.appendChild(tEl);
+  if (gEl) grid.appendChild(gEl);
 }
 
 function drawChart() {
