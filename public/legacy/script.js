@@ -32005,13 +32005,15 @@ function renderStatsRow() {
     { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M12 20.5l-1.45-1.32C5.4 14.36 2 11.28 2 7.5 2 4.42 4.42 2 7.5 2 9.24 2 10.91 2.81 12 4.09 13.09 2.81 14.76 2 16.5 2 19.58 2 22 4.42 22 7.5c0 3.78-3.4 6.86-8.55 11.69L12 20.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="11" r="1.5" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
   ];
 
+  // v693 (2026-06-08): kartu disederhanakan — ikon + label + nilai (tanpa
+  // sparkline & trend pill yg ramai), layout horizontal compact.
   row.innerHTML = cards.map(c => `
     <div class="stat-card">
-      <div class="stat-icon" style="--c1:${c.c1};--c2:${c.c2}"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
-      <p class="stat-label">${c.label}</p>
-      <h3 class="stat-value">${c.value}</h3>
-      ${c.trend ? `<div class="stat-trend ${c.trend}"><svg viewBox="0 0 24 24" fill="none"><path d="m6 14 6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>${c.trendText}</div>` : `<div class="stat-trend neutral">${c.trendText}</div>`}
-      ${c.raw > 0 ? `<div class="spark"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline fill="none" stroke="${c.spark}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="0,22 14,18 28,20 42,12 56,16 70,8 84,10 100,6"/></svg></div>` : ""}
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
+      <div class="stat-body">
+        <p class="stat-label">${c.label}</p>
+        <h3 class="stat-value">${c.value}</h3>
+      </div>
     </div>
   `).join("");
 }
@@ -37042,11 +37044,12 @@ function drawMiniChart(metric) {
     H - PAD_Y - ((v - min) / range) * (H - PAD_Y * 2),
   ]);
 
+  // Palet diselaraskan dgn tema wine/cream — lebih lembut & harmonis.
   const colors = {
-    videos:    "#BE9752",
-    views:     "#7d3640",
-    followers: "#f59e0b",
-    comments:  "#10b981",
+    videos:    "#C9A24B",
+    views:     "#A3485A",
+    followers: "#C97C5A",
+    comments:  "#5A9E8C",
   };
   const c = colors[metric] || colors.videos;
   const fillId = `chartFill-${metric}`;
@@ -37099,7 +37102,7 @@ function drawMiniChart(metric) {
   svg.innerHTML = `
     <defs>
       <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${c}" stop-opacity=".35"/>
+        <stop offset="0%" stop-color="${c}" stop-opacity=".2"/>
         <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
       </linearGradient>
     </defs>

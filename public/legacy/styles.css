@@ -72038,3 +72038,31 @@ section[data-view="stats"] .top-perf-item .mini-thumb img { width: 100%; height:
 section[data-view="stats"] .top-perf-item .views { flex: 0 0 auto; white-space: nowrap; }
 /* nilai Top Video pakai class .views yg bentrok dgn .views{width:100%} global → paksa auto */
 section[data-view="stats"] .top-perf-item .views { width: auto !important; max-width: 40% !important; margin-left: auto !important; flex: 0 0 auto !important; text-align: right; }
+
+/* ===== STATISTIK — refresh tampilan (simpel, compact, aksen rapi) ===== */
+/* Kartu Ringkasan: ikon + label + nilai horizontal compact (tanpa spark/trend) */
+section[data-view="stats"] #statsRow {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] .stat-card {
+  display: flex !important; align-items: center; gap: 12px;
+  padding: 12px 14px !important; border-radius: 12px;
+}
+section[data-view="stats"] .stat-card:hover { transform: none !important; box-shadow: none !important; border-color: var(--border-strong, var(--border)); }
+section[data-view="stats"] .stat-icon {
+  width: 34px !important; height: 34px !important; margin: 0 !important;
+  border-radius: 9px !important; background: var(--surface-2) !important;
+  color: var(--text-2, var(--muted)) !important; box-shadow: none !important; flex: 0 0 auto;
+}
+section[data-view="stats"] .stat-icon svg { width: 16px; height: 16px; }
+section[data-view="stats"] .stat-body { min-width: 0; }
+section[data-view="stats"] .stat-label { font-size: 9.5px; letter-spacing: .1em; margin: 0; }
+section[data-view="stats"] .stat-value { font-size: 20px !important; margin: 1px 0 0 !important; }
+/* Tab bar: lebih kecil & flat */
+section[data-view="stats"] .riwayat-tab {
+  height: 32px !important; padding: 0 13px !important; font-size: 12px !important;
+  border-radius: 8px !important; gap: 6px;
+}
+section[data-view="stats"] .riwayat-tab svg { width: 14px !important; height: 14px !important; }
