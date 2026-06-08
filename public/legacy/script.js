@@ -6325,9 +6325,9 @@ const I18N = {
     "stats.achievements":        "Pencapaian",
     "stats.achievements.sub":    "Buka pencapaian dengan beraktivitas di Playly.",
     "stats.topperforming":       "Performa Terbaik",
-    "stats.topviews":            "Top Tontonan",
+    "stats.topviews":            "Top Dilihat",
     "stats.toplikes":            "Top Suka",
-    "stats.topwatch":            "Top Tonton",
+    "stats.topwatch":            "Top Durasi",
     "stats.grafik":              "📈 Grafik Statistik",
     "stats.grafik.video":        "Grafik Statistik Video",
     "stats.grafik.views":        "Grafik Statistik Tontonan",
@@ -52616,9 +52616,9 @@ function saveVideoEdit() {
   }
 
   function buildAll() {
-    if (document.body && document.body.dataset.role === "admin") return;
-    var wraps = document.querySelectorAll('section.view[data-view="stats"] .chart-wrap[data-chart-metric]');
-    wraps.forEach(function (w) { buildRing(w, w.dataset.chartMetric); });
+    // Ring/donut chart DIHAPUS — redundan dgn grafik garis (metrik & periode
+    // sama) + datanya buggy (kosong). Bersihkan sisa ring kalau masih ada.
+    document.querySelectorAll('section.view[data-view="stats"] .chart-wrap svg.ring-chart-svg, section.view[data-view="stats"] .chart-wrap .ring-chart-legend').forEach(function (el) { el.remove(); });
   }
 
   function watch() {

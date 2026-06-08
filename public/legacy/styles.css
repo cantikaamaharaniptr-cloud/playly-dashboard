@@ -41687,14 +41687,9 @@ section[data-view="stats"] .mini-chart-card .chart-wrap .chart-ring-wrap {
    legend. Hide modern .mc-headline (big number + delta) yang ditambah di
    v602, kembalikan .mini-chart-total original di header. */
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 18px !important;
-  min-height: 240px !important;
-  padding: 18px !important;
-  flex-wrap: wrap !important;
+  display: block !important;
+  min-height: 0 !important;
+  padding: 6px 18px 16px !important;
 }
 /* Hide modern bezier headline — pakai .mini-chart-total original di head */
 section[data-view="stats"] .mini-chart-card .mc-headline { display: none !important; }
@@ -41707,7 +41702,7 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts
 }
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts-stack > .mini-chart-card {
   align-self: stretch !important;
-  min-height: 280px !important;
+  min-height: 0 !important;
 }
 
 /* v602f (2026-05-28): GitHub Contribution Graph style — COMPACT version.
@@ -50051,11 +50046,12 @@ body:not([data-role="admin"]):not(.auth-mode) .riwayat-row::after {
    USER STATS — RING CHART v4 (dynamic arcs, 0% empty, 2-col legend)
    ========================================================= */
 
-/* Hide line chart + empty state overlay */
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap > svg.lineChart,
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-empty,
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-chart-empty] {
-  display: none !important;
+/* Ring chart dihapus → tampilkan kembali line chart (full width). Empty-state
+   dikontrol JS (drawMiniChart), jadi tidak di-force-hide lagi. */
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap > svg.lineChart {
+  display: block !important;
+  width: 100% !important;
+  height: 120px !important;
 }
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap {
   background-image: none !important;
