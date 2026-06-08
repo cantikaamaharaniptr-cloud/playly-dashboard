@@ -72529,3 +72529,21 @@ section[data-view="stats"] .stat-card {
   border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
 }
+
+/* ===== STATISTIK — Ringkasan jadi 1 kartu blok; KPI flat di dalamnya ===== */
+section[data-view="stats"] .stats-ringkasan-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
+  padding: 16px !important;
+  margin-top: 14px !important;
+}
+section[data-view="stats"] .stats-ringkasan-card .stats-section-head { margin: 0 0 12px !important; }
+/* KPI di dalam kartu Ringkasan = sel flat (tanpa kartu sendiri) */
+section[data-view="stats"] .stats-ringkasan-card .stat-card {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  padding: 4px 16px !important;
+}
+section[data-view="stats"] .stats-ringkasan-card #statsRow { gap: 0 !important; }
+section[data-view="stats"] .stats-ringkasan-card .stat-card + .stat-card { border-left: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important; }
