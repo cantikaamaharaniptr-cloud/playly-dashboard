@@ -56576,14 +56576,16 @@ document.addEventListener("click", function(e) {
     document.querySelectorAll(".admin-landing-section").forEach(sec => {
       const head = sec.querySelector(".admin-landing-head");
       if (head && !head.hasAttribute("data-aos")) head.setAttribute("data-aos", "fade-up");
-      // Kartu/step/item di dalam section → stagger biar muncul beruntun
+      // Kartu/step/item di dalam section → efek BERVARIASI (ala demo AOS) +
+      // stagger biar muncul beruntun. Pola per-kolom: kiri → atas → kanan → zoom.
       const items = sec.querySelectorAll('article, [class*="-card"], [class*="-step"], [class*="-item"], .admin-preview-frame');
+      const EFFECTS = ["fade-right", "fade-up", "fade-left", "zoom-in"];
       let i = 0;
       items.forEach(el => {
         if (el.closest(".admin-landing-head")) return;
         if (el.closest("[data-aos]") && el.closest("[data-aos]") !== el) return; // skip nested
         if (!el.hasAttribute("data-aos")) {
-          el.setAttribute("data-aos", "fade-up");
+          el.setAttribute("data-aos", EFFECTS[i % EFFECTS.length]);
           const delay = (i % 4) * 90;
           if (delay) el.style.transitionDelay = delay + "ms";
           i++;
