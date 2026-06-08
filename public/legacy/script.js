@@ -26330,7 +26330,7 @@ function computeRevenueFromLedger() {
   return {
     ledger, total, today, ads, sub,
     rate: recent / 5,        // Rp/menit (sum 5 menit terakhir / 5)
-    payout: total * 0.35,    // Share kreator (kontrak: 35%)
+    payout: total * 0,       // Share kreator 0% — platform ambil 100% (per user)
     isEmpty: ledger.length === 0,
     filterActive,            // dipake UI buat ngeganti label & nampilin status banner
   };
@@ -28954,8 +28954,8 @@ const KPI_DETAIL_PROVIDERS = {
         { type: "bar", label: "Iklan (Ads)", value: fmtRp(r.ads), pct: adsPct },
         { type: "bar", label: "Subscription", value: fmtRp(r.sub), pct: subPct },
         { type: "section", label: "Distribusi" },
-        { type: "row", label: "Platform (65%)", value: fmtRp(r.total - r.payout) },
-        { type: "row", label: "Creator payout (35%)", value: fmtRp(r.payout) }
+        { type: "row", label: "Platform (100%)", value: fmtRp(r.total - r.payout) },
+        { type: "row", label: "Creator payout (0%)", value: fmtRp(r.payout) }
       );
     }
     return {
@@ -29027,19 +29027,19 @@ const KPI_DETAIL_PROVIDERS = {
   "rev-payout": () => {
     const r = computeRevenueFromLedger();
     const platform = r.total - r.payout;
-    const platformPct = r.total > 0 ? (platform / r.total) * 100 : 65;
-    const payoutPct = r.total > 0 ? (r.payout / r.total) * 100 : 35;
+    const platformPct = r.total > 0 ? (platform / r.total) * 100 : 100;
+    const payoutPct = r.total > 0 ? (r.payout / r.total) * 100 : 0;
     const rows = [
       { type: "section", label: "Pembagian revenue" },
-      { type: "bar", label: "Platform (65%)", value: fmtRp(platform), pct: platformPct },
-      { type: "bar", label: "Creator payout (35%)", value: fmtRp(r.payout), pct: payoutPct },
+      { type: "bar", label: "Platform (100%)", value: fmtRp(platform), pct: platformPct },
+      { type: "bar", label: "Creator payout (0%)", value: fmtRp(r.payout), pct: payoutPct },
       { type: "section", label: "Skema kontrak" },
-      { type: "row", label: "Share kreator", value: "35% dari revenue total" },
-      { type: "row", label: "Share platform", value: "65% (operasional + margin)" },
-      { type: "row", label: "Basis perhitungan", value: "Revenue ledger × 0.35" }
+      { type: "row", label: "Share kreator", value: "0% (tidak ada bagi hasil)" },
+      { type: "row", label: "Share platform", value: "100% (semua ke platform)" },
+      { type: "row", label: "Basis perhitungan", value: "Revenue ledger × 0" }
     ];
     return {
-      icon: "🏦", title: "Creator Payouts", desc: "Estimasi payout kreator berdasarkan share 35%.",
+      icon: "🏦", title: "Creator Payouts", desc: "Bagi hasil dimatikan — kreator 0%, platform 100%.",
       value: fmtRp(r.payout),
       valueSub: r.total > 0 ? `dari total ${fmtRp(r.total)}` : "menunggu revenue",
       rows
