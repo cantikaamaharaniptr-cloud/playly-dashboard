@@ -72816,16 +72816,25 @@ section[data-view="stats"] #statsRow .stat-icon {
    STATISTIK v750 — (1) hapus ring hover/focus (merah) di kartu KPI,
    (2) kotak ikon KPI lebih beda dari kartunya (18% terlalu menyatu).
    =================================================================== */
-/* (1) Kartu KPI tidak interaktif → matikan semua efek hover/focus (ring) */
-section[data-view="stats"] #statsRow .stat-card:hover,
-section[data-view="stats"] #statsRow .stat-card:focus,
-section[data-view="stats"] #statsRow .stat-card:focus-visible,
-section[data-view="stats"] #statsRow .stat-card:focus-within,
-section[data-view="stats"] #statsRow .stat-card:active {
-  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 28%, transparent) !important;
+/* (1) Kartu KPI kini CLICKABLE (v752) → cursor pointer + hover halus.
+   TANPA ring wine/merah: hover pakai aksen cream + sedikit terangkat.
+   Klik mouse tidak memunculkan outline; keyboard dapat outline cream (a11y). */
+section[data-view="stats"] #statsRow .stat-card {
+  cursor: pointer !important;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease !important;
+}
+section[data-view="stats"] #statsRow .stat-card:hover {
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 44%, transparent) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,.24) !important;
   outline: none !important;
-  box-shadow: none !important;
-  transform: none !important;
+}
+section[data-view="stats"] #statsRow .stat-card:active { transform: translateY(0) !important; }
+section[data-view="stats"] #statsRow .stat-card:focus,
+section[data-view="stats"] #statsRow .stat-card:focus-within { outline: none !important; box-shadow: none !important; }
+section[data-view="stats"] #statsRow .stat-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cream, #E8D8C4) 55%, transparent) !important;
+  outline-offset: 2px !important;
 }
 /* (2) Kotak ikon KPI: cukup naikkan FILL supaya tak menyatu dgn kartu —
    TANPA border (border tipis tadi malah terbaca seperti "ring"). */

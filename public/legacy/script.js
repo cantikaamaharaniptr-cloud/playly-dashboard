@@ -32021,8 +32021,10 @@ function renderStatsRow() {
 
   // v693 (2026-06-08): kartu disederhanakan — ikon + label + nilai (tanpa
   // sparkline & trend pill yg ramai), layout horizontal compact.
-  row.innerHTML = cards.map(c => `
-    <div class="stat-card">
+  // v752: kartu KPI clickable → tiap kartu mengarah ke halaman/section detail.
+  const KPI_KEYS = ["videos", "views", "likes", "comments", "followers", "engagement"];
+  row.innerHTML = cards.map((c, i) => `
+    <div class="stat-card" data-kpi="${KPI_KEYS[i] || ""}" role="button" tabindex="0" title="Lihat detail">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
       <div class="stat-body">
         <p class="stat-label">${c.label}</p>
@@ -32030,6 +32032,30 @@ function renderStatsRow() {
       </div>
     </div>
   `).join("");
+  row.querySelectorAll(".stat-card[data-kpi]").forEach(card => {
+    const go = () => kpiNavigate(card.dataset.kpi);
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+}
+
+// v752: navigasi saat kartu KPI diklik → reuse sub-item sidebar yg sudah ada
+// (switchView + filter sudah ter-wire di sana). Tontonan & Engagement → Grafik.
+function kpiNavigate(key) {
+  const map = {
+    videos:     'focus:my-video',   // Video Saya
+    views:      'stats-tab:grafik',  // tren tontonan
+    likes:      'act-filter:like',   // Suka
+    comments:   'act-filter:comment',// Komentar
+    followers:  'act-filter:follow', // Pengikut
+    engagement: 'stats-tab:grafik',  // tren (engagement turunan)
+  };
+  const action = map[key];
+  if (!action) return;
+  const link = document.querySelector(`.sidebar .nav-subitem[data-sub-action="${action}"]`);
+  if (link) link.click();
 }
 
 function renderAchievements() {
