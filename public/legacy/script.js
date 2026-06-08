@@ -791,8 +791,37 @@ function seedOfficialAdmin() {
   localStorage.setItem(key, JSON.stringify(merged));
 }
 
+// Seed admin KEDUA (cadangan) — admin.playly2. Per request user 2026-06-08:
+// dibuat sbg admin sah supaya jalan di LOKAL juga (di live sudah dibuat lewat
+// fitur "Buat Admin" + sync Supabase). Mirror seedOfficialAdmin + masuk allowlist.
+const ADMIN2_EMAIL = "admin.playly2@gmail.com";
+const ADMIN2_USERNAME = "admin.playly2";
+// h2 = SHA-256("playly-pwd-salt-v1" + "Adminplayly234")
+const ADMIN2_PASSWORD_HASH = "h2:a5586ad161c370dcbc19da282f59908c69829f6951d05361cfca9ce81ef78b38";
+function seedSecondAdmin() {
+  // 1. Masuk allowlist → isAllowedAdminEmail() = true (dikenali sbg admin)
+  try {
+    const list = getExtraAdminEmails();
+    if (!list.includes(ADMIN2_EMAIL)) setExtraAdminEmails([...list, ADMIN2_EMAIL]);
+  } catch {}
+  // 2. Seed akun (jangan overwrite password kalau admin sudah ganti custom)
+  const key = `playly-account-${ADMIN2_EMAIL}`;
+  const existing = JSON.parse(localStorage.getItem(key) || "null");
+  const identity = {
+    name: existing?.name || "Admin Dua",
+    username: ADMIN2_USERNAME,
+    email: ADMIN2_EMAIL,
+    role: "admin",
+    adminLevel: existing?.adminLevel || "senior",
+    joinedAt: existing?.joinedAt || new Date().toISOString()
+  };
+  const password = (!existing || !existing.password) ? ADMIN2_PASSWORD_HASH : existing.password;
+  localStorage.setItem(key, JSON.stringify({ ...(existing || {}), ...identity, password }));
+}
+
 // Run sekali saat script load — sebelum apapun
 seedOfficialAdmin();
+seedSecondAdmin();
 enforceAdminLock();
 
 // === DEMO DUMMY ACCOUNT — auto-seeded for testing/QA ============================
