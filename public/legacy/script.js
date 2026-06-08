@@ -32051,6 +32051,28 @@ function renderStatsRow() {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
     });
   });
+  // v757: bungkus judul "Ringkasan Performa" + kartu KPI jadi SATU kartu.
+  wrapRingkasanCard();
+}
+
+// v757: gabung judul section Ringkasan + #statsRow ke dalam satu kartu
+// (.stats-ringkasan-card). data-stats-section="ringkasan" supaya ikut logika
+// filter (tampil saat tab ringkasan/all, sembunyi saat tab lain).
+function wrapRingkasanCard() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const head = view.querySelector('.stats-section-head[data-stats-section="ringkasan"]');
+  const row = document.getElementById("statsRow");
+  if (!head || !row) return;
+  let card = view.querySelector(".stats-ringkasan-card");
+  if (!card) {
+    card = document.createElement("div");
+    card.className = "stats-ringkasan-card";
+    card.setAttribute("data-stats-section", "ringkasan");
+    head.parentNode.insertBefore(card, head);
+  }
+  if (head.parentNode !== card) card.appendChild(head);
+  if (row.parentNode !== card) card.appendChild(row);
 }
 
 // v752: navigasi saat kartu KPI diklik → reuse sub-item sidebar yg sudah ada

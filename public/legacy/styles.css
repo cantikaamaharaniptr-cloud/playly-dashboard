@@ -72890,3 +72890,24 @@ section[data-view="stats"] #statsRow .stat-label {
   line-height: 1.2 !important;
 }
 section[data-view="stats"] #statsRow .stat-value { font-size: 26px !important; }
+
+/* ===================================================================
+   STATISTIK v757 — judul "Ringkasan Performa" + KPI digabung jadi 1 kartu
+   (per user). Kartu luar lembut; kartu KPI di dalamnya tetap distinct.
+   =================================================================== */
+section[data-view="stats"] .stats-ringkasan-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+}
+/* judul di dalam kartu */
+section[data-view="stats"] .stats-ringkasan-card .stats-section-head { margin: 2px 2px 14px !important; }
+section[data-view="stats"] .stats-ringkasan-card #statsRow { margin-top: 0 !important; }
+/* kartu KPI di dalam: sedikit lebih terang dari kartu luar supaya tetap terbaca
+   sebagai sel terpisah (bukan menyatu) tanpa terkesan berat. */
+section[data-view="stats"] .stats-ringkasan-card #statsRow .stat-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 9%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+}
