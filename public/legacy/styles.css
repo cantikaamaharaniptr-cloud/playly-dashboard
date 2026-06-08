@@ -72232,3 +72232,24 @@ section[data-view="stats"] .grafik-head-text h3::before {
   font-variant-numeric: tabular-nums;
 }
 section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+
+/* ===== STATISTIK — judul section KONSEP GARIS PEMISAH PENUH ===== */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: flex !important; align-items: center; gap: 14px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before { content: none !important; }
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after {
+  content: "" !important; flex: 1 1 auto !important;
+  height: 1px !important; width: auto !important; border-radius: 0 !important; margin: 0 !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 45%, var(--border)), transparent) !important;
+}
