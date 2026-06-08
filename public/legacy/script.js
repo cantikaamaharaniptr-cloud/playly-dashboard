@@ -31427,8 +31427,16 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderNotifPage === "function") renderNotifPage();
   }
   if (name === "storage") renderStoragePage();
-  if (name === "stats") setStatsTab("all"); // default tampil semua section
-  if (name === "stats") setTimeout(drawChart, 50);
+  if (name === "stats") {
+    setStatsTab("all"); // default tampil semua section
+    // v740: render KPI ringkasan + tabel Performa Video saat MASUK view.
+    // Sebelumnya hanya dipanggil saat event data → markup statis lama
+    // ("Top Video/TOP DILIHAT" + KPI kosong) sempat tampil. Panggil di sini
+    // supaya section selalu ter-render bersih (termasuk empty-state).
+    if (typeof renderUserStats === "function") renderUserStats();
+    if (typeof renderTopPerforming === "function") renderTopPerforming();
+    setTimeout(drawChart, 50);
+  }
   if (name === "admin-premium-queue") {
     if (typeof renderAdminPremiumQueue === "function") setTimeout(renderAdminPremiumQueue, 30);
   }
@@ -31986,14 +31994,17 @@ function fmtNum(n) {
 function renderStatsRow() {
   const row = $("#statsRow");
   if (!row) return;
-  const myUploads = state.myVideos.length;
-  const myViews = state.myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const myLikes = state.myVideos.reduce((s, v) => s + (v.likes || 0), 0);
+  // v740: guard data — fungsi ini kini dipanggil saat masuk view (sebelum
+  // data ter-hydrate), jadi state.myVideos bisa undefined. Default ke [].
+  const mv = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const myUploads = mv.length;
+  const myViews = mv.reduce((s, v) => s + (v.viewsNum || 0), 0);
+  const myLikes = mv.reduce((s, v) => s + (v.likes || 0), 0);
   // v595 (2026-05-28): Following → Followers (channel kamu yang di-follow),
   // tambah Total Komentar + Engagement Rate. Following = metric viewer, bukan
   // creator — diganti Followers per cleanup user.
-  const myComments = state.myVideos.reduce((s, v) =>
-    s + ((state.comments?.[v.id]?.length) || 0), 0);
+  const myComments = mv.reduce((s, v) =>
+    s + ((state?.comments?.[v.id]?.length) || 0), 0);
   let myFollowers = 0;
   try {
     myFollowers = (typeof getUserFollowers === "function" && user?.username)
