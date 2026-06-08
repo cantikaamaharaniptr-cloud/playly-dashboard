@@ -72811,3 +72811,25 @@ section[data-view="stats"] .st-ico {
 section[data-view="stats"] #statsRow .stat-icon {
   background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
 }
+
+/* ===================================================================
+   STATISTIK v750 — (1) hapus ring hover/focus (merah) di kartu KPI,
+   (2) kotak ikon KPI lebih beda dari kartunya (18% terlalu menyatu).
+   =================================================================== */
+/* (1) Kartu KPI tidak interaktif → matikan semua efek hover/focus (ring) */
+section[data-view="stats"] #statsRow .stat-card:hover,
+section[data-view="stats"] #statsRow .stat-card:focus,
+section[data-view="stats"] #statsRow .stat-card:focus-visible,
+section[data-view="stats"] #statsRow .stat-card:focus-within,
+section[data-view="stats"] #statsRow .stat-card:active {
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 28%, transparent) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+/* (2) Kotak ikon KPI: fill sedikit lebih pekat + border tipis supaya tidak
+   menyatu dgn kartu (tetap tingkat paling lembut, < section 46%). */
+section[data-view="stats"] #statsRow .stat-icon {
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 52%, transparent) !important;
+}
