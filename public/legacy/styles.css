@@ -72519,3 +72519,13 @@ section[data-view="stats"] .chart-metric-tabs { margin: 0 0 10px !important; }
 section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 150px !important; }
 /* grid trafik/audiens rapat */
 section[data-view="stats"] .stats-extra-grid { gap: 14px !important; margin-top: 14px !important; }
+
+/* ===== STATISTIK — pertegas pemisah kartu (lebih terang + border jelas) ===== */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section,
+section[data-view="stats"] .stat-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
+}
