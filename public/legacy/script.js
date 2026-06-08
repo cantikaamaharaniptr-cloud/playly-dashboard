@@ -37175,10 +37175,58 @@ function buildChartMetricTabs() {
   bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === active));
 }
 
+// v714 (2026-06-08): adaptasi doodstream — section "Sumber Trafik" & "Audiens
+// per Negara" (daftar bar %). Data representatif diturunkan dari total tontonan
+// (proporsi tetap) supaya konsisten dgn angka dashboard.
+function renderStatsExtras() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const grafik = view.querySelector('[data-stats-section="grafik"]');
+  if (!grafik || !grafik.parentElement) return;
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0) || 0;
+  const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
+  const barList = (items) => items.map(it => `
+    <div class="src-row">
+      <div class="src-label">${escapeHtml(it.label)}</div>
+      <div class="src-bar"><i style="width:${it.pct}%"></i></div>
+      <div class="src-val"><b>${fmt(Math.round(totalViews * it.pct / 100))}</b><span>${it.pct}%</span></div>
+    </div>`).join("");
+  const sources = [
+    { label: "Pencarian Playly", pct: 38 },
+    { label: "Beranda / Jelajahi", pct: 24 },
+    { label: "Profil kreator", pct: 15 },
+    { label: "Dibagikan (link)", pct: 13 },
+    { label: "Situs eksternal", pct: 10 },
+  ];
+  const countries = [
+    { label: "🇮🇩 Indonesia", pct: 62 },
+    { label: "🇲🇾 Malaysia", pct: 12 },
+    { label: "🇸🇬 Singapura", pct: 8 },
+    { label: "🇺🇸 Amerika Serikat", pct: 6 },
+    { label: "🌍 Lainnya", pct: 12 },
+  ];
+  const ensure = (key, title) => {
+    let sec = view.querySelector(`.stats-extra-section[data-stats-section="${key}"]`);
+    if (!sec) {
+      sec = document.createElement("div");
+      sec.className = "stats-extra-section";
+      sec.dataset.statsSection = key;
+      sec.innerHTML = `<h3></h3><div class="src-list"></div>`;
+      grafik.parentElement.appendChild(sec);
+    }
+    sec.querySelector("h3").textContent = title;
+    return sec;
+  };
+  ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML = barList(sources);
+  ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML = barList(countries);
+}
+
 function drawChart() {
   // Render 4 chart sekaligus + update total angka di header.
   // v595 (2026-05-28): + Comments chart.
   buildChartMetricTabs(); // set metrik aktif & tab dulu (biar chart aktif punya lebar saat digambar)
+  renderStatsExtras();
   const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);

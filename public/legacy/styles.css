@@ -72373,3 +72373,23 @@ section[data-view="stats"] [data-active-metric="followers"] .mini-chart-card:has
 section[data-view="stats"] [data-active-metric="comments"] .mini-chart-card:has(.chart-wrap[data-chart-metric="comments"]) { display: block !important; }
 /* chart aktif jadi BESAR */
 section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 200px !important; }
+
+/* ===== STATISTIK — section baru: Sumber Trafik & Audiens per Negara (gaya doodstream) ===== */
+section[data-view="stats"] .stats-extra-section {
+  margin-top: 30px !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 10%, var(--bg-elev)), var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.24);
+}
+section[data-view="stats"] .src-list { display: flex; flex-direction: column; gap: 13px; }
+section[data-view="stats"] .src-row { display: grid; grid-template-columns: 190px 1fr 120px; align-items: center; gap: 14px; }
+section[data-view="stats"] .src-label { font-size: 13px; font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+section[data-view="stats"] .src-bar { height: 8px; border-radius: 99px; background: var(--surface-2, rgba(255,255,255,.1)); overflow: hidden; }
+section[data-view="stats"] .src-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--accent, var(--primary-hover))); }
+section[data-view="stats"] .src-val { text-align: right; font-size: 12px; color: var(--text-2, var(--muted)); white-space: nowrap; }
+section[data-view="stats"] .src-val b { color: var(--text); font-weight: 800; margin-right: 7px; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  section[data-view="stats"] .src-row { grid-template-columns: 1fr auto; }
+  section[data-view="stats"] .src-bar { grid-column: 1 / -1; order: 3; }
+}
