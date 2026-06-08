@@ -72553,3 +72553,32 @@ section[data-view="stats"] .riwayat-tab-bar { display: flex; flex-wrap: wrap; ga
 section[data-view="stats"] .stat-tab { display: inline-flex !important; align-items: center; gap: 7px; }
 section[data-view="stats"] .stat-tab-ico { display: inline-flex; flex: 0 0 auto; }
 section[data-view="stats"] .stat-tab-ico svg { width: 15px; height: 15px; }
+
+/* ===================================================================
+   STATISTIK v728 — rapikan ritme vertikal (tetap compact)
+   Masalah: gap KPI -> "Grafik Stats" = 0px (nempel) + jarak antar
+   section tidak konsisten (10/0/14/28). Diseragamkan ~24px.
+   =================================================================== */
+/* Jarak konsisten antar blok utama */
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] [data-stats-section="top-video"],
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] .stats-extra-grid {
+  margin-top: 24px !important;
+}
+/* KPI row: beri ruang di bawah heading-nya & sebelum Grafik */
+section[data-view="stats"] #statsRow { margin-top: 10px !important; margin-bottom: 2px !important; }
+
+/* Grafik card-head: judul/subtitle/toggle align atas; subtitle & tab diberi napas */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head {
+  align-items: flex-start !important; margin-bottom: 14px !important;
+}
+section[data-view="stats"] #chartSubtitle {
+  margin: 3px 0 0 !important; font-size: 12px !important;
+  line-height: 1.35 !important; color: var(--muted) !important;
+}
+section[data-view="stats"] .chart-metric-tabs { margin: 2px 0 14px !important; }
+
+/* Jarak bawah heading section seragam (compact) */
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] [data-stats-section] > .card-head h3 { margin-bottom: 12px !important; }
