@@ -46556,6 +46556,9 @@ async function openPlayer(id) {
   const saved = state.saved.includes(id);
   $("#likeCount").textContent = (v.likes || 0).toLocaleString("id-ID");
   $("#likeBtn").classList.toggle("active", liked);
+  ensureDislikeBtn();
+  if (!Array.isArray(state.disliked)) state.disliked = [];
+  $("#dislikeBtn")?.classList.toggle("active", state.disliked.includes(id));
   $("#saveBtn").classList.toggle("active", saved);
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
@@ -48474,7 +48477,13 @@ $("#likeBtn")?.addEventListener("click", () => {
   const id = state.currentVideo;
   const wasLiked = state.liked.includes(id);
   if (wasLiked) state.liked = state.liked.filter(x => x !== id);
-  else state.liked.push(id);
+  else {
+    state.liked.push(id);
+    // Mutual-exclusive: nge-like membatalkan dislike (kalau ada).
+    if (Array.isArray(state.disliked) && state.disliked.includes(id)) {
+      state.disliked = state.disliked.filter(x => x !== id);
+    }
+  }
   // Update real likes count pada video creator's state — cloud-sync akan mirror.
   updateVideoStat(id, "likes", wasLiked ? -1 : 1);
   saveState();
@@ -48495,6 +48504,52 @@ $("#likeBtn")?.addEventListener("click", () => {
   refreshAllVideoGrids();
   renderUserStats();
 });
+
+// ---- DISLIKE (cermin Like) ----------------------------------------------
+// Tombol di-INJECT via JS (markup index-markup.ts single-line & fragile, jangan
+// disisipi). Idempotent: dipanggil tiap render player. Mutual-exclusive dgn Like.
+function ensureDislikeBtn() {
+  if (document.getElementById("dislikeBtn")) return;
+  const likeBtn = document.getElementById("likeBtn");
+  if (!likeBtn) return;
+  const btn = document.createElement("button");
+  btn.id = "dislikeBtn";
+  btn.type = "button";
+  btn.className = "pv-pill pv-pill-dislike";
+  btn.setAttribute("title", "Tidak suka");
+  btn.setAttribute("aria-label", "Tidak suka");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>';
+  likeBtn.insertAdjacentElement("afterend", btn);
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#dislikeBtn");
+  if (!btn) return;
+  const id = state.currentVideo;
+  if (id == null) return;
+  if (!Array.isArray(state.disliked)) state.disliked = [];
+  const wasDisliked = state.disliked.includes(id);
+  if (wasDisliked) {
+    state.disliked = state.disliked.filter(x => x !== id);
+  } else {
+    state.disliked.push(id);
+    // Mutual-exclusive: dislike membatalkan like (kalau ada) + koreksi hitungan.
+    if (state.liked.includes(id)) {
+      state.liked = state.liked.filter(x => x !== id);
+      updateVideoStat(id, "likes", -1);
+    }
+    if (typeof toast === "function") toast("👎 Masukan terkirim");
+  }
+  saveState();
+  // Update UI langsung (tanpa reload video).
+  btn.classList.toggle("active", state.disliked.includes(id));
+  const likeBtn = document.getElementById("likeBtn");
+  if (likeBtn) likeBtn.classList.toggle("active", state.liked.includes(id));
+  const likeCountEl = document.getElementById("likeCount");
+  const v = findVideo(id);
+  if (likeCountEl && v) likeCountEl.textContent = (v.likes || 0).toLocaleString("id-ID");
+  if (typeof refreshAllVideoGrids === "function") refreshAllVideoGrids();
+});
+
 $("#saveBtn")?.addEventListener("click", () => {
   const id = state.currentVideo;
   if (state.saved.includes(id)) state.saved = state.saved.filter(x => x !== id);

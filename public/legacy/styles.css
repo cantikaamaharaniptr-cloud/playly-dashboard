@@ -72000,3 +72000,10 @@ textarea#upDesc.upf-desc-textarea {
   box-shadow: none !important;
 }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+
+/* ===================================================================
+   PLAYER — tombol Dislike (di-inject via JS, cermin Like). Pill konsisten;
+   state aktif NETRAL (beda dari Like yang wine/--primary) supaya jelas terbedakan.
+   =================================================================== */
+.pv-pill-dislike.active { background: var(--surface-3) !important; color: var(--text) !important; }
+.pv-pill-dislike.active svg { fill: currentColor !important; }
