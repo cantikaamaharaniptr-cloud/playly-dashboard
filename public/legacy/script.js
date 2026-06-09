@@ -36099,6 +36099,24 @@ function ensureDraftTab() {
   else if (myTab) bar.appendChild(btn);
   else bar.insertBefore(btn, bar.firstChild);
 }
+// v750: tab status "all" diberi makna PENDING saja → relabel "Bermasalah" jadi
+// "Menunggu" + ikon JAM (waiting). Idempotent. Hindari edit index-markup.
+function ensureStatusSubtabLabels() {
+  const allTab = document.querySelector('.status-sub-tab[data-status-tab="all"]');
+  if (!allTab) return;
+  const spans = [...allTab.querySelectorAll("span")];
+  const labelSpan = spans.find(s => !s.classList.contains("sst-ico") && !s.classList.contains("ssc-count"));
+  if (labelSpan && /bermasalah/i.test(labelSpan.textContent)) {
+    labelSpan.textContent = "Menunggu";
+    labelSpan.removeAttribute("data-i18n");
+  }
+  const ico = allTab.querySelector(".sst-ico");
+  if (ico && ico.dataset.relabeled !== "menunggu") {
+    ico.dataset.relabeled = "menunggu";
+    ico.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  }
+}
+
 function ensureDraftSection() {
   const view = document.querySelector('section.view[data-view="videos"]');
   if (!view || document.getElementById("draftVideoGrid")) return;
@@ -36275,13 +36293,16 @@ function renderMyLibrary() {
   // BUG fix 2026-05-10: dulu sub-tab "all" merge trashVideos juga → user delete
   // video, video tetap muncul di tab Diterbitkan karena trashVideos masih dihitung.
   // Sekarang trashVideos cuma muncul di tab Sampah; "all" = pending + takedown.
+  // v750: "all" (label "Menunggu") = HANYA pendingVideos. Dulu pending+takedown,
+  // tumpang tindih dgn tab "Takedown" (video takedown terhitung 2x). Kini tiap
+  // status berdiri sendiri: Menunggu (pending) | Takedown (admin) | Sampah (user).
   const subTabMap = {
-    all:      { list: [...pendingVideos, ...takedownVideos],
-                empty: "No videos in status." },
+    all:      { list: pendingVideos,
+                empty: "Tidak ada video yang menunggu review admin." },
     draft:    { list: draftVideos,
                 empty: "Belum ada draft. Simpan video ke Draft via menu titik tiga di setiap card." },
     trash:    { list: trashVideos,
-                empty: "Trash kosong — video yang kamu hapus sendiri akan muncul di sini." },
+                empty: "Sampah kosong — video yang kamu hapus sendiri akan muncul di sini." },
     takedown: { list: takedownVideos,
                 empty: "Belum ada video yang di-takedown admin." },
   };
@@ -36302,6 +36323,7 @@ function renderMyLibrary() {
   document.querySelectorAll(".status-sub-tab").forEach(b => {
     b.classList.toggle("active", b.dataset.statusTab === subTab);
   });
+  ensureStatusSubtabLabels();
 
   // 2b. Draf — kini tab utama sendiri (#draftVideoGrid, di-inject ensureDraftSection).
   // Kebab aktif supaya user bisa Edit / Terbitkan / Hapus draf.
