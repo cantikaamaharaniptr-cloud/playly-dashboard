@@ -72015,3 +72015,22 @@ section[data-view="videos"] .view-header {
   margin-bottom: 18px !important;
 }
 section[data-view="videos"] .view-header .lib-header-flex { align-items: center !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA — kartu: badge visibilitas + meta lebih kaya + sort bar.
+   =================================================================== */
+.lib-thumb { position: relative; }
+.lib-thumb-vis {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 10.5px; font-weight: 600;
+  padding: 3px 8px; border-radius: 999px; backdrop-filter: blur(4px); letter-spacing: .02em;
+}
+.lib-thumb-vis.prv { background: color-mix(in srgb, var(--primary) 85%, #000); }
+.lib-thumb-vis.unl { background: rgba(120,90,60,.88); }
+.lib-meta .lib-meta-date { color: var(--muted); opacity: .85; }
+.lib-sort-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+.lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.lib-sort-bar select {
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+}

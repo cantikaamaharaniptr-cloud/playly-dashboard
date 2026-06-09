@@ -35953,6 +35953,31 @@ $$("#filterTabs button").forEach(b => {
 // ----------------------- MY LIBRARY VIEW (videos) -----------------------
 // Render 3 koleksi: My Video (upload sendiri), New Videos (terbaru dari kreator
 // lain), Download (yang sudah ditandai diunduh). Click → buka player video.
+// Dropdown "Urutkan" untuk Pustaka Saya (Terbaru/Terlama/Terpopuler) — di-inject
+// sekali di atas grid Video Saya. state.libSort menyimpan pilihan.
+function ensureLibSort() {
+  const grid = document.getElementById("myVideoGrid");
+  if (!grid || !grid.parentNode) return;
+  let bar = document.getElementById("libSortBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "libSortBar";
+    bar.className = "lib-sort-bar";
+    bar.innerHTML = '<label for="libSortSelect">Urutkan</label>' +
+      '<select id="libSortSelect"><option value="new">Terbaru</option>' +
+      '<option value="old">Terlama</option><option value="popular">Terpopuler</option></select>';
+    grid.parentNode.insertBefore(bar, grid);
+  }
+  const sel = document.getElementById("libSortSelect");
+  if (sel) sel.value = state.libSort || "new";
+}
+document.addEventListener("change", (e) => {
+  const sel = e.target.closest("#libSortSelect");
+  if (!sel) return;
+  if (typeof state !== "undefined") state.libSort = sel.value;
+  if (typeof renderMyLibrary === "function") renderMyLibrary();
+});
+
 function renderMyLibrary() {
   const renderCard = (v, opts = {}) => {
     const id = v.id;
@@ -35962,6 +35987,14 @@ function renderMyLibrary() {
     const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
     const duration = v.duration || "";
     const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
+    // Info tambahan kartu: jumlah suka, badge visibilitas, tanggal upload (data asli).
+    const likes = v.likesNum != null ? fmtNum(v.likesNum) : fmtNum(v.likes || 0);
+    const _visMap = { public: { t: "🌐 Publik", c: "pub" }, unlisted: { t: "🔗 Unlisted", c: "unl" }, private: { t: "🔒 Privat", c: "prv" } };
+    const _vis = _visMap[v.visibility] || _visMap.public;
+    // Badge hanya untuk non-publik (unlisted/private) — publik = default, tak perlu.
+    const visBadge = (v.visibility && v.visibility !== "public") ? `<span class="lib-thumb-vis ${_vis.c}">${_vis.t}</span>` : "";
+    let dateStr = "";
+    { const ts = v.uploadedAt || v.createdAt; if (ts) { try { const d = new Date(ts); if (!isNaN(d.getTime())) dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }); } catch (e) {} } }
     // Status badge — hanya ditampilkan untuk video user sendiri (My Video)
     let statusBadge = "";
     if (opts.showStatus) {
@@ -36014,12 +36047,14 @@ function renderMyLibrary() {
         ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
         ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
         ${statusBadge}
+        ${visBadge}
         ${actionsHtml}
       </div>
       ${menuHtml}
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small>@${creator} · ${views} views</small>
+        <small class="lib-meta-stats">${views} views · ${likes} suka</small>
+        ${dateStr ? `<small class="lib-meta-date">${dateStr}</small>` : ""}
       </div>
     </div>`;
   };
@@ -36043,7 +36078,13 @@ function renderMyLibrary() {
   //   - My Videos = sudah published (live di platform) — bisa di-delete
   //   - Status Videos = pending / takedown (belum live) + sampah (state.deletedVideos)
   const allMyVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
-  allMyVideos.sort((a, b) => (b.id || 0) - (a.id || 0));
+  ensureLibSort();
+  const _libSort = state.libSort || "new";
+  const _libTs = vv => (vv.uploadedAt || vv.createdAt || vv.id || 0);
+  allMyVideos.sort((a, b) =>
+    _libSort === "popular" ? (b.viewsNum || 0) - (a.viewsNum || 0) :
+    _libSort === "old" ? _libTs(a) - _libTs(b) :
+    _libTs(b) - _libTs(a));
   const isPublished = v => !v.adminStatus || v.adminStatus === "published";
   const myVideos = allMyVideos.filter(isPublished);
   const pendingVideos = allMyVideos.filter(v => v.adminStatus === "pending");
