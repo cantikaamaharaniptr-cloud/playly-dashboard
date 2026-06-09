@@ -31650,6 +31650,43 @@ document.addEventListener("click", e => {
   if (window.innerWidth <= 768) $("#sidebar")?.classList.remove("open");
 });
 
+// v746: lengkapi sub-item sidebar "Pustaka Saya" agar match dgn tab di halaman:
+// tambah "Draf" (sebelumnya tak ada) + rename "Video Status" → "Status Video".
+function ensureSidebarVideosSubitems() {
+  const myVid = document.querySelector('.nav-subitem[data-view="videos"][data-sub-action="focus:my-video"]');
+  if (!myVid) return;
+  // Rename "Video Status" → "Status Video" (konsisten dgn tab + breadcrumb).
+  const st = document.querySelector('.nav-subitem[data-sub-action="focus:status-videos"]');
+  if (st && /video\s*status/i.test(st.textContent)) {
+    st.textContent = "Status Video";
+    st.setAttribute("data-orig-text", "Status Video");
+  }
+  // Sisipkan "Draf" tepat setelah "Video Saya" (urutan = tab: Video Saya, Draf,
+  // Status Video, Unduhan). Klik → switchView videos + focus:draft (section draf).
+  if (!document.querySelector('.nav-subitem[data-sub-action="focus:draft"]')) {
+    const li = myVid.closest("li");
+    const a = document.createElement("a");
+    a.href = "#";
+    a.className = "nav-subitem";
+    a.dataset.view = "videos";
+    a.dataset.subAction = "focus:draft";
+    a.setAttribute("data-orig-text", "Draf");
+    a.textContent = "Draf";
+    if (li && li.parentNode) {
+      const newLi = document.createElement("li");
+      newLi.appendChild(a);
+      li.parentNode.insertBefore(newLi, li.nextSibling);
+    } else {
+      myVid.parentNode.insertBefore(a, myVid.nextSibling);
+    }
+  }
+}
+(function initSidebarVideosSubitems() {
+  const run = () => { try { ensureSidebarVideosSubitems(); } catch (e) {} };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
+  else run();
+})();
+
 // Update h2 view dengan judul sub-item — simpan judul asli sekali supaya bisa
 // di-restore saat user reset/keluar dari focus mode.
 function updateViewTitle(view, title) {
