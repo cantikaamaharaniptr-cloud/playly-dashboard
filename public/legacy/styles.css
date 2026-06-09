@@ -72492,3 +72492,34 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: none !important;
   animation: none !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v737 — tombol Suka/Bagikan: ganti BENTUK (pill → kotak rounded
+   radius 10px, serasi dgn input/Kirim) + WARNA tema dashboard (wine-tinted).
+   Flat: tanpa animasi/transisi, tanpa focus ring, tanpa glass.
+   =================================================================== */
+.view[data-view="videos"] .lib-ytp-pill,
+.view[data-view="videos"] .lib-ytp-pill:hover,
+.view[data-view="videos"] .lib-ytp-pill:focus,
+.view[data-view="videos"] .lib-ytp-pill:focus-visible,
+.view[data-view="videos"] .lib-ytp-pill:active {
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-elev)) !important;
+  border: 1px solid var(--primary) !important;
+  color: var(--cream) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+.view[data-view="videos"] .lib-ytp-pill:hover {
+  background: color-mix(in srgb, var(--primary) 28%, var(--bg-elev)) !important;
+}
+/* state aktif (Suka ditekan) → solid wine penuh */
+.view[data-view="videos"] .lib-ytp-pill.is-active {
+  background: var(--primary) !important;
+}
+.view[data-view="videos"] .lib-ytp-pill::before,
+.view[data-view="videos"] .lib-ytp-pill::after {
+  content: none !important; display: none !important; animation: none !important;
+}
