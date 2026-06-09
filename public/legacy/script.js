@@ -45743,14 +45743,27 @@ async function openLibInlinePlayer(id) {
   if (dateEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
     if (ts) {
-      // Format DD MMM YYYY (e.g., "04 Mei 2026")
+      // Format DD MMM YYYY (e.g., "04 Mei 2026") — tanpa emoji, masuk baris meta.
       const d = new Date(ts);
       const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-      dateEl.textContent = `📅 ${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      dateEl.textContent = `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
       dateEl.hidden = false;
     } else {
       dateEl.textContent = "";
       dateEl.hidden = true;
+    }
+  }
+  // v728: gabung tanggal ke baris meta (samping "X tontonan"), keluar dari kotak
+  // deskripsi → deskripsi berdiri sendiri sbg teks polos. Pindah sekali saja.
+  {
+    const viewsChip = document.querySelector('#libInlineActions .lib-ytp-views-chip');
+    if (viewsChip && dateEl && dateEl.parentElement !== viewsChip && !dateEl.hidden) {
+      const sep = document.createElement("span");
+      sep.className = "lib-meta-sep";
+      sep.setAttribute("aria-hidden", "true");
+      sep.textContent = "·";
+      viewsChip.appendChild(sep);
+      viewsChip.appendChild(dateEl);
     }
   }
   // Description + expandable desc box
@@ -45896,56 +45909,6 @@ async function openLibInlinePlayer(id) {
   wrap.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// v727: STRIP STATISTIK gaya dashboard (Wistia/Vidyard/Loom/Bilibili) — bukan
-// satu baris "X tontonan" biasa ala YouTube/TikTok. Metrik video ditampilkan
-// sebagai deretan kartu kecil (Tontonan · Suka · Komentar · Diunggah) di kiri
-// baris aksi. Tombol Suka/Bagikan jadi aksi murni (angka pindah ke strip).
-// Di-inject sekali ke #libInlineActions, diperbarui via refreshLibInlineEngagement.
-const _LST_IC = {
-  views:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
-  like:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
-  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>',
-  date:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>'
-};
-function ensureLibStatStrip() {
-  const bar = document.getElementById("libInlineActions");
-  if (!bar || document.getElementById("libStatStrip")) return;
-  const tile = (key, ico, valId, label) =>
-    `<div class="lib-stat-tile" data-stat="${key}"><span class="lst-ico">${ico}</span>` +
-    `<span class="lst-body"><span class="lst-val" id="${valId}">–</span>` +
-    `<span class="lst-label">${label}</span></span></div>`;
-  const strip = document.createElement("div");
-  strip.id = "libStatStrip";
-  strip.className = "lib-stat-strip";
-  strip.innerHTML =
-    tile("views",   _LST_IC.views,   "libStatViews",    "Tontonan") +
-    tile("like",    _LST_IC.like,    "libStatLikes",    "Suka") +
-    tile("comment", _LST_IC.comment, "libStatComments", "Komentar") +
-    tile("date",    _LST_IC.date,    "libStatDate",     "Diunggah");
-  bar.insertBefore(strip, bar.firstChild);
-}
-function updateLibStatStrip(v) {
-  if (!v) return;
-  ensureLibStatStrip();
-  const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-  const liked = Array.isArray(state?.liked) && state.liked.includes(v.id);
-  const totalLikes = (v.likes || 0) + (liked ? 1 : 0);
-  const commentCount = (state?.comments && Array.isArray(state.comments[v.id])) ? state.comments[v.id].length : 0;
-  set("libStatViews",    (typeof fmtNum === "function" ? fmtNum(v.viewsNum || 0) : (v.viewsNum || 0)));
-  set("libStatLikes",    (typeof fmtNum === "function" ? fmtNum(totalLikes) : totalLikes));
-  set("libStatComments", (typeof fmtNum === "function" ? fmtNum(commentCount) : commentCount));
-  const ts = Number(v.uploadedAt || v.createdAt || 0);
-  let dstr = "—";
-  if (ts) {
-    const d = new Date(ts);
-    if (!isNaN(d.getTime())) {
-      const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-      dstr = `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
-    }
-  }
-  set("libStatDate", dstr);
-}
-
 function refreshLibInlineEngagement(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -45963,9 +45926,6 @@ function refreshLibInlineEngagement(id) {
   // Like button visual state
   const likeBtn = document.querySelector('#libInlineActions [data-act="like"]');
   if (likeBtn) likeBtn.classList.toggle("is-active", liked);
-
-  // v727: sinkronkan strip statistik dashboard
-  try { updateLibStatStrip(v); } catch (e) {}
 }
 
 function refreshLibInlineComments(id) {
