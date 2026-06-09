@@ -72443,23 +72443,39 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 
 /* ===================================================================
-   PUSTAKA SAYA v731 — kolom komentar: HILANGKAN focus ring emas (per user)
-   + warna teks tombol "Kirim" dibuat jelas (sebelumnya wine di atas bg gelap
-   → tak terlihat).
+   PUSTAKA SAYA v731/v732 — kolom komentar: HILANGKAN total focus ring + tombol
+   "Kirim" jelas & SAMA TINGGI dgn input. Border input dibuat KONSTAN di semua
+   state (fokus tak mengubah apa pun → tak ada efek ring).
    =================================================================== */
+/* Input: tak ada ring/glow/outline sama sekali, border tetap di semua state */
 .view[data-view="videos"] #libInlineCommentField,
+.view[data-view="videos"] #libInlineCommentField:hover,
 .view[data-view="videos"] #libInlineCommentField:focus,
 .view[data-view="videos"] #libInlineCommentField:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+  border: 1px solid var(--border) !important;
 }
-/* indikasi fokus halus lewat warna border saja (bukan ring) */
-.view[data-view="videos"] #libInlineCommentField:focus,
-.view[data-view="videos"] #libInlineCommentField:focus-visible {
-  border-color: var(--primary) !important;
+/* Wrapper baris input: jaga-jaga tak ada ring :focus-within */
+.view[data-view="videos"] .lib-ytp-comment-input-row:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
 }
-/* teks tombol Kirim → krem terang biar jelas */
+/* Tombol Kirim: dibuat PERSIS seperti kolom komentar (box kembar) — bg/border/
+   radius/font/tinggi sama, hanya teks "Kirim" tebal krem. */
 .view[data-view="videos"] #libInlineCommentSend {
   color: var(--cream) !important;
   font-weight: 700 !important;
+  font-size: 13px !important;                            /* = input */
+  background: rgba(232, 216, 196, 0.06) !important;       /* = input */
+  border: 1px solid rgba(232, 216, 196, 0.14) !important; /* = input */
+  border-radius: 10px !important;                         /* = input */
+  align-self: stretch !important;                         /* tinggi = input (38px) */
+  padding: 0 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.view[data-view="videos"] #libInlineCommentSend:hover {
+  background: rgba(232, 216, 196, 0.12) !important;
+  border-color: var(--primary) !important;
 }
