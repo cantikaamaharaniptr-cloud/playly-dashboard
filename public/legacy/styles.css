@@ -72052,3 +72052,24 @@ textarea#upDesc.upf-desc-textarea {
   font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
   pointer-events: none !important;
 }
+
+/* ===================================================================
+   PLAYER v695 — empty-state layar video + rapikan frame slot iklan.
+   =================================================================== */
+/* Empty-state: video gagal dimuat → placeholder di atas layar. */
+.player-empty {
+  position: absolute !important; inset: 0 !important; z-index: 5 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  background: #0b0608 !important; color: var(--cream, #E8D8C4) !important;
+  text-align: center !important; padding: 20px !important;
+}
+.player-empty[hidden] { display: none !important; }
+.player-empty .pe-box svg { opacity: .5; margin-bottom: 10px; }
+.player-empty .pe-box p { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+.player-empty .pe-box small { color: var(--muted, #9a8a7a); font-size: 12px; line-height: 1.4; display: block; max-width: 280px; }
+
+/* Rapikan frame "Slot Iklan": sudut rounded konsisten + teks placeholder lebih halus. */
+.pab-slot, #playerSidebar .ps-ad:not(.ps-ad-hero) { border-radius: 10px !important; }
+.pab-slot::after, #playerSidebar .ps-ad:not(.ps-ad-hero)::after, .ptk-runway::after {
+  font-weight: 500 !important; opacity: .8 !important;
+}

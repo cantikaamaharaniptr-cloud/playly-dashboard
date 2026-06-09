@@ -46570,6 +46570,7 @@ async function openPlayer(id) {
   const SAMPLE_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const resolved = await resolveVideoSource(v);
   videoEl.src = resolved || SAMPLE_URL;
+  ensurePlayerEmptyState(videoEl);
   // Real-time progress tracking ke state.history → Lanjutkan Tontonan
   // selalu sync dengan posisi tonton yang sebenarnya. Bind sekali saja.
   if (!videoEl.__progressBound) {
@@ -46693,6 +46694,28 @@ async function openPlayer(id) {
 }
 
 // =================== PLAYER TOOLBAR (speed/quality/CC/PiP/FS) ===================
+
+// Empty-state layar video: overlay placeholder saat sumber video GAGAL dimuat
+// (video dihapus / link rusak / jaringan). Disuntik sekali per .player-screen,
+// di-reset (hidden) tiap video baru; di-toggle lewat event <video>.
+function ensurePlayerEmptyState(videoEl) {
+  const screen = videoEl?.closest(".player-screen");
+  if (!screen) return;
+  let es = screen.querySelector(".player-empty");
+  if (!es) {
+    es = document.createElement("div");
+    es.className = "player-empty";
+    es.innerHTML = '<div class="pe-box"><svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/></svg><p>Video tidak tersedia</p><small>Sumber video gagal dimuat atau sudah dihapus.</small></div>';
+    screen.appendChild(es);
+  }
+  es.hidden = true; // reset untuk video baru
+  if (!videoEl.__emptyStateBound) {
+    videoEl.__emptyStateBound = true;
+    videoEl.addEventListener("error", () => { es.hidden = false; });
+    videoEl.addEventListener("loadeddata", () => { es.hidden = true; });
+    videoEl.addEventListener("playing", () => { es.hidden = true; });
+  }
+}
 
 function resetPlayerToolbar(videoEl, vid) {
   // Speed back to 1×
