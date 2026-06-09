@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-// Global 404. With multiple root layouts there is no shared root layout to wrap
-// this, so it renders its own <html>/<body>. (The old 404.html only existed as
-// a GitHub Pages clean-URL redirector — obsolete now that Next.js routes
-// /watch, /embed and /id/* server-side.)
+// Per-route-group 404 for the main app. With the multiple-root-layout setup
+// (no app/layout.tsx, separate (site)/(player) root layouts), Next.js requires
+// not-found to live INSIDE a route group so it inherits that group's root
+// layout — a root app/not-found.tsx errors ("doesn't have a root layout") and
+// poisons the .next cache. This file renders inside (site)/layout's <html>/<body>
+// (which already loads styles.css), so it only provides the content.
 export const metadata: Metadata = {
   title: 'Playly. — Halaman tidak ditemukan',
   robots: { index: false, follow: false },
@@ -26,20 +28,18 @@ const CSS = `
 
 export default function NotFound() {
   return (
-    <html lang="id">
-      <body>
-        <style dangerouslySetInnerHTML={{ __html: CSS }} />
-        <div className="nf-wrap">
-          <div>
-            <div className="nf-logo">P</div>
-            <h1>Halaman tidak ditemukan</h1>
-            <p>Link mungkin salah atau halaman sudah dipindahkan.</p>
-            <Link className="nf-btn" href="/">
-              Kembali ke Playly
-            </Link>
-          </div>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="nf-wrap">
+        <div>
+          <div className="nf-logo">P</div>
+          <h1>Halaman tidak ditemukan</h1>
+          <p>Link mungkin salah atau halaman sudah dipindahkan.</p>
+          <Link className="nf-btn" href="/">
+            Kembali ke Playly
+          </Link>
         </div>
-      </body>
-    </html>
+      </div>
+    </>
   );
 }
