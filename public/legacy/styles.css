@@ -72491,18 +72491,29 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v746: warna sub-tab Status SESUAI FITUR — ikon selalu berwarna; saat aktif
    bg soft + badge angka berwarna sesuai makna:
    Bermasalah=gold(peringatan), Sampah=taupe(netral/recoverable), Takedown=merah(danger). */
-/* Bermasalah (all = pending/issues) → AMBER (peringatan, perlu perhatian) */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"] .sst-ico { color: #E3A93E !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active { background: rgba(227,169,62,.16) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active .ssc-count { background: #E3A93E !important; color: #1a0c10 !important; }
-/* Sampah (user menghapus, recoverable) → ORANYE (tingkat sedang, gradien amber→merah) */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"] .sst-ico { color: #E8814A !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active { background: rgba(232,129,74,.16) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active .ssc-count { background: #E8814A !important; color: #1a0c10 !important; }
-/* Takedown (diblokir admin) → MERAH penuh (paling parah/eksternal) */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"] .sst-ico { color: #DD4C5A !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active { background: rgba(221,76,90,.18) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active .ssc-count { background: #DD4C5A !important; color: #fff !important; }
+/* v751: warna fitur dibuat LEBIH HALUS (active oranye dulu terlalu mencolok).
+   Identitas warna kini dominan di IKON + BADGE angka; background aktif cuma tint
+   tipis (subtle), seragam intensitasnya. Hue sedikit dilembutkan. Gradien tetap:
+   Menunggu(amber) → Sampah(terracotta) → Takedown(merah). */
+/* fill aktif: tint tipis sesuai fitur (tak mencolok) */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active      { background: rgba(217,164,65,.10) !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active    { background: rgba(207,107,62,.10) !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active { background: rgba(206,80,96,.10) !important; }
+/* ikon per-fitur (hue lembut) — selalu tampil */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="all"] .sst-ico      { color: #D9A441 !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"] .sst-ico    { color: #CF6B3E !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"] .sst-ico { color: #CE5060 !important; }
+/* badge angka berwarna fitur saat aktif (indikator utama, tetap jelas) */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active .ssc-count      { background: #D9A441 !important; color: #1a0c10 !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active .ssc-count    { background: #CF6B3E !important; color: #fff !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active .ssc-count { background: #CE5060 !important; color: #fff !important; }
+
+/* v751: rapatkan jarak tab utama ↔ sub-tab/konten. Gap-nya dari flex-gap view
+   (20px) + margin → ~38px (mengambang). Kecilkan flex-gap jadi 14px & nol-kan
+   margin tab-bar/section supaya jarak bersih & konsisten. */
+.view[data-view="videos"] { gap: 14px !important; }
+.view[data-view="videos"] .riwayat-tab-bar { margin-bottom: 0 !important; }
+.view[data-view="videos"] .lib-card.lib-card-bare { margin-top: 0 !important; }
 
 /* ===================================================================
    PUSTAKA SAYA v731/v732 — kolom komentar: HILANGKAN total focus ring + tombol
