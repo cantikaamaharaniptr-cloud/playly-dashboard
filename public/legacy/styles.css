@@ -72441,6 +72441,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .lib-ytp-views-chip svg {
   color: rgba(232, 216, 196, 0.82) !important; font-size: 14px !important;
 }
+/* v740: serasikan ikon & teks meta — teks dibuat semibold (bukan 800 yg terlalu
+   tebal) + ikon ditebalkan (stroke 2.4) & sedikit diperbesar (16px). */
+.view[data-view="videos"] .lib-ytp-views-chip,
+.view[data-view="videos"] .lib-ytp-views-chip span { font-weight: 600 !important; }
+.view[data-view="videos"] .lib-ytp-views-chip svg {
+  stroke-width: 2.4 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
 
 /* ===================================================================
    PUSTAKA SAYA v731/v732 — kolom komentar: HILANGKAN total focus ring + tombol
