@@ -37530,8 +37530,22 @@ function renderTopPerforming() {
     ${th("comments", "Komentar")}
     ${th("eng", "Engagement")}
   </tr></thead>`;
-  const body = rows.slice(0, 20).map(r => `<tr class="tp-row" data-vid="${r.v.id}">
-    <td class="tp-vid"><div class="tp-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div><span class="tp-title">${escapeHtml(r.v.title || "")}</span></td>
+  // v781: metadata kolom Video (durasi · tanggal upload) di bawah judul.
+  const vidMeta = (v) => {
+    const parts = [];
+    if (v.duration) parts.push(escapeHtml(String(v.duration)));
+    const ts = v.createdAt || v.uploadedAt || v.date || v.createdat;
+    if (ts) {
+      let d = null;
+      try { d = (typeof ts === "number") ? new Date(ts) : new Date(ts); } catch (e) {}
+      if (d && !isNaN(d.getTime())) {
+        parts.push(d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }));
+      }
+    }
+    return parts.join(" · ");
+  };
+  const body = rows.slice(0, 20).map(r => `<tr class="tp-row" data-vid="${r.v.id}" role="button" tabindex="0" title="Buka video">
+    <td class="tp-vid"><div class="tp-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div><div class="tp-vid-text"><span class="tp-title">${escapeHtml(r.v.title || "")}</span>${vidMeta(r.v) ? `<span class="tp-sub">${vidMeta(r.v)}</span>` : ""}</div></td>
     <td class="tp-num">${fmt(r.views)}</td>
     <td class="tp-num">${fmt(r.likes)}</td>
     <td class="tp-num">${fmt(r.comments)}</td>
@@ -37545,7 +37559,12 @@ function renderTopPerforming() {
     else { sort.key = k; sort.dir = "desc"; }
     renderTopPerforming();
   }));
-  list.querySelectorAll(".tp-row").forEach(row => row.addEventListener("click", () => openPlayer(+row.dataset.vid)));
+  // v781: baris clickable → buka video (id bisa string/number → kirim apa adanya)
+  const openVid = (id) => { if (typeof openPlayer === "function") openPlayer(/^\d+$/.test(id) ? +id : id); };
+  list.querySelectorAll(".tp-row").forEach(row => {
+    row.addEventListener("click", () => openVid(row.dataset.vid));
+    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openVid(row.dataset.vid); } });
+  });
   if (typeof decorateStatsHeadings === "function") decorateStatsHeadings();
 }
 
