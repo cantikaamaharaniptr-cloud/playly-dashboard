@@ -72461,32 +72461,29 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   outline: none !important;
   box-shadow: none !important;
 }
-/* Tombol Kirim: dibuat PERSIS seperti kolom komentar (box kembar) — bg/border/
-   radius/font/tinggi sama, hanya teks "Kirim" tebal krem. */
-.view[data-view="videos"] #libInlineCommentSend {
-  color: var(--cream) !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;                            /* = input */
-  background: rgba(232, 216, 196, 0.06) !important;       /* = input */
-  border: 1px solid rgba(232, 216, 196, 0.14) !important; /* = input */
-  border-radius: 10px !important;                         /* = input */
-  align-self: stretch !important;                         /* tinggi = input (38px) */
-  padding: 0 22px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-}
-.view[data-view="videos"] #libInlineCommentSend:hover {
-  background: rgba(232, 216, 196, 0.12) !important;
-  border-color: var(--primary) !important;
-}
-/* v735: hapus focus ring (outline emas) + efek GLASS shine (::after gradient)
-   bawaan class .btn pada tombol Kirim — per user. */
+/* v736 — Tombol Kirim: SOLID warna tema dashboard (wine), FLAT total — tanpa
+   animasi (transition/transform), tanpa focus ring (outline/box-shadow), tanpa
+   glass shine (::before/::after). Konsisten di SEMUA state. */
 .view[data-view="videos"] #libInlineCommentSend,
+.view[data-view="videos"] #libInlineCommentSend:hover,
 .view[data-view="videos"] #libInlineCommentSend:focus,
 .view[data-view="videos"] #libInlineCommentSend:focus-visible,
 .view[data-view="videos"] #libInlineCommentSend:active {
+  color: var(--cream) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  background: var(--primary) !important;      /* warna tema dashboard (wine) */
+  border: 1px solid var(--primary) !important;
+  border-radius: 10px !important;             /* = radius input */
+  align-self: stretch !important;             /* tinggi = input (38px) */
+  padding: 0 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
   outline: none !important;
   box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;                /* tanpa animasi */
+  filter: none !important;
 }
 .view[data-view="videos"] #libInlineCommentSend::before,
 .view[data-view="videos"] #libInlineCommentSend::after {
