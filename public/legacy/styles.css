@@ -73232,3 +73232,32 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title {
   padding-left: 0 !important;
 }
+
+/* ===================================================================
+   STATISTIK v778 — tabel Performa Video: samaratakan warna font header
+   (kolom sort aktif tadinya wine → seragam) + rapikan.
+   =================================================================== */
+/* semua header warna SAMA (muted-cream seragam), termasuk kolom sort aktif */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 66%, transparent) !important;
+  font-weight: 700 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) {
+  color: var(--cream, #E8D8C4) !important;
+}
+/* sel data: warna teks seragam cream */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-num,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-title {
+  color: var(--cream, #E8D8C4) !important;
+}
+
+/* ===================================================================
+   STATISTIK v779 — header tabel Performa Video: jangan KAPITAL (title-case).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+}
