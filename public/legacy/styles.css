@@ -72504,8 +72504,8 @@ section[data-view="stats"] .stat-card { background: var(--bg-elev) !important; b
 section[data-view="stats"] .stat-card:hover { box-shadow: none !important; transform: none !important; border-color: var(--border-strong, var(--border)) !important; }
 /* Ringkasan spacing */
 section[data-view="stats"] .stats-section-head { margin: 4px 0 14px !important; }
-/* Sumber Trafik + Audiens = 2 kolom berdampingan */
-section[data-view="stats"] .stats-extra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+/* Sumber Trafik + Audiens = SELALU full-width (1 kolom stacked), konsisten dgn section lain */
+section[data-view="stats"] .stats-extra-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 24px; }
 section[data-view="stats"] .stats-extra-grid .stats-extra-section { margin-top: 0 !important; }
 @media (max-width: 820px) { section[data-view="stats"] .stats-extra-grid { grid-template-columns: 1fr; } }
 
@@ -73327,12 +73327,5 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
 /* (opsi 2) baris bisa diklik */
 section[data-view="stats"] .tp-table tbody tr { cursor: pointer !important; }
 
-/* ===================================================================
-   STATISTIK v782 — Sumber Trafik + Audiens SELALU full-width (stacked),
-   konsisten dgn section lain (jangan kadang 2-kolom kadang 1).
-   =================================================================== */
-html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .stats-extra-grid {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 24px !important;
-}
+/* STATISTIK — Sumber Trafik + Audiens full-width diatur langsung di rule sumber
+   (.stats-extra-grid grid-template-columns: 1fr), tak perlu override terpisah. */
