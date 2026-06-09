@@ -73074,3 +73074,34 @@ body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
   animation: none !important;
 }
+
+/* ===================================================================
+   STATISTIK v770 — tab metrik jadi SEGMENTED CONTROL (per user):
+   satu wadah membungkus, segmen aktif terisi wine.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  display: inline-flex !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 15%, transparent) !important;
+  border-radius: 12px !important;
+  flex-wrap: nowrap !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 9px !important;
+  padding: 7px 16px !important;
+  font-size: 12.5px !important; font-weight: 600 !important;
+  color: var(--muted) !important;
+  box-shadow: none !important;
+  transition: background .14s ease, color .14s ease !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn:hover {
+  color: var(--text) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn.active {
+  background: var(--primary) !important;
+  color: var(--cream, #E8D8C4) !important;
+}
