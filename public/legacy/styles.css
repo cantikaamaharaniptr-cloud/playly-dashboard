@@ -72495,14 +72495,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .status-sub-tab[data-status-tab="all"] .sst-ico { color: #E3A93E !important; }
 .view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active { background: rgba(227,169,62,.16) !important; }
 .view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active .ssc-count { background: #E3A93E !important; color: #1a0c10 !important; }
-/* Sampah (trash, recoverable) → ABU SLATE (netral, dibuang tapi bisa dipulihkan) */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"] .sst-ico { color: #8E99A8 !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active { background: rgba(142,153,168,.16) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active .ssc-count { background: #8E99A8 !important; color: #1a0c10 !important; }
-/* Takedown (diblokir admin) → MERAH (danger/serius) */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"] .sst-ico { color: #DD5560 !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active { background: rgba(221,85,96,.16) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active .ssc-count { background: #DD5560 !important; color: #fff !important; }
+/* Sampah (user menghapus, recoverable) → MERAH (destruktif tapi bisa dipulihkan) */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"] .sst-ico { color: #E25563 !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active { background: rgba(226,85,99,.15) !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active .ssc-count { background: #E25563 !important; color: #fff !important; }
+/* Takedown (diblokir admin) → MERAH GELAP/CRIMSON (paling serius/eksternal) */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"] .sst-ico { color: #C0334A !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active { background: rgba(192,51,74,.18) !important; }
+.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active .ssc-count { background: #C0334A !important; color: #fff !important; }
 
 /* ===================================================================
    PUSTAKA SAYA v731/v732 — kolom komentar: HILANGKAN total focus ring + tombol
