@@ -72226,3 +72226,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   font-weight: 600 !important;
 }
 .view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v712 — tab dikecilkan sedikit (dari v711 yg kebesaran):
+   teks 14->13px, padding 11/20->9/17. Ikon SEDIKIT lebih besar dari teks (16px).
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 13px !important;
+  padding: 9px 17px !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 16px !important; height: 16px !important; }
