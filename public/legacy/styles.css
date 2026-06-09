@@ -73326,3 +73326,13 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
 }
 /* (opsi 2) baris bisa diklik */
 section[data-view="stats"] .tp-table tbody tr { cursor: pointer !important; }
+
+/* ===================================================================
+   STATISTIK v782 — Sumber Trafik + Audiens SELALU full-width (stacked),
+   konsisten dgn section lain (jangan kadang 2-kolom kadang 1).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .stats-extra-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 24px !important;
+}
