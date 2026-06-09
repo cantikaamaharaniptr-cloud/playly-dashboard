@@ -72346,3 +72346,40 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: transparent !important;
   border: 1px solid var(--border) !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v727 — STRIP STATISTIK gaya DASHBOARD (Wistia/Vidyard/Loom/
+   Bilibili), bukan baris "X tontonan" ala YouTube/TikTok. Metrik video jadi
+   deretan kartu kecil (Tontonan · Suka · Komentar · Diunggah) di kiri baris
+   aksi; tombol Suka/Bagikan jadi aksi murni (angka pindah ke strip).
+   Tetap konsep dashboard user + tema wine/cream.
+   =================================================================== */
+/* Ganti baris views lama + date-meta (pindah ke strip) */
+.view[data-view="videos"] .lib-ytp-views-chip { display: none !important; }
+.view[data-view="videos"] .lib-ytp-desc-meta { display: none !important; }
+/* Tombol aksi = aksi murni → sembunyikan angka (sudah ada di strip) */
+.view[data-view="videos"] .lib-ytp-pill #libInlineLikeCount,
+.view[data-view="videos"] .lib-ytp-pill #libInlineShareCount { display: none !important; }
+
+/* Strip + kartu statistik */
+.view[data-view="videos"] .lib-stat-strip {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch;
+}
+.view[data-view="videos"] .lib-stat-tile {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 15px;
+  min-width: 118px;
+}
+.view[data-view="videos"] .lib-stat-tile .lst-ico { display: flex; color: rgba(232, 216, 196, 0.5); }
+.view[data-view="videos"] .lib-stat-tile .lst-ico svg { width: 19px; height: 19px; }
+.view[data-view="videos"] .lib-stat-tile .lst-body { display: flex; flex-direction: column; line-height: 1.15; }
+.view[data-view="videos"] .lib-stat-tile .lst-val { font-size: 15px; font-weight: 800; color: var(--text); }
+.view[data-view="videos"] .lib-stat-tile .lst-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  color: rgba(232, 216, 196, 0.5);
+}
+/* Tile "Diunggah" — nilai tanggal lebih kecil (bukan angka) */
+.view[data-view="videos"] .lib-stat-tile[data-stat="date"] .lst-val { font-size: 13px; font-weight: 700; }
