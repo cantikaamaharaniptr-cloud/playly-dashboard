@@ -72479,3 +72479,19 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: rgba(232, 216, 196, 0.12) !important;
   border-color: var(--primary) !important;
 }
+/* v735: hapus focus ring (outline emas) + efek GLASS shine (::after gradient)
+   bawaan class .btn pada tombol Kirim — per user. */
+.view[data-view="videos"] #libInlineCommentSend,
+.view[data-view="videos"] #libInlineCommentSend:focus,
+.view[data-view="videos"] #libInlineCommentSend:focus-visible,
+.view[data-view="videos"] #libInlineCommentSend:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.view[data-view="videos"] #libInlineCommentSend::before,
+.view[data-view="videos"] #libInlineCommentSend::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  animation: none !important;
+}
