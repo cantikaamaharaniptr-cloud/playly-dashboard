@@ -72307,3 +72307,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   display: none !important;
 }
 .view[data-view="videos"].lib-watch-mode #libInlinePlayer { margin-top: 4px; }
+
+/* ===================================================================
+   PUSTAKA SAYA v718 — panel info di bawah player dibatasi jadi KOLOM BACA.
+   Sebelumnya judul/stats/tanggal/komentar melebar penuh (~1580px) → baris
+   kepanjangan, kotak komentar terlalu lebar, tombol Suka/Komentar/Bagikan
+   jauh terpisah dari "X tontonan". Video tetap full-width; hanya panel info
+   yang dibatasi (left-aligned di bawah tepi kiri video).
+   =================================================================== */
+.view[data-view="videos"] .lib-ytp-panel {
+  max-width: 1100px !important;
+}
