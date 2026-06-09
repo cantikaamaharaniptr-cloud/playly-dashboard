@@ -72308,6 +72308,17 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .view[data-view="videos"].lib-watch-mode #libInlinePlayer { margin-top: 4px; }
 
+/* v741: ROBUST — sembunyikan chrome pustaka (header, tab, toolbar urut, semua
+   grid section) KAPAN PUN inline player tampil, tak bergantung pd class
+   .lib-watch-mode (jaga-jaga class lepas akibat re-render/race). Pakai :has().
+   Memperbaiki: grid "1 Video / Terbaru" + kartu masih muncul di bawah player. */
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) .view-header,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) .riwayat-tab-bar,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) #libSortBar,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) [data-focus-target] {
+  display: none !important;
+}
+
 /* ===================================================================
    PUSTAKA SAYA v723 — REVERT pembatasan lebar panel info (v718-v722).
    Per user: kembalikan ke tampilan ASLI sebelum diubah — panel info di bawah

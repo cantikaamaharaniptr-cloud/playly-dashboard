@@ -46053,6 +46053,13 @@ function refreshLibInlineComments(id) {
 function setLibraryTab(tabKey) {
   const view = document.querySelector('section.view[data-view="videos"]');
   if (!view) return;
+  // v741: kalau inline player sedang dibuka/terbuka, jangan ganggu — setLibraryTab
+  // dipanggil via setTimeout 30ms dari switchView; bila user buka video dalam
+  // jendela itu, ia akan menutup player / melepas watch-mode (grid muncul lagi).
+  // Cek class lib-watch-mode (ditambah di AWAL openLibInlinePlayer, sebelum await
+  // → player bisa masih hidden saat openLibInlinePlayer async berjalan).
+  const _ip = document.getElementById("libInlinePlayer");
+  if (view.classList.contains("lib-watch-mode") || (_ip && !_ip.hidden) || __libInlineVid != null) return;
   // "all" = parent "My Library" diklik → tampilkan semua section (gabungan).
   // Sub-tab spesifik (my/status/download) → tampilkan hanya itu.
   const valid = ["all", "my", "status", "new", "download"];
