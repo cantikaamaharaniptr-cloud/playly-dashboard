@@ -72313,3 +72313,36 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    Per user: kembalikan ke tampilan ASLI sebelum diubah — panel info di bawah
    player kembali full-width (tanpa max-width). Tidak ada rule pembatas lagi.
    =================================================================== */
+
+/* ===================================================================
+   PUSTAKA SAYA v724 — rapikan DESAIN panel info player (warna/bentuk/kolom).
+   Masalah: semua teks krem penuh (tak ada hierarki), pill aksi nyaris tak
+   terbaca sbg tombol, pill "Komentar" redundan dgn section Komentar di bawah,
+   kotak deskripsi terlalu berat (fill) untuk isi sedikit.
+   =================================================================== */
+/* 1. Hierarki warna — meta (tontonan + tanggal) dibuat REDUP, judul menonjol.
+   Teks "tontonan" ada di <span> dgn rule .lib-inline-action span{color:var(--text)}
+   → harus sasar span + svg juga, pakai #libInlineActions utk menang spesifisitas. */
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip span,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip svg { color: rgba(232, 216, 196, 0.55) !important; }
+.view[data-view="videos"] .lib-ytp-desc-meta,
+.view[data-view="videos"] .lib-ytp-desc-meta .lib-inline-date,
+.view[data-view="videos"] .lib-ytp-desc-meta .lib-inline-date svg { color: rgba(232, 216, 196, 0.55) !important; font-size: 12.5px !important; }
+
+/* 2. Pill aksi (Suka/Bagikan) — beri border + bg solid biar terbaca sbg tombol */
+.view[data-view="videos"] .lib-ytp-pill {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  transition: border-color .15s, background .15s;
+}
+.view[data-view="videos"] .lib-ytp-pill:hover { border-color: var(--primary) !important; }
+
+/* 3. Hapus pill "Komentar" — sudah ada section Komentar lengkap di bawah */
+.view[data-view="videos"] .lib-ytp-pill[data-act="comment"] { display: none !important; }
+
+/* 4. Kotak deskripsi lebih ringan — outline tipis, bukan fill berat */
+.view[data-view="videos"] .lib-ytp-desc-box {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+}
