@@ -73165,3 +73165,43 @@ section[data-view="stats"] .riwayat-tab-bar .stat-tab.active {
 }
 section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico { display: inline-flex !important; flex: 0 0 auto; }
 section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico svg { width: 15px !important; height: 15px !important; }
+
+/* ===================================================================
+   STATISTIK v773 — rapatkan heading "Grafik Stats" -> tab metrik
+   (sebelumnya terasa terlalu berjarak).
+   =================================================================== */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin: 2px 2px 4px !important; }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  margin: 0 0 10px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  padding: 5px 4px !important;
+}
+
+/* ===================================================================
+   STATISTIK v774 — (1) isi header chart tidak terlalu ke bawah (chip
+   dipadatkan + head ramping), (2) animasi garis grafik (draw-in + fade).
+   =================================================================== */
+/* (1) header ramping */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  padding-bottom: 8px !important; margin-bottom: 8px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  padding: 4px 11px !important; font-size: 20px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 10px !important; margin-bottom: 1px !important;
+}
+/* (2) animasi grafik: garis tergambar (draw-in) + area memudar masuk */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-line-anim {
+  animation: statsChartDraw 1.3s cubic-bezier(.4,0,.2,1) forwards !important;
+}
+@keyframes statsChartDraw { to { stroke-dashoffset: 0 !important; } }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-area-anim {
+  animation: statsChartFade .9s ease-out .25s both !important;
+}
+@keyframes statsChartFade { from { opacity: 0; } to { opacity: 1; } }
+body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .chart-line-anim,
+body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .chart-area-anim {
+  animation: none !important; stroke-dashoffset: 0 !important; opacity: 1 !important;
+}
