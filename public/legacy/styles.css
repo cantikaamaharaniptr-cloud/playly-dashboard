@@ -72290,3 +72290,20 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   line-height: 1;
 }
 .view[data-view="videos"] .riwayat-tab .ptb-count[hidden] { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v717 — MODE MENONTON (.lib-watch-mode pada view videos).
+   Saat inline player terbuka, view jadi layar player BERSIH: semua chrome
+   pustaka (header, tab bar, toolbar urut, dan SEMUA section grid) di-hide,
+   hanya #libInlinePlayer yang tampil. Tutup via tombol X player / klik
+   breadcrumb → exitLibWatchMode() melepas class ini.
+   Memperbaiki: (1) ganti tab/back tetap menampilkan player, (2) judul top bar
+   tidak berubah, (3) toolbar "X Video / Urutkan" tetap muncul di bawah player.
+   =================================================================== */
+.view[data-view="videos"].lib-watch-mode .view-header,
+.view[data-view="videos"].lib-watch-mode .riwayat-tab-bar,
+.view[data-view="videos"].lib-watch-mode #libSortBar,
+.view[data-view="videos"].lib-watch-mode [data-focus-target] {
+  display: none !important;
+}
+.view[data-view="videos"].lib-watch-mode #libInlinePlayer { margin-top: 4px; }

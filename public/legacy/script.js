@@ -31436,6 +31436,11 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderAdminPremiumQueue === "function") setTimeout(renderAdminPremiumQueue, 30);
   }
   if (name === "videos") {
+    // v717: masuk/kembali ke Pustaka (termasuk klik breadcrumb "Pustaka Saya"/
+    // "Video Saya" saat sedang menonton) → pastikan inline player tertutup &
+    // chrome pustaka kembali tampil. switchView("videos") tidak memicu
+    // playly:view-changed cleanup (view sama), jadi tutup eksplisit di sini.
+    try { closeLibInlinePlayer(); } catch {}
     renderVideoGrid();
     renderMyLibrary();
     // Restore last active library tab (default "my")
@@ -36687,6 +36692,19 @@ document.addEventListener("click", e => {
   });
   // Apply focus mode (hide non-matching sections)
   if (typeof applyFocus === "function") applyFocus(view, key);
+  // v717: ganti tab Pustaka → tutup inline player yang mungkin terbuka, dan
+  // sinkronkan judul breadcrumb (segmen aktif) dgn tab — dulu judul top bar
+  // tidak ikut berubah saat pindah tab (tab pakai data-focus-tab, bukan
+  // setLibraryTab yang meng-update breadcrumb).
+  if (view.dataset.view === "videos") {
+    try { closeLibInlinePlayer(); } catch {}
+    const TAB_LABEL = { "my-video": "Video Saya", "draft": "Draf", "status-videos": "Status Video", "download": "Unduhan" };
+    const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+    if (last && TAB_LABEL[key]) {
+      last.textContent = TAB_LABEL[key];
+      delete last.dataset.libOrigLabel;
+    }
+  }
 });
 
 // On page load, apply default focus untuk views yang punya data-focus attribute.
@@ -45674,6 +45692,32 @@ window.addEventListener("playly:view-changed", e => {
 //   description
 let __libInlineVid = null;
 
+// v717: "Mode menonton" — saat inline player terbuka, view Pustaka jadi layar
+// player bersih: chrome pustaka (tab, toolbar urut, semua grid, header) di-hide
+// via CSS .lib-watch-mode, dan judul breadcrumb (segmen aktif) diganti judul
+// video. Sebelumnya player muncul DI ATAS grid → user lihat "kolom"/toolbar +
+// daftar video di bawah player, dan ganti tab tidak menutup player.
+function enterLibWatchMode(v) {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  view.classList.add("lib-watch-mode");
+  const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+  if (last) {
+    if (last.dataset.libOrigLabel == null) last.dataset.libOrigLabel = last.textContent;
+    last.textContent = (v && v.title) ? v.title : "Memutar video";
+  }
+}
+function exitLibWatchMode() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  view.classList.remove("lib-watch-mode");
+  const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+  if (last && last.dataset.libOrigLabel != null) {
+    last.textContent = last.dataset.libOrigLabel;
+    delete last.dataset.libOrigLabel;
+  }
+}
+
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -45681,6 +45725,7 @@ async function openLibInlinePlayer(id) {
   const wrap = document.getElementById("libInlinePlayer");
   const videoEl = document.getElementById("libInlineVideo");
   if (!wrap || !videoEl) return;
+  enterLibWatchMode(v);
 
   // Track view
   {
@@ -46000,6 +46045,8 @@ function closeLibInlinePlayer() {
   }
   document.querySelectorAll(".lib-tool-menu").forEach(m => m.hidden = true);
   __libInlineVid = null;
+  // v717: keluar mode menonton → munculkan lagi chrome pustaka + restore judul.
+  try { exitLibWatchMode(); } catch {}
 }
 
 // Wire up engagement actions + comment input — once
