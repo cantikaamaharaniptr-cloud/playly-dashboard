@@ -72078,3 +72078,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .riwayat-tab[aria-selected="true"] {
   background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v697 — header section diperbesar biar pas (sebelumnya kekecilan):
+   ikon 40, judul 17, deskripsi 13, padding lebih lega.
+   =================================================================== */
+.view[data-view="videos"] .dl-head-flex { padding: 15px 18px !important; gap: 13px !important; }
+.view[data-view="videos"] .dl-head-flex .sec-icon-v582 {
+  width: 40px !important; height: 40px !important; border-radius: 11px !important; flex: 0 0 auto !important;
+}
+.view[data-view="videos"] .dl-head-flex .sec-icon-v582 svg { width: 21px !important; height: 21px !important; }
+.view[data-view="videos"] .dl-head-flex h3 { font-size: 17px !important; font-weight: 700 !important; }
+.view[data-view="videos"] .dl-head-flex small { font-size: 13px !important; }
