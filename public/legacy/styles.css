@@ -72214,3 +72214,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .lib-item .lib-meta strong { font-size: 15px !important; }
 .view[data-view="videos"] .lib-item .lib-meta-stats,
 .view[data-view="videos"] .lib-item .lib-meta-date { font-size: 12.5px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v711 — tab (Video Saya/Status/Unduhan) DIPERBESAR:
+   teks 11.9->14px, padding 8/16->11/20, ikon 15->18px.
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 14px !important;
+  padding: 11px 20px !important;
+  gap: 8px !important;
+  font-weight: 600 !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
