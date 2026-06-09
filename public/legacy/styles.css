@@ -73105,3 +73105,32 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
   background: var(--primary) !important;
   color: var(--cream, #E8D8C4) !important;
 }
+
+/* ===================================================================
+   STATISTIK v771 — (1) tab metrik dari segmented -> UNDERLINE (biar beda
+   dari period box .chip-tabs), (2) teks period aktif jadi cream (readable).
+   =================================================================== */
+/* (1) underline tabs untuk metrik */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  display: inline-flex !important; gap: 4px !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; border-radius: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  border: 0 !important; background: transparent !important; border-radius: 0 !important;
+  padding: 8px 4px !important; margin: 0 12px 0 0 !important;
+  color: var(--muted) !important; font-weight: 600 !important; font-size: 13px !important;
+  border-bottom: 2px solid transparent !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn:hover {
+  color: var(--text) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn.active {
+  background: transparent !important;
+  color: var(--cream, #E8D8C4) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+/* (2) period .chip-tabs: teks aktif cream (sebelumnya wine gelap, susah dibaca) */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs .active,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs button.active {
+  color: var(--cream, #E8D8C4) !important;
+}
