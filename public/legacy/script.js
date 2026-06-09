@@ -52228,6 +52228,53 @@ function maybeOfferSaveCard() {
   });
 })();
 
+// Restructure modal Edit Video jadi 2 kolom (Media | Pengaturan) supaya TIDAK
+// perlu scroll panjang, + inject 4 field baru (unduh/sematkan/usia/lisensi).
+// Idempotent: dijalankan sekali (guard form.dataset.vemLaidOut).
+function ensureVemLayout() {
+  const form = document.getElementById("videoEditForm");
+  if (!form || form.dataset.vemLaidOut) return;
+  form.dataset.vemLaidOut = "1";
+
+  const closestField = sel => document.getElementById(sel)?.closest(".upf-field");
+  const thumb = form.querySelector(".vem-thumb-row");
+  const judul = closestField("vemTitleInput");
+  const desc = closestField("vemDesc");
+  const sub = form.querySelector(".upf-subtitle-section");
+  const pairs = [...form.querySelectorAll(".upf-pair")];
+
+  const grid = document.createElement("div"); grid.className = "vem-grid";
+  const left = document.createElement("div"); left.className = "vem-col vem-col-media";
+  const right = document.createElement("div"); right.className = "vem-col vem-col-settings";
+  grid.append(left, right);
+
+  // KIRI = Media/konten
+  [thumb, judul, desc].forEach(el => el && left.appendChild(el));
+  // KANAN = Pengaturan (pasangan asli + field baru)
+  pairs.forEach(p => right.appendChild(p));
+  const mkField = (id, label, opts) => {
+    const f = document.createElement("div"); f.className = "upf-field";
+    f.innerHTML = `<label for="${id}">${label}</label><select id="${id}">` +
+      opts.map(o => `<option value="${o.v}">${o.t}</option>`).join("") + `</select>`;
+    return f;
+  };
+  const np1 = document.createElement("div"); np1.className = "upf-pair";
+  np1.append(
+    mkField("vemAllowDownload", "Izinkan unduh", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }]),
+    mkField("vemAllowEmbed", "Izinkan sematkan", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }])
+  );
+  const np2 = document.createElement("div"); np2.className = "upf-pair";
+  np2.append(
+    mkField("vemAgeRestrict", "Batasan usia", [{ v: "all", t: "👪 Semua umur" }, { v: "adult", t: "🔞 18+" }]),
+    mkField("vemLicense", "Lisensi", [{ v: "standard", t: "Standar Playly" }, { v: "cc", t: "Creative Commons" }])
+  );
+  right.append(np1, np2);
+
+  // Sisipkan grid sebelum subtitle (subtitle tetap full-width di bawah).
+  if (sub) form.insertBefore(grid, sub);
+  else form.appendChild(grid);
+}
+
 function openVideoEditModal(id) {
   const v = (state?.myVideos || []).find(x => x.id === id);
   if (!v) {
@@ -52236,6 +52283,7 @@ function openVideoEditModal(id) {
   }
   const modal = document.getElementById("videoEditModal");
   if (!modal) return;
+  ensureVemLayout();
 
   const setVal = (sel, val) => { const el = document.getElementById(sel); if (el) el.value = val ?? ""; };
   setVal("vemId", v.id);
@@ -52245,6 +52293,10 @@ function openVideoEditModal(id) {
   setVal("vemTags", Array.isArray(v.tags) ? v.tags.join(", ") : (v.tags || ""));
   setVal("vemVis", v.visibility || "public");
   setVal("vemComments", v.comments || v.commentMode || "all");
+  setVal("vemAllowDownload", v.allowDownload || "yes");
+  setVal("vemAllowEmbed", v.allowEmbed || "yes");
+  setVal("vemAgeRestrict", v.ageRestriction || "all");
+  setVal("vemLicense", v.license || "standard");
 
   const thumbPreview = document.getElementById("vemThumbPreview");
   if (thumbPreview) thumbPreview.src = v.thumb || "";
@@ -52296,6 +52348,10 @@ function saveVideoEdit() {
   v.tags = get("vemTags").split(",").map(s => s.trim()).filter(Boolean);
   v.visibility = get("vemVis");
   v.comments = get("vemComments");
+  v.allowDownload = get("vemAllowDownload") || "yes";
+  v.allowEmbed = get("vemAllowEmbed") || "yes";
+  v.ageRestriction = get("vemAgeRestrict") || "all";
+  v.license = get("vemLicense") || "standard";
   if (window._vemNewThumb) {
     v.thumb = window._vemNewThumb;
     window._vemNewThumb = null;

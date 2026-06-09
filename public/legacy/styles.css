@@ -72158,3 +72158,17 @@ textarea#upDesc.upf-desc-textarea {
 }
 .lib-edit-video-btn svg { width: 15px; height: 15px; }
 .lib-edit-video-btn:hover { filter: brightness(1.08); }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v701 — layout 2 kolom (Media | Pengaturan) supaya TIDAK
+   perlu scroll panjang. Subtitle full-width di bawah. Tema dashboard.
+   =================================================================== */
+.video-edit-panel { max-width: 840px !important; width: min(840px, 94vw) !important; max-height: 92vh !important; }
+.vem-grid {
+  display: grid; grid-template-columns: minmax(300px, 340px) 1fr;
+  gap: 22px; align-items: start; margin-bottom: 12px;
+}
+.vem-grid .vem-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.vem-grid .vem-col .upf-field,
+.vem-grid .vem-col .upf-pair { margin: 0 !important; }
+@media (max-width: 780px) { .vem-grid { grid-template-columns: 1fr; } }
