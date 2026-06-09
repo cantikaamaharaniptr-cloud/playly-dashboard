@@ -46529,6 +46529,13 @@ async function openPlayer(id) {
   $("#playerTitle").textContent = v.title;
   $("#playerCreator").textContent = "@" + v.creator;
   $("#playerCreatorInit").textContent = v.creator.slice(0, 2).toUpperCase();
+  // Sub-label creator: DATA ASLI (jumlah video + pengikut), bukan "2 video" statis.
+  {
+    const _cv = (typeof getUserVideos === "function" ? getUserVideos(v.creator) : []).length;
+    const _cf = (typeof getUserFollowers === "function" ? getUserFollowers(v.creator) : []).length;
+    const _sub = document.querySelector(".pv-creator-row .pv-sub-label");
+    if (_sub) _sub.textContent = `${_cv} video · ${fmtNum(_cf)} pengikut`;
+  }
   $("#playerViewCount").textContent = v.views || fmtNum(v.viewsNum || 0);
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
@@ -47228,11 +47235,15 @@ function renderComments(id) {
     if (!repliesByParent[r.parentId]) repliesByParent[r.parentId] = [];
     repliesByParent[r.parentId].push(r);
   });
-  topLevel.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  // Sort: Terbaru (ts desc, default) atau Teratas (likes desc → ts desc).
+  const _csort = state.commentSort === "top" ? "top" : "new";
+  if (_csort === "top") topLevel.sort((a, b) => (b.likes.length - a.likes.length) || ((b.ts || 0) - (a.ts || 0)));
+  else topLevel.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   Object.values(repliesByParent).forEach(arr => arr.sort((a, b) => (a.ts || 0) - (b.ts || 0)));
 
   const total = raw.length;
   $("#commentCount").textContent = `${total} Komentar`;
+  ensureCommentSort(total);
 
   if (!topLevel.length) {
     $("#commentList").innerHTML = `<div class="comment-empty">Belum ada komentar. Jadilah yang pertama!</div>`;
@@ -48587,6 +48598,13 @@ function ensurePlayerExtraActions() {
     b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh</span>';
     pills.appendChild(b);
   }
+  if (!document.getElementById("embedBtn")) {
+    const b = document.createElement("button");
+    b.id = "embedBtn"; b.type = "button"; b.className = "pv-pill pv-pill-embed";
+    b.setAttribute("title", "Sematkan video"); b.setAttribute("aria-label", "Sematkan");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Sematkan</span>';
+    pills.appendChild(b);
+  }
   if (!document.getElementById("reportBtn")) {
     const b = document.createElement("button");
     b.id = "reportBtn"; b.type = "button"; b.className = "pv-pill pv-pill-report";
@@ -48644,6 +48662,38 @@ function reportVideoToAdmin(v) {
   });
 }
 
+// Modal Sematkan: kode <iframe> ke /id/{id}/embed (route embed yang sudah ada).
+function openEmbedModal(v) {
+  if (!v) return;
+  const id = v.id;
+  const code = `<iframe src="${location.origin}/id/${id}/embed" width="560" height="315" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+  document.getElementById("__embedModal")?.remove();
+  const wrap = document.createElement("div");
+  wrap.id = "__embedModal";
+  wrap.className = "embed-modal-backdrop";
+  wrap.innerHTML =
+    '<div class="embed-modal" role="dialog" aria-label="Sematkan video">' +
+      '<div class="embed-modal-head"><h3>Sematkan Video</h3>' +
+      '<button type="button" class="embed-modal-close" aria-label="Tutup">✕</button></div>' +
+      '<p class="embed-modal-desc">Salin kode ini untuk menyematkan video di situs lain.</p>' +
+      '<textarea class="embed-code" readonly rows="3"></textarea>' +
+      '<div class="embed-modal-foot"><button type="button" class="embed-copy">Salin kode</button></div>' +
+    '</div>';
+  wrap.querySelector(".embed-code").value = code;
+  document.body.appendChild(wrap);
+  const close = () => wrap.remove();
+  wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+  wrap.querySelector(".embed-modal-close").addEventListener("click", close);
+  wrap.querySelector(".embed-copy").addEventListener("click", async () => {
+    const ta = wrap.querySelector(".embed-code");
+    ta.select();
+    try { await navigator.clipboard.writeText(ta.value); }
+    catch (e) { try { document.execCommand("copy"); } catch (_) {} }
+    if (typeof toast === "function") toast("🔗 Kode embed disalin", "success");
+    close();
+  });
+}
+
 document.addEventListener("click", (e) => {
   const dl = e.target.closest("#dlBtn");
   if (dl) {
@@ -48651,11 +48701,40 @@ document.addEventListener("click", (e) => {
     if (v && typeof openDownloadOptionsModal === "function") openDownloadOptionsModal(v);
     return;
   }
+  const emb = e.target.closest("#embedBtn");
+  if (emb) {
+    const v = findVideo(state.currentVideo);
+    if (v) openEmbedModal(v);
+    return;
+  }
   const rep = e.target.closest("#reportBtn");
   if (rep) {
     const v = findVideo(state.currentVideo);
     if (v) reportVideoToAdmin(v);
   }
+});
+
+// ---- SORT KOMENTAR (Terbaru / Teratas) — toggle di-inject dekat #commentCount.
+function ensureCommentSort(total) {
+  const countEl = document.getElementById("commentCount");
+  if (!countEl) return;
+  let sortEl = document.getElementById("commentSortToggle");
+  if (!sortEl) {
+    sortEl = document.createElement("div");
+    sortEl.id = "commentSortToggle";
+    sortEl.className = "comment-sort";
+    sortEl.innerHTML = '<button type="button" data-csort="new">Terbaru</button><button type="button" data-csort="top">Teratas</button>';
+    countEl.insertAdjacentElement("afterend", sortEl);
+  }
+  const mode = state.commentSort === "top" ? "top" : "new";
+  sortEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.csort === mode));
+  sortEl.hidden = !(total >= 2);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("#commentSortToggle button[data-csort]");
+  if (!b) return;
+  state.commentSort = b.dataset.csort;
+  if (typeof renderComments === "function") renderComments(state.currentVideo);
 });
 
 $("#saveBtn")?.addEventListener("click", () => {

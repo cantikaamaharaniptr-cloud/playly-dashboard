@@ -72088,3 +72088,39 @@ textarea#upDesc.upf-desc-textarea {
 /* Tombol Laporkan = sekunder (muted), Unduh = pill normal (warisi .pv-pill). */
 .pv-pill-report { color: var(--muted) !important; }
 .pv-pill-report:hover { color: var(--text) !important; }
+
+/* ===================================================================
+   PLAYER v698 — sort komentar + modal Sematkan (tema dashboard user).
+   =================================================================== */
+.comment-sort { display: inline-flex; gap: 4px; margin: -2px 0 12px; }
+.comment-sort[hidden] { display: none !important; }
+.comment-sort button {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.comment-sort button:hover { color: var(--text); }
+.comment-sort button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.embed-modal-backdrop {
+  position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.embed-modal {
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px; width: min(480px, 100%); color: var(--text);
+}
+.embed-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.embed-modal-head h3 { margin: 0; font-size: 16px; }
+.embed-modal-close { background: transparent; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; line-height: 1; }
+.embed-modal-close:hover { color: var(--text); }
+.embed-modal-desc { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.embed-code {
+  width: 100%; background: var(--bg, #1a0c10); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--cream, #E8D8C4); font-family: ui-monospace, monospace; font-size: 12px; padding: 10px; resize: vertical; box-sizing: border-box;
+}
+.embed-modal-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+.embed-copy {
+  background: var(--primary); color: #fff; border: 0; border-radius: 999px;
+  padding: 9px 18px; font-weight: 700; cursor: pointer;
+}
+.embed-copy:hover { filter: brightness(1.08); }
