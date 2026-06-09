@@ -73220,3 +73220,15 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* ===================================================================
+   STATISTIK v776 — ikon+judul header chart terlalu menjorok ke dalam
+   (.mini-chart-head padding-left 20px). Tarik ke kiri rata tepi kartu.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title {
+  padding-left: 0 !important;
+}
