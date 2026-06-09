@@ -35956,8 +35956,18 @@ $$("#filterTabs button").forEach(b => {
 // Dropdown "Urutkan" untuk Pustaka Saya (Terbaru/Terlama/Terpopuler) — di-inject
 // sekali di atas grid Video Saya. state.libSort menyimpan pilihan.
 function ensureLibSort() {
+  const right = document.querySelector('.view[data-view="videos"] .dl-head-right');
   const grid = document.getElementById("myVideoGrid");
-  if (!grid || !grid.parentNode) return;
+  const host = right || (grid && grid.parentNode);
+  if (!host) return;
+  // Jumlah video (di area kanan header Video Saya).
+  if (right) {
+    let cnt = right.querySelector(".dl-head-count");
+    if (!cnt) { cnt = document.createElement("span"); cnt.className = "dl-head-count"; right.insertBefore(cnt, right.firstChild); }
+    const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
+    cnt.textContent = `${n} video`;
+  }
+  // Dropdown urutkan — ditaruh di area kanan header (atau fallback di atas grid).
   let bar = document.getElementById("libSortBar");
   if (!bar) {
     bar = document.createElement("div");
@@ -35966,8 +35976,8 @@ function ensureLibSort() {
     bar.innerHTML = '<label for="libSortSelect">Urutkan</label>' +
       '<select id="libSortSelect"><option value="new">Terbaru</option>' +
       '<option value="old">Terlama</option><option value="popular">Terpopuler</option></select>';
-    grid.parentNode.insertBefore(bar, grid);
   }
+  if (bar.parentNode !== host) host.appendChild(bar);
   const sel = document.getElementById("libSortSelect");
   if (sel) sel.value = state.libSort || "new";
 }
@@ -35996,6 +36006,15 @@ function ensureLibSectionHeads() {
     if (small) textWrap.appendChild(small);
     head.appendChild(textWrap);
     head.classList.add("dl-head-flex");
+    // Area kanan hanya untuk header section Video Saya (yg memuat #myVideoGrid):
+    // diisi jumlah video + dropdown Urutkan (lihat ensureLibSort).
+    const card = head.closest(".lib-card");
+    if (card && card.querySelector("#myVideoGrid")) {
+      const right = document.createElement("div");
+      right.className = "dl-head-right";
+      head.appendChild(right);
+      head.classList.add("dl-head-has-right");
+    }
   });
 }
 
@@ -36099,8 +36118,8 @@ function renderMyLibrary() {
   //   - My Videos = sudah published (live di platform) — bisa di-delete
   //   - Status Videos = pending / takedown (belum live) + sampah (state.deletedVideos)
   const allMyVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
-  ensureLibSort();
   ensureLibSectionHeads();
+  ensureLibSort();
   const _libSort = state.libSort || "new";
   const _libTs = vv => (vv.uploadedAt || vv.createdAt || vv.id || 0);
   allMyVideos.sort((a, b) =>

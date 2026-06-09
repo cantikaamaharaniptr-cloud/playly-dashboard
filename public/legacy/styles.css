@@ -72090,3 +72090,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .dl-head-flex .sec-icon-v582 svg { width: 21px !important; height: 21px !important; }
 .view[data-view="videos"] .dl-head-flex h3 { font-size: 17px !important; font-weight: 700 !important; }
 .view[data-view="videos"] .dl-head-flex small { font-size: 13px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v698 — area kanan header Video Saya: jumlah video + Urutkan.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head.dl-head-has-right { justify-content: space-between !important; }
+.view[data-view="videos"] .dl-head-right {
+  display: flex !important; align-items: center !important; gap: 12px !important; flex: 0 0 auto !important;
+}
+.view[data-view="videos"] .dl-head-count {
+  font-size: 12.5px !important; color: var(--muted) !important; font-weight: 600 !important; white-space: nowrap;
+}
+.view[data-view="videos"] .dl-head-right .lib-sort-bar { margin: 0 !important; }
