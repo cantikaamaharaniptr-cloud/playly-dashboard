@@ -72147,3 +72147,14 @@ textarea#upDesc.upf-desc-textarea {
   width: 3px; height: 11px; border-radius: 2px;
   background: var(--cream, #E8D8C4); opacity: .85; pointer-events: none; z-index: 3;
 }
+
+/* ===================================================================
+   LIBRARY PLAYER v700 — tombol Edit Video (fitur pemilik video) tema dashboard.
+   =================================================================== */
+.lib-edit-video-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: #fff; border: 0; border-radius: 999px;
+  padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lib-edit-video-btn svg { width: 15px; height: 15px; }
+.lib-edit-video-btn:hover { filter: brightness(1.08); }

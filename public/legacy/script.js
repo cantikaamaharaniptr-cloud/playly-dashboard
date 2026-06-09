@@ -45492,6 +45492,33 @@ window.addEventListener("playly:view-changed", e => {
 //   description
 let __libInlineVid = null;
 
+// Tombol "Edit Video" di player library (#libInlinePlayer) — fitur khusus
+// pemilik video untuk menyunting video yang sudah diupload. Hanya tampil untuk
+// video milik user (ada di state.myVideos). Wired ke openVideoEditModal.
+function ensureLibEditBtn(v) {
+  const bar = document.getElementById("libInlineActions");
+  if (!bar || !v) return;
+  const isOwn = Array.isArray(state?.myVideos) && state.myVideos.some(x => x.id === v.id);
+  let btn = document.getElementById("libEditVideoBtn");
+  if (!isOwn) { if (btn) btn.remove(); return; }
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "libEditVideoBtn";
+    btn.type = "button";
+    btn.className = "lib-edit-video-btn";
+    btn.setAttribute("title", "Edit video");
+    btn.setAttribute("aria-label", "Edit video");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Edit Video</span>';
+    bar.appendChild(btn);
+  }
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("#libEditVideoBtn");
+  if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  if (typeof openVideoEditModal === "function" && __libInlineVid != null) openVideoEditModal(__libInlineVid);
+});
+
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -45512,6 +45539,7 @@ async function openLibInlinePlayer(id) {
 
   // Title + upload date
   document.getElementById("libInlineTitle").textContent = v.title || "Video";
+  ensureLibEditBtn(v);
   const dateEl = document.getElementById("libInlineDate");
   if (dateEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
