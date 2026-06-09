@@ -72150,3 +72150,12 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   font-size: 12.5px !important; color: var(--text) !important; font-weight: 600 !important;
   white-space: nowrap;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v702 — toolbar (jumlah video + Urutkan) DI BAWAH kartu header
+   (di atas grid), rata kanan. Bukan di dalam kartu.
+   =================================================================== */
+.view[data-view="videos"] #libSortBar {
+  display: flex !important; align-items: center !important; justify-content: flex-end !important;
+  gap: 10px !important; margin: 2px 0 14px !important;
+}

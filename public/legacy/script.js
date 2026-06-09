@@ -35956,19 +35956,10 @@ $$("#filterTabs button").forEach(b => {
 // Dropdown "Urutkan" untuk Pustaka Saya (Terbaru/Terlama/Terpopuler) — di-inject
 // sekali di atas grid Video Saya. state.libSort menyimpan pilihan.
 function ensureLibSort() {
-  const right = document.querySelector('.view[data-view="videos"] .dl-head-right');
   const grid = document.getElementById("myVideoGrid");
-  const host = right || (grid && grid.parentNode);
-  if (!host) return;
-  // Jumlah video (di area kanan header Video Saya).
-  if (right) {
-    let cnt = right.querySelector(".dl-head-count");
-    if (!cnt) { cnt = document.createElement("span"); cnt.className = "dl-head-count"; right.insertBefore(cnt, right.firstChild); }
-    const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
-    cnt.textContent = `${n} video`;
-  }
-  // Dropdown urutkan — KUSTOM (bukan <select> native) supaya warna/list ikut
-  // tema dashboard. Ditaruh di area kanan header (atau fallback di atas grid).
+  if (!grid || !grid.parentNode) return;
+  // Toolbar (jumlah video + dropdown Urutkan kustom) ditaruh DI BAWAH kartu
+  // header (tepat sebelum grid), bukan di dalam kartu.
   const LABELS = { new: "Terbaru", old: "Terlama", popular: "Terpopuler" };
   let bar = document.getElementById("libSortBar");
   if (!bar) {
@@ -35976,6 +35967,7 @@ function ensureLibSort() {
     bar.id = "libSortBar";
     bar.className = "lib-sort-bar";
     bar.innerHTML =
+      '<span class="dl-head-count" id="libVideoCount"></span>' +
       '<div class="lib-sort-dd">' +
         '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
           '<span id="libSortCurrent">Terbaru</span>' +
@@ -35988,7 +35980,12 @@ function ensureLibSort() {
         '</div>' +
       '</div>';
   }
-  if (bar.parentNode !== host) host.appendChild(bar);
+  if (grid.previousElementSibling !== bar) grid.parentNode.insertBefore(bar, grid);
+  const cnt = document.getElementById("libVideoCount");
+  if (cnt) {
+    const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
+    cnt.textContent = `${n} video`;
+  }
   const cur = state.libSort || "new";
   const curEl = document.getElementById("libSortCurrent");
   if (curEl) curEl.textContent = LABELS[cur] || "Terbaru";
@@ -36030,15 +36027,6 @@ function ensureLibSectionHeads() {
     if (small) textWrap.appendChild(small);
     head.appendChild(textWrap);
     head.classList.add("dl-head-flex");
-    // Area kanan hanya untuk header section Video Saya (yg memuat #myVideoGrid):
-    // diisi jumlah video + dropdown Urutkan (lihat ensureLibSort).
-    const card = head.closest(".lib-card");
-    if (card && card.querySelector("#myVideoGrid")) {
-      const right = document.createElement("div");
-      right.className = "dl-head-right";
-      head.appendChild(right);
-      head.classList.add("dl-head-has-right");
-    }
   });
 }
 
