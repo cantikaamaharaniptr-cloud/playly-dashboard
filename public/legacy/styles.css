@@ -72175,3 +72175,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    Urutkan di KANAN (space-between). Count tak lagi terpisah jauh dari grid.
    =================================================================== */
 .view[data-view="videos"] #libSortBar { justify-content: space-between !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v707 — bedakan count (info) vs dropdown (aksi): count jadi chip
+   OUTLINE halus (bg transparan, teks muted), dropdown tetap box solid.
+   =================================================================== */
+.view[data-view="videos"] .dl-head-count {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  color: var(--muted) !important;
+}
