@@ -37431,31 +37431,19 @@ function buildStatsTabs() {
   const bar = view && view.querySelector(".riwayat-tab-bar");
   if (!bar || bar.dataset.statsBuilt) return;
   const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  // v772: tab in-page = FILTER (data-stats-tab), sinkron sidebar. Klik ditangani
+  // handler global button[data-stats-tab] -> setStatsTab(); active di-toggle oleh
+  // setStatsTab. Ikon ringkasan = pie (samakan dgn heading).
   const TABS = [
-    { k: "ringkasan", l: "Ringkasan", i: `<svg ${S}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
+    { k: "ringkasan", l: "Ringkasan", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>` },
     { k: "grafik", l: "Grafik", i: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>` },
     { k: "top-video", l: "Performa Video", i: `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>` },
     { k: "traffic", l: "Sumber Trafik", i: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>` },
     { k: "geo", l: "Audiens", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>` },
   ];
-  bar.innerHTML = TABS.map((t, idx) => `<button type="button" class="riwayat-tab stat-tab${idx === 0 ? " active" : ""}" data-stats-jump="${t.k}"><span class="stat-tab-ico">${t.i}</span>${t.l}</button>`).join("");
+  const cur = view.dataset.statsTab || "all";
+  bar.innerHTML = TABS.map(t => `<button type="button" class="riwayat-tab stat-tab${t.k === cur ? " active" : ""}" data-stats-tab="${t.k}"><span class="stat-tab-ico">${t.i}</span>${t.l}</button>`).join("");
   bar.dataset.statsBuilt = "1";
-  const setActive = (k) => bar.querySelectorAll(".stat-tab").forEach(x => x.classList.toggle("active", x.dataset.statsJump === k));
-  bar.querySelectorAll("[data-stats-jump]").forEach(btn => btn.addEventListener("click", () => {
-    const key = btn.dataset.statsJump;
-    const target = view.querySelector(`[data-stats-section="${key}"]`);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    setActive(key);
-  }));
-  // scroll-spy: highlight tab sesuai section yg paling terlihat
-  const sections = TABS.map(t => view.querySelector(`[data-stats-section="${t.k}"]`)).filter(Boolean);
-  if (window.IntersectionObserver && sections.length) {
-    const io = new IntersectionObserver((es) => {
-      const vis = es.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-      if (vis.length) setActive(vis[0].target.getAttribute("data-stats-section"));
-    }, { rootMargin: "-90px 0px -55% 0px", threshold: [0, .25, .5, 1] });
-    sections.forEach(s => io.observe(s));
-  }
 }
 
 $$("#chartTabs button").forEach(b => {
@@ -51648,6 +51636,12 @@ function setStatsTab(tab) {
   const crumb = document.getElementById("breadcrumb");
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast && meta) activeBcLast.textContent = meta.crumb;
+  // v772: sinkronkan SIDEBAR sub-item dgn tab aktif (tab in-page sudah otomatis
+  // via toggle [data-stats-tab] di atas). key "all" → tak ada sub-item aktif.
+  document.querySelectorAll('.sidebar .nav-subitem[data-sub-action^="stats-tab:"]').forEach(a => {
+    const ak = (a.dataset.subAction || "").split(":")[1];
+    a.classList.toggle("active", ak === key);
+  });
   // Re-draw chart kalau pindah ke tab grafik (chart kadang perlu refresh saat re-visible)
   if (key === "grafik" || key === "all") {
     if (typeof drawChart === "function") setTimeout(drawChart, 60);
