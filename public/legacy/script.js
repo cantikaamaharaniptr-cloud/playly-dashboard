@@ -46540,7 +46540,11 @@ async function openPlayer(id) {
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
   const descToggle = $("#pvDescToggle");
-  if (descEl) descEl.textContent = v.desc || "";
+  // Deskripsi: hashtag (#word) jadi pill clickable (reuse linkifyHashtags) +
+  // tampilkan tag eksplisit (v.tags) sebagai chip. Data ASLI dari video.
+  if (descEl) descEl.innerHTML = (typeof linkifyHashtags === "function") ? linkifyHashtags(v.desc || "") : escapeHtml(v.desc || "");
+  ensurePlayerTags(v);
+  ensurePlayerChapters(v);
   // Reset desc box to collapsed state for each new video
   if (descBox) descBox.classList.remove("expanded");
   if (descToggle) {
@@ -48735,6 +48739,104 @@ document.addEventListener("click", (e) => {
   if (!b) return;
   state.commentSort = b.dataset.csort;
   if (typeof renderComments === "function") renderComments(state.currentVideo);
+});
+
+// ---- TAG/HASHTAG di deskripsi player ---------------------------------------
+// v.tags (eksplisit dari upload) → chip clickable. #hashtag di teks deskripsi
+// sudah di-linkify via linkifyHashtags saat render. Data ASLI video.
+function ensurePlayerTags(v) {
+  const box = document.getElementById("pvDescBox");
+  if (!box) return;
+  let tags = v && v.tags;
+  if (typeof tags === "string") tags = tags.split(/[,\s]+/);
+  tags = Array.isArray(tags) ? tags.map(t => String(t).replace(/^#/, "").trim().toLowerCase()).filter(Boolean) : [];
+  tags = [...new Set(tags)].slice(0, 12);
+  let row = document.getElementById("playerTags");
+  if (!tags.length) { if (row) row.remove(); return; }
+  if (!row) {
+    row = document.createElement("div");
+    row.id = "playerTags";
+    row.className = "pv-tags";
+    box.insertAdjacentElement("afterend", row);
+  }
+  row.innerHTML = tags.map(t => `<button type="button" class="fyp-tag-pill" data-fyp-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`).join("");
+}
+// Klik tag/hashtag dari player → buka Jelajahi (discover) terfilter tag.
+document.addEventListener("click", (e) => {
+  const tagBtn = e.target.closest("#pvDescBox [data-fyp-tag], #playerTags [data-fyp-tag]");
+  if (!tagBtn) return;
+  e.preventDefault(); e.stopPropagation();
+  fypTagFilter = tagBtn.dataset.fypTag;
+  if (typeof switchView === "function") switchView("discover");
+  setTimeout(() => { if (typeof renderFYP === "function") renderFYP(); }, 80);
+});
+
+// ---- CHAPTERS (bab) dari timestamp di deskripsi -----------------------------
+// Parse baris "0:00 Judul" / "1:30 - Judul" → bab (min 2). Data ASLI dari
+// deskripsi video. Tampil: daftar bab (klik=seek) + marker di progress bar.
+function _fmtChapterTime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const pad = n => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+}
+function parsePlayerChapters(desc) {
+  if (!desc) return [];
+  const out = [];
+  String(desc).split(/\r?\n/).forEach(line => {
+    const m = line.match(/^\s*[\(\[]?(\d{1,2}:\d{2}(?::\d{2})?)[\)\]]?\s*[-–—:]?\s*(.+?)\s*$/);
+    if (!m) return;
+    const p = m[1].split(":").map(Number);
+    const sec = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+    const label = (m[2] || "").trim();
+    if (label) out.push({ t: sec, label });
+  });
+  return out.length >= 2 ? out : [];
+}
+function ensurePlayerChapters(v) {
+  const chapters = parsePlayerChapters(v && v.desc);
+  window._playerChapters = chapters;
+  const existing = document.getElementById("playerChapters");
+  if (!chapters.length) { if (existing) existing.remove(); renderChapterMarkers([]); return; }
+  let list = existing;
+  if (!list) {
+    list = document.createElement("div");
+    list.id = "playerChapters";
+    list.className = "pv-chapters";
+    const anchor = document.getElementById("playerTags") || document.getElementById("pvDescBox");
+    if (anchor) anchor.insertAdjacentElement("afterend", list);
+  }
+  list.innerHTML = `<div class="pv-chapters-head">Bab (${chapters.length})</div>` + chapters.map(c =>
+    `<button type="button" class="pv-chapter" data-seek="${c.t}"><span class="pv-chapter-t">${_fmtChapterTime(c.t)}</span><span class="pv-chapter-l">${escapeHtml(c.label)}</span></button>`
+  ).join("");
+  renderChapterMarkers(chapters);
+}
+function renderChapterMarkers(chapters) {
+  const track = document.getElementById("cplProgress");
+  if (!track) return;
+  const videoEl = document.getElementById("videoEl");
+  if (videoEl && !videoEl.__chapterBound) {
+    videoEl.__chapterBound = true;
+    videoEl.addEventListener("loadedmetadata", () => renderChapterMarkers(window._playerChapters || []));
+  }
+  track.querySelectorAll(".cpl-chapter-marker").forEach(m => m.remove());
+  const dur = videoEl && videoEl.duration;
+  if (!dur || !isFinite(dur) || !chapters || !chapters.length) return;
+  chapters.forEach(c => {
+    if (c.t > dur) return;
+    const mk = document.createElement("span");
+    mk.className = "cpl-chapter-marker";
+    mk.style.left = (c.t / dur * 100) + "%";
+    mk.title = c.label;
+    track.appendChild(mk);
+  });
+}
+document.addEventListener("click", (e) => {
+  const ch = e.target.closest(".pv-chapter[data-seek]");
+  if (!ch) return;
+  const t = parseFloat(ch.dataset.seek);
+  const videoEl = document.getElementById("videoEl");
+  if (videoEl && isFinite(t)) { try { videoEl.currentTime = t; videoEl.play && videoEl.play(); } catch (e) {} }
 });
 
 $("#saveBtn")?.addEventListener("click", () => {

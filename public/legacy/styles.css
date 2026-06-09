@@ -72124,3 +72124,26 @@ textarea#upDesc.upf-desc-textarea {
   padding: 9px 18px; font-weight: 700; cursor: pointer;
 }
 .embed-copy:hover { filter: brightness(1.08); }
+
+/* ===================================================================
+   PLAYER v699 — tag/hashtag deskripsi + chapters (bab) dari timestamp.
+   Tema dashboard user (wine/cream).
+   =================================================================== */
+.pv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+
+.pv-chapters { margin: 14px 0 0; display: flex; flex-direction: column; gap: 2px; }
+.pv-chapters-head { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.pv-chapter {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: 8px; padding: 7px 8px;
+  color: var(--text); cursor: pointer; font-size: 13px;
+}
+.pv-chapter:hover { background: color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent); }
+.pv-chapter-t { color: var(--primary); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 44px; }
+
+.cpl-progress { position: relative; }
+.cpl-chapter-marker {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 3px; height: 11px; border-radius: 2px;
+  background: var(--cream, #E8D8C4); opacity: .85; pointer-events: none; z-index: 3;
+}
