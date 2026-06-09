@@ -35978,6 +35978,27 @@ document.addEventListener("change", (e) => {
   if (typeof renderMyLibrary === "function") renderMyLibrary();
 });
 
+// Rapikan header tiap section (.dl-section-head): pindah ikon keluar dari <h3>
+// jadi pola "ikon | (judul + deskripsi rapat)" seperti header halaman + kartu.
+// Idempotent (guard dataset.restructured).
+function ensureLibSectionHeads() {
+  document.querySelectorAll('.view[data-view="videos"] .dl-section-head').forEach(head => {
+    if (head.dataset.restructured) return;
+    const h3 = head.querySelector("h3");
+    if (!h3) return;
+    head.dataset.restructured = "1";
+    const icon = h3.querySelector(".sec-icon-v582, [class*='sec-icon']");
+    const small = head.querySelector("small");
+    const textWrap = document.createElement("div");
+    textWrap.className = "dl-head-text";
+    if (icon) head.insertBefore(icon, head.firstChild);
+    textWrap.appendChild(h3);
+    if (small) textWrap.appendChild(small);
+    head.appendChild(textWrap);
+    head.classList.add("dl-head-flex");
+  });
+}
+
 function renderMyLibrary() {
   const renderCard = (v, opts = {}) => {
     const id = v.id;
@@ -36079,6 +36100,7 @@ function renderMyLibrary() {
   //   - Status Videos = pending / takedown (belum live) + sampah (state.deletedVideos)
   const allMyVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
   ensureLibSort();
+  ensureLibSectionHeads();
   const _libSort = state.libSort || "new";
   const _libTs = vv => (vv.uploadedAt || vv.createdAt || vv.id || 0);
   allMyVideos.sort((a, b) =>
