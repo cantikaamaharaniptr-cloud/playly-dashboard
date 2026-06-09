@@ -37081,6 +37081,9 @@ function drawMiniChart(metric) {
   const svg = document.querySelector(`[data-chart-svg="${metric}"]`);
   const empty = document.querySelector(`[data-chart-empty="${metric}"]`);
   if (!svg) return;
+  // v775: sembunyikan tooltip yg mungkin nyangkut dari hover chart sebelumnya
+  // (re-render mengganti hit-area sebelum mouseleave sempat firing).
+  document.getElementById("chartTip")?.classList.remove("show");
   const wrap = svg.parentElement;
   const card = wrap?.closest(".mini-chart-card");
   const data = generateChartData(metric, state.chartRange);
@@ -37172,6 +37175,9 @@ function drawMiniChart(metric) {
   let areaPath = "";
   if (n > 0) {
     const pts = [[PAD_X, points[0][1]], ...points, [W - PAD_X, points[n - 1][1]]];
+    // v775: clamp Y control-point ke batas chart [PAD_Y, H-PAD_Y] supaya kurva
+    // smooth tidak "overshoot" keluar area (garis terlihat crash/terpotong).
+    const clampY = y => Math.max(PAD_Y, Math.min(H - PAD_Y, y));
     stepPath = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[i - 1] || pts[i];
@@ -37179,9 +37185,9 @@ function drawMiniChart(metric) {
       const p2 = pts[i + 1];
       const p3 = pts[i + 2] || p2;
       const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
-      const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const cp1y = clampY(p1[1] + (p2[1] - p0[1]) / 6);
       const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
-      const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+      const cp2y = clampY(p2[1] - (p3[1] - p1[1]) / 6);
       stepPath += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
     }
     areaPath = stepPath + ` L ${(W - PAD_X).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;

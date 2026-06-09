@@ -73205,3 +73205,18 @@ body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .ch
 body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .chart-area-anim {
   animation: none !important; stroke-dashoffset: 0 !important; opacity: 1 !important;
 }
+
+/* ===================================================================
+   STATISTIK v775 — (1) isi header chart rata ATAS (jangan turun ke tengah),
+   (2) tooltip chart hidden by default (tidak nyangkut).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  align-items: flex-start !important;
+  padding-top: 0 !important;
+}
+/* tooltip chart: kalau tanpa .show -> benar2 tersembunyi */
+#chartTip:not(.show) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
