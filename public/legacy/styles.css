@@ -72236,3 +72236,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   padding: 9px 17px !important;
 }
 .view[data-view="videos"] .riwayat-tab svg { width: 16px !important; height: 16px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v713 — tab: teks/judul dibuat COMPACT (font 12.5, padding & gap
+   lebih rapat) + ikon diperbesar lagi (18px) supaya menonjol dari teks.
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 12.5px !important;
+  padding: 8px 14px !important;
+  gap: 6px !important;
+  letter-spacing: 0 !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
