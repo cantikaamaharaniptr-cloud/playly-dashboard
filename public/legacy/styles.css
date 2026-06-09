@@ -73021,3 +73021,14 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
   padding-bottom: 12px !important;
   margin-bottom: 10px !important;
 }
+
+/* ===================================================================
+   STATISTIK v767 — compact-kan TEKS judul "Statistik" + deskripsi (teks saja,
+   kartu/kolom tidak diubah).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageTitle {
+  font-size: 20px !important; line-height: 1.15 !important; margin: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageDesc {
+  font-size: 12px !important; line-height: 1.35 !important; margin: 3px 0 0 !important;
+}
