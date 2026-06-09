@@ -5629,7 +5629,7 @@ const I18N = {
     "lp.faq.q10":                 "Is user data encrypted?",
     "lp.faq.a10":                 "Yes. Passwords are hashed with bcrypt (never stored in plaintext). Session tokens and 2FA secrets are encrypted at rest. Data in transit uses TLS 1.3. PII fields (email, name) are encrypted in the database with rotated keys.",
     "lp.faq.q11":                 "How does the payment & payout system work?",
-    "lp.faq.a11":                 "Premium subscriptions are processed by an external payment gateway. Admins approve payments in the Premium Queue after verifying proof. Creator payouts run weekly on Mondays based on revenue share. All transactions are logged with reconciliation reports available in Settings → Finance.",
+    "lp.faq.a11":                 "Premium subscriptions are processed by an external payment gateway. Admins approve payments in the Premium Queue after verifying proof. All ad and subscription revenue currently goes to the platform (no creator revenue share at this time). All transactions are logged with reconciliation reports available in Settings → Finance.",
     "lp.restricted.title":        "Restricted access — administrators only",
     "lp.restricted.desc":         "This panel manages live user data and platform revenue. Sign-in attempts are rate-limited and logged. If you don't have an admin account, return to the",
     // ===== ADMIN VIEW PAGES (descriptions / labels) =====
@@ -7241,7 +7241,7 @@ const I18N = {
     "lp.faq.q10":                 "Apakah data user di-encrypt?",
     "lp.faq.a10":                 "Ya. Password di-hash dengan bcrypt (tidak pernah disimpan plaintext). Session token dan 2FA secret di-encrypt at rest. Data in-transit pakai TLS 1.3. Field PII (email, nama) di-encrypt di database dengan kunci yang dirotasi.",
     "lp.faq.q11":                 "Bagaimana sistem pembayaran & payout bekerja?",
-    "lp.faq.a11":                 "Subscription premium diproses via payment gateway eksternal. Admin approve pembayaran di Premium Queue setelah verifikasi bukti. Payout creator jalan mingguan tiap Senin berdasarkan revenue share. Semua transaksi tercatat dengan reconciliation report tersedia di Settings → Finance.",
+    "lp.faq.a11":                 "Subscription premium diproses via payment gateway eksternal. Admin approve pembayaran di Premium Queue setelah verifikasi bukti. Seluruh pendapatan iklan & langganan saat ini masuk ke platform (belum ada bagi hasil kreator). Semua transaksi tercatat dengan reconciliation report tersedia di Settings → Finance.",
     "lp.faq.a6":                  "Sebagian besar aksi reversible: user yang di-suspend bisa dipulihkan, video yang di-takedown bisa dikembalikan, peran bisa di-reassign. Audit log menyimpan aksi asli dan pembalikan keduanya, jadi sejarah penuh tetap utuh.",
     "lp.restricted.title":        "Akses dibatasi — hanya administrator",
     "lp.restricted.desc":         "Panel ini mengelola data user live dan pendapatan platform. Percobaan sign-in di‑rate‑limit dan dicatat.\nJika kamu tidak punya akun admin, kembali ke",
