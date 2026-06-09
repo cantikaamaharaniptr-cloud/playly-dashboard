@@ -72102,3 +72102,38 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   font-size: 12.5px !important; color: var(--muted) !important; font-weight: 600 !important; white-space: nowrap;
 }
 .view[data-view="videos"] .dl-head-right .lib-sort-bar { margin: 0 !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v699 — judul+deskripsi TETAP di kiri (dekat ikon); area kanan
+   (jumlah video + Urutkan) didorong ke kanan via margin-left:auto.
+   Sebelumnya space-between mendorong teks ke kanan — diperbaiki.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head.dl-head-has-right { justify-content: flex-start !important; }
+.view[data-view="videos"] .dl-head-right { margin-left: auto !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v700 — dropdown Urutkan KUSTOM (bukan select native) ber-tema
+   dashboard (wine/cream). Trigger ber-frame + menu popup, item aktif wine.
+   =================================================================== */
+.view[data-view="videos"] .lib-sort-bar { display: flex !important; align-items: center !important; gap: 8px !important; }
+.view[data-view="videos"] .lib-sort-label { font-size: 12px !important; color: var(--muted) !important; font-weight: 600 !important; }
+.lib-sort-dd { position: relative; }
+.lib-sort-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
+  border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lib-sort-trigger:hover { border-color: color-mix(in srgb, var(--cream, #E8D8C4) 30%, transparent); }
+.lib-sort-trigger svg { opacity: .7; }
+.lib-sort-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 100; min-width: 156px;
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); border-radius: 12px;
+  padding: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.42); display: flex; flex-direction: column; gap: 2px;
+}
+.lib-sort-menu[hidden] { display: none; }
+.lib-sort-menu button {
+  text-align: left; background: transparent; border: 0; color: var(--text);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer;
+}
+.lib-sort-menu button:hover { background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, transparent); }
+.lib-sort-menu button.active { background: var(--primary); color: #fff; }

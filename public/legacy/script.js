@@ -35967,25 +35967,50 @@ function ensureLibSort() {
     const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
     cnt.textContent = `${n} video`;
   }
-  // Dropdown urutkan — ditaruh di area kanan header (atau fallback di atas grid).
+  // Dropdown urutkan — KUSTOM (bukan <select> native) supaya warna/list ikut
+  // tema dashboard. Ditaruh di area kanan header (atau fallback di atas grid).
+  const LABELS = { new: "Terbaru", old: "Terlama", popular: "Terpopuler" };
   let bar = document.getElementById("libSortBar");
   if (!bar) {
     bar = document.createElement("div");
     bar.id = "libSortBar";
     bar.className = "lib-sort-bar";
-    bar.innerHTML = '<label for="libSortSelect">Urutkan</label>' +
-      '<select id="libSortSelect"><option value="new">Terbaru</option>' +
-      '<option value="old">Terlama</option><option value="popular">Terpopuler</option></select>';
+    bar.innerHTML =
+      '<span class="lib-sort-label">Urutkan</span>' +
+      '<div class="lib-sort-dd">' +
+        '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
+          '<span id="libSortCurrent">Terbaru</span>' +
+          '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+        '</button>' +
+        '<div class="lib-sort-menu" id="libSortMenu" role="listbox" hidden>' +
+          '<button type="button" role="option" data-sort="new">Terbaru</button>' +
+          '<button type="button" role="option" data-sort="old">Terlama</button>' +
+          '<button type="button" role="option" data-sort="popular">Terpopuler</button>' +
+        '</div>' +
+      '</div>';
   }
   if (bar.parentNode !== host) host.appendChild(bar);
-  const sel = document.getElementById("libSortSelect");
-  if (sel) sel.value = state.libSort || "new";
+  const cur = state.libSort || "new";
+  const curEl = document.getElementById("libSortCurrent");
+  if (curEl) curEl.textContent = LABELS[cur] || "Terbaru";
+  bar.querySelectorAll(".lib-sort-menu button").forEach(b => b.classList.toggle("active", b.dataset.sort === cur));
 }
-document.addEventListener("change", (e) => {
-  const sel = e.target.closest("#libSortSelect");
-  if (!sel) return;
-  if (typeof state !== "undefined") state.libSort = sel.value;
-  if (typeof renderMyLibrary === "function") renderMyLibrary();
+// Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("libSortMenu");
+  const trigger = e.target.closest("#libSortTrigger");
+  if (trigger) {
+    if (menu) { const willOpen = menu.hidden; menu.hidden = !willOpen; trigger.setAttribute("aria-expanded", String(willOpen)); }
+    return;
+  }
+  const opt = e.target.closest("#libSortMenu button[data-sort]");
+  if (opt) {
+    if (typeof state !== "undefined") state.libSort = opt.dataset.sort;
+    if (menu) menu.hidden = true;
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    return;
+  }
+  if (menu && !menu.hidden && !e.target.closest(".lib-sort-dd")) menu.hidden = true;
 });
 
 // Rapikan header tiap section (.dl-section-head): pindah ikon keluar dari <h3>
