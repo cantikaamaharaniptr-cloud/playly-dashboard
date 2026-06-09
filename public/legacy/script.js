@@ -45718,6 +45718,44 @@ function exitLibWatchMode() {
   }
 }
 
+// v730: tata letak gaya YouTube + X (Twitter) untuk panel info player.
+// Tambah BARIS KREATOR (avatar bulat + nama + @handle) di kiri baris aksi —
+// identitas ala X + channel-row ala YouTube. Baris "X tontonan · tanggal"
+// dipindah jadi baris meta sendiri (di bawah kreator, di atas deskripsi).
+function ensureLibYTCreatorLayout(v) {
+  const bar = document.getElementById("libInlineActions");
+  if (!bar) return;
+  const panel = bar.closest(".lib-ytp-panel");
+  const descBox = document.getElementById("libYtpDescBox");
+  let cr = document.getElementById("libCreatorBlock");
+  if (!cr) {
+    cr = document.createElement("div");
+    cr.id = "libCreatorBlock";
+    cr.className = "lib-creator";
+    cr.innerHTML =
+      '<div class="lib-cr-avatar" id="libCrAvatar"></div>' +
+      '<div class="lib-cr-meta"><span class="lib-cr-name" id="libCrName"></span>' +
+      '<span class="lib-cr-handle" id="libCrHandle"></span></div>';
+    bar.insertBefore(cr, bar.firstChild);
+  }
+  // Pindahkan meta (tontonan · tanggal) ke baris sendiri, di bawah baris kreator.
+  const viewsChip = document.querySelector(".lib-ytp-views-chip");
+  if (viewsChip && panel && descBox && viewsChip.nextElementSibling !== descBox) {
+    panel.insertBefore(viewsChip, descBox);
+  }
+  const name = String(v.creator || v.uploader || "Pengguna");
+  const nm = document.getElementById("libCrName");
+  const hd = document.getElementById("libCrHandle");
+  const av = document.getElementById("libCrAvatar");
+  if (nm) nm.textContent = name;
+  if (hd) hd.textContent = "@" + name.toLowerCase().replace(/[^a-z0-9_.]/g, "");
+  if (av) {
+    const img = v.creatorAvatar || v.avatar || v.uploaderAvatar || "";
+    if (img) { av.style.backgroundImage = `url('${img}')`; av.textContent = ""; av.classList.add("has-img"); }
+    else { av.style.backgroundImage = ""; av.textContent = (name[0] || "U").toUpperCase(); av.classList.remove("has-img"); }
+  }
+}
+
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -45766,6 +45804,8 @@ async function openLibInlinePlayer(id) {
       viewsChip.appendChild(dateEl);
     }
   }
+  // v730: bangun baris kreator (avatar + @handle) + pindah meta ke baris sendiri.
+  try { ensureLibYTCreatorLayout(v); } catch (e) {}
   // Description + expandable desc box
   const descEl = document.getElementById("libInlineDesc");
   const descBox = document.getElementById("libYtpDescBox");
