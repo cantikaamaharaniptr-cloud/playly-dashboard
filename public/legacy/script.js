@@ -35987,7 +35987,7 @@ function ensureLibSort() {
   const cnt = document.getElementById("libVideoCount");
   if (cnt) {
     const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
-    cnt.textContent = `${n} video`;
+    cnt.textContent = `${n} Video`;
   }
   const cur = state.libSort || "new";
   const curEl = document.getElementById("libSortCurrent");
