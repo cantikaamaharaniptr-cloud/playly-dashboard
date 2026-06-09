@@ -35976,7 +35976,6 @@ function ensureLibSort() {
     bar.id = "libSortBar";
     bar.className = "lib-sort-bar";
     bar.innerHTML =
-      '<span class="lib-sort-label">Urutkan</span>' +
       '<div class="lib-sort-dd">' +
         '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
           '<span id="libSortCurrent">Terbaru</span>' +

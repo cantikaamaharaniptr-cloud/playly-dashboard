@@ -72137,3 +72137,16 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-sort-menu button:hover { background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, transparent); }
 .lib-sort-menu button.active { background: var(--primary); color: #fff; }
+
+/* ===================================================================
+   PUSTAKA SAYA v701 — label "Urutkan" dihapus + count "X video" jadi kolom/box
+   (senada dgn trigger dropdown).
+   =================================================================== */
+.view[data-view="videos"] .dl-head-count {
+  background: var(--bg-elev, #251419) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 7px 12px !important;
+  font-size: 12.5px !important; color: var(--text) !important; font-weight: 600 !important;
+  white-space: nowrap;
+}
