@@ -72504,8 +72504,8 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .lib-ytp-pill:focus-visible,
 .view[data-view="videos"] .lib-ytp-pill:active {
   border-radius: 10px !important;
-  background: color-mix(in srgb, var(--primary) 16%, var(--bg-elev)) !important;
-  border: 1px solid var(--primary) !important;
+  background: var(--bg-elev) !important;            /* v738: surface netral dashboard */
+  border: 1px solid var(--border) !important;
   color: var(--cream) !important;
   outline: none !important;
   box-shadow: none !important;
@@ -72513,13 +72513,43 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   transform: none !important;
 }
 .view[data-view="videos"] .lib-ytp-pill:hover {
-  background: color-mix(in srgb, var(--primary) 28%, var(--bg-elev)) !important;
+  background: color-mix(in srgb, var(--primary) 18%, var(--bg-elev)) !important;
+  border-color: var(--primary) !important;
 }
-/* state aktif (Suka ditekan) → solid wine penuh */
+/* state aktif (Suka/Simpan ditekan) → solid wine penuh */
 .view[data-view="videos"] .lib-ytp-pill.is-active {
   background: var(--primary) !important;
+  border-color: var(--primary) !important;
 }
 .view[data-view="videos"] .lib-ytp-pill::before,
 .view[data-view="videos"] .lib-ytp-pill::after {
   content: none !important; display: none !important; animation: none !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v738 — tambah fitur: tombol IKUTI (follow kreator, ala YouTube/X)
+   di baris kreator + tombol SIMPAN (bookmark) di deretan aksi. Plus ganti warna
+   tombol aksi jadi surface netral (di atas).
+   =================================================================== */
+.view[data-view="videos"] .lib-cr-follow {
+  margin-left: 4px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  white-space: nowrap;
+}
+.view[data-view="videos"] .lib-cr-follow.following {
+  background: transparent;
+  border-color: var(--border);
+  color: rgba(232, 216, 196, 0.7);
+}
+.view[data-view="videos"] .lib-cr-follow::before,
+.view[data-view="videos"] .lib-cr-follow::after { content: none !important; display: none !important; }

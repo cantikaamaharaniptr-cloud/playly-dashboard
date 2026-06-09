@@ -45735,13 +45735,24 @@ function ensureLibYTCreatorLayout(v) {
     cr.innerHTML =
       '<div class="lib-cr-avatar" id="libCrAvatar"></div>' +
       '<div class="lib-cr-meta"><span class="lib-cr-name" id="libCrName"></span>' +
-      '<span class="lib-cr-handle" id="libCrHandle"></span></div>';
+      '<span class="lib-cr-handle" id="libCrHandle"></span></div>' +
+      '<button type="button" class="lib-cr-follow" id="libCrFollow"></button>';
     bar.insertBefore(cr, bar.firstChild);
   }
   // Pindahkan meta (tontonan · tanggal) ke baris sendiri, di bawah baris kreator.
   const viewsChip = document.querySelector(".lib-ytp-views-chip");
   if (viewsChip && panel && descBox && viewsChip.nextElementSibling !== descBox) {
     panel.insertBefore(viewsChip, descBox);
+  }
+  // v738: tombol SIMPAN (bookmark) di deretan aksi — di samping Suka/Bagikan.
+  const pills = document.querySelector(".lib-ytp-pills");
+  if (pills && !document.getElementById("libInlineSaveBtn")) {
+    const sb = document.createElement("button");
+    sb.type = "button";
+    sb.id = "libInlineSaveBtn";
+    sb.className = "lib-inline-action lib-ytp-pill";
+    sb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>Simpan</span>';
+    pills.appendChild(sb);
   }
   const name = String(v.creator || v.uploader || "Pengguna");
   const nm = document.getElementById("libCrName");
@@ -45753,6 +45764,35 @@ function ensureLibYTCreatorLayout(v) {
     const img = v.creatorAvatar || v.avatar || v.uploaderAvatar || "";
     if (img) { av.style.backgroundImage = `url('${img}')`; av.textContent = ""; av.classList.add("has-img"); }
     else { av.style.backgroundImage = ""; av.textContent = (name[0] || "U").toUpperCase(); av.classList.remove("has-img"); }
+  }
+  // v738: tombol IKUTI (follow kreator) — pakai toggleFollow + state.followingCreators.
+  const fb = document.getElementById("libCrFollow");
+  if (fb) {
+    const me = (typeof user === "object" && user) ? String(user.username || user.name || "") : "";
+    if (me && name.toLowerCase() === me.toLowerCase()) {
+      fb.style.display = "none"; // tak bisa mengikuti diri sendiri
+    } else {
+      fb.style.display = "";
+      const following = Array.isArray(state?.followingCreators) && state.followingCreators.includes(name);
+      fb.textContent = following ? "Mengikuti" : "Ikuti";
+      fb.classList.toggle("following", following);
+      fb.onclick = () => { try { if (typeof toggleFollow === "function") toggleFollow(name); } catch (e) {} ensureLibYTCreatorLayout(v); };
+    }
+  }
+  // v738: tombol SIMPAN — toggle state.saved (bookmark).
+  const sb = document.getElementById("libInlineSaveBtn");
+  if (sb) {
+    if (!Array.isArray(state.saved)) state.saved = [];
+    const saved = state.saved.includes(v.id);
+    sb.classList.toggle("is-active", saved);
+    const lbl = sb.querySelector("span"); if (lbl) lbl.textContent = saved ? "Tersimpan" : "Simpan";
+    sb.onclick = () => {
+      if (!Array.isArray(state.saved)) state.saved = [];
+      if (state.saved.includes(v.id)) { state.saved = state.saved.filter(x => x !== v.id); if (typeof toast === "function") toast("Dihapus dari simpanan"); }
+      else { state.saved.push(v.id); if (typeof toast === "function") toast("🔖 Disimpan", "success"); }
+      if (typeof saveState === "function") saveState();
+      ensureLibYTCreatorLayout(v);
+    };
   }
 }
 
