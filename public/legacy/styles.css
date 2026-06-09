@@ -72169,3 +72169,9 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v705 — pastikan section header tersembunyi (menang atas .dl-head-flex display:flex) */
 .view[data-view="videos"] .dl-section-head.dl-head-flex,
 .view[data-view="videos"] .dl-section-head { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v706 — toolbar: jumlah video di KIRI (sejajar grid) + dropdown
+   Urutkan di KANAN (space-between). Count tak lagi terpisah jauh dari grid.
+   =================================================================== */
+.view[data-view="videos"] #libSortBar { justify-content: space-between !important; }
