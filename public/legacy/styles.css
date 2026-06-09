@@ -72199,3 +72199,18 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   padding: 7px 12px !important;
   border-radius: 10px !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v710 — kartu video DIPERBESAR (min 250px, dari ~189) + judul
+   lebih besar (15px). Meta kini: views · suka · komentar + tanggal.
+   =================================================================== */
+.view[data-view="videos"] #myVideoGrid,
+.view[data-view="videos"] #statusVideoGrid,
+.view[data-view="videos"] #downloadDashboardGrid,
+.view[data-view="videos"] #downloadFileGrid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+  gap: 16px !important;
+}
+.view[data-view="videos"] .lib-item .lib-meta strong { font-size: 15px !important; }
+.view[data-view="videos"] .lib-item .lib-meta-stats,
+.view[data-view="videos"] .lib-item .lib-meta-date { font-size: 12.5px !important; }

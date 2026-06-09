@@ -36044,6 +36044,7 @@ function renderMyLibrary() {
     const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
     // Info tambahan kartu: jumlah suka, badge visibilitas, tanggal upload (data asli).
     const likes = v.likesNum != null ? fmtNum(v.likesNum) : fmtNum(v.likes || 0);
+    const cmts = (typeof state !== "undefined" && state.comments && Array.isArray(state.comments[id])) ? state.comments[id].length : 0;
     const _visMap = { public: { t: "🌐 Publik", c: "pub" }, unlisted: { t: "🔗 Unlisted", c: "unl" }, private: { t: "🔒 Privat", c: "prv" } };
     const _vis = _visMap[v.visibility] || _visMap.public;
     // Badge hanya untuk non-publik (unlisted/private) — publik = default, tak perlu.
@@ -36108,7 +36109,7 @@ function renderMyLibrary() {
       ${menuHtml}
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small class="lib-meta-stats">${views} views · ${likes} suka</small>
+        <small class="lib-meta-stats">${views} views · ${likes} suka · ${cmts} komentar</small>
         ${dateStr ? `<small class="lib-meta-date">${dateStr}</small>` : ""}
       </div>
     </div>`;
