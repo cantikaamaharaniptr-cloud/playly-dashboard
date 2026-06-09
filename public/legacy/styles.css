@@ -73032,3 +73032,45 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #s
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageDesc {
   font-size: 12px !important; line-height: 1.35 !important; margin: 3px 0 0 !important;
 }
+
+/* ===================================================================
+   STATISTIK v768 — deskripsi sedikit lebih besar + teks (judul+deskripsi)
+   dirapatkan ke kotak ikon.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageDesc {
+  font-size: 12.5px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .view-header .lib-header-flex {
+  gap: 9px !important;
+}
+
+/* ===================================================================
+   STATISTIK v769 — dot LIVE lebih "hidup": core berdenyut + glow + ring
+   radar memancar keluar (sonar). Khusus badge LIVE di Statistik.
+   =================================================================== */
+section[data-view="stats"] #statsLiveBadge .hqs-live-dot {
+  position: relative !important;
+  width: 7px !important; height: 7px !important;
+  background: #2ecc71 !important;
+  box-shadow: 0 0 6px rgba(46,204,113,.85) !important;
+  animation: statsLiveCore 1.4s ease-in-out infinite !important;
+}
+section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  content: "" !important; position: absolute !important; inset: -2px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(46,204,113,.75) !important;
+  animation: statsLiveRing 1.4s ease-out infinite !important;
+  pointer-events: none;
+}
+@keyframes statsLiveCore {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 5px rgba(46,204,113,.65); }
+  50%      { transform: scale(1.28); box-shadow: 0 0 10px rgba(46,204,113,1); }
+}
+@keyframes statsLiveRing {
+  0%   { transform: scale(.5); opacity: .9; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
+body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  animation: none !important;
+}
