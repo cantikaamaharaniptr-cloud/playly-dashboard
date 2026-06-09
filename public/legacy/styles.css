@@ -72248,3 +72248,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   letter-spacing: 0 !important;
 }
 .view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v714 — kartu video diperbesar lagi (min 250->275px).
+   Grid auto-fill: banyak video → otomatis isi baris & turun ke baris baru.
+   =================================================================== */
+.view[data-view="videos"] #myVideoGrid,
+.view[data-view="videos"] #statusVideoGrid,
+.view[data-view="videos"] #downloadDashboardGrid,
+.view[data-view="videos"] #downloadFileGrid {
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)) !important;
+}
