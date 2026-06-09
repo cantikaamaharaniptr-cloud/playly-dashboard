@@ -73261,3 +73261,38 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
   text-transform: none !important;
   letter-spacing: .01em !important;
 }
+
+/* ===================================================================
+   STATISTIK v780 — Performa Video = TABLE LIST yang jelas (baris & kolom
+   tegas): header beraksen, tiap baris ber-separator + zebra + hover.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table {
+  width: 100% !important; border-collapse: collapse !important;
+}
+/* HEADER row */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, transparent) !important;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
+  padding: 12px 16px !important;
+  font-size: 11.5px !important;
+}
+/* DATA cells: separator antar-baris */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody td {
+  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 10%, transparent) !important;
+  padding: 13px 16px !important;
+}
+/* zebra (selang-seling) + hover highlight */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 4%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+/* garis pemisah kolom tipis (kolom angka) supaya jelas "kolom" */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
+  border-left: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent) !important;
+}
