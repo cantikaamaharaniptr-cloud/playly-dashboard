@@ -72259,3 +72259,34 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] #downloadFileGrid {
   grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)) !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v715 — DRAF jadi TAB UTAMA sendiri (sebelumnya sub-tab
+   tersembunyi di bawah Status Video → user tak menemukan draftnya).
+   - Draf sub-tab lama (di dalam Status Video) disembunyikan.
+   - Badge hitung di tab Draf (mis. "Draf 2") untuk discoverability.
+   - #draftVideoGrid pakai layout grid kartu yang sama.
+   =================================================================== */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="draft"] { display: none !important; }
+
+.view[data-view="videos"] #draftVideoGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)) !important;
+  gap: 16px !important;
+}
+.view[data-view="videos"] .riwayat-tab .ptb-count {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px !important;
+  font-weight: 700;
+  line-height: 1;
+}
+.view[data-view="videos"] .riwayat-tab .ptb-count[hidden] { display: none !important; }

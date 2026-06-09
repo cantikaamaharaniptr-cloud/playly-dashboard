@@ -36033,6 +36033,55 @@ function ensureLibSectionHeads() {
   });
 }
 
+// v715 (2026-06-09): "Draf" dipromosikan jadi TAB UTAMA Pustaka Saya (sejajar
+// Video Saya / Status Video / Unduhan), bukan lagi sub-tab tersembunyi di bawah
+// Status Video. User bingung "simpan ke draft tapi lihat draftnya di mana?" —
+// sekarang ada destinasi yang jelas. Tab + section di-inject via JS (pola sama
+// dgn ensureLibSort) supaya tidak menyentuh index-markup.ts yang rapuh.
+const DRAFT_TAB_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"/><polyline points="14 2 14 8 20 8"/><path d="M18.4 12.6a2 2 0 0 1 3 3L17 20l-3 1 1-3Z"/></svg>';
+function ensureDraftTab() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const bar = view.querySelector(".riwayat-tab-bar");
+  if (!bar || document.getElementById("libDraftTab")) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "libDraftTab";
+  btn.className = "riwayat-tab";
+  btn.setAttribute("role", "tab");
+  btn.dataset.focusTab = "draft";
+  btn.innerHTML = `<span class="ptb-ico">${DRAFT_TAB_ICO}</span> Draf <span class="ptb-count" id="libDraftTabCount" hidden></span>`;
+  // Sisipkan tepat setelah tab "Video Saya" (draf = lanjutan dari video saya).
+  const myTab = [...bar.querySelectorAll(".riwayat-tab")].find(t => t.dataset.focusTab === "my-video");
+  if (myTab && myTab.nextSibling) bar.insertBefore(btn, myTab.nextSibling);
+  else if (myTab) bar.appendChild(btn);
+  else bar.insertBefore(btn, bar.firstChild);
+}
+function ensureDraftSection() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view || document.getElementById("draftVideoGrid")) return;
+  const statusGrid = document.getElementById("statusVideoGrid");
+  let statusSec = statusGrid;
+  while (statusSec && !statusSec.hasAttribute("data-focus-target")) statusSec = statusSec.parentElement;
+  const sec = document.createElement("div");
+  sec.className = "lib-card lib-card-bare";
+  sec.dataset.focusTarget = "draft";
+  // CATATAN: sengaja TANPA data-lib. Sistem legacy data-lib-active (styles.css
+  // ~36539) menyembunyikan .lib-card[data-lib] yang tak cocok dgn tab aktif —
+  // section draf cukup dikontrol applyFocus (data-focus-hidden, !important).
+  sec.innerHTML =
+    '<div class="dl-section-head dl-head-flex" data-restructured="1"><div class="dl-head-text">' +
+    '<h3><span class="lib-h-ico">' + DRAFT_TAB_ICO + '</span> Draf</h3>' +
+    '<small>Video yang kamu simpan untuk dilanjutkan nanti — belum dipublikasikan. Klik “Edit” untuk lanjut, atau “Terbitkan” bila sudah siap.</small>' +
+    '</div></div><div id="draftVideoGrid"></div>';
+  if (statusSec && statusSec.parentNode) statusSec.parentNode.insertBefore(sec, statusSec.nextSibling);
+  else view.appendChild(sec);
+  if (statusGrid) sec.querySelector("#draftVideoGrid").className = statusGrid.className;
+  // Hormati focus aktif saat ini — kalau bukan tab draf, sembunyikan.
+  const curFocus = view.dataset.focus || "all";
+  if (curFocus !== "all" && curFocus !== "draft") sec.setAttribute("data-focus-hidden", "1");
+}
+
 function renderMyLibrary() {
   const renderCard = (v, opts = {}) => {
     const id = v.id;
@@ -36082,10 +36131,15 @@ function renderMyLibrary() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
           <span>Edit</span>
         </button>
-        <button type="button" class="lcm-item" data-lib-draft="${id}" role="menuitem">
+        ${v.adminStatus === "draft"
+          ? `<button type="button" class="lcm-item" data-lib-publish="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+          <span>Terbitkan</span>
+        </button>`
+          : `<button type="button" class="lcm-item" data-lib-draft="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <span>Simpan ke Draft</span>
-        </button>
+        </button>`}
         <button type="button" class="lcm-item lcm-danger" data-lib-delete="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           <span>Hapus</span>
@@ -36136,6 +36190,8 @@ function renderMyLibrary() {
   const allMyVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
   ensureLibSectionHeads();
   ensureLibSort();
+  ensureDraftTab();
+  ensureDraftSection();
   const _libSort = state.libSort || "new";
   const _libTs = vv => (vv.uploadedAt || vv.createdAt || vv.id || 0);
   allMyVideos.sort((a, b) =>
@@ -36204,6 +36260,17 @@ function renderMyLibrary() {
   document.querySelectorAll(".status-sub-tab").forEach(b => {
     b.classList.toggle("active", b.dataset.statusTab === subTab);
   });
+
+  // 2b. Draf — kini tab utama sendiri (#draftVideoGrid, di-inject ensureDraftSection).
+  // Kebab aktif supaya user bisa Edit / Terbitkan / Hapus draf.
+  renderLibSection(draftVideos, "draftVideoGrid", "draftVideoCount", LIB_DRAFT,
+    "Belum ada draf. Simpan video ke draf lewat menu titik-tiga (⋮) di kartu video — video tersimpan di sini untuk dilanjutkan nanti.",
+    { showStatus: true, canDelete: true });
+  const _dtc = document.getElementById("libDraftTabCount");
+  if (_dtc) {
+    _dtc.textContent = draftVideos.length;
+    _dtc.hidden = draftVideos.length === 0;
+  }
 
   // New Videos dipindah ke Discover — lihat renderDiscoverNewVideos()
   const myIds = new Set(allMyVideos.map(v => v.id));
@@ -36326,8 +36393,25 @@ function renderMyLibrary() {
         if (!v) return;
         v.adminStatus = "draft";
         if (typeof saveState === "function") saveState();
-        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draft`, "success");
         renderMyLibrary();
+        // Arahkan langsung ke tab "Draf" supaya user TAHU di mana draftnya tersimpan.
+        if (typeof applyFocus === "function") applyFocus(view, "draft");
+        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf — lihat di tab <b>Draf</b>`, "success");
+        return;
+      }
+      // Publish menu item (dari draf) → kembalikan adminStatus="published" + persist
+      const publishBtn = e.target.closest("[data-lib-publish]");
+      if (publishBtn) {
+        e.stopPropagation();
+        const id = +publishBtn.dataset.libPublish;
+        view.querySelectorAll(".lib-card-menu").forEach(m => { m.hidden = true; });
+        view.querySelectorAll(".lib-card-kebab").forEach(b => b.setAttribute("aria-expanded", "false"));
+        const v = (state.myVideos || []).find(x => x.id === id);
+        if (!v) return;
+        v.adminStatus = "published";
+        if (typeof saveState === "function") saveState();
+        renderMyLibrary();
+        if (typeof toast === "function") toast(`🚀 <b>${escapeHtml(v.title || "Video")}</b> diterbitkan — kini tampil di Video Saya`, "success");
         return;
       }
       // Delete button — konfirmasi → moveVideoToTrash
