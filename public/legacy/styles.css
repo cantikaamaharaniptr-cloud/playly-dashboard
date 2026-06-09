@@ -72441,3 +72441,25 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .lib-ytp-views-chip svg {
   color: rgba(232, 216, 196, 0.82) !important; font-size: 14px !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v731 — kolom komentar: HILANGKAN focus ring emas (per user)
+   + warna teks tombol "Kirim" dibuat jelas (sebelumnya wine di atas bg gelap
+   → tak terlihat).
+   =================================================================== */
+.view[data-view="videos"] #libInlineCommentField,
+.view[data-view="videos"] #libInlineCommentField:focus,
+.view[data-view="videos"] #libInlineCommentField:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* indikasi fokus halus lewat warna border saja (bukan ring) */
+.view[data-view="videos"] #libInlineCommentField:focus,
+.view[data-view="videos"] #libInlineCommentField:focus-visible {
+  border-color: var(--primary) !important;
+}
+/* teks tombol Kirim → krem terang biar jelas */
+.view[data-view="videos"] #libInlineCommentSend {
+  color: var(--cream) !important;
+  font-weight: 700 !important;
+}
