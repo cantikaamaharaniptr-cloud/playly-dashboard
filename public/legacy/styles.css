@@ -72316,5 +72316,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    yang dibatasi (left-aligned di bawah tepi kiri video).
    =================================================================== */
 .view[data-view="videos"] .lib-ytp-panel {
-  max-width: 920px !important;
+  width: 100% !important;
+  max-width: 1100px !important;
+  align-self: center !important; /* wrap = flex column → center kolom info di tengah */
 }
