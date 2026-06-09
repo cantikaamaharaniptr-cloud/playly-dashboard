@@ -31382,14 +31382,17 @@ function switchView(name, { fromNav = false } = {}) {
     // Parent ("all") → "My Library", sub-tab → label sub-tab dalam Bahasa Indonesia.
     let crumbLabel = trCrumb(name);
     if (name === "videos") {
+      // Breadcrumb: Beranda / Pustaka Saya / [sub-tab]. Sebelumnya level
+      // "Pustaka Saya" hilang (langsung Beranda / Video Saya).
       const labelMap = {
-        all:      "My Library",
+        all:      "Video Saya",
         my:       "Video Saya",
         status:   "Status Video",
         new:      "New Videos",
         download: "Unduhan",
       };
-      crumbLabel = labelMap[state?.libTab || "all"] || "My Library";
+      parts.push(`<span class="sep">/</span><a href="#" data-view="videos">Pustaka Saya</a>`);
+      crumbLabel = labelMap[state?.libTab || "all"] || "Video Saya";
     }
     parts.push(`<span class="sep">/</span><a href="#" class="active">${crumbLabel}</a>`);
     crumb.innerHTML = parts.join("");
