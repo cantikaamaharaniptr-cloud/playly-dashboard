@@ -72079,3 +72079,12 @@ textarea#upDesc.upf-desc-textarea {
    tadinya dempet (creator-row margin-bottom:0) → beri napas.
    =================================================================== */
 .player-info .pv-creator-row { margin-bottom: 14px !important; }
+
+/* ===================================================================
+   PLAYER v697 — aksi ekstra: Unduh + Laporkan + tanggal upload (tema dashboard).
+   =================================================================== */
+/* Tanggal upload di samping views — muted, menyatu dgn chip. */
+.pv-views-chip .pv-date-inline { color: var(--muted) !important; font-weight: 500 !important; }
+/* Tombol Laporkan = sekunder (muted), Unduh = pill normal (warisi .pv-pill). */
+.pv-pill-report { color: var(--muted) !important; }
+.pv-pill-report:hover { color: var(--text) !important; }

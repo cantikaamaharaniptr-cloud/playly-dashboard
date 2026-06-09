@@ -46559,6 +46559,8 @@ async function openPlayer(id) {
   ensureDislikeBtn();
   if (!Array.isArray(state.disliked)) state.disliked = [];
   $("#dislikeBtn")?.classList.toggle("active", state.disliked.includes(id));
+  ensurePlayerExtraActions();
+  setPlayerUploadDate(v);
   $("#saveBtn").classList.toggle("active", saved);
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
@@ -48571,6 +48573,89 @@ document.addEventListener("click", (e) => {
   const v = findVideo(id);
   if (likeCountEl && v) likeCountEl.textContent = (v.likes || 0).toLocaleString("id-ID");
   if (typeof refreshAllVideoGrids === "function") refreshAllVideoGrids();
+});
+
+// ---- AKSI EKSTRA PLAYER: Unduh + Laporkan (khas platform video hosting) -----
+// Tombol di-inject ke .pv-pills (markup fragile). Pakai data video ASLI.
+function ensurePlayerExtraActions() {
+  const pills = document.querySelector(".pv-pills");
+  if (!pills) return;
+  if (!document.getElementById("dlBtn")) {
+    const b = document.createElement("button");
+    b.id = "dlBtn"; b.type = "button"; b.className = "pv-pill pv-pill-dl";
+    b.setAttribute("title", "Unduh video"); b.setAttribute("aria-label", "Unduh");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh</span>';
+    pills.appendChild(b);
+  }
+  if (!document.getElementById("reportBtn")) {
+    const b = document.createElement("button");
+    b.id = "reportBtn"; b.type = "button"; b.className = "pv-pill pv-pill-report";
+    b.setAttribute("title", "Laporkan video"); b.setAttribute("aria-label", "Laporkan");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span>Laporkan</span>';
+    pills.appendChild(b);
+  }
+}
+
+// Tanggal upload di samping views (standar "views · tanggal"). Data asli.
+function setPlayerUploadDate(v) {
+  const chip = document.getElementById("playerStats");
+  if (!chip) return;
+  const ts = v && (v.uploadedAt || v.createdAt);
+  let label = "";
+  if (ts) {
+    let d = null;
+    try { d = (typeof ts === "number") ? new Date(ts) : new Date(ts); } catch (e) {}
+    if (d && !isNaN(d.getTime())) label = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+  let dateEl = chip.querySelector(".pv-date-inline");
+  if (!label) { if (dateEl) dateEl.remove(); return; }
+  if (!dateEl) { dateEl = document.createElement("span"); dateEl.className = "pv-date-inline"; chip.appendChild(dateEl); }
+  dateEl.textContent = " · " + label;
+}
+
+// Laporkan video → antrian moderasi admin (playly-admin-mod), dgn dedup.
+// Skema sama dgn flow report yang sudah ada (renderAdminModeration membacanya).
+function reportVideoToAdmin(v) {
+  if (!v || typeof openConfirm !== "function") return;
+  const id = v.id;
+  openConfirm({
+    icon: "🚩", iconClass: "warn",
+    title: "Laporkan Video?",
+    desc: `Video "<b>${escapeHtml(v.title || "")}</b>" akan dilaporkan ke admin untuk ditinjau.`,
+    btnText: "Laporkan", btnClass: "danger",
+    onConfirm: () => {
+      try {
+        const KEY = "playly-admin-mod";
+        const list = JSON.parse(localStorage.getItem(KEY) || "[]");
+        const dup = list.find(r => r && r.videoId === id && r.reportedBy === user.username && r.status === "pending");
+        if (dup) { toast("⚠ Kamu sudah melaporkan video ini. Admin sedang menangani.", "warning"); return; }
+        list.unshift({
+          id: Date.now(), videoId: id, title: v.title, creator: v.creator,
+          reportedBy: user.username, reason: "Dilaporkan dari player",
+          at: new Date().toISOString(), status: "pending",
+          reportedAt: Date.now(), updatedAt: Date.now(),
+          flag: "🚩", thumb: v.thumb || v.poster || "🎬"
+        });
+        if (list.length > 200) { const i = list.findIndex(r => r.status !== "pending"); if (i >= 0) list.splice(i, 1); }
+        localStorage.setItem(KEY, JSON.stringify(list));
+        toast("🚩 Video dilaporkan ke admin. Terima kasih.", "success");
+      } catch (e) { console.warn(e); toast("❌ Gagal mengirim laporan", "error"); }
+    }
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const dl = e.target.closest("#dlBtn");
+  if (dl) {
+    const v = findVideo(state.currentVideo);
+    if (v && typeof openDownloadOptionsModal === "function") openDownloadOptionsModal(v);
+    return;
+  }
+  const rep = e.target.closest("#reportBtn");
+  if (rep) {
+    const v = findVideo(state.currentVideo);
+    if (v) reportVideoToAdmin(v);
+  }
 });
 
 $("#saveBtn")?.addEventListener("click", () => {
