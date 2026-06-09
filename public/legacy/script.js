@@ -32101,8 +32101,22 @@ function kpiNavigate(key) {
   if (link) link.click();
   if (leavesStats) {
     const btn = ensureStatsBackBtn();
-    if (btn) setTimeout(() => { btn.style.display = ""; }, 130);
+    if (btn) setTimeout(() => { btn.style.display = ""; applyStatsOriginCrumb(); }, 130);
   }
+}
+
+// Saat drill-down dari Statistik (tombol "‹ Statistik" tampil), root breadcrumb
+// ikut jadi "Statistik" — supaya KONSISTEN dgn tombol back (bukan "Beranda").
+// Hanya menyentuh segment pertama; segment terakhir (halaman aktif) dibiarkan.
+// switchView akan rebuild breadcrumb (root "Beranda") lagi saat navigasi normal.
+function applyStatsOriginCrumb() {
+  const crumb = document.getElementById("breadcrumb");
+  if (!crumb) return;
+  const root = crumb.querySelector("a");
+  if (!root) return;
+  root.textContent = t("page.stats") || "Statistik";
+  root.dataset.view = "stats";
+  root.dataset.statsOrigin = "1";
 }
 
 // v753: tombol "← Statistik" di topbar — balik 1 klik ke Statistik (tab asal)
