@@ -72365,3 +72365,38 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 /* desc-meta (bekas tempat tanggal) kini kosong → sembunyikan */
 .view[data-view="videos"] .lib-ytp-desc-meta { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v729 — rapikan keterbacaan & jarak panel info. Per user:
+   (1) teks meta terlalu KECIL & BURAM, (2) tombol terlalu BESAR (kolom besar),
+   (3) deskripsi terasa TERPISAH jauh (ada garis + jarak lebar).
+   =================================================================== */
+/* 1. Meta (tontonan · tanggal) lebih TERANG + sedikit lebih besar (tak buram) */
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip span,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip svg {
+  color: rgba(232, 216, 196, 0.82) !important;
+  font-size: 14px !important;
+}
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip .lib-inline-date {
+  font-size: 14px !important; font-weight: 600 !important;
+}
+
+/* 2. Tombol Suka/Bagikan lebih COMPACT (bukan kolom besar) */
+.view[data-view="videos"] .lib-ytp-pill {
+  padding: 7px 14px !important;
+  font-size: 13px !important;
+}
+.view[data-view="videos"] .lib-ytp-pill svg { width: 16px !important; height: 16px !important; }
+
+/* 3. Buang garis pemisah + rapatkan deskripsi ke baris meta (tak terpisah) */
+.view[data-view="videos"] .lib-ytp-action-bar {
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 8px !important;
+}
+.view[data-view="videos"] .lib-inline-title { margin-bottom: 7px !important; }
+.view[data-view="videos"] #libInlineDesc {
+  font-size: 14px !important;
+  color: rgba(232, 216, 196, 0.9) !important;
+}
