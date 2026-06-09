@@ -72512,9 +72512,10 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   transition: none !important;
   transform: none !important;
 }
+/* v739: hover hanya ubah bg tipis — TANPA border wine (tak ada kesan ring) */
 .view[data-view="videos"] .lib-ytp-pill:hover {
-  background: color-mix(in srgb, var(--primary) 18%, var(--bg-elev)) !important;
-  border-color: var(--primary) !important;
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-elev)) !important;
+  border-color: var(--border) !important;
 }
 /* state aktif (Suka/Simpan ditekan) → solid wine penuh */
 .view[data-view="videos"] .lib-ytp-pill.is-active {

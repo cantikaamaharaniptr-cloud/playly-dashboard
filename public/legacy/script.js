@@ -45704,7 +45704,9 @@ function enterLibWatchMode(v) {
   const last = document.getElementById("breadcrumb")?.querySelector("a.active");
   if (last) {
     if (last.dataset.libOrigLabel == null) last.dataset.libOrigLabel = last.textContent;
-    last.textContent = (v && v.title) ? v.title : "Memutar video";
+    // v739: breadcrumb saat menonton = "Putar Video" (label generik), bukan judul
+    // video (dulu judul "Download" terlihat seperti tombol/aksi).
+    last.textContent = "Putar Video";
   }
 }
 function exitLibWatchMode() {
@@ -45769,8 +45771,12 @@ function ensureLibYTCreatorLayout(v) {
   const fb = document.getElementById("libCrFollow");
   if (fb) {
     const me = (typeof user === "object" && user) ? String(user.username || user.name || "") : "";
-    if (me && name.toLowerCase() === me.toLowerCase()) {
-      fb.style.display = "none"; // tak bisa mengikuti diri sendiri
+    // v739: Pustaka Saya = video milik sendiri → tombol Ikuti tidak relevan.
+    // Sembunyikan kalau kreator = user ATAU video ada di myVideos (upload sendiri).
+    const ownVideo = (me && name.toLowerCase() === me.toLowerCase()) ||
+      (Array.isArray(state?.myVideos) && state.myVideos.some(mv => mv && mv.id === v.id));
+    if (ownVideo) {
+      fb.style.display = "none"; // video sendiri — tak bisa/ perlu mengikuti
     } else {
       fb.style.display = "";
       const following = Array.isArray(state?.followingCreators) && state.followingCreators.includes(name);
