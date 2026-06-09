@@ -72159,3 +72159,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   display: flex !important; align-items: center !important; justify-content: flex-end !important;
   gap: 10px !important; margin: 2px 0 14px !important;
 }
+
+/* ===================================================================
+   PUSTAKA SAYA v704 — hapus kartu section header (Video Saya/Status/Unduhan)
+   yang redundan dgn tab aktif. Susunan: header halaman → tab → toolbar → grid.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head { display: none !important; }
+
+/* v705 — pastikan section header tersembunyi (menang atas .dl-head-flex display:flex) */
+.view[data-view="videos"] .dl-section-head.dl-head-flex,
+.view[data-view="videos"] .dl-section-head { display: none !important; }
