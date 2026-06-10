@@ -72715,6 +72715,12 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-dd-menu button.active { background: var(--primary); color: #fff; }
 /* flip ke atas saat ruang bawah tak cukup */
 #videoEditModal .vem-dd.flip-up .vem-dd-menu { top: auto; bottom: calc(100% + 6px); }
+/* v784: opsi "Tanpa kategori" — pembatas bawah + teks muted (opsi keluar) */
+#videoEditModal .vem-dd-menu button.vem-dd-none {
+  border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0;
+  margin-bottom: 2px; color: rgba(232,216,196,.6);
+}
+#videoEditModal .vem-dd-menu button.vem-dd-none.active { color: #fff; }
 
 /* 5. Tombol footer (Batal/Reset = ghost bersih, Simpan = wine solid), FLAT */
 #videoEditModal .vem-actions .btn.ghost {

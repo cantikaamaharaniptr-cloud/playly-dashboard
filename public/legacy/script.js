@@ -52325,6 +52325,14 @@ function enhanceVemModal() {
   ["vemCategory", "vemVis", "vemComments"].forEach(id => {
     try { makeVemDropdown(document.getElementById(id)); } catch (e) {}
   });
+  // 2b. Kategori: beri opsi keluar yang jelas. Opsi value="" di MENU diberi
+  //     label "Tanpa kategori" (trigger tetap placeholder "Pilih kategori"),
+  //     supaya user paham boleh tidak memilih kategori.
+  try {
+    const catDd = modal.querySelector('.vem-dd[data-for="vemCategory"]');
+    const emptyBtn = catDd && catDd.querySelector('.vem-dd-menu button[data-val=""]');
+    if (emptyBtn) { emptyBtn.textContent = "Tanpa kategori"; emptyBtn.classList.add("vem-dd-none"); }
+  } catch (e) {}
   // 3. Tombol Reset (kembalikan ke nilai tersimpan) di footer
   const footer = modal.querySelector(".vem-actions");
   if (footer && !document.getElementById("vemResetBtn")) {
