@@ -72695,3 +72695,29 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-actions .btn.ghost::before, #videoEditModal .vem-actions .btn.ghost::after,
 #videoEditModal .vem-actions .btn.primary::before, #videoEditModal .vem-actions .btn.primary::after { content: none !important; display: none !important; }
 #videoEditModal .vem-actions .btn:focus, #videoEditModal .vem-actions .btn:focus-visible { outline: none !important; box-shadow: none !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v759 — layout 2 KOLOM (compact, tanpa scroll panjang).
+   Kiri: thumbnail + judul + deskripsi. Kanan: kategori + tag + visibilitas +
+   komentar. Subtitle full-width di bawah. Panel dilebarkan.
+   =================================================================== */
+#videoEditModal .video-edit-panel { max-width: 880px !important; width: 94vw !important; }
+#videoEditModal .vem-2col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start;
+}
+#videoEditModal .vem-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* compact: jarak antar field cukup dari gap kolom (hindari dobel margin) */
+#videoEditModal .vem-2col .upf-field { margin-bottom: 0 !important; }
+#videoEditModal .vem-2col .upf-field > label,
+#videoEditModal .vem-2col .upf-label-row { margin-bottom: 6px !important; }
+/* deskripsi mengisi tinggi kolom kiri biar seimbang dgn 4 field kanan */
+#videoEditModal .vem-col-left { gap: 12px; }
+#videoEditModal #vemDesc { min-height: 150px; }
+/* thumbnail row sedikit dipadatkan */
+#videoEditModal .vem-thumb-row { margin-bottom: 0 !important; }
+/* subtitle full-width, beri jarak atas dari grid */
+#videoEditModal .upf-subtitle-section { margin-top: 16px !important; }
+/* Responsif: layar sempit → kembali 1 kolom */
+@media (max-width: 720px) {
+  #videoEditModal .vem-2col { grid-template-columns: 1fr; gap: 14px; }
+}

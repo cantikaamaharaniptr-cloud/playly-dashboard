@@ -52309,6 +52309,36 @@ function enhanceVemModal() {
     if (batal && batal.nextSibling) footer.insertBefore(reset, batal.nextSibling);
     else footer.appendChild(reset);
   }
+  // 4. Tata ulang jadi 2 kolom (kiri: media+judul+deskripsi, kanan: pengaturan)
+  try { ensureVemTwoCol(); } catch (e) {}
+}
+// v759: layout 2 KOLOM modal Edit Video — kiri (thumbnail/judul/deskripsi),
+// kanan (kategori/tag/visibilitas/komentar), subtitle full-width di bawah.
+// Compact & tak perlu scroll. Idempotent (guard #vem2col).
+function ensureVemTwoCol() {
+  const form = document.getElementById("videoEditForm");
+  if (!form || document.getElementById("vem2col")) return;
+  // Pecah .upf-pair → field individual jadi anak langsung form
+  form.querySelectorAll(".upf-pair").forEach(pair => {
+    while (pair.firstElementChild) pair.parentNode.insertBefore(pair.firstElementChild, pair);
+    pair.remove();
+  });
+  const fields = [...form.querySelectorAll(":scope > .upf-field")];
+  const find = re => fields.find(f => re.test(f.textContent.trim().toLowerCase()));
+  const thumb = form.querySelector(".vem-thumb-row");
+  const fJudul = find(/^judul/), fDesc = find(/^deskripsi/), fKat = find(/^kategori/),
+        fTag = find(/^tag/), fVis = find(/^visibilitas/), fKom = find(/^komentar/);
+  const fSub = form.querySelector(".upf-subtitle-section");
+  const actions = form.querySelector(".vem-actions");
+  const grid = document.createElement("div"); grid.id = "vem2col"; grid.className = "vem-2col";
+  const left = document.createElement("div"); left.className = "vem-col vem-col-left";
+  const right = document.createElement("div"); right.className = "vem-col vem-col-right";
+  grid.appendChild(left); grid.appendChild(right);
+  if (actions) form.insertBefore(grid, actions); else form.appendChild(grid);
+  if (thumb) left.appendChild(thumb);
+  [fJudul, fDesc].forEach(f => { if (f) left.appendChild(f); });
+  [fKat, fTag, fVis, fKom].forEach(f => { if (f) right.appendChild(f); });
+  if (fSub && actions) form.insertBefore(fSub, actions); // subtitle full-width di bawah grid
 }
 function syncVemCatDd() {
   const sel = document.getElementById("vemCategory");
