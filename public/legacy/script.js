@@ -52272,10 +52272,22 @@ function enhanceVemModal() {
     "subtitle":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 11h3M7 15h6M14 11h3"/></svg>'
   };
   modal.querySelectorAll("label").forEach(lbl => {
-    if (lbl.dataset.vemIcon) return;
+    if (lbl.dataset.vemDone) return;
+    lbl.dataset.vemDone = "1";
     const key = lbl.textContent.trim().toLowerCase();
     const m = Object.keys(VIC).find(k => key.startsWith(k));
-    if (m) { lbl.dataset.vemIcon = "1"; lbl.insertAdjacentHTML("afterbegin", `<span class="vem-lbl-ico" aria-hidden="true">${VIC[m]}</span>`); }
+    if (m) lbl.insertAdjacentHTML("afterbegin", `<span class="vem-lbl-ico" aria-hidden="true">${VIC[m]}</span>`);
+    // v761: teks label JANGAN CAPSLOCK — sentence case. Dibungkus span supaya
+    // sentence-case dilakukan via CSS (lowercase + ::first-letter uppercase),
+    // immune terhadap sistem i18n yg suka me-reset teks node.
+    lbl.childNodes.forEach(n => {
+      if (n.nodeType === 3 && n.textContent.trim()) {
+        const span = document.createElement("span");
+        span.className = "vem-lbl-text";
+        span.textContent = n.textContent.replace(/\s+/g, " ").trim();
+        n.replaceWith(span);
+      }
+    });
   });
   // 2. Dropdown kategori KUSTOM (ganti select native → tanpa highlight biru OS)
   const sel = document.getElementById("vemCategory");

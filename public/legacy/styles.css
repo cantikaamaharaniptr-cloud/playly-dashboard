@@ -72641,11 +72641,31 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    ambigu), spacing anti-dempet, dropdown kategori kustom (tanpa biru native,
    tema dashboard), tombol footer (Batal/Reset/Simpan) bersih & flat.
    =================================================================== */
-/* 1. Ikon pada label field */
+/* 1. Ikon pada label field — v761: tiap ikon dalam KOTAK sendiri + label TANPA
+   CAPSLOCK (sentence case via JS). */
 #videoEditModal .upf-field > label,
-#videoEditModal .upf-label-row > label { display: inline-flex; align-items: center; gap: 7px; }
-#videoEditModal .vem-lbl-ico { display: inline-flex; color: rgba(232,216,196,.6); }
+#videoEditModal .upf-label-row > label {
+  display: inline-flex; align-items: center; gap: 9px;
+  text-transform: none !important; letter-spacing: 0 !important;
+  font-size: 13px !important; font-weight: 700 !important; color: var(--cream) !important;
+}
+#videoEditModal .vem-lbl-ico {
+  width: 26px; height: 26px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--cream);
+}
 #videoEditModal .vem-lbl-ico svg { width: 15px; height: 15px; }
+/* Sentence case via CSS (immune i18n): semua kecil, huruf depan saja besar. */
+#videoEditModal .vem-lbl-text { display: inline-block; text-transform: lowercase; }
+#videoEditModal .vem-lbl-text::first-letter { text-transform: uppercase; }
+/* Hilangkan CAPSLOCK pada teks kecil lain di modal (meta thumbnail, dropzone). */
+#videoEditModal .vem-thumb-info small, #videoEditModal .vem-thumb-info strong,
+#videoEditModal .vem-thumb-info span,
+#videoEditModal .upf-subtitle-section .dz-pro strong,
+#videoEditModal .upf-subtitle-section .dz-pro small,
+#videoEditModal .upf-subtitle-section .dz-pro b,
+#videoEditModal .modal-header h3, #videoEditModal .modal-header h2 { text-transform: none !important; letter-spacing: 0 !important; }
 
 /* 2. Placeholder ABU-ABU (netral) supaya jelas itu contoh, bukan isian.
    Krem-transparan dulu masih kelihatan hangat/pink → pakai gray netral. */
