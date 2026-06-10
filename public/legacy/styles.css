@@ -72048,6 +72048,52 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v795: pemisah "·" antara statistik & tanggal (dulu nempel "0 komentar 10 Jun"). */
 .lib-meta .lib-meta-stats + .lib-meta-date::before { content: "·"; margin: 0 5px 0 4px; opacity: .5; }
 .lib-sort-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+
+/* ===================================================================
+   v798: toggle Grid/List + tampilan LIST (ala dashboard video-host,
+   tetap tema wine/cream). Kartu grid di-reflow jadi baris.
+   =================================================================== */
+.lib-bar-right { display: flex; align-items: center; gap: 10px; }
+.lib-view-toggle {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px;
+}
+.lib-vt-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 26px; border: 0; border-radius: 7px; background: transparent;
+  color: rgba(232,216,196,.55); cursor: pointer; transition: background .12s, color .12s;
+}
+.lib-vt-btn:hover { color: var(--cream); }
+.lib-vt-btn.active { background: var(--primary); color: #fff; }
+/* LIST: grid → daftar vertikal */
+.view[data-view="videos"][data-libview="list"] #myVideoGrid,
+.view[data-view="videos"][data-libview="list"] #draftVideoGrid,
+.view[data-view="videos"][data-libview="list"] #statusVideoGrid,
+.view[data-view="videos"][data-libview="list"] #downloadDashboardGrid,
+.view[data-view="videos"][data-libview="list"] #downloadFileGrid {
+  display: flex !important; flex-direction: column !important; gap: 8px !important;
+}
+/* kartu → baris */
+.view[data-view="videos"][data-libview="list"] .lib-item {
+  display: flex !important; align-items: center; gap: 14px;
+  padding: 8px; background: var(--bg-elev);
+  border: 1px solid var(--border); border-radius: 12px;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb {
+  width: 132px; min-width: 132px; aspect-ratio: 16 / 9; height: auto;
+  border-radius: 8px; flex: none;
+}
+/* sembunyikan badge vis/status overlay di list (biar baris bersih); durasi tetap */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-vis,
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-status { display: none; }
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-meta {
+  flex: 1; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 3px;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-meta strong {
+  -webkit-line-clamp: 1; margin-bottom: 0; font-size: 14px;
+}
+/* kebab tetap di pojok kanan-atas thumb (kecil tapi jelas) */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions { top: 5px; right: 5px; }
 .lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
 .lib-sort-bar select {
   background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);

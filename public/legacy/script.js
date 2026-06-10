@@ -36040,19 +36040,37 @@ function ensureLibSort() {
     bar.className = "lib-sort-bar";
     bar.innerHTML =
       '<span class="dl-head-count" id="libVideoCount"></span>' +
-      '<div class="lib-sort-dd">' +
-        '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
-          '<span id="libSortCurrent">Terbaru</span>' +
-          '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
-        '</button>' +
-        '<div class="lib-sort-menu" id="libSortMenu" role="listbox" hidden>' +
-          '<button type="button" role="option" data-sort="new">Terbaru</button>' +
-          '<button type="button" role="option" data-sort="old">Terlama</button>' +
-          '<button type="button" role="option" data-sort="popular">Terpopuler</button>' +
+      '<div class="lib-bar-right">' +
+        // v798: toggle tampilan Grid / List (ala dashboard video-host)
+        '<div class="lib-view-toggle" role="group" aria-label="Tampilan">' +
+          '<button type="button" class="lib-vt-btn" data-libview-set="grid" title="Tampilan grid" aria-label="Tampilan grid">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' +
+          '</button>' +
+          '<button type="button" class="lib-vt-btn" data-libview-set="list" title="Tampilan list" aria-label="Tampilan list">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3.5" y1="6" x2="3.51" y2="6"/><line x1="3.5" y1="12" x2="3.51" y2="12"/><line x1="3.5" y1="18" x2="3.51" y2="18"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="lib-sort-dd">' +
+          '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
+            '<span id="libSortCurrent">Terbaru</span>' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</button>' +
+          '<div class="lib-sort-menu" id="libSortMenu" role="listbox" hidden>' +
+            '<button type="button" role="option" data-sort="new">Terbaru</button>' +
+            '<button type="button" role="option" data-sort="old">Terlama</button>' +
+            '<button type="button" role="option" data-sort="popular">Terpopuler</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
   }
   if (grid.previousElementSibling !== bar) grid.parentNode.insertBefore(bar, grid);
+  // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
+  {
+    const vmode = state.libViewMode === "list" ? "list" : "grid";
+    const sec = document.querySelector('section.view[data-view="videos"]');
+    if (sec) sec.dataset.libview = vmode;
+    bar.querySelectorAll(".lib-vt-btn").forEach(b => b.classList.toggle("active", b.dataset.libviewSet === vmode));
+  }
   const cnt = document.getElementById("libVideoCount");
   if (cnt) {
     const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
@@ -36065,6 +36083,17 @@ function ensureLibSort() {
 }
 // Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
 document.addEventListener("click", (e) => {
+  // v798: toggle tampilan Grid / List
+  const vtBtn = e.target.closest(".lib-vt-btn[data-libview-set]");
+  if (vtBtn) {
+    const mode = vtBtn.dataset.libviewSet === "list" ? "list" : "grid";
+    if (typeof state !== "undefined") state.libViewMode = mode;
+    const sec = document.querySelector('section.view[data-view="videos"]');
+    if (sec) sec.dataset.libview = mode;
+    document.querySelectorAll(".lib-vt-btn").forEach(b => b.classList.toggle("active", b.dataset.libviewSet === mode));
+    if (typeof saveState === "function") saveState();
+    return;
+  }
   const menu = document.getElementById("libSortMenu");
   const trigger = e.target.closest("#libSortTrigger");
   if (trigger) {
