@@ -16256,6 +16256,66 @@ function closeSetTierModal() {
 }
 
 document.getElementById("adminCreateUserBtn")     ?.addEventListener("click", openCreateUserModal);
+
+// Export daftar akun → CSV (bisa dibuka di Excel). Mirror exportRevenueCsv:
+// ambil getAllAccounts(), hitung status & jumlah video sama spt renderAdminUsers.
+function exportUsersCsv() {
+  const accounts = (typeof getAllAccounts === "function") ? getAllAccounts() : [];
+  if (!accounts.length) { toast("Belum ada akun untuk diekspor.", "warning"); return; }
+  const pad = (n) => String(n).padStart(2, "0");
+  const now = Date.now();
+  const esc = (v) => { const s = String(v == null ? "" : v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const stateOf = (a) => { try { return JSON.parse(localStorage.getItem(`playly-state-${a.username}`) || "{}"); } catch { return {}; } };
+  const videoCount = (s) => Array.isArray(s.myVideos) ? s.myVideos.length : 0;
+  const statusLabel = (a, s) => {
+    if (a.suspended) return "Suspended";
+    if (a.deactivated) return "Tidak aktif";
+    let last = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
+    const hb = Number(s.lastActivityAt || 0); if (hb > last) last = hb;
+    const diff = now - last;
+    if (last && diff < 5 * 60 * 1000) return "Online";
+    if (last && diff < 7 * 24 * 60 * 60 * 1000) return "Offline";
+    return "Tidak aktif";
+  };
+  const totalUser = accounts.filter(a => (a.role || "user") !== "admin").length;
+  const totalAdmin = accounts.filter(a => (a.role || "") === "admin").length;
+  const totalPremium = accounts.filter(a => (a.tier || "free") === "premium").length;
+  const summary = [
+    ["Laporan Daftar Akun Playly"],
+    ["Diekspor", new Date().toLocaleString("id-ID")],
+    ["Total akun", accounts.length],
+    ["User", totalUser],
+    ["Admin", totalAdmin],
+    ["Premium", totalPremium],
+    [],
+  ];
+  const header = ["Nama", "Username", "Email", "Peran", "Tier", "Plan Premium", "Jml Video", "Status", "Bergabung"];
+  const rows = accounts.map(a => {
+    const s = stateOf(a);
+    return [
+      a.name || "", a.username || "", a.email || "",
+      a.role || "user", a.tier || "free", a.premiumPlan || "",
+      videoCount(s), statusLabel(a, s), (a.joinedAt || "").split("T")[0] || "—",
+    ];
+  });
+  const lines = [
+    ...summary.map(c => c.map(esc).join(",")),
+    header.map(esc).join(","),
+    ...rows.map(c => c.map(esc).join(",")),
+  ];
+  const csv = "﻿" + lines.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `akun-playly-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.csv`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`✓ ${accounts.length} akun diekspor ke CSV`, "success");
+}
+document.getElementById("exportUsersCsv")?.addEventListener("click", exportUsersCsv);
+
 document.getElementById("createUserModalClose")    ?.addEventListener("click", closeCreateUserModal);
 document.getElementById("createUserCancelBtn")     ?.addEventListener("click", closeCreateUserModal);
 document.getElementById("createUserModalBackdrop") ?.addEventListener("click", closeCreateUserModal);
