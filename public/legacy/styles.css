@@ -72647,10 +72647,11 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-lbl-ico { display: inline-flex; color: rgba(232,216,196,.6); }
 #videoEditModal .vem-lbl-ico svg { width: 15px; height: 15px; }
 
-/* 2. Placeholder REDUP supaya jelas itu contoh, bukan isian */
+/* 2. Placeholder ABU-ABU (netral) supaya jelas itu contoh, bukan isian.
+   Krem-transparan dulu masih kelihatan hangat/pink → pakai gray netral. */
 #videoEditModal input::placeholder,
-#videoEditModal textarea::placeholder { color: rgba(232,216,196,.36) !important; }
-#videoEditModal .vem-dd-label.placeholder { color: rgba(232,216,196,.36) !important; }
+#videoEditModal textarea::placeholder { color: #8a8784 !important; opacity: 1 !important; }
+#videoEditModal .vem-dd-label.placeholder { color: #8a8784 !important; }
 
 /* 3. Spacing antar field (jangan dempet) */
 #videoEditModal .upf-field { margin-bottom: 14px; }
