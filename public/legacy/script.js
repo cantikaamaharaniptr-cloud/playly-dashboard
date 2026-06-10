@@ -36098,15 +36098,18 @@ function ensureLibSort() {
     fbar = document.createElement("div");
     fbar.id = "libFilterBar"; fbar.className = "lib-filter-bar";
     fbar.innerHTML =
-      '<div class="lib-search">' +
-        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
-        '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
-      '</div>' +
       '<div class="lib-vis-chips" role="group" aria-label="Filter visibilitas">' +
         '<button type="button" data-visf="all">Semua</button>' +
         '<button type="button" data-visf="public">Publik</button>' +
         '<button type="button" data-visf="unlisted">Tidak terdaftar</button>' +
         '<button type="button" data-visf="private">Privat</button>' +
+      '</div>' +
+      // v805: search pustaka collapsible (ikon → expand) biar tidak tampak 2 search.
+      '<div class="lib-search collapsible">' +
+        '<button type="button" class="lib-search-toggle" aria-label="Cari di pustaka">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+        '</button>' +
+        '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
       '</div>';
   }
   // v799b: bar aksi massal (dibuat di sini, disisipkan bersama toolbar).
@@ -36281,6 +36284,16 @@ document.addEventListener("input", (e) => {
   if (typeof state !== "undefined") state.libSearch = inp.value;
   _libApplySearchFilter(); // hanya hide/show, tidak render → fokus aman
 });
+// v805: tutup kembali search kalau ditinggal dalam keadaan kosong.
+document.addEventListener("focusout", (e) => {
+  const inp = e.target.closest("#libSearchInput");
+  if (!inp) return;
+  setTimeout(() => {
+    if (!(inp.value || "").trim() && document.activeElement !== inp) {
+      inp.closest(".lib-search")?.classList.remove("open");
+    }
+  }, 120);
+});
 // checkbox kartu → update seleksi
 document.addEventListener("change", (e) => {
   const cb = e.target.closest('input[data-lib-check]');
@@ -36291,6 +36304,16 @@ document.addEventListener("change", (e) => {
 });
 // Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
 document.addEventListener("click", (e) => {
+  // v805: toggle search pustaka (ikon ↔ input)
+  const stg = e.target.closest(".lib-search-toggle");
+  if (stg) {
+    const wrap = stg.closest(".lib-search");
+    const open = wrap.classList.toggle("open");
+    const inp = wrap.querySelector("#libSearchInput");
+    if (open) { if (inp) inp.focus(); }
+    else if (inp && (inp.value || "").trim()) { inp.value = ""; if (typeof state !== "undefined") state.libSearch = ""; if (typeof _libApplySearchFilter === "function") _libApplySearchFilter(); }
+    return;
+  }
   // v801: chip filter visibilitas
   const visfBtn = e.target.closest(".lib-vis-chips button[data-visf]");
   if (visfBtn) {

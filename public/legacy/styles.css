@@ -72115,6 +72115,31 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   color: var(--cream); font-size: 13px;
 }
 .lib-search input::placeholder { color: rgba(232,216,196,.45); }
+/* v805: search collapsible — default ikon, expand saat .open (anti "2 search") */
+.lib-filter-bar { justify-content: flex-start; }
+.lib-search.collapsible {
+  flex: 0 0 auto; min-width: 0; max-width: none; margin-left: auto;
+  padding: 0; gap: 0; background: transparent; border: 0; overflow: hidden;
+}
+.lib-search-toggle {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+  background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.7);
+  transition: border-color .12s, color .12s;
+}
+.lib-search-toggle:hover { border-color: var(--primary); color: var(--cream); }
+.lib-search.collapsible input {
+  width: 0; opacity: 0; padding: 0; margin: 0; pointer-events: none;
+  transition: width .2s ease, opacity .15s ease, margin .2s ease;
+}
+.lib-search.collapsible.open {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0 12px 0 8px;
+}
+.lib-search.collapsible.open .lib-search-toggle {
+  background: transparent; border: 0; width: 20px; height: 20px; color: rgba(232,216,196,.6);
+}
+.lib-search.collapsible.open input { width: 210px; opacity: 1; margin-left: 8px; pointer-events: auto; }
 .lib-vis-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .lib-vis-chips button {
   padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
