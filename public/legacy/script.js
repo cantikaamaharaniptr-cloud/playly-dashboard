@@ -458,7 +458,14 @@ function removeDeviceAccount(email) {
 function toast(msg, type = "") {
   const t = document.createElement("div");
   t.className = `toast ${type}`;
-  t.innerHTML = msg;
+  // v793: bentuk kartu notifikasi — pisahkan ikon (emoji) di depan jadi badge
+  //       bulat, sisanya jadi body. Konsisten tema dashboard (tanpa warna luar).
+  let icon = "", body = String(msg);
+  const m = body.match(/^\s*([^\w<\s][^\w<]*?)\s+([\s\S]+)$/u);
+  if (m) { icon = m[1]; body = m[2]; }
+  t.innerHTML =
+    `<span class="toast-ico" aria-hidden="true">${icon || "🔔"}</span>` +
+    `<span class="toast-body">${body}</span>`;
   const host = $("#toastHost");
   host.append(t);
   // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke
@@ -36466,7 +36473,7 @@ function renderMyLibrary() {
         renderMyLibrary();
         // Arahkan langsung ke tab "Draf" supaya user TAHU di mana draftnya tersimpan.
         if (typeof applyFocus === "function") applyFocus(view, "draft");
-        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf — lihat di tab <b>Draf</b>`, "success");
+        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success");
         return;
       }
       // Publish menu item (dari draf) → kembalikan adminStatus="published" + persist
@@ -52174,7 +52181,7 @@ function maybeOfferSaveCard() {
       if (!v) return;
       v.adminStatus = "draft";
       if (typeof saveState === "function") saveState();
-      if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draft`, "success");
+      if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success");
       if (typeof renderMyLibrary === "function") renderMyLibrary();
       return;
     }
