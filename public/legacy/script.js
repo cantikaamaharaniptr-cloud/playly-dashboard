@@ -52261,6 +52261,15 @@ function maybeOfferSaveCard() {
 function enhanceVemModal() {
   const modal = document.getElementById("videoEditModal");
   if (!modal) return;
+  // v788: reset tombol Simpan kalau modal sebelumnya ditutup saat loading.
+  {
+    const sb = modal.querySelector(".vem-actions .btn.primary");
+    if (sb && sb.dataset.loading === "1") {
+      if (sb.dataset.orig != null) sb.innerHTML = sb.dataset.orig;
+      sb.disabled = false; sb.classList.remove("is-loading");
+      delete sb.dataset.loading; delete sb.dataset.orig;
+    }
+  }
   // v777: header — ikon pensil dibungkus KOTAK + deskripsi di bawah judul.
   {
     const head = modal.querySelector(".vem-head");
@@ -52549,37 +52558,60 @@ function saveVideoEdit() {
     if (typeof toast === "function") toast("⚠️ Judul tidak boleh kosong", "warning");
     return;
   }
-  v.title = newTitle;
-  v.description = get("vemDesc");
-  v.category = get("vemCategory");
-  // v772: tags sebagai HASHTAG — pisah spasi/koma, pastikan prefix #.
-  v.tags = get("vemTags").split(/[\s,]+/).map(s => s.trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s);
-  v.visibility = get("vemVis");
-  v.comments = get("vemComments");
-  // v765: pengaturan lanjutan (toggle)
-  const chk = cid => !!document.getElementById(cid)?.checked;
-  v.allowDownload = chk("vemAllowDownload");
-  v.allowEmbed = chk("vemAllowEmbed");
-  v.showViews = chk("vemShowViews");
-  v.hideFromSearch = chk("vemHideSearch");
-  v.ageRestriction = chk("vemAgeRestrict");
-  if (window._vemNewThumb) {
-    v.thumb = window._vemNewThumb;
-    window._vemNewThumb = null;
+  // v788: tampilkan loading di tombol Simpan, lalu setelah jeda singkat simpan
+  //       perubahan & langsung buka player video agar user lihat hasilnya.
+  const saveBtn = document.querySelector("#videoEditModal .vem-actions .btn.primary");
+  if (saveBtn) {
+    if (saveBtn.dataset.loading === "1") return; // cegah double submit
+    saveBtn.dataset.loading = "1";
+    saveBtn.dataset.orig = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.classList.add("is-loading");
+    saveBtn.innerHTML = '<span class="vem-spin" aria-hidden="true"></span> Menyimpan…';
   }
-  // Persist subtitle: kalau user upload/auto-generate baru → simpan; kalau hapus → null
-  // _editSubtitle = null artinya user explicit clear; undefined artinya tidak diubah.
-  if (window._editSubtitle === null) {
-    v.subtitleVtt = null;
-    v.subtitleLang = null;
-  } else if (window._editSubtitle && window._editSubtitle.vtt) {
-    v.subtitleVtt = window._editSubtitle.vtt;
-    v.subtitleLang = window._editSubtitle.lang || "auto";
-  }
-  if (typeof saveState === "function") saveState();
-  if (typeof toast === "function") toast(`✓ Perubahan disimpan untuk <b>${escapeHtml(v.title)}</b>`, "success");
-  closeVideoEditModal();
-  if (typeof renderMyLibrary === "function") renderMyLibrary();
+  const restoreBtn = () => {
+    if (!saveBtn) return;
+    if (saveBtn.dataset.orig != null) saveBtn.innerHTML = saveBtn.dataset.orig;
+    saveBtn.disabled = false;
+    saveBtn.classList.remove("is-loading");
+    delete saveBtn.dataset.loading; delete saveBtn.dataset.orig;
+  };
+  setTimeout(() => {
+    v.title = newTitle;
+    v.description = get("vemDesc");
+    v.category = get("vemCategory");
+    // v772: tags sebagai HASHTAG — pisah spasi/koma, pastikan prefix #.
+    v.tags = get("vemTags").split(/[\s,]+/).map(s => s.trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s);
+    v.visibility = get("vemVis");
+    v.comments = get("vemComments");
+    // v765: pengaturan lanjutan (toggle)
+    const chk = cid => !!document.getElementById(cid)?.checked;
+    v.allowDownload = chk("vemAllowDownload");
+    v.allowEmbed = chk("vemAllowEmbed");
+    v.showViews = chk("vemShowViews");
+    v.hideFromSearch = chk("vemHideSearch");
+    v.ageRestriction = chk("vemAgeRestrict");
+    if (window._vemNewThumb) {
+      v.thumb = window._vemNewThumb;
+      window._vemNewThumb = null;
+    }
+    // Persist subtitle: kalau user upload/auto-generate baru → simpan; kalau hapus → null
+    // _editSubtitle = null artinya user explicit clear; undefined artinya tidak diubah.
+    if (window._editSubtitle === null) {
+      v.subtitleVtt = null;
+      v.subtitleLang = null;
+    } else if (window._editSubtitle && window._editSubtitle.vtt) {
+      v.subtitleVtt = window._editSubtitle.vtt;
+      v.subtitleLang = window._editSubtitle.lang || "auto";
+    }
+    if (typeof saveState === "function") saveState();
+    restoreBtn();
+    closeVideoEditModal();
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    if (typeof toast === "function") toast(`✓ Perubahan disimpan untuk <b>${escapeHtml(v.title)}</b>`, "success");
+    // v788: langsung lihat perubahan di player video
+    if (typeof openPlayer === "function") { try { openPlayer(id); } catch (e) {} }
+  }, 700);
 }
 
 /* =========================================================

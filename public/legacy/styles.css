@@ -72767,6 +72767,31 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* footer lebih rapat */
 #videoEditModal .vem-actions { padding-top: 10px !important; }
 
+/* ===================================================================
+   v788: (1) subtitle isi sisa tinggi kolom kanan biar sejajar kiri,
+   (2) footer sticky supaya tidak kepotong di viewport pendek,
+   (3) spinner tombol Simpan.
+   =================================================================== */
+/* (1) dropzone subtitle tumbuh mengisi sisa ruang kolom kanan */
+#videoEditModal .vem-2col { align-items: stretch !important; } /* dulu start → kanan tak penuh */
+#videoEditModal .vem-col-right { display: flex !important; flex-direction: column !important; }
+#videoEditModal .upf-subtitle-section { flex: 1 1 auto !important; display: flex !important; flex-direction: column !important; }
+#videoEditModal .upf-subtitle-section .dz-pro { flex: 1 1 auto !important; }
+/* (2) panel bisa scroll + footer menempel di bawah, selalu terlihat */
+#videoEditModal .video-edit-panel { max-height: calc(100vh - 32px) !important; overflow-y: auto !important; }
+#videoEditModal .vem-actions {
+  position: sticky !important; bottom: 0 !important; z-index: 5 !important;
+  background: #251419 !important; margin-top: 8px !important;
+}
+/* (3) spinner loading di tombol Simpan */
+#videoEditModal .vem-spin {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+  animation: vemSpin .6s linear infinite; vertical-align: -2px; margin-right: 4px;
+}
+@keyframes vemSpin { to { transform: rotate(360deg); } }
+#videoEditModal .vem-actions .btn.primary.is-loading { opacity: .85 !important; cursor: progress !important; }
+
 /* 5. Tombol footer (Batal/Reset = ghost bersih, Simpan = wine solid), FLAT */
 #videoEditModal .vem-actions .btn.ghost {
   background: var(--bg-elev) !important; border: 1px solid var(--border) !important;
