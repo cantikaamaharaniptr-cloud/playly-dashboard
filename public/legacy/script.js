@@ -31607,11 +31607,12 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
       group.querySelectorAll(".nav-subitem").forEach(x => x.classList.remove("active"));
       // Navigate ke parent view (idempotent)
       switchView(n.dataset.view, { fromNav: true });
-      // Khusus My Library: reset library tab ke "all" supaya tampil gabungan.
-      // Dipanggil setelah switchView selesai (yang restore libTab terakhir).
+      // v807: My Library → buka tab "Video Saya" (bukan gabungan "all"). Dulu
+      // "all" bikin breadcrumb "My Library" (dobel "Pustaka Saya") + chip toolbar
+      // hilang saat interaksi (scope-other karena focus≠my-video). Klik tab pill
+      // menjalankan alur lengkap (focus + breadcrumb "Video Saya" + sync toolbar).
       if (n.dataset.view === "videos") {
         setTimeout(() => {
-          if (typeof setLibraryTab === "function") setLibraryTab("all");
           const view = document.querySelector('section.view[data-view="videos"]');
           if (view) {
             const h = view.querySelector(".page-head h2, .view-header h2");
@@ -31619,7 +31620,9 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
               h.textContent = h.dataset.originalTitle;
               delete h.dataset.originalTitle;
             }
-            if (typeof applyFocus === "function") applyFocus(view, "all");
+            const tabBtn = view.querySelector('button[data-focus-tab="my-video"]');
+            if (tabBtn) tabBtn.click();
+            else if (typeof applyFocus === "function") applyFocus(view, "my-video");
           }
         }, 50);
       }
@@ -31788,11 +31791,14 @@ function resetGroupFocus(group) {
   const targetView = group.querySelector(".nav-parent")?.dataset.view;
   if (!targetView) return;
   const view = document.querySelector(`section.view[data-view="${targetView}"]`);
-  if (view) applyFocus(view, "all");
-  // Khusus My Library: reset ke "all" supaya semua section (My Videos + Status + Unduhan) tampil gabungan
-  if (targetView === "videos" && typeof setLibraryTab === "function") {
-    setLibraryTab("all");
+  // v807: My Library → buka tab "Video Saya" (bukan gabungan "all").
+  if (targetView === "videos" && view) {
+    const tabBtn = view.querySelector('button[data-focus-tab="my-video"]');
+    if (tabBtn) { tabBtn.click(); return; }
+    if (typeof applyFocus === "function") applyFocus(view, "my-video");
+    return;
   }
+  if (view) applyFocus(view, "all");
 }
 
 function runSubAction(action) {
@@ -36159,7 +36165,9 @@ function _libSyncToolbar() {
   const view = document.querySelector('section.view[data-view="videos"]');
   if (!view) return;
   const focus = view.dataset.focus || "my-video";
-  const own = (focus === "my-video" || focus === "draft");
+  // v807: "all" (gabungan) ikut diperlakukan sbg own → toolbar penuh, chip TIDAK
+  // hilang saat interaksi (cegah bug "klik Semua kolom hilang").
+  const own = (focus === "my-video" || focus === "draft" || focus === "all");
   const bar = document.getElementById("libSortBar");
   // own = toolbar penuh; lainnya = scope-other (hanya toggle Grid/List).
   if (bar) bar.classList.toggle("scope-other", !own);
@@ -46466,12 +46474,12 @@ function setLibraryTab(tabKey) {
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast) {
     const labelMap = {
-      all:      "My Library",
+      all:      "Video Saya",
       my:       "Video Saya",
       status:   "Status Video",
       download: "Unduhan",
     };
-    activeBcLast.textContent = labelMap[key] || "My Library";
+    activeBcLast.textContent = labelMap[key] || "Video Saya";
   }
   // Auto-close inline player saat ganti tab
   try { closeLibInlinePlayer(); } catch {}
