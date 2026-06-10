@@ -72103,7 +72103,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: var(--bg-elev); border: 1px solid var(--border); color: var(--cream);
   cursor: pointer; transition: background .12s, border-color .12s;
 }
-.lib-pick-btn:hover { border-color: var(--primary); }
+.lib-pick-btn:hover { border-color: rgba(232,216,196,.5); }
 .lib-pick-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .lib-select { display: none; }
 .view[data-view="videos"][data-libselect="on"] .lib-item { position: relative; }
@@ -72163,7 +72163,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: var(--bg-elev-2); border: 1px solid var(--border); color: var(--cream); cursor: pointer;
 }
 .lib-bulk-act svg { width: 14px; height: 14px; flex: none; }
-.lib-bulk-act:hover:not(:disabled) { border-color: var(--primary); }
+.lib-bulk-act:hover:not(:disabled) { border-color: rgba(232,216,196,.5); }
 /* v817: tombol Hapus jelas MERAH (destruktif) */
 .lib-bulk-act.danger { color: var(--danger); border-color: rgba(239,68,68,.5); }
 .lib-bulk-act.danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
@@ -72193,7 +72193,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.7);
   transition: border-color .12s, color .12s;
 }
-.lib-search-toggle:hover { border-color: var(--primary); color: var(--cream); }
+.lib-search-toggle:hover { border-color: rgba(232,216,196,.5); color: var(--cream); }
 .lib-search.collapsible input {
   width: 0; opacity: 0; padding: 0; margin: 0; pointer-events: none;
   transition: width .2s ease, opacity .15s ease, margin .2s ease;
@@ -72212,7 +72212,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.75);
   cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
-.lib-vis-chips button:hover { border-color: var(--primary); color: var(--cream); }
+.lib-vis-chips button:hover { border-color: rgba(232,216,196,.5); color: var(--cream); }
 .lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 /* v801b: pesan saat cari tak ada hasil */
 .lib-nomatch {
