@@ -72745,7 +72745,22 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal #vemDesc { min-height: 60px !important; }
 /* thumbnail row & gambar lebih ringkas */
 #videoEditModal .vem-thumb-row { padding: 10px !important; }
-#videoEditModal .vem-thumb-wrap img { width: 164px !important; height: auto !important; }
+/* v787: thumbnail DILEBARKAN jadi full-width (preview 16:9 di atas, info di
+   bawah) supaya kolom kiri tidak kosong di bawahnya. */
+#videoEditModal .vem-thumb-row {
+  grid-template-columns: 1fr !important; gap: 10px !important;
+}
+#videoEditModal .vem-thumb-wrap {
+  width: 100% !important; aspect-ratio: 16 / 9 !important; height: auto !important;
+}
+#videoEditModal .vem-thumb-wrap img {
+  width: 100% !important; height: 100% !important; object-fit: cover !important;
+}
+#videoEditModal .vem-thumb-info {
+  display: flex !important; flex-direction: row !important; align-items: baseline !important;
+  flex-wrap: wrap !important; gap: 4px 8px !important; justify-content: center !important;
+  text-align: center !important;
+}
 /* pengaturan lanjutan: toggle lebih rapat */
 #videoEditModal #vemAdvanced { padding: 9px 12px !important; }
 #videoEditModal #vemAdvanced .vem-toggle { padding: 6px 0 !important; }
