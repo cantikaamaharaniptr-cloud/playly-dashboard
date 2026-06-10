@@ -72657,8 +72657,17 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 #videoEditModal .vem-lbl-ico svg { width: 15px; height: 15px; }
 /* Sentence case via CSS (immune i18n): semua kecil, huruf depan saja besar. */
-#videoEditModal .vem-lbl-text { display: inline-block; text-transform: lowercase; }
+#videoEditModal .vem-lbl-text { display: inline-block; text-transform: lowercase; line-height: 1.15; }
 #videoEditModal .vem-lbl-text::first-letter { text-transform: uppercase; }
+/* "(opsional)" pada label subtitle — sejajar tengah, kecil, muted (tak naik). */
+#videoEditModal .upf-subtitle-section label small,
+#videoEditModal .upf-subtitle-section label .muted {
+  align-self: center !important;
+  font-size: 11.5px !important; font-weight: 600 !important; line-height: 1 !important;
+  color: rgba(232,216,196,.5) !important; text-transform: none !important;
+  letter-spacing: 0 !important; margin: 0 0 0 2px !important;
+  position: static !important; top: auto !important; vertical-align: baseline !important;
+}
 /* Hilangkan CAPSLOCK pada teks kecil lain di modal (meta thumbnail, dropzone). */
 #videoEditModal .vem-thumb-info small, #videoEditModal .vem-thumb-info strong,
 #videoEditModal .vem-thumb-info span,

@@ -52289,23 +52289,11 @@ function enhanceVemModal() {
       }
     });
   });
-  // 2. Dropdown kategori KUSTOM (ganti select native → tanpa highlight biru OS)
-  const sel = document.getElementById("vemCategory");
-  if (sel && !document.getElementById("vemCatDd")) {
-    const dd = document.createElement("div");
-    dd.id = "vemCatDd"; dd.className = "vem-dd";
-    const opts = [...sel.options];
-    dd.innerHTML =
-      '<button type="button" class="vem-dd-trigger" id="vemCatTrigger" aria-haspopup="listbox" aria-expanded="false">' +
-      '<span class="vem-dd-label" id="vemCatLabel"></span>' +
-      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
-      '<div class="vem-dd-menu" id="vemCatMenu" role="listbox" hidden>' +
-      opts.map(o => `<button type="button" role="option" data-val="${o.value}">${escapeHtml(o.textContent)}</button>`).join("") +
-      '</div>';
-    sel.style.display = "none";
-    sel.parentNode.insertBefore(dd, sel.nextSibling);
-  }
-  syncVemCatDd();
+  // 2. Dropdown KUSTOM (ganti select native → tanpa highlight biru OS) untuk
+  //    Kategori, Visibilitas, dan Komentar.
+  ["vemCategory", "vemVis", "vemComments"].forEach(id => {
+    try { makeVemDropdown(document.getElementById(id)); } catch (e) {}
+  });
   // 3. Tombol Reset (kembalikan ke nilai tersimpan) di footer
   const footer = modal.querySelector(".vem-actions");
   if (footer && !document.getElementById("vemResetBtn")) {
@@ -52353,30 +52341,58 @@ function ensureVemTwoCol() {
   // bukan full-width besar. Dropzone-nya dipadatkan via CSS.
   [fKat, fTag, fVis, fKom, fSub].forEach(f => { if (f) right.appendChild(f); });
 }
-function syncVemCatDd() {
-  const sel = document.getElementById("vemCategory");
-  const label = document.getElementById("vemCatLabel");
-  if (!sel || !label) return;
-  const opt = sel.options[sel.selectedIndex] || sel.options[0];
-  label.textContent = opt ? opt.textContent : "Pilih kategori";
-  label.classList.toggle("placeholder", !sel.value);
-  document.querySelectorAll("#vemCatMenu button[data-val]").forEach(b => b.classList.toggle("active", b.dataset.val === sel.value));
+// v764: dropdown KUSTOM generik untuk select mana pun di modal (vemCategory,
+// vemVis, vemComments) → tema dashboard, tanpa highlight biru native OS.
+function makeVemDropdown(sel) {
+  if (!sel) return;
+  if (!sel.dataset.ddDone) {
+    sel.dataset.ddDone = "1";
+    const dd = document.createElement("div");
+    dd.className = "vem-dd";
+    dd.dataset.for = sel.id;
+    dd.innerHTML =
+      '<button type="button" class="vem-dd-trigger" aria-haspopup="listbox" aria-expanded="false">' +
+      '<span class="vem-dd-label"></span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
+      '<div class="vem-dd-menu" role="listbox" hidden>' +
+      [...sel.options].map(o => `<button type="button" role="option" data-val="${escapeHtml(o.value)}">${escapeHtml(o.textContent)}</button>`).join("") +
+      '</div>';
+    sel.style.display = "none";
+    sel.parentNode.insertBefore(dd, sel.nextSibling);
+  }
+  syncVemDropdown(sel);
 }
-// Handler dropdown kategori (toggle / pilih / tutup klik-luar)
+function syncVemDropdown(sel) {
+  if (!sel) return;
+  const dd = document.querySelector(`.vem-dd[data-for="${sel.id}"]`);
+  if (!dd) return;
+  const label = dd.querySelector(".vem-dd-label");
+  const opt = sel.options[sel.selectedIndex] || sel.options[0];
+  if (label) {
+    label.textContent = opt ? opt.textContent : "";
+    label.classList.toggle("placeholder", !sel.value);
+  }
+  dd.querySelectorAll(".vem-dd-menu button[data-val]").forEach(b => b.classList.toggle("active", b.dataset.val === sel.value));
+}
+// Handler GENERIK semua dropdown kustom modal (toggle / pilih / tutup klik-luar)
 document.addEventListener("click", e => {
-  const menu = document.getElementById("vemCatMenu");
-  if (!menu) return;
-  const trig = e.target.closest("#vemCatTrigger");
-  if (trig) { const open = menu.hidden; menu.hidden = !open; trig.setAttribute("aria-expanded", String(open)); return; }
-  const opt = e.target.closest("#vemCatMenu button[data-val]");
-  if (opt) {
-    const sel = document.getElementById("vemCategory");
-    if (sel) { sel.value = opt.dataset.val; sel.dispatchEvent(new Event("change", { bubbles: true })); }
-    menu.hidden = true;
-    syncVemCatDd();
+  const trig = e.target.closest(".vem-dd-trigger");
+  if (trig) {
+    const menu = trig.closest(".vem-dd").querySelector(".vem-dd-menu");
+    document.querySelectorAll(".vem-dd-menu").forEach(m => { if (m !== menu) m.hidden = true; });
+    const open = menu.hidden; menu.hidden = !open; trig.setAttribute("aria-expanded", String(open));
     return;
   }
-  if (!menu.hidden && !e.target.closest("#vemCatDd")) menu.hidden = true;
+  const opt = e.target.closest(".vem-dd-menu button[data-val]");
+  if (opt) {
+    const dd = opt.closest(".vem-dd");
+    const sel = document.getElementById(dd.dataset.for);
+    if (sel) { sel.value = opt.dataset.val; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+    dd.querySelector(".vem-dd-menu").hidden = true;
+    syncVemDropdown(sel);
+    return;
+  }
+  if (!e.target.closest(".vem-dd")) document.querySelectorAll(".vem-dd-menu").forEach(m => m.hidden = true);
 });
 
 function openVideoEditModal(id) {
