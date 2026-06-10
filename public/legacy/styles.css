@@ -72204,6 +72204,19 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   position: absolute; top: 50%; right: 10px; bottom: auto; left: auto;
   transform: translateY(-50%); margin: 0;
 }
+/* v810: di LIST → kebab SELALU tampil + tanpa kotak (titik-3 bersih). Di grid
+   tetap pakai kotak (kontras di atas thumbnail). */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions { opacity: 1 !important; }
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab {
+  background: transparent !important; color: rgba(232,216,196,.65) !important;
+  width: 30px !important; height: 30px !important;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab:hover {
+  background: rgba(232,216,196,.1) !important; color: var(--cream) !important; transform: none !important;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab[aria-expanded="true"] {
+  background: rgba(232,216,196,.12) !important; color: var(--cream) !important;
+}
 .lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
 .lib-sort-bar select {
   background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
