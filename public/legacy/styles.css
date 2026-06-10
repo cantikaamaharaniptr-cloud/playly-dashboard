@@ -72842,12 +72842,10 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg {
   width: 18px !important; height: 18px !important; min-width: 18px !important; flex: none !important;
 }
-/* teks di dalam field RATA TENGAH (input + dropdown label) */
+/* v771: REVERT rata tengah (kelewat — dipasang ke semua field). Kembali rata kiri. */
 #videoEditModal #vemTitleInput,
-#videoEditModal #vemTags { text-align: center !important; }
-#videoEditModal .vem-dd-trigger { position: relative; }
-#videoEditModal .vem-dd-trigger .vem-dd-label { flex: 1 1 auto; text-align: center; }
-#videoEditModal .vem-dd-trigger > svg { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
+#videoEditModal #vemTags { text-align: left !important; }
+#videoEditModal .vem-dd-trigger .vem-dd-label { flex: 1 1 auto; text-align: left; }
 /* warna placeholder ("Pilih kategori" dll) → abu-abu netral hangat, bukan bluish */
 #videoEditModal .vem-dd-label.placeholder,
 #videoEditModal input::placeholder,
