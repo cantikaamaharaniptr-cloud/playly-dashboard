@@ -72069,7 +72069,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    tak relevan, disembunyikan). */
 /* v806: satu baris toolbar — grup kiri (jumlah+chip) & kanan (cari/Pilih/toggle/sort) */
 #libSortBar .lib-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
-#libSortBar .lib-bar-left .dl-head-count { flex: none; }
+/* v808: jumlah = teks polos (label), bukan kotak/pill spt chip → tidak terlihat
+   seperti tombol filter. */
+#libSortBar #libVideoCount.dl-head-count {
+  flex: none; background: transparent !important; border: 0 !important;
+  padding: 0 !important; box-shadow: none !important;
+  color: rgba(232,216,196,.6) !important; font-weight: 600 !important; font-size: 13px !important;
+}
 #libSortBar .lib-search.collapsible { margin-left: 0 !important; }
 /* Status/Unduhan: hanya toggle Grid/List */
 .view[data-view="videos"] #libSortBar.scope-other { justify-content: flex-end !important; }

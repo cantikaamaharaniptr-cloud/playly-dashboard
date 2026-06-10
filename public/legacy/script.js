@@ -36174,11 +36174,13 @@ function _libSyncToolbar() {
   if (!own && window._libSelectMode && typeof _libApplySelectMode === "function") _libApplySelectMode(false);
   if (own) {
     const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
-    const n = focus === "draft"
-      ? vids.filter(v => v.adminStatus === "draft").length
-      : vids.filter(v => !v.adminStatus || v.adminStatus === "published").length;
+    const base = focus === "draft"
+      ? vids.filter(v => v.adminStatus === "draft")
+      : vids.filter(v => !v.adminStatus || v.adminStatus === "published");
+    // v808: ikut filter visibilitas aktif (mis. "Publik" → hanya hitung publik).
+    const list = (typeof _libFilterList === "function") ? _libFilterList(base) : base;
     const cnt = document.getElementById("libVideoCount");
-    if (cnt) cnt.textContent = `${n} Video`;
+    if (cnt) cnt.textContent = `${list.length} Video`;
   }
 }
 window._libSyncToolbar = _libSyncToolbar;
