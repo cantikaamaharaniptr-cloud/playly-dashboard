@@ -72776,7 +72776,9 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-2col { align-items: stretch !important; } /* dulu start → kanan tak penuh */
 #videoEditModal .vem-col-right { display: flex !important; flex-direction: column !important; }
 #videoEditModal .upf-subtitle-section { flex: 1 1 auto !important; display: flex !important; flex-direction: column !important; }
-#videoEditModal .upf-subtitle-section .dz-pro { flex: 1 1 auto !important; }
+/* .dz-pro = <label>, jadi kena rule label field (margin-bottom 6px). Naikkan
+   spesifisitas (1,3,0 > 1,2,1) supaya margin-bottom 0 menang → mentok ke bawah. */
+#videoEditModal .vem-2col .upf-subtitle-section .dz-pro { flex: 1 1 auto !important; margin-bottom: 0 !important; }
 /* (2) panel bisa scroll + footer menempel di bawah, selalu terlihat */
 #videoEditModal .video-edit-panel { max-height: calc(100vh - 32px) !important; overflow-y: auto !important; }
 #videoEditModal .vem-actions {
