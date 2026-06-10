@@ -72214,17 +72214,6 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-vis-chips button:hover { border-color: rgba(232,216,196,.5); color: var(--cream); }
 .lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-/* v820: header Pustaka Saya lebih CLEAN — buang kotak/border + ringkas, biar
-   tidak menumpuk dgn breadcrumb & tab. */
-.view[data-view="videos"] .view-header {
-  padding: 0 2px 2px !important; margin-bottom: 6px !important;
-  background: transparent !important; border: 0 !important; border-radius: 0 !important;
-  box-shadow: none !important;
-}
-.view[data-view="videos"] .view-header h2 { font-size: 20px !important; }
-.view[data-view="videos"] .view-header .lib-header-text p { font-size: 12.5px !important; opacity: .8; }
-.view[data-view="videos"] .view-header .sec-icon-lg { width: 38px !important; height: 38px !important; }
-.view[data-view="videos"] .view-header .sec-icon-lg svg { width: 19px !important; height: 19px !important; }
 /* v801b: pesan saat cari tak ada hasil */
 .lib-nomatch {
   grid-column: 1 / -1; width: 100%; text-align: center;
