@@ -36109,14 +36109,7 @@ function ensureLibSort() {
         '<button type="button" data-visf="private">Privat</button>' +
       '</div>';
   }
-  if (grid.previousElementSibling !== bar) grid.parentNode.insertBefore(bar, grid);
-  // sisipkan filter bar TEPAT sebelum toolbar (setelah bar masuk DOM).
-  if (bar.parentNode && bar.previousElementSibling !== fbar) bar.parentNode.insertBefore(fbar, bar);
-  { // sinkron chip aktif (value input dibiarkan agar fokus tak hilang)
-    const vf = state.libVisFilter || "all";
-    fbar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
-  }
-  // v799b: bar aksi massal (muncul saat mode pilih) — sisipkan tepat di bawah toolbar.
+  // v799b: bar aksi massal (dibuat di sini, disisipkan bersama toolbar).
   let bulk = document.getElementById("libBulkBar");
   if (!bulk) {
     bulk = document.createElement("div");
@@ -36130,7 +36123,19 @@ function ensureLibSort() {
       '<button type="button" class="lib-bulk-act danger" data-bulk="delete">Hapus</button>' +
       '<button type="button" class="lib-bulk-x" data-bulk="cancel" title="Batal" aria-label="Batal pilih">✕</button>';
   }
-  if (bar.nextElementSibling !== bulk) bar.parentNode.insertBefore(bulk, bar.nextSibling);
+  // v803: toolbar DI ATAS semua tab (selalu tampil) — urutan fbar, bar, bulk
+  // tepat sebelum section tab pertama. Guard posisi agar tidak re-insert (anti
+  // blur input cari).
+  const _lview = document.querySelector('section.view[data-view="videos"]');
+  const _firstSec = _lview && _lview.querySelector('[data-focus-target]');
+  if (_lview && _firstSec) {
+    const _ins = (el, ref) => { if (el.parentNode !== _lview || el.nextElementSibling !== ref) _lview.insertBefore(el, ref); };
+    _ins(bulk, _firstSec); _ins(bar, bulk); _ins(fbar, bar);
+  }
+  { // sinkron chip aktif (value input dibiarkan agar fokus tak hilang)
+    const vf = state.libVisFilter || "all";
+    fbar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
+  }
   // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
   {
     const vmode = state.libViewMode === "list" ? "list" : "grid";
@@ -36140,16 +36145,36 @@ function ensureLibSort() {
   }
   // v799b: pertahankan state mode-pilih lintas re-render (reset seleksi).
   if (typeof _libApplySelectMode === "function") _libApplySelectMode(!!window._libSelectMode, true);
-  const cnt = document.getElementById("libVideoCount");
-  if (cnt) {
-    const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
-    cnt.textContent = `${n} Video`;
-  }
   const cur = state.libSort || "new";
   const curEl = document.getElementById("libSortCurrent");
   if (curEl) curEl.textContent = LABELS[cur] || "Terbaru";
   bar.querySelectorAll(".lib-sort-menu button").forEach(b => b.classList.toggle("active", b.dataset.sort === cur));
+  // v803: scoping toolbar per tab aktif (count + sembunyikan kontrol tak relevan).
+  if (typeof _libSyncToolbar === "function") _libSyncToolbar();
 }
+// v803: sesuaikan toolbar dengan tab aktif. Video Saya/Draf = toolbar penuh
+// (cari, filter, Pilih, sort). Status/Unduhan = hanya toggle Grid/List (kontrol
+// lain tak relevan: Unduhan = video kreator lain, Status punya sub-tab sendiri).
+function _libSyncToolbar() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const focus = view.dataset.focus || "my-video";
+  const own = (focus === "my-video" || focus === "draft");
+  const fbar = document.getElementById("libFilterBar");
+  const bar = document.getElementById("libSortBar");
+  if (fbar) fbar.hidden = !own;                         // cari + chip: tab sendiri
+  if (bar) bar.classList.toggle("scope-other", !own);   // sembunyikan count+Pilih+sort
+  if (!own && window._libSelectMode && typeof _libApplySelectMode === "function") _libApplySelectMode(false);
+  if (own) {
+    const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+    const n = focus === "draft"
+      ? vids.filter(v => v.adminStatus === "draft").length
+      : vids.filter(v => !v.adminStatus || v.adminStatus === "published").length;
+    const cnt = document.getElementById("libVideoCount");
+    if (cnt) cnt.textContent = `${n} Video`;
+  }
+}
+window._libSyncToolbar = _libSyncToolbar;
 // v799b: ===== MODE PILIH-BANYAK (bulk select) Pustaka Saya =====
 window._libSelected = window._libSelected || new Set();
 function _libUpdateBulkCount() {
@@ -37024,6 +37049,9 @@ document.addEventListener("click", e => {
   });
   // Apply focus mode (hide non-matching sections)
   if (typeof applyFocus === "function") applyFocus(view, key);
+  // v803: sesuaikan toolbar + filter cari dgn tab baru (tanpa full re-render).
+  if (typeof _libSyncToolbar === "function") _libSyncToolbar();
+  if (typeof _libApplySearchFilter === "function") _libApplySearchFilter();
   // v795: buka tab Status Video selalu mulai dari sub-tab pertama (Menunggu),
   // bukan sub-tab terakhir (mis. Sampah) yang persist → bikin user bingung lihat
   // "Sampah kosong" padahal baru masuk. Re-render + re-apply focus.
