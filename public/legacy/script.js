@@ -36855,6 +36855,16 @@ function renderMyLibrary() {
       }
       const item = e.target.closest(".lib-item");
       if (!item) return;
+      // v812: di MODE PILIH → klik baris = toggle checkbox (JANGAN play video).
+      if (view.dataset.libselect === "on") {
+        const cb = item.querySelector('input[data-lib-check]');
+        // Kalau klik tepat di checkbox, biarkan native toggle (jangan dobel).
+        if (cb && !e.target.closest('input[data-lib-check]')) {
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        return;
+      }
       const id = Number(item.dataset.vid);
       if (Number.isFinite(id)) {
         // Video harus exist di section yang lagi visible — kalau dipanggil di

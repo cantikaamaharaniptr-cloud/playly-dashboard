@@ -72099,6 +72099,12 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
   background: rgba(0,0,0,.5); border-radius: 6px; padding: 2px; backdrop-filter: blur(3px);
 }
 .lib-select input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+/* v812: di mode pilih → seluruh kartu bisa diklik utk pilih + sorot yg terpilih */
+.view[data-view="videos"][data-libselect="on"] .lib-item { cursor: pointer; }
+.view[data-view="videos"][data-libselect="on"] .lib-item:has(input[data-lib-check]:checked) {
+  border-color: var(--primary) !important;
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
 .lib-bulk-bar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: 0 0 14px; padding: 8px 12px;
