@@ -72805,5 +72805,31 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .upf-subtitle-section .dz-pro { aspect-ratio: auto !important; padding: 16px 12px !important; }
 #videoEditModal .upf-subtitle-section .dz-pro-empty { height: auto !important; }
 #videoEditModal .upf-subtitle-section .dz-pro-empty { gap: 6px !important; }
-#videoEditModal .upf-subtitle-section .dz-pro-empty-icon { width: 30px !important; height: 30px !important; }
-#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg { width: 16px !important; height: 16px !important; }
+/* ===================================================================
+   MODAL EDIT VIDEO v769 — rapikan section SUBTITLE (dropzone + ikon + tombol).
+   =================================================================== */
+/* baris label: "Subtitle (opsional)" kiri, tombol Auto-generate kanan, sejajar */
+#videoEditModal .upf-subtitle-section .upf-label-row { display: flex; align-items: center; justify-content: space-between; }
+/* tombol Auto-generate (AI) — ghost themed, flat */
+#videoEditModal .upf-auto-group .btn,
+#videoEditModal .upf-subtitle-section .btn.ghost {
+  background: var(--bg-elev) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important; box-shadow: none !important; border-radius: 9px !important;
+}
+#videoEditModal .upf-auto-group .btn:hover { border-color: var(--primary) !important; }
+#videoEditModal .upf-auto-group .btn::before, #videoEditModal .upf-auto-group .btn::after { content: none !important; display: none !important; }
+/* dropzone bersih: dashed tipis, bg sangat subtle */
+#videoEditModal .upf-subtitle-section .dz-pro {
+  border: 1.5px dashed var(--border) !important; border-radius: 12px !important;
+  background: rgba(232,216,196,.03) !important;
+}
+/* ikon dropzone: lingkaran THEMED subtle (bukan gradient wine mencolok) */
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon {
+  width: 40px !important; height: 40px !important;
+  background: rgba(232,216,196,.07) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important;
+}
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg { width: 18px !important; height: 18px !important; }
+/* teks dropzone berjenjang: judul jelas, hint muted */
+#videoEditModal .upf-subtitle-section .dz-pro-empty p { font-size: 13px !important; font-weight: 700 !important; color: var(--cream) !important; margin: 0 !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty small { font-size: 11.5px !important; color: rgba(232,216,196,.5) !important; }
