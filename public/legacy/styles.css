@@ -9358,7 +9358,12 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
   flex: none; width: 32px; height: 32px; border-radius: 9px;
   display: grid; place-items: center; font-size: 15px; line-height: 1;
   background: rgba(232,216,196,.08); border: 1px solid var(--border);
+  color: var(--cream);
 }
+.toast-ico svg { width: 17px; height: 17px; }
+/* v794: badge per status — draf netral cream, published wine solid (berhasil & live) */
+.toast.draft .toast-ico { background: rgba(232,216,196,.08); color: var(--cream); }
+.toast.published .toast-ico { background: var(--primary); border-color: rgba(232,216,196,.22); color: #fff; }
 .toast-body { line-height: 1.4; padding-top: 2px; color: var(--cream); }
 .toast-body b { color: var(--cream); font-weight: 700; }
 .toast-body .toast-sub {

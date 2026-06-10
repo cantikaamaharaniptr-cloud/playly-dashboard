@@ -455,16 +455,20 @@ function removeDeviceAccount(email) {
 // Tidak pakai interceptor setItem supaya proses auto-boot, role-recovery, atau
 // profile-update tidak ikut menambah email ke daftar perangkat.
 
-function toast(msg, type = "") {
+function toast(msg, type = "", icon = null) {
   const t = document.createElement("div");
   t.className = `toast ${type}`;
-  // v793: bentuk kartu notifikasi — pisahkan ikon (emoji) di depan jadi badge
-  //       bulat, sisanya jadi body. Konsisten tema dashboard (tanpa warna luar).
-  let icon = "", body = String(msg);
-  const m = body.match(/^\s*([^\w<\s][^\w<]*?)\s+([\s\S]+)$/u);
-  if (m) { icon = m[1]; body = m[2]; }
+  // v793: bentuk kartu notifikasi — badge ikon + body. v794: badge bisa diisi
+  //       ikon SVG bertema eksplisit (arg icon); kalau tidak, ambil emoji depan.
+  let ico = "", body = String(msg);
+  if (icon) {
+    ico = icon;
+  } else {
+    const m = body.match(/^\s*([^\w<\s][^\w<]*?)\s+([\s\S]+)$/u);
+    if (m) { ico = m[1]; body = m[2]; }
+  }
   t.innerHTML =
-    `<span class="toast-ico" aria-hidden="true">${icon || "🔔"}</span>` +
+    `<span class="toast-ico" aria-hidden="true">${ico || "🔔"}</span>` +
     `<span class="toast-body">${body}</span>`;
   const host = $("#toastHost");
   host.append(t);
@@ -480,6 +484,14 @@ function toast(msg, type = "") {
   setTimeout(() => t.remove(), 3200);
 }
 window.toast = toast;
+// v794: ikon SVG bertema untuk notifikasi status video (ganti emoji 📝/🚀).
+const TOAST_ICONS = {
+  // disimpan ke draf — dokumen berlipat (file draft)
+  draft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>',
+  // dipublikasikan — centang dalam lingkaran (berhasil & live)
+  published: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+};
+window.TOAST_ICONS = TOAST_ICONS;
 
 // Popup notif yang anchor di bawah bell icon di topbar (id="openNotif").
 // Variant ke-2 dari toast — per request user 2026-05-10aj. Auto-dismiss 4.5s.
@@ -36473,7 +36485,7 @@ function renderMyLibrary() {
         renderMyLibrary();
         // Arahkan langsung ke tab "Draf" supaya user TAHU di mana draftnya tersimpan.
         if (typeof applyFocus === "function") applyFocus(view, "draft");
-        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success");
+        if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success draft", TOAST_ICONS.draft);
         return;
       }
       // Publish menu item (dari draf) → kembalikan adminStatus="published" + persist
@@ -36488,7 +36500,7 @@ function renderMyLibrary() {
         v.adminStatus = "published";
         if (typeof saveState === "function") saveState();
         renderMyLibrary();
-        if (typeof toast === "function") toast(`🚀 <b>${escapeHtml(v.title || "Video")}</b> diterbitkan — kini tampil di Video Saya`, "success");
+        if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> berhasil dipublikasikan<span class="toast-sub">Kini tampil publik di tab Video Saya.</span>`, "success published", TOAST_ICONS.published);
         return;
       }
       // Delete button — konfirmasi → moveVideoToTrash
@@ -52181,7 +52193,7 @@ function maybeOfferSaveCard() {
       if (!v) return;
       v.adminStatus = "draft";
       if (typeof saveState === "function") saveState();
-      if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success");
+      if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success draft", TOAST_ICONS.draft);
       if (typeof renderMyLibrary === "function") renderMyLibrary();
       return;
     }
@@ -52200,7 +52212,7 @@ function maybeOfferSaveCard() {
       if (typeof renderMyLibrary === "function") renderMyLibrary();
       const _vw = document.querySelector('section.view[data-view="videos"]');
       if (_vw && typeof applyFocus === "function") applyFocus(_vw, "my-video");
-      if (typeof toast === "function") toast(`🚀 <b>${escapeHtml(v.title || "Video")}</b> dipublikasikan — kini tampil di Video Saya`, "success");
+      if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> berhasil dipublikasikan<span class="toast-sub">Kini tampil publik di tab Video Saya.</span>`, "success published", TOAST_ICONS.published);
       return;
     }
     // Delete (handled via openConfirm)
