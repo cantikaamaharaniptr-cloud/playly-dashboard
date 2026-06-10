@@ -72065,6 +72065,38 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-vt-btn:hover { color: var(--cream); }
 .lib-vt-btn.active { background: var(--primary); color: #fff; }
+/* v799b: tombol Pilih + checkbox kartu + bar aksi massal */
+.lib-pick-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 9px; font-size: 12.5px; font-weight: 600;
+  background: var(--bg-elev); border: 1px solid var(--border); color: var(--cream);
+  cursor: pointer; transition: background .12s, border-color .12s;
+}
+.lib-pick-btn:hover { border-color: var(--primary); }
+.lib-pick-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.lib-select { display: none; }
+.view[data-view="videos"][data-libselect="on"] .lib-item { position: relative; }
+.view[data-view="videos"][data-libselect="on"] .lib-select {
+  display: inline-flex; position: absolute; top: 8px; left: 8px; z-index: 5;
+  background: rgba(0,0,0,.5); border-radius: 6px; padding: 2px; backdrop-filter: blur(3px);
+}
+.lib-select input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+.lib-bulk-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 8px 12px;
+  background: var(--bg-elev); border: 1px solid var(--primary); border-radius: 11px;
+}
+.lib-bulk-count { font-size: 12.5px; font-weight: 700; color: var(--cream); }
+.lib-bulk-link { background: none; border: 0; color: #c98b94; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.lib-bulk-spacer { flex: 1; }
+.lib-bulk-act {
+  padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  background: var(--bg-elev-2); border: 1px solid var(--border); color: var(--cream); cursor: pointer;
+}
+.lib-bulk-act:hover:not(:disabled) { border-color: var(--primary); }
+.lib-bulk-act.danger { color: #e8989b; }
+.lib-bulk-act:disabled { opacity: .45; cursor: not-allowed; }
+.lib-bulk-x { background: none; border: 0; color: var(--cream); font-size: 15px; cursor: pointer; padding: 2px 6px; line-height: 1; }
 /* LIST: grid → daftar vertikal */
 .view[data-view="videos"][data-libview="list"] #myVideoGrid,
 .view[data-view="videos"][data-libview="list"] #draftVideoGrid,

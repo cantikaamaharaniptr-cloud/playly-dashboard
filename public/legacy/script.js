@@ -36065,6 +36065,11 @@ function ensureLibSort() {
     bar.innerHTML =
       '<span class="dl-head-count" id="libVideoCount"></span>' +
       '<div class="lib-bar-right">' +
+        // v799b: tombol Pilih (mode pilih-banyak)
+        '<button type="button" class="lib-pick-btn" id="libPickBtn" title="Pilih banyak video">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
+          '<span>Pilih</span>' +
+        '</button>' +
         // v798: toggle tampilan Grid / List (ala dashboard video-host)
         '<div class="lib-view-toggle" role="group" aria-label="Tampilan">' +
           '<button type="button" class="lib-vt-btn" data-libview-set="grid" title="Tampilan grid" aria-label="Tampilan grid">' +
@@ -36088,6 +36093,21 @@ function ensureLibSort() {
       '</div>';
   }
   if (grid.previousElementSibling !== bar) grid.parentNode.insertBefore(bar, grid);
+  // v799b: bar aksi massal (muncul saat mode pilih) — sisipkan tepat di bawah toolbar.
+  let bulk = document.getElementById("libBulkBar");
+  if (!bulk) {
+    bulk = document.createElement("div");
+    bulk.id = "libBulkBar"; bulk.className = "lib-bulk-bar"; bulk.hidden = true;
+    bulk.innerHTML =
+      '<span class="lib-bulk-count" id="libBulkCount">0 dipilih</span>' +
+      '<button type="button" class="lib-bulk-link" data-bulk="all">Pilih semua</button>' +
+      '<span class="lib-bulk-spacer"></span>' +
+      '<button type="button" class="lib-bulk-act" data-bulk="publish">Publikasikan</button>' +
+      '<button type="button" class="lib-bulk-act" data-bulk="draft">ke Draf</button>' +
+      '<button type="button" class="lib-bulk-act danger" data-bulk="delete">Hapus</button>' +
+      '<button type="button" class="lib-bulk-x" data-bulk="cancel" title="Batal" aria-label="Batal pilih">✕</button>';
+  }
+  if (bar.nextElementSibling !== bulk) bar.parentNode.insertBefore(bulk, bar.nextSibling);
   // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
   {
     const vmode = state.libViewMode === "list" ? "list" : "grid";
@@ -36095,6 +36115,8 @@ function ensureLibSort() {
     if (sec) sec.dataset.libview = vmode;
     bar.querySelectorAll(".lib-vt-btn").forEach(b => b.classList.toggle("active", b.dataset.libviewSet === vmode));
   }
+  // v799b: pertahankan state mode-pilih lintas re-render (reset seleksi).
+  if (typeof _libApplySelectMode === "function") _libApplySelectMode(!!window._libSelectMode, true);
   const cnt = document.getElementById("libVideoCount");
   if (cnt) {
     const n = (Array.isArray(state?.myVideos) ? state.myVideos : []).filter(v => !v.adminStatus || v.adminStatus === "published").length;
@@ -36105,8 +36127,84 @@ function ensureLibSort() {
   if (curEl) curEl.textContent = LABELS[cur] || "Terbaru";
   bar.querySelectorAll(".lib-sort-menu button").forEach(b => b.classList.toggle("active", b.dataset.sort === cur));
 }
+// v799b: ===== MODE PILIH-BANYAK (bulk select) Pustaka Saya =====
+window._libSelected = window._libSelected || new Set();
+function _libUpdateBulkCount() {
+  const n = window._libSelected.size;
+  const cEl = document.getElementById("libBulkCount");
+  if (cEl) cEl.textContent = `${n} dipilih`;
+  document.querySelectorAll('#libBulkBar .lib-bulk-act').forEach(b => b.disabled = n === 0);
+}
+function _libApplySelectMode(on, fromRender) {
+  window._libSelectMode = !!on;
+  const sec = document.querySelector('section.view[data-view="videos"]');
+  if (sec) sec.dataset.libselect = on ? "on" : "off";
+  const bulk = document.getElementById("libBulkBar");
+  if (bulk) bulk.hidden = !on;
+  const pick = document.getElementById("libPickBtn");
+  if (pick) pick.classList.toggle("active", !!on);
+  // toggle mode SELALU reset seleksi (juga saat re-render)
+  window._libSelected.clear();
+  document.querySelectorAll('input[data-lib-check]').forEach(cb => { cb.checked = false; });
+  _libUpdateBulkCount();
+}
+window._libApplySelectMode = _libApplySelectMode;
+function _libHandleBulk(action) {
+  if (action === "cancel") { _libApplySelectMode(false); return; }
+  if (action === "all") {
+    document.querySelectorAll('input[data-lib-check]').forEach(cb => {
+      if (cb.offsetParent !== null) { cb.checked = true; window._libSelected.add(+cb.dataset.libCheck); }
+    });
+    _libUpdateBulkCount();
+    return;
+  }
+  const ids = [...window._libSelected];
+  if (!ids.length) return;
+  const vids = (typeof state === "object" && state ? (state.myVideos || []) : []);
+  if (action === "publish" || action === "draft") {
+    const status = action === "publish" ? "published" : "draft";
+    ids.forEach(id => { const v = vids.find(x => x.id === id); if (v) v.adminStatus = status; });
+    if (typeof saveState === "function") saveState();
+    _libApplySelectMode(false);
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    const label = action === "publish" ? "dipublikasikan" : "dipindahkan ke Draf";
+    if (typeof toast === "function") toast(`<b>${ids.length} video</b> ${label}`, "success", action === "publish" ? TOAST_ICONS.published : TOAST_ICONS.draft);
+    return;
+  }
+  if (action === "delete") {
+    const doDelete = () => {
+      ids.forEach(id => { if (typeof moveVideoToTrash === "function") moveVideoToTrash(id); });
+      _libApplySelectMode(false);
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+      if (typeof toast === "function") toast(`<b>${ids.length} video</b> dipindahkan ke Sampah`, "success");
+    };
+    if (typeof openConfirm === "function") {
+      openConfirm({
+        icon: "🗑️", iconClass: "danger", title: "Hapus video terpilih?",
+        desc: `<b>${ids.length} video</b> akan dipindahkan ke Sampah. Bisa dipulihkan dari Status Video → Sampah.`,
+        btnText: "Hapus", btnClass: "danger", onConfirm: doDelete
+      });
+    } else doDelete();
+    return;
+  }
+}
+window._libHandleBulk = _libHandleBulk;
+// checkbox kartu → update seleksi
+document.addEventListener("change", (e) => {
+  const cb = e.target.closest('input[data-lib-check]');
+  if (!cb) return;
+  const id = +cb.dataset.libCheck;
+  if (cb.checked) window._libSelected.add(id); else window._libSelected.delete(id);
+  _libUpdateBulkCount();
+});
 // Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
 document.addEventListener("click", (e) => {
+  // v799b: tombol "Pilih" → toggle mode pilih-banyak
+  const pickBtn = e.target.closest("#libPickBtn");
+  if (pickBtn) { _libApplySelectMode(!window._libSelectMode); return; }
+  // v799b: aksi bar massal
+  const bulkBtn = e.target.closest("#libBulkBar [data-bulk]");
+  if (bulkBtn) { _libHandleBulk(bulkBtn.dataset.bulk); return; }
   // v798: toggle tampilan Grid / List
   const vtBtn = e.target.closest(".lib-vt-btn[data-libview-set]");
   if (vtBtn) {
@@ -36300,7 +36398,11 @@ function renderMyLibrary() {
       ];
       actionsHtml = `<div class="lib-card-actions">${restoreActions.join("")}</div>`;
     }
+    const selectBox = opts.canDelete
+      ? `<label class="lib-select" title="Pilih video"><input type="checkbox" data-lib-check="${id}" aria-label="Pilih video"></label>`
+      : "";
     return `<div class="lib-item" data-vid="${id}">
+      ${selectBox}
       <div class="lib-thumb" ${thumbBg}>
         ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
         ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
