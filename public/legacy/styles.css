@@ -72495,21 +72495,24 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    Identitas warna kini dominan di IKON + BADGE angka; background aktif cuma tint
    tipis (subtle), seragam intensitasnya. Hue sedikit dilembutkan. Gradien tetap:
    Menunggu(amber) → Sampah(terracotta) → Takedown(merah). */
-/* v753: warna dibuat LEBIH HIDUP (vivid). Menunggu = paling hidup (krusial:
-   video menunggu review perlu perhatian). Gradien tetap amber→oranye→merah.
-   fill aktif: tint tipis (tak mencolok); warna vivid di ikon + badge angka. */
-/* fill aktif tipis */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active      { background: rgba(245,184,46,.14) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active    { background: rgba(238,124,58,.12) !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active { background: rgba(232,72,85,.12) !important; }
-/* ikon per-fitur (vivid) — selalu tampil */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"] .sst-ico      { color: #F5B82E !important; }  /* gold vivid */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"] .sst-ico    { color: #EE7C3A !important; }  /* oranye vivid */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"] .sst-ico { color: #E84855 !important; }  /* merah vivid */
-/* badge angka berwarna fitur saat aktif */
-.view[data-view="videos"] .status-sub-tab[data-status-tab="all"].active .ssc-count      { background: #F5B82E !important; color: #1a0c10 !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="trash"].active .ssc-count    { background: #EE7C3A !important; color: #1a0c10 !important; }
-.view[data-view="videos"] .status-sub-tab[data-status-tab="takedown"].active .ssc-count { background: #E84855 !important; color: #fff !important; }
+/* v754: warna fitur MENYALA hanya saat ADA item (.has-items, count>0) → narik
+   perhatian ke yg perlu aksi. Kalau 0 item → tab REDUP/tenang. Vivid:
+   Menunggu #F5B82E (gold, krusial) · Sampah #EE7C3A (oranye) · Takedown #E84855 (merah). */
+/* default 0 item → ikon redup, tab tenang */
+.view[data-view="videos"] .status-sub-tab .sst-ico { color: rgba(232,216,196,.42) !important; }
+/* ADA item → ikon vivid sesuai fitur (menyala) */
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="all"] .sst-ico      { color: #F5B82E !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="trash"] .sst-ico    { color: #EE7C3A !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="takedown"] .sst-ico { color: #E84855 !important; }
+/* ADA item → badge angka vivid (pop walau tab tidak aktif, biar kelihatan ada yg menunggu) */
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="all"] .ssc-count      { background: #F5B82E !important; color: #1a0c10 !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="trash"] .ssc-count    { background: #EE7C3A !important; color: #1a0c10 !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="takedown"] .ssc-count { background: #E84855 !important; color: #fff !important; }
+/* fill aktif berwarna HANYA jika ada item; aktif tapi kosong → netral tipis */
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="all"]      { background: rgba(245,184,46,.14) !important; }
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="trash"]    { background: rgba(238,124,58,.12) !important; }
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="takedown"] { background: rgba(232,72,85,.12) !important; }
+.view[data-view="videos"] .status-sub-tab.active:not(.has-items)                        { background: rgba(232,216,196,.07) !important; }
 
 /* v751: rapatkan jarak tab utama ↔ sub-tab/konten. Gap-nya dari flex-gap view
    (20px) + margin → ~38px (mengambang). Kecilkan flex-gap jadi 14px & nol-kan

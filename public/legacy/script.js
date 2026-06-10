@@ -36319,6 +36319,12 @@ function renderMyLibrary() {
   setT("statusCntDraft",    draftVideos.length);
   setT("statusCntTrash",    trashVideos.length);
   setT("statusCntTakedown", takedownVideos.length);
+  // v754: warna sub-tab "menyala" HANYA saat ada item (>0) → menarik perhatian
+  // ke yg perlu aksi. Kalau 0 → tab redup/tenang. Toggle class .has-items.
+  const setHot = (key, n) => { const b = document.querySelector(`.status-sub-tab[data-status-tab="${key}"]`); if (b) b.classList.toggle("has-items", n > 0); };
+  setHot("all",      subTabMap.all.list.length);
+  setHot("trash",    trashVideos.length);
+  setHot("takedown", takedownVideos.length);
   // Sync active state pada sub-tab buttons
   document.querySelectorAll(".status-sub-tab").forEach(b => {
     b.classList.toggle("active", b.dataset.statusTab === subTab);
