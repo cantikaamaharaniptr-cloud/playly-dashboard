@@ -36092,7 +36092,30 @@ function ensureLibSort() {
         '</div>' +
       '</div>';
   }
+  // v801: bar Cari + filter visibilitas (di atas toolbar). Idempotent.
+  let fbar = document.getElementById("libFilterBar");
+  if (!fbar) {
+    fbar = document.createElement("div");
+    fbar.id = "libFilterBar"; fbar.className = "lib-filter-bar";
+    fbar.innerHTML =
+      '<div class="lib-search">' +
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+        '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
+      '</div>' +
+      '<div class="lib-vis-chips" role="group" aria-label="Filter visibilitas">' +
+        '<button type="button" data-visf="all">Semua</button>' +
+        '<button type="button" data-visf="public">Publik</button>' +
+        '<button type="button" data-visf="unlisted">Tidak terdaftar</button>' +
+        '<button type="button" data-visf="private">Privat</button>' +
+      '</div>';
+  }
   if (grid.previousElementSibling !== bar) grid.parentNode.insertBefore(bar, grid);
+  // sisipkan filter bar TEPAT sebelum toolbar (setelah bar masuk DOM).
+  if (bar.parentNode && bar.previousElementSibling !== fbar) bar.parentNode.insertBefore(fbar, bar);
+  { // sinkron chip aktif (value input dibiarkan agar fokus tak hilang)
+    const vf = state.libVisFilter || "all";
+    fbar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
+  }
   // v799b: bar aksi massal (muncul saat mode pilih) — sisipkan tepat di bawah toolbar.
   let bulk = document.getElementById("libBulkBar");
   if (!bulk) {
@@ -36189,6 +36212,31 @@ function _libHandleBulk(action) {
   }
 }
 window._libHandleBulk = _libHandleBulk;
+// v801: filter daftar by VISIBILITAS (dipakai di tiap section saat render).
+// Cari (judul) TIDAK di sini — dilakukan via hide/show DOM biar fokus input aman.
+function _libFilterList(list) {
+  if (!Array.isArray(list)) return list;
+  const vf = state.libVisFilter || "all";
+  if (vf === "all") return list;
+  return list.filter(v => (v.visibility || "public") === vf);
+}
+window._libFilterList = _libFilterList;
+// Cari: sembunyikan/ tampilkan kartu by judul, TANPA re-render (fokus tetap).
+function _libApplySearchFilter() {
+  const q = ((typeof state !== "undefined" && state.libSearch) || "").trim().toLowerCase();
+  document.querySelectorAll('section.view[data-view="videos"] .lib-item').forEach(item => {
+    if (!q) { item.style.display = ""; return; }
+    const t = (item.querySelector('.lib-meta strong')?.textContent || "").toLowerCase();
+    item.style.display = t.includes(q) ? "" : "none";
+  });
+}
+window._libApplySearchFilter = _libApplySearchFilter;
+document.addEventListener("input", (e) => {
+  const inp = e.target.closest("#libSearchInput");
+  if (!inp) return;
+  if (typeof state !== "undefined") state.libSearch = inp.value;
+  _libApplySearchFilter(); // hanya hide/show, tidak render → fokus aman
+});
 // checkbox kartu → update seleksi
 document.addEventListener("change", (e) => {
   const cb = e.target.closest('input[data-lib-check]');
@@ -36199,6 +36247,13 @@ document.addEventListener("change", (e) => {
 });
 // Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
 document.addEventListener("click", (e) => {
+  // v801: chip filter visibilitas
+  const visfBtn = e.target.closest(".lib-vis-chips button[data-visf]");
+  if (visfBtn) {
+    if (typeof state !== "undefined") state.libVisFilter = visfBtn.dataset.visf;
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    return;
+  }
   // v799b: tombol "Pilih" → toggle mode pilih-banyak
   const pickBtn = e.target.closest("#libPickBtn");
   if (pickBtn) { _libApplySelectMode(!window._libSelectMode); return; }
@@ -36468,7 +36523,7 @@ function renderMyLibrary() {
   const LIB_SAVE  = '<svg ' + _LS + '><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
 
   // 1. My Videos — hanya yang sudah disetujui admin (+ delete button)
-  renderLibSection(myVideos, "myVideoGrid", "myVideoCount", LIB_FILM,
+  renderLibSection(_libFilterList(myVideos), "myVideoGrid", "myVideoCount", LIB_FILM,
     "No videos are live yet. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload now</a>",
     { showStatus: true, canDelete: true });
 
@@ -36499,7 +36554,7 @@ function renderMyLibrary() {
   const cur = subTabMap[subTab] || subTabMap.all;
   // Draft items: show kebab menu (Edit/Delete) supaya user bisa lanjut edit / hapus draft
   const allowKebab = subTab === "draft" || subTab === "all";
-  renderLibSection(cur.list, "statusVideoGrid", "statusVideoCount",
+  renderLibSection(_libFilterList(cur.list), "statusVideoGrid", "statusVideoCount",
     subTab === "takedown" ? LIB_BAN : subTab === "draft" ? LIB_DRAFT : LIB_CLIP,
     cur.empty,
     { showStatus: true, canRestore: subTab === "trash", canDelete: allowKebab });
@@ -36523,7 +36578,7 @@ function renderMyLibrary() {
 
   // 2b. Draf — kini tab utama sendiri (#draftVideoGrid, di-inject ensureDraftSection).
   // Kebab aktif supaya user bisa Edit / Terbitkan / Hapus draf.
-  renderLibSection(draftVideos, "draftVideoGrid", "draftVideoCount", LIB_DRAFT,
+  renderLibSection(_libFilterList(draftVideos), "draftVideoGrid", "draftVideoCount", LIB_DRAFT,
     "Belum ada draf. Simpan video ke draf lewat menu titik-tiga (⋮) di kartu video — video tersimpan di sini untuk dilanjutkan nanti.",
     { showStatus: true, canDelete: true });
   const _dtc = document.getElementById("libDraftTabCount");
@@ -36563,6 +36618,9 @@ function renderMyLibrary() {
   // Total counter = gabungan dua section
   const totalDlEl = document.getElementById("downloadVideoCount");
   if (totalDlEl) totalDlEl.textContent = (dashList.length + fileList.length);
+
+  // v801: terapkan filter cari (hide/show) setelah semua kartu ter-render.
+  if (typeof _libApplySearchFilter === "function") _libApplySearchFilter();
 
   // Click handler — klik tile → play video INLINE di atas halaman (tidak
   // navigate ke /watch view, tetap di My Library). Delegasi sekali per view.

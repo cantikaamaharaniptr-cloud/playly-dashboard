@@ -72097,6 +72097,26 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .lib-bulk-act.danger { color: #e8989b; }
 .lib-bulk-act:disabled { opacity: .45; cursor: not-allowed; }
 .lib-bulk-x { background: none; border: 0; color: var(--cream); font-size: 15px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+/* v801: bar Cari + chip filter visibilitas */
+.lib-filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.lib-search {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; max-width: 360px;
+  padding: 7px 12px; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; color: rgba(232,216,196,.6);
+}
+.lib-search input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: none;
+  color: var(--cream); font-size: 13px;
+}
+.lib-search input::placeholder { color: rgba(232,216,196,.45); }
+.lib-vis-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.lib-vis-chips button {
+  padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.75);
+  cursor: pointer; transition: background .12s, border-color .12s, color .12s;
+}
+.lib-vis-chips button:hover { border-color: var(--primary); color: var(--cream); }
+.lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 /* LIST: grid → daftar vertikal */
 .view[data-view="videos"][data-libview="list"] #myVideoGrid,
 .view[data-view="videos"][data-libview="list"] #draftVideoGrid,
