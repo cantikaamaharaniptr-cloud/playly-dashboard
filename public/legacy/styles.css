@@ -72847,10 +72847,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal #vemTags { text-align: left !important; }
 #videoEditModal .vem-dd-trigger .vem-dd-label { flex: 1 1 auto; text-align: left; }
 /* warna placeholder ("Pilih kategori", "Beri judul…", dll) → ABU-ABU NETRAL
-   MURNI #9a9a9a (R=G=B): tidak hangat, tidak biru → jelas abu-abu. */
+   MURNI #9a9a9a (R=G=B) + ITALIC supaya jelas itu contoh/placeholder, beda tegas
+   dari teks isian (krem, tegak). Spesifisitas tinggi (ID) supaya pasti menang. */
+#videoEditModal #vemTitleInput::placeholder,
+#videoEditModal #vemDesc::placeholder,
+#videoEditModal #vemTags::placeholder,
 #videoEditModal .vem-dd-label.placeholder,
 #videoEditModal input::placeholder,
-#videoEditModal textarea::placeholder { color: #9a9a9a !important; }
+#videoEditModal textarea::placeholder { color: #9a9a9a !important; font-style: italic !important; }
 
 /* ===================================================================
    MODAL EDIT VIDEO v772 — garis pembatas antar toggle Pengaturan lanjutan +
