@@ -72177,27 +72177,33 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"][data-libview="list"] #downloadFileGrid {
   display: flex !important; flex-direction: column !important; gap: 8px !important;
 }
-/* kartu → baris */
+/* kartu → baris (v809: kebab di UJUNG KANAN baris, bukan di pojok thumb) */
 .view[data-view="videos"][data-libview="list"] .lib-item {
+  position: relative;
   display: flex !important; align-items: center; gap: 14px;
-  padding: 8px; background: var(--bg-elev);
+  padding: 8px 46px 8px 8px; background: var(--bg-elev);
   border: 1px solid var(--border); border-radius: 12px;
 }
 .view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb {
+  position: static; /* kebab anchor ke .lib-item, bukan thumb */
   width: 132px; min-width: 132px; aspect-ratio: 16 / 9; height: auto;
   border-radius: 8px; flex: none;
 }
-/* sembunyikan badge vis/status overlay di list (biar baris bersih); durasi tetap */
+/* di list: sembunyikan overlay vis/status + durasi (baris bersih; kebab di kanan) */
 .view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-vis,
-.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-status { display: none; }
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-status,
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-dur { display: none; }
 .view[data-view="videos"][data-libview="list"] .lib-item .lib-meta {
   flex: 1; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 3px;
 }
 .view[data-view="videos"][data-libview="list"] .lib-item .lib-meta strong {
   -webkit-line-clamp: 1; margin-bottom: 0; font-size: 14px;
 }
-/* kebab tetap di pojok kanan-atas thumb (kecil tapi jelas) */
-.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions { top: 5px; right: 5px; }
+/* kebab → tengah-kanan baris */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions {
+  position: absolute; top: 50%; right: 10px; bottom: auto; left: auto;
+  transform: translateY(-50%); margin: 0;
+}
 .lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
 .lib-sort-bar select {
   background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
