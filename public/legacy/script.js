@@ -52261,6 +52261,29 @@ function maybeOfferSaveCard() {
 function enhanceVemModal() {
   const modal = document.getElementById("videoEditModal");
   if (!modal) return;
+  // v777: header — ikon pensil dibungkus KOTAK + deskripsi di bawah judul.
+  {
+    const head = modal.querySelector(".vem-head");
+    const heading = modal.querySelector("#vemHeading");
+    if (head && heading && !head.dataset.vemHeadDone) {
+      head.dataset.vemHeadDone = "1";
+      const picon = heading.querySelector(".picon-w, svg");
+      const icoBox = document.createElement("div");
+      icoBox.className = "vem-head-ico";
+      if (picon) icoBox.appendChild(picon);
+      const textCol = document.createElement("div");
+      textCol.className = "vem-head-text";
+      heading.textContent = "Edit Video";
+      textCol.appendChild(heading);
+      const desc = document.createElement("p");
+      desc.className = "vem-head-desc";
+      desc.textContent = "Ubah detail & pengaturan videomu";
+      textCol.appendChild(desc);
+      const closeBtn = head.querySelector(".modal-close");
+      head.insertBefore(icoBox, closeBtn || null);
+      head.insertBefore(textCol, closeBtn || null);
+    }
+  }
   // 1. Ikon pada label tiap field
   const VIC = {
     "judul video": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>',

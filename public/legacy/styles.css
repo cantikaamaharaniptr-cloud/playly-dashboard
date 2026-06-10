@@ -72875,3 +72875,26 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .upf-subtitle-section .dz-pro-empty { text-align: center !important; align-items: center !important; }
 #videoEditModal .upf-subtitle-section .dz-pro-empty p,
 #videoEditModal .upf-subtitle-section .dz-pro-empty small { text-align: center !important; width: 100%; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v777 — header: ikon pensil dalam KOTAK + deskripsi di bawah
+   judul "Edit Video".
+   =================================================================== */
+#videoEditModal .vem-head { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 12px !important; }
+#videoEditModal .vem-head-ico {
+  width: 40px; height: 40px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 11px; color: var(--cream);
+}
+#videoEditModal .vem-head-ico svg, #videoEditModal .vem-head-ico .picon {
+  width: 20px !important; height: 20px !important; fill: currentColor;
+}
+#videoEditModal .vem-head-ico .picon-w { display: inline-flex; }
+#videoEditModal .vem-head-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+#videoEditModal .vem-head-text h3 { margin: 0 !important; }
+#videoEditModal .vem-head-desc {
+  margin: 0 !important; font-size: 12.5px !important; font-weight: 500 !important;
+  color: rgba(232,216,196,.55) !important;
+}
+#videoEditModal .vem-head .modal-close { margin-left: auto; }
