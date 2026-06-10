@@ -48253,6 +48253,18 @@ body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
   outline-offset: 2px;
   border-radius: 6px;
 }
+/* v818: GLOBAL GUARD — fokus ring/border SAAT FOKUS tidak pernah wine/merah/aksen
+   di mana pun (user dashboard). Dipaksa NETRAL cream, override aturan spesifik
+   apa pun (mis. input:focus border-color var(--primary)). */
+body:not([data-role="admin"]):not(.auth-mode) *:focus-visible {
+  outline-color: rgba(232, 216, 196, .4) !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) input:focus,
+body:not([data-role="admin"]):not(.auth-mode) textarea:focus,
+body:not([data-role="admin"]):not(.auth-mode) select:focus {
+  border-color: rgba(232, 216, 196, .4) !important;
+  outline-color: rgba(232, 216, 196, .4) !important;
+}
 
 /* (6) Sidebar nav-item polish + active accent bar */
 body:not([data-role="admin"]):not(.auth-mode) .sidebar .nav-item,
