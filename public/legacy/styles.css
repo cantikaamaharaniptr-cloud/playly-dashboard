@@ -72635,3 +72635,62 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .view[data-view="videos"] .lib-cr-follow::before,
 .view[data-view="videos"] .lib-cr-follow::after { content: none !important; display: none !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v756 — penyempurnaan: ikon label, placeholder redup (tak
+   ambigu), spacing anti-dempet, dropdown kategori kustom (tanpa biru native,
+   tema dashboard), tombol footer (Batal/Reset/Simpan) bersih & flat.
+   =================================================================== */
+/* 1. Ikon pada label field */
+#videoEditModal .upf-field > label,
+#videoEditModal .upf-label-row > label { display: inline-flex; align-items: center; gap: 7px; }
+#videoEditModal .vem-lbl-ico { display: inline-flex; color: rgba(232,216,196,.6); }
+#videoEditModal .vem-lbl-ico svg { width: 15px; height: 15px; }
+
+/* 2. Placeholder REDUP supaya jelas itu contoh, bukan isian */
+#videoEditModal input::placeholder,
+#videoEditModal textarea::placeholder { color: rgba(232,216,196,.36) !important; }
+#videoEditModal .vem-dd-label.placeholder { color: rgba(232,216,196,.36) !important; }
+
+/* 3. Spacing antar field (jangan dempet) */
+#videoEditModal .upf-field { margin-bottom: 14px; }
+#videoEditModal .upf-field > label,
+#videoEditModal .upf-label-row { margin-bottom: 8px !important; }
+
+/* 4. Dropdown kategori KUSTOM — tema dashboard, tanpa highlight biru OS */
+#videoEditModal .vem-dd { position: relative; }
+#videoEditModal .vem-dd-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; color: var(--cream);
+  font-size: 14px; cursor: pointer; outline: none;
+}
+#videoEditModal .vem-dd-trigger:hover { border-color: var(--primary); }
+#videoEditModal .vem-dd-trigger svg { color: rgba(232,216,196,.6); flex: none; }
+#videoEditModal .vem-dd-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px; box-shadow: 0 14px 36px rgba(0,0,0,.45);
+  max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+}
+#videoEditModal .vem-dd-menu button {
+  text-align: left; background: transparent; border: 0; border-radius: 8px;
+  padding: 9px 12px; color: var(--cream); font-size: 14px; cursor: pointer;
+  transition: background .12s;
+}
+#videoEditModal .vem-dd-menu button:hover { background: rgba(232,216,196,.08); }
+#videoEditModal .vem-dd-menu button.active { background: var(--primary); color: #fff; }
+
+/* 5. Tombol footer (Batal/Reset = ghost bersih, Simpan = wine solid), FLAT */
+#videoEditModal .vem-actions .btn.ghost {
+  background: var(--bg-elev) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important; box-shadow: none !important; transition: border-color .15s, background .15s !important;
+}
+#videoEditModal .vem-actions .btn.ghost:hover { border-color: var(--primary) !important; }
+#videoEditModal .vem-actions .btn.primary {
+  background: var(--primary) !important; border: 1px solid var(--primary) !important;
+  color: var(--cream) !important; box-shadow: none !important; transition: none !important;
+}
+#videoEditModal .vem-actions .btn.ghost::before, #videoEditModal .vem-actions .btn.ghost::after,
+#videoEditModal .vem-actions .btn.primary::before, #videoEditModal .vem-actions .btn.primary::after { content: none !important; display: none !important; }
+#videoEditModal .vem-actions .btn:focus, #videoEditModal .vem-actions .btn:focus-visible { outline: none !important; box-shadow: none !important; }

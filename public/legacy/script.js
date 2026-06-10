@@ -52256,6 +52256,86 @@ function maybeOfferSaveCard() {
   });
 })();
 
+// v756: penyempurnaan modal Edit Video — ikon pada label field, dropdown
+// kategori KUSTOM (tema dashboard, tanpa biru native), + tombol Reset.
+function enhanceVemModal() {
+  const modal = document.getElementById("videoEditModal");
+  if (!modal) return;
+  // 1. Ikon pada label tiap field
+  const VIC = {
+    "judul video": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>',
+    "deskripsi":   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+    "kategori":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+    "tag":         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9 8.6-8.6A2 2 0 0 1 13 4l7 .9.9 7a2 2 0 0 1-.3 1.5Z"/><circle cx="16.5" cy="7.5" r="1.3" fill="currentColor"/></svg>',
+    "visibilitas": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    "komentar":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>',
+    "subtitle":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 11h3M7 15h6M14 11h3"/></svg>'
+  };
+  modal.querySelectorAll("label").forEach(lbl => {
+    if (lbl.dataset.vemIcon) return;
+    const key = lbl.textContent.trim().toLowerCase();
+    const m = Object.keys(VIC).find(k => key.startsWith(k));
+    if (m) { lbl.dataset.vemIcon = "1"; lbl.insertAdjacentHTML("afterbegin", `<span class="vem-lbl-ico" aria-hidden="true">${VIC[m]}</span>`); }
+  });
+  // 2. Dropdown kategori KUSTOM (ganti select native → tanpa highlight biru OS)
+  const sel = document.getElementById("vemCategory");
+  if (sel && !document.getElementById("vemCatDd")) {
+    const dd = document.createElement("div");
+    dd.id = "vemCatDd"; dd.className = "vem-dd";
+    const opts = [...sel.options];
+    dd.innerHTML =
+      '<button type="button" class="vem-dd-trigger" id="vemCatTrigger" aria-haspopup="listbox" aria-expanded="false">' +
+      '<span class="vem-dd-label" id="vemCatLabel"></span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
+      '<div class="vem-dd-menu" id="vemCatMenu" role="listbox" hidden>' +
+      opts.map(o => `<button type="button" role="option" data-val="${o.value}">${escapeHtml(o.textContent)}</button>`).join("") +
+      '</div>';
+    sel.style.display = "none";
+    sel.parentNode.insertBefore(dd, sel.nextSibling);
+  }
+  syncVemCatDd();
+  // 3. Tombol Reset (kembalikan ke nilai tersimpan) di footer
+  const footer = modal.querySelector(".vem-actions");
+  if (footer && !document.getElementById("vemResetBtn")) {
+    const batal = footer.querySelector("[data-vem-close]");
+    const reset = document.createElement("button");
+    reset.type = "button"; reset.id = "vemResetBtn"; reset.className = "btn ghost";
+    reset.textContent = "Reset";
+    reset.addEventListener("click", () => {
+      const rid = +(document.getElementById("vemId")?.value || 0);
+      if (rid) openVideoEditModal(rid);
+      if (typeof toast === "function") toast("Perubahan di-reset");
+    });
+    if (batal && batal.nextSibling) footer.insertBefore(reset, batal.nextSibling);
+    else footer.appendChild(reset);
+  }
+}
+function syncVemCatDd() {
+  const sel = document.getElementById("vemCategory");
+  const label = document.getElementById("vemCatLabel");
+  if (!sel || !label) return;
+  const opt = sel.options[sel.selectedIndex] || sel.options[0];
+  label.textContent = opt ? opt.textContent : "Pilih kategori";
+  label.classList.toggle("placeholder", !sel.value);
+  document.querySelectorAll("#vemCatMenu button[data-val]").forEach(b => b.classList.toggle("active", b.dataset.val === sel.value));
+}
+// Handler dropdown kategori (toggle / pilih / tutup klik-luar)
+document.addEventListener("click", e => {
+  const menu = document.getElementById("vemCatMenu");
+  if (!menu) return;
+  const trig = e.target.closest("#vemCatTrigger");
+  if (trig) { const open = menu.hidden; menu.hidden = !open; trig.setAttribute("aria-expanded", String(open)); return; }
+  const opt = e.target.closest("#vemCatMenu button[data-val]");
+  if (opt) {
+    const sel = document.getElementById("vemCategory");
+    if (sel) { sel.value = opt.dataset.val; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+    menu.hidden = true;
+    syncVemCatDd();
+    return;
+  }
+  if (!menu.hidden && !e.target.closest("#vemCatDd")) menu.hidden = true;
+});
+
 function openVideoEditModal(id) {
   const v = (state?.myVideos || []).find(x => x.id === id);
   if (!v) {
@@ -52293,6 +52373,7 @@ function openVideoEditModal(id) {
     window._vemSubtitleSetFilled(v.subtitleVtt, filename, v.subtitleLang || "auto");
   }
 
+  try { enhanceVemModal(); } catch (e) {}
   modal.hidden = false;
   // Trigger CSS .show transition di next frame
   requestAnimationFrame(() => modal.classList.add("show"));
