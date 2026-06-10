@@ -72797,5 +72797,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal #vemAdvanced > label { margin-bottom: 4px !important; }
 #videoEditModal #vemAdvanced .vem-toggle { padding: 7px 0; }
 /* kompak: deskripsi & dropzone subtitle dikecilkan supaya kiri≈kanan, no scroll */
-#videoEditModal #vemDesc { min-height: 116px !important; }
-#videoEditModal .upf-subtitle-section .dz-pro { min-height: 0 !important; padding: 12px !important; }
+#videoEditModal #vemDesc { min-height: 92px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro,
+#videoEditModal .upf-subtitle-section .dz-pro-empty { min-height: 0 !important; }
+/* KUNCI: dropzone punya aspect-ratio 16/9 → tinggi ikut lebar (226px). Matikan
+   supaya tinggi mengikuti isi → kompak. */
+#videoEditModal .upf-subtitle-section .dz-pro { aspect-ratio: auto !important; padding: 16px 12px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty { height: auto !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty { gap: 6px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon { width: 30px !important; height: 30px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg { width: 16px !important; height: 16px !important; }
