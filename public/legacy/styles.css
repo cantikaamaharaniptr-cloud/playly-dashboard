@@ -72850,3 +72850,17 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-dd-label.placeholder,
 #videoEditModal input::placeholder,
 #videoEditModal textarea::placeholder { color: #978f87 !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v772 — garis pembatas antar toggle Pengaturan lanjutan +
+   teks dropzone subtitle rata tengah & rapi.
+   =================================================================== */
+/* garis pembatas antar item pengaturan */
+#videoEditModal #vemAdvanced .vem-toggles { gap: 0 !important; }
+#videoEditModal #vemAdvanced .vem-toggle { border-bottom: 1px solid var(--border); padding: 10px 0 !important; }
+#videoEditModal #vemAdvanced .vem-toggle:last-child { border-bottom: 0; padding-bottom: 2px !important; }
+#videoEditModal #vemAdvanced .vem-toggle:first-of-type { padding-top: 2px !important; }
+/* dropzone subtitle: seluruh teks rata tengah & rapi */
+#videoEditModal .upf-subtitle-section .dz-pro-empty { text-align: center !important; align-items: center !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty p,
+#videoEditModal .upf-subtitle-section .dz-pro-empty small { text-align: center !important; width: 100%; }

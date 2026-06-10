@@ -52289,6 +52289,14 @@ function enhanceVemModal() {
       }
     });
   });
+  // v772: ganti label "Tag" → "Hashtag" + placeholder contoh #playly #video.
+  {
+    const tagsInput = document.getElementById("vemTags");
+    const tagsField = tagsInput ? tagsInput.closest(".upf-field") : null;
+    const tagsLblText = tagsField ? tagsField.querySelector("label .vem-lbl-text") : null;
+    if (tagsLblText) tagsLblText.textContent = "Hashtag";
+    if (tagsInput) tagsInput.setAttribute("placeholder", "#playly #video");
+  }
   // 2. Dropdown KUSTOM (ganti select native → tanpa highlight biru OS) untuk
   //    Kategori, Visibilitas, dan Komentar.
   ["vemCategory", "vemVis", "vemComments"].forEach(id => {
@@ -52324,7 +52332,7 @@ function ensureVemAdvanced() {
     `<label class="vem-toggle"><span class="vem-toggle-lbl">${label}</span>` +
     `<span class="vem-switch"><input type="checkbox" id="${id}"><span class="vem-switch-track"></span></span></label>`;
   grp.innerHTML =
-    '<label><span class="vem-lbl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 2.6 14H2.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 2.6h0A1.7 1.7 0 0 0 11 1h2a2 2 0 0 1 2 2v.1A1.7 1.7 0 0 0 17 4.6h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21.4 10v0A1.7 1.7 0 0 0 23 11"/></svg></span><span class="vem-lbl-text">Pengaturan lanjutan</span></label>' +
+    '<label><span class="vem-lbl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/><path d="M2 12.88V11.12C2 10.08 2.85 9.22 3.9 9.22C5.71 9.22 6.45 7.94 5.54 6.37C5.02 5.47 5.33 4.3 6.24 3.78L7.97 2.79C8.76 2.32 9.78 2.6 10.25 3.39L10.36 3.58C11.26 5.15 12.74 5.15 13.65 3.58L13.76 3.39C14.23 2.6 15.25 2.32 16.04 2.79L17.77 3.78C18.68 4.3 18.99 5.47 18.47 6.37C17.56 7.94 18.3 9.22 20.11 9.22C21.15 9.22 22.01 10.07 22.01 11.12V12.88C22.01 13.92 21.16 14.78 20.11 14.78C18.3 14.78 17.56 16.06 18.47 17.63C18.99 18.54 18.68 19.7 17.77 20.22L16.04 21.21C15.25 21.68 14.23 21.4 13.76 20.61L13.65 20.42C12.75 18.85 11.27 18.85 10.36 20.42L10.25 20.61C9.78 21.4 8.76 21.68 7.97 21.21L6.24 20.22C5.33 19.7 5.02 18.53 5.54 17.63C6.45 16.06 5.71 14.78 3.9 14.78C2.85 14.78 2 13.92 2 12.88Z"/></svg></span><span class="vem-lbl-text">Pengaturan lanjutan</span></label>' +
     '<div class="vem-toggles">' +
     tog("vemAllowDownload", "Izinkan unduh") +
     tog("vemAllowEmbed", "Izinkan sematkan") +
@@ -52347,8 +52355,10 @@ function ensureVemTwoCol() {
   const fields = [...form.querySelectorAll(":scope > .upf-field")];
   const find = re => fields.find(f => re.test(f.textContent.trim().toLowerCase()));
   const thumb = form.querySelector(".vem-thumb-row");
+  const byInput = id => fields.find(f => f.querySelector("#" + id));
   const fJudul = find(/^judul/), fDesc = find(/^deskripsi/), fKat = find(/^kategori/),
-        fTag = find(/^tag/), fVis = find(/^visibilitas/), fKom = find(/^komentar/);
+        // tag dicari via input (label sudah di-rename "Hashtag" → regex /tag/ gagal)
+        fTag = byInput("vemTags") || find(/^(tag|hashtag)/), fVis = find(/^visibilitas/), fKom = find(/^komentar/);
   const fSub = form.querySelector(".upf-subtitle-section");
   const actions = form.querySelector(".vem-actions");
   const grid = document.createElement("div"); grid.id = "vem2col"; grid.className = "vem-2col";
@@ -52365,6 +52375,11 @@ function ensureVemTwoCol() {
 }
 // v764: dropdown KUSTOM generik untuk select mana pun di modal (vemCategory,
 // vemVis, vemComments) → tema dashboard, tanpa highlight biru native OS.
+// v772: STRIP emoji/ikon di awal teks opsi — ikon cukup di label field, jangan
+// di dalam kotak nilai.
+function _vemCleanOpt(s) {
+  return String(s).replace(/^[^\p{L}\p{N}#]+/u, "").trim();
+}
 function makeVemDropdown(sel) {
   if (!sel) return;
   if (!sel.dataset.ddDone) {
@@ -52377,7 +52392,7 @@ function makeVemDropdown(sel) {
       '<span class="vem-dd-label"></span>' +
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
       '<div class="vem-dd-menu" role="listbox" hidden>' +
-      [...sel.options].map(o => `<button type="button" role="option" data-val="${escapeHtml(o.value)}">${escapeHtml(o.textContent)}</button>`).join("") +
+      [...sel.options].map(o => `<button type="button" role="option" data-val="${escapeHtml(o.value)}">${escapeHtml(_vemCleanOpt(o.textContent))}</button>`).join("") +
       '</div>';
     sel.style.display = "none";
     sel.parentNode.insertBefore(dd, sel.nextSibling);
@@ -52391,7 +52406,7 @@ function syncVemDropdown(sel) {
   const label = dd.querySelector(".vem-dd-label");
   const opt = sel.options[sel.selectedIndex] || sel.options[0];
   if (label) {
-    label.textContent = opt ? opt.textContent : "";
+    label.textContent = opt ? _vemCleanOpt(opt.textContent) : "";
     label.classList.toggle("placeholder", !sel.value);
   }
   dd.querySelectorAll(".vem-dd-menu button[data-val]").forEach(b => b.classList.toggle("active", b.dataset.val === sel.value));
@@ -52431,7 +52446,11 @@ function openVideoEditModal(id) {
   setVal("vemTitleInput", v.title || "");
   setVal("vemDesc", v.description || v.desc || "");
   setVal("vemCategory", v.category || "");
-  setVal("vemTags", Array.isArray(v.tags) ? v.tags.join(", ") : (v.tags || ""));
+  // v772: tampilkan tags sebagai hashtag (mis. "#playly #video"), dipisah spasi.
+  {
+    const _tArr = Array.isArray(v.tags) ? v.tags : String(v.tags || "").split(/[\s,]+/);
+    setVal("vemTags", _tArr.map(s => String(s).trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s).join(" "));
+  }
   setVal("vemVis", v.visibility || "public");
   setVal("vemComments", v.comments || v.commentMode || "all");
 
@@ -52490,7 +52509,8 @@ function saveVideoEdit() {
   v.title = newTitle;
   v.description = get("vemDesc");
   v.category = get("vemCategory");
-  v.tags = get("vemTags").split(",").map(s => s.trim()).filter(Boolean);
+  // v772: tags sebagai HASHTAG — pisah spasi/koma, pastikan prefix #.
+  v.tags = get("vemTags").split(/[\s,]+/).map(s => s.trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s);
   v.visibility = get("vemVis");
   v.comments = get("vemComments");
   // v765: pengaturan lanjutan (toggle)
