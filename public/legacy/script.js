@@ -36198,6 +36198,13 @@ function _libUpdateBulkCount() {
   const cEl = document.getElementById("libBulkCount");
   if (cEl) cEl.textContent = `${n} dipilih`;
   document.querySelectorAll('#libBulkBar .lib-bulk-act').forEach(b => b.disabled = n === 0);
+  // v816: label "Pilih semua" ↔ "Batalkan semua" sesuai status.
+  const link = document.querySelector('#libBulkBar [data-bulk="all"]');
+  if (link) {
+    const cbs = [...document.querySelectorAll('input[data-lib-check]')].filter(cb => cb.offsetParent !== null);
+    const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+    link.textContent = allChecked ? "Batalkan semua" : "Pilih semua";
+  }
 }
 function _libApplySelectMode(on, fromRender) {
   window._libSelectMode = !!on;
@@ -36216,8 +36223,13 @@ window._libApplySelectMode = _libApplySelectMode;
 function _libHandleBulk(action) {
   if (action === "cancel") { _libApplySelectMode(false); return; }
   if (action === "all") {
-    document.querySelectorAll('input[data-lib-check]').forEach(cb => {
-      if (cb.offsetParent !== null) { cb.checked = true; window._libSelected.add(+cb.dataset.libCheck); }
+    // v816: toggle — kalau semua sudah terpilih → batalkan; kalau belum → pilih semua.
+    const cbs = [...document.querySelectorAll('input[data-lib-check]')].filter(cb => cb.offsetParent !== null);
+    const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+    cbs.forEach(cb => {
+      cb.checked = !allChecked;
+      if (allChecked) window._libSelected.delete(+cb.dataset.libCheck);
+      else window._libSelected.add(+cb.dataset.libCheck);
     });
     _libUpdateBulkCount();
     return;
