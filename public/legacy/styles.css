@@ -72067,10 +72067,16 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .lib-vt-btn.active { background: var(--primary); color: #fff; }
 /* v803: tab Status/Unduhan → toolbar hanya toggle Grid/List (kontrol lain
    tak relevan, disembunyikan). */
+/* v806: satu baris toolbar — grup kiri (jumlah+chip) & kanan (cari/Pilih/toggle/sort) */
+#libSortBar .lib-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+#libSortBar .lib-bar-left .dl-head-count { flex: none; }
+#libSortBar .lib-search.collapsible { margin-left: 0 !important; }
+/* Status/Unduhan: hanya toggle Grid/List */
 .view[data-view="videos"] #libSortBar.scope-other { justify-content: flex-end !important; }
-.lib-sort-bar.scope-other #libVideoCount,
-.lib-sort-bar.scope-other #libPickBtn,
-.lib-sort-bar.scope-other .lib-sort-dd { display: none !important; }
+#libSortBar.scope-other .lib-bar-left,
+#libSortBar.scope-other .lib-search,
+#libSortBar.scope-other #libPickBtn,
+#libSortBar.scope-other .lib-sort-dd { display: none !important; }
 /* v799b: tombol Pilih + checkbox kartu + bar aksi massal */
 .lib-pick-btn {
   display: inline-flex; align-items: center; gap: 6px;

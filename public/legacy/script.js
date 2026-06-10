@@ -36062,15 +36062,32 @@ function ensureLibSort() {
     bar = document.createElement("div");
     bar.id = "libSortBar";
     bar.className = "lib-sort-bar";
+    // v806: SATU baris toolbar — grup KIRI (jumlah + chip filter) & KANAN
+    // (cari, Pilih, toggle, urutkan). Sebelumnya tersebar di 2 baris (rame).
     bar.innerHTML =
-      '<span class="dl-head-count" id="libVideoCount"></span>' +
+      '<div class="lib-bar-left">' +
+        '<span class="dl-head-count" id="libVideoCount"></span>' +
+        '<div class="lib-vis-chips" role="group" aria-label="Filter visibilitas">' +
+          '<button type="button" data-visf="all">Semua</button>' +
+          '<button type="button" data-visf="public">Publik</button>' +
+          '<button type="button" data-visf="unlisted">Tidak terdaftar</button>' +
+          '<button type="button" data-visf="private">Privat</button>' +
+        '</div>' +
+      '</div>' +
       '<div class="lib-bar-right">' +
-        // v799b: tombol Pilih (mode pilih-banyak)
+        // cari (collapsible: ikon → expand)
+        '<div class="lib-search collapsible">' +
+          '<button type="button" class="lib-search-toggle" aria-label="Cari di pustaka">' +
+            '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+          '</button>' +
+          '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
+        '</div>' +
+        // tombol Pilih (mode pilih-banyak)
         '<button type="button" class="lib-pick-btn" id="libPickBtn" title="Pilih banyak video">' +
           '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
           '<span>Pilih</span>' +
         '</button>' +
-        // v798: toggle tampilan Grid / List (ala dashboard video-host)
+        // toggle tampilan Grid / List
         '<div class="lib-view-toggle" role="group" aria-label="Tampilan">' +
           '<button type="button" class="lib-vt-btn" data-libview-set="grid" title="Tampilan grid" aria-label="Tampilan grid">' +
             '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' +
@@ -36079,6 +36096,7 @@ function ensureLibSort() {
             '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3.5" y1="6" x2="3.51" y2="6"/><line x1="3.5" y1="12" x2="3.51" y2="12"/><line x1="3.5" y1="18" x2="3.51" y2="18"/></svg>' +
           '</button>' +
         '</div>' +
+        // urutkan
         '<div class="lib-sort-dd">' +
           '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
             '<span id="libSortCurrent">Terbaru</span>' +
@@ -36090,26 +36108,6 @@ function ensureLibSort() {
             '<button type="button" role="option" data-sort="popular">Terpopuler</button>' +
           '</div>' +
         '</div>' +
-      '</div>';
-  }
-  // v801: bar Cari + filter visibilitas (di atas toolbar). Idempotent.
-  let fbar = document.getElementById("libFilterBar");
-  if (!fbar) {
-    fbar = document.createElement("div");
-    fbar.id = "libFilterBar"; fbar.className = "lib-filter-bar";
-    fbar.innerHTML =
-      '<div class="lib-vis-chips" role="group" aria-label="Filter visibilitas">' +
-        '<button type="button" data-visf="all">Semua</button>' +
-        '<button type="button" data-visf="public">Publik</button>' +
-        '<button type="button" data-visf="unlisted">Tidak terdaftar</button>' +
-        '<button type="button" data-visf="private">Privat</button>' +
-      '</div>' +
-      // v805: search pustaka collapsible (ikon → expand) biar tidak tampak 2 search.
-      '<div class="lib-search collapsible">' +
-        '<button type="button" class="lib-search-toggle" aria-label="Cari di pustaka">' +
-          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
-        '</button>' +
-        '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
       '</div>';
   }
   // v799b: bar aksi massal (dibuat di sini, disisipkan bersama toolbar).
@@ -36126,18 +36124,17 @@ function ensureLibSort() {
       '<button type="button" class="lib-bulk-act danger" data-bulk="delete">Hapus</button>' +
       '<button type="button" class="lib-bulk-x" data-bulk="cancel" title="Batal" aria-label="Batal pilih">✕</button>';
   }
-  // v803: toolbar DI ATAS semua tab (selalu tampil) — urutan fbar, bar, bulk
-  // tepat sebelum section tab pertama. Guard posisi agar tidak re-insert (anti
-  // blur input cari).
+  // v803/806: toolbar DI ATAS semua tab (selalu tampil) — urutan bar, bulk tepat
+  // sebelum section pertama. Guard posisi agar tidak re-insert (anti blur input).
   const _lview = document.querySelector('section.view[data-view="videos"]');
   const _firstSec = _lview && _lview.querySelector('[data-focus-target]');
   if (_lview && _firstSec) {
     const _ins = (el, ref) => { if (el.parentNode !== _lview || el.nextElementSibling !== ref) _lview.insertBefore(el, ref); };
-    _ins(bulk, _firstSec); _ins(bar, bulk); _ins(fbar, bar);
+    _ins(bulk, _firstSec); _ins(bar, bulk);
   }
   { // sinkron chip aktif (value input dibiarkan agar fokus tak hilang)
     const vf = state.libVisFilter || "all";
-    fbar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
+    bar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
   }
   // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
   {
@@ -36163,10 +36160,9 @@ function _libSyncToolbar() {
   if (!view) return;
   const focus = view.dataset.focus || "my-video";
   const own = (focus === "my-video" || focus === "draft");
-  const fbar = document.getElementById("libFilterBar");
   const bar = document.getElementById("libSortBar");
-  if (fbar) fbar.hidden = !own;                         // cari + chip: tab sendiri
-  if (bar) bar.classList.toggle("scope-other", !own);   // sembunyikan count+Pilih+sort
+  // own = toolbar penuh; lainnya = scope-other (hanya toggle Grid/List).
+  if (bar) bar.classList.toggle("scope-other", !own);
   if (!own && window._libSelectMode && typeof _libApplySelectMode === "function") _libApplySelectMode(false);
   if (own) {
     const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
