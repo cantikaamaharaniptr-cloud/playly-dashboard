@@ -72108,11 +72108,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .lib-bulk-link { background: none; border: 0; color: #c98b94; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
 .lib-bulk-spacer { flex: 1; }
 .lib-bulk-act {
-  padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 600;
   background: var(--bg-elev-2); border: 1px solid var(--border); color: var(--cream); cursor: pointer;
 }
+.lib-bulk-act svg { width: 14px; height: 14px; flex: none; }
 .lib-bulk-act:hover:not(:disabled) { border-color: var(--primary); }
-.lib-bulk-act.danger { color: #e8989b; }
+.lib-bulk-act.danger { color: #e8989b; border-color: rgba(232,152,155,.28); }
+.lib-bulk-act.danger:hover:not(:disabled) { border-color: #e8989b; background: rgba(232,152,155,.12); }
 .lib-bulk-act:disabled { opacity: .45; cursor: not-allowed; }
 .lib-bulk-x { background: none; border: 0; color: var(--cream); font-size: 15px; cursor: pointer; padding: 2px 6px; line-height: 1; }
 /* v801: bar Cari + chip filter visibilitas */

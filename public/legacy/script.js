@@ -36125,9 +36125,16 @@ function ensureLibSort() {
       '<span class="lib-bulk-count" id="libBulkCount">0 dipilih</span>' +
       '<button type="button" class="lib-bulk-link" data-bulk="all">Pilih semua</button>' +
       '<span class="lib-bulk-spacer"></span>' +
-      '<button type="button" class="lib-bulk-act" data-bulk="publish">Publikasikan</button>' +
-      '<button type="button" class="lib-bulk-act" data-bulk="draft">ke Draf</button>' +
-      '<button type="button" class="lib-bulk-act danger" data-bulk="delete">Hapus</button>' +
+      // v811: ikon + casing konsisten ("Ke Draf"), Hapus jelas destruktif.
+      '<button type="button" class="lib-bulk-act" data-bulk="publish">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<span>Publikasikan</span></button>' +
+      '<button type="button" class="lib-bulk-act" data-bulk="draft">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+        '<span>Ke Draf</span></button>' +
+      '<button type="button" class="lib-bulk-act danger" data-bulk="delete">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>' +
+        '<span>Hapus</span></button>' +
       '<button type="button" class="lib-bulk-x" data-bulk="cancel" title="Batal" aria-label="Batal pilih">✕</button>';
   }
   // v803/806: toolbar DI ATAS semua tab (selalu tampil) — urutan bar, bulk tepat
