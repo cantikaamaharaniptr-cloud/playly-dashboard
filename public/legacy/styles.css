@@ -72697,19 +72697,22 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 #videoEditModal .vem-dd-trigger:hover { border-color: var(--primary); }
 #videoEditModal .vem-dd-trigger svg { color: rgba(232,216,196,.6); flex: none; }
+/* v780: dropdown menu lebih ringkas + bisa flip ke atas biar tidak kepotong. */
 #videoEditModal .vem-dd-menu {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60;
   background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
-  padding: 6px; box-shadow: 0 14px 36px rgba(0,0,0,.45);
-  max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+  padding: 5px; box-shadow: 0 14px 36px rgba(0,0,0,.45);
+  max-height: 196px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
 }
 #videoEditModal .vem-dd-menu button {
   text-align: left; background: transparent; border: 0; border-radius: 8px;
-  padding: 9px 12px; color: var(--cream); font-size: 14px; cursor: pointer;
+  padding: 7px 11px; color: var(--cream); font-size: 13px; cursor: pointer;
   transition: background .12s;
 }
 #videoEditModal .vem-dd-menu button:hover { background: rgba(232,216,196,.08); }
 #videoEditModal .vem-dd-menu button.active { background: var(--primary); color: #fff; }
+/* flip ke atas saat ruang bawah tak cukup */
+#videoEditModal .vem-dd.flip-up .vem-dd-menu { top: auto; bottom: calc(100% + 6px); }
 
 /* 5. Tombol footer (Batal/Reset = ghost bersih, Simpan = wine solid), FLAT */
 #videoEditModal .vem-actions .btn.ghost {

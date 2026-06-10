@@ -52438,9 +52438,17 @@ function syncVemDropdown(sel) {
 document.addEventListener("click", e => {
   const trig = e.target.closest(".vem-dd-trigger");
   if (trig) {
-    const menu = trig.closest(".vem-dd").querySelector(".vem-dd-menu");
+    const dd = trig.closest(".vem-dd");
+    const menu = dd.querySelector(".vem-dd-menu");
     document.querySelectorAll(".vem-dd-menu").forEach(m => { if (m !== menu) m.hidden = true; });
+    document.querySelectorAll(".vem-dd.flip-up").forEach(d => { if (d !== dd) d.classList.remove("flip-up"); });
     const open = menu.hidden; menu.hidden = !open; trig.setAttribute("aria-expanded", String(open));
+    // v780: flip ke atas kalau ruang di bawah kurang dari tinggi menu (anti kepotong)
+    if (open) {
+      const r = trig.getBoundingClientRect();
+      const menuH = Math.min(menu.scrollHeight + 12, 196);
+      dd.classList.toggle("flip-up", (window.innerHeight - r.bottom) < (menuH + 12) && r.top > (menuH + 12));
+    } else dd.classList.remove("flip-up");
     return;
   }
   const opt = e.target.closest(".vem-dd-menu button[data-val]");
