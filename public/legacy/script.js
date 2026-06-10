@@ -52357,10 +52357,11 @@ function ensureVemTwoCol() {
   grid.appendChild(left); grid.appendChild(right);
   if (actions) form.insertBefore(grid, actions); else form.appendChild(grid);
   if (thumb) left.appendChild(thumb);
-  [fJudul, fDesc].forEach(f => { if (f) left.appendChild(f); });
-  // v760: subtitle masuk KOLOM KANAN (isi ruang kosong di bawah Komentar),
-  // bukan full-width besar. Dropzone-nya dipadatkan via CSS.
-  [fKat, fTag, fVis, fKom, fSub].forEach(f => { if (f) right.appendChild(f); });
+  // v766: distribusi diseimbangkan supaya tinggi kiri≈kanan (tanpa scroll).
+  // Kiri: media + judul + deskripsi + kategori + tag (deskripsi konten video).
+  // Kanan: visibilitas + komentar + (pengaturan lanjutan) + subtitle (distribusi).
+  [fJudul, fDesc, fKat, fTag].forEach(f => { if (f) left.appendChild(f); });
+  [fVis, fKom, fSub].forEach(f => { if (f) right.appendChild(f); });
 }
 // v764: dropdown KUSTOM generik untuk select mana pun di modal (vemCategory,
 // vemVis, vemComments) → tema dashboard, tanpa highlight biru native OS.

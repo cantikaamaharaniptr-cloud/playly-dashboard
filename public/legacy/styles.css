@@ -72786,3 +72786,16 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .vem-switch input:checked + .vem-switch-track { background: var(--primary); border-color: var(--primary); }
 #videoEditModal .vem-switch input:checked + .vem-switch-track::after { transform: translateX(16px); background: #fff; }
 #videoEditModal .vem-switch input:focus-visible + .vem-switch-track { outline: none; }
+
+/* v766: Pengaturan lanjutan dalam KOTAK/kolom sendiri + kolom diseimbangkan. */
+#videoEditModal #vemAdvanced {
+  background: rgba(232,216,196,.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+#videoEditModal #vemAdvanced > label { margin-bottom: 4px !important; }
+#videoEditModal #vemAdvanced .vem-toggle { padding: 7px 0; }
+/* kompak: deskripsi & dropzone subtitle dikecilkan supaya kiri≈kanan, no scroll */
+#videoEditModal #vemDesc { min-height: 116px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro { min-height: 0 !important; padding: 12px !important; }
