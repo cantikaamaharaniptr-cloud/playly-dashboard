@@ -489,9 +489,33 @@ const TOAST_ICONS = {
   // disimpan ke draf — dokumen berlipat (file draft)
   draft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>',
   // dipublikasikan — centang dalam lingkaran (berhasil & live)
-  published: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+  published: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  // tautan disalin — ikon rantai
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  // kode embed disalin — ikon code
+  embed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
 };
 window.TOAST_ICONS = TOAST_ICONS;
+
+// v798: salin teks ke clipboard (dgn fallback) + toast konfirmasi bertema.
+function _libCopyFallback(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.pointerEvents = "none";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand("copy"); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+function _libCopyToClipboard(text, title, sub, icon) {
+  const ok = () => { if (typeof toast === "function") toast(`<b>${title}</b><span class="toast-sub">${sub}</span>`, "success", icon); };
+  const no = () => { if (typeof toast === "function") toast(`Gagal menyalin — coba salin manual.`, "warning"); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(() => { _libCopyFallback(text) ? ok() : no(); });
+    } else { _libCopyFallback(text) ? ok() : no(); }
+  } catch (e) { _libCopyFallback(text) ? ok() : no(); }
+}
+window._libCopyToClipboard = _libCopyToClipboard;
 
 // Popup notif yang anchor di bawah bell icon di topbar (id="openNotif").
 // Variant ke-2 dari toast — per request user 2026-05-10aj. Auto-dismiss 4.5s.
@@ -36247,6 +36271,14 @@ function renderMyLibrary() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
           <span>Edit</span>
         </button>
+        <button type="button" class="lcm-item" data-lib-copylink="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Salin tautan</span>
+        </button>
+        <button type="button" class="lcm-item" data-lib-embed="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Sematkan</span>
+        </button>
         ${v.adminStatus === "draft"
           ? `<button type="button" class="lcm-item" data-lib-publish="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
@@ -52229,6 +52261,27 @@ function maybeOfferSaveCard() {
       const id = +editBtn.dataset.libEdit;
       _libCloseAllCardMenus();
       if (typeof openVideoEditModal === "function") openVideoEditModal(id);
+      return;
+    }
+    // v798: Salin tautan — copy URL tonton ke clipboard
+    const copyBtn = e.target.closest("[data-lib-copylink]");
+    if (copyBtn) {
+      e.stopPropagation();
+      const id = +copyBtn.dataset.libCopylink;
+      _libCloseAllCardMenus();
+      const url = `${location.origin}/#/watch/${id}`;
+      _libCopyToClipboard(url, `Tautan disalin`, `Tautan tonton video disalin ke clipboard.`, TOAST_ICONS.link);
+      return;
+    }
+    // v798: Sematkan — copy kode embed iframe
+    const embedBtn = e.target.closest("[data-lib-embed]");
+    if (embedBtn) {
+      e.stopPropagation();
+      const id = +embedBtn.dataset.libEmbed;
+      _libCloseAllCardMenus();
+      const src = `${location.origin}/#/watch/${id}?embed=1`;
+      const code = `<iframe src="${src}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+      _libCopyToClipboard(code, `Kode embed disalin`, `Tempel di situsmu untuk menyematkan video.`, TOAST_ICONS.embed);
       return;
     }
     // Draft
