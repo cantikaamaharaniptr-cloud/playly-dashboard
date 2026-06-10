@@ -72854,7 +72854,13 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal #vemTags::placeholder,
 #videoEditModal .vem-dd-label.placeholder,
 #videoEditModal input::placeholder,
-#videoEditModal textarea::placeholder { color: #9a9a9a !important; font-style: italic !important; }
+#videoEditModal textarea::placeholder {
+  color: #9a9a9a !important;
+  /* KUNCI: input punya -webkit-text-fill-color krem yg menimpa `color` saat
+     dicat. Tanpa override ini, placeholder tetap krem walau color=abu. */
+  -webkit-text-fill-color: #9a9a9a !important;
+  font-style: italic !important;
+}
 
 /* ===================================================================
    MODAL EDIT VIDEO v772 — garis pembatas antar toggle Pengaturan lanjutan +
