@@ -3948,10 +3948,18 @@ async function refreshStorageUsage() {
       if (textEl) textEl.textContent = `${monthlyTxt} / 1 GB`;
       if (pctEl) pctEl.textContent = `${pct < 1 && monthlyBytes > 0 ? "<1" : Math.round(pct)}%`;
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
-    } else {
+    } else if (user?.role === "admin") {
+      // Admin: tanpa batas penyimpanan.
       if (textEl) textEl.textContent = `${usedTxt} / Unlimited`;
       if (pctEl) pctEl.textContent = "∞";
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `0, 100`);
+    } else {
+      // v795: Premium BOUNDED 100 GB (bukan Unlimited) — konsisten dgn model kuota.
+      const PREMIUM_QUOTA = 100 * 1024 * 1024 * 1024; // 100 GB
+      const pct = Math.min(100, Math.max(0, (used / PREMIUM_QUOTA) * 100));
+      if (textEl) textEl.textContent = `${usedTxt} / 100 GB`;
+      if (pctEl) pctEl.textContent = `${pct < 1 && used > 0 ? "<1" : Math.round(pct)}%`;
+      if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
     }
   } catch (err) {
     console.warn("storage refresh failed:", err);
@@ -36776,6 +36784,14 @@ document.addEventListener("click", e => {
   });
   // Apply focus mode (hide non-matching sections)
   if (typeof applyFocus === "function") applyFocus(view, key);
+  // v795: buka tab Status Video selalu mulai dari sub-tab pertama (Menunggu),
+  // bukan sub-tab terakhir (mis. Sampah) yang persist → bikin user bingung lihat
+  // "Sampah kosong" padahal baru masuk. Re-render + re-apply focus.
+  if (key === "status-videos" && state.statusSubTab && state.statusSubTab !== "all") {
+    state.statusSubTab = "all";
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    if (typeof applyFocus === "function") applyFocus(view, "status-videos");
+  }
   // v717: ganti tab Pustaka → tutup inline player yang mungkin terbuka, dan
   // sinkronkan judul breadcrumb (segmen aktif) dgn tab — dulu judul top bar
   // tidak ikut berubah saat pindah tab (tab pakai data-focus-tab, bukan
@@ -51636,10 +51652,11 @@ async function renderStoragePage() {
   }
   const totalBytes = videoBytes + thumbBytes + cacheBytes;
 
-  // Quota
+  // Quota — v795: Premium BOUNDED 100 GB (bukan Unlimited).
   const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-  const quotaBytes = isPremium ? Infinity : FREE_QUOTA;
-  const pct = isPremium ? 0 : Math.min(100, (totalBytes / FREE_QUOTA) * 100);
+  const PREMIUM_QUOTA = 100 * 1024 * 1024 * 1024; // 100 GB
+  const quotaBytes = isPremium ? PREMIUM_QUOTA : FREE_QUOTA;
+  const pct = Math.min(100, (totalBytes / quotaBytes) * 100);
 
   // Update overview ring + bar
   const ring = document.getElementById("storagePageRing");
@@ -51649,13 +51666,15 @@ async function renderStoragePage() {
   const barEl = document.getElementById("storagePageBar");
 
   if (ring) ring.setAttribute("stroke-dasharray", `${pct}, 100`);
-  if (pctEl) pctEl.textContent = isPremium ? "∞" : `${Math.round(pct)}%`;
+  if (pctEl) pctEl.textContent = `${pct < 1 && totalBytes > 0 ? "<1" : Math.round(pct)}%`;
   if (usedEl) usedEl.textContent = isPremium
-    ? `${fmtBytes(totalBytes)} / Unlimited`
+    ? `${fmtBytes(totalBytes)} / 100 GB`
     : `${fmtBytes(totalBytes)} / 1 GB`;
   if (statusEl) {
     if (isPremium) {
-      statusEl.textContent = "Akun Premium — tanpa batas penyimpanan & kuota bulanan.";
+      statusEl.textContent = pct >= 90
+        ? "⚠️ Penyimpanan Premium (100 GB) hampir penuh — hapus file lama untuk melapangkan ruang."
+        : "Akun Premium — 100 GB penyimpanan & kuota bulanan lega.";
     } else if (pct >= 90) {
       statusEl.innerHTML = "⚠️ Kuota hampir penuh — hapus file lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade ke Premium</a>.";
     } else if (pct >= 60) {

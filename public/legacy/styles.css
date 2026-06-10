@@ -44253,10 +44253,11 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 }
 
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
+/* v795: badge Premium diselaraskan ke tema (cream/wine), bukan emas/kuning. */
 .dashboard-tier-pill[data-tier="premium"] {
-  border-color: rgba(220, 169, 109, .55);
-  background: linear-gradient(135deg, rgba(220,169,109,.18), rgba(80,16,10,.10));
-  box-shadow: 0 0 0 0 rgba(220,169,109,0);
+  border-color: rgba(232, 216, 196, .42);
+  background: linear-gradient(135deg, rgba(232,216,196,.12), rgba(109,41,50,.20));
+  box-shadow: 0 0 0 0 rgba(232,216,196,0);
   animation: tierPillGlow 2.4s ease-in-out infinite;
   position: relative;
   overflow: hidden;
@@ -44270,14 +44271,14 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   height: 100%;
   background: linear-gradient(115deg,
     transparent 30%,
-    rgba(255, 240, 200, .35) 50%,
+    rgba(232, 216, 196, .30) 50%,
     transparent 70%);
   transform: skewX(-18deg);
   animation: tierPillShine 3.5s ease-in-out infinite;
   pointer-events: none;
 }
 .dashboard-tier-pill[data-tier="premium"] .dtp-icon {
-  color: #FFC94D; /* warna ikon (request user 2026-05-17) */
+  color: var(--cream); /* v795: emas #FFC94D → cream (selaras tema) */
   animation: tierPillStar 1.6s ease-in-out infinite;
 }
 /* Bintang pill premium (request user 2026-05-17):
@@ -44342,8 +44343,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   animation-play-state: paused;
 }
 @keyframes tierPillGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220,169,109,0); }
-  50%      { box-shadow: 0 0 14px 2px rgba(220,169,109,.35); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,216,196,0); }
+  50%      { box-shadow: 0 0 14px 2px rgba(232,216,196,.28); }
 }
 @keyframes tierPillShine {
   0%   { left: -75%; }
@@ -72044,6 +72045,8 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .lib-thumb-vis.prv { background: color-mix(in srgb, var(--primary) 85%, #000); }
 .lib-thumb-vis.unl { background: rgba(120,90,60,.88); }
 .lib-meta .lib-meta-date { color: var(--muted); opacity: .85; }
+/* v795: pemisah "·" antara statistik & tanggal (dulu nempel "0 komentar 10 Jun"). */
+.lib-meta .lib-meta-stats + .lib-meta-date::before { content: "·"; margin: 0 5px 0 4px; opacity: .5; }
 .lib-sort-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
 .lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
 .lib-sort-bar select {
@@ -72185,6 +72188,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v705 — pastikan section header tersembunyi (menang atas .dl-head-flex display:flex) */
 .view[data-view="videos"] .dl-section-head.dl-head-flex,
 .view[data-view="videos"] .dl-section-head { display: none !important; }
+
+/* v795 — KECUALI tab Unduhan: tampilkan judul section (Dashboard vs Perangkat)
+   karena ada 2 sub-section, biar tidak ambigu (termasuk saat kosong). :has(#id)
+   memberi spesifisitas id → menang atas rule sembunyi di atas. */
+.view[data-view="videos"] .dl-section:has(#downloadDashboardGrid) > .dl-section-head,
+.view[data-view="videos"] .dl-section:has(#downloadFileGrid) > .dl-section-head {
+  display: flex !important;
+}
 
 /* ===================================================================
    PUSTAKA SAYA v706 — toolbar: jumlah video di KIRI (sejajar grid) + dropdown
