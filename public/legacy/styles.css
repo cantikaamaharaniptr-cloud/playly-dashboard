@@ -72881,14 +72881,16 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
    judul "Edit Video".
    =================================================================== */
 #videoEditModal .vem-head { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 12px !important; }
+/* v779: kotak ikon header — warna aksen wine + ikon dikembalikan ke OUTLINE. */
 #videoEditModal .vem-head-ico {
   width: 40px; height: 40px; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--bg-elev); border: 1px solid var(--border);
+  background: var(--primary); border: 1px solid rgba(232,216,196,.18);
   border-radius: 11px; color: var(--cream);
 }
 #videoEditModal .vem-head-ico svg, #videoEditModal .vem-head-ico .picon {
-  width: 20px !important; height: 20px !important; fill: currentColor;
+  width: 20px !important; height: 20px !important;
+  fill: none !important; stroke: currentColor !important; stroke-width: 2px !important;
 }
 #videoEditModal .vem-head-ico .picon-w { display: inline-flex; }
 #videoEditModal .vem-head-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
