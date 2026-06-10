@@ -72152,8 +72152,9 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-bulk-act svg { width: 14px; height: 14px; flex: none; }
 .lib-bulk-act:hover:not(:disabled) { border-color: var(--primary); }
-.lib-bulk-act.danger { color: #e8989b; border-color: rgba(232,152,155,.28); }
-.lib-bulk-act.danger:hover:not(:disabled) { border-color: #e8989b; background: rgba(232,152,155,.12); }
+/* v817: tombol Hapus jelas MERAH (destruktif) */
+.lib-bulk-act.danger { color: var(--danger); border-color: rgba(239,68,68,.5); }
+.lib-bulk-act.danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
 .lib-bulk-act:disabled { opacity: .45; cursor: not-allowed; }
 .lib-bulk-x { background: none; border: 0; color: var(--cream); font-size: 15px; cursor: pointer; padding: 2px 6px; line-height: 1; }
 /* v801: bar Cari + chip filter visibilitas */
