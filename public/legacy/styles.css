@@ -72697,9 +72697,11 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 #videoEditModal .vem-dd-trigger:hover { border-color: var(--primary); }
 #videoEditModal .vem-dd-trigger svg { color: rgba(232,216,196,.6); flex: none; }
-/* v780: dropdown menu lebih ringkas + bisa flip ke atas biar tidak kepotong. */
+/* v780: dropdown menu lebih ringkas + bisa flip ke atas biar tidak kepotong.
+   v781: lebar menu mengikuti konten (tidak full-width), rata kiri. */
 #videoEditModal .vem-dd-menu {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60;
+  position: absolute; top: calc(100% + 6px); left: 0; right: auto; z-index: 60;
+  width: max-content; min-width: 200px; max-width: 100%;
   background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
   padding: 5px; box-shadow: 0 14px 36px rgba(0,0,0,.45);
   max-height: 196px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
