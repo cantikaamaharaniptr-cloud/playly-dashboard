@@ -52368,6 +52368,7 @@ function ensureVemAdvanced() {
     tog("vemAllowDownload", "Izinkan unduh") +
     tog("vemAllowEmbed", "Izinkan sematkan") +
     tog("vemShowViews", "Tampilkan jumlah penonton") +
+    tog("vemHideSearch", "Sembunyikan dari pencarian") +
     tog("vemAgeRestrict", "Batasan usia (18+)") +
     '</div>';
   const sub = right.querySelector(".upf-subtitle-section");
@@ -52520,6 +52521,7 @@ function openVideoEditModal(id) {
     setChk("vemAllowDownload", v.allowDownload !== false);
     setChk("vemAllowEmbed", v.allowEmbed !== false);
     setChk("vemShowViews", v.showViews !== false);
+    setChk("vemHideSearch", !!v.hideFromSearch);
     setChk("vemAgeRestrict", !!v.ageRestriction);
   }
   modal.hidden = false;
@@ -52559,6 +52561,7 @@ function saveVideoEdit() {
   v.allowDownload = chk("vemAllowDownload");
   v.allowEmbed = chk("vemAllowEmbed");
   v.showViews = chk("vemShowViews");
+  v.hideFromSearch = chk("vemHideSearch");
   v.ageRestriction = chk("vemAgeRestrict");
   if (window._vemNewThumb) {
     v.thumb = window._vemNewThumb;
