@@ -72513,6 +72513,8 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="trash"]    { background: rgba(238,124,58,.12) !important; }
 .view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="takedown"] { background: rgba(232,72,85,.12) !important; }
 .view[data-view="videos"] .status-sub-tab.active:not(.has-items)                        { background: rgba(232,216,196,.07) !important; }
+/* aktif tapi KOSONG → badge "0" juga netral (jangan kena warna wine .active dasar) */
+.view[data-view="videos"] .status-sub-tab.active:not(.has-items) .ssc-count { background: var(--bg-elev) !important; color: rgba(232,216,196,.5) !important; }
 
 /* v751: rapatkan jarak tab utama ↔ sub-tab/konten. Gap-nya dari flex-gap view
    (20px) + margin → ~38px (mengambang). Kecilkan flex-gap jadi 14px & nol-kan
