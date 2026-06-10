@@ -52311,6 +52311,27 @@ function enhanceVemModal() {
   }
   // 4. Tata ulang jadi 2 kolom (kiri: media+judul+deskripsi, kanan: pengaturan)
   try { ensureVemTwoCol(); } catch (e) {}
+  // 5. Pengaturan lanjutan (toggle): izinkan unduh / sematkan / batasan usia
+  try { ensureVemAdvanced(); } catch (e) {}
+}
+// v765: fitur tambahan — toggle Pengaturan lanjutan di kolom kanan modal.
+function ensureVemAdvanced() {
+  const right = document.querySelector("#videoEditModal .vem-col-right");
+  if (!right || document.getElementById("vemAdvanced")) return;
+  const grp = document.createElement("div");
+  grp.id = "vemAdvanced"; grp.className = "upf-field vem-adv";
+  const tog = (id, label) =>
+    `<label class="vem-toggle"><span class="vem-toggle-lbl">${label}</span>` +
+    `<span class="vem-switch"><input type="checkbox" id="${id}"><span class="vem-switch-track"></span></span></label>`;
+  grp.innerHTML =
+    '<label><span class="vem-lbl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 2.6 14H2.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 2.6h0A1.7 1.7 0 0 0 11 1h2a2 2 0 0 1 2 2v.1A1.7 1.7 0 0 0 17 4.6h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21.4 10v0A1.7 1.7 0 0 0 23 11"/></svg></span><span class="vem-lbl-text">Pengaturan lanjutan</span></label>' +
+    '<div class="vem-toggles">' +
+    tog("vemAllowDownload", "Izinkan unduh") +
+    tog("vemAllowEmbed", "Izinkan sematkan") +
+    tog("vemAgeRestrict", "Batasan usia (18+)") +
+    '</div>';
+  const sub = right.querySelector(".upf-subtitle-section");
+  if (sub) right.insertBefore(grp, sub); else right.appendChild(grp);
 }
 // v759: layout 2 KOLOM modal Edit Video — kiri (thumbnail/judul/deskripsi),
 // kanan (kategori/tag/visibilitas/komentar), subtitle full-width di bawah.
@@ -52433,6 +52454,13 @@ function openVideoEditModal(id) {
   }
 
   try { enhanceVemModal(); } catch (e) {}
+  // v765: populate toggle Pengaturan lanjutan (default: unduh & sematkan ON).
+  {
+    const setChk = (cid, val) => { const el = document.getElementById(cid); if (el) el.checked = val; };
+    setChk("vemAllowDownload", v.allowDownload !== false);
+    setChk("vemAllowEmbed", v.allowEmbed !== false);
+    setChk("vemAgeRestrict", !!v.ageRestriction);
+  }
   modal.hidden = false;
   // Trigger CSS .show transition di next frame
   requestAnimationFrame(() => modal.classList.add("show"));
@@ -52464,6 +52492,11 @@ function saveVideoEdit() {
   v.tags = get("vemTags").split(",").map(s => s.trim()).filter(Boolean);
   v.visibility = get("vemVis");
   v.comments = get("vemComments");
+  // v765: pengaturan lanjutan (toggle)
+  const chk = cid => !!document.getElementById(cid)?.checked;
+  v.allowDownload = chk("vemAllowDownload");
+  v.allowEmbed = chk("vemAllowEmbed");
+  v.ageRestriction = chk("vemAgeRestrict");
   if (window._vemNewThumb) {
     v.thumb = window._vemNewThumb;
     window._vemNewThumb = null;
