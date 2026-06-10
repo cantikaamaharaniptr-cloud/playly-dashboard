@@ -72833,3 +72833,22 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* teks dropzone berjenjang: judul jelas, hint muted */
 #videoEditModal .upf-subtitle-section .dz-pro-empty p { font-size: 13px !important; font-weight: 700 !important; color: var(--cream) !important; margin: 0 !important; }
 #videoEditModal .upf-subtitle-section .dz-pro-empty small { font-size: 11.5px !important; color: rgba(232,216,196,.5) !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v770 — fix ikon dropzone (svg width 0), teks field rata
+   tengah, warna placeholder dropdown (bukan bluish).
+   =================================================================== */
+/* fix: svg ikon dropzone tadi width 0 → paksa ukuran + jangan menyusut */
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg {
+  width: 18px !important; height: 18px !important; min-width: 18px !important; flex: none !important;
+}
+/* teks di dalam field RATA TENGAH (input + dropdown label) */
+#videoEditModal #vemTitleInput,
+#videoEditModal #vemTags { text-align: center !important; }
+#videoEditModal .vem-dd-trigger { position: relative; }
+#videoEditModal .vem-dd-trigger .vem-dd-label { flex: 1 1 auto; text-align: center; }
+#videoEditModal .vem-dd-trigger > svg { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
+/* warna placeholder ("Pilih kategori" dll) → abu-abu netral hangat, bukan bluish */
+#videoEditModal .vem-dd-label.placeholder,
+#videoEditModal input::placeholder,
+#videoEditModal textarea::placeholder { color: #978f87 !important; }
