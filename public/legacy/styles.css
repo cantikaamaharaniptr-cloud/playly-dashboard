@@ -72715,8 +72715,19 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal #vemDesc { min-height: 150px; }
 /* thumbnail row sedikit dipadatkan */
 #videoEditModal .vem-thumb-row { margin-bottom: 0 !important; }
-/* subtitle full-width, beri jarak atas dari grid */
-#videoEditModal .upf-subtitle-section { margin-top: 16px !important; }
+/* v760: subtitle PINDAH ke kolom kanan + dropzone DIPADATKAN (dulu full-width
+   besar makan banyak ruang). Jadi ringkas di bawah Komentar. */
+#videoEditModal .upf-subtitle-section { margin-top: 0 !important; }
+#videoEditModal .upf-subtitle-section .dz-pro,
+#videoEditModal .upf-subtitle-section [class*="dropzone"],
+#videoEditModal .upf-subtitle-section [class*="dz-"] {
+  min-height: 0 !important;
+  padding: 14px !important;
+}
+/* ikon dropzone subtitle dikecilkan */
+#videoEditModal .upf-subtitle-section .dz-pro svg,
+#videoEditModal .upf-subtitle-section .dz-pro [class*="icon"] { width: 26px !important; height: 26px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro > *:first-child { margin-bottom: 6px !important; }
 /* Responsif: layar sempit → kembali 1 kolom */
 @media (max-width: 720px) {
   #videoEditModal .vem-2col { grid-template-columns: 1fr; gap: 14px; }

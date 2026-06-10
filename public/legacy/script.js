@@ -52337,8 +52337,9 @@ function ensureVemTwoCol() {
   if (actions) form.insertBefore(grid, actions); else form.appendChild(grid);
   if (thumb) left.appendChild(thumb);
   [fJudul, fDesc].forEach(f => { if (f) left.appendChild(f); });
-  [fKat, fTag, fVis, fKom].forEach(f => { if (f) right.appendChild(f); });
-  if (fSub && actions) form.insertBefore(fSub, actions); // subtitle full-width di bawah grid
+  // v760: subtitle masuk KOLOM KANAN (isi ruang kosong di bawah Komentar),
+  // bukan full-width besar. Dropzone-nya dipadatkan via CSS.
+  [fKat, fTag, fVis, fKom, fSub].forEach(f => { if (f) right.appendChild(f); });
 }
 function syncVemCatDd() {
   const sel = document.getElementById("vemCategory");
