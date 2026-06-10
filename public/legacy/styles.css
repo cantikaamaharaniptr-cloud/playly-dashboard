@@ -48241,14 +48241,15 @@ body:not([data-role="admin"]):not(.auth-mode) .btn.primary:hover {
   box-shadow: 0 6px 16px rgba(109, 41, 50, .42);
 }
 
-/* (5) Focus rings — a11y, gold */
+/* (5) Focus rings — a11y. v813: NETRAL (bukan gold/wine/aksen) per request user.
+   Cream sangat tipis → hanya untuk keyboard-nav (:focus-visible), tak mencolok. */
 body:not([data-role="admin"]):not(.auth-mode) button:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) a:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) input:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) select:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) textarea:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
-  outline: 2px solid rgba(220, 169, 109, .65);
+  outline: 1.5px solid rgba(232, 216, 196, .4);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -72096,14 +72097,29 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"][data-libselect="on"] .lib-item { position: relative; }
 .view[data-view="videos"][data-libselect="on"] .lib-select {
   display: inline-flex; position: absolute; top: 8px; left: 8px; z-index: 5;
-  background: rgba(0,0,0,.5); border-radius: 6px; padding: 2px; backdrop-filter: blur(3px);
+  background: transparent; padding: 0;
 }
-.lib-select input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+/* v813: checkbox kustom — bentuk rounded bersih (bukan kotak siku native) */
+.lib-select input {
+  appearance: none; -webkit-appearance: none;
+  width: 20px; height: 20px; margin: 0; border-radius: 6px;
+  border: 1.5px solid rgba(232,216,196,.6); background: rgba(0,0,0,.5);
+  cursor: pointer; display: inline-grid; place-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  transition: background .12s, border-color .12s;
+}
+.lib-select input:hover { border-color: var(--cream); }
+.lib-select input:checked {
+  background-color: var(--primary); border-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-size: 12px 12px; background-position: center; background-repeat: no-repeat;
+}
 /* v812: di mode pilih → seluruh kartu bisa diklik utk pilih + sorot yg terpilih */
 .view[data-view="videos"][data-libselect="on"] .lib-item { cursor: pointer; }
+/* v813: sorot baris terpilih → NETRAL (cream tipis), bukan wine */
 .view[data-view="videos"][data-libselect="on"] .lib-item:has(input[data-lib-check]:checked) {
-  border-color: var(--primary) !important;
-  box-shadow: inset 0 0 0 1px var(--primary);
+  border-color: rgba(232,216,196,.32) !important;
+  background: rgba(232,216,196,.05);
 }
 .lib-bulk-bar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
