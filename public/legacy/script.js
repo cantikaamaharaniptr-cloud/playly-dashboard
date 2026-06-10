@@ -36132,7 +36132,7 @@ function ensureDraftSection() {
   sec.innerHTML =
     '<div class="dl-section-head dl-head-flex" data-restructured="1"><div class="dl-head-text">' +
     '<h3><span class="lib-h-ico">' + DRAFT_TAB_ICO + '</span> Draf</h3>' +
-    '<small>Video yang kamu simpan untuk dilanjutkan nanti — belum dipublikasikan. Klik “Edit” untuk lanjut, atau “Terbitkan” bila sudah siap.</small>' +
+    '<small>Video yang kamu simpan untuk dilanjutkan nanti — belum dipublikasikan. Klik “Edit” untuk lanjut, atau “Publikasikan” bila sudah siap.</small>' +
     '</div></div><div id="draftVideoGrid"></div>';
   if (statusSec && statusSec.parentNode) statusSec.parentNode.insertBefore(sec, statusSec.nextSibling);
   else view.appendChild(sec);
@@ -36194,7 +36194,7 @@ function renderMyLibrary() {
         ${v.adminStatus === "draft"
           ? `<button type="button" class="lcm-item" data-lib-publish="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
-          <span>Terbitkan</span>
+          <span>Publikasikan</span>
         </button>`
           : `<button type="button" class="lcm-item" data-lib-draft="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -52176,6 +52176,24 @@ function maybeOfferSaveCard() {
       if (typeof saveState === "function") saveState();
       if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draft`, "success");
       if (typeof renderMyLibrary === "function") renderMyLibrary();
+      return;
+    }
+    // Publikasikan (dari draf) → adminStatus published + arahkan ke "Video Saya".
+    // v792: dulu branch ini cuma ada di handler view-level, tapi menu dipindah ke
+    // document.body saat open → handler view tak terpicu → "Terbitkan" mati total.
+    const publishBtn = e.target.closest("[data-lib-publish]");
+    if (publishBtn) {
+      e.stopPropagation();
+      const id = +publishBtn.dataset.libPublish;
+      _libCloseAllCardMenus();
+      const v = (typeof state === "object" && state ? (state.myVideos || []) : []).find(x => x.id === id);
+      if (!v) return;
+      v.adminStatus = "published";
+      if (typeof saveState === "function") saveState();
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+      const _vw = document.querySelector('section.view[data-view="videos"]');
+      if (_vw && typeof applyFocus === "function") applyFocus(_vw, "my-video");
+      if (typeof toast === "function") toast(`🚀 <b>${escapeHtml(v.title || "Video")}</b> dipublikasikan — kini tampil di Video Saya`, "success");
       return;
     }
     // Delete (handled via openConfirm)
