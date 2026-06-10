@@ -36222,12 +36222,31 @@ function _libFilterList(list) {
 }
 window._libFilterList = _libFilterList;
 // Cari: sembunyikan/ tampilkan kartu by judul, TANPA re-render (fokus tetap).
+// + tampilkan pesan "tidak ada hasil" per grid kalau semua tersaring (v801b).
 function _libApplySearchFilter() {
-  const q = ((typeof state !== "undefined" && state.libSearch) || "").trim().toLowerCase();
-  document.querySelectorAll('section.view[data-view="videos"] .lib-item').forEach(item => {
-    if (!q) { item.style.display = ""; return; }
-    const t = (item.querySelector('.lib-meta strong')?.textContent || "").toLowerCase();
-    item.style.display = t.includes(q) ? "" : "none";
+  const raw = (typeof state !== "undefined" && state.libSearch) || "";
+  const q = raw.trim().toLowerCase();
+  const grids = document.querySelectorAll(
+    'section.view[data-view="videos"] #myVideoGrid,' +
+    'section.view[data-view="videos"] #draftVideoGrid,' +
+    'section.view[data-view="videos"] #statusVideoGrid,' +
+    'section.view[data-view="videos"] #downloadDashboardGrid,' +
+    'section.view[data-view="videos"] #downloadFileGrid'
+  );
+  grids.forEach(grid => {
+    const items = [...grid.querySelectorAll('.lib-item')];
+    let anyVisible = false;
+    items.forEach(item => {
+      const t = (item.querySelector('.lib-meta strong')?.textContent || "").toLowerCase();
+      const show = !q || t.includes(q);
+      item.style.display = show ? "" : "none";
+      if (show) anyVisible = true;
+    });
+    let nm = grid.querySelector(':scope > .lib-nomatch');
+    if (q && items.length && !anyVisible) {
+      if (!nm) { nm = document.createElement("div"); nm.className = "lib-nomatch"; grid.appendChild(nm); }
+      nm.innerHTML = `<div class="lib-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><p>Tidak ada video cocok dengan "<b>${escapeHtml(raw.trim())}</b>".</p>`;
+    } else if (nm) { nm.remove(); }
   });
 }
 window._libApplySearchFilter = _libApplySearchFilter;

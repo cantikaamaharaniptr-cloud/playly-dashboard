@@ -72117,6 +72117,15 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-vis-chips button:hover { border-color: var(--primary); color: var(--cream); }
 .lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* v801b: pesan saat cari tak ada hasil */
+.lib-nomatch {
+  grid-column: 1 / -1; width: 100%; text-align: center;
+  padding: 36px 20px; border: 1px dashed var(--border); border-radius: 12px;
+}
+.lib-nomatch .lib-empty-icon { color: rgba(232,216,196,.5); margin-bottom: 8px; }
+.lib-nomatch .lib-empty-icon svg { width: 32px; height: 32px; }
+.lib-nomatch p { font-size: 13px; color: rgba(232,216,196,.6); margin: 0; }
+.lib-nomatch p b { color: var(--cream); }
 /* LIST: grid → daftar vertikal */
 .view[data-view="videos"][data-libview="list"] #myVideoGrid,
 .view[data-view="videos"][data-libview="list"] #draftVideoGrid,
