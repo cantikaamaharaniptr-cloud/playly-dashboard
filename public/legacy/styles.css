@@ -72847,6 +72847,19 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 #videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg {
   width: 18px !important; height: 18px !important; min-width: 18px !important; flex: none !important;
 }
+/* v782: FIX kotak ikon subtitle — selector lebar [class*="dz-"] & [class*="icon"]
+   tanpa sengaja menambah padding 14px + paksa 26px → ikon meluber jadi lingkaran
+   terpotong. Override spesifisitas tinggi: kotak rapi, ikon center, tanpa padding. */
+#videoEditModal .upf-subtitle-section .dz-pro .dz-pro-empty .dz-pro-empty-icon {
+  width: 44px !important; height: 44px !important; padding: 0 !important;
+  border-radius: 12px !important; overflow: hidden !important;
+  display: grid !important; place-items: center !important;
+  background: rgba(232,216,196,.07) !important; border: 1px solid var(--border) !important;
+  box-shadow: none !important; color: var(--cream) !important;
+}
+#videoEditModal .upf-subtitle-section .dz-pro .dz-pro-empty .dz-pro-empty-icon svg {
+  width: 20px !important; height: 20px !important; min-width: 20px !important; flex: none !important;
+}
 /* v771: REVERT rata tengah (kelewat — dipasang ke semua field). Kembali rata kiri. */
 #videoEditModal #vemTitleInput,
 #videoEditModal #vemTags { text-align: left !important; }
