@@ -46483,6 +46483,52 @@ function closeLibInlinePlayer() {
   });
 })();
 
+// ===== JEDA IKLAN IN-PLAYER (kombinasi Hulu + Tubi + Pluto) =====
+// Hulu: countdown "Iklan berakhir dalam Xs" + badge "Iklan" + tombol Lewati.
+// Tubi: framing "Tonton gratis dengan iklan". Pluto: iklan menutup video (jeda
+// siaran) sebelum mulai. Konten iklan = SLOT KOSONG (diisi admin); free user saja.
+let _adBreakTimer = null;
+function _showAdBreak() {
+  const screen = document.querySelector(".player-screen");
+  if (!screen) return;
+  if (user?.tier === "premium" || user?.role === "admin") return; // bebas iklan
+  screen.querySelector(".ad-break")?.remove();
+  if (_adBreakTimer) { clearInterval(_adBreakTimer); _adBreakTimer = null; }
+  const TOTAL = 10, SKIP_AT = 5;
+  let remain = TOTAL;
+  const ov = document.createElement("div");
+  ov.className = "ad-break";
+  ov.innerHTML =
+    '<div class="ad-break-stage">' +
+      '<span class="ad-break-badge">Iklan</span>' +
+      '<span class="ad-break-free">Tonton gratis dengan iklan</span>' +
+      '<div class="ad-break-slot">Slot Iklan</div>' +
+    '</div>' +
+    '<div class="ad-break-bar">' +
+      '<span class="ad-break-count">Iklan berakhir dalam <b>' + remain + '</b> dtk</span>' +
+      '<button type="button" class="ad-break-skip" hidden>Lewati Iklan ›</button>' +
+    '</div>' +
+    '<div class="ad-break-progress"><i></i></div>';
+  screen.appendChild(ov);
+  const countEl = ov.querySelector(".ad-break-count b");
+  const skipBtn = ov.querySelector(".ad-break-skip");
+  const prog = ov.querySelector(".ad-break-progress i");
+  const dismiss = () => {
+    if (_adBreakTimer) { clearInterval(_adBreakTimer); _adBreakTimer = null; }
+    ov.remove();
+    try { document.getElementById("videoEl")?.play?.(); } catch (_) {}
+  };
+  skipBtn.addEventListener("click", dismiss);
+  _adBreakTimer = setInterval(() => {
+    if (!document.querySelector('section.view[data-view="player"].active') || !screen.contains(ov)) { dismiss(); return; }
+    remain--;
+    if (countEl) countEl.textContent = Math.max(0, remain);
+    if (prog) prog.style.width = ((TOTAL - remain) / TOTAL * 100) + "%";
+    if (TOTAL - remain >= SKIP_AT) skipBtn.hidden = false;
+    if (remain <= 0) dismiss();
+  }, 1000);
+}
+
 async function openPlayer(id) {
   const v = findVideo(id);
   if (!v) {
@@ -46609,6 +46655,7 @@ async function openPlayer(id) {
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
   $("#followBtn").textContent = state.followingCreators.includes(v.creator) ? "✓ Following" : "Follow";
+  try { _showAdBreak(); } catch (_) {}
 
   const videoEl = $("#videoEl");
   videoEl.poster = v.thumb;
