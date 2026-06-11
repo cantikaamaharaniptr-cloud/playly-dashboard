@@ -3030,6 +3030,8 @@ function initPlySpeedPopups() {
       e.stopPropagation();
       const willOpen = pop.hidden;
       document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+      // Tutup menu ⋮ (dots) supaya dua popup tak menumpuk.
+      const _dm = document.getElementById("cplDotsMenu"); if (_dm) _dm.hidden = true;
       pop.hidden = !willOpen;
     });
   });
@@ -47323,7 +47325,12 @@ function setupCustomPlayer() {
   const dotsMenu = $("#cplDotsMenu");
 
   function closeDots() { if (dotsMenu) dotsMenu.hidden = true; }
-  dotsBtn?.addEventListener("click", e => { e.stopPropagation(); dotsMenu && (dotsMenu.hidden = !dotsMenu.hidden); });
+  dotsBtn?.addEventListener("click", e => {
+    e.stopPropagation();
+    // Tutup popup kecepatan bottom-bar dulu supaya tak menumpuk dgn menu ⋮.
+    document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+    dotsMenu && (dotsMenu.hidden = !dotsMenu.hidden);
+  });
   document.addEventListener("click", e => { if (!e.target.closest(".cpl-dots-wrap")) closeDots(); });
 
   // ── Isi dots menu: Pop-up (PiP) ──
