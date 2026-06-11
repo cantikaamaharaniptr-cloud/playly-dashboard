@@ -53240,6 +53240,10 @@ function saveVideoEdit() {
     if (!modal || !title || !body) return;
     title.textContent = cfg.title;
     body.innerHTML = cfg.html;
+    // Modal ini aslinya bersarang di #authScreen (display:none saat user sudah
+    // di dashboard) → tak bisa tampil dari footer Jelajah dll. Pindahkan ke
+    // <body> supaya bisa muncul dari konteks mana pun. Idempotent.
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
     modal.classList.add("show");
     document.body.style.overflow = "hidden";
   }
