@@ -25670,7 +25670,14 @@ function injectRunningText(screen, c) {
   // baru insert relatif ke situ. insertBefore(node, null) = append (aman).
   let ref = anchor;
   while (ref && ref.parentNode && ref.parentNode !== outer) ref = ref.parentNode;
-  if (!ref || ref.parentNode !== outer) {
+  // FULL PLAYER: taruh running text TEPAT di bawah/atas video (dalam .player-main)
+  // supaya KELIHATAN saat user free nonton — bukan di paling bawah halaman
+  // (di bawah komentar). Inline player tetap pakai logika outer di bawah.
+  const pmain = screen.closest(".player-main");
+  if (pmain && screen.parentNode === pmain) {
+    if (pos === "top") pmain.insertBefore(overlay, screen);
+    else pmain.insertBefore(overlay, screen.nextSibling);
+  } else if (!ref || ref.parentNode !== outer) {
     outer.appendChild(overlay);
   } else if (pos === "top") {
     outer.insertBefore(overlay, ref);

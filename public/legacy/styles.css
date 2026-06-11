@@ -29062,6 +29062,12 @@ body.player-view-active main.main { padding-top: 16px; }
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
 .player-floating-banner { display: none !important; }
 
+/* Iklan admin harus KELIHATAN saat nonton (user free):
+   - Side banner (hero) di ATAS sidebar, sebelah video — bukan di bawah up-next. */
+.player-side .ps-ad-hero { order: -2; }
+/* - Running text admin tepat di bawah video (dalam player-main) → rapikan jarak. */
+.player-main > .ad-runtext-outside { margin: 12px 0 0; border-radius: 10px; overflow: hidden; }
+
 /* ===== GAYA DAILYMOTION — konten watch page tersusun kartu bersih & rapi ===== */
 .player-main .player-info,
 .player-main .pv-comments,
