@@ -28987,19 +28987,31 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
    din/iklan-kosong.) Hero admin-driven (.ps-ad-hero) DIBIARKAN.
    =================================================================== */
 /* Sidebar player: kartu Google Ads + mini dummy → slot kosong */
+/* Companion ad — kartu iklan bersih & disengaja (bukan kotak dashed setengah
+   jadi). Label "IKLAN" + placeholder; diisi admin Ad Manager. */
 #playerSidebar .ps-ad:not(.ps-ad-hero) {
   position: relative !important;
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
-  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
-  min-height: 84px !important;
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  min-height: 180px !important;
   box-shadow: none !important;
+  margin-top: 12px;
+  overflow: hidden !important;
 }
 #playerSidebar .ps-ad:not(.ps-ad-hero) > * { visibility: hidden !important; }
+#playerSidebar .ps-ad:not(.ps-ad-hero)::before {
+  content: "Iklan" !important;
+  position: absolute !important; top: 10px !important; left: 13px !important;
+  font-size: 10px !important; font-weight: 700 !important; letter-spacing: .12em !important; text-transform: uppercase !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 44%, transparent) !important;
+  visibility: visible !important; pointer-events: none !important; z-index: 1 !important;
+}
 #playerSidebar .ps-ad:not(.ps-ad-hero)::after {
   content: "Slot Iklan" !important;
-  position: absolute !important; inset: 0 !important;
+  position: absolute !important; inset: 24px 0 0 !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
-  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
   font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
   pointer-events: none !important;
 }
