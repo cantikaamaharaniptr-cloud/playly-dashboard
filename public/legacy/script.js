@@ -3364,6 +3364,20 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Toggle "Selanjutnya · Autoplay" — sebelumnya tombol ini tak punya handler
+// (mati). Sekarang: toggle on/off, simpan preferensi, video berikutnya diputar
+// otomatis saat video selesai (lihat handler "ended" di openPlayer). (req user)
+document.addEventListener("click", (e) => {
+  const ap = e.target.closest(".ps-autoplay-toggle");
+  if (!ap) return;
+  e.preventDefault();
+  const on = !ap.classList.contains("on");
+  ap.classList.toggle("on", on);
+  ap.setAttribute("aria-pressed", on ? "true" : "false");
+  try { if (typeof setPref === "function") setPref("player.autoplayNext", on); } catch (_) {}
+  if (typeof toast === "function") toast(on ? "✓ Autoplay aktif — video berikutnya otomatis diputar" : "Autoplay dimatikan", "success");
+});
+
 // Wire side item clicks + back button + action buttons
 document.addEventListener("click", (e) => {
   // Open another video from sidebar
@@ -25793,6 +25807,7 @@ function playPrerollAd(videoEl, url, c) {
     screen.appendChild(overlay);
 
     // Mainkan iklan
+    videoEl._prerollActive = true;   // guard: jgn picu autoplay-next saat preroll selesai
     videoEl.src = url;
     videoEl.poster = "";
     videoEl.controls = false;
@@ -25811,6 +25826,7 @@ function playPrerollAd(videoEl, url, c) {
     const watchdog = setTimeout(() => { if (!started) finish(); }, 6000);
 
     const cleanup = () => {
+      videoEl._prerollActive = false;
       if (countdownTimer) clearInterval(countdownTimer);
       clearTimeout(watchdog);
       videoEl.removeEventListener("playing", onPlaying);
@@ -46627,6 +46643,15 @@ async function openPlayer(id) {
       let all = [];
       try { all = (typeof allVideos === "function") ? allVideos() : ((typeof videos !== "undefined" && Array.isArray(videos)) ? videos : []); } catch { all = []; }
       const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 12);
+      // Video "berikutnya" untuk autoplay = rekomendasi teratas.
+      state._upNextFirstId = others.length ? others[0].id : null;
+      // Sinkronkan visual toggle Autoplay dengan preferensi tersimpan.
+      const _apT = document.querySelector(".ps-autoplay-toggle");
+      if (_apT) {
+        const _apOn = (typeof getPref === "function") ? getPref("player.autoplayNext", true) : true;
+        _apT.classList.toggle("on", _apOn);
+        _apT.setAttribute("aria-pressed", _apOn ? "true" : "false");
+      }
       // Kartu satuan up-next.
       const psCardHTML = (x) => {
         const xThumb = x.thumb || "";
@@ -46759,11 +46784,19 @@ async function openPlayer(id) {
       }
     });
     videoEl.addEventListener("ended", () => {
+      // Jangan proses saat pre-roll selesai (src sementara = video iklan).
+      if (videoEl._prerollActive) return;
       if (!state?.currentVideo) return;
       const idx = state.history.findIndex(h => h.videoId === state.currentVideo);
       if (idx >= 0) {
         state.history[idx].progress = 100;
         saveState();
+      }
+      // Autoplay: putar video berikutnya kalau toggle "Selanjutnya · Autoplay" aktif.
+      const apOn = (typeof getPref === "function") ? getPref("player.autoplayNext", true) : true;
+      const nextId = state._upNextFirstId;
+      if (apOn && nextId && nextId !== state.currentVideo && typeof openPlayer === "function") {
+        openPlayer(nextId);
       }
     });
   }

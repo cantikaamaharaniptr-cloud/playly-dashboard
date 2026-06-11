@@ -8337,9 +8337,11 @@ body[data-role="admin"] #playerSidebar { display: none; }
   background: #fff;
   border-radius: 50%;
   top: 2px;
-  right: 2px;
+  left: 2px;
+  transition: transform .15s ease;
 }
 .ps-autoplay-toggle.on .ps-autoplay-pill { background: var(--primary, #6D2932); }
+.ps-autoplay-toggle.on .ps-autoplay-pill i { transform: translateX(12px); }
 .ps-related-list { display: flex; flex-direction: column; gap: 8px; }
 .ps-related-item {
   display: grid;
