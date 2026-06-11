@@ -29109,7 +29109,9 @@ body.player-view-active #cplSettingsBtn { display: none !important; }
   pointer-events: none;
   box-shadow: 0 -1px 0 rgba(0,0,0,.25);
 }
-.player-screen > .ad-runtext-lower3.ad-pos-bottom { bottom: 50px !important; top: auto !important; }
+/* 62px = di atas control bar (50px) + garis seek .cpl-progress & thumb (~57px),
+   supaya ticker tak menutupi garis durasi saat kontrol tampil. */
+.player-screen > .ad-runtext-lower3.ad-pos-bottom { bottom: 62px !important; top: auto !important; }
 .player-screen > .ad-runtext-lower3.ad-pos-top { top: 0 !important; bottom: auto !important; }
 
 /* Tombol "←" ringkas di topbar — menggantikan baris .player-back-row di atas
