@@ -29017,16 +29017,25 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
 }
 /* Banner iklan bawah (.pab-slot) → slot kosong ber-frame (teks & gambar) */
 .pab-slot {
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  position: relative !important;
+  background: var(--bg-elev) !important;
   background-image: none !important;
-  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
   box-shadow: none !important; overflow: hidden !important;
 }
 .pab-slot > * { display: none !important; }
+/* Label "IKLAN" pojok kiri-atas — slot terlihat disengaja, bukan kotak kosong */
+.pab-slot::before {
+  content: "Iklan" !important;
+  position: absolute !important; top: 6px !important; left: 11px !important;
+  font-size: 9px !important; font-weight: 700 !important; letter-spacing: .12em !important; text-transform: uppercase !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 40%, transparent) !important;
+}
 .pab-slot::after {
   content: "Slot Iklan" !important;
-  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
   font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
 }
 /* Ticker promo atas (.ptk) → kosongkan teks dummy (slot tetap = preview) */
@@ -29038,22 +29047,11 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
   font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
 }
-/* ===== ROMBAK TOTAL IKLAN — konsolidasi bersih (gaya streaming Hulu/Tubi/Pluto).
-   Iklan utama = JEDA IN-PLAYER (.ad-break). Halaman watch tak lagi penuh slot
-   berserakan: ticker promo atas + strip banner bawah DIHAPUS, sidebar cukup 1
-   slot companion. Slot tetap kosong (admin Ad Manager yang isi). ===== */
-body.player-view-active #playerTicker,
-body.player-view-active #playerAdBanner { display: none !important; }
-/* Tanpa ticker, topbar tak perlu offset — padding normal saja. */
-body.player-view-active main.main { padding-top: 16px; }
-/* Sidebar: sisakan 1 slot iklan companion; sembunyikan slot mini yang redundan. */
-.player-side .ps-ad-mini { display: none !important; }
-/* Companion ad: tampil rapi sebagai 1 kartu bersih di bawah rekomendasi. */
-.player-side .ps-ad:not(.ps-ad-hero) {
-  margin-top: 4px;
-  border-radius: 14px !important;
-  min-height: 120px !important;
-}
+/* ===== IKLAN — semua slot TETAP ADA (diisi admin Ad Manager), tapi DIRAPIKAN
+   jadi bersih & konsisten (bukan kotak dashed berserakan). ===== */
+/* Ticker promo fixed di atas → beri ruang ke topbar saat ticker tampil. */
+body.player-view-active:has(#playerTicker:not([hidden])) main.main { padding-top: 52px; }
+.player-side .ps-ad:not(.ps-ad-hero) { margin-top: 12px; }
 
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
