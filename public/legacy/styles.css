@@ -8114,14 +8114,14 @@ body[data-role="admin"] .featured-badge {
   flex-direction: column;
 }
 .player-side {
-  position: sticky;
-  top: 16px;
+  /* Tumbuh penuh mengikuti halaman — JANGAN sticky + max-height + overflow:
+     dulu sidebar di-clip pada calc(100vh-80px) dgn scrollbar disembunyikan,
+     jadi kartu "Selanjutnya" terakhir kepotong & tak ada petunjuk bisa di-scroll.
+     Sekarang seluruh daftar terjangkau lewat scroll halaman biasa. */
+  position: static;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  scrollbar-width: none;
   padding-bottom: 20px;
 }
 .player-side::-webkit-scrollbar { display: none; }
