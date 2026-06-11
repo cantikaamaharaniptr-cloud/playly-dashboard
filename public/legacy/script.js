@@ -46528,8 +46528,13 @@ async function openPlayer(id) {
     }
     const sideEl = document.getElementById("playerRelatedList");
     if (sideEl && document.body.dataset.role !== "admin") {
-      const all = (typeof videos !== "undefined" && Array.isArray(videos)) ? videos : [];
-      const others = all.filter(x => x && x.id !== id).slice(0, 10);
+      // Up-next dari seluruh platform (termasuk konten demo) — bukan hanya
+      // global `videos` yg sering kosong. Supaya "Selanjutnya" selalu berisi
+      // rekomendasi (mirip platform video profesional).
+      let all = [];
+      try { all = (typeof allVideos === "function") ? allVideos() : ((typeof videos !== "undefined" && Array.isArray(videos)) ? videos : []); } catch { all = []; }
+      const me0 = (user?.username || "").toLowerCase();
+      const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 10);
       sideEl.innerHTML = others.length ? others.map(x => {
         const xThumb = x.thumb || `https://picsum.photos/seed/playly-${x.id || Math.random()}/240/135`;
         const xUploaded = (() => {

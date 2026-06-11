@@ -29032,6 +29032,13 @@ body.player-view-active:has(#playerTicker:not([hidden])) main.main {
   padding-top: 52px; /* 16px bawaan + 36px tinggi ticker */
 }
 
+/* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
+/* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
+.player-floating-banner { display: none !important; }
+/* Sidebar: dahulukan "Selanjutnya" (rekomendasi) di atas, slot iklan menyusul. */
+.player-side { display: flex; flex-direction: column; }
+.player-side .ps-section { order: -1; }
+
 @keyframes spin {
   from { transform: rotate(0); }
   to { transform: rotate(360deg); }
