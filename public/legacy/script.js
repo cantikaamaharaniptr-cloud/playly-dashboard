@@ -46612,9 +46612,9 @@ async function openPlayer(id) {
       // rekomendasi (mirip platform video profesional).
       let all = [];
       try { all = (typeof allVideos === "function") ? allVideos() : ((typeof videos !== "undefined" && Array.isArray(videos)) ? videos : []); } catch { all = []; }
-      const me0 = (user?.username || "").toLowerCase();
-      const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 10);
-      sideEl.innerHTML = others.length ? others.map(x => {
+      const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 12);
+      // Kartu satuan up-next.
+      const psCardHTML = (x) => {
         const xThumb = x.thumb || "";
         const xUploaded = (() => {
           const ts = Number(x.uploadedAt || x.createdAt || (typeof x.id === "number" && x.id > 1e12 ? x.id : 0));
@@ -46639,7 +46639,30 @@ async function openPlayer(id) {
             </div>
           </div>
         `;
-      }).join("") : `<div style="font-size:12px;color:var(--muted);padding:14px;text-align:center">Tidak ada video lain.</div>`;
+      };
+      // Batasi tampilan awal (5) supaya sidebar tak memanjang ke bawah saat video
+      // banyak; sisanya dibuka lewat tombol "Muat lebih banyak" (req user
+      // 2026-06-11). Tetap scroll halaman biasa, bukan clip.
+      const PS_INITIAL = 5;
+      const paintRelated = (limit) => {
+        if (!others.length) {
+          sideEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:14px;text-align:center">Tidak ada video lain.</div>`;
+          return;
+        }
+        const shown = others.slice(0, limit);
+        const moreCount = others.length - shown.length;
+        let foot = "";
+        if (moreCount > 0) foot = `<button class="ps-related-more" type="button" data-ps-more>Muat ${moreCount} lainnya</button>`;
+        else if (others.length > PS_INITIAL) foot = `<button class="ps-related-more" type="button" data-ps-less>Tampilkan lebih sedikit</button>`;
+        sideEl.innerHTML = shown.map(psCardHTML).join("") + foot;
+      };
+      paintRelated(PS_INITIAL);
+      // Toggle muat-lebih / lebih-sedikit. preventDefault+stopPropagation hanya
+      // untuk tombol; klik kartu tetap menggelembung ke handler [data-ps-open].
+      sideEl.onclick = (e) => {
+        if (e.target.closest("[data-ps-more]")) { e.preventDefault(); e.stopPropagation(); paintRelated(others.length); }
+        else if (e.target.closest("[data-ps-less]")) { e.preventDefault(); e.stopPropagation(); paintRelated(PS_INITIAL); sideEl.scrollIntoView({ block: "start", behavior: "smooth" }); }
+      };
     }
   } catch (_) {}
 

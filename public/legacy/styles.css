@@ -8398,6 +8398,23 @@ body[data-role="admin"] #playerSidebar { display: none; }
   color: var(--muted);
   margin-top: auto;
 }
+/* Tombol "Muat lebih banyak / Tampilkan lebih sedikit" up-next — bertema cream,
+   jaga sidebar tetap ringkas saat video banyak (bukan memanjang ke bawah). */
+.ps-related-more {
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.ps-related-more:hover { background: rgba(232,216,196,.08); border-color: rgba(232,216,196,.28); }
+.ps-related-more:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 1px; }
 .player-side-head {
   display: flex;
   align-items: center;
