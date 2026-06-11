@@ -29026,10 +29026,21 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
   font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
 }
-/* Ticker fixed (h:36) menutupi atas topbar → beri ruang ke main.main HANYA saat
-   ticker benar-benar tampil (user free di player; admin/premium ticker hidden). */
-body.player-view-active:has(#playerTicker:not([hidden])) main.main {
-  padding-top: 52px; /* 16px bawaan + 36px tinggi ticker */
+/* ===== ROMBAK TOTAL IKLAN — konsolidasi bersih (gaya streaming Hulu/Tubi/Pluto).
+   Iklan utama = JEDA IN-PLAYER (.ad-break). Halaman watch tak lagi penuh slot
+   berserakan: ticker promo atas + strip banner bawah DIHAPUS, sidebar cukup 1
+   slot companion. Slot tetap kosong (admin Ad Manager yang isi). ===== */
+body.player-view-active #playerTicker,
+body.player-view-active #playerAdBanner { display: none !important; }
+/* Tanpa ticker, topbar tak perlu offset — padding normal saja. */
+body.player-view-active main.main { padding-top: 16px; }
+/* Sidebar: sisakan 1 slot iklan companion; sembunyikan slot mini yang redundan. */
+.player-side .ps-ad-mini { display: none !important; }
+/* Companion ad: tampil rapi sebagai 1 kartu bersih di bawah rekomendasi. */
+.player-side .ps-ad:not(.ps-ad-hero) {
+  margin-top: 4px;
+  border-radius: 14px !important;
+  min-height: 120px !important;
 }
 
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
