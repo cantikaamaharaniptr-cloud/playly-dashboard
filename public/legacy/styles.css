@@ -63702,6 +63702,23 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 .upf-seg input[type="radio"]:checked + .upf-seg-card {
   background: rgba(109, 41, 50, .12);
 }
+/* Opsi 18+ — penanda konten dewasa (status indicator, bukan focus ring). */
+.upf-seg input[value="18+"] + .upf-seg-card strong { color: var(--danger, #ef4444); }
+.upf-seg input[value="18+"]:checked ~ .upf-seg-card,
+.upf-seg input[value="18+"]:checked + .upf-seg-card {
+  background: rgba(239, 68, 68, .14);
+}
+/* Catatan dinamis visibilitas 18+ di bawah kontrol audiens. */
+.upf-audience-note {
+  margin: 8px 2px 0;
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--danger, #ef4444);
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .25);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
 .upf-seg input[type="radio"]:focus-visible + .upf-seg-card {
   outline: 2px solid var(--primary, #6D2932);
   outline-offset: -2px;

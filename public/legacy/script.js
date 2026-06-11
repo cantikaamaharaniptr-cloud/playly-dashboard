@@ -44608,6 +44608,20 @@ async function fetchVideoOEmbed(data) {
   } catch { return null; }
 }
 
+// Toggle catatan visibilitas 18+ pada form upload/edit saat audiens dipilih.
+(function () {
+  function syncUpAudienceNote() {
+    const note = document.getElementById("upAudienceNote");
+    if (!note) return;
+    const v = document.querySelector('input[name="upAudience"]:checked')?.value;
+    note.hidden = v !== "18+";
+  }
+  document.addEventListener("change", e => {
+    if (e.target && e.target.name === "upAudience") syncUpAudienceNote();
+  });
+  window._syncUpAudienceNote = syncUpAudienceNote; // dipanggil saat reset/populate edit
+})();
+
 // Set autofill fields with animation indicator
 function setAutofillField(id, value, isNew) {
   const el = document.getElementById(id);
@@ -44933,6 +44947,7 @@ $("#startUpload")?.addEventListener("click", async () => {
       if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
       const visPub = document.querySelector('input[name="upVisibility"][value="public"]'); if (visPub) visPub.checked = true;
       const audAll = document.querySelector('input[name="upAudience"][value="all"]'); if (audAll) audAll.checked = true;
+      if (typeof window._syncUpAudienceNote === "function") window._syncUpAudienceNote();
       if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
       if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
       if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
