@@ -37489,6 +37489,101 @@ function videoMatchesTag(v, tag) {
 
 let discoverQuery = "";
 
+// ============== ALGORITMA PERINGKAT FEED JELAJAH (Discover/FYP) ==============
+// Feed bukan lagi daftar acak — tiap video diberi SKOR lalu diurutkan. Skor =
+// engagement (log-damped) × campuran recency, dikali boost personalisasi
+// (kreator yang di-follow + kategori favorit), diturunkan kalau sudah ditonton/
+// di-like, plus baseline kecil supaya video baru (0 view) tetap kebagian
+// exposure (cold-start). Bobot di bawah sengaja dibuat eksplisit agar gampang
+// di-tune. Deterministik (tak pakai Math.random) supaya urutan stabil saat feed
+// re-render (mis. tiap ketukan di kotak cari).
+function _fypNum(x) { const n = Number(x); return Number.isFinite(n) ? n : 0; }
+function _fypViews(v)    { return _fypNum(v.viewsNum != null ? v.viewsNum : v.views); }
+function _fypLikes(v)    { return _fypNum(v.likes); }
+function _fypShares(v)   { return _fypNum(v.shares); }
+function _fypComments(v) {
+  if (typeof v.commentsCount === "number") return v.commentsCount;
+  if (typeof v.comments === "number") return v.comments;
+  if (v.comments && typeof v.comments === "object") return Object.keys(v.comments).length;
+  return 0;
+}
+function _fypTime(v) {
+  if (v.publishedAt) { const t = Date.parse(v.publishedAt); if (!isNaN(t)) return t; }
+  if (v.uploadedAt) return _fypNum(v.uploadedAt);
+  if (v.createdAt)  return _fypNum(v.createdAt);
+  return 0; // tak ada timestamp → recency netral
+}
+
+// Kumpulkan konteks personalisasi dari state user (sekali per render).
+function _fypContext() {
+  const now = Date.now();
+  const st = (typeof state === "object" && state) ? state : {};
+  const following = new Set((st.followingCreators || []).map(x => String(x).toLowerCase()));
+  const liked = new Set(st.liked || []);
+  const seen  = new Set((st.history || []).map(h => h && h.videoId).filter(id => id != null));
+  // Kategori favorit: frekuensi kategori dari video yang di-like + history terbaru.
+  const idMap = new Map();
+  try { (typeof allVideos === "function" ? allVideos() : []).forEach(v => idMap.set(v.id, v)); } catch {}
+  const catCount = {};
+  const tally = (id) => { const vid = idMap.get(id); if (vid && vid.category) catCount[vid.category] = (catCount[vid.category] || 0) + 1; };
+  (st.liked || []).forEach(tally);
+  (st.history || []).slice(0, 30).forEach(h => h && tally(h.videoId));
+  const favCats = new Set(
+    Object.entries(catCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c)
+  );
+  return { now, following, liked, seen, favCats };
+}
+
+function _fypScore(v, ctx) {
+  // 1) Engagement — log10 supaya video viral tak menelan semua; interaksi
+  //    (komentar/share) dibobot lebih tinggi dari sekadar view.
+  const engagement =
+      1.0 * Math.log10(1 + _fypViews(v))
+    + 1.6 * Math.log10(1 + _fypLikes(v))
+    + 2.2 * Math.log10(1 + _fypComments(v))
+    + 1.8 * Math.log10(1 + _fypShares(v));
+
+  // 2) Recency — decay half-life 60 jam (1.0 baru → .5 @60j → .25 @120j).
+  let recency = 0.5;
+  const t = _fypTime(v);
+  if (t > 0) {
+    const ageH = Math.max(0, (ctx.now - t) / 3600000);
+    recency = Math.pow(0.5, ageH / 60);
+  }
+  // +0.3 baseline: video 0-engagement (baru upload) tetap dapat skor dari
+  //    recency → cold-start, tidak langsung tenggelam.
+  let score = (engagement + 0.3) * (0.45 + 0.55 * recency);
+
+  // 3) Personalisasi
+  const creator = (v.creator || "").toLowerCase();
+  if (ctx.following.has(creator)) score *= 1.35;                 // kreator di-follow
+  if (v.category && ctx.favCats.has(v.category)) score *= 1.25;  // kategori favorit
+
+  // 4) Sudah dikonsumsi → turunkan (tidak disembunyikan total)
+  if (ctx.seen.has(v.id))  score *= 0.45;
+  if (ctx.liked.has(v.id)) score *= 0.60;
+
+  // 5) Jitter deterministik kecil (pakai id) biar tak kaku saat skor mirip.
+  score *= 0.96 + 0.08 * (((_fypNum(v.id)) % 7) / 7);
+  return score;
+}
+
+// Urutkan + diversifikasi: hindari >2 video berturut dari kreator yang sama.
+function _fypRank(list) {
+  const ctx = _fypContext();
+  const scored = list.map(v => ({ v, s: _fypScore(v, ctx) })).sort((a, b) => b.s - a.s);
+  const out = [], deferred = [];
+  let lastCreator = null, streak = 0;
+  for (const item of scored) {
+    const c = (item.v.creator || "").toLowerCase();
+    if (c && c === lastCreator && streak >= 2) { deferred.push(item); continue; }
+    out.push(item);
+    if (c === lastCreator) streak++; else { lastCreator = c; streak = 1; }
+  }
+  for (const item of deferred) out.push(item); // sisanya menyusul (tetap urut skor)
+  return out.map(x => x.v);
+}
+
 function getFypVideos() {
   // Discover hanya menampilkan video dari kreator LAIN — bukan video sendiri.
   // User bisa lihat video mereka di "My Library". Discover = explore.
@@ -37505,7 +37600,8 @@ function getFypVideos() {
       (v.desc || "").toLowerCase().includes(q)
     );
   }
-  return all;
+  // Terapkan algoritma peringkat (skor + diversifikasi) sebelum dirender.
+  return _fypRank(all);
 }
 
 function renderFYP() {
