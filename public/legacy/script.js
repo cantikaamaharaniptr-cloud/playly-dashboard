@@ -46652,11 +46652,10 @@ async function openPlayer(id) {
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
   const descToggle = $("#pvDescToggle");
-  // Deskripsi: hashtag (#word) jadi pill clickable (reuse linkifyHashtags) +
-  // tampilkan tag eksplisit (v.tags) sebagai chip. Data ASLI dari video.
-  if (descEl) descEl.innerHTML = (typeof linkifyHashtags === "function") ? linkifyHashtags(v.desc || "") : escapeHtml(v.desc || "");
-  ensurePlayerTags(v);
-  ensurePlayerChapters(v);
+  if (descEl) descEl.textContent = v.desc || "";
+  // Sembunyikan box deskripsi kalau video tak punya deskripsi — jangan tampilkan
+  // bar kosong/abu-abu di bawah channel (req user 2026-06-11).
+  if (descBox) descBox.hidden = !(v.desc && v.desc.trim());
   // Reset desc box to collapsed state for each new video
   if (descBox) descBox.classList.remove("expanded");
   if (descToggle) {

@@ -29068,6 +29068,9 @@ body.player-view-active main.main { padding-top: 16px; }
 body.player-view-active #cplCloseBtn,
 body.player-view-active #cplSettingsBtn { display: none !important; }
 
+/* Box deskripsi: jangan tampil sebagai bar kosong saat video tak punya desc. */
+.player-info .pv-desc-box[hidden] { display: none !important; }
+
 /* Running text full player = overlay lower-third ala ticker TV (Hulu/Pluto):
    strip DI DALAM frame video, di tepi (bawah default) DI ATAS control bar 50px,
    z-index di atas cpl-overlay (z-index 4) → selalu kelihatan saat nonton tanpa
