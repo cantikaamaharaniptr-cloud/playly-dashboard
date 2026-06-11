@@ -29026,6 +29026,11 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
   font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
 }
+/* Ticker fixed (h:36) menutupi atas topbar → beri ruang ke main.main HANYA saat
+   ticker benar-benar tampil (user free di player; admin/premium ticker hidden). */
+body.player-view-active:has(#playerTicker:not([hidden])) main.main {
+  padding-top: 52px; /* 16px bawaan + 36px tinggi ticker */
+}
 
 @keyframes spin {
   from { transform: rotate(0); }
