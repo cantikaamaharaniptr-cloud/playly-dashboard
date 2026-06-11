@@ -25670,13 +25670,14 @@ function injectRunningText(screen, c) {
   // baru insert relatif ke situ. insertBefore(node, null) = append (aman).
   let ref = anchor;
   while (ref && ref.parentNode && ref.parentNode !== outer) ref = ref.parentNode;
-  // FULL PLAYER: taruh running text TEPAT di bawah/atas video (dalam .player-main)
-  // supaya KELIHATAN saat user free nonton — bukan di paling bawah halaman
-  // (di bawah komentar). Inline player tetap pakai logika outer di bawah.
-  const pmain = screen.closest(".player-main");
-  if (pmain && screen.parentNode === pmain) {
-    if (pos === "top") pmain.insertBefore(overlay, screen);
-    else pmain.insertBefore(overlay, screen.nextSibling);
+  // FULL PLAYER: running text = overlay lower-third ala ticker TV (Hulu/Pluto).
+  // Taruh DI DALAM frame video (.player-screen), strip tepi DI ATAS control bar
+  // (z-index di atas cpl-overlay) → selalu kelihatan saat nonton tanpa mendorong
+  // judul/komentar ke bawah. Di-cleanup oleh sweep ".ad-overlay" di applyAdOverlays.
+  const inFullPlayer = screen.classList.contains("player-screen") && screen.closest(".player-page");
+  if (inFullPlayer) {
+    overlay.classList.add("ad-runtext-lower3");
+    screen.appendChild(overlay);
   } else if (!ref || ref.parentNode !== outer) {
     outer.appendChild(overlay);
   } else if (pos === "top") {
@@ -51650,6 +51651,24 @@ function initYTControls(iframe) {
 document.getElementById("playerBackBtn")?.addEventListener("click", () => {
   document.getElementById("cplCloseBtn")?.click();
 });
+
+// Tombol "←" ringkas di topbar (sebelah breadcrumb) — tampil HANYA di player view
+// (CSS body.player-view-active). Menggantikan baris .player-back-row yang makan
+// satu baris di atas video, jadi video bisa naik. Proxy ke #playerBackBtn.
+(function injectTopbarBackBtn() {
+  const topbar = document.querySelector(".topbar");
+  const crumb = document.getElementById("breadcrumb");
+  if (!topbar || !crumb || document.getElementById("topbarBackBtn")) return;
+  const btn = document.createElement("button");
+  btn.id = "topbarBackBtn";
+  btn.type = "button";
+  btn.className = "topbar-back-btn";
+  btn.title = "Kembali";
+  btn.setAttribute("aria-label", "Kembali");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+  btn.addEventListener("click", () => document.getElementById("playerBackBtn")?.click());
+  topbar.insertBefore(btn, crumb);
+})();
 
 
 // =====================================================================

@@ -29068,6 +29068,44 @@ body.player-view-active main.main { padding-top: 16px; }
 body.player-view-active #cplCloseBtn,
 body.player-view-active #cplSettingsBtn { display: none !important; }
 
+/* Running text full player = overlay lower-third ala ticker TV (Hulu/Pluto):
+   strip DI DALAM frame video, di tepi (bawah default) DI ATAS control bar 50px,
+   z-index di atas cpl-overlay (z-index 4) → selalu kelihatan saat nonton tanpa
+   mendorong judul/komentar. pointer-events:none agar tak blokir klik video. */
+.player-screen > .ad-runtext-lower3 {
+  position: absolute !important;   /* lawan .ad-runtext-outside { position: static } */
+  left: 0 !important; right: 0 !important;
+  z-index: 5;
+  margin: 0 !important;
+  border-radius: 0;
+  pointer-events: none;
+  box-shadow: 0 -1px 0 rgba(0,0,0,.25);
+}
+.player-screen > .ad-runtext-lower3.ad-pos-bottom { bottom: 50px !important; top: auto !important; }
+.player-screen > .ad-runtext-lower3.ad-pos-top { top: 0 !important; bottom: auto !important; }
+
+/* Tombol "←" ringkas di topbar — menggantikan baris .player-back-row di atas
+   video. Muncul hanya di player view; tema cream netral, fokus ring cream. */
+.topbar-back-btn {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.topbar-back-btn:hover { background: rgba(232,216,196,.08); border-color: rgba(232,216,196,.28); }
+.topbar-back-btn:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 1px; }
+body.player-view-active .topbar-back-btn { display: inline-flex; }
+/* Baris Kembali lama disembunyikan di full player (digantikan tombol topbar). */
+body.player-view-active .player-back-row { display: none !important; }
+
 /* Iklan admin harus KELIHATAN saat nonton (user free):
    - Side banner (hero) di ATAS sidebar, sebelah video — bukan di bawah up-next. */
 .player-side .ps-ad-hero { order: -2; }
