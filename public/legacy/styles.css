@@ -28981,6 +28981,52 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
 }
 .fyp-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
 
+/* ===================================================================
+   IKLAN — kosongkan SEMUA iklan dummy hardcoded jadi slot kosong. Iklan asli
+   nanti datang dari Ad Manager admin (in-player), BUKAN dummy. (Reuse dari
+   din/iklan-kosong.) Hero admin-driven (.ps-ad-hero) DIBIARKAN.
+   =================================================================== */
+/* Sidebar player: kartu Google Ads + mini dummy → slot kosong */
+#playerSidebar .ps-ad:not(.ps-ad-hero) {
+  position: relative !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  min-height: 84px !important;
+  box-shadow: none !important;
+}
+#playerSidebar .ps-ad:not(.ps-ad-hero) > * { visibility: hidden !important; }
+#playerSidebar .ps-ad:not(.ps-ad-hero)::after {
+  content: "Slot Iklan" !important;
+  position: absolute !important; inset: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+  pointer-events: none !important;
+}
+/* Banner iklan bawah (.pab-slot) → slot kosong ber-frame (teks & gambar) */
+.pab-slot {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  background-image: none !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  box-shadow: none !important; overflow: hidden !important;
+}
+.pab-slot > * { display: none !important; }
+.pab-slot::after {
+  content: "Slot Iklan" !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+}
+/* Ticker promo atas (.ptk) → kosongkan teks dummy (slot tetap = preview) */
+.ptk-text { visibility: hidden !important; }
+.ptk-runway { position: relative !important; }
+.ptk-runway::after {
+  content: "Slot promo" !important;
+  position: absolute !important; left: 14px !important; top: 50% !important; transform: translateY(-50%) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
+  font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
+}
+
 @keyframes spin {
   from { transform: rotate(0); }
   to { transform: rotate(360deg); }
