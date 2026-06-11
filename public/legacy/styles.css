@@ -3627,6 +3627,11 @@ body[data-theme="light"] .trending-retry-btn:hover {
   border-color: var(--border);
   transform: translateX(2px);
 }
+/* Tag tren yang sedang dipakai sebagai filter feed (active-state, wine OK). */
+.trending-item.active {
+  background: rgba(109, 41, 50, .18);
+  border-color: rgba(109, 41, 50, .45);
+}
 .trending-rank {
   font-family: 'Inter', sans-serif;
   font-size: 18px;

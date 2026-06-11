@@ -37921,9 +37921,72 @@ document.addEventListener("click", (e) => {
   renderTrendingNews(targetId, category, { forceRefresh: true });
 });
 
-// Backwards-compat — keep existing call sites working
-function renderDiscoverTrending(category = "top") {
-  return renderTrendingNews("discoverTrendingList", category);
+// ====== TRENDING INTERNAL — hashtag paling ramai DARI KONTEN PLATFORM ======
+// Mengganti berita eksternal (Google News) dgn tren asli Playly: hashtag/tag
+// diberi bobot engagement×recency dari video platform. Klik tag → filter feed
+// (fypTagFilter) — sinergi dgn algoritma konten. (renderTrendingNews tetap ada
+// untuk pemakai lain spt home, tidak dihapus.)
+function renderDiscoverTrendingInternal() {
+  const list = document.getElementById("discoverTrendingList");
+  if (!list) return;
+  // Sembunyikan tab kategori berita (tak relevan untuk tren internal).
+  const tabs = document.getElementById("discoverTrendingTabs");
+  if (tabs) tabs.style.display = "none";
+  // Pill: data platform live (bukan cache/offline berita).
+  try {
+    const card = list.closest(".trending-card");
+    const pill = card?.querySelector(".trending-live-pill");
+    if (pill) { pill.classList.remove("is-cache", "is-fallback"); pill.innerHTML = '<span class="trending-live-dot"></span>LIVE'; }
+  } catch {}
+
+  const me = (user?.username || "").toLowerCase();
+  let vids = [];
+  try { vids = (typeof getPlatformVideos === "function" ? getPlatformVideos() : []).filter(v => (v.creator || "").toLowerCase() !== me); } catch {}
+  const now = Date.now();
+  const agg = {}; // tag -> { weight, count }
+  for (const v of vids) {
+    const eng = Math.log10(1 + _fypViews(v)) + 0.8 * Math.log10(1 + _fypLikes(v)) + 1.2 * Math.log10(1 + _fypComments(v));
+    const t = _fypTime(v);
+    let rec = 0.6;
+    if (t > 0) rec = Math.pow(0.5, Math.max(0, (now - t) / 3600000) / 72); // half-life 72 jam
+    const w = (eng + 0.2) * (0.5 + 0.5 * rec);
+    const tags = new Set();
+    if (Array.isArray(v.tags)) v.tags.forEach(t => { const s = String(t).toLowerCase().replace(/^#/, "").trim(); if (s) tags.add(s); });
+    if (typeof extractHashtags === "function") extractHashtags((v.title || "") + " " + (v.desc || v.description || "")).forEach(t => tags.add(t));
+    tags.forEach(tag => { const a = agg[tag] || (agg[tag] = { weight: 0, count: 0 }); a.weight += w; a.count++; });
+  }
+  const top = Object.entries(agg).sort((a, b) => b[1].weight - a[1].weight).slice(0, 6);
+  if (!top.length) {
+    list.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">🔥</div><p>Belum ada tren. Mulai upload &amp; beri tag videomu!</p></div>`;
+    return;
+  }
+  const trendIcon = (i) => i === 0 ? "↑" : i === 1 ? "→" : "↗";
+  list.innerHTML = top.map(([tag, info], i) => `
+    <div class="trending-item${fypTagFilter === tag ? " active" : ""}" data-fyp-tag="${escapeHtml(tag)}" role="button" tabindex="0">
+      <span class="trending-rank">#${i + 1}</span>
+      <span class="trending-info">
+        <span class="trending-cat">${info.count} video</span>
+        <strong>#${escapeHtml(tag)}</strong>
+        <small>lagi ramai</small>
+      </span>
+      <span class="trending-trend">${trendIcon(i)}</span>
+    </div>`).join("");
+  const apply = (b) => {
+    const tag = b.dataset.fypTag;
+    fypTagFilter = (fypTagFilter === tag) ? null : tag;
+    if (typeof renderFYP === "function") renderFYP();
+    document.getElementById("fypFeed")?.scrollTo({ top: 0, behavior: "smooth" });
+    list.querySelectorAll("[data-fyp-tag]").forEach(x => x.classList.toggle("active", x.dataset.fypTag === fypTagFilter));
+  };
+  list.querySelectorAll("[data-fyp-tag]").forEach(b => {
+    b.addEventListener("click", () => apply(b));
+    b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apply(b); } });
+  });
+}
+
+// Backwards-compat — keep existing call sites working (kini tren internal).
+function renderDiscoverTrending() {
+  return renderDiscoverTrendingInternal();
 }
 
 // Wire category tab click — switch category + re-render. Works untuk SEMUA
