@@ -4540,6 +4540,17 @@ function applyPrefSideEffects(key, val) {
     toast(val ? "✓ Autoplay video aktif" : "✓ Autoplay video dimatikan", "success");
   }
 
+  // Preferensi konten → pengaruhi feed Jelajah (filter dibaca di getFypVideos).
+  if (key === "content.adult") {
+    toast(val ? "✓ Konten 18+ ditampilkan" : "✓ Konten 18+ disembunyikan", "success");
+    try { if (typeof renderFYP === "function") renderFYP(); } catch {}
+    try { if (typeof renderDiscoverTrending === "function") renderDiscoverTrending(); } catch {}
+  }
+  if (key === "content.hideWatched") {
+    toast(val ? "✓ Video yang sudah ditonton disembunyikan" : "✓ Video yang sudah ditonton ditampilkan", "success");
+    try { if (typeof renderFYP === "function") renderFYP(); } catch {}
+  }
+
   // Notifikasi push browser → minta permission saat di-toggle ON
   if (key === "notif.push" && val && "Notification" in window) {
     if (Notification.permission === "default") {
