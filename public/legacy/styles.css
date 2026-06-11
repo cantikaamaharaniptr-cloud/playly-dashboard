@@ -29039,6 +29039,29 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: var(--muted);
 }
 .fyp-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+/* Ikon dalam lingkaran — senada empty-state kartu samping (suggest/trending). */
+.fyp-empty-icon {
+  width: 72px; height: 72px;
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(232, 216, 196, .12), transparent 60%),
+    var(--grad-soft);
+  border: 1px solid var(--border-strong);
+  color: var(--cream, #E8D8C4);
+  position: relative;
+}
+.fyp-empty-icon::before {
+  content: ''; position: absolute; inset: -7px;
+  border-radius: 50%; border: 1px dashed var(--border); opacity: .45;
+}
+.fyp-empty-icon svg { width: 30px; height: 30px; }
+/* Baris tombol aksi */
+.fyp-empty-actions {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  margin-top: 18px;
+}
 
 @keyframes spin {
   from { transform: rotate(0); }

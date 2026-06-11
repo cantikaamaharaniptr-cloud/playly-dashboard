@@ -37720,12 +37720,26 @@ function renderFYP() {
   renderDiscoverSidebar(); // refresh suggested + trending tiap kali feed re-render
 
   if (!videos.length) {
+    // Empty-state selevel kartu samping: ikon dalam lingkaran + tombol aksi
+    // supaya area utama tidak terasa kosong/buntu.
+    const _IC = {
+      compass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+      search:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+      tag:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 12 22l-9-9V3h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg>',
+    };
     const emptyMsg = discoverQuery
-      ? { h: `Tidak ada hasil untuk "${escapeHtml(discoverQuery)}"`, p: "Coba kata kunci lain atau kosongkan kolom pencarian." }
+      ? { icon: _IC.search, h: `Tidak ada hasil untuk "${escapeHtml(discoverQuery)}"`, p: "Coba kata kunci lain atau kosongkan kolom pencarian.",
+          actions: `<button type="button" class="btn ghost" data-fyp-clear="search"><span data-no-i18n>Kosongkan pencarian</span></button>` }
       : fypTagFilter
-      ? { h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas." }
-      : { h: "Belum ada video di feed", p: "Upload video pertamamu atau follow kreator lain untuk mengisi feed!" };
-    feed.innerHTML = `<div class="fyp-empty"><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p></div>`;
+      ? { icon: _IC.tag, h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas.",
+          actions: `<button type="button" class="btn ghost" data-fyp-clear="tag"><span data-no-i18n>Hapus filter</span></button>` }
+      : { icon: _IC.compass, h: "Belum ada video di feed", p: "Upload video pertamamu atau follow kreator lain untuk mengisi feed!",
+          actions: `<button type="button" class="btn primary" data-jump="upload"><span data-no-i18n>Unggah Video</span></button><button type="button" class="btn ghost" data-jump="people"><span data-no-i18n>Cari Kreator</span></button>` };
+    feed.innerHTML = `<div class="fyp-empty"><div class="fyp-empty-icon">${emptyMsg.icon}</div><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p><div class="fyp-empty-actions">${emptyMsg.actions}</div></div>`;
+    feed.querySelector('[data-fyp-clear="search"]')?.addEventListener("click", () => {
+      discoverQuery = ""; const i = document.getElementById("discoverSearch"); if (i) i.value = ""; renderFYP();
+    });
+    feed.querySelector('[data-fyp-clear="tag"]')?.addEventListener("click", () => { fypTagFilter = null; renderFYP(); });
     return;
   }
 
