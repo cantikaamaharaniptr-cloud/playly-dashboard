@@ -352,10 +352,24 @@ console.info("%c[playly] script.js v583 (skeleton loading system + pricing modal
       // Special: watch/:videoId → openPlayer(id)
       if ((section === "watch" || section === "player") && param) {
         const vid = /^\d+$/.test(param) ? parseInt(param, 10) : param;
-        if (typeof window.openPlayer === "function") {
-          window.openPlayer(vid);
-        } else if (typeof openPlayer === "function") {
-          openPlayer(vid);
+        const openFn = (typeof window.openPlayer === "function") ? window.openPlayer
+                     : (typeof openPlayer === "function") ? openPlayer : null;
+        if (openFn) {
+          // Deep-link: data video (konten demo / state cloud) bisa BELUM siap saat
+          // hash di-route → openPlayer gagal temukan video (judul placeholder).
+          // Retry singkat sampai video findable, baru buka, supaya metadata kebaca.
+          // Buka HANYA saat video sudah findable. Deep-link sering jalan sebelum
+          // data siap (konten demo di-seed / state cloud sync ~3-4s) → kalau buka
+          // prematur, openPlayer early-return & player jadi cangkang kosong (judul
+          // "Judul Video", src kosong). Poll sabar sampai findVideo sukses (cap ~6s),
+          // baru buka. (req user 2026-06-11)
+          const tryOpen = (n) => {
+            let ready = false;
+            try { ready = (typeof findVideo === "function") && !!findVideo(vid); } catch (_) {}
+            if (ready || n >= 40) { openFn(vid); return; }
+            setTimeout(() => tryOpen(n + 1), 150);
+          };
+          tryOpen(0);
         }
         return;
       }
@@ -47318,10 +47332,20 @@ function setupCustomPlayer() {
     switchView(state?.prevView || "home");
   });
 
-  // Expand → open video in public watch tab
+  // Expand → buka video di tab baru.
+  // Video DEMO hanya ada di mode ?demo=1 (client-side, TIDAK di cloud) → link
+  // publik /watch?v= akan "Video tidak ditemukan". Jadi untuk demo buka rute SPA
+  // + flag demo. Video ASLI (di-upload) tetap pakai link publik cloud. (req user)
   expandBtn?.addEventListener("click", () => {
     const vid = state?.currentVideo;
-    if (vid) window.open(`/watch?v=${vid}`, "_blank", "noopener");
+    if (!vid) return;
+    let isDemo = false;
+    try {
+      const vObj = (typeof allVideos === "function") ? allVideos().find(x => x && x.id === vid) : null;
+      isDemo = !!(vObj && vObj.isDemoContent) || localStorage.getItem("playly-demo") === "1";
+    } catch (_) {}
+    const url = isDemo ? `/?demo=1#/watch/${vid}` : `/watch?v=${vid}`;
+    window.open(url, "_blank", "noopener");
   });
 
   // ── Zoom / Fullscreen (tombol baru di kanan bawah) ──
