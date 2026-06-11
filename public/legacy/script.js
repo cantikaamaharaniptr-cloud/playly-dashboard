@@ -46483,6 +46483,65 @@ function closeLibInlinePlayer() {
   });
 })();
 
+// ===== DANMAKU (gaya Niconico) — komentar menyapu melintang di atas video =====
+let _danmakuTimer = null;
+const _DANMAKU_SAMPLES = ["wkwk 😂", "keren parah 🔥", "first!", "mantap", "888888", "kualitasnya oke", "auto follow", "gokil sih", "editingnya rapi", "suaranya jernih", "nonton ulang 🔁", "real banget", "next-nya kapan?", "bg music-nya pas", "juara 👏", "semangat kak", "ditunggu part 2", "ngakak", "good vibes ✨", "rapi bgt", "ini sih candu", "skip iklan dulu"];
+function _danmakuLayer() {
+  const screen = document.querySelector(".player-screen");
+  if (!screen) return null;
+  let layer = screen.querySelector(".danmaku-layer");
+  if (!layer) { layer = document.createElement("div"); layer.className = "danmaku-layer"; screen.appendChild(layer); }
+  return layer;
+}
+function _spawnDanmaku(layer, text, opts) {
+  if (!layer || !text) return;
+  opts = opts || {};
+  const el = document.createElement("span");
+  el.className = "danmaku-item" + (opts.accent ? " danmaku-self" : "");
+  el.textContent = String(text).slice(0, 60);
+  const lane = (opts.lane != null) ? opts.lane : Math.floor(Math.random() * 9);
+  el.style.top = (5 + lane * 10) + "%";
+  el.style.animationDuration = (opts.dur || (8 + Math.random() * 5)).toFixed(1) + "s";
+  if (opts.delay) el.style.animationDelay = opts.delay + "s";
+  el.addEventListener("animationend", () => el.remove());
+  layer.appendChild(el);
+}
+function _renderDanmaku(v) {
+  const layer = _danmakuLayer();
+  if (!layer) return;
+  layer.innerHTML = "";
+  if (_danmakuTimer) { clearInterval(_danmakuTimer); _danmakuTimer = null; }
+  // Toggle on/off (kiri-atas video) — gaya Niconico.
+  const screen = layer.parentElement;
+  if (screen && !screen.querySelector(".danmaku-toggle")) {
+    const tg = document.createElement("button");
+    tg.type = "button"; tg.className = "danmaku-toggle";
+    tg.innerHTML = '<span class="dmk-ico" aria-hidden="true">💬</span><span class="dmk-lbl">Komentar layar</span>';
+    tg.addEventListener("click", () => { const off = screen.classList.toggle("danmaku-off"); tg.classList.toggle("is-off", off); });
+    screen.appendChild(tg);
+  }
+  const real = (state?.comments?.[v?.id] || []).map(c => c.text || c.body || "").filter(Boolean);
+  const pool = real.length ? real.concat(_DANMAKU_SAMPLES) : _DANMAKU_SAMPLES.slice();
+  // Burst awal + aliran tetap.
+  pool.slice(0, 7).forEach((t, k) => _spawnDanmaku(layer, t, { lane: k % 9, delay: (k * 0.45).toFixed(1) }));
+  let i = 0;
+  _danmakuTimer = setInterval(() => {
+    const ly = document.querySelector(".player-screen .danmaku-layer");
+    if (!ly || !document.querySelector('section.view[data-view="player"].active')) { clearInterval(_danmakuTimer); _danmakuTimer = null; return; }
+    _spawnDanmaku(ly, pool[i % pool.length], {});
+    i++;
+  }, 1400);
+}
+// Kirim komentar → ikut terbang sebagai danmaku (warna aksen). Capture phase
+// supaya membaca nilai sebelum handler asli mengosongkan field.
+document.addEventListener("click", (e) => {
+  if (e.target.closest && e.target.closest("#commentSend")) {
+    const f = document.getElementById("commentField");
+    const txt = f && f.value.trim();
+    if (txt) _spawnDanmaku(_danmakuLayer(), txt, { accent: true, lane: 4, dur: 9 });
+  }
+}, true);
+
 async function openPlayer(id) {
   const v = findVideo(id);
   if (!v) {
@@ -46609,6 +46668,7 @@ async function openPlayer(id) {
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
   $("#followBtn").textContent = state.followingCreators.includes(v.creator) ? "✓ Following" : "Follow";
+  try { _renderDanmaku(v); } catch (_) {}
 
   const videoEl = $("#videoEl");
   videoEl.poster = v.thumb;

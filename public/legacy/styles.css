@@ -29035,6 +29035,38 @@ body.player-view-active:has(#playerTicker:not([hidden])) main.main {
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
 .player-floating-banner { display: none !important; }
+
+/* ===== DANMAKU (gaya Niconico) — komentar menyapu melintang di atas video ===== */
+.player-screen { position: relative; }
+.danmaku-layer {
+  position: absolute; inset: 0; overflow: hidden;
+  pointer-events: none; z-index: 4;
+}
+.danmaku-item {
+  position: absolute; left: 100%; white-space: nowrap;
+  color: #fff; font-weight: 700; font-size: clamp(14px, 1.5vw, 20px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 3px rgba(0, 0, 0, .85);
+  animation-name: danmaku-fly; animation-timing-function: linear; animation-fill-mode: forwards;
+  will-change: transform;
+}
+.danmaku-item.danmaku-self {
+  color: #ffe2a3; /* komentar sendiri = aksen cream/gold */
+  text-shadow: 0 0 7px rgba(255, 200, 110, .65), 0 1px 3px rgba(0, 0, 0, .95);
+}
+@keyframes danmaku-fly { to { transform: translateX(calc(-100% - 82vw)); } }
+.player-screen.danmaku-off .danmaku-layer { display: none; }
+/* Toggle on/off danmaku (kiri-atas video) */
+.danmaku-toggle {
+  position: absolute; top: 12px; left: 12px; z-index: 6;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(20, 10, 13, .58); border: 1px solid rgba(232, 216, 196, .25);
+  color: var(--cream, #E8D8C4); font-size: 12px; font-weight: 600;
+  cursor: pointer; backdrop-filter: blur(8px); transition: background .15s, border-color .15s, opacity .15s;
+}
+.danmaku-toggle:hover { background: rgba(20, 10, 13, .8); border-color: rgba(232, 216, 196, .45); }
+.danmaku-toggle.is-off { opacity: .5; }
+.danmaku-toggle.is-off .dmk-lbl::after { content: " · off"; }
 /* Sidebar: dahulukan "Selanjutnya" (rekomendasi) di atas, slot iklan menyusul. */
 .player-side { display: flex; flex-direction: column; }
 .player-side .ps-section { order: -1; }
