@@ -27926,6 +27926,53 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
 /* === Discover layout: 2 KOLOM. Feed Untukmu KIRI (besar), KANAN stack 2 card
  * masing-masing kolom sendiri: Trending atas, Suggested Creators bawah.
  * Per request user 2026-05-10e — Feed kiri | (Trending atas / Suggested bawah). === */
+/* Jelajah header: judul kiri + kotak cari feed kanan (v695). Sebaris,
+   wrap ke bawah di layar sempit. */
+.fyp-view .view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.disc-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 280px;
+  min-width: 200px;
+}
+.disc-search-ico {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: rgba(232, 216, 196, .55);
+  pointer-events: none;
+}
+.disc-search-input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border-radius: 10px;
+  background: var(--bg-elev, #251419);
+  border: 1px solid var(--border, rgba(232, 216, 196, .14));
+  color: var(--text, #E8D8C4);
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.disc-search-input::placeholder { color: rgba(232, 216, 196, .4); }
+/* Fokus & hover NETRAL cream — jangan wine/gold/merah (aturan dashboard) */
+.disc-search-input:hover  { border-color: rgba(232, 216, 196, .3); }
+.disc-search-input:focus  { border-color: rgba(232, 216, 196, .5); }
+/* Hilangkan tombol clear bawaan search agar konsisten tema */
+.disc-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+@media (max-width: 560px) {
+  .disc-search-wrap { flex: 1 1 100%; }
+}
+
 .discover-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 24vw);
