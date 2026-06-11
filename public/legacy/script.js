@@ -37686,6 +37686,11 @@ function getFypVideos() {
   // User bisa lihat video mereka di "My Library". Discover = explore.
   const me = (user?.username || "").toLowerCase();
   let all = allVideos().filter(v => v.thumb && (v.creator || "").toLowerCase() !== me);
+  // Filter konten 18+ — sembunyikan secara default; tampil hanya kalau user
+  // mengaktifkan "Tampilkan konten 18+" di Pengaturan (state.showAdult).
+  if (!(typeof state === "object" && state && state.showAdult)) {
+    all = all.filter(v => String(v.audience || v.age || v.ageRating || "").toLowerCase() !== "18+");
+  }
   if (fypTagFilter) {
     all = all.filter(v => videoMatchesTag(v, fypTagFilter));
   }
@@ -37940,8 +37945,13 @@ function renderDiscoverTrendingInternal() {
   } catch {}
 
   const me = (user?.username || "").toLowerCase();
+  const showAdult = !!(typeof state === "object" && state && state.showAdult);
   let vids = [];
-  try { vids = (typeof getPlatformVideos === "function" ? getPlatformVideos() : []).filter(v => (v.creator || "").toLowerCase() !== me); } catch {}
+  try {
+    vids = (typeof getPlatformVideos === "function" ? getPlatformVideos() : [])
+      .filter(v => (v.creator || "").toLowerCase() !== me)
+      .filter(v => showAdult || String(v.audience || v.age || v.ageRating || "").toLowerCase() !== "18+");
+  } catch {}
   const now = Date.now();
   const agg = {}; // tag -> { weight, count }
   for (const v of vids) {
