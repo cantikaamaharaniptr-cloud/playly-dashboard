@@ -555,12 +555,19 @@ function _demoEnabled() {
 function _seedDemoAdConfig() {
   try {
     const ex = JSON.parse(localStorage.getItem("playly-ad-config") || "null");
-    const hasItems = ex && ["runningText", "banner", "preroll", "sideBanner"].some(k => ((ex[k] && ex[k].items) || []).length);
-    if (hasItems) return;
+    // Jangan timpa kalau admin sudah set iklan ASLI (id bukan "demo-").
+    // Kalau kosong / hanya berisi seed demo lama → (re)seed demo terbaru
+    // (mis. menambah contoh banner + pre-roll yang sebelumnya kosong).
+    const allItems = ex ? ["runningText", "banner", "preroll", "sideBanner"].flatMap(k => (ex[k] && ex[k].items) || []) : [];
+    if (allItems.some(it => it && it.id && !String(it.id).startsWith("demo-"))) return;
+    // Gambar banner: SVG data-URI (tak butuh internet) — promo Playly bertema wine.
+    const _bnImg = "data:image/svg+xml," + encodeURIComponent(
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6D2932'/><stop offset='1' stop-color='#2a1014'/></linearGradient></defs><rect width='320' height='96' rx='12' fill='url(#g)'/><text x='18' y='40' fill='#E8D8C4' font-family='Inter,sans-serif' font-size='19' font-weight='800'>Playly Premium</text><text x='18' y='64' fill='#E8D8C4' opacity='.82' font-family='Inter,sans-serif' font-size='12'>Bebas iklan · 4K · Coba 30 hari gratis</text><rect x='206' y='33' width='96' height='30' rx='15' fill='#E8D8C4'/><text x='254' y='53' fill='#3a1418' font-family='Inter,sans-serif' font-size='12' font-weight='700' text-anchor='middle'>Coba Gratis</text></svg>"
+    );
     localStorage.setItem("playly-ad-config", JSON.stringify({
       runningText: { rotation: "random", items: [{ id: "demo-rt", enabled: true, text: "🎉 Playly Premium diskon 50% — bebas iklan, kualitas 4K, tonton offline!", position: "bottom", bgColor: "#6D2932", bgOpacity: 88, textColor: "#FFFFFF", fontFamily: "Inter", padding: 8, speed: 60, link: "#" }] },
-      banner: { rotation: "random", items: [] },
-      preroll: { rotation: "random", items: [] },
+      banner: { rotation: "random", items: [{ id: "demo-bn", enabled: true, name: "Demo Banner Premium", imageUrl: _bnImg, linkUrl: "#", position: "top-right", showAfterSec: 2, closable: true, size: "medium", radius: 12, shadow: true, animation: "fade" }] },
+      preroll: { rotation: "random", items: [{ id: "demo-pr", enabled: true, name: "Demo Pre-roll", mediaType: "video", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", hasBlob: false, linkUrl: "#", skippable: true, skipAfterSec: 5 }] },
       sideBanner: { rotation: "random", items: [{ id: "demo-sb", enabled: true, badge: "50%", label: "Promo Spesial", title: "Upgrade ke Premium", subtitle: "Bebas iklan + 4K + download offline", gradient: "wine", cta: "Pelajari", ctaUrl: "#" }] }
     }));
   } catch (_) {}
@@ -25735,10 +25742,12 @@ function injectBanner(screen, c) {
   const linkOpen = c.linkUrl ? `<a href="${c.linkUrl}" target="_blank" rel="noopener">` : "";
   const linkClose = c.linkUrl ? `</a>` : "";
   overlay.innerHTML = `${linkOpen}<img src="${c.imageUrl}" alt="banner"/>${linkClose}${closeBtn}`;
-  // Attach OUTSIDE the video — naik ke .player-page (sibling area di sekitar
-  // video) supaya banner tidak menutupi video player. Fallback ke screen kalau
-  // page parent tidak ditemukan (mis. inline lib player).
-  const target = screen.closest(".player-page") || screen;
+  // Anchor DI FRAME VIDEO (.player-screen) supaya banner muncul di pojok video
+  // (dekat konten). Sebelumnya di-anchor ke .player-page yang tinggi → banner
+  // nyasar ~400px di bawah video, dekat komentar. Posisi pojok diatur via CSS
+  // (.player-screen > .ad-banner.*) agar tak bentrok ticker/kontrol. (review
+  // iklan 2026-06-11)
+  const target = screen;
   target.appendChild(overlay);
   if (c.closable) {
     // Behavior klik X (per request 2026-05-10):
