@@ -574,38 +574,52 @@ function chatRelTime(ts) {
 // Matikan: localStorage.removeItem("playly-demo").
 function _demoEnabled() {
   try {
-    // Pemicu lewat URL: buka `?demo=1` untuk hidupkan (persist), `?demo=0` matikan.
-    if (/[?&]demo=1\b/.test(location.search)) localStorage.setItem("playly-demo", "1");
-    else if (/[?&]demo=0\b/.test(location.search)) localStorage.removeItem("playly-demo");
-    const on = localStorage.getItem("playly-demo") === "1";
-    if (on && !window.__demoAdSeeded) { window.__demoAdSeeded = true; _seedDemoAdConfig(); }
-    return on;
+    // VIEW-ONLY (req user 2026-06-11): demo/dummy AKTIF hanya saat `?demo=1` ada
+    // di URL — TIDAK disimpan ke localStorage/cloud. Murni untuk lihat hasil.
+    // `?demo=1` tetap di query string selama sesi (hash-router tak menghapusnya).
+    return /[?&]demo=1\b/.test(location.search || "");
   } catch { return false; }
 }
-// Demo: isi sample config Ad Manager (kalau admin belum set apa pun) supaya
-// preview menampilkan iklan ADMIN ASLI (running-text + side banner) — bukti
-// halaman digerakkan config admin, bukan slot dummy. Admin set sendiri → ini
-// tak menimpa.
-function _seedDemoAdConfig() {
+// Config iklan DEMO — DIKEMBALIKAN in-memory (TIDAK ditulis ke storage). Dipakai
+// getAdConfig() saat demo aktif & admin belum set iklan apa pun. Hanya preview.
+function _demoAdConfig() {
+  // Gambar banner: SVG data-URI (tak butuh internet) — promo Playly bertema wine.
+  const _bnImg = "data:image/svg+xml," + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6D2932'/><stop offset='1' stop-color='#2a1014'/></linearGradient></defs><rect width='320' height='96' rx='12' fill='url(#g)'/><text x='18' y='40' fill='#E8D8C4' font-family='Inter,sans-serif' font-size='19' font-weight='800'>Playly Premium</text><text x='18' y='64' fill='#E8D8C4' opacity='.82' font-family='Inter,sans-serif' font-size='12'>Bebas iklan · 4K · Coba 30 hari gratis</text><rect x='206' y='33' width='96' height='30' rx='15' fill='#E8D8C4'/><text x='254' y='53' fill='#3a1418' font-family='Inter,sans-serif' font-size='12' font-weight='700' text-anchor='middle'>Coba Gratis</text></svg>"
+  );
+  return {
+    runningText: { rotation: "random", items: [{ id: "demo-rt", enabled: true, text: "🎉 Playly Premium diskon 50% — bebas iklan, kualitas 4K, tonton offline!", position: "bottom", bgColor: "#6D2932", bgOpacity: 88, textColor: "#FFFFFF", fontFamily: "Inter", padding: 8, speed: 60, link: "#" }] },
+    banner: { rotation: "random", items: [{ id: "demo-bn", enabled: true, name: "Demo Banner Premium", imageUrl: _bnImg, linkUrl: "#", position: "top-right", showAfterSec: 2, closable: true, size: "medium", radius: 12, shadow: true, animation: "fade" }] },
+    preroll: { rotation: "random", items: [{ id: "demo-pr", enabled: true, name: "Demo Pre-roll", mediaType: "video", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", hasBlob: false, linkUrl: "#", skippable: true, skipAfterSec: 5 }] },
+    sideBanner: { rotation: "random", items: [{ id: "demo-sb", enabled: true, badge: "50%", label: "Promo Spesial", title: "Upgrade ke Premium", subtitle: "Bebas iklan + 4K + download offline", gradient: "wine", cta: "Pelajari", ctaUrl: "#" }] }
+  };
+}
+// Bersihkan data DEMO yang TERLANJUR tersimpan oleh versi lama (flag playly-demo
+// + ad-config ber-seed demo, yg ikut ter-sync ke cloud). req user 2026-06-11:
+// demo cuma untuk preview, JANGAN tersimpan. Hanya hapus ad-config kalau SEMUA
+// itemnya ber-id "demo-" (murni demo) — config iklan admin ASLI tak tersentuh.
+// removeItem di-hijack cloud-sync.js → penghapusan ikut ter-propagate ke cloud.
+function _purgeStoredDemo() {
   try {
-    const ex = JSON.parse(localStorage.getItem("playly-ad-config") || "null");
-    // Jangan timpa kalau admin sudah set iklan ASLI (id bukan "demo-").
-    // Kalau kosong / hanya berisi seed demo lama → (re)seed demo terbaru
-    // (mis. menambah contoh banner + pre-roll yang sebelumnya kosong).
-    const allItems = ex ? ["runningText", "banner", "preroll", "sideBanner"].flatMap(k => (ex[k] && ex[k].items) || []) : [];
-    if (allItems.some(it => it && it.id && !String(it.id).startsWith("demo-"))) return;
-    // Gambar banner: SVG data-URI (tak butuh internet) — promo Playly bertema wine.
-    const _bnImg = "data:image/svg+xml," + encodeURIComponent(
-      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6D2932'/><stop offset='1' stop-color='#2a1014'/></linearGradient></defs><rect width='320' height='96' rx='12' fill='url(#g)'/><text x='18' y='40' fill='#E8D8C4' font-family='Inter,sans-serif' font-size='19' font-weight='800'>Playly Premium</text><text x='18' y='64' fill='#E8D8C4' opacity='.82' font-family='Inter,sans-serif' font-size='12'>Bebas iklan · 4K · Coba 30 hari gratis</text><rect x='206' y='33' width='96' height='30' rx='15' fill='#E8D8C4'/><text x='254' y='53' fill='#3a1418' font-family='Inter,sans-serif' font-size='12' font-weight='700' text-anchor='middle'>Coba Gratis</text></svg>"
-    );
-    localStorage.setItem("playly-ad-config", JSON.stringify({
-      runningText: { rotation: "random", items: [{ id: "demo-rt", enabled: true, text: "🎉 Playly Premium diskon 50% — bebas iklan, kualitas 4K, tonton offline!", position: "bottom", bgColor: "#6D2932", bgOpacity: 88, textColor: "#FFFFFF", fontFamily: "Inter", padding: 8, speed: 60, link: "#" }] },
-      banner: { rotation: "random", items: [{ id: "demo-bn", enabled: true, name: "Demo Banner Premium", imageUrl: _bnImg, linkUrl: "#", position: "top-right", showAfterSec: 2, closable: true, size: "medium", radius: 12, shadow: true, animation: "fade" }] },
-      preroll: { rotation: "random", items: [{ id: "demo-pr", enabled: true, name: "Demo Pre-roll", mediaType: "video", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", hasBlob: false, linkUrl: "#", skippable: true, skipAfterSec: 5 }] },
-      sideBanner: { rotation: "random", items: [{ id: "demo-sb", enabled: true, badge: "50%", label: "Promo Spesial", title: "Upgrade ke Premium", subtitle: "Bebas iklan + 4K + download offline", gradient: "wine", cta: "Pelajari", ctaUrl: "#" }] }
-    }));
+    if (localStorage.getItem("playly-demo") != null) localStorage.removeItem("playly-demo");
+    const raw = localStorage.getItem("playly-ad-config");
+    if (raw) {
+      const c = JSON.parse(raw);
+      const items = ["runningText", "banner", "preroll", "sideBanner"].flatMap(k => (c && c[k] && c[k].items) || []);
+      if (items.length && items.every(it => it && it.id && String(it.id).startsWith("demo-"))) {
+        localStorage.removeItem("playly-ad-config");
+      }
+    }
   } catch (_) {}
 }
+_purgeStoredDemo();
+// Cloud bisa push balik config demo lama saat sync awal → purge lagi tiap apply.
+try {
+  window.addEventListener("playly:cloud-applied", (e) => {
+    const keys = (e && e.detail && e.detail.keys) || [];
+    if (!keys.length || keys.indexOf("playly-ad-config") >= 0 || keys.indexOf("playly-demo") >= 0) _purgeStoredDemo();
+  });
+} catch (_) {}
 function _demoVideos() {
   const H = 3600000, NOW = Date.now();
   const MP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/";
@@ -24293,8 +24307,13 @@ function migrateAdConfig(c) {
 function getAdConfig() {
   try {
     const c = JSON.parse(localStorage.getItem(AD_CONFIG_KEY) || "null");
-    if (!c) return defaultAdConfig();
-    return migrateAdConfig(c);
+    if (c) return migrateAdConfig(c);
+    // Demo (view-only): tampilkan iklan contoh IN-MEMORY tanpa menyimpan apa pun —
+    // hanya saat ?demo=1 & admin belum set iklan. (req user 2026-06-11)
+    if (typeof _demoEnabled === "function" && _demoEnabled() && typeof _demoAdConfig === "function") {
+      return migrateAdConfig(_demoAdConfig());
+    }
+    return defaultAdConfig();
   } catch { return defaultAdConfig(); }
 }
 
