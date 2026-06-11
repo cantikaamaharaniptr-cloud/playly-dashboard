@@ -29061,6 +29061,12 @@ body.player-view-active main.main { padding-top: 16px; }
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
 .player-floating-banner { display: none !important; }
+/* Tombol pojok video yang REDUNDAN — bikin video ramai:
+   - #cplCloseBtn "Tutup player" = duplikat tombol "Kembali"
+   - #cplSettingsBtn "Pengaturan" = duplikat Settings/Kecepatan/CC di kontrol bawah
+   Disembunyikan di full player (fungsi tetap ada). "Buka di tab baru" dibiarkan. */
+body.player-view-active #cplCloseBtn,
+body.player-view-active #cplSettingsBtn { display: none !important; }
 
 /* Iklan admin harus KELIHATAN saat nonton (user free):
    - Side banner (hero) di ATAS sidebar, sebelah video — bukan di bawah up-next. */
