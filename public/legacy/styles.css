@@ -8641,7 +8641,10 @@ body[data-theme="light"].player-view-active .main {
   right: 0;
   z-index: 50;
   min-width: 230px;
-  background: rgba(14, 6, 6, 0.93);
+  /* Opak penuh: baris terbawah menu (Subtitle) duduk di atas ticker running-text
+     wine; bg semi-transparan + backdrop-blur dulu membuat ticker menembus &
+     bikin baris itu tampak redup/ber-band wine. (req user 2026-06-11) */
+  background: rgb(18, 9, 10);
   border: 1px solid rgba(255,255,255,.13);
   border-radius: 10px;
   padding: 4px;
@@ -29105,7 +29108,11 @@ body.player-view-active #cplSettingsBtn { display: none !important; }
 .player-screen > .ad-runtext-lower3 {
   position: absolute !important;   /* lawan .ad-runtext-outside { position: static } */
   left: 0 !important; right: 0 !important;
-  z-index: 5;
+  /* z-index 3 = DI BAWAH .cpl-overlay (z-index 4) supaya kontrol & menu (PiP/
+     Kualitas/Subtitle) selalu di ATAS ticker. Dulu z-5 (di atas overlay) bikin
+     ticker menutupi baris bawah menu. Tetap di atas <video>, jadi terlihat saat
+     nonton (overlay transparan); tertutup hanya saat kontrol/menu tampil. */
+  z-index: 3;
   margin: 0 !important;
   border-radius: 0;
   pointer-events: none;
