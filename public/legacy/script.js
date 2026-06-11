@@ -38093,8 +38093,11 @@ function fypCardHTML(v) {
   const init = (v.creator || "U").split(/[\s_]/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const commentCount = state?.comments?.[v.id]?.length || 0;
   const shareCount = getShareCount(v.id);
-  // Real-time relative timestamp — pakai createdAt (atau fallback ke id yang juga Date.now())
-  const ts = v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : null);
+  // Real-time relative timestamp — pakai _fypTime (publishedAt/uploadedAt/
+  // createdAt) supaya video kreator platform (yang pakai publishedAt) ikut
+  // menampilkan waktu, bukan hanya upload sendiri (createdAt/id = Date.now()).
+  const ts = (typeof _fypTime === "function" && _fypTime(v)) || v.createdAt
+           || (typeof v.id === "number" && v.id > 1e12 ? v.id : null);
   const timeText = ts ? relTime(ts) : (v.time || "");
   return `
     <article class="fyp-card" data-vid="${v.id}">
