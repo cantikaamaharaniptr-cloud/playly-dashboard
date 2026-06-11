@@ -533,6 +533,77 @@ function chatRelTime(ts) {
 // Tidak ada data hardcoded — Discover akan kosong sampai user upload.
 // Konten platform = agregasi dari semua user yang sudah upload video.
 
+// ===== KONTEN DEMO (preview) — aktif kalau localStorage["playly-demo"]==="1".
+// Sumbernya dari KODE (bukan localStorage) supaya KEBAL purge/cloud-sync yang
+// menghapus seed lokal. Video pakai URL sample asli (playable) + stat lengkap
+// agar feed Discover bisa dilihat & diinteraksi (play, like, komen, follow).
+// Matikan: localStorage.removeItem("playly-demo").
+function _demoEnabled() {
+  try {
+    // Pemicu lewat URL: buka `?demo=1` untuk hidupkan (persist), `?demo=0` matikan.
+    if (/[?&]demo=1\b/.test(location.search)) localStorage.setItem("playly-demo", "1");
+    else if (/[?&]demo=0\b/.test(location.search)) localStorage.removeItem("playly-demo");
+    const on = localStorage.getItem("playly-demo") === "1";
+    if (on && !window.__demoAdSeeded) { window.__demoAdSeeded = true; _seedDemoAdConfig(); }
+    return on;
+  } catch { return false; }
+}
+// Demo: isi sample config Ad Manager (kalau admin belum set apa pun) supaya
+// preview menampilkan iklan ADMIN ASLI (running-text + side banner) — bukti
+// halaman digerakkan config admin, bukan slot dummy. Admin set sendiri → ini
+// tak menimpa.
+function _seedDemoAdConfig() {
+  try {
+    const ex = JSON.parse(localStorage.getItem("playly-ad-config") || "null");
+    const hasItems = ex && ["runningText", "banner", "preroll", "sideBanner"].some(k => ((ex[k] && ex[k].items) || []).length);
+    if (hasItems) return;
+    localStorage.setItem("playly-ad-config", JSON.stringify({
+      runningText: { rotation: "random", items: [{ id: "demo-rt", enabled: true, text: "🎉 Playly Premium diskon 50% — bebas iklan, kualitas 4K, tonton offline!", position: "bottom", bgColor: "#6D2932", bgOpacity: 88, textColor: "#FFFFFF", fontFamily: "Inter", padding: 8, speed: 60, link: "#" }] },
+      banner: { rotation: "random", items: [] },
+      preroll: { rotation: "random", items: [] },
+      sideBanner: { rotation: "random", items: [{ id: "demo-sb", enabled: true, badge: "50%", label: "Promo Spesial", title: "Upgrade ke Premium", subtitle: "Bebas iklan + 4K + download offline", gradient: "wine", cta: "Pelajari", ctaUrl: "#" }] }
+    }));
+  } catch (_) {}
+}
+function _demoVideos() {
+  const H = 3600000, NOW = Date.now();
+  const MP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/";
+  const IMG = MP4 + "images/";
+  const v = (id, title, creator, cname, file, thumb, views, likes, com, tags, cat, ageH) => ({
+    id, title, creator, creatorName: cname,
+    creatorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + creator,
+    thumb: IMG + thumb, url: MP4 + file, videoUrl: MP4 + file,
+    duration: "3:00", viewsNum: views, likes, commentsCount: com, shares: Math.floor(likes / 9),
+    category: cat, tags, audience: "all", adminStatus: "published",
+    publishedAt: new Date(NOW - ageH * H).toISOString(),
+    description: title + " #" + tags.join(" #"), isDemoContent: true,
+  });
+  return [
+    v(770001, "Tutorial masak rendang autentik", "dewikartika", "Dewi Kartika", "ForBiggerBlazes.mp4", "ForBiggerBlazes.jpg", 2100, 240, 60, ["masak", "resep", "rendang"], "food", 6),
+    v(770002, "Resep ayam geprek level pedas", "dewikartika", "Dewi Kartika", "ForBiggerEscapes.mp4", "ForBiggerEscapes.jpg", 1500, 180, 35, ["masak", "pedas"], "food", 50),
+    v(770101, "Vlog roadtrip Jogja naik motor", "bayuanggara", "Bayu Anggara", "BigBuckBunny.mp4", "BigBuckBunny.jpg", 3400, 410, 95, ["vlog", "travel", "jalan"], "travel", 10),
+    v(770102, "Sunrise di Bromo bikin merinding", "bayuanggara", "Bayu Anggara", "ElephantsDream.mp4", "ElephantsDream.jpg", 980, 120, 22, ["travel", "alam", "gunung"], "travel", 30),
+    v(770201, "Review HP flagship 2026 jujur", "putritech", "Putri Tech", "ForBiggerJoyrides.mp4", "ForBiggerJoyrides.jpg", 6200, 720, 140, ["tech", "review", "hp"], "tech", 18),
+    v(770202, "5 tips hemat baterai HP", "putritech", "Putri Tech", "ForBiggerMeltdowns.mp4", "ForBiggerMeltdowns.jpg", 1200, 140, 30, ["tech", "tips"], "tech", 4),
+    v(770301, "Cover akustik lagu hits 2026", "rakaaudio", "Raka Audio", "Sintel.mp4", "Sintel.jpg", 2700, 330, 70, ["musik", "gitar", "cover"], "music", 8),
+    v(770302, "Belajar fingerstyle 10 menit", "rakaaudio", "Raka Audio", "TearsOfSteel.mp4", "TearsOfSteel.jpg", 1900, 210, 48, ["musik", "gitar", "tutorial"], "music", 26),
+  ];
+}
+function _demoCreators() {
+  const byU = {};
+  for (const vid of _demoVideos()) {
+    const o = byU[vid.creator] || (byU[vid.creator] = { name: vid.creator, displayName: vid.creatorName, videoCount: 0, latest: 0, avatar: vid.creatorAvatar });
+    o.videoCount++;
+    const t = Date.parse(vid.publishedAt) || 0;
+    if (t > o.latest) o.latest = t;
+  }
+  return Object.values(byU).map(o => ({
+    name: o.name, displayName: o.displayName, subs: o.videoCount + " video", online: false,
+    init: (o.displayName || o.name).slice(0, 2).toUpperCase(),
+    videoCount: o.videoCount, avatar: o.avatar, latestUploadAt: o.latest, lastActivity: o.latest,
+  }));
+}
+
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
@@ -46483,52 +46554,6 @@ function closeLibInlinePlayer() {
   });
 })();
 
-// ===== JEDA IKLAN IN-PLAYER (kombinasi Hulu + Tubi + Pluto) =====
-// Hulu: countdown "Iklan berakhir dalam Xs" + badge "Iklan" + tombol Lewati.
-// Tubi: framing "Tonton gratis dengan iklan". Pluto: iklan menutup video (jeda
-// siaran) sebelum mulai. Konten iklan = SLOT KOSONG (diisi admin); free user saja.
-let _adBreakTimer = null;
-function _showAdBreak() {
-  const screen = document.querySelector(".player-screen");
-  if (!screen) return;
-  if (user?.tier === "premium" || user?.role === "admin") return; // bebas iklan
-  screen.querySelector(".ad-break")?.remove();
-  if (_adBreakTimer) { clearInterval(_adBreakTimer); _adBreakTimer = null; }
-  const TOTAL = 10, SKIP_AT = 5;
-  let remain = TOTAL;
-  const ov = document.createElement("div");
-  ov.className = "ad-break";
-  ov.innerHTML =
-    '<div class="ad-break-stage">' +
-      '<span class="ad-break-badge">Iklan</span>' +
-      '<span class="ad-break-free">Tonton gratis dengan iklan</span>' +
-      '<div class="ad-break-slot">Slot Iklan</div>' +
-    '</div>' +
-    '<div class="ad-break-bar">' +
-      '<span class="ad-break-count">Iklan berakhir dalam <b>' + remain + '</b> dtk</span>' +
-      '<button type="button" class="ad-break-skip" hidden>Lewati Iklan ›</button>' +
-    '</div>' +
-    '<div class="ad-break-progress"><i></i></div>';
-  screen.appendChild(ov);
-  const countEl = ov.querySelector(".ad-break-count b");
-  const skipBtn = ov.querySelector(".ad-break-skip");
-  const prog = ov.querySelector(".ad-break-progress i");
-  const dismiss = () => {
-    if (_adBreakTimer) { clearInterval(_adBreakTimer); _adBreakTimer = null; }
-    ov.remove();
-    try { document.getElementById("videoEl")?.play?.(); } catch (_) {}
-  };
-  skipBtn.addEventListener("click", dismiss);
-  _adBreakTimer = setInterval(() => {
-    if (!document.querySelector('section.view[data-view="player"].active') || !screen.contains(ov)) { dismiss(); return; }
-    remain--;
-    if (countEl) countEl.textContent = Math.max(0, remain);
-    if (prog) prog.style.width = ((TOTAL - remain) / TOTAL * 100) + "%";
-    if (TOTAL - remain >= SKIP_AT) skipBtn.hidden = false;
-    if (remain <= 0) dismiss();
-  }, 1000);
-}
-
 async function openPlayer(id) {
   const v = findVideo(id);
   if (!v) {
@@ -46655,7 +46680,6 @@ async function openPlayer(id) {
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
   $("#followBtn").textContent = state.followingCreators.includes(v.creator) ? "✓ Following" : "Follow";
-  try { _showAdBreak(); } catch (_) {}
 
   const videoEl = $("#videoEl");
   videoEl.poster = v.thumb;

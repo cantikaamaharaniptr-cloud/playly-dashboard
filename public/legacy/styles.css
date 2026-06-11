@@ -29047,60 +29047,20 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
   font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
 }
-/* ===== IKLAN — semua slot TETAP ADA (diisi admin Ad Manager), tapi DIRAPIKAN
-   jadi bersih & konsisten (bukan kotak dashed berserakan). ===== */
-/* Ticker promo fixed di atas → beri ruang ke topbar saat ticker tampil. */
-body.player-view-active:has(#playerTicker:not([hidden])) main.main { padding-top: 52px; }
-.player-side .ps-ad:not(.ps-ad-hero) { margin-top: 12px; }
+/* ===== IKLAN — pakai HANYA Ad Manager admin (applyAdOverlays → pre-roll,
+   running-text, banner, side-banner, dibaca dari getAdConfig). Slot DUMMY lama
+   (ticker promo + strip banner bawah + companion sidebar non-hero) DISEMBUNYIKAN
+   supaya 100% sesuai pengaturan admin — bukan placeholder hardcoded. Side banner
+   admin (.ps-ad-hero) tetap ada (memang admin-driven). ===== */
+body.player-view-active #playerTicker,
+body.player-view-active #playerAdBanner,
+#playerSidebar .ps-ad:not(.ps-ad-hero) { display: none !important; }
+/* Tanpa ticker dummy, topbar tak perlu offset. */
+body.player-view-active main.main { padding-top: 16px; }
 
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
 .player-floating-banner { display: none !important; }
-
-/* ===== JEDA IKLAN IN-PLAYER (Hulu + Tubi + Pluto) — overlay di atas video ===== */
-.ad-break {
-  position: absolute; inset: 0; z-index: 30;
-  display: flex; flex-direction: column;
-  background: linear-gradient(135deg, #1c0d12, #0f0709);
-  border-radius: inherit; overflow: hidden;
-  animation: adbreak-in .25s ease;
-  /* Promosikan ke layer sendiri supaya menimpa <video> (yang ter-composite). */
-  transform: translateZ(0); will-change: transform;
-}
-@keyframes adbreak-in { from { opacity: 0; } to { opacity: 1; } }
-.ad-break-stage { flex: 1; position: relative; display: grid; place-items: center; padding: 16px; }
-.ad-break-slot {
-  width: min(72%, 520px); aspect-ratio: 16 / 9;
-  border: 1px dashed rgba(232, 216, 196, .28); border-radius: 12px;
-  display: grid; place-items: center;
-  color: rgba(232, 216, 196, .5); font-weight: 600; letter-spacing: .05em; font-size: 14px;
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, transparent);
-}
-.ad-break-badge {
-  position: absolute; top: 14px; left: 14px;
-  background: #e8c87a; color: #1a0c10; font-weight: 800; font-size: 11px;
-  padding: 3px 9px; border-radius: 5px; letter-spacing: .08em; text-transform: uppercase;
-}
-.ad-break-free {
-  position: absolute; top: 16px; right: 16px;
-  color: rgba(232, 216, 196, .72); font-size: 12px; font-weight: 600;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.ad-break-free::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #6ddf9c; }
-.ad-break-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 16px; background: rgba(0, 0, 0, .42); backdrop-filter: blur(4px);
-}
-.ad-break-count { color: var(--cream, #E8D8C4); font-size: 13px; }
-.ad-break-count b { font-variant-numeric: tabular-nums; font-weight: 800; }
-.ad-break-skip {
-  background: rgba(232, 216, 196, .12); border: 1px solid rgba(232, 216, 196, .38);
-  color: var(--cream, #E8D8C4); padding: 7px 16px; border-radius: 999px;
-  font-weight: 700; font-size: 13px; cursor: pointer; transition: background .15s, border-color .15s;
-}
-.ad-break-skip:hover { background: rgba(232, 216, 196, .22); border-color: rgba(232, 216, 196, .55); }
-.ad-break-progress { height: 3px; background: rgba(255, 255, 255, .1); }
-.ad-break-progress i { display: block; height: 100%; width: 0; background: #e8c87a; transition: width .35s linear; }
 
 /* ===== GAYA DAILYMOTION — konten watch page tersusun kartu bersih & rapi ===== */
 .player-main .player-info,
