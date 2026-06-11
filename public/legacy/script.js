@@ -567,38 +567,11 @@ function chatRelTime(ts) {
 // Tidak ada data hardcoded — Discover akan kosong sampai user upload.
 // Konten platform = agregasi dari semua user yang sudah upload video.
 
-// ===== KONTEN DEMO (preview) — aktif kalau localStorage["playly-demo"]==="1".
-// Sumbernya dari KODE (bukan localStorage) supaya KEBAL purge/cloud-sync yang
-// menghapus seed lokal. Video pakai URL sample asli (playable) + stat lengkap
-// agar feed Discover bisa dilihat & diinteraksi (play, like, komen, follow).
-// Matikan: localStorage.removeItem("playly-demo").
-function _demoEnabled() {
-  try {
-    // VIEW-ONLY (req user 2026-06-11): demo/dummy AKTIF hanya saat `?demo=1` ada
-    // di URL — TIDAK disimpan ke localStorage/cloud. Murni untuk lihat hasil.
-    // `?demo=1` tetap di query string selama sesi (hash-router tak menghapusnya).
-    return /[?&]demo=1\b/.test(location.search || "");
-  } catch { return false; }
-}
-// Config iklan DEMO — DIKEMBALIKAN in-memory (TIDAK ditulis ke storage). Dipakai
-// getAdConfig() saat demo aktif & admin belum set iklan apa pun. Hanya preview.
-function _demoAdConfig() {
-  // Gambar banner: SVG data-URI (tak butuh internet) — promo Playly bertema wine.
-  const _bnImg = "data:image/svg+xml," + encodeURIComponent(
-    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6D2932'/><stop offset='1' stop-color='#2a1014'/></linearGradient></defs><rect width='320' height='96' rx='12' fill='url(#g)'/><text x='18' y='40' fill='#E8D8C4' font-family='Inter,sans-serif' font-size='19' font-weight='800'>Playly Premium</text><text x='18' y='64' fill='#E8D8C4' opacity='.82' font-family='Inter,sans-serif' font-size='12'>Bebas iklan · 4K · Coba 30 hari gratis</text><rect x='206' y='33' width='96' height='30' rx='15' fill='#E8D8C4'/><text x='254' y='53' fill='#3a1418' font-family='Inter,sans-serif' font-size='12' font-weight='700' text-anchor='middle'>Coba Gratis</text></svg>"
-  );
-  return {
-    runningText: { rotation: "random", items: [{ id: "demo-rt", enabled: true, text: "🎉 Playly Premium diskon 50% — bebas iklan, kualitas 4K, tonton offline!", position: "bottom", bgColor: "#6D2932", bgOpacity: 88, textColor: "#FFFFFF", fontFamily: "Inter", padding: 8, speed: 60, link: "#" }] },
-    banner: { rotation: "random", items: [{ id: "demo-bn", enabled: true, name: "Demo Banner Premium", imageUrl: _bnImg, linkUrl: "#", position: "top-right", showAfterSec: 2, closable: true, size: "medium", radius: 12, shadow: true, animation: "fade" }] },
-    preroll: { rotation: "random", items: [{ id: "demo-pr", enabled: true, name: "Demo Pre-roll", mediaType: "video", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", hasBlob: false, linkUrl: "#", skippable: true, skipAfterSec: 5 }] },
-    sideBanner: { rotation: "random", items: [{ id: "demo-sb", enabled: true, badge: "50%", label: "Promo Spesial", title: "Upgrade ke Premium", subtitle: "Bebas iklan + 4K + download offline", gradient: "wine", cta: "Pelajari", ctaUrl: "#" }] }
-  };
-}
-// Bersihkan data DEMO yang TERLANJUR tersimpan oleh versi lama (flag playly-demo
-// + ad-config ber-seed demo, yg ikut ter-sync ke cloud). req user 2026-06-11:
-// demo cuma untuk preview, JANGAN tersimpan. Hanya hapus ad-config kalau SEMUA
-// itemnya ber-id "demo-" (murni demo) — config iklan admin ASLI tak tersentuh.
-// removeItem di-hijack cloud-sync.js → penghapusan ikut ter-propagate ke cloud.
+// Pembersih data DEMO lama (req user 2026-06-11: demo/dummy DICABUT total — tak
+// boleh ada di dashboard/DB/repo). Konten & mode demo sudah dihapus; fungsi ini
+// HANYA membersihkan SISA data demo yg sempat tersimpan/ter-sync ke cloud: flag
+// playly-demo + ad-config yg SEMUA itemnya ber-id "demo-" (config iklan admin
+// ASLI tak tersentuh). removeItem di-hijack cloud-sync → ikut hapus di cloud.
 function _purgeStoredDemo() {
   try {
     if (localStorage.getItem("playly-demo") != null) localStorage.removeItem("playly-demo");
@@ -620,45 +593,6 @@ try {
     if (!keys.length || keys.indexOf("playly-ad-config") >= 0 || keys.indexOf("playly-demo") >= 0) _purgeStoredDemo();
   });
 } catch (_) {}
-function _demoVideos() {
-  const H = 3600000, NOW = Date.now();
-  const MP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/";
-  const IMG = MP4 + "images/";
-  const v = (id, title, creator, cname, file, thumb, views, likes, com, tags, cat, ageH) => ({
-    id, title, creator, creatorName: cname,
-    creatorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + creator,
-    thumb: IMG + thumb, url: MP4 + file, videoUrl: MP4 + file,
-    duration: "3:00", viewsNum: views, likes, commentsCount: com, shares: Math.floor(likes / 9),
-    category: cat, tags, audience: "all", adminStatus: "published",
-    publishedAt: new Date(NOW - ageH * H).toISOString(),
-    description: title + " #" + tags.join(" #"), isDemoContent: true,
-  });
-  return [
-    v(770001, "Tutorial masak rendang autentik", "dewikartika", "Dewi Kartika", "ForBiggerBlazes.mp4", "ForBiggerBlazes.jpg", 2100, 240, 60, ["masak", "resep", "rendang"], "food", 6),
-    v(770002, "Resep ayam geprek level pedas", "dewikartika", "Dewi Kartika", "ForBiggerEscapes.mp4", "ForBiggerEscapes.jpg", 1500, 180, 35, ["masak", "pedas"], "food", 50),
-    v(770101, "Vlog roadtrip Jogja naik motor", "bayuanggara", "Bayu Anggara", "BigBuckBunny.mp4", "BigBuckBunny.jpg", 3400, 410, 95, ["vlog", "travel", "jalan"], "travel", 10),
-    v(770102, "Sunrise di Bromo bikin merinding", "bayuanggara", "Bayu Anggara", "ElephantsDream.mp4", "ElephantsDream.jpg", 980, 120, 22, ["travel", "alam", "gunung"], "travel", 30),
-    v(770201, "Review HP flagship 2026 jujur", "putritech", "Putri Tech", "ForBiggerJoyrides.mp4", "ForBiggerJoyrides.jpg", 6200, 720, 140, ["tech", "review", "hp"], "tech", 18),
-    v(770202, "5 tips hemat baterai HP", "putritech", "Putri Tech", "ForBiggerMeltdowns.mp4", "ForBiggerMeltdowns.jpg", 1200, 140, 30, ["tech", "tips"], "tech", 4),
-    v(770301, "Cover akustik lagu hits 2026", "rakaaudio", "Raka Audio", "Sintel.mp4", "Sintel.jpg", 2700, 330, 70, ["musik", "gitar", "cover"], "music", 8),
-    v(770302, "Belajar fingerstyle 10 menit", "rakaaudio", "Raka Audio", "TearsOfSteel.mp4", "TearsOfSteel.jpg", 1900, 210, 48, ["musik", "gitar", "tutorial"], "music", 26),
-  ];
-}
-function _demoCreators() {
-  const byU = {};
-  for (const vid of _demoVideos()) {
-    const o = byU[vid.creator] || (byU[vid.creator] = { name: vid.creator, displayName: vid.creatorName, videoCount: 0, latest: 0, avatar: vid.creatorAvatar });
-    o.videoCount++;
-    const t = Date.parse(vid.publishedAt) || 0;
-    if (t > o.latest) o.latest = t;
-  }
-  return Object.values(byU).map(o => ({
-    name: o.name, displayName: o.displayName, subs: o.videoCount + " video", online: false,
-    init: (o.displayName || o.name).slice(0, 2).toUpperCase(),
-    videoCount: o.videoCount, avatar: o.avatar, latestUploadAt: o.latest, lastActivity: o.latest,
-  }));
-}
-
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
@@ -24307,13 +24241,8 @@ function migrateAdConfig(c) {
 function getAdConfig() {
   try {
     const c = JSON.parse(localStorage.getItem(AD_CONFIG_KEY) || "null");
-    if (c) return migrateAdConfig(c);
-    // Demo (view-only): tampilkan iklan contoh IN-MEMORY tanpa menyimpan apa pun —
-    // hanya saat ?demo=1 & admin belum set iklan. (req user 2026-06-11)
-    if (typeof _demoEnabled === "function" && _demoEnabled() && typeof _demoAdConfig === "function") {
-      return migrateAdConfig(_demoAdConfig());
-    }
-    return defaultAdConfig();
+    if (!c) return defaultAdConfig();
+    return migrateAdConfig(c);
   } catch { return defaultAdConfig(); }
 }
 
@@ -47351,20 +47280,10 @@ function setupCustomPlayer() {
     switchView(state?.prevView || "home");
   });
 
-  // Expand → buka video di tab baru.
-  // Video DEMO hanya ada di mode ?demo=1 (client-side, TIDAK di cloud) → link
-  // publik /watch?v= akan "Video tidak ditemukan". Jadi untuk demo buka rute SPA
-  // + flag demo. Video ASLI (di-upload) tetap pakai link publik cloud. (req user)
+  // Expand → buka video di halaman publik /watch (tab baru).
   expandBtn?.addEventListener("click", () => {
     const vid = state?.currentVideo;
-    if (!vid) return;
-    let isDemo = false;
-    try {
-      const vObj = (typeof allVideos === "function") ? allVideos().find(x => x && x.id === vid) : null;
-      isDemo = !!(vObj && vObj.isDemoContent) || localStorage.getItem("playly-demo") === "1";
-    } catch (_) {}
-    const url = isDemo ? `/?demo=1#/watch/${vid}` : `/watch?v=${vid}`;
-    window.open(url, "_blank", "noopener");
+    if (vid) window.open(`/watch?v=${vid}`, "_blank", "noopener");
   });
 
   // ── Zoom / Fullscreen (tombol baru di kanan bawah) ──
