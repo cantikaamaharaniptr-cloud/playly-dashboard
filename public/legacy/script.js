@@ -38115,7 +38115,7 @@ function fypCardHTML(v) {
       <p class="fyp-caption">${linkifyHashtags(v.title)}</p>
 
       <div class="fyp-video-wrap paused is-muted" data-vid="${v.id}">
-        <img class="fyp-poster" src="${v.thumb}" alt="${escapeHtml(v.title)}"/>
+        <img class="fyp-poster" src="${v.thumb}" alt="${escapeHtml(v.title)}" loading="lazy" onerror="this.style.display='none'"/>
         <div class="fyp-progress"><i></i></div>
         <div class="fyp-vol-group">
           <button class="fyp-mute-btn" data-fyp-mute title="Mute / Unmute">

@@ -28253,6 +28253,9 @@ body.light-mode .ds-bento-tag.tag-fyp { color: var(--primary); }
 .discover-layout .video-card {
   min-height: 600px;
   padding: 22px 22px 18px;
+  /* Isi tinggi area grid (sejajar rail kanan) supaya kolom feed tidak
+     menyisakan ruang kosong besar saat feed kosong/pendek. */
+  align-self: stretch;
 }
 .discover-layout .video-card .fyp-feed {
   width: 100%;
@@ -28263,6 +28266,8 @@ body.light-mode .ds-bento-tag.tag-fyp { color: var(--primary); }
   z-index: 1;
   align-items: stretch;
 }
+/* Empty-state ditaruh di tengah vertikal, bukan menggantung di atas void. */
+.discover-layout .video-card .fyp-feed:has(.fyp-empty) { justify-content: center; }
 .discover-layout .video-card .fyp-card {
   max-width: 100%;
   padding: 14px 4px;
@@ -28724,7 +28729,9 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   position: relative;
   width: 100%;
   max-height: 70vh;
-  background: #000;
+  /* Gradient wine-gelap (bukan hitam polos) → letterbox & fallback thumbnail
+     gagal-load terlihat disengaja, bukan kotak hitam/ikon patah. */
+  background: linear-gradient(135deg, #1f0e13, #120a0c);
   border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
