@@ -37521,17 +37521,63 @@ function _fypContext() {
   const following = new Set((st.followingCreators || []).map(x => String(x).toLowerCase()));
   const liked = new Set(st.liked || []);
   const seen  = new Set((st.history || []).map(h => h && h.videoId).filter(id => id != null));
-  // Kategori favorit: frekuensi kategori dari video yang di-like + history terbaru.
+  // ---- PROFIL MINAT KONTEN (content-based) ----
+  // Bangun "vektor minat" user dari konten yang ia konsumsi & buat. Token =
+  // kategori + tag + hashtag (judul/deskripsi); tiap sumber sinyal punya bobot.
   const idMap = new Map();
   try { (typeof allVideos === "function" ? allVideos() : []).forEach(v => idMap.set(v.id, v)); } catch {}
+  const profile = {};
+  const addTokens = (vid, w) => {
+    if (!vid || !(w > 0)) return;
+    for (const tk of _fypTokens(vid)) profile[tk] = (profile[tk] || 0) + w;
+  };
+  (st.liked || []).forEach(id => addTokens(idMap.get(id), 3));         // di-like = sinyal terkuat
+  (st.history || []).slice(0, 25).forEach((h, i) =>                    // history: makin baru makin berbobot
+    addTokens(idMap.get(h && h.videoId), 2 * (1 - i / 30)));
+  (st.myVideos || []).forEach(v => addTokens(v, 1.5));                 // video sendiri = selera kuat
+  for (const vid of idMap.values())                                   // konten kreator yang di-follow
+    if (following.has((vid.creator || "").toLowerCase())) addTokens(vid, 0.8);
+
+  // IDF: token yang dipakai di mana-mana (mis. tag "music") dianggap kurang khas.
+  const N = idMap.size || 1, df = {};
+  for (const vid of idMap.values()) { new Set(_fypTokens(vid)).forEach(tk => df[tk] = (df[tk] || 0) + 1); }
+  const idf = {}; for (const tk in df) idf[tk] = Math.log(1 + N / (1 + df[tk]));
+  const profileSize = Object.keys(profile).length;
+
+  // Fallback: kategori favorit (dipakai kalau profil konten masih kosong).
   const catCount = {};
-  const tally = (id) => { const vid = idMap.get(id); if (vid && vid.category) catCount[vid.category] = (catCount[vid.category] || 0) + 1; };
-  (st.liked || []).forEach(tally);
-  (st.history || []).slice(0, 30).forEach(h => h && tally(h.videoId));
-  const favCats = new Set(
-    Object.entries(catCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c)
-  );
-  return { now, following, liked, seen, favCats };
+  for (const tk in profile) if (tk.charCodeAt(0) === 99 && tk[1] === ":") catCount[tk.slice(2)] = profile[tk];
+  const favCats = new Set(Object.entries(catCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c));
+
+  return { now, following, liked, seen, profile, idf, profileSize, favCats };
+}
+
+// Token konten sebuah video: kategori + tag + hashtag (judul/deskripsi),
+// di-lowercase & diprefiks ("c:" kategori, "t:" tag) supaya tak bentrok.
+function _fypTokens(v) {
+  if (!v) return [];
+  const toks = [];
+  if (v.category) toks.push("c:" + String(v.category).toLowerCase());
+  if (Array.isArray(v.tags)) for (const t of v.tags) {
+    const s = String(t).toLowerCase().replace(/^#/, "").trim();
+    if (s) toks.push("t:" + s);
+  }
+  if (typeof extractHashtags === "function") {
+    for (const t of extractHashtags((v.title || "") + " " + (v.desc || v.description || ""))) toks.push("t:" + t);
+  }
+  return toks;
+}
+
+// Afinitas konten video terhadap profil minat user: dot-product
+// (bobot profil × IDF) atas token yang cocok, dinormalisasi panjang token.
+// Makin mirip konten yang biasa user konsumsi → makin tinggi.
+function _fypContentAffinity(v, ctx) {
+  if (!ctx.profileSize) return 0;
+  const toks = _fypTokens(v);
+  if (!toks.length) return 0;
+  let dot = 0;
+  for (const tk of toks) { const pw = ctx.profile[tk]; if (pw) dot += pw * (ctx.idf[tk] || 1); }
+  return dot / Math.sqrt(toks.length);
 }
 
 function _fypScore(v, ctx) {
@@ -37554,10 +37600,16 @@ function _fypScore(v, ctx) {
   //    recency → cold-start, tidak langsung tenggelam.
   let score = (engagement + 0.3) * (0.45 + 0.55 * recency);
 
-  // 3) Personalisasi
-  const creator = (v.creator || "").toLowerCase();
-  if (ctx.following.has(creator)) score *= 1.35;                 // kreator di-follow
-  if (v.category && ctx.favCats.has(v.category)) score *= 1.25;  // kategori favorit
+  // 3) Konten (content-based) — dorong video yang KONTENNYA mirip minat user.
+  //    Afinitas dinormalisasi 0..1 antar kandidat (ctx._affMax, dihitung di _fypRank).
+  if (ctx._affMax > 0) {
+    const affN = (ctx._affOf.get(v) || 0) / ctx._affMax;        // 0..1
+    score *= 1 + 1.4 * affN;                                    // s/d ~2.4x untuk match konten terkuat
+  } else if (v.category && ctx.favCats.has(v.category)) {
+    score *= 1.25;                                              // fallback kategori favorit
+  }
+  // Kreator yang di-follow tetap dapat dorongan ringan.
+  if (ctx.following.has((v.creator || "").toLowerCase())) score *= 1.35;
 
   // 4) Sudah dikonsumsi → turunkan (tidak disembunyikan total)
   if (ctx.seen.has(v.id))  score *= 0.45;
@@ -37571,6 +37623,9 @@ function _fypScore(v, ctx) {
 // Urutkan + diversifikasi: hindari >2 video berturut dari kreator yang sama.
 function _fypRank(list) {
   const ctx = _fypContext();
+  // Pra-hitung afinitas konten tiap kandidat lalu normalisasi 0..1 (pakai max).
+  ctx._affOf = new Map(); ctx._affMax = 0;
+  for (const v of list) { const a = _fypContentAffinity(v, ctx); ctx._affOf.set(v, a); if (a > ctx._affMax) ctx._affMax = a; }
   const scored = list.map(v => ({ v, s: _fypScore(v, ctx) })).sort((a, b) => b.s - a.s);
   const out = [], deferred = [];
   let lastCreator = null, streak = 0;
