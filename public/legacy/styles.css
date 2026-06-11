@@ -29035,6 +29035,24 @@ body.player-view-active:has(#playerTicker:not([hidden])) main.main {
 /* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
 /* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
 .player-floating-banner { display: none !important; }
+
+/* ===== GAYA DAILYMOTION — konten watch page tersusun kartu bersih & rapi ===== */
+.player-main .player-info,
+.player-main .pv-comments,
+.player-side .ps-section {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+}
+.player-main .player-info { padding: 18px 20px 16px !important; margin-top: 14px; }
+.player-main .pv-comments { padding: 18px 20px 20px !important; margin-top: 14px; }
+.player-side .ps-section { padding: 14px 16px 16px !important; }
+.pv-title { font-size: 20px; line-height: 1.3; }
+/* Deskripsi di dalam kartu info: bg lebih halus supaya tak terasa kartu-dalam-kartu */
+.player-main .player-info .pv-desc-box { background: var(--surface-2, rgba(255, 255, 255, .035)); }
+/* Header "Selanjutnya" lebih rapi di dalam kartu */
+.player-side .ps-section .ps-section-head,
+.player-side .ps-section h3 { margin-top: 0; }
 /* Sidebar: dahulukan "Selanjutnya" (rekomendasi) di atas, slot iklan menyusul. */
 .player-side { display: flex; flex-direction: column; }
 .player-side .ps-section { order: -1; }
