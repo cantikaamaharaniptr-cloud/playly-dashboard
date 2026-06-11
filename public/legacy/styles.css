@@ -8358,7 +8358,15 @@ body[data-role="admin"] #playerSidebar { display: none; }
   overflow: hidden;
   background: linear-gradient(135deg, #561C24, #1a0c10);
 }
-.ps-related-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ps-related-thumb img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Placeholder bertema di balik img — muncul kalau thumbnail kosong/gagal load
+   (img di-set display:none lewat onerror). Glyph play cream samar di atas
+   gradien wine — bukan ikon broken. */
+.ps-related-thumb-ph {
+  position: absolute; inset: 0; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(232,216,196,.30);
+}
 .ps-related-thumb-time {
   position: absolute;
   bottom: 4px;

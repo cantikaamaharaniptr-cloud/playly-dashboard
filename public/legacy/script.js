@@ -46615,21 +46615,27 @@ async function openPlayer(id) {
       const me0 = (user?.username || "").toLowerCase();
       const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 10);
       sideEl.innerHTML = others.length ? others.map(x => {
-        const xThumb = x.thumb || `https://picsum.photos/seed/playly-${x.id || Math.random()}/240/135`;
+        const xThumb = x.thumb || "";
         const xUploaded = (() => {
           const ts = Number(x.uploadedAt || x.createdAt || (typeof x.id === "number" && x.id > 1e12 ? x.id : 0));
-          return ts && typeof relTime === "function" ? relTime(ts) : (x.time || "—");
+          const t = ts && typeof relTime === "function" ? relTime(ts) : (x.time || "");
+          return (t && t !== "—") ? t : "";
         })();
+        // Thumbnail: kalau gambar gagal/kosong, jangan tampilkan ikon broken —
+        // sembunyikan img, sisakan gradien + glyph play bertema (req user
+        // 2026-06-11: perbaiki thumbnail pecah, jangan terlalu meniru YouTube).
+        const xViews = (x.viewsNum || 0).toLocaleString("id-ID");
         return `
           <div class="ps-related-item" data-ps-open="${x.id}">
             <div class="ps-related-thumb">
-              <img src="${xThumb}" alt="" loading="lazy"/>
+              <span class="ps-related-thumb-ph" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              ${xThumb ? `<img src="${escapeHtml(xThumb)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : ""}
               <span class="ps-related-thumb-time">${escapeHtml(x.duration || "0:00")}</span>
             </div>
             <div class="ps-related-meta">
               <strong>${escapeHtml(x.title || "(no title)")}</strong>
               <small>@${escapeHtml(x.creator || "—")}</small>
-              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} views · ${xUploaded}</span>
+              <span class="ps-related-stats">${xViews} tontonan${xUploaded ? " · " + escapeHtml(xUploaded) : ""}</span>
             </div>
           </div>
         `;
