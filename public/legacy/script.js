@@ -25677,7 +25677,34 @@ function injectRunningText(screen, c) {
   const inFullPlayer = screen.classList.contains("player-screen") && screen.closest(".player-page");
   if (inFullPlayer) {
     overlay.classList.add("ad-runtext-lower3");
+    // Tombol tutup (×) — user bisa menyingkirkan iklan, spt banner in-video
+    // platform asli (Hulu/YouTube). (req user 2026-06-11)
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "ad-rt-close";
+    closeBtn.title = "Tutup iklan";
+    closeBtn.setAttribute("aria-label", "Tutup iklan");
+    closeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    overlay.appendChild(closeBtn);
     screen.appendChild(overlay);
+    // Auto-cycle: tampil ~12s lalu sembunyi ~45s, berulang — iklan tetap dapat
+    // exposure berkala tanpa menutupi video terus-menerus. isConnected guard
+    // supaya timer no-op setelah overlay di-sweep applyAdOverlays.
+    let dismissed = false;
+    const timers = [];
+    const clearTimers = () => { timers.forEach(t => clearTimeout(t)); timers.length = 0; };
+    const cycle = (visible) => {
+      if (dismissed || !overlay.isConnected) { clearTimers(); return; }
+      overlay.classList.toggle("ad-rt-collapsed", !visible);
+      timers.push(setTimeout(() => cycle(!visible), visible ? 12000 : 45000));
+    };
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dismissed = true; clearTimers();
+      overlay.classList.add("ad-rt-collapsed");
+      setTimeout(() => { try { overlay._adRtRO?.disconnect(); } catch {} if (overlay.isConnected) overlay.remove(); }, 360);
+    });
+    timers.push(setTimeout(() => cycle(false), 12000));
   } else if (!ref || ref.parentNode !== outer) {
     outer.appendChild(overlay);
   } else if (pos === "top") {
