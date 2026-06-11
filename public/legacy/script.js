@@ -37686,10 +37686,16 @@ function getFypVideos() {
   // User bisa lihat video mereka di "My Library". Discover = explore.
   const me = (user?.username || "").toLowerCase();
   let all = allVideos().filter(v => v.thumb && (v.creator || "").toLowerCase() !== me);
-  // Filter konten 18+ — sembunyikan secara default; tampil hanya kalau user
-  // mengaktifkan "Tampilkan konten 18+" di Pengaturan (state.showAdult).
-  if (!(typeof state === "object" && state && state.showAdult)) {
+  // Filter konten 18+ — sembunyikan default; tampil hanya kalau user mengaktifkan
+  // "Tampilkan konten 18+" di Pengaturan (pref content.adult, via getPref).
+  const _showAdult = (typeof getPref === "function") ? !!getPref("content.adult", false) : false;
+  if (!_showAdult) {
     all = all.filter(v => String(v.audience || v.age || v.ageRating || "").toLowerCase() !== "18+");
+  }
+  // Sembunyikan video yang sudah ditonton (pref content.hideWatched).
+  if ((typeof getPref === "function") && getPref("content.hideWatched", false)) {
+    const _seen = new Set((state?.history || []).map(h => h && h.videoId).filter(id => id != null));
+    all = all.filter(v => !_seen.has(v.id));
   }
   if (fypTagFilter) {
     all = all.filter(v => videoMatchesTag(v, fypTagFilter));
@@ -37945,7 +37951,7 @@ function renderDiscoverTrendingInternal() {
   } catch {}
 
   const me = (user?.username || "").toLowerCase();
-  const showAdult = !!(typeof state === "object" && state && state.showAdult);
+  const showAdult = (typeof getPref === "function") ? !!getPref("content.adult", false) : false;
   let vids = [];
   try {
     vids = (typeof getPlatformVideos === "function" ? getPlatformVideos() : [])
