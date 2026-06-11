@@ -37575,6 +37575,17 @@ const TRENDING_CAT_FALLBACK = {
   ]
 };
 
+// Decode entity HTML (&amp; &#39; &quot; dll) dari judul/sumber RSS supaya
+// tidak dobel-escape saat di-render via escapeHtml (Google News mengirim teks
+// yang sudah ber-entity). Pakai textarea sebagai decoder bawaan browser.
+function decodeHtmlEntities(str) {
+  if (!str) return "";
+  if (typeof document === "undefined") return String(str);
+  const ta = document.createElement("textarea");
+  ta.innerHTML = String(str);
+  return ta.value;
+}
+
 async function renderTrendingNews(listId, category = "top", opts = {}) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -37674,11 +37685,18 @@ async function renderTrendingNews(listId, category = "top", opts = {}) {
     const isLink = !!it.link;
     const tag = isLink ? "a" : "div";
     const linkAttrs = isLink ? `href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"` : "";
+    // Decode entity dulu (fix "&amp;" dobel-escape), lalu pisahkan judul
+    // Google News berformat "Headline - Publisher": publisher jadi label sumber
+    // (lebih variatif daripada "Google News" berulang di tiap baris).
+    let title = decodeHtmlEntities(it.title || "");
+    let source = decodeHtmlEntities(it.source || "");
+    const dash = title.lastIndexOf(" - ");
+    if (dash > 15) { source = title.slice(dash + 3).trim(); title = title.slice(0, dash).trim(); }
     return `<${tag} class="trending-item" ${linkAttrs}>
       <span class="trending-rank">#${i + 1}</span>
       <span class="trending-info">
-        <span class="trending-cat">${escapeHtml(it.source)}</span>
-        <strong>${escapeHtml(it.title)}</strong>
+        <span class="trending-cat">${escapeHtml(source)}</span>
+        <strong>${escapeHtml(title)}</strong>
         <small>${relTimeShort(it.ts)}</small>
       </span>
       <span class="trending-trend">${trendIcon(i)}</span>
