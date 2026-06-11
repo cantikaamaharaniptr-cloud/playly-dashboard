@@ -35311,6 +35311,45 @@ function renderHomeCreatorLevel() {
 //  dibiarkan — tak dipakai lagi tapi harmless, sesuai konvensi codebase.)
 
 // =================== SUGGEST USERS (sarankan kreator di Discover sidebar) ===================
+// Peringkat "Kreator Disarankan" — interest-aware (content-based), sejalan
+// dgn algoritma feed: kreator yang KONTENNYA cocok dgn minat user naik. Skor =
+// afinitas konten (vs profil minat) × keaktifan (jumlah video) × freshness,
+// dengan kreator yang SUDAH di-follow diturunkan (saran = temukan yang baru).
+function _rankSuggestedCreators(creators) {
+  let ctx; try { ctx = _fypContext(); } catch { ctx = null; }
+  // Agregasi token konten per kreator dari video platform.
+  const byCreator = {};
+  try {
+    (typeof getPlatformVideos === "function" ? getPlatformVideos() : []).forEach(v => {
+      const c = (v.creator || "").toLowerCase(); if (!c) return;
+      const bag = byCreator[c] || (byCreator[c] = {});
+      for (const tk of _fypTokens(v)) bag[tk] = (bag[tk] || 0) + 1;
+    });
+  } catch {}
+  const following = new Set((state?.followingCreators || []).map(x => String(x).toLowerCase()));
+  const affinity = (cname) => {
+    const bag = byCreator[cname]; if (!bag || !ctx || !ctx.profileSize) return 0;
+    let dot = 0, norm = 0;
+    for (const tk in bag) {
+      const w = bag[tk]; norm += w * w;
+      const pw = ctx.profile[tk]; if (pw) dot += w * pw * (ctx.idf[tk] || 1);
+    }
+    return norm ? dot / Math.sqrt(norm) : 0;
+  };
+  let maxAff = 0; const affMap = {};
+  creators.forEach(c => { const a = affinity(String(c.name).toLowerCase()); affMap[String(c.name).toLowerCase()] = a; if (a > maxAff) maxAff = a; });
+  const now = Date.now();
+  const score = (c) => {
+    const cn = String(c.name).toLowerCase();
+    const affN = maxAff > 0 ? affMap[cn] / maxAff : 0;
+    let s = (1 + 1.3 * affN) * (0.5 + Math.log10(1 + (c.videoCount || 0)));
+    if (c.latestUploadAt && (now - c.latestUploadAt) < 24 * 3600 * 1000) s *= 1.15; // fresh < 24 jam
+    if (following.has(cn)) s *= 0.55;                                                // sudah di-follow → turunkan
+    return s;
+  };
+  return creators.slice().sort((a, b) => score(b) - score(a));
+}
+
 function renderSuggestUsers() {
   const wrap = document.querySelector("#suggestUsersList");
   if (!wrap) return;
@@ -35318,9 +35357,12 @@ function renderSuggestUsers() {
   try {
     creators = (typeof getPlatformCreators === "function" ? getPlatformCreators({ activeOnly: true }) : []) || [];
   } catch { creators = []; }
-  // Sort by videoCount/views — kreator yg lebih aktif rank atas; ambil 20 teratas (sisanya bisa di-scroll)
-  creators.sort((a, b) => (b.videos || b.videoCount || 0) - (a.videos || a.videoCount || 0));
-  const top = creators.slice(0, 20);
+  // Peringkat interest-aware (content-based) — kreator yg kontennya cocok minat
+  // user naik; fallback ke keaktifan kalau profil minat masih kosong. Ambil 20 teratas.
+  const ranked = (typeof _rankSuggestedCreators === "function")
+    ? _rankSuggestedCreators(creators)
+    : creators.slice().sort((a, b) => (b.videos || b.videoCount || 0) - (a.videos || a.videoCount || 0));
+  const top = ranked.slice(0, 20);
   const following = (state?.followingCreators || []).map(x => String(x).toLowerCase());
 
   if (top.length === 0) {
