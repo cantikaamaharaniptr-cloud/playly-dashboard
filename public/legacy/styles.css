@@ -29121,6 +29121,33 @@ body.player-view-active #cplSettingsBtn { display: none !important; }
 .player-screen > .ad-banner.ad-pos-bottom-right { bottom: 104px !important; right: 12px !important; top: auto !important; left: auto !important; }
 .player-screen > .ad-banner.ad-pos-bottom-left  { bottom: 104px !important; left: 12px !important; top: auto !important; right: auto !important; }
 
+/* "Ikuti" (#followBtn) & "Kirim" (#commentSend / inline) — JANGAN outline wine.
+   Ada rule global `body:not([data-role=admin]) .btn.primary` yg memaksa border+
+   teks wine (!important). Override jadi NETRAL CREAM sesuai aturan border/fokus
+   cream, biar konsisten dgn tombol aksi (Suka/Bagikan/Simpan). (req user) */
+body:not([data-role="admin"]) #followBtn,
+body:not([data-role="admin"]) #followBtn:focus,
+body:not([data-role="admin"]) #followBtn:focus-visible,
+body:not([data-role="admin"]) #followBtn:active,
+body:not([data-role="admin"]) #commentSend,
+body:not([data-role="admin"]) #commentSend:focus,
+body:not([data-role="admin"]) #commentSend:focus-visible,
+body:not([data-role="admin"]) #commentSend:active,
+body:not([data-role="admin"]) #libInlineCommentSend,
+body:not([data-role="admin"]) #libInlineCommentSend:focus,
+body:not([data-role="admin"]) #libInlineCommentSend:active {
+  background: rgba(232, 216, 196, .08) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(232, 216, 196, .40) !important;
+}
+body:not([data-role="admin"]) #followBtn:hover,
+body:not([data-role="admin"]) #commentSend:hover,
+body:not([data-role="admin"]) #libInlineCommentSend:hover {
+  background: rgba(232, 216, 196, .16) !important;
+  border-color: rgba(232, 216, 196, .60) !important;
+  color: var(--text) !important;
+}
+
 /* Tombol "←" ringkas di topbar — menggantikan baris .player-back-row di atas
    video. Muncul hanya di player view; tema cream netral, fokus ring cream. */
 .topbar-back-btn {
