@@ -461,13 +461,33 @@ function toast(msg, type = "") {
   t.innerHTML = msg;
   const host = $("#toastHost");
   host.append(t);
-  // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke
-  // top-right kalau bell ga ada di viewport.
-  const bell = document.getElementById("openNotif");
-  if (bell) {
-    const r = bell.getBoundingClientRect();
-    host.style.top = `${Math.round(r.bottom + 10)}px`;
-    host.style.right = `${Math.max(12, Math.round(window.innerWidth - r.right))}px`;
+  // Posisi toast (req user 2026-06-11 — biar dekat fiturnya, bukan nyangkut topbar):
+  //  - PLAYER view: tampil DI ATAS player (top-center frame video) supaya feedback
+  //    aksi player (subtitle/kecepatan/kualitas/suara) muncul dekat konteksnya.
+  //    Bagian bawah video sudah dipakai ticker + control bar, jadi atas paling bersih.
+  //  - Halaman lain: anchor di bawah ikon lonceng topbar (default).
+  const pScreen = document.body.classList.contains("player-view-active")
+    ? document.querySelector(".player-screen") : null;
+  if (pScreen) {
+    const r = pScreen.getBoundingClientRect();
+    host.style.top = `${Math.round(r.top + 14)}px`;
+    host.style.left = `${Math.round(r.left + r.width / 2)}px`;
+    host.style.right = "auto";
+    host.style.transform = "translateX(-50%)";
+    host.style.alignItems = "center";
+  } else {
+    host.style.transform = "none";
+    host.style.left = "auto";
+    host.style.alignItems = "stretch";
+    host.style.top = "76px";
+    host.style.right = "22px";
+    // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke top-right.
+    const bell = document.getElementById("openNotif");
+    if (bell) {
+      const r = bell.getBoundingClientRect();
+      host.style.top = `${Math.round(r.bottom + 10)}px`;
+      host.style.right = `${Math.max(12, Math.round(window.innerWidth - r.right))}px`;
+    }
   }
   setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(-12px)"; }, 2800);
   setTimeout(() => t.remove(), 3200);
