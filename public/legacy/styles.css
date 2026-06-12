@@ -45344,7 +45344,7 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
   transition: background .15s, color .15s, border-color .15s;
 }
 .dm-section-tab .dmt-ico { display: inline-flex; align-items: center; }
-.dm-section-tab .dmt-ico svg { width: 15px; height: 15px; }
+.dm-section-tab .dmt-ico svg { width: 19px; height: 19px; }
 .dm-section-tab:hover { background: var(--surface-2); color: var(--text); }
 .dm-section-tab.active {
   background: var(--primary);
