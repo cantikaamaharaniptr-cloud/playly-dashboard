@@ -10545,6 +10545,11 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   display: inline-flex;
   align-items: center;
 }
+/* Dua-panel persisten (2026-06-12): back button = afordansi MOBILE saja. Di
+   desktop daftar selalu terlihat di kiri, jadi tak perlu tombol back. */
+@media (min-width: 769px) {
+  .dm-chat-back { display: none !important; }
+}
 
 /* === DM "Semua" overview — kartu per kategori gaya admin Inbox
    (per request user 2026-05-16). Toggle hidden via JS. === */

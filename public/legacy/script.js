@@ -40762,13 +40762,17 @@ function _dmApplyView() {
   if (bc) bc.hidden = true;
   if (lay) {
     lay.hidden = false;
-    // Default list-only mode (daftar full-width, chat panel hidden) sampai
-    // user klik thread → openDmChat remove .dm-list-only → reveal split.
-    lay.classList.add("dm-list-only");
+    // Dua-panel persisten (2026-06-12): daftar kiri + reading pane kanan SELALU
+    // tampil di desktop (pola inbox standar — Gmail/Outlook reading pane,
+    // Instagram/Intercom). Reading pane tampilkan placeholder "Pilih
+    // percakapan" sampai user klik thread; openDmChat ganti ke chat aktif.
+    // (Mobile: slide CSS tetap menyembunyikan chat pane di luar layar, jadi
+    // daftar full-screen — placeholder tak terlihat, tak masalah.)
+    lay.classList.remove("dm-list-only");
     if (typeof dmState !== "undefined") dmState.openIdx = null;
     var emptyP = document.getElementById("dmChatEmpty");
     var activeP = document.getElementById("dmChatActive");
-    if (emptyP) emptyP.hidden = true;
+    if (emptyP) emptyP.hidden = false;   // tampilkan placeholder reading pane
     if (activeP) activeP.hidden = true;
   }
   // Keluar dari mode chat mobile saat pindah tab / kembali ke list (fix bug
@@ -40822,18 +40826,23 @@ function _dmRelocateSyncPill() {
   if (pill.parentElement !== actions) actions.appendChild(pill);
 }
 
-// Wire back button (req user 2026-05-25): klik back di chat header →
-// kembali ke list-only mode (chat panel hidden, list full-width).
+// Wire back button (#dmChatBack) — tombol back di chat header. Dua-panel
+// persisten (2026-06-12): deselect thread → kembalikan reading pane ke
+// placeholder "Pilih percakapan" (BUKAN collapse ke list-only). Di mobile,
+// remove .dm-show-chat memicu slide kembali ke daftar full-screen. Tombol ini
+// disembunyikan di desktop via CSS (afordansi mobile-only).
 document.addEventListener("click", function (e) {
   var btn = e.target.closest && e.target.closest("#dmChatBack");
   if (!btn) return;
   e.preventDefault();
   var lay = document.getElementById("dmLayout");
-  if (lay) lay.classList.add("dm-list-only");
+  if (lay) lay.classList.remove("dm-list-only");
   if (typeof dmState !== "undefined") dmState.openIdx = null;
   var activeP = document.getElementById("dmChatActive");
+  var emptyP = document.getElementById("dmChatEmpty");
   if (activeP) activeP.hidden = true;
-  // Mobile: keluar dari chat view mode
+  if (emptyP) emptyP.hidden = false;
+  // Mobile: keluar dari chat view mode (slide balik ke daftar)
   document.body.classList.remove("dm-show-chat");
   // Re-render list supaya tidak ada thread yg ke-mark active highlighted
   if (typeof renderDmList === "function") renderDmList();
