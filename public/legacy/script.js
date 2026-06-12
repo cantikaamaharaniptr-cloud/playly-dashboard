@@ -31414,12 +31414,12 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
           }
         }, 50);
       }
-      // Khusus Messages (Opsi 3, 2026-06-12): landing = daftar "Terbaru"
-      // gabungan semua kategori (full-width, list-only) tanpa panel kanan
-      // kosong. Default filter "all". Klik thread → split; klik tab → filter.
+      // Khusus Messages (Opsi 1, 2026-06-12): landing = overview kartu
+      // ringkasan kategori (BUKAN langsung messenger DM). Klik tab/kartu →
+      // messenger. _dmApplyView yang render overview + atur active-class.
       if (n.dataset.view === "messages") {
         setTimeout(() => {
-          if (typeof dmState !== "undefined") dmState.filter = "all";
+          if (typeof dmState !== "undefined") dmState.filter = "overview";
           if (typeof _dmApplyView === "function") _dmApplyView();
         }, 50);
       }
@@ -39393,20 +39393,22 @@ $("#peopleMoreBtn")?.addEventListener("click", () => {
 // === DM (Instagram-style messages) ===
 // State: filter tab (all/dm/broadcast/requests/archived) + currently open thread idx.
 // Default "all" per user 2026-05-06 — combined view, klik tab spesifik untuk filter.
-// Default "all" (Opsi 3, 2026-06-12): landing Inbox = daftar "Terbaru" gabungan
-// SEMUA kategori (DM + broadcast + permintaan, urut waktu) full-width list-only
-// tanpa panel kanan kosong. Tab "Semua" lama dihapus (di-hide via CSS) — di
-// landing tak ada tab terlihat aktif. Klik thread → split; klik tab → filter.
-const dmState = { filter: "all", openIdx: null };
+// Default "overview" (Opsi 1, 2026-06-12): landing Inbox = kartu ringkasan
+// kategori (#dmOverview), bukan langsung messenger. Tab "Semua" lama dihapus
+// (di-hide via CSS). Klik tab/kartu → messenger kategori; klik tab aktif →
+// balik overview.
+const dmState = { filter: "overview", openIdx: null };
 
 // Section tab click handler — section tabs di atas dm-layout.
-// Opsi 2 (2026-06-12): klik tab → set filter → daftar full-width kategori itu
-// (list-only). _dmApplyView yang atur active-class + render.
+// Opsi 1 (2026-06-12): klik tab → messenger kategori itu; klik tab yang SUDAH
+// aktif → toggle kembali ke overview landing (kartu ringkasan). _dmApplyView
+// yang mengatur active-class + show/hide overview vs messenger.
 document.addEventListener("click", e => {
   const tab = e.target.closest(".dm-section-tab[data-dm-filter]");
   if (!tab) return;
   e.preventDefault();
-  dmState.filter = tab.dataset.dmFilter;
+  var clicked = tab.dataset.dmFilter;
+  dmState.filter = (dmState.filter === clicked) ? "overview" : clicked;
   if (typeof _dmApplyView === "function") _dmApplyView();
 });
 
@@ -40744,44 +40746,92 @@ function _dmApplyView() {
   var ov = document.getElementById("dmOverview");
   var lay = document.getElementById("dmLayout");
   var bc = document.getElementById("dmBroadcastView");
-  var f = (typeof dmState === "undefined") ? "all" : dmState.filter;
-  var isAll = f === "all";
+  var f = (typeof dmState === "undefined") ? "overview" : dmState.filter;
+  var isOverview = (f === "overview" || f == null);
   var isDm = f === "dm";
-  // OPSI 3 (2026-06-12): landing = daftar "TERBARU" GABUNGAN semua kategori
-  // (filter "all" — DM + broadcast + permintaan, urut waktu) full-width
-  // (.dm-list-only) TANPA panel kanan kosong. Klik thread → openDmChat remove
-  // .dm-list-only → panel chat muncul (split). Tab DM/Broadcast/Permintaan/
-  // Arsip → filter ke satu kategori. Kartu overview + broadcast view terpisah
-  // retired. "+ Pesan Baru" di landing gabungan + DM.
+  // OPSI 1 (2026-06-12): LANDING = kartu ringkasan kategori (#dmOverview) — DM,
+  // Broadcast Admin, Permintaan, Arsip dengan preview + jumlah. Klik tab/kartu
+  // → messenger DUA-PANEL (#dmLayout) untuk kategori itu; klik tab aktif lagi →
+  // balik ke overview (lihat Section tab click handler). View broadcast
+  // terpisah (#dmBroadcastView) tetap retired (broadcast pakai messenger
+  // read-only). "+ Pesan Baru" hanya di messenger DM.
   var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
-  if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
+  if (newChatBtn) newChatBtn.hidden = !isDm;
   // Pill status sync ke kanan header (sejajar pill "LIVE" Statistik).
   if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
-  if (ov) ov.hidden = true;
   if (bc) bc.hidden = true;
-  // Active state tab sesuai filter aktif (tab "Semua" di-hide → saat landing
-  // gabungan tak ada tab terlihat yang aktif).
+  if (ov) ov.hidden = !isOverview;
+  if (lay) lay.hidden = isOverview;
+  // Active state tab: tak ada tab aktif saat overview landing.
   document.querySelectorAll(".dm-section-tab").forEach(function (t) {
-    t.classList.toggle("active", t.dataset.dmFilter === f);
+    t.classList.toggle("active", !isOverview && t.dataset.dmFilter === f);
   });
-  // Heading "Terbaru" di atas daftar — hanya saat landing gabungan (filter all).
-  if (typeof _dmEnsureRecentHeading === "function") {
-    var rh = _dmEnsureRecentHeading();
-    if (rh) rh.hidden = !isAll;
+  document.body.classList.remove("dm-show-chat");
+  if (typeof dmState !== "undefined") dmState.openIdx = null;
+
+  if (isOverview) {
+    // Landing: render kartu ringkasan kategori.
+    if (typeof renderDmOverview === "function") renderDmOverview();
+    return;
   }
+
+  // Messenger dua-panel untuk kategori aktif (Gmail/Outlook reading pane).
+  // Reading pane kanan tampilkan placeholder "Pilih percakapan" sampai user
+  // klik thread; openDmChat ganti ke chat aktif. (Mobile: slide CSS sembunyikan
+  // chat pane → daftar full-screen.)
   if (lay) {
-    lay.hidden = false;
-    // Landing list-only: daftar full-width; panel chat + placeholder hidden
-    // sampai user klik thread.
-    lay.classList.add("dm-list-only");
-    if (typeof dmState !== "undefined") dmState.openIdx = null;
+    lay.classList.remove("dm-list-only");
     var emptyP = document.getElementById("dmChatEmpty");
     var activeP = document.getElementById("dmChatActive");
-    if (emptyP) emptyP.hidden = true;
+    if (emptyP) emptyP.hidden = false;
     if (activeP) activeP.hidden = true;
   }
-  document.body.classList.remove("dm-show-chat");
+  // BEDAKAN tiap halaman kategori (2026-06-12): banner konteks + placeholder
+  // search sesuai isi kategori. Compose "+ Pesan Baru" sudah hanya di DM
+  // (newChatBtn di atas), empty-state sudah per-filter (renderDmList).
+  //   DM        → chat personal: compose + list, tanpa banner (default).
+  //   Broadcast → pengumuman read-only.
+  //   Permintaan→ pesan dari non-followed: buka lalu Terima.
+  //   Arsip     → chat diarsipkan: buka untuk baca, bisa dipulihkan.
+  var CAT_META = {
+    dm:        { banner: "",                                                                                         ph: "Cari pesan atau user…" },
+    broadcast: { banner: "📢 Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.",                     ph: "Cari broadcast…" },
+    requests:  { banner: "✉️ Permintaan pesan dari orang yang belum kamu ikuti. Buka lalu klik Terima untuk lanjut di DM.", ph: "Cari permintaan…" },
+    archived:  { banner: "🗄️ Chat yang sudah kamu arsipkan. Buka untuk baca; pulihkan lewat tombol arsip di dalam chat.", ph: "Cari di arsip…" },
+  };
+  var cm = CAT_META[f] || CAT_META.dm;
+  var searchInput = document.getElementById("msgSearch");
+  if (searchInput) {
+    searchInput.setAttribute("placeholder", cm.ph);
+    // data-orig-ph dipakai mekanisme restore placeholder → set juga biar sticky.
+    searchInput.setAttribute("data-orig-ph", cm.ph);
+  }
+  if (typeof _dmEnsureCatBanner === "function") {
+    var catBanner = _dmEnsureCatBanner();
+    if (catBanner) {
+      if (cm.banner) { catBanner.textContent = cm.banner; catBanner.hidden = false; }
+      else catBanner.hidden = true;
+    }
+  }
   if (typeof renderDmList === "function") renderDmList();
+}
+
+// Inject banner konteks kategori (#dmCatBanner) di atas daftar — menjelaskan
+// isi tiap halaman (Broadcast/Permintaan/Arsip). Idempotent; teks + visibilitas
+// di-set _dmApplyView per filter (kosong/hidden untuk DM).
+function _dmEnsureCatBanner() {
+  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
+  if (!side) return document.getElementById("dmCatBanner");
+  var b = document.getElementById("dmCatBanner");
+  if (!b) {
+    b = document.createElement("div");
+    b.id = "dmCatBanner";
+    b.className = "dm-cat-banner";
+    var listEl = document.getElementById("dmThreadList");
+    if (listEl) side.insertBefore(b, listEl);
+    else side.appendChild(b);
+  }
+  return b;
 }
 
 // Inject tombol "+ Pesan Baru" di atas panel daftar (.dm-side). Idempotent —
@@ -40810,25 +40860,6 @@ function _dmEnsureComposeBtn() {
   return btn;
 }
 
-// Inject heading "Terbaru" di atas daftar (#dmThreadList) — dipakai Opsi 3
-// untuk menandai landing gabungan semua kategori. Idempotent; visibilitas
-// di-toggle _dmApplyView (hidden saat filter spesifik).
-function _dmEnsureRecentHeading() {
-  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
-  if (!side) return document.getElementById("dmRecentHeading");
-  var h = document.getElementById("dmRecentHeading");
-  if (!h) {
-    h = document.createElement("div");
-    h.id = "dmRecentHeading";
-    h.className = "dm-recent-heading";
-    h.textContent = "Terbaru";
-    var listEl = document.getElementById("dmThreadList");
-    if (listEl) side.insertBefore(h, listEl);
-    else side.appendChild(h);
-  }
-  return h;
-}
-
 // Pindahkan pill status sync (#dmSyncStatus) dari dalam .lib-header-text ke
 // .view-actions di kanan .view-header — biar sejajar gaya header halaman lain
 // (mis. pill "LIVE" di Statistik). Idempotent.
@@ -40847,21 +40878,22 @@ function _dmRelocateSyncPill() {
   if (pill.parentElement !== actions) actions.appendChild(pill);
 }
 
-// Wire back button (#dmChatBack) — tombol back di chat header. Opsi 2
-// (2026-06-12): klik back → kembali ke DAFTAR full-width (.dm-list-only),
-// panel chat + placeholder hidden. Di mobile, remove .dm-show-chat memicu
-// slide kembali ke daftar full-screen.
+// Wire back button (#dmChatBack) — tombol back di chat header. Dua-panel
+// persisten (2026-06-12): deselect thread → kembalikan reading pane ke
+// placeholder "Pilih percakapan" (BUKAN collapse ke list-only). Di mobile,
+// remove .dm-show-chat memicu slide kembali ke daftar full-screen. Tombol ini
+// disembunyikan di desktop via CSS (afordansi mobile-only).
 document.addEventListener("click", function (e) {
   var btn = e.target.closest && e.target.closest("#dmChatBack");
   if (!btn) return;
   e.preventDefault();
   var lay = document.getElementById("dmLayout");
-  if (lay) lay.classList.add("dm-list-only");
+  if (lay) lay.classList.remove("dm-list-only");
   if (typeof dmState !== "undefined") dmState.openIdx = null;
   var activeP = document.getElementById("dmChatActive");
   var emptyP = document.getElementById("dmChatEmpty");
   if (activeP) activeP.hidden = true;
-  if (emptyP) emptyP.hidden = true;
+  if (emptyP) emptyP.hidden = false;
   // Mobile: keluar dari chat view mode (slide balik ke daftar)
   document.body.classList.remove("dm-show-chat");
   // Re-render list supaya tidak ada thread yg ke-mark active highlighted

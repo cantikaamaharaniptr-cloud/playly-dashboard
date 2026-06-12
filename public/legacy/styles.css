@@ -10700,20 +10700,23 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
 .dm-new-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
 .dm-new-chat-btn svg { width: 16px; height: 16px; }
 .dm-new-chat-btn[hidden] { display: none !important; }
-/* "Terbaru" section heading (Opsi 3) — label di atas daftar gabungan. */
-.dm-recent-heading {
-  padding: 10px 16px 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
+/* Banner konteks kategori (Broadcast/Permintaan/Arsip) — beda isi tiap halaman. */
+.dm-cat-banner {
+  margin: 0 14px 8px;
+  padding: 9px 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
   color: var(--text-2, var(--muted));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
-.dm-recent-heading[hidden] { display: none !important; }
-/* Opsi 2 (2026-06-12): landing = daftar full-width (list-only), bukan kartu
-   overview. Kartu overview (#dmOverview) + view broadcast terpisah
-   (#dmBroadcastView) retired → force-hide. */
-#dmOverview, #dmBroadcastView { display: none !important; }
+.dm-cat-banner[hidden] { display: none !important; }
+/* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
+   ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
+   view broadcast terpisah (#dmBroadcastView) yang tetap retired permanen
+   (broadcast pakai messenger read-only). */
+#dmBroadcastView { display: none !important; }
 .dm-side-search {
   display: flex;
   align-items: center;
