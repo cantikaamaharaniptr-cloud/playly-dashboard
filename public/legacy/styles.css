@@ -10768,7 +10768,8 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
   border: 1px solid var(--border);
   border-radius: 10px;
 }
-.dm-cat-banner-ico { flex-shrink: 0; }
+.dm-cat-banner-ico { flex-shrink: 0; display: inline-flex; margin-top: 1px; color: var(--text-2, var(--muted)); }
+.dm-cat-banner-ico svg { width: 15px; height: 15px; display: block; }
 .dm-cat-banner-txt { flex: 1; min-width: 0; }
 .dm-cat-banner[hidden] { display: none !important; }
 /* Permintaan = aksi → banner ber-aksen wine; Arsip = penyimpanan → banner
@@ -45463,6 +45464,49 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
    sekarang DM (chat personal). Di-hide via CSS — markup index-markup.ts fragile
    jadi tidak diedit; tombolnya tetap ada di DOM tapi tak tampil. */
 .dm-section-tab[data-dm-filter="all"] { display: none !important; }
+/* Permintaan & Arsip dikeluarkan dari tab bar (req user 2026-06-12) → diakses
+   via entri di atas daftar DM. Tab tinggal DM | Broadcast Admin. */
+.dm-section-tab[data-dm-filter="requests"],
+.dm-section-tab[data-dm-filter="archived"] { display: none !important; }
+
+/* Entri seksi (Permintaan/Arsip) di atas daftar DM — pola Instagram/WhatsApp. */
+.dm-section-entry {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  margin: 0 0 4px; padding: 11px 13px; border-radius: 11px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.dm-section-entry:hover { background: rgba(255,255,255,.04); border-color: var(--border); }
+.dm-section-entry-ico {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2, var(--muted));
+}
+.dm-section-entry-ico svg { width: 18px; height: 18px; }
+.dm-section-entry-label { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; }
+.dm-section-entry-count {
+  flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  background: var(--primary); color: #fff;
+}
+.dm-section-entry-arrow { flex-shrink: 0; display: inline-flex; color: var(--text-2, var(--muted)); opacity: .6; }
+.dm-section-entry-arrow svg { width: 16px; height: 16px; }
+/* Pemisah halus antara blok entri dan daftar chat di bawahnya. */
+.dm-section-entry + .dm-thread,
+.dm-section-entry + .dm-contact-row { margin-top: 8px; }
+
+/* Tombol kembali di view Permintaan/Arsip (mereka bukan tab lagi). */
+.dm-subnav-back {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin: 0 0 10px; padding: 6px 11px 6px 7px; border-radius: 999px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-2, var(--muted)); font: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+}
+.dm-subnav-back:hover { background: rgba(255,255,255,.04); color: var(--text); border-color: var(--text-2, var(--muted)); }
+.dm-subnav-back svg { width: 16px; height: 16px; }
 .dm-section-tab-badge {
   display: inline-grid;
   place-items: center;

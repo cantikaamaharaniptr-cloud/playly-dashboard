@@ -39567,7 +39567,35 @@ function renderDmList() {
     contactsHTML = (typeof _dmContactRowsHTML === "function") ? _dmContactRowsHTML(existingLower, q) : "";
   }
 
-  if (!filtered.length && !contactsHTML) {
+  // Permintaan & Arsip DIKELUARKAN dari tab bar (req user 2026-06-12) → jadi
+  // ENTRI di atas daftar DM (pola Instagram "Requests" / WhatsApp "Archived").
+  // Hanya muncul kalau ada isinya & tidak sedang mencari.
+  let entriesHTML = "";
+  if (dmState.filter === "dm" && !q) {
+    const arcCountAll = allMsgs.filter(m => m.archived).length;
+    const _sIco = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+    const _chev = _sIco('<path d="m9 18 6-6-6-6"/>');
+    const mkEntry = (sec, ico, label, count) => count > 0
+      ? `<button type="button" class="dm-section-entry" data-dm-open-section="${sec}">`
+        + `<span class="dm-section-entry-ico">${ico}</span>`
+        + `<span class="dm-section-entry-label">${label}</span>`
+        + `<span class="dm-section-entry-count">${count}</span>`
+        + `<span class="dm-section-entry-arrow">${_chev}</span>`
+        + `</button>`
+      : "";
+    entriesHTML =
+      mkEntry("requests", _sIco('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'), "Permintaan pesan", reqCountAll)
+      + mkEntry("archived", _sIco('<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>'), "Arsip", arcCountAll);
+  }
+  // Di view Permintaan/Arsip (bukan tab lagi) → tombol kembali ke daftar DM.
+  let backHTML = "";
+  if (dmState.filter === "requests" || dmState.filter === "archived") {
+    backHTML = `<button type="button" class="dm-subnav-back" data-dm-back>`
+      + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`
+      + `<span>Kembali ke Pesan</span></button>`;
+  }
+
+  if (!filtered.length && !contactsHTML && !entriesHTML) {
     // v530 (2026-05-25): full i18n via inbox.list.empty.* keys.
     const emptyMap = {
       all:       q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.all"),
@@ -39576,7 +39604,8 @@ function renderDmList() {
       requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
       archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
     };
-    list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
+    list.innerHTML = backHTML + `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
+    list.querySelectorAll("[data-dm-back]").forEach(el => el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm"); }));
     return;
   }
 
@@ -39617,7 +39646,16 @@ function renderDmList() {
     return `<div class="${rowCls}" data-dm-thread="${idx}">${avatarHTML}${infoHTML}${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}</div>`;
   }).join("");
 
-  list.innerHTML = threadsHTML + contactsHTML;
+  list.innerHTML = backHTML + entriesHTML + threadsHTML + contactsHTML;
+
+  // Entri Permintaan/Arsip (di atas daftar DM) → buka kategorinya.
+  list.querySelectorAll("[data-dm-open-section]").forEach(el => {
+    el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory(el.dataset.dmOpenSection); });
+  });
+  // Tombol kembali (dari Permintaan/Arsip) → daftar DM.
+  list.querySelectorAll("[data-dm-back]").forEach(el => {
+    el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm"); });
+  });
 
   list.querySelectorAll("[data-dm-thread]").forEach(el => {
     el.addEventListener("click", () => {
@@ -40925,11 +40963,14 @@ function _dmApplyView() {
   //   Arsip     → chat diarsipkan: buka untuk baca, bisa dipulihkan.
   // icon + text dipisah supaya saat teks wrap, semua baris rata (tidak masuk
   // ke bawah ikon) — req user 2026-06-12.
+  // Ikon banner = SVG MONOKROM (inherit currentColor tema, BUKAN emoji berwarna)
+  // — req user 2026-06-12 "jangan pakai ikon warna".
+  var _ban = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
   var CAT_META = {
     dm:        { icon: "", text: "", ph: "Cari pesan atau user…" },
-    broadcast: { icon: "📢", text: "Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.", ph: "Cari broadcast…" },
-    requests:  { icon: "✉️", text: "Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk menghapus.", ph: "Cari permintaan…" },
-    archived:  { icon: "🗄️", text: "Chat yang sudah kamu arsipkan. Klik Pulihkan untuk mengembalikannya ke DM.", ph: "Cari di arsip…" },
+    broadcast: { icon: _ban('<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'), text: "Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.", ph: "Cari broadcast…" },
+    requests:  { icon: _ban('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'), text: "Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk menghapus.", ph: "Cari permintaan…" },
+    archived:  { icon: _ban('<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>'), text: "Chat yang sudah kamu arsipkan. Klik Pulihkan untuk mengembalikannya ke DM.", ph: "Cari di arsip…" },
   };
   var cm = CAT_META[f] || CAT_META.dm;
   var searchInput = document.getElementById("msgSearch");
@@ -40946,7 +40987,7 @@ function _dmApplyView() {
       catBanner.className = "dm-cat-banner dm-cat-banner--" + f;
       if (cm.text) {
         catBanner.innerHTML = '<span class="dm-cat-banner-ico" aria-hidden="true"></span><span class="dm-cat-banner-txt"></span>';
-        catBanner.querySelector(".dm-cat-banner-ico").textContent = cm.icon;
+        catBanner.querySelector(".dm-cat-banner-ico").innerHTML = cm.icon; // SVG monokrom
         catBanner.querySelector(".dm-cat-banner-txt").textContent = cm.text;
         catBanner.hidden = false;
       } else catBanner.hidden = true;
