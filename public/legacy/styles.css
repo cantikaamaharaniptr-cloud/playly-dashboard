@@ -45488,6 +45488,11 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
    via entri di atas daftar DM. Tab tinggal DM | Broadcast Admin. */
 .dm-section-tab[data-dm-filter="requests"],
 .dm-section-tab[data-dm-filter="archived"] { display: none !important; }
+/* Konsisten (req user 2026-06-12): submenu sidebar Inbox juga tinggal
+   DM | Broadcast Admin — Permintaan & Arsip sudah jadi entri di dalam DM, jadi
+   subitem sidebar-nya disembunyikan (markup index-markup.ts fragile, tak diedit). */
+.nav-subitem[data-sub-action="dm-filter:requests"],
+.nav-subitem[data-sub-action="dm-filter:archived"] { display: none !important; }
 
 /* Entri seksi (Permintaan/Arsip) di atas daftar DM — pola Instagram/WhatsApp. */
 .dm-section-entry {
