@@ -39530,7 +39530,8 @@ function renderDmList() {
     titleEl.dataset.origText = "";
   }
   if (descEl) {
-    descEl.textContent = "Inbox kamu — DM, broadcast admin, permintaan, dan arsip di satu tempat.";
+    // Dipendekkan (2026-06-12): teks lama hanya mengulang isi tab di bawah.
+    descEl.textContent = "Semua percakapanmu di satu tempat.";
     descEl.removeAttribute("data-i18n");
     descEl.dataset.origText = "";
   }
