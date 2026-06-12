@@ -10688,6 +10688,44 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
   word-break: break-word;
 }
 
+/* === Broadcast = FEED NOTIFIKASI (req user 2026-06-12) === */
+#dmBroadcastView.dm-broadcast { margin-top: 16px; max-width: 720px; }
+.dm-bc-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px; margin-bottom: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  font-size: 12.5px; color: var(--text-2, var(--muted)); line-height: 1.45;
+}
+.dm-bc-note-ico { flex-shrink: 0; color: var(--primary); display: inline-flex; }
+.dm-bc-note-ico svg { width: 18px; height: 18px; }
+.dm-bc-note b { color: var(--text); }
+.dm-bc-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-elev); border: 1px solid var(--border);
+}
+.dm-bc-item.is-unread {
+  background: rgba(109, 41, 50, .14);
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+}
+.dm-bc-item-ico {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  color: var(--primary);
+}
+.dm-bc-item-ico svg { width: 19px; height: 19px; }
+.dm-bc-item-main { flex: 1; min-width: 0; }
+.dm-bc-item-top { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+.dm-bc-item-top strong { font-size: 13px; font-weight: 700; color: var(--text); }
+.dm-bc-item-time { margin-left: auto; font-size: 11px; color: var(--text-2, var(--muted)); flex-shrink: 0; }
+.dm-bc-item-text {
+  margin: 0; font-size: 13px; line-height: 1.5; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+.dm-bc-empty-ico { color: var(--muted); margin-bottom: 6px; }
+.dm-bc-empty-ico svg { width: 34px; height: 34px; }
+
 /* === LEFT SIDE: thread list === */
 .dm-side {
   display: flex;
@@ -10745,9 +10783,9 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 .dm-contact-row:hover .dm-contact-start { background: var(--primary); color: #fff; border-color: var(--primary); }
 /* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
    ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
-   view broadcast terpisah (#dmBroadcastView) yang tetap retired permanen
-   (broadcast pakai messenger read-only). */
-#dmBroadcastView { display: none !important; }
+   view broadcast terpisah (#dmBroadcastView) DIPAKAI LAGI (req user 2026-06-12)
+   sebagai halaman feed notifikasi pengumuman read-only — visibilitas dikelola
+   _dmApplyView ([hidden]). */
 .dm-side-search {
   display: flex;
   align-items: center;

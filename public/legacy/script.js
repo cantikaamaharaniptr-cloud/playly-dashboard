@@ -40823,19 +40823,19 @@ function _dmApplyView() {
   var f = (typeof dmState === "undefined") ? "overview" : dmState.filter;
   var isOverview = (f === "overview" || f == null);
   var isDm = f === "dm";
-  // OPSI 1 (2026-06-12): LANDING = kartu ringkasan kategori (#dmOverview) — DM,
-  // Broadcast Admin, Permintaan, Arsip dengan preview + jumlah. Klik tab/kartu
-  // → messenger DUA-PANEL (#dmLayout) untuk kategori itu; klik tab aktif lagi →
-  // balik ke overview (lihat Section tab click handler). View broadcast
-  // terpisah (#dmBroadcastView) tetap retired (broadcast pakai messenger
-  // read-only). "+ Pesan Baru" hanya di messenger DM.
+  var isBroadcast = (f === "broadcast");
+  // OPSI 1 (2026-06-12): LANDING = kartu ringkasan kategori (#dmOverview).
+  // Klik tab/kartu → messenger. BROADCAST khusus (req user 2026-06-12): halaman
+  // seperti NOTIFIKASI — feed pengumuman read-only (#dmBroadcastView), bukan
+  // messenger/chat. DM/Permintaan/Arsip → messenger single-column.
+  // "+ Pesan Baru" hanya di messenger DM.
   var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
   if (newChatBtn) newChatBtn.hidden = !isDm;
   // Pill status sync ke kanan header (sejajar pill "LIVE" Statistik).
   if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
-  if (bc) bc.hidden = true;
+  if (bc) bc.hidden = !isBroadcast;
   if (ov) ov.hidden = !isOverview;
-  if (lay) lay.hidden = isOverview;
+  if (lay) lay.hidden = isOverview || isBroadcast;
   // Active state tab: tak ada tab aktif saat overview landing.
   document.querySelectorAll(".dm-section-tab").forEach(function (t) {
     t.classList.toggle("active", !isOverview && t.dataset.dmFilter === f);
@@ -40846,6 +40846,12 @@ function _dmApplyView() {
   if (isOverview) {
     // Landing: render kartu ringkasan kategori.
     if (typeof renderDmOverview === "function") renderDmOverview();
+    return;
+  }
+
+  if (isBroadcast) {
+    // Halaman Broadcast = feed notifikasi pengumuman read-only.
+    if (typeof renderDmBroadcast === "function") renderDmBroadcast();
     return;
   }
 
@@ -40997,8 +41003,17 @@ function renderDmBroadcast() {
       '<small>Kirim pengumuman ke semua user terdaftar (' + recCount + ' penerima). Read-only di sisi user.</small></div>' +
       '<button type="button" class="btn primary small" id="dmComposeBroadcastBtn">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> Tulis Broadcast</button>';
-  } else if (bar) {
-    bar.remove();
+  } else {
+    // Non-admin: catatan read-only di atas feed pengumuman (gaya notifikasi).
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "dmAdminBroadcastBar";
+      wrap.parentNode.insertBefore(bar, wrap);
+    }
+    bar.className = "dm-bc-note";
+    bar.innerHTML =
+      '<span class="dm-bc-note-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>' +
+      '<span>Pengumuman resmi dari tim Playly. <b>Read-only</b> — tidak bisa dibalas.</span>';
   }
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var bc = all.filter(function (m) { return m.isAdmin || m.isBroadcast; });
@@ -41008,31 +41023,37 @@ function renderDmBroadcast() {
     var fromAdmin = hist.filter(function (h) { return h && h.from !== "me"; });
     if (fromAdmin.length) {
       fromAdmin.forEach(function (h) {
-        items.push({ name: m.name, ts: h.ts || m.ts, text: h.text || "[pesan]" });
+        items.push({ name: m.name, ts: h.ts || m.ts, text: h.text || "[pesan]", unread: !!m.unread });
       });
     } else {
-      items.push({ name: m.name, ts: m.ts, text: m.preview || "[broadcast]" });
+      items.push({ name: m.name, ts: m.ts, text: m.preview || "[broadcast]", unread: !!m.unread });
     }
   });
   items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-  if (!items.length) {
-    wrap.innerHTML = '<div class="dm-bc-empty">Belum ada broadcast dari admin.</div>';
-    return;
-  }
-  var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
   function esc(s) {
     return (typeof escapeHtml === "function")
       ? escapeHtml(String(s))
       : String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]); });
   }
+  if (!items.length) {
+    wrap.innerHTML =
+      '<div class="dm-bc-empty"><div class="dm-bc-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>' +
+      '<p><b>Belum ada pengumuman</b></p><span>Pengumuman resmi dari tim Playly akan muncul di sini.</span></div>';
+    return;
+  }
+  var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
+  // Render gaya NOTIFIKASI (req user 2026-06-12): ikon bulat + teks pengumuman
+  // + waktu, read-only (tak bisa diklik jadi chat).
   wrap.innerHTML = items.map(function (it) {
     var tlabel = (typeof chatRelTime === "function") ? chatRelTime(it.ts) : "";
-    return '<article class="dm-bc-card">' +
-      '<div class="dm-bc-head"><span class="dm-bc-ico" aria-hidden="true">' + ico + '</span>' +
-      '<div class="dm-bc-meta"><strong>' + esc(it.name || "Admin Playly") + '</strong>' +
-      '<span class="dm-bc-badge">ADMIN</span></div>' +
-      '<span class="dm-bc-time">' + esc(tlabel) + '</span></div>' +
-      '<div class="dm-bc-body">' + esc(it.text).replace(/\n/g, "<br>") + '</div></article>';
+    return '<div class="dm-bc-item' + (it.unread ? ' is-unread' : '') + '">' +
+      '<span class="dm-bc-item-ico" aria-hidden="true">' + ico + '</span>' +
+      '<div class="dm-bc-item-main">' +
+        '<div class="dm-bc-item-top"><strong>' + esc(it.name || "Admin Playly") + '</strong>' +
+        '<span class="dm-bc-badge">ADMIN</span>' +
+        '<span class="dm-bc-item-time">' + esc(tlabel) + '</span></div>' +
+        '<p class="dm-bc-item-text">' + esc(it.text).replace(/\n/g, "<br>") + '</p>' +
+      '</div></div>';
   }).join("");
 }
 
