@@ -72000,3 +72000,53 @@ textarea#upDesc.upf-desc-textarea {
   box-shadow: none !important;
 }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+
+/* === Pengaturan: tab grouping (req user 2026-06-12) — 10 kartu dikelompokkan
+   ke tab Umum/Keamanan/Data biar tak menumpuk di satu halaman panjang. === */
+.set-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.set-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 17px; border-radius: 11px;
+  background: var(--surface); color: var(--text-2, var(--muted));
+  border: 1px solid var(--border);
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s, transform .12s;
+}
+.set-tab .set-tab-ico { display: inline-flex; }
+.set-tab .set-tab-ico svg { width: 16px; height: 16px; }
+.set-tab:hover { background: var(--bg-elev); color: var(--text); transform: translateY(-1px); }
+.set-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.set-tab-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.set-tab-panel[hidden] { display: none !important; }
+
+/* Kartu "Akun Saya" di Pengaturan (req user 2026-06-12) — edit nama/bio/foto. */
+.set-acct { display: flex; flex-direction: column; gap: 13px; }
+.set-acct-avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 2px; }
+.set-acct-avatar { width: 64px; height: 64px; min-width: 64px; border-radius: 50%; flex-shrink: 0; font-size: 22px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
+.set-acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.set-acct-avatar-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.set-acct-avatar-btn { padding: 7px 14px !important; font-size: 12.5px !important; }
+.set-acct-avatar-remove { background: none; border: 0; color: var(--text-2, var(--muted)); font-size: 12px; cursor: pointer; padding: 0; }
+.set-acct-avatar-remove:hover { color: var(--danger, #c0392b); }
+.set-acct-avatar-hint { font-size: 11px; color: var(--muted); }
+.set-field { display: flex; flex-direction: column; gap: 5px; }
+.set-field > span { font-size: 12px; font-weight: 600; color: var(--text-2, var(--muted)); }
+.set-field input, .set-field textarea {
+  width: 100%; padding: 9px 12px; border-radius: 9px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-family: inherit;
+}
+.set-field textarea { resize: vertical; min-height: 42px; }
+.set-field input[readonly] { opacity: .6; cursor: default; }
+.set-acct-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 2px; line-height: 1.45; }
+.set-acct-save { align-self: flex-start; padding: 9px 18px !important; }
+/* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
+   kiri; toggle tetap di kanan. */
+.tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
+.tog .tog-desc { font-size: 11px; line-height: 1.4; color: var(--muted); font-weight: 400; }
+.tog { align-items: center; }

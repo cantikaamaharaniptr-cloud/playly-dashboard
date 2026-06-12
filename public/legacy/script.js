@@ -4496,6 +4496,199 @@ function getPref(key, defVal) {
   return obj === undefined ? defVal : obj;
 }
 
+// Rapikan halaman Pengaturan (req user 2026-06-12): kelompokkan 10 kartu yang
+// dulu menumpuk di satu halaman panjang ke dalam TAB (Umum / Keamanan / Data &
+// Akun). DOM-restructure (markup statis di index-markup.ts fragile → tak
+// diedit langsung). Idempotent via dataset.tabbed. Listener data-pref tetap
+// nempel karena node DIPINDAH (appendChild), bukan di-clone.
+function _setupSettingsTabs() {
+  var sec = document.querySelector('section.view[data-view="settings"]');
+  if (!sec) return;
+  var grid = sec.querySelector(".grid-2");
+  if (!grid || grid.dataset.tabbed === "1") return;
+
+  var groupOf = function (h) {
+    if (/Keamanan|Faktor|2FA|Riwayat Aktivitas|Sesi Aktif/i.test(h)) return "keamanan";
+    if (/Ekspor|Hapus Akun|Akun Saya|Profil/i.test(h)) return "data";
+    return "umum"; // Notifikasi, Tampilan, Privasi, Bahasa & Region
+  };
+  var ic = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+  var TABS = [
+    { id: "umum",     label: "Umum",        icon: ic('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>') },
+    { id: "keamanan", label: "Keamanan",    icon: ic('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>') },
+    { id: "data",     label: "Data & Akun", icon: ic('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>') },
+  ];
+
+  var panels = {};
+  TABS.forEach(function (t) {
+    var p = document.createElement("div");
+    p.className = "set-tab-panel";
+    p.dataset.panel = t.id;
+    panels[t.id] = p;
+  });
+  Array.prototype.slice.call(grid.children).forEach(function (card) {
+    var hEl = card.querySelector("h1,h2,h3");
+    var h = hEl ? hEl.textContent.trim() : "";
+    (panels[groupOf(h)] || panels.umum).appendChild(card);
+  });
+
+  var nav = document.createElement("div");
+  nav.className = "set-tabs";
+  TABS.forEach(function (t, i) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "set-tab" + (i === 0 ? " active" : "");
+    b.dataset.settab = t.id;
+    b.innerHTML = '<span class="set-tab-ico" aria-hidden="true">' + t.icon + "</span><span>" + t.label + "</span>";
+    b.addEventListener("click", function () {
+      nav.querySelectorAll(".set-tab").forEach(function (x) { x.classList.toggle("active", x === b); });
+      TABS.forEach(function (tt) { panels[tt.id].hidden = tt.id !== t.id; });
+    });
+    nav.appendChild(b);
+  });
+
+  grid.dataset.tabbed = "1";
+  grid.classList.remove("grid-2");
+  grid.classList.add("set-tab-host");
+  grid.appendChild(nav);
+  TABS.forEach(function (t, i) { panels[t.id].hidden = i !== 0; grid.appendChild(panels[t.id]); });
+}
+
+// Kartu "Akun Saya" di Pengaturan (req user 2026-06-12): edit Nama, Bio, Foto
+// dari Settings (sebelumnya hanya di halaman Profil terpisah). Username & Email
+// read-only (identitas akun — konsisten dgn form profil yg juga tak meng-edit
+// keduanya). Reuse persistUserAndAccount/applyUserToUI/openAvatarEditor.
+function _refreshSettingsAccountCard() {
+  if (typeof user === "undefined" || !user) return;
+  var nm = document.getElementById("setAcctName");
+  var bio = document.getElementById("setAcctBio");
+  var un = document.getElementById("setAcctUsername");
+  var em = document.getElementById("setAcctEmail");
+  var av = document.getElementById("setAcctAvatar");
+  if (nm && document.activeElement !== nm) nm.value = user.name || "";
+  if (bio && document.activeElement !== bio) bio.value = user.bio || "";
+  if (un) un.value = user.username ? "@" + user.username : "—";
+  if (em) em.value = user.email || "—";
+  if (av) {
+    if (user.avatar) av.innerHTML = '<img src="' + user.avatar + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    else av.innerHTML = '<span>' + ((user.name || "U").split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase() || "U") + "</span>";
+  }
+}
+
+function _setupSettingsAccountCard() {
+  var sec = document.querySelector('section.view[data-view="settings"]');
+  if (!sec) return;
+  if (document.getElementById("setAccountCard")) { _refreshSettingsAccountCard(); return; }
+  // Sisipkan ke grid (sebelum tab-grouping) supaya ikut dikelompokkan ke "Data
+  // & Akun". Kalau sudah ter-tab, sisipkan ke panel data.
+  var host = sec.querySelector(".grid-2") || sec.querySelector('.set-tab-panel[data-panel="data"]');
+  if (!host) return;
+  var card = document.createElement("div");
+  card.className = "card set-account-card";
+  card.id = "setAccountCard";
+  card.innerHTML =
+    '<h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>Akun Saya</h3>'
+    + '<div class="set-acct">'
+    +   '<div class="set-acct-avatar-row">'
+    +     '<div class="avatar set-acct-avatar" id="setAcctAvatar"><span>U</span></div>'
+    +     '<div class="set-acct-avatar-actions">'
+    +       '<button type="button" class="btn ghost set-acct-avatar-btn" id="setAcctAvatarBtn">Ubah Foto</button>'
+    +       '<button type="button" class="set-acct-avatar-remove" id="setAcctAvatarRemove">Hapus</button>'
+    +       '<div class="set-acct-avatar-hint">JPG/PNG, maks 2 MB</div>'
+    +     '</div>'
+    +   '</div>'
+    +   '<label class="set-field"><span>Nama</span><input type="text" id="setAcctName" maxlength="40" placeholder="Nama tampilan" autocomplete="off"></label>'
+    +   '<label class="set-field"><span>Bio</span><textarea id="setAcctBio" rows="2" maxlength="160" placeholder="Ceritakan tentang dirimu…"></textarea></label>'
+    +   '<label class="set-field"><span>Username</span><input type="text" id="setAcctUsername" readonly></label>'
+    +   '<label class="set-field"><span>Email</span><input type="text" id="setAcctEmail" readonly></label>'
+    +   '<p class="set-acct-note">Username & email adalah identitas akun dan tidak bisa diubah.</p>'
+    +   '<button type="button" class="btn primary set-acct-save" id="setAcctSave">Simpan Perubahan</button>'
+    +   '<input type="file" id="setAcctAvatarInput" accept="image/*" hidden>'
+    + '</div>';
+  // Taruh paling depan supaya muncul pertama di tab Data & Akun.
+  host.insertBefore(card, host.firstChild);
+
+  document.getElementById("setAcctSave").addEventListener("click", function () {
+    if (!user) return;
+    var newName = (document.getElementById("setAcctName").value || "").trim();
+    var newBio = (document.getElementById("setAcctBio").value || "").trim();
+    if (newName.length < 2) { if (typeof toast === "function") toast("⚠️ Nama minimal 2 karakter", "warning"); return; }
+    user.name = newName; user.bio = newBio;
+    if (typeof persistUserAndAccount === "function") persistUserAndAccount();
+    if (typeof applyUserToUI === "function") applyUserToUI();
+    _refreshSettingsAccountCard();
+    if (typeof toast === "function") toast("✓ Profil disimpan", "success");
+  });
+  document.getElementById("setAcctAvatarBtn").addEventListener("click", function () {
+    document.getElementById("setAcctAvatarInput").click();
+  });
+  document.getElementById("setAcctAvatarInput").addEventListener("change", function (e) {
+    var file = e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { if (typeof toast === "function") toast("⚠️ File harus berupa gambar", "warning"); return; }
+    if (file.size > 2 * 1024 * 1024) { if (typeof toast === "function") toast("⚠️ Maksimal 2 MB", "warning"); return; }
+    if (typeof openAvatarEditor === "function") openAvatarEditor(file);
+  });
+  document.getElementById("setAcctAvatarRemove").addEventListener("click", function () {
+    if (!user) return;
+    user.avatar = null;
+    if (typeof persistUserAndAccount === "function") persistUserAndAccount();
+    if (typeof applyUserToUI === "function") applyUserToUI();
+    _refreshSettingsAccountCard();
+    if (typeof toast === "function") toast("Foto profil dihapus", "info");
+  });
+  _refreshSettingsAccountCard();
+}
+
+// Jaga kartu Akun di Settings tetap sinkron saat profil berubah di mana pun
+// (mis. crop avatar via openAvatarEditor → applyUserToUI). Wrap sekali.
+(function () {
+  if (typeof applyUserToUI !== "function" || applyUserToUI.__acctWrapped) return;
+  var _orig = applyUserToUI;
+  applyUserToUI = function () {
+    var r = _orig.apply(this, arguments);
+    try { if (document.getElementById("setAccountCard")) _refreshSettingsAccountCard(); } catch (e) {}
+    return r;
+  };
+  applyUserToUI.__acctWrapped = true;
+})();
+
+// Polish (req user 2026-06-12): tambah deskripsi 1-baris di tiap toggle Settings
+// supaya jelas fungsinya (sebelumnya cuma label). Idempotent.
+function _setupSettingsToggleDesc() {
+  var DESC = {
+    "notif.message":         "Notif saat ada pesan (DM) masuk.",
+    "notif.comment":         "Notif saat ada yang mengomentari videomu.",
+    "notif.follower":        "Notif saat ada yang mulai mengikutimu.",
+    "notif.email":           "Kirim ringkasan notifikasi ke emailmu.",
+    "notif.push":            "Tampilkan notifikasi langsung di perangkat ini.",
+    "display.autoplay":      "Putar video otomatis saat halaman dibuka.",
+    "display.reducedMotion": "Kurangi animasi & transisi untuk tampilan lebih tenang.",
+    "display.compact":       "Rapatkan tata letak — lebih banyak konten per layar.",
+    "privacy.publicProfile": "Siapa pun bisa melihat profil & video publikmu.",
+    "privacy.showHistory":   "Izinkan orang lain melihat riwayat tontonmu.",
+    "privacy.allowDM":       "Kalau dimatikan, hanya yang kamu ikuti yang bisa kirim DM.",
+  };
+  var togs = document.querySelectorAll('section.view[data-view="settings"] label.tog');
+  Array.prototype.slice.call(togs).forEach(function (tog) {
+    if (tog.dataset.descDone === "1") return;
+    var input = tog.querySelector("input[data-pref]");
+    var span = tog.querySelector("span");
+    if (!input || !span) return;
+    var desc = DESC[input.dataset.pref];
+    if (!desc) return;
+    var wrap = document.createElement("span");
+    wrap.className = "tog-text";
+    span.parentNode.insertBefore(wrap, span);
+    wrap.appendChild(span);
+    var small = document.createElement("small");
+    small.className = "tog-desc";
+    small.textContent = desc;
+    wrap.appendChild(small);
+    tog.dataset.descDone = "1";
+  });
+}
+
 function populateSettingsPrefs() {
   $$("[data-pref]").forEach(el => {
     const key = el.dataset.pref;
@@ -31482,6 +31675,13 @@ function switchView(name, { fromNav = false } = {}) {
   if (name === "settings") {
     populateSettingsPrefs();
     refreshTwoFASettings();
+    // Rapikan layout + kartu Akun (req user 2026-06-12). Kartu Akun disisipkan
+    // SEBELUM tab-grouping supaya ikut dikelompokkan ke "Data & Akun". Idempotent.
+    setTimeout(function () {
+      if (typeof _setupSettingsAccountCard === "function") _setupSettingsAccountCard();
+      if (typeof _setupSettingsToggleDesc === "function") _setupSettingsToggleDesc();
+      if (typeof _setupSettingsTabs === "function") _setupSettingsTabs();
+    }, 20);
     if (user?.role === "admin") {
       populatePlatformSettings();
       populateAdminSessionInfo();
