@@ -10567,11 +10567,12 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
    Catatan: aturan mobile (@media max-width:768px) pakai display:flex!important
    + slide transform → tetap menang di mobile (slide), aturan di bawah hanya
    efektif di desktop. */
-/* List view = KOLOM DM sempit (req user 2026-06-12: jangan full-width panjang,
-   cukup kolom nama user). Card ~420px, tinggi auto, rata kiri. */
+/* List view = DM. Update req user 2026-06-12: isi PENUH lebar area konten
+   (konsisten dgn halaman Broadcast) — bukan lagi kolom sempit 420px di pojok. */
 section.view[data-view="messages"] #dmLayout.dm-layout {
   grid-template-columns: 1fr;
-  max-width: 420px;
+  max-width: none;
+  width: 100%;
   height: auto;
   min-height: 300px;
 }
