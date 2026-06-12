@@ -10781,6 +10781,29 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
   transition: background .12s, color .12s, border-color .12s;
 }
 .dm-contact-row:hover .dm-contact-start { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* Permintaan = KARTU + Terima/Tolak; Arsip = baris + Pulihkan (req 2026-06-12). */
+.dm-thread.dm-req-card { flex-direction: column; align-items: stretch; gap: 10px; cursor: pointer; }
+.dm-req-card .dm-req-head { display: flex; align-items: center; gap: 12px; }
+.dm-thread-actions { display: flex; gap: 8px; padding-left: 56px; }
+.dm-act {
+  padding: 7px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border);
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dm-act-accept { flex: 1.5; background: var(--primary); color: #fff; border-color: var(--primary); }
+.dm-act-accept:hover { background: var(--primary-hover); }
+.dm-act-decline { flex: 1; background: transparent; color: var(--text-2, var(--muted)); }
+.dm-act-decline:hover { border-color: var(--danger, #c0392b); color: var(--danger, #c0392b); }
+.dm-thread.dm-arc-row { cursor: pointer; }
+.dm-thread.dm-arc-row .avatar,
+.dm-thread.dm-arc-row .dm-thread-info { opacity: .72; }
+.dm-act-unarchive {
+  margin-left: auto; align-self: center; flex-shrink: 0;
+  padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: transparent; color: var(--primary); border: 1px solid var(--border); cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dm-act-unarchive:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 /* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
    ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
    view broadcast terpisah (#dmBroadcastView) DIPAKAI LAGI (req user 2026-06-12)

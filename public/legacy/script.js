@@ -39593,20 +39593,25 @@ function renderDmList() {
     const nameOrPrevMatch = q && ((m.name || "").toLowerCase().includes(q) || (m.preview || "").toLowerCase().includes(q));
     const bodyOnlyMatch = q && !nameOrPrevMatch && matchBody(m);
     const matchHint = bodyOnlyMatch ? '<span class="dm-thread-bodymatch">🔎 cocok di pesan</span>' : '';
-    return `
-      <div class="dm-thread ${isActive ? 'is-active' : ''} ${m.unread ? 'is-unread' : ''} ${m.isAdmin ? 'is-admin' : ''}" data-dm-thread="${idx}">
-        <div class="avatar"><span>${escapeHtml(m.init || "U")}</span>${m.online ? '<i class="status"></i>' : ''}</div>
-        <div class="dm-thread-info">
-          <div class="dm-thread-top">
-            <strong>@${escapeHtml(m.name)}</strong>${adminBadge}
-            <span class="dm-thread-time">${timeLabel}</span>
-          </div>
-          <div class="dm-thread-preview">${escapeHtml(String(preview).slice(0, 80))}${String(preview).length > 80 ? '…' : ''}</div>
-          ${matchHint}
-        </div>
-        ${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}
-      </div>
-    `;
+    const escPrev = `${escapeHtml(String(preview).slice(0, 80))}${String(preview).length > 80 ? '…' : ''}`;
+    const rowCls = `dm-thread ${isActive ? 'is-active' : ''} ${m.unread ? 'is-unread' : ''} ${m.isAdmin ? 'is-admin' : ''}`;
+    const avatarHTML = `<div class="avatar"><span>${escapeHtml(m.init || "U")}</span>${m.online ? '<i class="status"></i>' : ''}</div>`;
+    const infoHTML = `<div class="dm-thread-info"><div class="dm-thread-top"><strong>@${escapeHtml(m.name)}</strong>${adminBadge}<span class="dm-thread-time">${timeLabel}</span></div><div class="dm-thread-preview">${escPrev}</div>${matchHint}</div>`;
+    // Permintaan = KARTU + Terima/Tolak; Arsip = baris + Pulihkan (req user
+    // 2026-06-12). Klik baris tetap buka chat; tombol di-stopPropagation.
+    if (dmState.filter === "requests") {
+      return `<div class="${rowCls} dm-req-card" data-dm-thread="${idx}">`
+        + `<div class="dm-req-head">${avatarHTML}${infoHTML}</div>`
+        + `<div class="dm-thread-actions">`
+        +   `<button type="button" class="dm-act dm-act-accept" data-dm-accept="${idx}">Terima</button>`
+        +   `<button type="button" class="dm-act dm-act-decline" data-dm-decline="${idx}">Tolak</button>`
+        + `</div></div>`;
+    }
+    if (dmState.filter === "archived") {
+      return `<div class="${rowCls} dm-arc-row" data-dm-thread="${idx}">${avatarHTML}${infoHTML}`
+        + `<button type="button" class="dm-act dm-act-unarchive" data-dm-unarchive="${idx}">Pulihkan</button></div>`;
+    }
+    return `<div class="${rowCls}" data-dm-thread="${idx}">${avatarHTML}${infoHTML}${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}</div>`;
   }).join("");
 
   list.innerHTML = threadsHTML + contactsHTML;
@@ -39626,6 +39631,11 @@ function renderDmList() {
     el.addEventListener("click", start);
     el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } });
   });
+  // Aksi inline (req user 2026-06-12): Terima/Tolak (Permintaan) + Pulihkan
+  // (Arsip). stopPropagation supaya tidak ikut buka chat (klik baris).
+  list.querySelectorAll("[data-dm-accept]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmAcceptRequest === "function") _dmAcceptRequest(+b.dataset.dmAccept); }));
+  list.querySelectorAll("[data-dm-decline]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmDeclineRequest === "function") _dmDeclineRequest(+b.dataset.dmDecline); }));
+  list.querySelectorAll("[data-dm-unarchive]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmUnarchive === "function") _dmUnarchive(+b.dataset.dmUnarchive); }));
 
   // 5g: jaga badge unread sidebar selalu sinkron dgn list yang baru di-render.
   if (typeof updateDmBadges === "function") updateDmBadges();
@@ -39681,6 +39691,43 @@ function _dmContactRowsHTML(existingLower, q) {
       + '</div>';
   }).join("");
   return '<div class="dm-contacts-head">Mulai chat baru</div>' + rows;
+}
+
+// Aksi inline Permintaan/Arsip (req user 2026-06-12) — operasi pada thread idx
+// (bukan openIdx), dipakai tombol Terima/Tolak/Pulihkan di daftar.
+function _dmAcceptRequest(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  if (!Array.isArray(state.followingCreators)) state.followingCreators = [];
+  if (!state.followingCreators.includes(m.name)) {
+    if (typeof toggleFollow === "function") toggleFollow(m.name);
+    else { state.followingCreators.push(m.name); if (typeof saveState === "function") saveState(); }
+  }
+  if (typeof toast === "function") toast("✓ Permintaan @" + m.name + " diterima — sekarang ada di DM", "success");
+  if (typeof renderDmList === "function") renderDmList();
+}
+function _dmDeclineRequest(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  var nm = m.name;
+  var doDel = function () {
+    var i = state.messages.indexOf(m);
+    if (i >= 0) state.messages.splice(i, 1);
+    if (typeof saveState === "function") saveState();
+    if (typeof renderDmList === "function") renderDmList();
+    if (typeof toast === "function") toast("Permintaan @" + nm + " ditolak", "success");
+  };
+  if (typeof openConfirm === "function") {
+    openConfirm({ icon: "🚫", iconClass: "danger", title: "Tolak Permintaan?", desc: "Permintaan pesan dari <b>@" + (typeof escapeHtml === "function" ? escapeHtml(nm) : nm) + "</b> akan dihapus dari daftar.", btnText: "Tolak", btnClass: "danger", onConfirm: doDel });
+  } else doDel();
+}
+function _dmUnarchive(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  m.archived = false;
+  if (typeof saveState === "function") saveState();
+  if (typeof toast === "function") toast("📥 Chat @" + m.name + " dikeluarkan dari arsip", "success");
+  if (typeof renderDmList === "function") renderDmList();
 }
 
 // Buka chat thread di panel kanan
@@ -40876,8 +40923,8 @@ function _dmApplyView() {
   var CAT_META = {
     dm:        { banner: "",                                                                                         ph: "Cari pesan atau user…" },
     broadcast: { banner: "📢 Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.",                     ph: "Cari broadcast…" },
-    requests:  { banner: "✉️ Permintaan pesan dari orang yang belum kamu ikuti. Buka lalu klik Terima untuk lanjut di DM.", ph: "Cari permintaan…" },
-    archived:  { banner: "🗄️ Chat yang sudah kamu arsipkan. Buka untuk baca; pulihkan lewat tombol arsip di dalam chat.", ph: "Cari di arsip…" },
+    requests:  { banner: "✉️ Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk hapus.", ph: "Cari permintaan…" },
+    archived:  { banner: "🗄️ Chat yang sudah kamu arsipkan. Klik Pulihkan untuk kembalikan ke DM.", ph: "Cari di arsip…" },
   };
   var cm = CAT_META[f] || CAT_META.dm;
   var searchInput = document.getElementById("msgSearch");
