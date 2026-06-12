@@ -27858,6 +27858,7 @@ function renderAdminUsers() {
         ${showSetTier ? `<button title="Set Tier" data-action="set-tier">⭐</button>` : ""}
         ${showMessage ? `<button title="Obrolan Langsung" data-action="message" class="action-chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>` : ""}
         ${showDetail  ? `<button title="Detail" data-action="detail">👤</button>` : ""}
+        ${showDetail  ? `<button title="Lihat platform sebagai user ini" data-action="view-as">👁️</button>` : ""}
         ${showDelete  ? `<button title="Delete Account" class="danger" data-action="delete">🗑️</button>` : ""}
       </div></td>
     </tr>`;
@@ -27877,6 +27878,14 @@ function renderAdminUsers() {
       e.stopPropagation();
       const tr = e.currentTarget.closest("tr");
       openUserDetail(tr.dataset.username);
+    });
+  });
+  // Lihat sebagai user — masuk mode pratinjau (lihat platform dari sisi user)
+  tbody.querySelectorAll("[data-action='view-as']").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const tr = e.currentTarget.closest("tr");
+      viewAsUser(tr.dataset.username);
     });
   });
   // Kirim pesan ke user dari row table → buka DM chat biasa, bukan modal template
@@ -51721,6 +51730,69 @@ function doSwitchAccount(email) {
   switchView(user.role === "admin" ? "admin-dashboard" : "home");
   toast(`✓ Pindah ke akun <b>${escapeHtml(user.name)}</b>`, "success");
 }
+
+// =================== LIHAT SEBAGAI USER (impersonate preview) ===================
+// Admin "nyamar" jadi user → lihat platform persis spt user itu (tier, iklan,
+// konten). Pakai doSwitchAccount (swap sesi + render, sudah teruji). Identitas
+// admin disimpan di sessionStorage supaya bisa balik. applyRoleToUI() (dipanggil
+// doSwitchAccount) otomatis set ulang flag super-admin saat balik ke admin.
+function viewAsUser(username) {
+  if (!user || user.role !== "admin") return toast("🔒 Hanya admin yang bisa", "warning");
+  const acc = getAllAccounts().find(a => a.username === username);
+  if (!acc) return toast("❌ Akun tidak ditemukan", "error");
+  if (isAllowedAdminEmail(acc.email)) return toast("Cuma bisa lihat sebagai user biasa", "warning");
+  // Ingat admin (object penuh) biar bisa balik walau reload
+  try { sessionStorage.setItem("playly-viewas-admin", JSON.stringify(user)); } catch {}
+  if (typeof pushAdminEvent === "function")
+    pushAdminEvent("👁️", `Lihat sebagai user @${username}`, { action: "view-as", target: username });
+  doSwitchAccount(acc.email);   // swap ke user → render sisi user
+  showViewAsBanner(acc);
+}
+
+function showViewAsBanner(acc) {
+  hideViewAsBanner();
+  const bar = document.createElement("div");
+  bar.id = "viewAsBanner";
+  bar.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:999px;background:linear-gradient(90deg,#7b4dff,#9b6bff);color:#fff;font-size:14px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.45);max-width:94vw;flex-wrap:wrap;justify-content:center";
+  bar.innerHTML =
+    `<span style="font-size:16px">👁️</span>` +
+    `<span>Lihat sebagai <b>${escapeHtml(acc.name || acc.username)}</b> <span style="opacity:.85">@${escapeHtml(acc.username)}</span> · mode pratinjau admin</span>` +
+    `<button id="viewAsExitBtn" style="margin-left:2px;padding:6px 14px;border:0;border-radius:999px;background:#fff;color:#5b2bd6;font-weight:700;font-size:13px;cursor:pointer">← Kembali ke Admin</button>`;
+  document.body.appendChild(bar);
+  document.getElementById("viewAsExitBtn").addEventListener("click", exitViewAs);
+}
+
+function hideViewAsBanner() {
+  document.getElementById("viewAsBanner")?.remove();
+}
+
+function exitViewAs() {
+  let adminEmail = null;
+  try {
+    const raw = sessionStorage.getItem("playly-viewas-admin");
+    if (raw) adminEmail = JSON.parse(raw).email;
+    sessionStorage.removeItem("playly-viewas-admin");
+  } catch {}
+  hideViewAsBanner();
+  if (adminEmail) {
+    doSwitchAccount(adminEmail);     // balik ke admin → applyRoleToUI pulihin super-admin
+    switchView("admin-users");
+    toast("✓ Kembali ke mode Admin", "success");
+  } else {
+    location.href = "/?admin=1";     // fallback aman
+  }
+}
+
+// Safety net: kalau halaman ke-reload pas lagi "Lihat sebagai", munculin lagi
+// tombol Kembali ke Admin biar admin tidak kejebak jadi user.
+setTimeout(() => {
+  try {
+    if (sessionStorage.getItem("playly-viewas-admin") && user && user.role !== "admin"
+        && !document.getElementById("viewAsBanner")) {
+      showViewAsBanner({ name: user.name, username: user.username });
+    }
+  } catch {}
+}, 2500);
 
 $("#switchAddNew")?.addEventListener("click", () => {
   $("#switchAccountModal").classList.remove("show");
