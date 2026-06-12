@@ -27085,16 +27085,40 @@ function setKPI(el, val) {
   }
 }
 
+// Hitung akun yang "online sekarang" = aktivitas terakhir < 5 menit.
+// Pakai logika sama spt status di renderAdminUsers (heartbeat lastActivityAt
+// 60s di playly-state-{username}, fallback joinedAt). Suspend/deactive di-skip.
+function countOnlineNow() {
+  const accounts = (typeof getAllAccounts === "function") ? getAllAccounts() : [];
+  const now = Date.now();
+  const FIVE_MIN = 5 * 60 * 1000;
+  let n = 0;
+  for (const a of accounts) {
+    if (a.suspended || a.deactivated) continue;
+    let last = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
+    try {
+      const s = JSON.parse(localStorage.getItem(`playly-state-${a.username}`) || "{}");
+      const hb = Number(s.lastActivityAt || 0);
+      if (hb > last) last = hb;
+    } catch {}
+    if (last && (now - last) < FIVE_MIN) n++;
+  }
+  return n;
+}
+
 function renderAdminKPI() {
   const m = getAdminMetrics();
   // Total Pengguna = user only (admin di-exclude — admin punya tab sendiri di User Management)
   const userCount = (m.userAccounts || []).length;
+  const onlineCount = countOnlineNow();
+  setKPI($("#kpiOnline"), fmtNum(onlineCount));
   setKPI($("#kpiUsers"), fmtNum(userCount));
   setKPI($("#kpiVideos"), fmtNum(m.videos.length));
   setKPI($("#kpiViews"), fmtNum(m.totalViews));
   setKPI($("#kpiRevenue"), fmtIDR(m.revenue));
   // Count-up animation on numeric KPIs (after setKPI sets initial value + flash)
   setTimeout(() => {
+    countUp($("#kpiOnline"), onlineCount,          fmtNum);
     countUp($("#kpiUsers"),  userCount,            fmtNum);
     countUp($("#kpiVideos"), m.videos.length,      fmtNum);
     countUp($("#kpiViews"),  m.totalViews,         fmtNum);
