@@ -10756,15 +10756,20 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 .dm-new-chat-btn[hidden] { display: none !important; }
 /* Banner konteks kategori (Broadcast/Permintaan/Arsip) — beda isi tiap halaman. */
 .dm-cat-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 14px 14px 12px;
   padding: 10px 13px;
   font-size: 11.5px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text-2, var(--muted));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
 }
+.dm-cat-banner-ico { flex-shrink: 0; }
+.dm-cat-banner-txt { flex: 1; min-width: 0; }
 .dm-cat-banner[hidden] { display: none !important; }
 /* Baris KONTAK di tab DM (nama user belum ada thread) — req user 2026-06-12. */
 .dm-contacts-head {

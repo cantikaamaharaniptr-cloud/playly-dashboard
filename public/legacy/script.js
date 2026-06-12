@@ -40920,11 +40920,13 @@ function _dmApplyView() {
   //   Broadcast → pengumuman read-only.
   //   Permintaan→ pesan dari non-followed: buka lalu Terima.
   //   Arsip     → chat diarsipkan: buka untuk baca, bisa dipulihkan.
+  // icon + text dipisah supaya saat teks wrap, semua baris rata (tidak masuk
+  // ke bawah ikon) — req user 2026-06-12.
   var CAT_META = {
-    dm:        { banner: "",                                                                                         ph: "Cari pesan atau user…" },
-    broadcast: { banner: "📢 Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.",                     ph: "Cari broadcast…" },
-    requests:  { banner: "✉️ Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk hapus.", ph: "Cari permintaan…" },
-    archived:  { banner: "🗄️ Chat yang sudah kamu arsipkan. Klik Pulihkan untuk kembalikan ke DM.", ph: "Cari di arsip…" },
+    dm:        { icon: "", text: "", ph: "Cari pesan atau user…" },
+    broadcast: { icon: "📢", text: "Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.", ph: "Cari broadcast…" },
+    requests:  { icon: "✉️", text: "Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk menghapus.", ph: "Cari permintaan…" },
+    archived:  { icon: "🗄️", text: "Chat yang sudah kamu arsipkan. Klik Pulihkan untuk mengembalikannya ke DM.", ph: "Cari di arsip…" },
   };
   var cm = CAT_META[f] || CAT_META.dm;
   var searchInput = document.getElementById("msgSearch");
@@ -40936,8 +40938,12 @@ function _dmApplyView() {
   if (typeof _dmEnsureCatBanner === "function") {
     var catBanner = _dmEnsureCatBanner();
     if (catBanner) {
-      if (cm.banner) { catBanner.textContent = cm.banner; catBanner.hidden = false; }
-      else catBanner.hidden = true;
+      if (cm.text) {
+        catBanner.innerHTML = '<span class="dm-cat-banner-ico" aria-hidden="true"></span><span class="dm-cat-banner-txt"></span>';
+        catBanner.querySelector(".dm-cat-banner-ico").textContent = cm.icon;
+        catBanner.querySelector(".dm-cat-banner-txt").textContent = cm.text;
+        catBanner.hidden = false;
+      } else catBanner.hidden = true;
     }
   }
   if (typeof renderDmList === "function") renderDmList();
