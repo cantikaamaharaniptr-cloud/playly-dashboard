@@ -41093,11 +41093,24 @@ function _dmEnsureComposeBtn() {
 
     bar.appendChild(btnNew);
     bar.appendChild(btnSearch);
-    // DI LUAR kartu DM (req user 2026-06-12: "jangan di dalam kolom") — taruh di
-    // baris tab, didorong ke kanan oleh .dm-section-tabs (flex:1).
-    var tabsRow = document.querySelector('section.view[data-view="messages"] .dm-tabs-search-row-v579');
-    if (tabsRow) tabsRow.appendChild(bar);
-    else { var searchRow = side.querySelector(".dm-side-search"); side.insertBefore(bar, searchRow || side.firstChild); }
+    // DI HEADER kanan, sejajar judul "Pesan" (req user 2026-06-12: aksi ke
+    // header). Masuk .view-actions (tempat pill "Tersimpan lokal"); bar di kiri
+    // pill. Fallback: baris tab → .dm-side.
+    var sec = document.querySelector('section.view[data-view="messages"]');
+    var header = sec && sec.querySelector(".view-header");
+    var headerActions = header && header.querySelector(".view-actions");
+    if (header && !headerActions) {
+      headerActions = document.createElement("div");
+      headerActions.className = "view-actions dm-header-actions";
+      header.appendChild(headerActions);
+    }
+    if (headerActions) {
+      headerActions.insertBefore(bar, headerActions.firstChild);
+    } else {
+      var tabsRow = sec && sec.querySelector(".dm-tabs-search-row-v579");
+      if (tabsRow) tabsRow.appendChild(bar);
+      else { var searchRow = side.querySelector(".dm-side-search"); side.insertBefore(bar, searchRow || side.firstChild); }
+    }
   }
   return bar;
 }
