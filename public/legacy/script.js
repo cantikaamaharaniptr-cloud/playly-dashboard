@@ -39608,8 +39608,11 @@ function renderDmList() {
         + `</div></div>`;
     }
     if (dmState.filter === "archived") {
+      // Arsip = daftar muted/compact + ikon restore (penyimpanan, sekunder).
       return `<div class="${rowCls} dm-arc-row" data-dm-thread="${idx}">${avatarHTML}${infoHTML}`
-        + `<button type="button" class="dm-act dm-act-unarchive" data-dm-unarchive="${idx}">Pulihkan</button></div>`;
+        + `<button type="button" class="dm-arc-restore" data-dm-unarchive="${idx}" title="Pulihkan ke DM" aria-label="Pulihkan ke DM">`
+        +   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2"/><path d="M20 8v11a2 2 0 0 1-2 2h-2"/><path d="m9 15 3-3 3 3"/><path d="M12 12v9"/></svg>`
+        + `</button></div>`;
     }
     return `<div class="${rowCls}" data-dm-thread="${idx}">${avatarHTML}${infoHTML}${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}</div>`;
   }).join("");
@@ -40938,6 +40941,9 @@ function _dmApplyView() {
   if (typeof _dmEnsureCatBanner === "function") {
     var catBanner = _dmEnsureCatBanner();
     if (catBanner) {
+      // Modifier per-kategori → banner Permintaan (aksi) vs Arsip (penyimpanan)
+      // bisa diwarnai beda di CSS.
+      catBanner.className = "dm-cat-banner dm-cat-banner--" + f;
       if (cm.text) {
         catBanner.innerHTML = '<span class="dm-cat-banner-ico" aria-hidden="true"></span><span class="dm-cat-banner-txt"></span>';
         catBanner.querySelector(".dm-cat-banner-ico").textContent = cm.icon;
