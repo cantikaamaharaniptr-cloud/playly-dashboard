@@ -41093,9 +41093,11 @@ function _dmEnsureComposeBtn() {
 
     bar.appendChild(btnNew);
     bar.appendChild(btnSearch);
-    var searchRow = side.querySelector(".dm-side-search");
-    if (searchRow) side.insertBefore(bar, searchRow);
-    else side.insertBefore(bar, side.firstChild);
+    // DI LUAR kartu DM (req user 2026-06-12: "jangan di dalam kolom") — taruh di
+    // baris tab, didorong ke kanan oleh .dm-section-tabs (flex:1).
+    var tabsRow = document.querySelector('section.view[data-view="messages"] .dm-tabs-search-row-v579');
+    if (tabsRow) tabsRow.appendChild(bar);
+    else { var searchRow = side.querySelector(".dm-side-search"); side.insertBefore(bar, searchRow || side.firstChild); }
   }
   return bar;
 }
