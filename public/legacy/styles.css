@@ -48585,14 +48585,16 @@ body:not([data-role="admin"]):not(.auth-mode) .btn.primary:hover {
   box-shadow: 0 6px 16px rgba(109, 41, 50, .42);
 }
 
-/* (5) Focus rings — a11y, gold */
+/* (5) Focus rings — a11y, NETRAL cream (req user: dashboard user jangan pakai
+   ring gold/wine/merah di kolom & halaman mana pun). Dulu gold
+   rgba(220,169,109,.65) → diganti cream. Admin dikecualikan oleh selector. */
 body:not([data-role="admin"]):not(.auth-mode) button:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) a:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) input:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) select:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) textarea:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
-  outline: 2px solid rgba(220, 169, 109, .65);
+  outline: 2px solid rgba(232, 216, 196, .5);
   outline-offset: 2px;
   border-radius: 6px;
 }
