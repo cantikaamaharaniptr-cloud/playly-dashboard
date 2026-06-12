@@ -10850,7 +10850,13 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 .dm-thread.is-active {
   background: var(--primary-soft);
 }
-.dm-thread.is-unread { background: rgba(109, 41, 50, .08); }
+/* Read vs UNREAD — beda warna jelas (req user 2026-06-12). Unread = bg wine +
+   garis aksen kiri + nama tebal + waktu aksen wine. Read = polos/muted. */
+.dm-thread.is-unread {
+  background: rgba(109, 41, 50, .16);
+  border-left: 3px solid var(--primary);
+  padding-left: 9px;   /* kompensasi border 3px supaya konten tak geser */
+}
 .dm-thread .avatar { width: 44px; height: 44px; flex-shrink: 0; font-size: 13px; }
 .dm-thread-info {
   flex: 1;
@@ -10885,10 +10891,29 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Beda di WARNA TEKS obrolan (req user 2026-06-12), BUKAN warna jam.
+   Unread = teks terang (nama + preview); read = teks muted. Jam tetap muted. */
 .dm-thread.is-unread .dm-thread-preview {
   color: var(--text);
   font-weight: 600;
 }
+.dm-thread.is-unread .dm-thread-top strong { font-weight: 800; color: var(--text); }
+/* Read (sudah dilihat) — teks nama + preview di-mute (warna redup), supaya
+   beda jelas dgn unread yg terang. Scoped ke baris thread ([data-dm-thread])
+   saja, BUKAN baris kontak. !important utk menang dari override warna lain. */
+/* Pakai OPACITY (theme-agnostic): di tema gelap var(--muted) resolve ke cream
+   juga, jadi beda warna via opacity lebih andal & aman utk tema terang/gelap.
+   Read = teks di-redupkan; unread = penuh + tebal. */
+.dm-thread[data-dm-thread]:not(.is-unread):not(.is-active) .dm-thread-top strong {
+  opacity: .62 !important;
+  font-weight: 600;
+}
+.dm-thread[data-dm-thread]:not(.is-unread):not(.is-active) .dm-thread-preview {
+  opacity: .55 !important;
+}
+/* Unread — teks penuh (terang) + tebal. */
+.dm-thread.is-unread .dm-thread-top strong,
+.dm-thread.is-unread .dm-thread-preview { opacity: 1 !important; }
 .dm-unread-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
