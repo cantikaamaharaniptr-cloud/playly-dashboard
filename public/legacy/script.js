@@ -39677,7 +39677,7 @@ function _dmContactRowsHTML(existingLower, q) {
       +   '<div class="dm-thread-info"><div class="dm-thread-top">'
       +     '<strong>' + esc(label) + '</strong>'
       +   '</div><div class="dm-thread-preview dm-contact-hint">@' + esc(a.username) + (foll ? ' · diikuti' : '') + '</div></div>'
-      +   '<span class="dm-contact-start" aria-hidden="true">Chat</span>'
+      +   '<span class="dm-contact-start" aria-hidden="true">Mulai chat</span>'
       + '</div>';
   }).join("");
   return '<div class="dm-contacts-head">Mulai chat baru</div>' + rows;
