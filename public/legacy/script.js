@@ -39338,6 +39338,12 @@ function renderPeople() {
 function startChatWithUser(username) {
   const acc = getAllAccounts().find(a => a.username === username);
   if (!acc) return toast("❌ User tidak ditemukan", "error");
+  // User TIDAK boleh kirim pesan ke admin/super-admin (req user 2026-06-12) —
+  // enforcement utama (semua jalur start-DM lewat sini). Admin sendiri tetap
+  // boleh (mis. admin balas user).
+  if (typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(acc) && user?.role !== "admin") {
+    return toast("🔒 Tidak bisa mengirim pesan ke admin", "warning");
+  }
   // Privasi: hormati setting "Izinkan DM dari semua orang" milik target. Admin selalu boleh.
   if (acc.role !== "admin" && user?.role !== "admin") {
     const allowDM = getOtherUserPrefByUsername(username, "privacy.allowDM", true);
@@ -39558,8 +39564,11 @@ function renderDmList() {
   // DM tab (req user 2026-06-12): tampilkan KONTAK (nama user) yang belum punya
   // thread, di bawah chat yang sudah ada — supaya user bisa langsung pilih nama
   // → mulai DM (tanpa harus buka picker). Hanya untuk filter "dm".
+  // Daftar kontak HANYA muncul saat user MENGETIK di kotak cari (req user
+  // 2026-06-12): "untuk apa kotak cari kalau user sudah dipajang". Tanpa query,
+  // DM cuma menampilkan chat yang sudah ada + entri Permintaan/Arsip.
   let contactsHTML = "";
-  if (dmState.filter === "dm") {
+  if (dmState.filter === "dm" && q) {
     const existingLower = new Set();
     state.messages.forEach(m => {
       if (m && !m.isAdmin && !m.isBroadcast && m.name) existingLower.add(String(m.name).toLowerCase());
@@ -39684,10 +39693,22 @@ function renderDmList() {
   if (typeof dmRenderSyncStatus === "function") dmRenderSyncStatus();
 }
 
+// User TIDAK boleh kirim pesan ke admin/super-admin (req user 2026-06-12).
+// Deteksi akun admin: role "admin", username reserved "admin", atau email
+// masuk allowlist admin. Dipakai di contact list, picker, & startChatWithUser.
+function _dmIsAdminAccount(a) {
+  if (!a) return false;
+  if (a.role === "admin") return true;
+  if (typeof isReservedUsername === "function" && isReservedUsername(a.username)) return true;
+  if (a.email && typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(a.email)) return true;
+  return false;
+}
+
 // Baris KONTAK untuk tab DM (req user 2026-06-12): nama user yang bisa di-DM
-// tapi belum punya thread. Sumber = getAllAccounts (sama spt picker "Pesan
-// Baru"), exclude diri sendiri + akun demo/dummy (isDemoAccount) + yang sudah
-// ada thread. Yang di-follow diprioritaskan di atas. Klik → startChatWithUser.
+// tapi belum punya thread. HANYA muncul saat user mengetik di kotak cari
+// (renderDmList: contactsHTML cuma dibangun kalau ada query) — daftar tak lagi
+// di-prepopulate, supaya kotak cari ada gunanya. Sumber = getAllAccounts,
+// exclude diri sendiri + demo/dummy + ADMIN/super-admin + yang sudah ada thread.
 function _dmContactRowsHTML(existingLower, q) {
   if (typeof getAllAccounts !== "function") return "";
   var me = (user && user.username ? user.username : "").toLowerCase();
@@ -39700,6 +39721,7 @@ function _dmContactRowsHTML(existingLower, q) {
     if (un === me) return false;
     if (existingLower && existingLower.has(un)) return false;
     if (typeof isDemoAccount === "function" && isDemoAccount(a)) return false;
+    if (_dmIsAdminAccount(a)) return false; // user tak boleh DM admin
     if (q) {
       var hit = (String(a.name || "").toLowerCase().indexOf(q) >= 0) || (un.indexOf(q) >= 0);
       if (!hit) return false;
@@ -41432,6 +41454,7 @@ function openChatUserPicker() {
     const q = (input.value || "").toLowerCase().trim();
     const accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
       .filter(a => a.username !== user?.username)
+      .filter(a => !(typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(a))) // user tak boleh DM admin
       .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
       .slice(0, 30);
     if (!accounts.length) {
