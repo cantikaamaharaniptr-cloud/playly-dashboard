@@ -45245,31 +45245,30 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
   letter-spacing: 0;
 }
 
-/* === DM SECTION TABS (item 12) === */
+/* === DM SECTION TABS === */
+/* Rombak 2026-06-12: samakan ke pill tab standar dashboard (.riwayat-tab di
+   Statistik/Riwayat/Pustaka/Profile) — pill terpisah mengambang, TANPA kotak
+   pembungkus. Konsistensi visual lintas halaman. */
 .dm-section-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
-  padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  width: fit-content;
+  margin-bottom: 18px;
+  padding: 0 4px;
 }
 .dm-section-tab {
-  padding: 8px 16px;
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s var(--ease);
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
 }
 .dm-section-tab .dmt-ico { display: inline-flex; align-items: center; }
 .dm-section-tab .dmt-ico svg { width: 15px; height: 15px; }
@@ -45277,6 +45276,7 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
 .dm-section-tab.active {
   background: var(--primary);
   color: #fff;
+  border-color: var(--primary);
 }
 .dm-section-tab-badge {
   display: inline-grid;
@@ -70594,15 +70594,11 @@ body:not([data-role="admin"]) #dmOverview .inbox-col-count {
   flex-wrap: nowrap;
 }
 .dm-tabs-search-row-v579 .dm-section-tabs {
-  flex: 0 0 auto;
-  margin-bottom: 0;           /* override default 14px */
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar { height: 4px; }
-.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
-  border-radius: 2px;
+  flex: 1 1 auto;
+  margin-bottom: 0;           /* override default 18px */
+  flex-wrap: wrap;            /* rombak 2026-06-12: tab wrap (bukan scroll) —
+                                 search global sudah dihapus, sejajar referensi
+                                 .riwayat-tab-bar yang wrap di layar sempit. */
 }
 .dm-tabs-search-row-v579 .dm-section-tab { white-space: nowrap; flex-shrink: 0; }
 

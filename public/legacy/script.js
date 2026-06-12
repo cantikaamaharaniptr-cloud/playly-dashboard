@@ -40755,6 +40755,9 @@ function _dmApplyView() {
   // compose lama (#dmOvNew) ada di dalam kartu overview yang sudah di-retire.
   var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
   if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
+  // Pindah pill status sync ke kanan header (sejajar gaya pill "LIVE" di
+  // Statistik) — konsistensi header lintas halaman dashboard.
+  if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
   if (ov) ov.hidden = true;
   if (bc) bc.hidden = true;
   if (lay) {
@@ -40799,6 +40802,24 @@ function _dmEnsureComposeBtn() {
     else side.insertBefore(btn, side.firstChild);
   }
   return btn;
+}
+
+// Pindahkan pill status sync (#dmSyncStatus) dari dalam .lib-header-text ke
+// .view-actions di kanan .view-header — biar sejajar gaya header halaman lain
+// (mis. pill "LIVE" di Statistik). Idempotent.
+function _dmRelocateSyncPill() {
+  var sec = document.querySelector('section.view[data-view="messages"]');
+  if (!sec) return;
+  var header = sec.querySelector(".view-header");
+  var pill = document.getElementById("dmSyncStatus");
+  if (!header || !pill) return;
+  var actions = header.querySelector(".view-actions");
+  if (!actions) {
+    actions = document.createElement("div");
+    actions.className = "view-actions dm-header-actions";
+    header.appendChild(actions);
+  }
+  if (pill.parentElement !== actions) actions.appendChild(pill);
 }
 
 // Wire back button (req user 2026-05-25): klik back di chat header →
