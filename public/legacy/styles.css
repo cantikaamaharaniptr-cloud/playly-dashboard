@@ -11042,6 +11042,28 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   box-shadow: none !important;
 }
 .dm-chat-input .btn { flex-shrink: 0; }
+/* Kirim (send) button — restore SOLID primary. Base .btn.primary is solid
+   (bg var(--primary), white text) but a global outline rule overrides it to
+   transparent+wine-outline → low contrast on the wine chat bg. Scoped override
+   matches the .btn.primary base intent + the .ar-modal precedent. User context
+   = wine (DM composer is user-only). */
+body:not([data-role="admin"]) .dm-chat-input .btn.primary,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:focus,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:focus-visible,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:active {
+  background: var(--primary) !important;
+  border: 1px solid transparent !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .35) !important;
+  transform: none !important;
+}
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .45) !important;
+}
 
 @media (max-width: 768px) {
   .dm-layout {
@@ -33804,6 +33826,15 @@ section.view.user-only[data-view="settings"] .grid-2 > .card {
   .dm-layout.dm-list-only .dm-chat { transform: translateX(100%); }
   /* Back button nyata selalu tampil di mobile saat ada chat aktif. */
   .dm-layout:not(.dm-list-only) .dm-chat-back { display: inline-flex; }
+  /* Full-screen chat di mobile (2026-06-12): saat chat dibuka, sembunyikan
+     header "Semua Pesan" + baris tab + global search supaya chat ambil-alih
+     seluruh tinggi layar (HP pendek → ruang chat maksimal). Scoped ke
+     [data-view="messages"] + body.dm-show-chat: hanya saat chat benar-benar
+     dibuka, dan tidak menyentuh header view lain (dm-show-chat bisa persist
+     lintas view). Back button (#dmChatBack) memunculkan kembali list + header. */
+  body.dm-show-chat [data-view="messages"] .view-header,
+  body.dm-show-chat [data-view="messages"] .dm-tabs-search-row-v579 { display: none !important; }
+  body.dm-show-chat [data-view="messages"] #dmLayout.dm-layout { height: calc(100dvh - 56px) !important; }
 }
 
 /* === STATS CHART === */
