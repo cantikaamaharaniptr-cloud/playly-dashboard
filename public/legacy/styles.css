@@ -10700,11 +10700,10 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
 .dm-new-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
 .dm-new-chat-btn svg { width: 16px; height: 16px; }
 .dm-new-chat-btn[hidden] { display: none !important; }
-/* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
-   ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
-   view broadcast terpisah (#dmBroadcastView) yang tetap retired permanen
-   (broadcast pakai messenger read-only). */
-#dmBroadcastView { display: none !important; }
+/* Opsi 2 (2026-06-12): landing = daftar full-width (list-only), bukan kartu
+   overview. Kartu overview (#dmOverview) + view broadcast terpisah
+   (#dmBroadcastView) retired → force-hide. */
+#dmOverview, #dmBroadcastView { display: none !important; }
 .dm-side-search {
   display: flex;
   align-items: center;
