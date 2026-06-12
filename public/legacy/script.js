@@ -51741,11 +51741,18 @@ function viewAsUser(username) {
   const acc = getAllAccounts().find(a => a.username === username);
   if (!acc) return toast("❌ Akun tidak ditemukan", "error");
   if (isAllowedAdminEmail(acc.email)) return toast("Cuma bisa lihat sebagai user biasa", "warning");
-  // Ingat admin (object penuh) biar bisa balik walau reload
-  try { sessionStorage.setItem("playly-viewas-admin", JSON.stringify(user)); } catch {}
+  // Ingat admin (in-memory + sessionStorage) biar bisa balik
+  const adminUser = user;
+  window.__viewAsAdmin = adminUser;
+  try { sessionStorage.setItem("playly-viewas-admin", JSON.stringify(adminUser)); } catch {}
   if (typeof pushAdminEvent === "function")
     pushAdminEvent("👁️", `Lihat sebagai user @${username}`, { action: "view-as", target: username });
-  doSwitchAccount(acc.email);   // swap ke user → render sisi user
+  doSwitchAccount(acc.email);   // swap tampilan ke user → render sisi user
+  // PENTING (fix): biarkan sesi TERSIMPAN tetap = ADMIN. doSwitchAccount tadi
+  // nulis playly-user=user; kalau halaman di-reload saat preview, akun user
+  // (apalagi demo) bisa ke-purge → kejebak di layar login. Dgn playly-user=admin,
+  // reload otomatis boot balik sebagai admin (aman, nggak perlu login lagi).
+  try { localStorage.setItem("playly-user", JSON.stringify(adminUser)); } catch {}
   showViewAsBanner(acc);
 }
 
@@ -51767,12 +51774,12 @@ function hideViewAsBanner() {
 }
 
 function exitViewAs() {
-  let adminEmail = null;
-  try {
-    const raw = sessionStorage.getItem("playly-viewas-admin");
-    if (raw) adminEmail = JSON.parse(raw).email;
-    sessionStorage.removeItem("playly-viewas-admin");
-  } catch {}
+  let adminEmail = window.__viewAsAdmin?.email || null;
+  if (!adminEmail) {
+    try { adminEmail = JSON.parse(sessionStorage.getItem("playly-viewas-admin") || "null")?.email || null; } catch {}
+  }
+  try { sessionStorage.removeItem("playly-viewas-admin"); } catch {}
+  window.__viewAsAdmin = null;
   hideViewAsBanner();
   if (adminEmail) {
     doSwitchAccount(adminEmail);     // balik ke admin → applyRoleToUI pulihin super-admin
