@@ -31414,13 +31414,13 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
           }
         }, 50);
       }
-      // Khusus Messages (Opsi 1, 2026-06-12): landing = overview kartu
-      // ringkasan kategori (BUKAN langsung messenger DM). Klik tab/kartu →
-      // messenger. _dmApplyView yang render overview + atur active-class.
+      // Khusus Messages (req user 2026-06-12): landing = LANGSUNG daftar DM
+      // (overview 4-kartu dipensiunkan). _dmOpenCategory render list + atur
+      // active-class tab.
       if (n.dataset.view === "messages") {
         setTimeout(() => {
-          if (typeof dmState !== "undefined") dmState.filter = "overview";
-          if (typeof _dmApplyView === "function") _dmApplyView();
+          if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm");
+          else if (typeof dmState !== "undefined") { dmState.filter = "dm"; if (typeof _dmApplyView === "function") _dmApplyView(); }
         }, 50);
       }
       // Khusus User Email: reset filter ke "all" + re-render
@@ -39397,24 +39397,20 @@ $("#peopleMoreBtn")?.addEventListener("click", () => {
 // Render messages 3-kolom (All / Broadcast / Unread). Setiap kolom punya
 // list element-nya sendiri. Klik baris → buka chat overlay.
 // === DM (Instagram-style messages) ===
-// State: filter tab (all/dm/broadcast/requests/archived) + currently open thread idx.
-// Default "all" per user 2026-05-06 — combined view, klik tab spesifik untuk filter.
-// Default "overview" (Opsi 1, 2026-06-12): landing Inbox = kartu ringkasan
-// kategori (#dmOverview), bukan langsung messenger. Tab "Semua" lama dihapus
-// (di-hide via CSS). Klik tab/kartu → messenger kategori; klik tab aktif →
-// balik overview.
-const dmState = { filter: "overview", openIdx: null };
+// State: filter tab (dm/broadcast/requests/archived) + currently open thread idx.
+// Default "dm" (req user 2026-06-12): landing Inbox = LANGSUNG daftar DM (pola
+// Instagram/WhatsApp). Overview 4-kartu lama dipensiunkan — Permintaan & Arsip
+// kini entri di dalam DM, Broadcast jadi tab. Tab bar tinggal DM | Broadcast.
+const dmState = { filter: "dm", openIdx: null };
 
-// Section tab click handler — section tabs di atas dm-layout.
-// Opsi 1 (2026-06-12): klik tab → messenger kategori itu; klik tab yang SUDAH
-// aktif → toggle kembali ke overview landing (kartu ringkasan). _dmApplyView
-// yang mengatur active-class + show/hide overview vs messenger.
+// Section tab click handler — section tabs di atas dm-layout. Klik tab → buka
+// kategori itu. (Tak ada lagi toggle-balik-ke-overview karena overview sudah
+// dipensiunkan.) _dmApplyView yang mengatur active-class + show/hide.
 document.addEventListener("click", e => {
   const tab = e.target.closest(".dm-section-tab[data-dm-filter]");
   if (!tab) return;
   e.preventDefault();
-  var clicked = tab.dataset.dmFilter;
-  dmState.filter = (dmState.filter === clicked) ? "overview" : clicked;
+  dmState.filter = tab.dataset.dmFilter;
   if (typeof _dmApplyView === "function") _dmApplyView();
 });
 
