@@ -41434,37 +41434,60 @@ function openChatUserPicker() {
   modal.id = "__chatUserPicker";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-cup-close></div>
-    <div class="hs-popup-panel email-user-picker-panel">
-      <button type="button" class="hs-popup-close" data-cup-close aria-label="Close">✕</button>
-      <h3 class="email-recipient-title">💬 New Message</h3>
-      <p class="email-recipient-desc">Choose a user to chat with.</p>
+    <div class="hs-popup-panel email-user-picker-panel" role="dialog" aria-modal="true" aria-label="Pesan Baru">
+      <button type="button" class="hs-popup-close" data-cup-close aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h3 class="email-recipient-title cup-title">
+        <span class="cup-title-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <span>Pesan Baru</span>
+      </h3>
+      <p class="email-recipient-desc">Cari nama lalu pilih orang yang ingin kamu kirimi pesan.</p>
       <div class="email-user-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="text" id="chatUserSearchInput" placeholder="Search name or username..." autocomplete="off"/>
+        <input type="text" id="chatUserSearchInput" placeholder="Cari nama atau username…" autocomplete="off"/>
       </div>
       <div class="email-user-list" id="chatUserPickerList"></div>
     </div>
   `;
   document.body.appendChild(modal);
   requestAnimationFrame(() => modal.classList.add("show"));
-  modal.querySelectorAll("[data-cup-close]").forEach(b => b.addEventListener("click", () => modal.remove()));
+  // Tutup: tombol/backdrop + tombol Escape (req perbaikan popup 2026-06-12).
+  const closePicker = () => { modal.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") closePicker(); };
+  document.addEventListener("keydown", onKey);
+  modal.querySelectorAll("[data-cup-close]").forEach(b => b.addEventListener("click", closePicker));
   const input = modal.querySelector("#chatUserSearchInput");
   const list = modal.querySelector("#chatUserPickerList");
+  const me = (user && user.username ? user.username : "").toLowerCase();
+  const follow = new Set((state && Array.isArray(state.followingCreators) ? state.followingCreators : []).map(x => String(x).toLowerCase()));
   const renderList = () => {
     const q = (input.value || "").toLowerCase().trim();
-    const accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
-      .filter(a => a.username !== user?.username)
-      .filter(a => !(typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(a))) // user tak boleh DM admin
-      .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
-      .slice(0, 30);
+    // Exclude: diri sendiri, admin/super-admin (tak boleh di-DM), akun
+    // demo/dummy (konsisten dgn daftar kontak DM) — req perbaikan 2026-06-12.
+    let accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
+      .filter(a => a && a.username && String(a.username).toLowerCase() !== me)
+      .filter(a => !(typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(a)))
+      .filter(a => !(typeof isDemoAccount === "function" && isDemoAccount(a)))
+      .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q));
+    // Yang di-follow diprioritaskan di atas, lalu alfabetis (konsisten kontak DM).
+    accounts.sort((a, b) => {
+      const fa = follow.has(String(a.username).toLowerCase()) ? 0 : 1;
+      const fb = follow.has(String(b.username).toLowerCase()) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return String(a.name || a.username).localeCompare(String(b.name || b.username));
+    });
+    accounts = accounts.slice(0, 30);
     if (!accounts.length) {
-      list.innerHTML = `<div class="email-user-empty">${q ? "Tidak ada user yang cocok." : "Belum ada user lain."}</div>`;
+      list.innerHTML = `<div class="email-user-empty">${q ? "Tidak ada user yang cocok." : "Belum ada user lain untuk diajak chat."}</div>`;
       return;
     }
     list.innerHTML = accounts.map(a => {
       const label = a.name || a.username || "U";
       const init = String(label).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
       const handle = escapeHtml(a.username || "");
+      const isFollow = follow.has(String(a.username).toLowerCase());
+      const followTag = isFollow ? `<span class="cup-follow-tag">Mengikuti</span>` : "";
       const avatar = a.avatar
         ? `<div class="avatar"><img src="${escapeHtml(a.avatar)}" alt=""/></div>`
         : `<div class="avatar"><span>${escapeHtml(init)}</span></div>`;
@@ -41472,7 +41495,7 @@ function openChatUserPicker() {
         <button type="button" class="email-user-item" data-cup-pick="${handle}">
           ${avatar}
           <div class="info">
-            <strong>${escapeHtml(label)}</strong>
+            <strong>${escapeHtml(label)}${followTag}</strong>
             <small>@${handle}</small>
           </div>
         </button>
@@ -41481,7 +41504,7 @@ function openChatUserPicker() {
     list.querySelectorAll("[data-cup-pick]").forEach(b => {
       b.addEventListener("click", () => {
         const uname = b.dataset.cupPick;
-        modal.remove();
+        closePicker();
         if (typeof startChatWithUser === "function") startChatWithUser(uname);
       });
     });

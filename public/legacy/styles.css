@@ -1415,6 +1415,26 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   color: var(--muted);
   padding: 28px 12px;
 }
+/* Picker "Pesan Baru" — polish (req perbaikan popup 2026-06-12). */
+.cup-title { display: flex; align-items: center; gap: 10px; }
+.cup-title-ico {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2);
+}
+.cup-title-ico svg { width: 16px; height: 16px; }
+.hs-popup-close svg { width: 15px; height: 15px; }
+/* Tag "Mengikuti" di samping nama — bedakan kontak yang sudah di-follow. */
+.cup-follow-tag {
+  display: inline-block; margin-left: 7px; padding: 1px 7px; vertical-align: middle;
+  border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .02em;
+  background: var(--primary-soft, rgba(109,41,50,.18)); color: var(--text-2);
+  border: 1px solid var(--border);
+}
+/* Fokus ring NETRAL cream (bukan wine/gold) — sesuai aturan dashboard user. */
+.email-user-search:focus-within { border-color: rgba(232,216,196,.4); }
+.email-user-item:focus-visible { outline: 2px solid rgba(232,216,196,.4); outline-offset: 1px; }
+.hs-popup-close:focus-visible { outline: 2px solid rgba(232,216,196,.4); outline-offset: 1px; }
 
 /* === EMAIL: compose to user === */
 .email-user-compose-panel {
