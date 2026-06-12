@@ -10879,25 +10879,31 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
    view broadcast terpisah (#dmBroadcastView) DIPAKAI LAGI (req user 2026-06-12)
    sebagai halaman feed notifikasi pengumuman read-only — visibilitas dikelola
    _dmApplyView ([hidden]). */
+/* Kotak cari = box TERPISAH (req user 2026-06-12: pisahkan, jangan digabung
+   dgn tombol "Pesan baru" / daftar). Punya border+bg sendiri + margin atas &
+   bawah supaya berdiri sendiri. border-bottom penyambung ke list dihapus. */
 .dm-side-search {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  gap: 9px;
+  margin: 12px 14px;
+  padding: 9px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 .dm-side-search svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
 .dm-side-search input {
   flex: 1; min-width: 0;
-  padding: 8px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  border: 0;
   font-size: 13px;
   color: var(--text);
   outline: none;
 }
-.dm-side-search input:focus { border-color: var(--primary); }
+/* Fokus ring NETRAL cream di container (bukan wine/gold) — aturan dashboard. */
+.dm-side-search:focus-within { border-color: rgba(232, 216, 196, .4); }
 
 .dm-side-tabs {
   display: flex;
