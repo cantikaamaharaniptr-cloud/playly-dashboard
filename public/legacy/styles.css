@@ -45283,6 +45283,11 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
   color: #fff;
   border-color: var(--primary);
 }
+/* Tab "Semua" dihapus (2026-06-12): mencampur DM personal + broadcast admin +
+   permintaan jadi satu aliran = kurang fokus/kurang cocok. Default landing
+   sekarang DM (chat personal). Di-hide via CSS — markup index-markup.ts fragile
+   jadi tidak diedit; tombolnya tetap ada di DOM tapi tak tampil. */
+.dm-section-tab[data-dm-filter="all"] { display: none !important; }
 .dm-section-tab-badge {
   display: inline-grid;
   place-items: center;

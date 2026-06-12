@@ -31419,11 +31419,11 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
       // setelah klik tab atau "+ Pesan Baru".
       if (n.dataset.view === "messages") {
         setTimeout(() => {
-          if (typeof dmState !== "undefined") dmState.filter = "all";
+          if (typeof dmState !== "undefined") dmState.filter = "dm";
           if (typeof renderDmList === "function") renderDmList();
           if (typeof _dmApplyView === "function") _dmApplyView();
           document.querySelectorAll(".dm-section-tab").forEach(function (t) {
-            t.classList.toggle("active", t.dataset.dmFilter === "all");
+            t.classList.toggle("active", t.dataset.dmFilter === "dm");
           });
         }, 50);
       }
@@ -39357,7 +39357,7 @@ function startChatWithUser(username) {
   const isAdminTarget = acc.role === "admin";
 
   // Reset filter ke "all" supaya thread baru pasti terlihat di list kiri
-  if (typeof dmState !== "undefined") dmState.filter = "all";
+  if (typeof dmState !== "undefined") dmState.filter = "dm";
 
   const existing = state.messages.findIndex(m => m.name === username);
   if (existing >= 0) {
@@ -39397,7 +39397,10 @@ $("#peopleMoreBtn")?.addEventListener("click", () => {
 // === DM (Instagram-style messages) ===
 // State: filter tab (all/dm/broadcast/requests/archived) + currently open thread idx.
 // Default "all" per user 2026-05-06 — combined view, klik tab spesifik untuk filter.
-const dmState = { filter: "all", openIdx: null };
+// Default "dm" (2026-06-12): tab "Semua" dihapus (di-hide via CSS) karena
+// mencampur DM personal + broadcast admin + permintaan = kurang fokus. DM
+// (chat personal) jadi landing default — sejajar Instagram "Primary".
+const dmState = { filter: "dm", openIdx: null };
 
 // Section tab click handler — section tabs di atas dm-layout
 document.addEventListener("click", e => {
@@ -39513,18 +39516,24 @@ function renderDmList() {
     requests:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
   };
+  // Header inbox STABIL (2026-06-12): judul tetap "Pesan" + ikon inbox tetap;
+  // tab pill yang menunjukkan filter aktif (pola Gmail/Outlook — nama inbox
+  // konstan, tabs sebagai filter). Tab "Semua" sudah dihapus, jadi tak lagi
+  // ganti judul per-filter (dulu init nyangkut "Semua Pesan" karena i18n
+  // dm.all.title menimpa). removeAttribute("data-i18n") supaya i18n tidak
+  // revert. (titleKeys/meta/stripEmojiPrefix di atas kini tak terpakai —
+  // dibiarkan, harmless.)
   if (iconEl) {
-    iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
+    iconEl.innerHTML = iconSvg.all;
   }
   if (titleEl) {
-    // v590d (2026-05-27): icon sekarang di LUAR h2 (sibling), jadi
-    // textContent update titleEl aman — gak ada child element yg perlu
-    // di-preserve.
-    titleEl.textContent = stripEmojiPrefix(t(meta.t));
+    titleEl.textContent = "Pesan";
+    titleEl.removeAttribute("data-i18n");
     titleEl.dataset.origText = "";
   }
   if (descEl) {
-    descEl.textContent = t(meta.d);
+    descEl.textContent = "Inbox kamu — DM, broadcast admin, permintaan, dan arsip di satu tempat.";
+    descEl.removeAttribute("data-i18n");
     descEl.dataset.origText = "";
   }
 
