@@ -10709,7 +10709,9 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 }
 
 /* === Broadcast = FEED NOTIFIKASI (req user 2026-06-12) === */
-#dmBroadcastView.dm-broadcast { margin-top: 16px; max-width: 720px; }
+/* Broadcast = feed notifikasi: isi PENUH lebar area konten (req user
+   2026-06-12: jangan setengah layar, harus se-halaman penuh). Tanpa cap. */
+#dmBroadcastView.dm-broadcast { margin-top: 16px; max-width: none; width: 100%; }
 .dm-bc-note {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 11px 14px; margin-bottom: 14px;
@@ -70093,7 +70095,10 @@ body[data-theme="light"]:not([data-role="admin"]) .view-header-people .vh-people
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  max-width: 760px;
+  /* Isi penuh lebar area konten (req user 2026-06-12: jangan setengah layar) —
+     cap 760px lama dihapus. */
+  max-width: none;
+  width: 100%;
 }
 .dm-bc-empty {
   padding: 48px 24px;
