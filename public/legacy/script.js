@@ -39401,7 +39401,7 @@ $("#peopleMoreBtn")?.addEventListener("click", () => {
 // Default "dm" (req user 2026-06-12): landing Inbox = LANGSUNG daftar DM (pola
 // Instagram/WhatsApp). Overview 4-kartu lama dipensiunkan — Permintaan & Arsip
 // kini entri di dalam DM, Broadcast jadi tab. Tab bar tinggal DM | Broadcast.
-const dmState = { filter: "dm", openIdx: null };
+const dmState = { filter: "dm", openIdx: null, searchOpen: false };
 
 // Section tab click handler — section tabs di atas dm-layout. Klik tab → buka
 // kategori itu. (Tak ada lagi toggle-balik-ke-overview karena overview sudah
@@ -40934,9 +40934,18 @@ function _dmApplyView() {
   // Klik tab/kartu → messenger. BROADCAST khusus (req user 2026-06-12): halaman
   // seperti NOTIFIKASI — feed pengumuman read-only (#dmBroadcastView), bukan
   // messenger/chat. DM/Permintaan/Arsip → messenger single-column.
-  // "+ Pesan Baru" hanya di messenger DM.
+  // Toolbar aksi (Pesan Baru + Cari) hanya di messenger DM.
   var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
   if (newChatBtn) newChatBtn.hidden = !isDm;
+  // Kotak cari: di DM default TERSEMBUNYI sampai tombol "Cari" dipilih; di
+  // Permintaan/Arsip selalu tampil (dipakai filter). req user 2026-06-12.
+  var dmSearchRow = document.querySelector('section.view[data-view="messages"] .dm-side .dm-side-search');
+  if (dmSearchRow) dmSearchRow.hidden = isDm ? !dmState.searchOpen : false;
+  var dmSearchToggle = document.getElementById("dmSearchToggle");
+  if (dmSearchToggle) {
+    dmSearchToggle.classList.toggle("is-active", isDm && !!dmState.searchOpen);
+    dmSearchToggle.setAttribute("aria-pressed", (isDm && dmState.searchOpen) ? "true" : "false");
+  }
   // Pill status sync ke kanan header (sejajar pill "LIVE" Statistik).
   if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
   if (bc) bc.hidden = !isBroadcast;
@@ -41037,25 +41046,58 @@ function _dmEnsureCatBanner() {
 // karena unified split (2026-06-12) me-retire kartu overview yang dulu jadi
 // satu-satunya entry compose (#dmOvNew). Klik → buka picker user (sama dgn
 // flow lama #newChat/#dmOvNew).
+// Toolbar aksi DM (req user 2026-06-12): 2 tombol segment di KANAN ATAS —
+// "Pesan Baru" (buka picker) + "Cari" (toggle kotak cari yang default
+// tersembunyi). Menggantikan tombol full-width lama. Idempotent; _dmApplyView
+// toggle .hidden seluruh bar per filter (cuma DM). Return bar.
 function _dmEnsureComposeBtn() {
   var side = document.querySelector('section.view[data-view="messages"] .dm-side');
-  if (!side) return document.getElementById("dmNewChatBtn");
-  var btn = document.getElementById("dmNewChatBtn");
-  if (!btn) {
-    btn = document.createElement("button");
-    btn.type = "button";
-    btn.id = "dmNewChatBtn";
-    btn.className = "dm-new-chat-btn";
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Pesan Baru</span>';
-    btn.addEventListener("click", function (e) {
+  if (!side) return document.getElementById("dmActionsBar");
+  var bar = document.getElementById("dmActionsBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "dmActionsBar";
+    bar.className = "dm-actions-bar";
+
+    var btnNew = document.createElement("button");
+    btnNew.type = "button";
+    btnNew.id = "dmNewChatBtn";
+    btnNew.className = "dm-act-seg dm-act-seg-primary";
+    btnNew.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Pesan Baru</span>';
+    btnNew.addEventListener("click", function (e) {
       e.preventDefault();
       if (typeof openChatUserPicker === "function") openChatUserPicker();
     });
+
+    var btnSearch = document.createElement("button");
+    btnSearch.type = "button";
+    btnSearch.id = "dmSearchToggle";
+    btnSearch.className = "dm-act-seg";
+    btnSearch.setAttribute("aria-pressed", "false");
+    btnSearch.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cari</span>';
+    btnSearch.addEventListener("click", function (e) {
+      e.preventDefault();
+      dmState.searchOpen = !dmState.searchOpen;
+      var sr = side.querySelector(".dm-side-search");
+      var inp = document.getElementById("msgSearch");
+      if (sr) sr.hidden = !dmState.searchOpen;
+      btnSearch.classList.toggle("is-active", !!dmState.searchOpen);
+      btnSearch.setAttribute("aria-pressed", dmState.searchOpen ? "true" : "false");
+      if (dmState.searchOpen) {
+        if (inp) setTimeout(function () { inp.focus(); }, 30);
+      } else if (inp) {
+        inp.value = "";
+        if (typeof renderDmList === "function") renderDmList();
+      }
+    });
+
+    bar.appendChild(btnNew);
+    bar.appendChild(btnSearch);
     var searchRow = side.querySelector(".dm-side-search");
-    if (searchRow) side.insertBefore(btn, searchRow);
-    else side.insertBefore(btn, side.firstChild);
+    if (searchRow) side.insertBefore(bar, searchRow);
+    else side.insertBefore(bar, side.firstChild);
   }
-  return btn;
+  return bar;
 }
 
 // Pindahkan pill status sync (#dmSyncStatus) dari dalam .lib-header-text ke

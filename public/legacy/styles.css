@@ -10879,9 +10879,36 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
    view broadcast terpisah (#dmBroadcastView) DIPAKAI LAGI (req user 2026-06-12)
    sebagai halaman feed notifikasi pengumuman read-only — visibilitas dikelola
    _dmApplyView ([hidden]). */
+/* Toolbar aksi DM (req user 2026-06-12): 2 tombol segment "Pesan Baru" + "Cari"
+   di KANAN ATAS. "Cari" toggle kotak cari (default tersembunyi). */
+.dm-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 12px 14px 0;
+}
+.dm-actions-bar[hidden] { display: none !important; }
+.dm-act-seg {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: 10px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s, transform .12s;
+}
+.dm-act-seg svg { width: 16px; height: 16px; }
+.dm-act-seg:hover { background: var(--bg-elev); transform: translateY(-1px); }
+/* "Pesan Baru" = aksi utama (solid wine). */
+.dm-act-seg-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.dm-act-seg-primary:hover { background: var(--primary-hover); }
+/* "Cari" aktif (kotak cari terbuka) → highlight netral cream. */
+.dm-act-seg.is-active { border-color: rgba(232, 216, 196, .5); background: var(--bg-elev); color: var(--text); }
+.dm-act-seg:focus-visible { outline: 2px solid rgba(232, 216, 196, .4); outline-offset: 1px; }
+
 /* Kotak cari = box TERPISAH (req user 2026-06-12: pisahkan, jangan digabung
    dgn tombol "Pesan baru" / daftar). Punya border+bg sendiri + margin atas &
-   bawah supaya berdiri sendiri. border-bottom penyambung ke list dihapus. */
+   bawah supaya berdiri sendiri. Default tersembunyi di DM (toggle via "Cari"). */
+.dm-side-search[hidden] { display: none !important; }
 .dm-side-search {
   display: flex;
   align-items: center;
