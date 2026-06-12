@@ -10674,6 +10674,32 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   border-right: 1px solid var(--border);
   min-width: 0;
 }
+/* "+ Pesan Baru" compose button — di-inject di atas search panel daftar
+   (unified split 2026-06-12). Solid primary (tidak kena rule outline global). */
+.dm-new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 14px 0;
+  padding: 10px 14px;
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s var(--ease), transform .15s var(--ease);
+}
+.dm-new-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.dm-new-chat-btn svg { width: 16px; height: 16px; }
+.dm-new-chat-btn[hidden] { display: none !important; }
+/* Unified split (2026-06-12): kartu overview (#dmOverview) + view broadcast
+   terpisah (#dmBroadcastView) di-retire permanen → jangan pernah tampil
+   (defense terhadap flash 50ms / entry path yang belum panggil _dmApplyView).
+   #dmLayout tetap dikelola _dmApplyView. */
+#dmOverview, #dmBroadcastView { display: none !important; }
 .dm-side-search {
   display: flex;
   align-items: center;
@@ -70595,6 +70621,10 @@ body:not([data-role="admin"]) #dmOverview .inbox-col-count {
 .dm-tabs-search-row-v579 .dm-ov-search-inline input {
   font-size: 13px;
 }
+/* Unified split (2026-06-12): global search tab-row (#dmOvSearch) di-retire
+   bareng kartu overview → hilangkan double-search. Search daftar pakai
+   #msgSearch yang ada di atas list panel (.dm-side). */
+.dm-tabs-search-row-v579 .dm-ov-search-inline { display: none !important; }
 
 @media (max-width: 980px) {
   .dm-tabs-search-row-v579 .dm-ov-search-inline { width: 240px; }

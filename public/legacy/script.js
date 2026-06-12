@@ -40743,33 +40743,62 @@ function _dmApplyView() {
   var bc = document.getElementById("dmBroadcastView");
   var f = (typeof dmState === "undefined") ? "all" : dmState.filter;
   var isAll = f === "all";
-  var isBc = f === "broadcast";
   var isDm = f === "dm";
-  // Hide "+ Pesan Baru" button saat tab non-DM (Broadcast/Permintaan/Arsip).
-  // User can only INITIATE chat from DM context — broadcast read-only, request
-  // = incoming (bukan outgoing), arsip = historical (juga bukan outgoing).
-  var newChatBtn = document.getElementById("newChat");
+  // UNIFIED SPLIT (2026-06-12): SEMUA tab pakai #dmLayout (list + chat). Tab =
+  // filter daftar kiri saja (renderDmList sudah dukung all/dm/broadcast/
+  // requests/archived). Kartu overview (#dmOverview) + view broadcast terpisah
+  // (#dmBroadcastView) di-retire → 1 layout konsisten, hapus 3-paradigma lama.
+  // Broadcast thread tetap read-only saat dibuka (openDmChat sembunyikan
+  // composer + tampilkan note). "+ Pesan Baru" hanya relevan saat bisa memulai
+  // chat (Semua/DM); Broadcast/Permintaan/Arsip = incoming/historical.
+  // Tombol "+ Pesan Baru" (compose) di panel daftar — di-inject karena entry
+  // compose lama (#dmOvNew) ada di dalam kartu overview yang sudah di-retire.
+  var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
   if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
-  if (ov) ov.hidden = !isAll;
-  if (bc) bc.hidden = !isBc;
+  if (ov) ov.hidden = true;
+  if (bc) bc.hidden = true;
   if (lay) {
-    lay.hidden = isAll || isBc;   // Broadcast & Semua bukan layout chat
-    // Req user 2026-05-25: saat switch ke tab DM/Permintaan/Arsip, default
-    // ke list-only mode (chat panel hidden). User klik thread → openDmChat
-    // remove class ini → chat panel reveal. Reset openIdx supaya state
-    // konsisten.
-    if (!lay.hidden) {
-      lay.classList.add("dm-list-only");
-      if (typeof dmState !== "undefined") dmState.openIdx = null;
-      // Pastikan chat panel empty placeholder hidden + active panel hidden
-      var emptyP = document.getElementById("dmChatEmpty");
-      var activeP = document.getElementById("dmChatActive");
-      if (emptyP) emptyP.hidden = true;
-      if (activeP) activeP.hidden = true;
-    }
+    lay.hidden = false;
+    // Default list-only mode (daftar full-width, chat panel hidden) sampai
+    // user klik thread → openDmChat remove .dm-list-only → reveal split.
+    lay.classList.add("dm-list-only");
+    if (typeof dmState !== "undefined") dmState.openIdx = null;
+    var emptyP = document.getElementById("dmChatEmpty");
+    var activeP = document.getElementById("dmChatActive");
+    if (emptyP) emptyP.hidden = true;
+    if (activeP) activeP.hidden = true;
   }
-  if (isAll && typeof renderDmOverview === "function") renderDmOverview();
-  if (isBc && typeof renderDmBroadcast === "function") renderDmBroadcast();
+  // Keluar dari mode chat mobile saat pindah tab / kembali ke list (fix bug
+  // laten: body.dm-show-chat sebelumnya persist lintas tab/view → di mobile
+  // header ke-hide + list ke-slide keluar = layar kosong).
+  document.body.classList.remove("dm-show-chat");
+  if (typeof renderDmList === "function") renderDmList();
+}
+
+// Inject tombol "+ Pesan Baru" di atas panel daftar (.dm-side). Idempotent —
+// hanya buat sekali; _dmApplyView tinggal toggle .hidden per filter. Perlu
+// karena unified split (2026-06-12) me-retire kartu overview yang dulu jadi
+// satu-satunya entry compose (#dmOvNew). Klik → buka picker user (sama dgn
+// flow lama #newChat/#dmOvNew).
+function _dmEnsureComposeBtn() {
+  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
+  if (!side) return document.getElementById("dmNewChatBtn");
+  var btn = document.getElementById("dmNewChatBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "dmNewChatBtn";
+    btn.className = "dm-new-chat-btn";
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Pesan Baru</span>';
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (typeof openChatUserPicker === "function") openChatUserPicker();
+    });
+    var searchRow = side.querySelector(".dm-side-search");
+    if (searchRow) side.insertBefore(btn, searchRow);
+    else side.insertBefore(btn, side.firstChild);
+  }
+  return btn;
 }
 
 // Wire back button (req user 2026-05-25): klik back di chat header →
