@@ -31174,6 +31174,11 @@ function switchView(name, { fromNav = false } = {}) {
   state.currentView = name;
   saveState();
 
+  // Tandai view aktif di body supaya CSS bisa target elemen di luar .view —
+  // mis. sembunyikan search global topbar di halaman Pesan (req user 2026-06-12:
+  // search global tak relevan di inbox; biar tak ada 2 kotak cari).
+  document.body.dataset.activeView = name;
+
   $$(".view").forEach(v => v.classList.toggle("active", v.dataset.view === name));
   $$(".nav-item, .footer-link[data-view]").forEach(n => n.classList.toggle("active", n.dataset.view === name));
 

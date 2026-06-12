@@ -10906,6 +10906,15 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 /* "Cari" aktif (kotak cari terbuka) → highlight netral cream. */
 .dm-act-seg.is-active { border-color: rgba(232, 216, 196, .5); background: var(--bg-elev); color: var(--text); }
 .dm-act-seg:focus-visible { outline: 2px solid rgba(232, 216, 196, .4); outline-offset: 1px; }
+/* Sembunyikan search GLOBAL topbar khusus di halaman Pesan (req user
+   2026-06-12): tak relevan utk inbox, dan biar tak terlihat 2 kotak cari.
+   Halaman lain tetap punya search global. Selector di-naikkan specificity-nya
+   (html + :not(.auth-mode)) supaya menang dari rule responsif
+   `html body:not(.auth-mode) .topbar .topbar-search { display:flex !important }`. */
+html body[data-active-view="messages"]:not(.auth-mode) .topbar .topbar-search { display: none !important; }
+/* Karena search (flex:1) yang dulu mendorong aksi ke kanan kini hilang, jaga
+   aksi topbar tetap rata kanan di halaman Pesan. */
+html body[data-active-view="messages"]:not(.auth-mode) .topbar .topbar-actions { margin-left: auto !important; }
 
 /* Kotak cari = box TERPISAH (req user 2026-06-12: pisahkan, jangan digabung
    dgn tombol "Pesan baru" / daftar). Punya border+bg sendiri + margin atas &
