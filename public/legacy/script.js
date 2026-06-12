@@ -39555,7 +39555,19 @@ function renderDmList() {
 
   filtered.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-  if (!filtered.length) {
+  // DM tab (req user 2026-06-12): tampilkan KONTAK (nama user) yang belum punya
+  // thread, di bawah chat yang sudah ada — supaya user bisa langsung pilih nama
+  // → mulai DM (tanpa harus buka picker). Hanya untuk filter "dm".
+  let contactsHTML = "";
+  if (dmState.filter === "dm") {
+    const existingLower = new Set();
+    state.messages.forEach(m => {
+      if (m && !m.isAdmin && !m.isBroadcast && m.name) existingLower.add(String(m.name).toLowerCase());
+    });
+    contactsHTML = (typeof _dmContactRowsHTML === "function") ? _dmContactRowsHTML(existingLower, q) : "";
+  }
+
+  if (!filtered.length && !contactsHTML) {
     // v530 (2026-05-25): full i18n via inbox.list.empty.* keys.
     const emptyMap = {
       all:       q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.all"),
@@ -39568,7 +39580,7 @@ function renderDmList() {
     return;
   }
 
-  list.innerHTML = filtered.map(m => {
+  const threadsHTML = filtered.map(m => {
     const idx = state.messages.indexOf(m);
     const isActive = dmState.openIdx === idx;
     const adminBadge = m.isAdmin ? `<span class="msg-admin-badge">ADMIN</span>` : "";
@@ -39597,17 +39609,78 @@ function renderDmList() {
     `;
   }).join("");
 
+  list.innerHTML = threadsHTML + contactsHTML;
+
   list.querySelectorAll("[data-dm-thread]").forEach(el => {
     el.addEventListener("click", () => {
       const idx = +el.dataset.dmThread;
       openDmChat(idx);
     });
   });
+  // Baris kontak (nama user belum ada thread) → mulai DM dengannya.
+  list.querySelectorAll("[data-dm-contact]").forEach(el => {
+    const start = () => {
+      const un = el.dataset.dmContact;
+      if (un && typeof startChatWithUser === "function") startChatWithUser(un);
+    };
+    el.addEventListener("click", start);
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } });
+  });
 
   // 5g: jaga badge unread sidebar selalu sinkron dgn list yang baru di-render.
   if (typeof updateDmBadges === "function") updateDmBadges();
   // 5k: refleksikan status sync terakhir saat list di-render.
   if (typeof dmRenderSyncStatus === "function") dmRenderSyncStatus();
+}
+
+// Baris KONTAK untuk tab DM (req user 2026-06-12): nama user yang bisa di-DM
+// tapi belum punya thread. Sumber = getAllAccounts (sama spt picker "Pesan
+// Baru"), exclude diri sendiri + akun demo/dummy (isDemoAccount) + yang sudah
+// ada thread. Yang di-follow diprioritaskan di atas. Klik → startChatWithUser.
+function _dmContactRowsHTML(existingLower, q) {
+  if (typeof getAllAccounts !== "function") return "";
+  var me = (user && user.username ? user.username : "").toLowerCase();
+  var follow = new Set((state && Array.isArray(state.followingCreators) ? state.followingCreators : []).map(function (x) { return String(x).toLowerCase(); }));
+  var accts = [];
+  try { accts = getAllAccounts() || []; } catch (e) { return ""; }
+  accts = accts.filter(function (a) {
+    if (!a || !a.username) return false;
+    var un = String(a.username).toLowerCase();
+    if (un === me) return false;
+    if (existingLower && existingLower.has(un)) return false;
+    if (typeof isDemoAccount === "function" && isDemoAccount(a)) return false;
+    if (q) {
+      var hit = (String(a.name || "").toLowerCase().indexOf(q) >= 0) || (un.indexOf(q) >= 0);
+      if (!hit) return false;
+    }
+    return true;
+  });
+  accts.sort(function (a, b) {
+    var fa = follow.has(String(a.username).toLowerCase()) ? 0 : 1;
+    var fb = follow.has(String(b.username).toLowerCase()) ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return String(a.name || a.username).localeCompare(String(b.name || b.username));
+  });
+  accts = accts.slice(0, 50);
+  if (!accts.length) return "";
+  var esc = (typeof escapeHtml === "function") ? escapeHtml : function (s) { return String(s); };
+  var rows = accts.map(function (a) {
+    var label = a.name || a.username || "U";
+    var init = String(label).split(/\s+/).map(function (s) { return s[0]; }).slice(0, 2).join("").toUpperCase() || "U";
+    var av = a.avatar
+      ? '<div class="avatar"><img src="' + esc(a.avatar) + '" alt=""></div>'
+      : '<div class="avatar"><span>' + esc(init) + '</span></div>';
+    var foll = follow.has(String(a.username).toLowerCase());
+    return ''
+      + '<div class="dm-thread dm-contact-row" data-dm-contact="' + esc(a.username) + '" role="button" tabindex="0">'
+      +   av
+      +   '<div class="dm-thread-info"><div class="dm-thread-top">'
+      +     '<strong>' + esc(label) + '</strong>'
+      +   '</div><div class="dm-thread-preview dm-contact-hint">@' + esc(a.username) + (foll ? ' · diikuti' : '') + '</div></div>'
+      +   '<span class="dm-contact-start" aria-hidden="true">Chat</span>'
+      + '</div>';
+  }).join("");
+  return '<div class="dm-contacts-head">Mulai chat baru</div>' + rows;
 }
 
 // Buka chat thread di panel kanan
@@ -40776,15 +40849,15 @@ function _dmApplyView() {
     return;
   }
 
-  // Messenger dua-panel untuk kategori aktif (Gmail/Outlook reading pane).
-  // Reading pane kanan tampilkan placeholder "Pilih percakapan" sampai user
-  // klik thread; openDmChat ganti ke chat aktif. (Mobile: slide CSS sembunyikan
-  // chat pane → daftar full-screen.)
+  // Messenger SINGLE-COLUMN (req user 2026-06-12: JANGAN dua-panel/Instagram).
+  // Landing kategori = DAFTAR nama (kontak + thread) full-width SAJA — panel
+  // chat TIDAK tampil sebagai kolom. Chat baru muncul full (gantikan daftar)
+  // saat nama diklik (openDmChat → body.dm-show-chat); back → daftar.
   if (lay) {
     lay.classList.remove("dm-list-only");
     var emptyP = document.getElementById("dmChatEmpty");
     var activeP = document.getElementById("dmChatActive");
-    if (emptyP) emptyP.hidden = false;
+    if (emptyP) emptyP.hidden = true;   // TANPA reading pane/placeholder kolom
     if (activeP) activeP.hidden = true;
   }
   // BEDAKAN tiap halaman kategori (2026-06-12): banner konteks + placeholder
@@ -40888,14 +40961,13 @@ document.addEventListener("click", function (e) {
   var btn = e.target.closest && e.target.closest("#dmChatBack");
   if (!btn) return;
   e.preventDefault();
-  var lay = document.getElementById("dmLayout");
-  if (lay) lay.classList.remove("dm-list-only");
+  // Single-column (2026-06-12): back → kembali ke DAFTAR full-width. Cukup
+  // lepas body.dm-show-chat (CSS swap daftar↔chat); tak ada reading pane.
   if (typeof dmState !== "undefined") dmState.openIdx = null;
   var activeP = document.getElementById("dmChatActive");
   var emptyP = document.getElementById("dmChatEmpty");
   if (activeP) activeP.hidden = true;
-  if (emptyP) emptyP.hidden = false;
-  // Mobile: keluar dari chat view mode (slide balik ke daftar)
+  if (emptyP) emptyP.hidden = true;
   document.body.classList.remove("dm-show-chat");
   // Re-render list supaya tidak ada thread yg ke-mark active highlighted
   if (typeof renderDmList === "function") renderDmList();

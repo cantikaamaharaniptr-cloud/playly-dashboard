@@ -10540,16 +10540,32 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   color: var(--text);
 }
 .dm-chat-back svg { width: 18px; height: 18px; }
-/* Show back button hanya saat layout NON-list-only (chat panel visible) */
-.dm-layout:not(.dm-list-only) .dm-chat-back {
-  display: inline-flex;
-  align-items: center;
+/* SINGLE-COLUMN DM (req user 2026-06-12: JANGAN dua-panel/Instagram). Inbox
+   messenger jadi 1 kolom: DAFTAR nama (kontak + thread) full-width; klik nama →
+   panel chat muncul FULL menggantikan daftar; tombol back → daftar.
+   Mekanisme via body.dm-show-chat (di-toggle openDmChat / back).
+   Catatan: aturan mobile (@media max-width:768px) pakai display:flex!important
+   + slide transform → tetap menang di mobile (slide), aturan di bawah hanya
+   efektif di desktop. */
+/* List view = KOLOM DM sempit (req user 2026-06-12: jangan full-width panjang,
+   cukup kolom nama user). Card ~420px, tinggi auto, rata kiri. */
+section.view[data-view="messages"] #dmLayout.dm-layout {
+  grid-template-columns: 1fr;
+  max-width: 420px;
+  height: auto;
+  min-height: 300px;
 }
-/* Dua-panel persisten (2026-06-12): back button = afordansi MOBILE saja. Di
-   desktop daftar selalu terlihat di kiri, jadi tak perlu tombol back. */
-@media (min-width: 769px) {
-  .dm-chat-back { display: none !important; }
+section.view[data-view="messages"] #dmLayout > .dm-chat { display: none; }
+/* Chat view = full-width, tinggi penuh (gantikan kolom daftar). */
+body.dm-show-chat section.view[data-view="messages"] #dmLayout.dm-layout {
+  max-width: none;
+  height: calc(100vh - 200px);
 }
+body.dm-show-chat section.view[data-view="messages"] #dmLayout > .dm-side { display: none; }
+body.dm-show-chat section.view[data-view="messages"] #dmLayout > .dm-chat { display: flex; }
+/* Back button: tampil saat chat terbuka (desktop & mobile), sembunyi di daftar. */
+.dm-chat-back { display: none; }
+body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: center; }
 
 /* === DM "Semua" overview — kartu per kategori gaya admin Inbox
    (per request user 2026-05-16). Toggle hidden via JS. === */
@@ -10712,6 +10728,21 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   border-radius: 10px;
 }
 .dm-cat-banner[hidden] { display: none !important; }
+/* Baris KONTAK di tab DM (nama user belum ada thread) — req user 2026-06-12. */
+.dm-contacts-head {
+  padding: 14px 16px 6px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-2, var(--muted));
+}
+.dm-contact-row { cursor: pointer; }
+.dm-contact-row .dm-contact-hint { color: var(--text-2, var(--muted)); }
+.dm-contact-start {
+  margin-left: auto; align-self: center; flex-shrink: 0;
+  font-size: 11px; font-weight: 600; color: var(--primary);
+  padding: 3px 11px; border: 1px solid var(--border); border-radius: 999px;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dm-contact-row:hover .dm-contact-start { background: var(--primary); color: #fff; border-color: var(--primary); }
 /* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
    ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
    view broadcast terpisah (#dmBroadcastView) yang tetap retired permanen
