@@ -10700,6 +10700,16 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
 .dm-new-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
 .dm-new-chat-btn svg { width: 16px; height: 16px; }
 .dm-new-chat-btn[hidden] { display: none !important; }
+/* "Terbaru" section heading (Opsi 3) — label di atas daftar gabungan. */
+.dm-recent-heading {
+  padding: 10px 16px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-2, var(--muted));
+}
+.dm-recent-heading[hidden] { display: none !important; }
 /* Opsi 2 (2026-06-12): landing = daftar full-width (list-only), bukan kartu
    overview. Kartu overview (#dmOverview) + view broadcast terpisah
    (#dmBroadcastView) retired → force-hide. */

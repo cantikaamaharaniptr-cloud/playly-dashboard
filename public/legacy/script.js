@@ -31414,12 +31414,12 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
           }
         }, 50);
       }
-      // Khusus Messages (Opsi 2, 2026-06-12): landing = daftar percakapan saja
-      // (full-width, list-only) tanpa panel kanan kosong. Default filter DM.
-      // Klik thread → split. _dmApplyView yang render + atur active-class.
+      // Khusus Messages (Opsi 3, 2026-06-12): landing = daftar "Terbaru"
+      // gabungan semua kategori (full-width, list-only) tanpa panel kanan
+      // kosong. Default filter "all". Klik thread → split; klik tab → filter.
       if (n.dataset.view === "messages") {
         setTimeout(() => {
-          if (typeof dmState !== "undefined") dmState.filter = "dm";
+          if (typeof dmState !== "undefined") dmState.filter = "all";
           if (typeof _dmApplyView === "function") _dmApplyView();
         }, 50);
       }
@@ -39393,11 +39393,11 @@ $("#peopleMoreBtn")?.addEventListener("click", () => {
 // === DM (Instagram-style messages) ===
 // State: filter tab (all/dm/broadcast/requests/archived) + currently open thread idx.
 // Default "all" per user 2026-05-06 — combined view, klik tab spesifik untuk filter.
-// Default "dm" (Opsi 2, 2026-06-12): landing Inbox = daftar percakapan DM
-// (full-width, list-only) tanpa panel kanan kosong. Tab "Semua" lama dihapus
-// (di-hide via CSS). Klik thread → panel chat muncul (split); klik tab → ganti
-// filter daftar.
-const dmState = { filter: "dm", openIdx: null };
+// Default "all" (Opsi 3, 2026-06-12): landing Inbox = daftar "Terbaru" gabungan
+// SEMUA kategori (DM + broadcast + permintaan, urut waktu) full-width list-only
+// tanpa panel kanan kosong. Tab "Semua" lama dihapus (di-hide via CSS) — di
+// landing tak ada tab terlihat aktif. Klik thread → split; klik tab → filter.
+const dmState = { filter: "all", openIdx: null };
 
 // Section tab click handler — section tabs di atas dm-layout.
 // Opsi 2 (2026-06-12): klik tab → set filter → daftar full-width kategori itu
@@ -40744,23 +40744,31 @@ function _dmApplyView() {
   var ov = document.getElementById("dmOverview");
   var lay = document.getElementById("dmLayout");
   var bc = document.getElementById("dmBroadcastView");
-  var f = (typeof dmState === "undefined") ? "dm" : dmState.filter;
+  var f = (typeof dmState === "undefined") ? "all" : dmState.filter;
+  var isAll = f === "all";
   var isDm = f === "dm";
-  // OPSI 2 (2026-06-12): landing = DAFTAR percakapan saja (full-width,
-  // .dm-list-only) TANPA panel kanan kosong "Pilih percakapan". Klik thread →
-  // openDmChat remove .dm-list-only → panel chat muncul (split). Tab = filter
-  // daftar. Kartu overview (#dmOverview) + broadcast view terpisah
-  // (#dmBroadcastView) retired. "+ Pesan Baru" hanya di DM.
+  // OPSI 3 (2026-06-12): landing = daftar "TERBARU" GABUNGAN semua kategori
+  // (filter "all" — DM + broadcast + permintaan, urut waktu) full-width
+  // (.dm-list-only) TANPA panel kanan kosong. Klik thread → openDmChat remove
+  // .dm-list-only → panel chat muncul (split). Tab DM/Broadcast/Permintaan/
+  // Arsip → filter ke satu kategori. Kartu overview + broadcast view terpisah
+  // retired. "+ Pesan Baru" di landing gabungan + DM.
   var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
-  if (newChatBtn) newChatBtn.hidden = !isDm;
+  if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
   // Pill status sync ke kanan header (sejajar pill "LIVE" Statistik).
   if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
   if (ov) ov.hidden = true;
   if (bc) bc.hidden = true;
-  // Active state tab sesuai filter aktif.
+  // Active state tab sesuai filter aktif (tab "Semua" di-hide → saat landing
+  // gabungan tak ada tab terlihat yang aktif).
   document.querySelectorAll(".dm-section-tab").forEach(function (t) {
     t.classList.toggle("active", t.dataset.dmFilter === f);
   });
+  // Heading "Terbaru" di atas daftar — hanya saat landing gabungan (filter all).
+  if (typeof _dmEnsureRecentHeading === "function") {
+    var rh = _dmEnsureRecentHeading();
+    if (rh) rh.hidden = !isAll;
+  }
   if (lay) {
     lay.hidden = false;
     // Landing list-only: daftar full-width; panel chat + placeholder hidden
@@ -40800,6 +40808,25 @@ function _dmEnsureComposeBtn() {
     else side.insertBefore(btn, side.firstChild);
   }
   return btn;
+}
+
+// Inject heading "Terbaru" di atas daftar (#dmThreadList) — dipakai Opsi 3
+// untuk menandai landing gabungan semua kategori. Idempotent; visibilitas
+// di-toggle _dmApplyView (hidden saat filter spesifik).
+function _dmEnsureRecentHeading() {
+  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
+  if (!side) return document.getElementById("dmRecentHeading");
+  var h = document.getElementById("dmRecentHeading");
+  if (!h) {
+    h = document.createElement("div");
+    h.id = "dmRecentHeading";
+    h.className = "dm-recent-heading";
+    h.textContent = "Terbaru";
+    var listEl = document.getElementById("dmThreadList");
+    if (listEl) side.insertBefore(h, listEl);
+    else side.appendChild(h);
+  }
+  return h;
 }
 
 // Pindahkan pill status sync (#dmSyncStatus) dari dalam .lib-header-text ke
