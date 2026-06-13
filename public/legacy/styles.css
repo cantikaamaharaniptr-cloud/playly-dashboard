@@ -9340,20 +9340,34 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 .toast {
   pointer-events: auto;
   display: flex; align-items: center; gap: 10px;
-  padding: 11px 14px;
+  padding: 12px 15px 12px 16px;
   background: var(--bg-elev);
-  border: 1px solid var(--border-strong);
-  border-radius: 11px;
-  box-shadow: var(--shadow-lg);
+  /* FIX (req user 2026-06-13): --border-strong & --shadow-lg TIDAK terdefinisi
+     → border penuh & shadow tak render, toast kelihatan flat. Pakai nilai nyata. */
+  border: 1px solid rgba(232, 216, 196, .16);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .3);
   font-size: 12.5px;
   font-weight: 500;
   min-width: 240px;
+  max-width: 360px;
   animation: toastSlideIn .42s cubic-bezier(.34, 1.56, .64, 1);
-  border-left: 3px solid var(--primary);
+  /* Aksen warna kiri (pseudo pill membulat, ikut sudut card — lebih rapi dari
+     border-left lurus yg memotong sudut). */
+  position: relative;
+  padding-left: 18px;
 }
-.toast.success { border-left-color: var(--success); }
-.toast.warning { border-left-color: var(--warning); }
-.toast.error { border-left-color: var(--danger); }
+.toast::before {
+  content: "";
+  position: absolute;
+  left: 7px; top: 10px; bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--primary);
+}
+.toast.success::before { background: var(--success, #10B981); }
+.toast.warning::before { background: var(--warning, #DCA96D); }
+.toast.error::before   { background: var(--danger, #ef4444); }
 /* Slide-in dari atas dgn overshoot bounce (toast sekarang di top-right,
    anchor di bawah bell icon). Per user 2026-05-11: popup muncul di atas
    seperti pop up notif pada umumnya. */
@@ -32652,7 +32666,8 @@ body:not([data-role="admin"]) .panel,
 body:not([data-role="admin"]) .auth-card,
 body:not([data-role="admin"]) .modal,
 body:not([data-role="admin"]) .hs-popup-panel,
-body:not([data-role="admin"]) .toast,
+/* .toast SENGAJA dikeluarkan dari kill-shadow ini (req user 2026-06-13): toast
+   = overlay mengambang, butuh elevasi/shadow biar tidak flat. */
 body:not([data-role="admin"]) .dropzone,
 body:not([data-role="admin"]) .footer-link,
 body:not([data-role="admin"]) .nav-item,
