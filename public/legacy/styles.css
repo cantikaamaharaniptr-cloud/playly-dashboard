@@ -55235,10 +55235,11 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
 /* Item dropdown notif DIROMBAK (req user 2026-06-13): ikon dalam kotak bulat +
    konten (teks 2-baris + waktu di bawah), baris rounded dgn hover halus. */
 .notif-dropdown .ndd-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 11px;
-  padding: 10px 11px;
+  padding: 10px 20px 10px 11px;
   margin-bottom: 7px;
   border-radius: 12px;
   /* Tiap notif = KOTAK/kartu sendiri (req user 2026-06-13: di setiap notif ada
@@ -55252,6 +55253,28 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
 .notif-dropdown .ndd-item:hover {
   background: rgba(232, 216, 196, .08);
   border-color: rgba(232, 216, 196, .18);
+}
+/* Pembeda SUDAH vs BELUM dibaca (req user 2026-06-14) — sama pola dgn halaman
+   penuh (.notif-item.unread = primary-soft wine). Belum dibaca = bg wine lembut
+   + border wine + titik wine + teks penuh; sudah dibaca = polos + sedikit redup. */
+.notif-dropdown .ndd-item.unread {
+  background: var(--primary-soft);
+  border-color: rgba(109, 41, 50, .4);
+}
+.notif-dropdown .ndd-item.unread:hover { background: var(--primary-soft); filter: brightness(1.08); }
+.notif-dropdown .ndd-item.unread .ndd-text { font-weight: 600; }
+.notif-dropdown .ndd-item:not(.unread) .ndd-text { opacity: .72; }
+.notif-dropdown .ndd-item:not(.unread) .ndd-icon { opacity: .7; }
+.notif-dropdown .ndd-unread-dot {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(109, 41, 50, .18);
 }
 .notif-dropdown .ndd-icon {
   flex-shrink: 0;

@@ -48971,17 +48971,26 @@ document.addEventListener("click", (e) => {
     closeNotifDropdown();
     return;
   }
-  // Klik ITEM notif (req user 2026-06-13: tiap kolom notif harus berfungsi) →
-  // tandai semua dibaca + persist + tutup dropdown + buka halaman notif penuh.
-  if (t.closest("#notifDropdown .ndd-item")) {
+  // Klik ITEM notif di dropdown (req user 2026-06-13/14) → tandai HANYA item itu
+  // dibaca + persist + perbarui dot/daftar + tutup dropdown + arahkan ke konten
+  // (video/profil) sesuai jenis; fallback ke halaman notif penuh.
+  const _nddItem = t.closest("#notifDropdown .ndd-item");
+  if (_nddItem) {
     e.preventDefault();
-    if (Array.isArray(state?.notifications)) {
-      state.notifications.forEach(n => { n.unread = false; });
+    const nid = _nddItem.dataset.notifId;
+    const n = (Array.isArray(state?.notifications))
+      ? state.notifications.find(x => String(x.id) === String(nid)) : null;
+    if (n && n.unread) {
+      n.unread = false;
       try { saveState(); } catch {}
-      try { renderNotifications?.(); } catch {}
     }
+    try { renderNotifications?.(); } catch {}   // perbarui dot bell + daftar penuh
     closeNotifDropdown();
-    if (typeof switchView === "function") switchView("notifications");
+    if (n && typeof handleNotificationClick === "function") {
+      handleNotificationClick(n);
+    } else if (typeof switchView === "function") {
+      switchView("notifications");
+    }
     return;
   }
   // Outside click closes dropdown
@@ -53052,6 +53061,8 @@ function renderNotifDropdownContent() {
     try {
       const list = (typeof getNotifList === "function") ? getNotifList().slice(0, 5) : [];
       list.forEach(n => items.push({
+        id: n.id || "",
+        unread: !!n.unread,
         icon: n.icon || NI_BELL,
         text: n.text || n.title || "Notification",
         time: n.time || ""
@@ -53071,12 +53082,13 @@ function renderNotifDropdownContent() {
   // Item dropdown dirombak (req user 2026-06-13): ikon dalam kotak bulat +
   // konten (teks 2-baris + waktu DI BAWAH, bukan dempet di samping).
   body.innerHTML = items.map(it => `
-    <div class="ndd-item">
+    <div class="ndd-item${it.unread ? " unread" : ""}"${it.id ? ` data-notif-id="${it.id}"` : ""}>
       <span class="ndd-icon">${it.icon}</span>
       <div class="ndd-main">
         <p class="ndd-text">${it.text}</p>
         ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
       </div>
+      ${it.unread ? `<span class="ndd-unread-dot" aria-label="Belum dibaca"></span>` : ""}
     </div>
   `).join("");
 }
@@ -53159,6 +53171,10 @@ function getNotifList() {
       const icon = cat.querySelector(".notif-cat-icon")?.innerHTML?.trim() || "";
       cat.querySelectorAll(".notif-item").forEach(it => {
         out.push({
+          // id + unread dibawa supaya dropdown bisa bedakan sudah/belum dibaca
+          // dan klik bisa menandai HANYA item itu (req user 2026-06-14).
+          id: it.dataset.notifId || "",
+          unread: it.classList.contains("unread"),
           icon: icon,
           text: (it.querySelector(".info p")?.textContent || it.textContent || "").trim().slice(0, 80),
           time: (it.querySelector(".time")?.textContent || "").trim()
