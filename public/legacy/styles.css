@@ -72200,7 +72200,13 @@ section.view[data-view="settings"] .user-audit-card .audit-row {
   gap: 12px;
 }
 section.view[data-view="settings"] .user-audit-card .audit-details { margin-bottom: 2px; }
-section.view[data-view="settings"] #userAuditList { gap: 7px; }
+/* Hilangkan scroll dalam + max-height (480px) yg memotong entri terakhir
+   (req user 2026-06-13: "kepotong"). Daftar tampil utuh, halaman yang scroll. */
+section.view[data-view="settings"] #userAuditList {
+  gap: 7px;
+  max-height: none;
+  overflow: visible;
+}
 
 /* Chip filter aktif "Semua": dari teks wine redup (kontras rendah) → isian
    SOLID wine + teks putih, active state jelas & konsisten tema. req user
