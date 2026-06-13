@@ -72027,10 +72027,21 @@ textarea#upDesc.upf-desc-textarea {
 /* Isi kartu Settings dibuat flex-column supaya body bisa mengisi tinggi kartu
    saat di-stretch (tak ada ruang kosong canggung di bawah). */
 .set-tab-panel > .card { display: flex; flex-direction: column; }
+/* Kartu pendek (mis. 2FA, Ganti Password) yang ikut di-stretch: buat area isi
+   mengisi tinggi & tombol aksi utama menempel ke BAWAH (gaya footer) — ruang
+   kosong jadi di tengah, bukan menggumpal di bawah, jadi terlihat rapi. */
+.set-tab-panel > .card > form.upload-form,
+.set-tab-panel > .card > #twofaSettings { flex: 1; display: flex; flex-direction: column; }
+.set-tab-panel > .card > form.upload-form > .btn,
+.set-tab-panel > .card > #twofaSettings > #twofaActivate,
+.set-tab-panel > .card > #twofaSettings > .twofa-actions { margin-top: auto; }
 .set-tab-panel[hidden] { display: none !important; }
 
-/* Kartu "Akun Saya" di Pengaturan (req user 2026-06-12) — edit nama/bio/foto. */
-.set-acct { display: flex; flex-direction: column; gap: 13px; }
+/* Kartu "Akun Saya" di Pengaturan (req user 2026-06-12) — edit nama/bio/foto.
+   Full-width biar sebaris dgn kartu Ekspor/Hapus (konsisten, tak lopsided);
+   isi form dibatasi lebar nyaman supaya field tak melebar terlalu jauh. */
+.set-account-card { grid-column: 1 / -1; }
+.set-acct { display: flex; flex-direction: column; gap: 13px; max-width: 600px; }
 .set-acct-avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 2px; }
 .set-acct-avatar { width: 64px; height: 64px; min-width: 64px; border-radius: 50%; flex-shrink: 0; font-size: 22px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
 .set-acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
