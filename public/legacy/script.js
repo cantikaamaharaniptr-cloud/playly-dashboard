@@ -48971,6 +48971,19 @@ document.addEventListener("click", (e) => {
     closeNotifDropdown();
     return;
   }
+  // Klik ITEM notif (req user 2026-06-13: tiap kolom notif harus berfungsi) →
+  // tandai semua dibaca + persist + tutup dropdown + buka halaman notif penuh.
+  if (t.closest("#notifDropdown .ndd-item")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications.forEach(n => { n.unread = false; });
+      try { saveState(); } catch {}
+      try { renderNotifications?.(); } catch {}
+    }
+    closeNotifDropdown();
+    if (typeof switchView === "function") switchView("notifications");
+    return;
+  }
   // Outside click closes dropdown
   if (!t.closest("#notifDropdown") && !t.closest("#openNotif")) {
     const dd = document.getElementById("notifDropdown");
