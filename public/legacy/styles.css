@@ -70727,6 +70727,13 @@ body[data-theme="light"]:not([data-role="admin"]) .stat-icon svg {
   vertical-align: -10px;
 }
 .sec-icon-v582.sec-icon-lg svg { width: 22px; height: 22px; }
+/* Ikon header kartu di Pengaturan dibesarkan (req user 2026-06-13) — badge
+   tetap 40px, SVG-nya yang diperbesar biar tidak terlihat kekecilan. Di-scope
+   ke view settings supaya halaman lain tidak ikut berubah. */
+section.view[data-view="settings"] .sec-icon-v582.sec-icon-lg svg {
+  width: 26px;
+  height: 26px;
+}
 .sec-icon-v582.sec-icon-sm {
   width: 26px;
   height: 26px;
