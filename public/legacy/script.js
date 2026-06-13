@@ -4879,6 +4879,16 @@ function _enhanceSelect(sel) {
     panel.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
     wrap.classList.add("open");
+    // Posisi pintar biar TIDAK kepotong: pilih arah (atas/bawah) yg ruangnya
+    // lebih besar, lalu batasi tinggi panel ke ruang itu (sisanya scroll di
+    // dalam panel). Dijamin tak pernah melewati tepi viewport.
+    var tr = trigger.getBoundingClientRect();
+    var below = window.innerHeight - tr.bottom - 14;
+    var above = tr.top - 14;
+    var useAbove = above > below;
+    panel.style.maxHeight = Math.max(140, Math.min(320, useAbove ? above : below)) + "px";
+    if (useAbove) { panel.style.top = "auto"; panel.style.bottom = "calc(100% + 6px)"; }
+    else { panel.style.top = "calc(100% + 6px)"; panel.style.bottom = "auto"; }
     var s = panel.querySelector(".cdrop-opt.sel");
     if (s) s.scrollIntoView({ block: "nearest" });
   }
