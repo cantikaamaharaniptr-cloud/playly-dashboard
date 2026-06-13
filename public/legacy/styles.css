@@ -40779,12 +40779,11 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .export-data-head small {
   display: block;
-  /* Dempetkan ke judul (req user 2026-06-13): h3 ber-ikon 32px bikin jarak ~14px.
-     Indent 42px (lebar ikon+gap) agar deskripsi sejajar di bawah TEKS judul +
-     tarik naik → ikon membentang 2 baris, judul & desc rapat. !important utk
-     mengalahkan rule global h3:has(.sec-icon)+small. */
+  /* Dempetkan ke judul (req user 2026-06-13): jarak asal ~15px karena h3
+     ber-ikon 32px. Deskripsi SUDAH ter-indent sejajar judul via rule global
+     (padding-left), jadi cukup TARIK NAIK saja. !important utk mengalahkan
+     rule h3:has(.sec-icon)+small yg set margin-top:4px. */
   margin-top: -6px !important;
-  margin-left: 42px;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -40843,9 +40842,9 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .danger-zone-head small {
   display: block;
-  /* Dempetkan ke judul (req user 2026-06-13) — sama spt Ekspor. */
+  /* Dempetkan ke judul (req user 2026-06-13) — sama spt Ekspor (tarik naik saja,
+     indent sudah dari rule global). */
   margin-top: -6px !important;
-  margin-left: 42px;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
