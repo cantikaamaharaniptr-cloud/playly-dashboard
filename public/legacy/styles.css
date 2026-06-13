@@ -72163,6 +72163,10 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
    2026-06-13). Gap visual besar krn h3 setinggi ikon (32px) + margin. */
 section.view[data-view="settings"] .user-audit-card h3 { margin-bottom: 0; }
 section.view[data-view="settings"] .user-audit-card h3 + small {
+  /* <small> default INLINE → margin vertikal diabaikan. Jadikan block dulu. */
+  display: block;
   padding-left: 42px;
-  margin-top: 1px;
+  /* Ikon 32px memanjang ~11px di bawah teks judul (di dalam h3) → ada ruang
+     kosong. Tarik deskripsi NAIK dgn margin negatif biar benar-benar rapat. */
+  margin-top: -8px;
 }
