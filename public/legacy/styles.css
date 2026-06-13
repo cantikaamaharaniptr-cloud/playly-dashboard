@@ -40779,7 +40779,12 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .export-data-head small {
   display: block;
-  margin-top: 4px;
+  /* Dempetkan ke judul (req user 2026-06-13): h3 ber-ikon 32px bikin jarak ~14px.
+     Indent 42px (lebar ikon+gap) agar deskripsi sejajar di bawah TEKS judul +
+     tarik naik → ikon membentang 2 baris, judul & desc rapat. !important utk
+     mengalahkan rule global h3:has(.sec-icon)+small. */
+  margin-top: -6px !important;
+  margin-left: 42px;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -40838,7 +40843,9 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .danger-zone-head small {
   display: block;
-  margin-top: 4px;
+  /* Dempetkan ke judul (req user 2026-06-13) — sama spt Ekspor. */
+  margin-top: -6px !important;
+  margin-left: 42px;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -72041,7 +72048,8 @@ textarea#upDesc.upf-desc-textarea {
    (req user 2026-06-13: editor profil sudah ada di Profil, jangan digandakan).
    Full-width, layout horizontal: avatar + info kiri, tombol "Edit profil" kanan. */
 .set-account-card { grid-column: 1 / -1; }
-.set-acct-summary { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+/* Garis pembatas antara header "Akun Saya" & konten (req user 2026-06-13). */
+.set-acct-summary { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-top: 13px; padding-top: 15px; border-top: 1px solid var(--border); }
 .set-acct-avatar { width: 56px; height: 56px; min-width: 56px; border-radius: 50%; flex-shrink: 0; font-size: 20px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
 .set-acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .set-acct-summary-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
