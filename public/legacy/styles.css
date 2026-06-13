@@ -6756,8 +6756,9 @@ body[data-role="admin"] .audit-filter-btn.active {
   transition: all .15s;
 }
 .session-row.session-current {
-  background: linear-gradient(135deg, rgba(220, 169, 109, .08), rgba(220, 169, 109, .02));
-  border-color: rgba(220, 169, 109, .35);
+  /* Highlight perangkat aktif: CREAM netral (req user 2026-06-13, ganti dari gold). */
+  background: linear-gradient(135deg, rgba(232, 216, 196, .06), rgba(232, 216, 196, .015));
+  border-color: rgba(232, 216, 196, .3);
 }
 body[data-role="admin"] .session-row.session-current {
   background: linear-gradient(135deg, rgba(154, 170, 196, .10), rgba(154, 170, 196, .02));
@@ -6775,7 +6776,7 @@ body[data-role="admin"] .session-row.session-current {
   flex-shrink: 0;
 }
 .session-row.session-current .session-icon {
-  background: rgba(220, 169, 109, .14);
+  background: rgba(232, 216, 196, .12);
 }
 body[data-role="admin"] .session-row.session-current .session-icon {
   background: rgba(154, 170, 196, .14);
@@ -6799,9 +6800,10 @@ body[data-role="admin"] .session-row.session-current .session-icon {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(220, 169, 109, .14);
-  border: 1px solid rgba(220, 169, 109, .42);
-  color: var(--gold, #DCA96D);
+  /* Badge "Perangkat ini": CREAM netral (req user 2026-06-13, ganti dari gold). */
+  background: rgba(232, 216, 196, .12);
+  border: 1px solid rgba(232, 216, 196, .32);
+  color: #e8d8c4;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .04em;
