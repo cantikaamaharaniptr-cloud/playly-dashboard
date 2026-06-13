@@ -72364,15 +72364,19 @@ section.view[data-view="settings"] textarea::placeholder {
   opacity: 1;
 }
 
-/* Fokus ring input/select/textarea di Pengaturan: PAKSA cream LEMBUT (req user
-   berulang: jangan gold/menyolok di setiap kolom). Ada rule lain yg bikin ring
-   cream 3px penuh (terlihat seperti gold di latar wine) → override scoped +
-   !important. */
+/* req user 2026-06-13: TIDAK mau ada fokus ring APAPUN di kolom (input/select/
+   textarea/dropdown) → hilangkan outline & box-shadow ring saat fokus. Border
+   statis kolom tetap. (Tombol/link tetap punya ring cream utk a11y.) */
+section.view[data-view="settings"] input:focus,
 section.view[data-view="settings"] input:focus-visible,
+section.view[data-view="settings"] select:focus,
 section.view[data-view="settings"] select:focus-visible,
-section.view[data-view="settings"] textarea:focus-visible {
-  outline: 2px solid rgba(232, 216, 196, .45) !important;
-  outline-offset: 2px !important;
+section.view[data-view="settings"] textarea:focus,
+section.view[data-view="settings"] textarea:focus-visible,
+section.view[data-view="settings"] .cdrop-trigger:focus,
+section.view[data-view="settings"] .cdrop-trigger:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 section.view[data-view="settings"] .sessions-card .session-row {
