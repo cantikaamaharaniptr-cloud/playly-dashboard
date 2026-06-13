@@ -4799,7 +4799,12 @@ function _setupDataSaverCard(panel) {
     '<option value="480"' + (qual === "480" ? " selected" : "") + ">480p (hemat)</option>" +
     '<option value="360"' + (qual === "360" ? " selected" : "") + ">360p (paling hemat)</option>" +
     "</select></label></div>";
-  panel.appendChild(card);
+  // Sisipkan SEBELUM kartu Bahasa & Region biar urutan: Konten · Hemat Data ·
+  // Bahasa & Region (req user 2026-06-13: Bahasa/region paling akhir, kartu
+  // sejenis Konten+Hemat Data berdekatan). Fallback: append di akhir.
+  var langCard = panel.querySelector(".lang-region-card");
+  if (langCard) panel.insertBefore(card, langCard);
+  else panel.appendChild(card);
   DATASAVER_TOGGLES.forEach(function (t) {
     _bindSettingToggle(card.querySelector('input[data-pref="' + t.pref + '"]'));
   });
