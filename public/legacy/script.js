@@ -53028,7 +53028,13 @@ function renderNotifDropdownContent() {
     } catch {}
   }
   if (!items.length) {
-    body.innerHTML = `<div class="ndd-empty">Belum ada notifikasi baru.</div>`;
+    // Empty state lebih ramah (req user 2026-06-13): ikon + judul + 1 baris
+    // konteks, biar tidak terasa polos/seperti bug. Tetap kompak utk dropdown.
+    body.innerHTML = `<div class="ndd-empty">
+      <span class="ndd-empty-ico">${NI_BELL}</span>
+      <p class="ndd-empty-title" data-no-i18n>Belum ada notifikasi</p>
+      <p class="ndd-empty-sub" data-no-i18n>Suka, komentar, & pengikut baru bakal muncul di sini.</p>
+    </div>`;
     return;
   }
   body.innerHTML = items.map(it => `
