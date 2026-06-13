@@ -72132,28 +72132,28 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
   flex-shrink: 0;
   color: var(--primary);
 }
-/* Opsi 1 (ikon berbeda per baris) di dalam callout (req user 2026-06-13): tiap
-   poin punya ikon relevan sendiri (lapisan / kunci / putar-ulang). */
-.twofa-blist {
+.twofa-callout ul {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
-.twofa-blist li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+.twofa-callout li {
+  position: relative;
+  padding-left: 16px;
   font-size: 12px;
   line-height: 1.45;
   color: var(--muted);
 }
-.twofa-blist li svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: var(--primary);
+.twofa-callout li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
 }
