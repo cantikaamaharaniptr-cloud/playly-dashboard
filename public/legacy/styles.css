@@ -70731,8 +70731,8 @@ body[data-theme="light"]:not([data-role="admin"]) .stat-icon svg {
    tetap 40px, SVG-nya yang diperbesar biar tidak terlihat kekecilan. Di-scope
    ke view settings supaya halaman lain tidak ikut berubah. */
 section.view[data-view="settings"] .sec-icon-v582.sec-icon-lg svg {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
 }
 .sec-icon-v582.sec-icon-sm {
   width: 26px;
