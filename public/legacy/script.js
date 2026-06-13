@@ -4680,11 +4680,12 @@ function _setupSecurityHints() {
     var ul = document.createElement("ul");
     ul.id = "twofaBenefits";
     ul.className = "twofa-benefits";
+    var CHECK_SVG = '<svg class="twofa-bul" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
     ["Lapisan kedua selain password",
      "PIN 6-digit diminta saat login",
      "Dipakai juga saat reset & ganti password"].forEach(function (txt) {
       var li = document.createElement("li");
-      li.textContent = txt;
+      li.innerHTML = CHECK_SVG + "<span>" + txt + "</span>";
       ul.appendChild(li);
     });
     if (statusRow && statusRow.nextSibling) ts.insertBefore(ul, statusRow.nextSibling);
