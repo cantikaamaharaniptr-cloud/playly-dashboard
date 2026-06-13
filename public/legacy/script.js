@@ -4659,6 +4659,39 @@ function _setupSettingsToggleDesc() {
   });
 }
 
+// Petunjuk di tab Keamanan (req user 2026-06-13). Idempotent.
+//  1. Hint di bawah tombol "Ganti Password": kasih tahu PIN 2FA diminta kalau
+//     2FA aktif (perilaku opsi a). Statis → akurat di segala kondisi.
+//  2. Isi ruang kosong kartu 2FA (saat 2FA mati, konten sedikit) dengan daftar
+//     manfaat singkat — tombol tetap di bawah (sejajar tombol password) tapi
+//     void hilang. Faktual, sekalian jelaskan kaitannya ke reset/ganti password.
+function _setupSecurityHints() {
+  var form = document.getElementById("changePasswordForm");
+  if (form && !document.getElementById("changePwHint")) {
+    var hint = document.createElement("p");
+    hint.id = "changePwHint";
+    hint.className = "set-field-hint";
+    hint.textContent = "🔒 PIN 2FA akan diminta saat ganti password jika 2FA aktif.";
+    form.appendChild(hint);
+  }
+  var ts = document.getElementById("twofaSettings");
+  if (ts && !document.getElementById("twofaBenefits")) {
+    var statusRow = ts.querySelector(".twofa-status-row");
+    var ul = document.createElement("ul");
+    ul.id = "twofaBenefits";
+    ul.className = "twofa-benefits";
+    ["Lapisan kedua selain password",
+     "PIN 6-digit diminta saat login",
+     "Dipakai juga saat reset & ganti password"].forEach(function (txt) {
+      var li = document.createElement("li");
+      li.textContent = txt;
+      ul.appendChild(li);
+    });
+    if (statusRow && statusRow.nextSibling) ts.insertBefore(ul, statusRow.nextSibling);
+    else ts.appendChild(ul);
+  }
+}
+
 function populateSettingsPrefs() {
   $$("[data-pref]").forEach(el => {
     const key = el.dataset.pref;
@@ -31684,6 +31717,7 @@ function switchView(name, { fromNav = false } = {}) {
       // yg TAK ada di peta i18n supaya translator skip & placeholder tetap "HAPUS".
       var delPh = document.getElementById("deleteAccConfirm");
       if (delPh) { delPh.placeholder = "HAPUS"; delPh.dataset.origPh = "delete-confirm-literal"; }
+      if (typeof _setupSecurityHints === "function") _setupSecurityHints();
     }, 20);
     if (user?.role === "admin") {
       populatePlatformSettings();
