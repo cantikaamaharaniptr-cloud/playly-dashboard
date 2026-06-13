@@ -72107,26 +72107,53 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
   line-height: 1.45;
   color: var(--muted);
 }
-.twofa-benefits {
+/* Kotak callout "Kenapa aktifkan 2FA?" (req user 2026-06-13) — info-box ber-aksen
+   tepi kiri, isi poin-poin. Mengisi ruang kosong kartu 2FA secara menonjol. */
+.twofa-callout {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .025);
+}
+.twofa-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 11px;
+}
+.twofa-callout-head svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.twofa-callout ul {
   list-style: none;
-  margin: 16px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 8px;
 }
-.twofa-benefits li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 12.5px;
-  line-height: 1.5;
+.twofa-callout li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--muted);
 }
-.twofa-benefits .twofa-bul {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--primary);
+.twofa-callout li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
 }

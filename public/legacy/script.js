@@ -4677,19 +4677,17 @@ function _setupSecurityHints() {
   var ts = document.getElementById("twofaSettings");
   if (ts && !document.getElementById("twofaBenefits")) {
     var statusRow = ts.querySelector(".twofa-status-row");
-    var ul = document.createElement("ul");
-    ul.id = "twofaBenefits";
-    ul.className = "twofa-benefits";
-    var CHECK_SVG = '<svg class="twofa-bul" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
-    ["Lapisan kedua selain password",
-     "PIN 6-digit diminta saat login",
-     "Dipakai juga saat reset & ganti password"].forEach(function (txt) {
-      var li = document.createElement("li");
-      li.innerHTML = CHECK_SVG + "<span>" + txt + "</span>";
-      ul.appendChild(li);
-    });
-    if (statusRow && statusRow.nextSibling) ts.insertBefore(ul, statusRow.nextSibling);
-    else ts.appendChild(ul);
+    var box = document.createElement("div");
+    box.id = "twofaBenefits";
+    box.className = "twofa-callout";
+    var SHIELD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>';
+    var items = ["Lapisan kedua selain password",
+                 "PIN 6-digit diminta saat login",
+                 "Dipakai juga saat reset & ganti password"];
+    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><ul>' +
+      items.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    if (statusRow && statusRow.nextSibling) ts.insertBefore(box, statusRow.nextSibling);
+    else ts.appendChild(box);
   }
 }
 
