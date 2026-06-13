@@ -48823,17 +48823,54 @@ function renderNotifications() {
   });
 }
 
-// Routing: like/comment/video-share → buka player; follow → buka profil pengirim;
-// fallback → buka profil pengirim kalau ada, kalau tidak biarkan saja.
+// Routing notif → HALAMAN FITUR terkait (req user 2026-06-14: tiap notif harus
+// terhubung langsung ke halaman-nya, jangan dead-end). Urutan: video → player;
+// jenis-spesifik (pesan/premium/video) → view-nya; sosial → profil pengirim
+// (kecuali pengirim admin yg tak punya profil publik → ke Pesan); fallback → notif.
+const NOTIF_VIEW_BY_TYPE = {
+  // Pesan / siaran / email dari admin → halaman Pesan
+  "broadcast":         "messages",
+  "admin-broadcast":   "messages",
+  "email-reply":       "messages",
+  "admin-email":       "messages",
+  "message":           "messages",
+  "system":            "messages",
+  // Status premium → Pengaturan (kartu premium)
+  "premium-approved":  "settings",
+  "premium-rejected":  "settings",
+  "premium-code-sent": "settings",
+  // Video milik sendiri (review/takedown/unggah) → halaman Video Saya
+  "video-pending":     "videos",
+  "video-takedown":    "videos",
+  "upload":            "videos",
+};
 function handleNotificationClick(n) {
+  if (!n) return;
   const closePanel = () => $("#notifPanel")?.classList.remove("open");
+  // 1) Terkait video tertentu → buka player video itu.
   if (n.videoId) { closePanel(); openPlayer(+n.videoId); return; }
+  // 2) Jenis dgn halaman fitur khusus → langsung ke view-nya.
+  const targetView = NOTIF_VIEW_BY_TYPE[n.type];
+  if (targetView) { closePanel(); switchView(targetView); return; }
+  // 3) Notif sosial (follow/like/comment) → profil pengirim. Tapi kalau
+  //    pengirimnya admin (tak punya profil publik) → arahkan ke Pesan, bukan
+  //    dead-end "Admin tidak punya profil publik".
   const sender = n.fromUsername || extractSenderFromText(n.text);
-  if (n.type === "follow") {
-    if (sender) { closePanel(); openUserProfile(sender); }
+  if (sender) {
+    let senderIsAdmin = false;
+    try {
+      const acc = (typeof findAccountByUsername === "function") ? findAccountByUsername(sender) : null;
+      senderIsAdmin = acc?.role === "admin"
+        || (acc?.email && typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(acc.email));
+    } catch {}
+    closePanel();
+    if (senderIsAdmin) { switchView("messages"); return; }
+    openUserProfile(sender);
     return;
   }
-  if (sender) { closePanel(); openUserProfile(sender); }
+  // 4) Fallback: tak ada target spesifik → halaman notifikasi penuh.
+  closePanel();
+  switchView("notifications");
 }
 
 // Backward-compat: notif lama belum punya fromUsername, ambil dari teks.
@@ -48977,6 +49014,14 @@ document.addEventListener("click", (e) => {
   const _nddItem = t.closest("#notifDropdown .ndd-item");
   if (_nddItem) {
     e.preventDefault();
+    // Item admin/alert dgn target halaman fitur (data-jump) → navigate ke sana
+    // (req user 2026-06-14: tiap notif terhubung ke halaman fiturnya).
+    const _jump = _nddItem.dataset.jump;
+    if (_jump) {
+      closeNotifDropdown();
+      if (typeof switchView === "function") switchView(_jump);
+      return;
+    }
     const nid = _nddItem.dataset.notifId;
     const n = (Array.isArray(state?.notifications))
       ? state.notifications.find(x => String(x.id) === String(nid)) : null;
@@ -53045,7 +53090,8 @@ function renderNotifDropdownContent() {
       alerts.forEach(a => items.push({
         icon: a.icon || "⚠️",
         text: a.text || a.title || "Alert",
-        time: a.time || ""
+        time: a.time || "",
+        jump: a.jump || ""
       }));
     } catch {}
     try {
@@ -53053,7 +53099,8 @@ function renderNotifDropdownContent() {
       feed.forEach(f => items.push({
         icon: f.icon || "🔥",
         text: f.text || f.title || "Activity",
-        time: f.time || ""
+        time: f.time || "",
+        jump: f.jump || ""
       }));
     } catch {}
   } else {
@@ -53082,7 +53129,7 @@ function renderNotifDropdownContent() {
   // Item dropdown dirombak (req user 2026-06-13): ikon dalam kotak bulat +
   // konten (teks 2-baris + waktu DI BAWAH, bukan dempet di samping).
   body.innerHTML = items.map(it => `
-    <div class="ndd-item${it.unread ? " unread" : ""}"${it.id ? ` data-notif-id="${it.id}"` : ""}>
+    <div class="ndd-item${it.unread ? " unread" : ""}"${it.id ? ` data-notif-id="${it.id}"` : ""}${it.jump ? ` data-jump="${it.jump}"` : ""}>
       <span class="ndd-icon">${it.icon}</span>
       <div class="ndd-main">
         <p class="ndd-text">${it.text}</p>
@@ -53143,7 +53190,10 @@ function getAdminAlerts() {
     return Array.from(ul.querySelectorAll("li")).map(li => ({
       icon: li.querySelector(".na-icon")?.textContent || "⚠️",
       text: li.querySelector(".na-text")?.textContent || li.textContent.trim(),
-      time: li.querySelector(".na-time")?.textContent || ""
+      time: li.querySelector(".na-time")?.textContent || "",
+      // target halaman fitur (admin-videos/admin-inbox/dll) supaya item dropdown
+      // admin bisa di-navigate (req user 2026-06-14).
+      jump: li.dataset.jump || ""
     }));
   } catch { return []; }
 }
@@ -53154,7 +53204,8 @@ function getAdminLiveFeed() {
     return Array.from(ul.querySelectorAll("li")).slice(0, 3).map(li => ({
       icon: li.querySelector(".af-icon")?.textContent || "🔥",
       text: li.querySelector(".af-text")?.textContent || li.textContent.trim(),
-      time: li.querySelector(".af-time")?.textContent || ""
+      time: li.querySelector(".af-time")?.textContent || "",
+      jump: li.dataset.jump || ""
     }));
   } catch { return []; }
 }
