@@ -72056,6 +72056,19 @@ textarea#upDesc.upf-desc-textarea {
 .set-acct-handle { font-size: 13px; color: var(--text-2, var(--muted)); }
 .set-acct-email { font-size: 12.5px; color: var(--muted); }
 .set-acct-edit { margin-left: auto; flex-shrink: 0; align-self: center; }
+/* Tombol aksi .btn.primary di Settings dibuat SOLID wine + teks putih (req user
+   2026-06-13): warnanya pudar/low-kontras karena rule ghost global
+   `body:not([data-role=admin]) .btn.primary { background:transparent!important;
+   color:var(--primary) }`. Specificity dinaikkan + !important utk menang.
+   (Hapus Akun pakai .danger-btn, tak terpengaruh.) */
+body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary:hover {
+  background: var(--primary-hover, #5a212a) !important;
+}
 /* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
    kiri; toggle tetap di kanan. */
 .tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
