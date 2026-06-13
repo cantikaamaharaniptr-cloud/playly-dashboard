@@ -4689,6 +4689,22 @@ function _setupSecurityHints() {
     if (statusRow && statusRow.nextSibling) ts.insertBefore(box, statusRow.nextSibling);
     else ts.appendChild(box);
   }
+
+  // Rapikan kartu Riwayat Aktivitas (req user 2026-06-13):
+  //  (1) chip "Semua" belum punya ikon (chip lain punya) → kasih ikon list biar
+  //      konsisten. (2) deskripsi mulai dgn Inggris "Security transparency" di
+  //      tengah kalimat Indonesia → ganti "Transparansi keamanan". Idempotent.
+  var allChip = document.querySelector('section.view[data-view="settings"] [data-audit-filter="all"]');
+  if (allChip && !allChip.querySelector("svg")) {
+    allChip.insertAdjacentHTML("afterbegin",
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><line x1="4" y1="6" x2="4" y2="6"/><line x1="4" y1="12" x2="4" y2="12"/><line x1="4" y1="18" x2="4" y2="18"/></svg>');
+  }
+  var auditCard = document.querySelector('section.view[data-view="settings"] .user-audit-card');
+  if (auditCard) {
+    var d = Array.prototype.slice.call(auditCard.querySelectorAll("small, p"))
+      .find(function (e) { return /Security transparency/.test(e.textContent); });
+    if (d) d.innerHTML = d.innerHTML.replace("Security transparency", "Transparansi keamanan");
+  }
 }
 
 function populateSettingsPrefs() {
