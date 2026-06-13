@@ -4690,6 +4690,13 @@ function _setupSecurityHints() {
     else ts.appendChild(box);
   }
 
+  // Tab Keamanan: panel jadi 2 kolom supaya Keamanan + 2FA mengisi penuh (tidak
+  // ada kolom kosong di kanan); Riwayat/Sesi tetap full-width (req user 2026-06-13).
+  if (ts) {
+    var kPanel = ts.closest(".set-tab-panel");
+    if (kPanel) kPanel.classList.add("set-panel-keamanan");
+  }
+
   // Rapikan kartu Riwayat Aktivitas (req user 2026-06-13):
   //  (1) chip "Semua" belum punya ikon (chip lain punya) → kasih ikon list biar
   //      konsisten. (2) deskripsi mulai dgn Inggris "Security transparency" di

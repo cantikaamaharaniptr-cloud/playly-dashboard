@@ -72274,6 +72274,14 @@ section.view[data-view="settings"] .session-current-tag {
   .set-tab-panel.set-panel-umum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Tab Keamanan: 2 kolom (Keamanan + 2FA isi penuh, tanpa kolom kosong di kanan);
+   kartu full-width (Riwayat/Sesi, grid-column 1/-1) tetap membentang. req user
+   2026-06-13. Turun 1 kolom di layar sempit. */
+.set-tab-panel.set-panel-keamanan { grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .set-tab-panel.set-panel-keamanan { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* Spacing toggle kartu dinamis (Hemat Data + a11y yg di-merge). */
 .a11y-toggles { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 /* Efek aksesibilitas — class di body, berlaku GLOBAL (bukan dummy):
