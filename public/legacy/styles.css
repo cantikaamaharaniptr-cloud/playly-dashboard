@@ -72193,6 +72193,15 @@ section.view[data-view="settings"] .user-audit-card .audit-icon {
   border-radius: 9px;
 }
 
+/* #1 (req user 2026-06-13): padatkan entri audit — padding & gap dikurangi,
+   jarak baris dalam dirapatkan. Tinggi entri ~83px → ~66px. */
+section.view[data-view="settings"] .user-audit-card .audit-row {
+  padding: 9px 14px;
+  gap: 12px;
+}
+section.view[data-view="settings"] .user-audit-card .audit-details { margin-bottom: 2px; }
+section.view[data-view="settings"] #userAuditList { gap: 7px; }
+
 /* Chip filter aktif "Semua": dari teks wine redup (kontras rendah) → isian
    SOLID wine + teks putih, active state jelas & konsisten tema. req user
    2026-06-13. (Non-admin; rule admin slate-blue tak terpengaruh.) */

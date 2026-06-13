@@ -48655,7 +48655,6 @@ function renderUserAuditLog() {
         <div class="audit-info">
           <div class="audit-action-row">
             <strong>${escapeHtml(ev.action || "Aktivitas")}</strong>
-            <span class="audit-type-pill" style="background:${meta.color}22;color:${meta.color}">${escapeHtml(meta.label)}</span>
           </div>
           ${ev.details ? `<p class="audit-details">${escapeHtml(ev.details)}</p>` : ""}
           <small class="audit-meta">
