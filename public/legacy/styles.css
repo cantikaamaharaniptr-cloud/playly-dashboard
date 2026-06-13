@@ -24278,6 +24278,18 @@ body[data-role="admin"] .admin-kpi-icon.revenue {
   font-size: 14px;
 }
 .admin-feed li .feed-time { margin-left: auto; font-size: 11px; color: var(--muted); }
+/* Badge jumlah aktivitas identik beruntun (req user 2026-06-13: feed teratur). */
+.admin-feed li .feed-text .feed-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(232, 216, 196, .14);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+}
 .admin-feed li.new-event {
   animation: feedSlideIn .55s var(--ease) both;
   background: rgba(173, 181, 189, .14);

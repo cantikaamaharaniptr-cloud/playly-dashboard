@@ -26431,8 +26431,8 @@ function renderUserNotifAlerts() {
 function renderUserLiveFeed() {
   const list = document.getElementById("userLiveFeed");
   if (!list) return;
-  const acts = Array.isArray(state?.activities) ? state.activities.slice(0, 10) : [];
-  if (!acts.length) {
+  const raw = Array.isArray(state?.activities) ? state.activities.slice(0, 40) : [];
+  if (!raw.length) {
     list.innerHTML = `<li class="feed-empty">
       <span class="feed-empty-icon">📭</span>
       <div>
@@ -26442,10 +26442,24 @@ function renderUserLiveFeed() {
     </li>`;
     return;
   }
-  list.innerHTML = acts.map(a => `<li>
-    <span class="feed-ico">${a.icon || "🔔"}</span>
-    <span class="feed-text">${a.text || ""}</span>
-    <span class="feed-time">${a.ts ? relTime(a.ts) : (a.time || "")}</span>
+  // Gabungkan aktivitas IDENTIK BERUNTUN jadi 1 baris + badge ×N — biar feed
+  // teratur, tidak acak/berulang (req user 2026-06-13). Mis. "Kamu mengunggah
+  // Unduhan" ×6 → satu baris dgn ×6.
+  const groups = [];
+  raw.forEach(a => {
+    const key = (a.text || "") + "|" + (a.icon || "");
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.count++;
+      last.lastTs = Math.max(last.lastTs || 0, a.ts || 0);
+    } else {
+      groups.push({ key, icon: a.icon, text: a.text, lastTs: a.ts || 0, time: a.time, count: 1 });
+    }
+  });
+  list.innerHTML = groups.slice(0, 10).map(g => `<li>
+    <span class="feed-ico">${g.icon || "🔔"}</span>
+    <span class="feed-text">${g.text || ""}${g.count > 1 ? ` <span class="feed-count">×${g.count}</span>` : ""}</span>
+    <span class="feed-time">${g.lastTs ? relTime(g.lastTs) : (g.time || "")}</span>
   </li>`).join("");
 }
 
