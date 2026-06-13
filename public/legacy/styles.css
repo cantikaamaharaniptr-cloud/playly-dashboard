@@ -72083,6 +72083,17 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
 body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-card .danger-btn:not(:disabled):hover {
   background-color: #b91c1c !important;
 }
+/* Daftar konsekuensi Hapus Akun: rapikan ikon & teks (req user 2026-06-13).
+   Sebelumnya ikon (span.picon-w) nempel ke teks (gap ~1px) & align baseline
+   bikin agak turun. Tetap INLINE — jangan flex/grid pada <li> krn teks punya
+   <b> inline yg bakal pecah jadi flex-item. Cukup atur jarak + center ikon. */
+.danger-zone-card ul li { line-height: 1.55; }
+.danger-zone-card li .picon-w {
+  vertical-align: middle;
+  margin-right: 11px;
+  flex-shrink: 0;
+}
+.danger-zone-card li .picon-w svg { width: 17px; height: 17px; }
 /* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
    kiri; toggle tetap di kanan. */
 .tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
