@@ -2932,6 +2932,10 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border: 2px solid var(--bg);
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
+/* Titik notif di bell DEFAULT tersembunyi; ditampilkan via JS (renderNotifications)
+   HANYA kalau ada notif belum dibaca — cegah titik dummy statis kedip saat load
+   (req user 2026-06-13). */
+#openNotif .dot-indicator { display: none; }
 
 .mobile-only { display: none; }
 

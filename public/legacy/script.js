@@ -48684,6 +48684,16 @@ const NOTIF_CATEGORY_MAP = {
 const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
 
 function renderNotifications() {
+  // Titik notif di bell: tampil HANYA kalau ADA notif belum dibaca — bukan
+  // dummy statis selalu-pulse yg menyesatkan (req user 2026-06-13). Dijalankan
+  // sebelum guard #notifList karena bell ada di semua view.
+  var _dot = document.querySelector("#openNotif .dot-indicator");
+  if (_dot) {
+    var _unread = (typeof state !== "undefined" && state && Array.isArray(state.notifications))
+      ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
+    _dot.style.display = _unread > 0 ? "block" : "none";
+  }
+
   const list = $("#notifList");
   if (!list) return;
   if (!state.notifications.length) {
