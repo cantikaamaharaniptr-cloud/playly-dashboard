@@ -72157,3 +72157,12 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
   border-radius: 50%;
   background: var(--primary);
 }
+
+/* Header kartu Riwayat Aktivitas: deskripsi sejajar TEKS judul (di kanan ikon,
+   42px = ikon 32 + gap 10) + RAPATKAN jarak judul->deskripsi (req user
+   2026-06-13). Gap visual besar krn h3 setinggi ikon (32px) + margin. */
+section.view[data-view="settings"] .user-audit-card h3 { margin-bottom: 0; }
+section.view[data-view="settings"] .user-audit-card h3 + small {
+  padding-left: 42px;
+  margin-top: 1px;
+}
