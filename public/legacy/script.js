@@ -4668,6 +4668,8 @@ function _setupSettingsToggleDesc() {
     "privacy.publicProfile": "Siapa pun bisa melihat profil & video publikmu.",
     "privacy.showHistory":   "Izinkan orang lain melihat riwayat tontonmu.",
     "privacy.allowDM":       "Kalau dimatikan, hanya yang kamu ikuti yang bisa kirim DM.",
+    "content.adult":         "Tampilkan video bertanda 18+ di feed Jelajah.",
+    "content.hideWatched":   "Video yang sudah kamu tonton tak muncul lagi di feed.",
   };
   var togs = document.querySelectorAll('section.view[data-view="settings"] label.tog');
   Array.prototype.slice.call(togs).forEach(function (tog) {

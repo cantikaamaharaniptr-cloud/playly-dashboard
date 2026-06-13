@@ -72020,8 +72020,13 @@ textarea#upDesc.upf-desc-textarea {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 20px;
-  align-items: start;
+  /* Sejajar (req user 2026-06-13): kartu satu baris tinggi SAMA (atas & bawah
+     rata), tak lagi ragged. Default grid stretch. */
+  align-items: stretch;
 }
+/* Isi kartu Settings dibuat flex-column supaya body bisa mengisi tinggi kartu
+   saat di-stretch (tak ada ruang kosong canggung di bawah). */
+.set-tab-panel > .card { display: flex; flex-direction: column; }
 .set-tab-panel[hidden] { display: none !important; }
 
 /* Kartu "Akun Saya" di Pengaturan (req user 2026-06-12) — edit nama/bio/foto. */
