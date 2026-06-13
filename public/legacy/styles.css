@@ -72191,3 +72191,12 @@ section.view[data-view="settings"] .user-audit-card .audit-icon {
   border-radius: 9px;
 }
 
+/* Chip filter aktif "Semua": dari teks wine redup (kontras rendah) → isian
+   SOLID wine + teks putih, active state jelas & konsisten tema. req user
+   2026-06-13. (Non-admin; rule admin slate-blue tak terpengaruh.) */
+body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
