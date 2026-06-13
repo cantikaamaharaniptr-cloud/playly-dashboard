@@ -72273,8 +72273,8 @@ section.view[data-view="settings"] .session-current-tag {
   .set-tab-panel.set-panel-umum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* Kartu Aksesibilitas (req user 2026-06-13). Spacing toggle samakan kartu lain. */
-.a11y-card .a11y-toggles { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+/* Spacing toggle kartu dinamis (Hemat Data + a11y yg di-merge). */
+.a11y-toggles { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 /* Efek aksesibilitas — class di body, berlaku GLOBAL (bukan dummy):
    1) Kontras tinggi → border/garis lebih tegas (override --border).
    2) Teks lebih tebal → font-weight dasar naik (diwarisi teks dashboard).

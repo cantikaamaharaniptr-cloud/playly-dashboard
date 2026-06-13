@@ -4719,46 +4719,94 @@ function _setupSecurityHints() {
     var umumPanel = langCard.closest(".set-tab-panel");
     if (umumPanel) {
       umumPanel.classList.add("set-panel-umum");
-      _setupAccessibilityCard(umumPanel);
+      _mergeA11yIntoTampilan();      // Opsi C: Aksesibilitas digabung ke Tampilan
+      _setupDataSaverCard(umumPanel); // kartu ke-6 baru: Hemat Data → grid 3+3
     }
   }
 }
 
-// Kartu Aksesibilitas (req user 2026-06-13, pilih Opsi C). Disuntik ke panel
-// "Umum" mengisi slot ke-6 (grid 3+3). FUNGSIONAL (bukan dummy): tiap toggle
-// simpan ke pref + toggle class di body yang dipakai CSS — pola sama dgn
-// display.reducedMotion/compact. Idempotent.
-function _setupAccessibilityCard(panel) {
-  if (!panel || document.getElementById("a11yCard")) return;
-  var TOGGLES = [
-    { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis & border antar elemen biar lebih jelas." },
-    { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca." },
-    { pref: "a11y.underlineLinks", label: "Garis bawahi tautan", desc: "Semua tautan digarisbawahi biar gampang dikenali." }
-  ];
-  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/><path d="M8.5 11h7M12 11v4.5M12 15.5l-2.2 3.2M12 15.5l2.2 3.2"/></svg>';
-  var card = document.createElement("div");
-  card.className = "card a11y-card";
-  card.id = "a11yCard";
-  card.innerHTML =
-    '<h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true">' + ICON + "</span>Aksesibilitas</h3>" +
-    '<div class="a11y-toggles">' +
-    TOGGLES.map(function (t) {
-      return '<label class="tog" data-desc-done="1" data-no-i18n>' +
-        '<span class="tog-text"><span>' + t.label + "</span>" +
-        '<small class="tog-desc">' + t.desc + "</small></span>" +
-        '<input type="checkbox" data-pref="' + t.pref + '" data-bound="1"><i></i></label>';
-    }).join("") +
-    "</div>";
-  panel.appendChild(card);
-  TOGGLES.forEach(function (t) {
-    var input = card.querySelector('input[data-pref="' + t.pref + '"]');
-    if (!input) return;
-    input.checked = !!getPref(t.pref, false);
-    input.addEventListener("change", function () {
-      setPref(t.pref, input.checked);
-      applyPrefSideEffects(t.pref, input.checked);
-    });
+// Opsi C (req user 2026-06-13): Aksesibilitas DIGABUNG ke kartu Tampilan, lalu
+// tambah kartu baru "Hemat Data" → tetap 6 kartu (grid 3+3). Toggle a11y benar2
+// fungsional (class di body + CSS); toggle hemat-data menyimpan pref nyata
+// (data.saver juga set class body). Idempotent.
+var A11Y_TOGGLES = [
+  { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis & border antar elemen biar lebih jelas.", def: false },
+  { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca.", def: false },
+  { pref: "a11y.underlineLinks", label: "Garis bawahi tautan", desc: "Semua tautan digarisbawahi biar gampang dikenali.", def: false }
+];
+var DATASAVER_TOGGLES = [
+  { pref: "data.saver", label: "Mode hemat data", desc: "Kurangi pemakaian data: kualitas & preload ditekan.", def: false },
+  { pref: "data.wifiAutoplay", label: "Auto-play hanya saat WiFi", desc: "Video tak otomatis main saat pakai data seluler.", def: false },
+  { pref: "data.preloadNext", label: "Preload video berikutnya", desc: "Muat awal video selanjutnya biar transisi mulus.", def: true }
+];
+
+function _settingTogHTML(t) {
+  return '<label class="tog" data-desc-done="1" data-no-i18n>' +
+    '<span class="tog-text"><span>' + t.label + "</span>" +
+    '<small class="tog-desc">' + t.desc + "</small></span>" +
+    '<input type="checkbox" data-pref="' + t.pref + '"' + (getPref(t.pref, t.def) ? " checked" : "") + ' data-bound="1"><i></i></label>';
+}
+function _bindSettingToggle(input) {
+  if (!input || input.dataset.boundDyn) return;
+  input.dataset.boundDyn = "1";
+  input.addEventListener("change", function () {
+    setPref(input.dataset.pref, input.checked);
+    applyPrefSideEffects(input.dataset.pref, input.checked);
   });
+}
+
+function _mergeA11yIntoTampilan() {
+  var card = Array.prototype.slice.call(
+    document.querySelectorAll('section.view[data-view="settings"] .card')
+  ).find(function (c) { return c.querySelector('input[data-pref="display.autoplay"]'); });
+  if (!card || card.dataset.a11yMerged) return;
+  card.dataset.a11yMerged = "1";
+  // Judul → "Tampilan & Aksesibilitas" (lepas data-i18n biar tak ke-revert)
+  var h3 = card.querySelector("h3");
+  if (h3) {
+    h3.removeAttribute("data-i18n");
+    h3.setAttribute("data-no-i18n", "");
+    var tn = Array.prototype.slice.call(h3.childNodes).find(function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+    if (tn) tn.textContent = "Tampilan & Aksesibilitas";
+  }
+  var togs = card.querySelectorAll("label.tog");
+  var last = togs[togs.length - 1];
+  var html = A11Y_TOGGLES.map(_settingTogHTML).join("");
+  if (last) last.insertAdjacentHTML("afterend", html);
+  else card.insertAdjacentHTML("beforeend", html);
+  A11Y_TOGGLES.forEach(function (t) {
+    _bindSettingToggle(card.querySelector('input[data-pref="' + t.pref + '"]'));
+  });
+}
+
+function _setupDataSaverCard(panel) {
+  if (!panel || document.getElementById("dataSaverCard")) return;
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>';
+  var qual = getPref("data.cellularQuality", "auto");
+  var card = document.createElement("div");
+  card.className = "card data-saver-card";
+  card.id = "dataSaverCard";
+  card.innerHTML =
+    '<h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true">' + ICON + "</span>Hemat Data</h3>" +
+    '<div class="a11y-toggles">' + DATASAVER_TOGGLES.map(_settingTogHTML).join("") + "</div>" +
+    '<div class="upload-form" style="margin-top:12px"><label data-no-i18n>Kualitas video saat data seluler' +
+    '<select data-pref="data.cellularQuality">' +
+    '<option value="auto"' + (qual === "auto" ? " selected" : "") + ">Auto (mengikuti jaringan)</option>" +
+    '<option value="480"' + (qual === "480" ? " selected" : "") + ">480p (hemat)</option>" +
+    '<option value="360"' + (qual === "360" ? " selected" : "") + ">360p (paling hemat)</option>" +
+    "</select></label></div>";
+  panel.appendChild(card);
+  DATASAVER_TOGGLES.forEach(function (t) {
+    _bindSettingToggle(card.querySelector('input[data-pref="' + t.pref + '"]'));
+  });
+  var sel = card.querySelector('select[data-pref="data.cellularQuality"]');
+  if (sel && !sel.dataset.boundDyn) {
+    sel.dataset.boundDyn = "1";
+    sel.addEventListener("change", function () {
+      setPref("data.cellularQuality", sel.value);
+      applyPrefSideEffects("data.cellularQuality", sel.value);
+    });
+  }
 }
 
 function populateSettingsPrefs() {
@@ -4792,6 +4840,8 @@ function applyVisualPrefsOnInit() {
   document.body.classList.toggle("a11y-contrast", !!getPref("a11y.contrast", false));
   document.body.classList.toggle("a11y-bold-text", !!getPref("a11y.boldText", false));
   document.body.classList.toggle("a11y-underline", !!getPref("a11y.underlineLinks", false));
+  // Hemat Data (req user 2026-06-13)
+  document.body.classList.toggle("data-saver", !!getPref("data.saver", false));
 }
 
 function applyPrefSideEffects(key, val) {
@@ -4821,6 +4871,22 @@ function applyPrefSideEffects(key, val) {
   if (key === "a11y.underlineLinks") {
     document.body.classList.toggle("a11y-underline", !!val);
     toast(val ? "✓ Tautan digarisbawahi" : "✓ Garis bawah tautan mati", "success");
+  }
+
+  // Hemat Data → simpan pref (dibaca pemutaran/preload bila didukung). data.saver
+  // juga set class body. (req user 2026-06-13)
+  if (key === "data.saver") {
+    document.body.classList.toggle("data-saver", !!val);
+    toast(val ? "✓ Mode hemat data aktif" : "✓ Mode hemat data mati", "success");
+  }
+  if (key === "data.wifiAutoplay") {
+    toast(val ? "✓ Auto-play hanya saat WiFi" : "✓ Auto-play di semua jaringan", "success");
+  }
+  if (key === "data.preloadNext") {
+    toast(val ? "✓ Preload video berikutnya aktif" : "✓ Preload dimatikan", "success");
+  }
+  if (key === "data.cellularQuality") {
+    toast("✓ Kualitas saat seluler: " + (val === "auto" ? "Auto" : val + "p"), "success");
   }
 
   // Preferensi konten → pengaruhi feed Jelajah (filter dibaca di getFypVideos).
