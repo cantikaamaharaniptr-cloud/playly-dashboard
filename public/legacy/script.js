@@ -4721,6 +4721,10 @@ function _setupSecurityHints() {
       umumPanel.classList.add("set-panel-umum");
       _mergeA11yIntoTampilan();      // Opsi C: Aksesibilitas digabung ke Tampilan
       _setupDataSaverCard(umumPanel); // kartu ke-6 baru: Hemat Data → grid 3+3
+      // Ganti <select> native dgn dropdown custom (req user 2026-06-13: hapus
+      // highlight biru native + fokus ring berwarna; native select tak bisa
+      // di-CSS untuk itu). Idempotent.
+      umumPanel.querySelectorAll("select").forEach(_enhanceSelect);
     }
   }
 }
@@ -4807,6 +4811,87 @@ function _setupDataSaverCard(panel) {
       applyPrefSideEffects("data.cellularQuality", sel.value);
     });
   }
+}
+
+// Dropdown custom pengganti <select> native (req user 2026-06-13). Native select
+// popup di Chrome/Windows = OS-rendered → highlight BIRU & fokus ring tak bisa
+// di-CSS. Custom: trigger + panel (group dari optgroup), hover cream / terpilih
+// wine (NOL biru), fokus ring cream netral. Select asli disembunyikan tapi tetap
+// dipakai utk value + change event (logika lama jalan). Idempotent.
+function _enhanceSelect(sel) {
+  if (!sel || sel.dataset.cdrop || sel.tagName !== "SELECT") return;
+  sel.dataset.cdrop = "1";
+  var wrap = document.createElement("div");
+  wrap.className = "cdrop";
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.classList.add("cdrop-native");
+
+  var trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "cdrop-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.innerHTML = '<span class="cdrop-value"></span><svg class="cdrop-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  wrap.appendChild(trigger);
+
+  var panel = document.createElement("div");
+  panel.className = "cdrop-panel";
+  panel.setAttribute("role", "listbox");
+  panel.hidden = true;
+  wrap.appendChild(panel);
+
+  function addOpt(o) {
+    var el = document.createElement("div");
+    el.className = "cdrop-opt";
+    el.setAttribute("role", "option");
+    el.dataset.value = o.value;
+    el.textContent = o.textContent;
+    if (o.value === sel.value) { el.classList.add("sel"); el.setAttribute("aria-selected", "true"); }
+    el.addEventListener("click", function () {
+      sel.value = o.value;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+      updateValue();
+      close();
+    });
+    panel.appendChild(el);
+  }
+  function buildPanel() {
+    panel.innerHTML = "";
+    Array.prototype.slice.call(sel.children).forEach(function (node) {
+      if (node.tagName === "OPTGROUP") {
+        var g = document.createElement("div");
+        g.className = "cdrop-group";
+        g.textContent = node.label;
+        panel.appendChild(g);
+        Array.prototype.slice.call(node.children).forEach(addOpt);
+      } else if (node.tagName === "OPTION") {
+        addOpt(node);
+      }
+    });
+  }
+  function updateValue() {
+    var opt = sel.options[sel.selectedIndex];
+    wrap.querySelector(".cdrop-value").textContent = opt ? opt.textContent : "";
+  }
+  function open() {
+    buildPanel();
+    panel.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    wrap.classList.add("open");
+    var s = panel.querySelector(".cdrop-opt.sel");
+    if (s) s.scrollIntoView({ block: "nearest" });
+  }
+  function close() {
+    panel.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    wrap.classList.remove("open");
+  }
+  trigger.addEventListener("click", function (e) { e.stopPropagation(); panel.hidden ? open() : close(); });
+  document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) close(); });
+  trigger.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  sel.addEventListener("change", updateValue);
+  updateValue();
 }
 
 function populateSettingsPrefs() {
