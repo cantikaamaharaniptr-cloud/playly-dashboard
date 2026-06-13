@@ -48680,7 +48680,11 @@ const NI_SHARE   = '<svg ' + _NSI + '><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20
 const NI_MAIL    = '<svg ' + _NSI + '><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
 const NI_CAST    = '<svg ' + _NSI + '><path d="M3 11a9 9 0 0 1 9 9M3 4a16 16 0 0 1 16 16"/><circle cx="4.5" cy="19.5" r="1.5"/></svg>';
 const NI_BELL    = '<svg ' + _NSI + '><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>';
+const NI_CARD    = '<svg ' + _NSI + '><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>';
 const NOTIF_CATEGORY_MAP = {
+  "premium-approved":  { key: "premium",    icon: NI_CARD,    title: "Premium" },
+  "premium-rejected":  { key: "premium",    icon: NI_CARD,    title: "Premium" },
+  "premium-code-sent": { key: "premium",    icon: NI_CARD,    title: "Premium" },
   follow:          { key: "followers",  icon: NI_USER,    title: "New Followers" },
   like:            { key: "likes",      icon: NI_HEART,   title: "New Likes" },
   "video-like":    { key: "likes",      icon: NI_HEART,   title: "New Likes" },
@@ -48695,7 +48699,7 @@ const NOTIF_CATEGORY_MAP = {
   "email-reply":   { key: "email",      icon: NI_MAIL,    title: "Balasan Email Admin" },
   "admin-email":   { key: "email",      icon: NI_MAIL,    title: "Balasan Email Admin" },
 };
-const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
+const NOTIF_CATEGORY_ORDER = ["premium", "followers", "likes", "comments", "share", "messages", "broadcast", "email"];
 
 function renderNotifications() {
   // Titik notif di bell: tampil HANYA kalau ADA notif belum dibaca — bukan
@@ -53051,11 +53055,15 @@ function renderNotifDropdownContent() {
     </div>`;
     return;
   }
+  // Item dropdown dirombak (req user 2026-06-13): ikon dalam kotak bulat +
+  // konten (teks 2-baris + waktu DI BAWAH, bukan dempet di samping).
   body.innerHTML = items.map(it => `
     <div class="ndd-item">
       <span class="ndd-icon">${it.icon}</span>
-      <div class="ndd-text">${it.text}</div>
-      ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
+      <div class="ndd-main">
+        <p class="ndd-text">${it.text}</p>
+        ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
+      </div>
     </div>
   `).join("");
 }
