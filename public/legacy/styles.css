@@ -55161,7 +55161,22 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.01em;
+  /* Sejajarkan ikon + judul (req user 2026-06-13: rapikan header). */
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
+/* Ikon bell header dalam KOTAK bulat kecil — konsisten dgn ikon item yg sudah
+   dirombak (req user 2026-06-13). */
+.notif-dropdown .ndd-head h4 .nh-ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(232, 216, 196, .1);
+  flex-shrink: 0;
+  vertical-align: 0;
+}
+.notif-dropdown .ndd-head h4 .nh-ico svg { width: 16px; height: 16px; }
 .notif-dropdown .ndd-close {
   background: transparent;
   border: 0;
