@@ -4705,6 +4705,20 @@ function _setupSecurityHints() {
       .find(function (e) { return /Security transparency/.test(e.textContent); });
     if (d) d.innerHTML = d.innerHTML.replace("Security transparency", "Transparansi keamanan");
   }
+
+  // Tab Umum: tandai kartu "Bahasa & Region" supaya bisa dibuat full-width
+  // footer (req user 2026-06-13: hindari 1 kartu nyangkut sendiri di bawah).
+  var langCard = Array.prototype.slice.call(
+    document.querySelectorAll('section.view[data-view="settings"] .card')
+  ).find(function (c) {
+    var h = c.querySelector("h3");
+    return h && /Bahasa/.test(h.textContent);
+  });
+  if (langCard) {
+    langCard.classList.add("lang-region-card");
+    var umumPanel = langCard.closest(".set-tab-panel");
+    if (umumPanel) umumPanel.classList.add("set-panel-umum");
+  }
 }
 
 function populateSettingsPrefs() {
