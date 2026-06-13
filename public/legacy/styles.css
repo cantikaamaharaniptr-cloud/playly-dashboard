@@ -72261,29 +72261,17 @@ section.view[data-view="settings"] .session-current-tag {
   line-height: 1;
 }
 
-/* Tab Umum: kartu "Bahasa & Region" jadi full-width footer (req user
-   2026-06-13: 5 kartu bikin 1 nyangkut sendiri di bawah). Span semua kolom,
-   isinya (2 select + waktu lokal) ditata menyamping biar lebar terpakai.
-   Grid Umum dipaksa kolom GENAP (2 atau 4, hindari 3) supaya 4 kartu reguler
-   tidak ikut orphan saat lebar layar pas 3 kolom. */
-.set-tab-panel.set-panel-umum {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* Tab Umum: 5 kartu → susun 3 kolom (3 atas + 2 bawah) di layar lebar, biar
+   lebih seimbang TANPA ada kartu yang melar full-width (req user 2026-06-13:
+   tidak suka Bahasa memanjang). Turun ke 2 lalu 1 kolom di layar sempit.
+   Semua kartu ukuran sama. */
+.set-tab-panel.set-panel-umum { grid-template-columns: 1fr; }
+@media (min-width: 760px) {
+  .set-tab-panel.set-panel-umum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (min-width: 1500px) {
-  .set-tab-panel.set-panel-umum {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+@media (min-width: 1200px) {
+  .set-tab-panel.set-panel-umum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-.set-tab-panel > .lang-region-card { grid-column: 1 / -1; }
-.lang-region-card .upload-form {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 14px 22px;
-  align-items: center;
-}
-.lang-region-card .upload-form > label { flex: 0 1 360px; margin: 0; }
-.lang-region-card .upload-form > .field-hint { margin: 0 0 0 auto; align-self: center; }
 section.view[data-view="settings"] .sessions-card .session-row {
   padding: 9px 14px;
   gap: 12px;
