@@ -4680,12 +4680,18 @@ function _setupSecurityHints() {
     var box = document.createElement("div");
     box.id = "twofaBenefits";
     box.className = "twofa-callout";
-    var SHIELD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>';
-    var items = ["Lapisan kedua selain password",
-                 "PIN 6-digit diminta saat login",
-                 "Dipakai juga saat reset & ganti password"];
-    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><div class="twofa-chips">' +
-      items.map(function (t) { return '<span class="twofa-chip">' + t + "</span>"; }).join("") + "</div>";
+    var svgOpen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    var SHIELD_SVG = svgOpen + '<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>';
+    var LAYERS_SVG = svgOpen + '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>';
+    var KEY_SVG    = svgOpen + '<circle cx="8" cy="15" r="4"/><path d="M10.85 12.15L20 3"/><path d="M16.5 6.5l2.5 2.5"/></svg>';
+    var SYNC_SVG   = svgOpen + '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>';
+    var items = [
+      { ic: LAYERS_SVG, txt: "Lapisan kedua selain password" },
+      { ic: KEY_SVG,    txt: "PIN 6-digit diminta saat login" },
+      { ic: SYNC_SVG,   txt: "Dipakai juga saat reset & ganti password" }
+    ];
+    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><ul class="twofa-blist">' +
+      items.map(function (it) { return "<li>" + it.ic + "<span>" + it.txt + "</span></li>"; }).join("") + "</ul>";
     if (statusRow && statusRow.nextSibling) ts.insertBefore(box, statusRow.nextSibling);
     else ts.appendChild(box);
   }

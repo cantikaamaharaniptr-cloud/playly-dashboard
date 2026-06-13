@@ -72132,21 +72132,28 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
   flex-shrink: 0;
   color: var(--primary);
 }
-/* Opsi 3 (chip/badge) digabung ke dalam callout (req user 2026-06-13): tiap poin
-   jadi pil kecil berbingkai yang mengalir. */
-.twofa-chips {
+/* Opsi 1 (ikon berbeda per baris) di dalam callout (req user 2026-06-13): tiap
+   poin punya ikon relevan sendiri (lapisan / kunci / putar-ulang). */
+.twofa-blist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 10px;
 }
-.twofa-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .035);
-  font-size: 11.5px;
-  line-height: 1.3;
-  color: var(--text);
+.twofa-blist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.twofa-blist li svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--primary);
 }
