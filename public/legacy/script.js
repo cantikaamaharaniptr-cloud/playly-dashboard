@@ -48632,6 +48632,11 @@ function _formatAuditDateTimeAbs(ts) {
   return `${date}, ${time}`;
 }
 
+// Default tampilkan sedikit entri (req user 2026-06-13: tidak mau daftar panjang).
+// Sisanya dibuka via tombol "Lihat semua".
+const AUDIT_PREVIEW_COUNT = 5;
+let _auditExpanded = false;
+
 function renderUserAuditLog() {
   const list = document.getElementById("userAuditList");
   if (!list) return;
@@ -48640,14 +48645,19 @@ function renderUserAuditLog() {
   if (filter !== "all") events = events.filter(e => e.type === filter);
   events.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
+  const _toggle = document.getElementById("userAuditToggle");
   if (!events.length) {
     list.innerHTML = `<div class="audit-empty" data-no-i18n>Belum ada aktivitas tercatat${filter !== "all" ? ` untuk kategori "${filter}"` : ""}.</div>`;
+    if (_toggle) _toggle.style.display = "none";
     return;
   }
 
-  // Tanpa pengelompokan tanggal (req user 2026-06-13). Tanggal + waktu langsung
-  // di dalam tiap entri (meta), satu daftar rata.
-  list.innerHTML = events.map(ev => {
+  // Tampilkan hanya AUDIT_PREVIEW_COUNT entri dulu (biar tidak panjang); sisanya
+  // dibuka lewat tombol "Lihat semua". Tanpa pengelompokan tanggal; tanggal +
+  // waktu langsung di dalam tiap entri.
+  const total = events.length;
+  const shown = _auditExpanded ? events : events.slice(0, AUDIT_PREVIEW_COUNT);
+  list.innerHTML = shown.map(ev => {
     const meta = AUDIT_TYPE_META[ev.type] || AUDIT_TYPE_META.general;
     return `
       <div class="audit-row" data-audit-id="${escapeHtml(ev.id)}">
@@ -48663,6 +48673,25 @@ function renderUserAuditLog() {
         </div>
       </div>`;
   }).join("");
+
+  // Tombol "Lihat semua / Tampilkan lebih sedikit" (cuma kalau entri > preview).
+  let toggle = document.getElementById("userAuditToggle");
+  if (total > AUDIT_PREVIEW_COUNT) {
+    if (!toggle) {
+      toggle = document.createElement("button");
+      toggle.id = "userAuditToggle";
+      toggle.type = "button";
+      toggle.className = "audit-toggle-btn";
+      toggle.addEventListener("click", () => { _auditExpanded = !_auditExpanded; renderUserAuditLog(); });
+      list.parentNode.insertBefore(toggle, list.nextSibling);
+    }
+    toggle.style.display = "";
+    toggle.textContent = _auditExpanded
+      ? "Tampilkan lebih sedikit"
+      : `Lihat semua (${total})`;
+  } else if (toggle) {
+    toggle.style.display = "none";
+  }
 }
 
 // Event delegation: filter + clear
@@ -48675,6 +48704,7 @@ document.addEventListener("click", e => {
     const list = document.getElementById("userAuditList");
     if (list) {
       list.dataset.filter = filter;
+      _auditExpanded = false; // reset ke ringkas saat ganti filter
       renderUserAuditLog();
     }
     return;

@@ -72207,6 +72207,26 @@ section.view[data-view="settings"] #userAuditList {
   max-height: none;
   overflow: visible;
 }
+/* Tombol "Lihat semua / Tampilkan lebih sedikit" (req user 2026-06-13: daftar
+   ringkas, default 5 entri). */
+.audit-toggle-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.audit-toggle-btn:hover {
+  background: rgba(232, 216, 196, .05);
+  border-color: rgba(232, 216, 196, .25);
+}
 
 /* Chip filter aktif "Semua": dari teks wine redup (kontras rendah) → isian
    SOLID wine + teks putih, active state jelas & konsisten tema. req user
