@@ -16201,6 +16201,19 @@ function populateAdminSessionInfo() {
 }
 
 // ----------------------- CHANGE PASSWORD -----------------------
+// --- Cookie helpers (sesi-only) — dipakai utk "perangkat terpercaya" 2FA saat
+//     ganti password. Codebase lain pakai localStorage; cookie sesi dipilih di
+//     sini krn otomatis hangus saat browser ditutup (req user 2026-06-13). ---
+function setSessionCookie(name, value) {
+  // Tanpa Max-Age/Expires → cookie SESI: browser hapus saat ditutup.
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict`;
+}
+function getCookie(name) {
+  const esc = name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1");
+  const m = document.cookie.match(new RegExp("(?:^|; )" + esc + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 document.getElementById("changePasswordForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   if (!user) return;
@@ -16217,6 +16230,20 @@ document.getElementById("changePasswordForm")?.addEventListener("submit", async 
   if (!acc) return toast("❌ Akun tidak ditemukan", "error");
   const oldOk = await verifyPassword(oldPw, acc.password);
   if (!oldOk) return toast("❌ Password lama salah", "error");
+
+  // OPSI A (req user 2026-06-13): kalau 2FA aktif, WAJIB verifikasi PIN dulu —
+  // setara level keamanan flow "Lupa Kata Sandi". Cookie SESI 'perangkat
+  // terpercaya' (playly-pwverify=email): setelah sekali verifikasi, ganti
+  // password berikutnya dalam sesi browser yang sama skip PIN; otomatis hangus
+  // saat browser ditutup → PIN diminta lagi.
+  if (acc.pin) {
+    const trustedFor = getCookie("playly-pwverify");
+    if (trustedFor !== user.email) {
+      const enteredPin = await open2FAModal(pin => verifyPin(pin, acc.pin));
+      if (!enteredPin) return; // batal / PIN tidak terverifikasi → password TIDAK diubah
+      setSessionCookie("playly-pwverify", user.email);
+    }
+  }
 
   acc.password = await hashPassword(newPw);
   localStorage.setItem(accKey, JSON.stringify(acc));
