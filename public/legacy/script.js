@@ -48622,20 +48622,14 @@ const AUDIT_TYPE_META = {
   general:  { icon: "•", label: "Aktivitas", color: "var(--muted)" }
 };
 
-// Label tanggal utk sub-header grup (tanpa jam) + jam saja utk meta entri —
-// dipakai saat entri dikelompokkan per tanggal (req user 2026-06-13).
-function _formatAuditDateLabel(ts) {
+// Tanggal + waktu ABSOLUT (tanpa "Hari ini/Kemarin") utk ditaruh di dalam tiap
+// entri audit (req user 2026-06-13: tidak mau sub-header grup tanggal).
+function _formatAuditDateTimeAbs(ts) {
   if (!ts) return "—";
   const d = new Date(ts);
-  const today = new Date();
-  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return "Hari ini";
-  if (d.toDateString() === yesterday.toDateString()) return "Kemarin";
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-}
-function _formatAuditTimeOnly(ts) {
-  if (!ts) return "—";
-  return new Date(ts).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  const time = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  return `${date}, ${time}`;
 }
 
 function renderUserAuditLog() {
@@ -48651,18 +48645,11 @@ function renderUserAuditLog() {
     return;
   }
 
-  // Kelompokkan per tanggal: sisipkan sub-header (Hari ini / Kemarin / tanggal)
-  // tiap kali tanggal berganti. Jam dipindah ke meta entri biar tak redundan.
-  let html = "";
-  let lastDateKey = null;
-  events.forEach(ev => {
-    const dateKey = new Date(ev.ts).toDateString();
-    if (dateKey !== lastDateKey) {
-      lastDateKey = dateKey;
-      html += `<div class="audit-date-group">${escapeHtml(_formatAuditDateLabel(ev.ts))}</div>`;
-    }
+  // Tanpa pengelompokan tanggal (req user 2026-06-13). Tanggal + waktu langsung
+  // di dalam tiap entri (meta), satu daftar rata.
+  list.innerHTML = events.map(ev => {
     const meta = AUDIT_TYPE_META[ev.type] || AUDIT_TYPE_META.general;
-    html += `
+    return `
       <div class="audit-row" data-audit-id="${escapeHtml(ev.id)}">
         <div class="audit-icon" style="background:${meta.color}22;color:${meta.color}">${meta.icon}</div>
         <div class="audit-info">
@@ -48672,12 +48659,11 @@ function renderUserAuditLog() {
           </div>
           ${ev.details ? `<p class="audit-details">${escapeHtml(ev.details)}</p>` : ""}
           <small class="audit-meta">
-            ${escapeHtml(_formatAuditTimeOnly(ev.ts))} · ${escapeHtml(ev.deviceLabel || "Unknown")}
+            ${escapeHtml(_formatAuditDateTimeAbs(ev.ts))} · ${escapeHtml(ev.deviceLabel || "Unknown")}
           </small>
         </div>
       </div>`;
-  });
-  list.innerHTML = html;
+  }).join("");
 }
 
 // Event delegation: filter + clear

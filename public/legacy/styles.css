@@ -72191,14 +72191,3 @@ section.view[data-view="settings"] .user-audit-card .audit-icon {
   border-radius: 9px;
 }
 
-/* #2: sub-header tanggal pengelompokan entri audit. */
-.audit-date-group {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 16px 0 8px;
-  padding-left: 2px;
-}
-.audit-date-group:first-child { margin-top: 4px; }
