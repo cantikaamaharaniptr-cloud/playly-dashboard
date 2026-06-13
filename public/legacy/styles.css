@@ -72132,28 +72132,21 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-ca
   flex-shrink: 0;
   color: var(--primary);
 }
-.twofa-callout ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Opsi 3 (chip/badge) digabung ke dalam callout (req user 2026-06-13): tiap poin
+   jadi pil kecil berbingkai yang mengalir. */
+.twofa-chips {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
-.twofa-callout li {
-  position: relative;
-  padding-left: 16px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--muted);
-}
-.twofa-callout li::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: 6px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--primary);
+.twofa-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .035);
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--text);
 }

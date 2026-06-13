@@ -4684,8 +4684,8 @@ function _setupSecurityHints() {
     var items = ["Lapisan kedua selain password",
                  "PIN 6-digit diminta saat login",
                  "Dipakai juga saat reset & ganti password"];
-    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><ul>' +
-      items.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><div class="twofa-chips">' +
+      items.map(function (t) { return '<span class="twofa-chip">' + t + "</span>"; }).join("") + "</div>";
     if (statusRow && statusRow.nextSibling) ts.insertBefore(box, statusRow.nextSibling);
     else ts.appendChild(box);
   }
