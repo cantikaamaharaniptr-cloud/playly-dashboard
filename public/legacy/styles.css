@@ -55239,12 +55239,20 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   align-items: flex-start;
   gap: 11px;
   padding: 10px 11px;
+  margin-bottom: 7px;
   border-radius: 12px;
-  border-bottom: 0;
-  transition: background .15s;
+  /* Tiap notif = KOTAK/kartu sendiri (req user 2026-06-13: di setiap notif ada
+     kolom) — bg + border halus, bukan cuma baris. */
+  background: rgba(232, 216, 196, .04);
+  border: 1px solid rgba(232, 216, 196, .09);
+  transition: background .15s, border-color .15s;
   cursor: pointer;
 }
-.notif-dropdown .ndd-item:hover { background: rgba(232, 216, 196, .06); }
+.notif-dropdown .ndd-item:last-child { margin-bottom: 0; }
+.notif-dropdown .ndd-item:hover {
+  background: rgba(232, 216, 196, .08);
+  border-color: rgba(232, 216, 196, .18);
+}
 .notif-dropdown .ndd-icon {
   flex-shrink: 0;
   width: 38px;
