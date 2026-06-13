@@ -72069,6 +72069,20 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary {
 body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary:hover {
   background: var(--primary-hover, #5a212a) !important;
 }
+/* Tombol "Hapus Akun Permanen": saat AKTIF (sudah ketik HAPUS) jadi SOLID merah
+   danger — sinyal aksi destruktif lebih jelas (req user 2026-06-13). Gradient
+   asal di-override transparan oleh rule ghost agresif, jadi pakai selector
+   ber-specificity tinggi + longhand (background-color & -image) supaya menang.
+   Saat disabled tetap redup (opacity dari rule asal). */
+body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-card .danger-btn:not(:disabled) {
+  background-color: #dc2626 !important;
+  background-image: none !important;
+  color: #fff !important;
+  border-color: #dc2626 !important;
+}
+body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-card .danger-btn:not(:disabled):hover {
+  background-color: #b91c1c !important;
+}
 /* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
    kiri; toggle tetap di kanan. */
 .tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
