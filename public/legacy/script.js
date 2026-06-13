@@ -31651,6 +31651,12 @@ function switchView(name, { fromNav = false } = {}) {
       if (typeof _setupSettingsAccountCard === "function") _setupSettingsAccountCard();
       if (typeof _setupSettingsToggleDesc === "function") _setupSettingsToggleDesc();
       if (typeof _setupSettingsTabs === "function") _setupSettingsTabs();
+      // Placeholder konfirmasi hapus = "HAPUS" (huruf besar) supaya konsisten dgn
+      // validasi exact-match (req user 2026-06-13). Translator placeholder i18n
+      // memetakan "HAPUS"→"Hapus" via data-orig-ph; set data-orig-ph ke literal
+      // yg TAK ada di peta i18n supaya translator skip & placeholder tetap "HAPUS".
+      var delPh = document.getElementById("deleteAccConfirm");
+      if (delPh) { delPh.placeholder = "HAPUS"; delPh.dataset.origPh = "delete-confirm-literal"; }
     }, 20);
     if (user?.role === "admin") {
       populatePlatformSettings();
@@ -48387,11 +48393,15 @@ document.addEventListener("click", (e) => {
   const input = document.getElementById("deleteAccConfirm");
   const btn = document.getElementById("deleteAccountBtn");
   if (!input || !btn) return;
+  // Konfirmasi EXACT-match "HAPUS" (case-sensitive) — safeguard destruktif lebih
+  // kuat (req user 2026-06-13). Placeholder disamakan biar konsisten.
+  input.placeholder = "HAPUS";
+  const CONFIRM_WORD = "HAPUS";
   input.addEventListener("input", () => {
-    btn.disabled = input.value.trim().toUpperCase() !== "HAPUS";
+    btn.disabled = input.value.trim() !== CONFIRM_WORD;
   });
   btn.addEventListener("click", async () => {
-    if (input.value.trim().toUpperCase() !== "HAPUS") return;
+    if (input.value.trim() !== CONFIRM_WORD) return;
     const proceed = typeof confirmAction === "function"
       ? await confirmAction({
           title: "⚠️ Hapus Akun Permanen?",
@@ -48402,16 +48412,21 @@ document.addEventListener("click", (e) => {
         })
       : confirm("Hapus akun permanen? Semua data hilang dan tidak bisa dipulihkan.");
     if (!proceed) return;
-    // Nuke user-specific data
+    // Hapus HANYA data akun INI (fix bug 2026-06-13: dulu pakai
+    // startsWith("playly-state-") yg menghapus state SEMUA user — di
+    // localStorage/Supabase bersama bisa ikut menghapus data akun lain).
     try {
+      const uname = user?.username;
       const email = String(user?.email || "").toLowerCase();
+      // 1) Per-user keys (state, prefs, history, videos, dll.) milik user ini.
+      if (uname && typeof purgeUserDataByUsername === "function") purgeUserDataByUsername(uname);
+      // 2) Key apa pun yang spesifik mengandung email user ini (mis. akun
+      //    playly-account-<email>, sessions/login-attempts/audit/prefs-<email>).
       if (email) {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i) || "";
-          if (k.includes(email) || k.startsWith("playly-acc-") || k.startsWith("playly-state-")) {
-            keysToRemove.push(k);
-          }
+          if (k.includes(email)) keysToRemove.push(k);
         }
         keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch {} });
       }
