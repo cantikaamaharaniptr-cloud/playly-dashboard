@@ -48839,19 +48839,20 @@ const NOTIF_VIEW_BY_TYPE = {
   "premium-approved":  "settings",
   "premium-rejected":  "settings",
   "premium-code-sent": "settings",
-  // Video milik sendiri (review/takedown/unggah) → halaman Video Saya
-  "video-pending":     "videos",
+  // Video kena takedown admin → halaman Video Saya. PENTING: takedown punya
+  // videoId tapi videonya sudah dihapus/dinonaktifkan, jadi JANGAN buka player
+  // (akan kosong/error). Karena itu type-map dicek SEBELUM videoId.
   "video-takedown":    "videos",
-  "upload":            "videos",
 };
 function handleNotificationClick(n) {
   if (!n) return;
   const closePanel = () => $("#notifPanel")?.classList.remove("open");
-  // 1) Terkait video tertentu → buka player video itu.
-  if (n.videoId) { closePanel(); openPlayer(+n.videoId); return; }
-  // 2) Jenis dgn halaman fitur khusus → langsung ke view-nya.
+  // 1) Jenis dgn halaman fitur khusus → langsung ke view-nya (dicek sebelum
+  //    videoId supaya takedown tidak nyoba buka video yg sudah hilang).
   const targetView = NOTIF_VIEW_BY_TYPE[n.type];
   if (targetView) { closePanel(); switchView(targetView); return; }
+  // 2) Terkait video tertentu (like/komentar/share) → buka player video itu.
+  if (n.videoId) { closePanel(); openPlayer(+n.videoId); return; }
   // 3) Notif sosial (follow/like/comment) → profil pengirim. Tapi kalau
   //    pengirimnya admin (tak punya profil publik) → arahkan ke Pesan, bukan
   //    dead-end "Admin tidak punya profil publik".
