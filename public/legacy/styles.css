@@ -48231,14 +48231,15 @@ body:not([data-role="admin"]):not(.auth-mode) .btn.primary:hover {
   box-shadow: 0 6px 16px rgba(109, 41, 50, .42);
 }
 
-/* (5) Focus rings — a11y, gold */
+/* (5) Focus rings — a11y, CREAM netral (req user berulang: JANGAN gold/warna,
+   fokus ring harus cream lembut di setiap kolom). Ganti dari gold .65. */
 body:not([data-role="admin"]):not(.auth-mode) button:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) a:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) input:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) select:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) textarea:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
-  outline: 2px solid rgba(220, 169, 109, .65);
+  outline: 2px solid rgba(232, 216, 196, .5);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -72353,6 +72354,26 @@ body.a11y-underline a { text-decoration: underline; }
 .cdrop-opt:hover { background: rgba(232, 216, 196, .08); }
 .cdrop-opt.sel { background: var(--primary); color: #fff; font-weight: 600; }
 .cdrop-opt.sel:hover { background: var(--primary); }
+
+/* Placeholder input Pengaturan DIPUDARKAN biar beda jelas dgn teks yg sudah
+   diketik (req user 2026-06-13). Di tema ini --muted = --text (#E8D8C4) → tak
+   ada beda; paksa alpha rendah. Teks asli tetap penuh (var(--text)). */
+section.view[data-view="settings"] input::placeholder,
+section.view[data-view="settings"] textarea::placeholder {
+  color: rgba(232, 216, 196, .4) !important;
+  opacity: 1;
+}
+
+/* Fokus ring input/select/textarea di Pengaturan: PAKSA cream LEMBUT (req user
+   berulang: jangan gold/menyolok di setiap kolom). Ada rule lain yg bikin ring
+   cream 3px penuh (terlihat seperti gold di latar wine) → override scoped +
+   !important. */
+section.view[data-view="settings"] input:focus-visible,
+section.view[data-view="settings"] select:focus-visible,
+section.view[data-view="settings"] textarea:focus-visible {
+  outline: 2px solid rgba(232, 216, 196, .45) !important;
+  outline-offset: 2px !important;
+}
 
 section.view[data-view="settings"] .sessions-card .session-row {
   padding: 9px 14px;
