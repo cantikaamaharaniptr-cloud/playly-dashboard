@@ -72037,41 +72037,18 @@ textarea#upDesc.upf-desc-textarea {
 .set-tab-panel > .card > #twofaSettings > .twofa-actions { margin-top: auto; }
 .set-tab-panel[hidden] { display: none !important; }
 
-/* Kartu "Akun Saya" di Pengaturan (req user 2026-06-12) — edit nama/bio/foto.
-   Full-width sebaris dgn Ekspor/Hapus. Field disusun 2 KOLOM (req user
-   2026-06-13: jangan lompong di kanan) supaya mengisi lebar kartu & seimbang:
-   Nama|Bio lalu Username|Email; avatar/note/tombol span penuh. */
+/* Kartu "Akun Saya" di Pengaturan — RINGKASAN akun + pintasan ke halaman Profil
+   (req user 2026-06-13: editor profil sudah ada di Profil, jangan digandakan).
+   Full-width, layout horizontal: avatar + info kiri, tombol "Edit profil" kanan. */
 .set-account-card { grid-column: 1 / -1; }
-.set-acct {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px 28px;
-  align-items: start;
-}
-.set-acct-avatar-row,
-.set-acct-note,
-.set-acct-save,
-.set-acct > input[type="file"] { grid-column: 1 / -1; }
-@media (max-width: 760px) { .set-acct { grid-template-columns: 1fr; } }
-.set-acct-avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 2px; }
-.set-acct-avatar { width: 64px; height: 64px; min-width: 64px; border-radius: 50%; flex-shrink: 0; font-size: 22px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
+.set-acct-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.set-acct-avatar { width: 60px; height: 60px; min-width: 60px; border-radius: 50%; flex-shrink: 0; font-size: 21px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
 .set-acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.set-acct-avatar-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.set-acct-avatar-btn { padding: 7px 14px !important; font-size: 12.5px !important; }
-.set-acct-avatar-remove { background: none; border: 0; color: var(--text-2, var(--muted)); font-size: 12px; cursor: pointer; padding: 0; }
-.set-acct-avatar-remove:hover { color: var(--danger, #c0392b); }
-.set-acct-avatar-hint { font-size: 11px; color: var(--muted); }
-.set-field { display: flex; flex-direction: column; gap: 5px; }
-.set-field > span { font-size: 12px; font-weight: 600; color: var(--text-2, var(--muted)); }
-.set-field input, .set-field textarea {
-  width: 100%; padding: 9px 12px; border-radius: 9px;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px; font-family: inherit;
-}
-.set-field textarea { resize: vertical; min-height: 42px; }
-.set-field input[readonly] { opacity: .6; cursor: default; }
-.set-acct-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 2px; line-height: 1.45; }
-.set-acct-save { justify-self: start; align-self: flex-start; padding: 9px 18px !important; }
+.set-acct-summary-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.set-acct-summary-info strong { font-size: 15px; font-weight: 700; color: var(--text); }
+.set-acct-handle { font-size: 13px; color: var(--text-2, var(--muted)); }
+.set-acct-email { font-size: 12.5px; color: var(--muted); }
+.set-acct-edit { margin-left: auto; flex-shrink: 0; }
 /* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
    kiri; toggle tetap di kanan. */
 .tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }

@@ -4561,14 +4561,12 @@ function _setupSettingsTabs() {
 function _refreshSettingsAccountCard() {
   if (typeof user === "undefined" || !user) return;
   var nm = document.getElementById("setAcctName");
-  var bio = document.getElementById("setAcctBio");
   var un = document.getElementById("setAcctUsername");
   var em = document.getElementById("setAcctEmail");
   var av = document.getElementById("setAcctAvatar");
-  if (nm && document.activeElement !== nm) nm.value = user.name || "";
-  if (bio && document.activeElement !== bio) bio.value = user.bio || "";
-  if (un) un.value = user.username ? "@" + user.username : "—";
-  if (em) em.value = user.email || "—";
+  if (nm) nm.textContent = user.name || "—";
+  if (un) un.textContent = user.username ? "@" + user.username : "—";
+  if (em) em.textContent = user.email || "—";
   if (av) {
     if (user.avatar) av.innerHTML = '<img src="' + user.avatar + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
     else av.innerHTML = '<span>' + ((user.name || "U").split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase() || "U") + "</span>";
@@ -4586,56 +4584,26 @@ function _setupSettingsAccountCard() {
   var card = document.createElement("div");
   card.className = "card set-account-card";
   card.id = "setAccountCard";
+  // RINGKASAN akun + pintasan ke halaman Profil (req user 2026-06-13): editor
+  // profil (nama/bio/foto) sudah ada di halaman Profil — JANGAN digandakan di
+  // Settings. Cukup tampilkan ringkasan + tombol "Edit profil" yg buka Profil.
   card.innerHTML =
     '<h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>Akun Saya</h3>'
-    + '<div class="set-acct">'
-    +   '<div class="set-acct-avatar-row">'
-    +     '<div class="avatar set-acct-avatar" id="setAcctAvatar"><span>U</span></div>'
-    +     '<div class="set-acct-avatar-actions">'
-    +       '<button type="button" class="btn ghost set-acct-avatar-btn" id="setAcctAvatarBtn">Ubah Foto</button>'
-    +       '<button type="button" class="set-acct-avatar-remove" id="setAcctAvatarRemove">Hapus</button>'
-    +       '<div class="set-acct-avatar-hint">JPG/PNG, maks 2 MB</div>'
-    +     '</div>'
+    + '<div class="set-acct-summary">'
+    +   '<div class="avatar set-acct-avatar" id="setAcctAvatar"><span>U</span></div>'
+    +   '<div class="set-acct-summary-info">'
+    +     '<strong id="setAcctName">—</strong>'
+    +     '<span class="set-acct-handle" id="setAcctUsername">—</span>'
+    +     '<span class="set-acct-email" id="setAcctEmail">—</span>'
     +   '</div>'
-    +   '<label class="set-field"><span>Nama</span><input type="text" id="setAcctName" maxlength="40" placeholder="Nama tampilan" autocomplete="off"></label>'
-    +   '<label class="set-field"><span>Bio</span><textarea id="setAcctBio" rows="2" maxlength="160" placeholder="Ceritakan tentang dirimu…"></textarea></label>'
-    +   '<label class="set-field"><span>Username</span><input type="text" id="setAcctUsername" readonly></label>'
-    +   '<label class="set-field"><span>Email</span><input type="text" id="setAcctEmail" readonly></label>'
-    +   '<p class="set-acct-note">Username & email adalah identitas akun dan tidak bisa diubah.</p>'
-    +   '<button type="button" class="btn primary set-acct-save" id="setAcctSave">Simpan Perubahan</button>'
-    +   '<input type="file" id="setAcctAvatarInput" accept="image/*" hidden>'
+    +   '<button type="button" class="btn primary set-acct-edit" id="setAcctEditProfile">Edit profil <span aria-hidden="true">→</span></button>'
     + '</div>';
   // Taruh paling depan supaya muncul pertama di tab Data & Akun.
   host.insertBefore(card, host.firstChild);
 
-  document.getElementById("setAcctSave").addEventListener("click", function () {
-    if (!user) return;
-    var newName = (document.getElementById("setAcctName").value || "").trim();
-    var newBio = (document.getElementById("setAcctBio").value || "").trim();
-    if (newName.length < 2) { if (typeof toast === "function") toast("⚠️ Nama minimal 2 karakter", "warning"); return; }
-    user.name = newName; user.bio = newBio;
-    if (typeof persistUserAndAccount === "function") persistUserAndAccount();
-    if (typeof applyUserToUI === "function") applyUserToUI();
-    _refreshSettingsAccountCard();
-    if (typeof toast === "function") toast("✓ Profil disimpan", "success");
-  });
-  document.getElementById("setAcctAvatarBtn").addEventListener("click", function () {
-    document.getElementById("setAcctAvatarInput").click();
-  });
-  document.getElementById("setAcctAvatarInput").addEventListener("change", function (e) {
-    var file = e.target.files[0]; e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { if (typeof toast === "function") toast("⚠️ File harus berupa gambar", "warning"); return; }
-    if (file.size > 2 * 1024 * 1024) { if (typeof toast === "function") toast("⚠️ Maksimal 2 MB", "warning"); return; }
-    if (typeof openAvatarEditor === "function") openAvatarEditor(file);
-  });
-  document.getElementById("setAcctAvatarRemove").addEventListener("click", function () {
-    if (!user) return;
-    user.avatar = null;
-    if (typeof persistUserAndAccount === "function") persistUserAndAccount();
-    if (typeof applyUserToUI === "function") applyUserToUI();
-    _refreshSettingsAccountCard();
-    if (typeof toast === "function") toast("Foto profil dihapus", "info");
+  document.getElementById("setAcctEditProfile").addEventListener("click", function () {
+    if (typeof switchView === "function") switchView("profile");
+    else location.hash = "#/profile";
   });
   _refreshSettingsAccountCard();
 }
