@@ -72170,3 +72170,35 @@ section.view[data-view="settings"] .user-audit-card h3 + small {
      kosong. Tarik deskripsi NAIK dgn margin negatif biar benar-benar rapat. */
   margin-top: -8px;
 }
+
+/* #1 (req user 2026-06-13): tombol "Hapus riwayat" ke kanan-atas sejajar judul.
+   .user-audit-head sudah flex tapi column → ubah ROW; deskripsi otomatis wrap
+   sebelum tombol (sekalian tidak sprawling penuh lebar kartu). */
+section.view[data-view="settings"] .user-audit-head {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+section.view[data-view="settings"] .user-audit-head > div { flex: 1; min-width: 0; }
+section.view[data-view="settings"] #userAuditClearBtn { flex-shrink: 0; margin: 0; }
+
+/* #3: ikon entri audit lebih kecil & proporsional (kotak 40→34px). */
+section.view[data-view="settings"] .user-audit-card .audit-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  border-radius: 9px;
+}
+
+/* #2: sub-header tanggal pengelompokan entri audit. */
+.audit-date-group {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 16px 0 8px;
+  padding-left: 2px;
+}
+.audit-date-group:first-child { margin-top: 4px; }
