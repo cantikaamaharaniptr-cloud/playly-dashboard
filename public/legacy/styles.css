@@ -40782,8 +40782,9 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   /* Dempetkan ke judul (req user 2026-06-13): jarak asal ~15px karena h3
      ber-ikon 32px. Deskripsi SUDAH ter-indent sejajar judul via rule global
      (padding-left), jadi cukup TARIK NAIK saja. !important utk mengalahkan
-     rule h3:has(.sec-icon)+small yg set margin-top:4px. */
-  margin-top: -6px !important;
+     rule h3:has(.sec-icon)+small yg set margin-top:4px. -8px = samakan dgn
+     kartu Riwayat/Sesi (req user 2026-06-13: konsistenkan gap). */
+  margin-top: -8px !important;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -40843,8 +40844,8 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .danger-zone-head small {
   display: block;
   /* Dempetkan ke judul (req user 2026-06-13) — sama spt Ekspor (tarik naik saja,
-     indent sudah dari rule global). */
-  margin-top: -6px !important;
+     indent sudah dari rule global). -8px = konsisten dgn Riwayat/Sesi/Ekspor. */
+  margin-top: -8px !important;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
