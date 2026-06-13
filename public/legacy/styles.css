@@ -72182,6 +72182,8 @@ section.view[data-view="settings"] .user-audit-head {
 }
 section.view[data-view="settings"] .user-audit-head > div { flex: 1; min-width: 0; }
 section.view[data-view="settings"] #userAuditClearBtn { flex-shrink: 0; margin: 0; }
+/* Rapatkan jarak header → baris chip filter (req user 2026-06-13: terlalu jauh). */
+section.view[data-view="settings"] .user-audit-head { margin-bottom: 6px; }
 
 /* #3: ikon entri audit lebih kecil & proporsional (kotak 40→34px). */
 section.view[data-view="settings"] .user-audit-card .audit-icon {
