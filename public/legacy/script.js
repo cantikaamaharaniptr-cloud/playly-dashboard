@@ -4717,8 +4717,48 @@ function _setupSecurityHints() {
   if (langCard) {
     langCard.classList.add("lang-region-card");
     var umumPanel = langCard.closest(".set-tab-panel");
-    if (umumPanel) umumPanel.classList.add("set-panel-umum");
+    if (umumPanel) {
+      umumPanel.classList.add("set-panel-umum");
+      _setupAccessibilityCard(umumPanel);
+    }
   }
+}
+
+// Kartu Aksesibilitas (req user 2026-06-13, pilih Opsi C). Disuntik ke panel
+// "Umum" mengisi slot ke-6 (grid 3+3). FUNGSIONAL (bukan dummy): tiap toggle
+// simpan ke pref + toggle class di body yang dipakai CSS — pola sama dgn
+// display.reducedMotion/compact. Idempotent.
+function _setupAccessibilityCard(panel) {
+  if (!panel || document.getElementById("a11yCard")) return;
+  var TOGGLES = [
+    { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis & border antar elemen biar lebih jelas." },
+    { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca." },
+    { pref: "a11y.underlineLinks", label: "Garis bawahi tautan", desc: "Semua tautan digarisbawahi biar gampang dikenali." }
+  ];
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/><path d="M8.5 11h7M12 11v4.5M12 15.5l-2.2 3.2M12 15.5l2.2 3.2"/></svg>';
+  var card = document.createElement("div");
+  card.className = "card a11y-card";
+  card.id = "a11yCard";
+  card.innerHTML =
+    '<h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true">' + ICON + "</span>Aksesibilitas</h3>" +
+    '<div class="a11y-toggles">' +
+    TOGGLES.map(function (t) {
+      return '<label class="tog" data-desc-done="1" data-no-i18n>' +
+        '<span class="tog-text"><span>' + t.label + "</span>" +
+        '<small class="tog-desc">' + t.desc + "</small></span>" +
+        '<input type="checkbox" data-pref="' + t.pref + '" data-bound="1"><i></i></label>';
+    }).join("") +
+    "</div>";
+  panel.appendChild(card);
+  TOGGLES.forEach(function (t) {
+    var input = card.querySelector('input[data-pref="' + t.pref + '"]');
+    if (!input) return;
+    input.checked = !!getPref(t.pref, false);
+    input.addEventListener("change", function () {
+      setPref(t.pref, input.checked);
+      applyPrefSideEffects(t.pref, input.checked);
+    });
+  });
 }
 
 function populateSettingsPrefs() {
@@ -4748,6 +4788,10 @@ function applyVisualPrefsOnInit() {
   document.body.classList.toggle("reduced-motion", !!getPref("display.reducedMotion", false));
   document.body.classList.toggle("compact-mode", !!getPref("display.compact", false));
   document.body.classList.toggle("no-autoplay", !getPref("display.autoplay", true));
+  // Aksesibilitas (req user 2026-06-13)
+  document.body.classList.toggle("a11y-contrast", !!getPref("a11y.contrast", false));
+  document.body.classList.toggle("a11y-bold-text", !!getPref("a11y.boldText", false));
+  document.body.classList.toggle("a11y-underline", !!getPref("a11y.underlineLinks", false));
 }
 
 function applyPrefSideEffects(key, val) {
@@ -4763,6 +4807,20 @@ function applyPrefSideEffects(key, val) {
   if (key === "display.autoplay") {
     document.body.classList.toggle("no-autoplay", !val);
     toast(val ? "✓ Autoplay video aktif" : "✓ Autoplay video dimatikan", "success");
+  }
+
+  // Aksesibilitas → CSS class on body (req user 2026-06-13)
+  if (key === "a11y.contrast") {
+    document.body.classList.toggle("a11y-contrast", !!val);
+    toast(val ? "✓ Kontras tinggi aktif" : "✓ Kontras normal", "success");
+  }
+  if (key === "a11y.boldText") {
+    document.body.classList.toggle("a11y-bold-text", !!val);
+    toast(val ? "✓ Teks tebal aktif" : "✓ Teks normal", "success");
+  }
+  if (key === "a11y.underlineLinks") {
+    document.body.classList.toggle("a11y-underline", !!val);
+    toast(val ? "✓ Tautan digarisbawahi" : "✓ Garis bawah tautan mati", "success");
   }
 
   // Preferensi konten → pengaruhi feed Jelajah (filter dibaca di getFypVideos).
