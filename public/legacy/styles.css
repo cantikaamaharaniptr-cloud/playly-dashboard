@@ -61078,7 +61078,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   border: 1px solid var(--border-strong, var(--border));
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
-.lt-empty-ico { flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; background: rgba(232, 216, 196, .1); color: var(--text); }
+/* Ikon wine gradient SAMA dgn .sec-icon-v582 (header kartu lain) — sebelumnya
+   krem muted, beda sendiri. req user 2026-06-14: samakan warna kolom ikon. */
+.lt-empty-ico { flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, #7d3640 0%, #561C24 100%); color: #F5E3C0; box-shadow: 0 4px 12px rgba(109,41,50,.32), 0 0 0 1px rgba(190,151,82,.18) inset, 0 1px 0 rgba(255,255,255,.06) inset; }
 .lt-empty-ico svg { width: 22px; height: 22px; }
 .lt-empty-txt { flex: 1; min-width: 0; }
 .lt-empty-txt strong { display: block; font-size: 14px; color: var(--text); }
