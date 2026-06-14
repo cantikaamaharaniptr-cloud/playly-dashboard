@@ -49006,12 +49006,14 @@ function renderNotifPage() {
     </div>`;
   } else {
     list.innerHTML = slice.map(n => {
-      const sender = n.fromUsername || extractSenderFromText(n.text) || "—";
-      const init = n.init || (sender.slice(0, 2).toUpperCase());
-      const text = n.text || `@${sender}`;
+      // Ikon kategori monokrom dalam chip (konsisten dropdown/panel) — bukan
+      // avatar emoji mentah. Teks pakai buildNotifText (bold @user). req user 2026-06-14.
+      const cat = (typeof NOTIF_CATEGORY_MAP !== "undefined" && NOTIF_CATEGORY_MAP[n.type]) || null;
+      const icon = (cat && cat.icon) || (typeof NI_BELL !== "undefined" ? NI_BELL : "🔔");
+      const text = (typeof buildNotifText === "function") ? buildNotifText(n) : (n.text || "");
       const time = n.ts ? (typeof relTime === "function" ? relTime(n.ts) : new Date(n.ts).toLocaleString()) : "";
       return `<div class="notif-page-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}">
-        <div class="avatar small"><span>${init}</span></div>
+        <span class="np-icon">${icon}</span>
         <div class="info">
           <p>${text}</p>
           <div class="time">${time}</div>
