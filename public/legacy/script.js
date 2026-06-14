@@ -2186,6 +2186,7 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -31438,6 +31439,7 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -34589,6 +34591,69 @@ document.addEventListener("click", (e) => {
   if (!Number.isFinite(vid)) return;
   if (document.body.dataset.role === "admin" && typeof openAdminPlayer === "function") openAdminPlayer(vid);
   else if (typeof openPlayer === "function") openPlayer(vid);
+});
+
+// ===== LANJUT TONTON (req user 2026-06-14, opsi #2): dimensi PENONTON yg belum
+// ada di Beranda. Ambil video belum selesai (state.history progress<100), resume
+// ke player. Referensi YouTube/dll "Continue Watching". =====
+function _lanjutCardHTML(v, h) {
+  const pct = Math.max(0, Math.min(100, Number(h.progress) || 0));
+  return '<div class="lt-card" data-vid="' + v.id + '" role="button" tabindex="0">'
+    + '<div class="lt-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+      + (v.duration ? '<span class="lt-dur">' + escapeHtml(v.duration) + '</span>' : '')
+      + '<span class="lt-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+      + '<div class="lt-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="lt-body"><h4 class="lt-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
+      + '<p class="lt-meta">@' + escapeHtml(v.creator || "—") + ' · ' + pct + '% selesai</p></div>'
+  + '</div>';
+}
+function _renderHomeLanjutTonton() {
+  const homeView = document.querySelector('section.view[data-view="home"]');
+  if (!homeView) return;
+  // sisipkan setelah Sorotan (kalau ada) atau setelah quick stats.
+  const anchor = document.getElementById("homeSorotan") || document.getElementById("homeQuickStats");
+  if (!anchor) return;
+  let divider = document.getElementById("homeLanjutDivider");
+  if (!divider) {
+    divider = document.createElement("div");
+    divider.id = "homeLanjutDivider";
+    divider.className = "admin-section-divider home-divider-lanjut";
+    divider.innerHTML = '<span data-no-i18n>LANJUT TONTON</span>';
+    anchor.insertAdjacentElement("afterend", divider);
+  }
+  let wrap = document.getElementById("homeLanjut");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "homeLanjut";
+    wrap.className = "home-lanjut";
+    divider.insertAdjacentElement("afterend", wrap);
+  }
+  const hist = Array.isArray(state?.history) ? state.history : [];
+  const cont = hist.filter(h => (Number(h.progress) || 0) < 100);
+  const cards = [];
+  for (const h of cont) {
+    const v = (typeof findVideo === "function") ? findVideo(h.videoId) : null;
+    if (v) cards.push(_lanjutCardHTML(v, h));
+    if (cards.length >= 4) break;
+  }
+  if (!cards.length) {
+    wrap.innerHTML = '<div class="lt-empty">'
+      + '<div class="lt-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg></div>'
+      + '<div class="lt-empty-txt"><strong>Belum ada yang ditonton</strong><small>Video yang belum selesai kamu tonton akan muncul di sini.</small></div>'
+      + '<button type="button" class="btn primary sm" data-jump="discover">Jelajahi Video</button>'
+    + '</div>';
+    return;
+  }
+  wrap.innerHTML = cards.join("");
+}
+// Klik kartu Lanjut Tonton → resume player.
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("#homeLanjut .lt-card[data-vid]");
+  if (!c) return;
+  e.preventDefault();
+  const vid = Number(c.dataset.vid);
+  if (!Number.isFinite(vid)) return;
+  if (typeof openPlayer === "function") openPlayer(vid);
 });
 
 function renderHomeTrendingNow() {
