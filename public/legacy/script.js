@@ -31435,6 +31435,7 @@ function switchView(name, { fromNav = false } = {}) {
     renderHomeWeather();
     if (typeof renderHomeSmartActions === "function") renderHomeSmartActions();
     updateHeroDmAlert();
+    if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -32878,6 +32879,19 @@ function renderHomeActivity() {
 }
 
 
+// Kartu profil hero punya "Unggah Video" yg DOBEL dgn CTA utama di hero (req
+// user 2026-06-14: rapikan). Ganti tombol kedua kartu profil jadi "Lihat
+// Profil" (→ myprofile, profil publik) — lebih relevan di kartu profil, upload
+// tetap prominent di hero. Patch via JS (markup-nya statis/rapuh di index-markup).
+function _patchHomeProfileCard() {
+  const btn = document.getElementById("hpcUploadBtn");
+  if (!btn || btn.dataset.repurposed === "1") return;
+  btn.dataset.repurposed = "1";
+  btn.setAttribute("data-jump", "myprofile");
+  btn.setAttribute("title", "Lihat profil publikmu");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg> Lihat Profil';
+}
+
 function renderHomeStats() {
   // Legacy stats list (kalau ada di DOM) — backward compat
   const list = $("#homeStatsList");
@@ -33101,9 +33115,12 @@ function hqsRenderSpark(statKey, series, current) {
     if (pct < -99) pct = -99;
   }
   if (pct === null || curVal === 0) {
-    // Empty / no real delta — tampilkan bar minimum + dash, tanpa persen palsu
+    // Empty / no real delta — tanpa persen palsu. Nilai 0 → bar KOSONG (jujur,
+    // jangan tampak ~8% progres utk user baru); ada value tapi tanpa history
+    // delta → sliver minimum 8%. (req user 2026-06-14)
+    const w = curVal > 0 ? 8 : 0;
     el.innerHTML =
-      '<div class="hqs-prog"><i style="width:8%"></i></div>' +
+      '<div class="hqs-prog"><i style="width:' + w + '%"></i></div>' +
       '<span class="hqs-delta flat">—</span>';
     return;
   }
