@@ -34594,7 +34594,7 @@ function _renderHomeSorotanVideo() {
   }
   const right = contV
     ? _homeVideoSlotHTML(contV, "LANJUT TONTON", Number(contH.progress) || 0)
-    : _homeVideoSlotEmpty("LANJUT TONTON", "Belum ada tontonan", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi");
+    : _homeVideoSlotEmpty("LANJUT TONTON", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi");
   wrap.innerHTML = left + right;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
