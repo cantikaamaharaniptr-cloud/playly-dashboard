@@ -12243,6 +12243,77 @@ body:not([data-super-admin="true"]) [data-super-admin-only] { display: none !imp
 .notif-section .admin-alerts { gap: 6px; }
 .notif-section .admin-alerts li { font-size: 12.5px; padding: 8px 10px; }
 
+/* ============================================================
+   PANEL NOTIFIKASI USER — polish menyeluruh (req user 2026-06-14):
+   kartu feed & alert dibikin konsisten dgn dropdown (.ndd-item) —
+   sudut rounded, latar cream lembut, ikon kotak, teks rapi, badge ×N
+   wine-soft, waktu selaras. SEMUA di-scope ke #userLiveFeed /
+   #userNotifAlerts supaya TIDAK menyentuh panel admin (tema slate).
+   ============================================================ */
+#userLiveFeed { gap: 8px; }
+#userLiveFeed li {
+  align-items: flex-start;          /* ikon sejajar baris teks pertama */
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(232, 216, 196, .04);
+  border: 1px solid rgba(232, 216, 196, .09);
+}
+#userLiveFeed li .feed-ico {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: rgba(232, 216, 196, .1);
+  color: var(--text);
+}
+#userLiveFeed li .feed-ico .picon,
+#userLiveFeed li .feed-ico svg { width: 17px; height: 17px; }
+#userLiveFeed li .feed-text {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; line-height: 1.5;
+  color: var(--text);
+}
+#userLiveFeed li .feed-time {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: rgba(232, 216, 196, .55);
+  white-space: nowrap;
+}
+#userLiveFeed li .feed-text .feed-count {
+  margin-left: 7px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  border: 1px solid rgba(109, 41, 50, .3);
+  color: #e8d8c4;
+  font-size: 10px; font-weight: 700;
+  vertical-align: middle;
+}
+
+/* Alert "Perlu Perhatian" user — retheme ke wine/cream (kelas default-nya
+   slate utk admin). Severity tetap kebaca: takedown=merah, pending=gold. */
+#userNotifAlerts .alert-row {
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: rgba(232, 216, 196, .04);
+  border: 1px solid rgba(232, 216, 196, .12);
+}
+#userNotifAlerts .alert-row span { font-size: 12.5px; line-height: 1.4; }
+#userNotifAlerts .alert-row b {
+  background: var(--primary-soft);
+  border: 1px solid rgba(109, 41, 50, .35);
+  color: #e8d8c4;
+}
+#userNotifAlerts .alert-row.red    { background: rgba(239, 68, 68, .07);  border-color: rgba(239, 68, 68, .30); }
+#userNotifAlerts .alert-row.red b  { background: rgba(239, 68, 68, .9);   color: #fff; border-color: transparent; }
+#userNotifAlerts .alert-row.amber  { background: rgba(220, 169, 109, .08);border-color: rgba(220, 169, 109, .32); }
+#userNotifAlerts .alert-row.amber b{ background: #DCA96D; color: #1a1410; border-color: transparent; }
+#userNotifAlerts .alert-row[data-jump]:hover {
+  background: rgba(232, 216, 196, .08);
+  border-color: rgba(232, 216, 196, .20);
+  transform: translateX(2px);
+}
+
 /* Admin dashboard summary widget */
 .admin-summary-list {
   display: flex;
