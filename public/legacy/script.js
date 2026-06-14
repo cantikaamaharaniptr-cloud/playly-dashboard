@@ -1278,11 +1278,19 @@ function purgeOrphanStates() {
         if (acc?.username) validUsernames.add(String(acc.username).toLowerCase());
       } catch {}
     }
+    // User yg SEDANG login TIDAK pernah orphan — lindungi state-nya walau key
+    // playly-account-<email> belum tersinkron lokal (mis. baru login lewat
+    // cloud / sesi, key akun individual belum ke-pull). Tanpa guard ini state
+    // user aktif ikut terhapus tiap cloud-applied → notif/data hilang
+    // (fix user 2026-06-14).
+    const myUname = (typeof user !== "undefined" && user && user.username)
+      ? String(user.username).toLowerCase() : null;
     // Scan state-* keys; orphan = username tidak ada di validUsernames
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
       if (!key || !key.startsWith("playly-state-")) continue;
       const uname = key.slice("playly-state-".length).toLowerCase();
+      if (myUname && uname === myUname) continue; // jangan purge user yg login
       // Orphan = state tanpa account record valid → purge (termasuk state
       // demo/dummy: pengecualian KNOWN_DEMO_USERNAMES dihapus per fix user
       // 2026-05-17 supaya sisa state demo tidak nyangkut).
