@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-// Global 404. With multiple root layouts there is no shared root layout to wrap
-// this, so it renders its own <html>/<body>. (The old 404.html only existed as
-// a GitHub Pages clean-URL redirector — obsolete now that Next.js routes
-// /watch, /embed and /id/* server-side.)
+// 404 untuk route group (site). Layout (site) sudah menyediakan <html>/<body>,
+// jadi not-found di sini cukup merender kontennya saja (TIDAK boleh bawa
+// <html>/<body> sendiri). Memindahkan not-found ke dalam route group adalah fix
+// untuk error build "not-found.tsx doesn't have a root layout" (app tidak punya
+// app/layout.tsx, hanya per-group root layout).
 export const metadata: Metadata = {
   title: 'Playly. — Halaman tidak ditemukan',
   robots: { index: false, follow: false },
 };
 
 const CSS = `
-  .nf-wrap { background:#1a0c10; color:#E8D8C4; font-family:system-ui,sans-serif;
+  .nf-wrap { background:#1a0c10; color:#E8D8C4; font-family:'Inter',system-ui,sans-serif;
     display:grid; place-items:center; min-height:100vh; margin:0; text-align:center; padding:24px; }
   .nf-wrap a { color:#C7B7A3; }
   .nf-logo { width:48px; height:48px; border-radius:12px;
@@ -26,20 +27,18 @@ const CSS = `
 
 export default function NotFound() {
   return (
-    <html lang="id">
-      <body>
-        <style dangerouslySetInnerHTML={{ __html: CSS }} />
-        <div className="nf-wrap">
-          <div>
-            <div className="nf-logo">P</div>
-            <h1>Halaman tidak ditemukan</h1>
-            <p>Link mungkin salah atau halaman sudah dipindahkan.</p>
-            <Link className="nf-btn" href="/">
-              Kembali ke Playly
-            </Link>
-          </div>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="nf-wrap">
+        <div>
+          <div className="nf-logo">P</div>
+          <h1>Halaman tidak ditemukan</h1>
+          <p>Link mungkin salah atau halaman sudah dipindahkan.</p>
+          <Link className="nf-btn" href="/">
+            Kembali ke Playly
+          </Link>
         </div>
-      </body>
-    </html>
+      </div>
+    </>
   );
 }
