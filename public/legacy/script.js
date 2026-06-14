@@ -48835,10 +48835,13 @@ const NOTIF_VIEW_BY_TYPE = {
   "admin-email":       "messages",
   "message":           "messages",
   "system":            "messages",
-  // Status premium → Pengaturan (kartu premium)
-  "premium-approved":  "settings",
-  "premium-rejected":  "settings",
-  "premium-code-sent": "settings",
+  // Status premium (bayar disetujui/ditolak/kode dikirim) → halaman Wawasan
+  // Premium (hub premium). Kalau sudah premium tampil insight; kalau belum,
+  // halaman itu sendiri yang munculkan ajakan upgrade. (req user 2026-06-14:
+  // jangan ke Pengaturan — kurang tepat utk notif pembayaran.)
+  "premium-approved":  "premium-insights",
+  "premium-rejected":  "premium-insights",
+  "premium-code-sent": "premium-insights",
   // Video kena takedown admin → halaman Video Saya. PENTING: takedown punya
   // videoId tapi videonya sudah dihapus/dinonaktifkan, jadi JANGAN buka player
   // (akan kosong/error). Karena itu type-map dicek SEBELUM videoId.
