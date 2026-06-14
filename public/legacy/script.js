@@ -48737,6 +48737,26 @@ const NOTIF_CATEGORY_MAP = {
 };
 const NOTIF_CATEGORY_ORDER = ["premium", "followers", "likes", "comments", "share", "messages", "broadcast", "email"];
 
+// Teks notif terlokalisasi dari type + sender (bukan stored text yg fixed),
+// fallback ke n.text utk notif lama. Module-scope supaya dipakai bareng oleh
+// renderNotifications (#notifList) DAN getNotifList (dropdown) — sumber teks
+// tunggal (2026-06-14, refactor D: dropdown baca state, bukan scrape DOM).
+function buildNotifText(n) {
+  if (!n) return "";
+  const sender = n.fromUsername;
+  if (!sender) return n.text || "";
+  const handle = `<b>@${escapeHtml(sender)}</b>`;
+  const verbKey = {
+    follow:        "notif.event.followed",
+    like:          "notif.event.liked",
+    comment:       "notif.event.commented",
+    "video-share": "notif.event.shared",
+    upload:        "notif.event.upload",
+  }[n.type];
+  if (!verbKey) return n.text || "";
+  return `${handle} ${t(verbKey)}`;
+}
+
 function renderNotifications() {
   // Titik notif di bell: tampil HANYA kalau ADA notif belum dibaca — bukan
   // dummy statis selalu-pulse yg menyesatkan (req user 2026-06-13). Dijalankan
@@ -48801,23 +48821,8 @@ function renderNotifications() {
   const order = [...NOTIF_CATEGORY_ORDER];
   if (grouped.other) order.push("other");
 
-  // Helper: build localized notif text dari type + sender supaya bahasa
-  // ngikutin setting user (bukan stored text yang fixed). Kalau notif lama
-  // belum punya fromUsername (legacy), fallback ke n.text.
-  const buildText = (n) => {
-    const sender = n.fromUsername;
-    if (!sender) return n.text || "";
-    const handle = `<b>@${escapeHtml(sender)}</b>`;
-    const verbKey = {
-      follow:        "notif.event.followed",
-      like:          "notif.event.liked",
-      comment:       "notif.event.commented",
-      "video-share": "notif.event.shared",
-      upload:        "notif.event.upload",
-    }[n.type];
-    if (!verbKey) return n.text || "";
-    return `${handle} ${t(verbKey)}`;
-  };
+  // Teks notif terlokalisasi — pakai helper module-scope (dipakai bareng dropdown).
+  const buildText = buildNotifText;
 
   // Section title juga localized — pakai key yang sudah ada di dict
   const localizedCatTitle = (g) => {
@@ -53332,30 +53337,22 @@ function getAdminLiveFeed() {
     }));
   } catch { return []; }
 }
+// Refactor D (2026-06-14): baca LANGSUNG dari state.notifications, bukan scrape
+// DOM #notifList (yg rapuh + tergantung render & display:none). Ikon dari
+// NOTIF_CATEGORY_MAP, teks dari buildNotifText (sama persis dgn #notifList),
+// waktu dari relTime. Urutan = newest-first (state.notifications.unshift).
 function getNotifList() {
   try {
-    const ul = document.querySelector("#notifList");
-    if (!ul) return [];
-    // #notifList di-render renderNotifications() sebagai .notif-cat blocks
-    // (icon = SVG monokrom di .notif-cat-icon, item di .notif-item). Flatten
-    // jadi list per-notif supaya dropdown nampilin baris bersih + ikon SVG
-    // yang sama (bukan emoji 🔔 lagi).
-    const out = [];
-    ul.querySelectorAll(".notif-cat").forEach(cat => {
-      const icon = cat.querySelector(".notif-cat-icon")?.innerHTML?.trim() || "";
-      cat.querySelectorAll(".notif-item").forEach(it => {
-        out.push({
-          // id + unread dibawa supaya dropdown bisa bedakan sudah/belum dibaca
-          // dan klik bisa menandai HANYA item itu (req user 2026-06-14).
-          id: it.dataset.notifId || "",
-          unread: it.classList.contains("unread"),
-          icon: icon,
-          text: (it.querySelector(".info p")?.textContent || it.textContent || "").trim().slice(0, 80),
-          time: (it.querySelector(".time")?.textContent || "").trim()
-        });
-      });
+    const arr = Array.isArray(state?.notifications) ? state.notifications : [];
+    return arr.slice(0, 5).map(n => {
+      const cat = (typeof NOTIF_CATEGORY_MAP !== "undefined" && NOTIF_CATEGORY_MAP[n.type]) || null;
+      const icon = (cat && cat.icon) || (typeof NI_BELL !== "undefined" ? NI_BELL : "🔔");
+      const text = (typeof buildNotifText === "function") ? buildNotifText(n) : (n.text || "");
+      const time = n.ts
+        ? (typeof relTime === "function" ? relTime(n.ts) : "")
+        : (n.time || "");
+      return { id: n.id || "", unread: !!n.unread, icon, text, time };
     });
-    return out.slice(0, 5);
   } catch { return []; }
 }
 
