@@ -2185,6 +2185,7 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeFollowingUpdates === "function") renderHomeFollowingUpdates();
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
+    if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -31436,6 +31437,7 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderHomeSmartActions === "function") renderHomeSmartActions();
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
+    if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -34521,6 +34523,73 @@ function _homeVidEmpty(icon, msg) {
     <p>${msg}</p>
   </div>`;
 }
+
+// ===== SOROTAN VIDEO (req user 2026-06-14): kartu "Video Terbaik" (views
+// tertinggi) + "Video Terbaru" — pola paling universal di dashboard video
+// (Vimeo/Vidyard/Dailymotion = Top Videos; Wistia/YT = latest video). Tampilkan
+// performa nyata (views/suka/komentar). Di-inject via JS (markup home statis). =====
+function _hsCardHTML(v, cap) {
+  const SI = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const eye   = '<svg ' + SI + '><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const heart = '<svg ' + SI + '><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
+  const cmt   = '<svg ' + SI + '><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+  const fmt = (n) => (typeof fmtNum === "function") ? fmtNum(Number(n) || 0) : (Number(n) || 0);
+  const cc = Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0);
+  return '<div class="hs-card" data-vid="' + v.id + '" role="button" tabindex="0">'
+    + '<div class="hs-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+      + (v.duration ? '<span class="hs-dur">' + escapeHtml(v.duration) + '</span>' : '') + '</div>'
+    + '<div class="hs-body">'
+      + '<span class="hs-cap">' + escapeHtml(cap) + '</span>'
+      + '<h4 class="hs-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
+      + '<div class="hs-stats"><span>' + eye + fmt(v.viewsNum) + '</span>'
+        + '<span>' + heart + fmt(v.likes) + '</span>'
+        + '<span>' + cmt + fmt(cc) + '</span></div>'
+    + '</div></div>';
+}
+function _renderHomeSorotanVideo() {
+  const homeView = document.querySelector('section.view[data-view="home"]');
+  const qs = document.getElementById("homeQuickStats");
+  if (!homeView || !qs) return;
+  let divider = document.getElementById("homeSorotanDivider");
+  if (!divider) {
+    divider = document.createElement("div");
+    divider.id = "homeSorotanDivider";
+    divider.className = "admin-section-divider home-divider-sorotan";
+    divider.innerHTML = '<span data-no-i18n>SOROTAN VIDEO</span>';
+    qs.insertAdjacentElement("afterend", divider);
+  }
+  let wrap = document.getElementById("homeSorotan");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "homeSorotan";
+    wrap.className = "home-sorotan";
+    divider.insertAdjacentElement("afterend", wrap);
+  }
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
+  if (!myVids.length) {
+    wrap.innerHTML = '<div class="hs-empty">'
+      + '<div class="hs-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg></div>'
+      + '<div class="hs-empty-txt"><strong>Belum ada sorotan video</strong><small>Upload video pertamamu — video terbaik &amp; terbaru bakal tampil di sini.</small></div>'
+      + '<button type="button" class="btn primary sm" data-jump="upload">Unggah Video</button>'
+    + '</div>';
+    return;
+  }
+  const top = myVids.slice().sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
+  const latest = myVids.slice().sort((a, b) => (Number(b.createdAt || b.id) || 0) - (Number(a.createdAt || a.id) || 0))[0];
+  const cards = [_hsCardHTML(top, "VIDEO TERBAIK")];
+  if (latest && String(latest.id) !== String(top.id)) cards.push(_hsCardHTML(latest, "VIDEO TERBARU"));
+  wrap.innerHTML = cards.join("");
+}
+// Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("#homeSorotan .hs-card[data-vid]");
+  if (!c) return;
+  e.preventDefault();
+  const vid = Number(c.dataset.vid);
+  if (!Number.isFinite(vid)) return;
+  if (document.body.dataset.role === "admin" && typeof openAdminPlayer === "function") openAdminPlayer(vid);
+  else if (typeof openPlayer === "function") openPlayer(vid);
+});
 
 function renderHomeTrendingNow() {
   const grid = document.getElementById("homeTrendingNowGrid");
