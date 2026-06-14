@@ -34527,11 +34527,16 @@ function _homeVidEmpty(icon, msg) {
 // ===== VIDEO (req user 2026-06-14): GABUNG Video Terbaik + Lanjut Tonton dalam
 // SATU section "VIDEO" — 2 kolom sejajar, gaya kartu sama. Kiri = Video Terbaik
 // (views tertinggi), Kanan = Lanjut Tonton (continue watching). Di-inject via JS. =====
-function _homeVideoSlotHTML(v, cap, progress) {
-  const SI = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
-  const eye   = '<svg ' + SI + '><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const heart = '<svg ' + SI + '><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
-  const cmt   = '<svg ' + SI + '><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+// Ikon SVG monokrom utk kartu VIDEO (req user 2026-06-14: beri ikon, rapikan).
+const _HS_SI = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const _hsIco = (p) => '<svg ' + _HS_SI + '>' + p + '</svg>';
+const HS_IC_TROPHY = _hsIco('<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/>');
+const HS_IC_PLAY   = _hsIco('<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>');
+const HS_IC_FILM   = _hsIco('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>');
+function _homeVideoSlotHTML(v, cap, progress, capIco) {
+  const eye   = _hsIco('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
+  const heart = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
+  const cmt   = _hsIco('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>');
   const fmt = (n) => (typeof fmtNum === "function") ? fmtNum(Number(n) || 0) : (Number(n) || 0);
   const hasProg = progress != null;
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
@@ -34543,16 +34548,22 @@ function _homeVideoSlotHTML(v, cap, progress) {
     + '<div class="hs-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
       + (v.duration ? '<span class="hs-dur">' + escapeHtml(v.duration) + '</span>' : '')
       + (hasProg ? '<div class="hs-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
-    + '<div class="hs-body"><span class="hs-cap">' + escapeHtml(cap) + '</span>'
+    + '<div class="hs-body"><span class="hs-cap">' + (capIco || "") + '<span>' + escapeHtml(cap) + '</span></span>'
       + '<h4 class="hs-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
   + '</div>';
 }
-function _homeVideoSlotEmpty(cap, title, sub, jump, btn) {
+// Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon di kiri + konten kanan
+// (caption ber-ikon, judul jelas, sub, tombol). req user 2026-06-14: jangan
+// berantakan, harus ada ikon & judul jelas.
+function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco) {
   return '<div class="hs-card hs-card-empty">'
-    + '<span class="hs-cap">' + escapeHtml(cap) + '</span>'
-    + '<div class="hs-empty-mini"><strong>' + escapeHtml(title) + '</strong>'
-      + '<small>' + escapeHtml(sub) + '</small></div>'
-    + '<button type="button" class="btn primary sm" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+    + '<div class="hs-thumb hs-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
+    + '<div class="hs-body">'
+      + '<span class="hs-cap">' + (capIco || "") + '<span>' + escapeHtml(cap) + '</span></span>'
+      + '<h4 class="hs-title">' + escapeHtml(title) + '</h4>'
+      + '<small class="hs-empty-sub">' + escapeHtml(sub) + '</small>'
+      + '<button type="button" class="btn primary sm hs-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+    + '</div>'
   + '</div>';
 }
 // Hilangkan CAPSLOCK pada divider section statis (teks aslinya HURUF BESAR di
@@ -34600,8 +34611,8 @@ function _renderHomeSorotanVideo() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
   const top = myVids.sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
   const left = top
-    ? _homeVideoSlotHTML(top, "Video Terbaik", null)
-    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video");
+    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_TROPHY)
+    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_TROPHY, HS_IC_FILM);
   // KANAN: Lanjut Tonton (continue watching terbaru)
   const hist = Array.isArray(state?.history) ? state.history : [];
   let contV = null, contH = null;
@@ -34612,8 +34623,8 @@ function _renderHomeSorotanVideo() {
     }
   }
   const right = contV
-    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0)
-    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi");
+    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0, HS_IC_PLAY)
+    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi", HS_IC_PLAY, HS_IC_PLAY);
   wrap.innerHTML = left + right;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
