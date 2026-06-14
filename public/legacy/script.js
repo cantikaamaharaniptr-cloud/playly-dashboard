@@ -34533,6 +34533,7 @@ const _hsIco = (p) => '<svg ' + _HS_SI + '>' + p + '</svg>';
 const HS_IC_TROPHY = _hsIco('<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/>');
 const HS_IC_PLAY   = _hsIco('<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>');
 const HS_IC_FILM   = _hsIco('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>');
+const HS_IC_HEART  = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
 // Header kartu: ikon box + judul + sub-keterangan DASAR pemilihan (req user
 // 2026-06-14: "Video Terbaik berdasarkan apa" harus jelas). sub mis. "Paling
 // banyak ditonton".
@@ -34622,10 +34623,15 @@ function _renderHomeSorotanVideo() {
   }
   // KIRI: Video Terbaik (views tertinggi)
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
-  const top = myVids.sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
+  const top = myVids.slice().sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
   const left = top
     ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_TROPHY, "Paling banyak ditonton")
     : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_TROPHY, HS_IC_FILM, "Paling banyak ditonton");
+  // TENGAH: Paling Disukai (likes tertinggi) — req user 2026-06-14
+  const topLike = myVids.slice().sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))[0];
+  const mid = topLike
+    ? _homeVideoSlotHTML(topLike, "Paling Disukai", null, HS_IC_HEART, "Paling banyak disukai")
+    : _homeVideoSlotEmpty("Paling Disukai", "Belum ada video", "Upload untuk lihat video terfavoritmu.", "upload", "Unggah Video", HS_IC_HEART, HS_IC_FILM, "Paling banyak disukai");
   // KANAN: Lanjut Tonton (continue watching terbaru)
   const hist = Array.isArray(state?.history) ? state.history : [];
   let contV = null, contH = null;
@@ -34638,7 +34644,7 @@ function _renderHomeSorotanVideo() {
   const right = contV
     ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0, HS_IC_PLAY, "Lanjutkan tontonanmu")
     : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi", HS_IC_PLAY, HS_IC_PLAY, "Lanjutkan tontonanmu");
-  wrap.innerHTML = left + right;
+  wrap.innerHTML = left + mid + right;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
 document.addEventListener("click", (e) => {

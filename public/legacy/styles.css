@@ -60949,8 +60949,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    (.hs-card/.hs-info/.hs-icon → align-items:center dst), bikin isi kartu
    ke-center & berantakan. Jangan pakai prefix `hs-` di sini lagi. */
 #homeSorotanDivider, #homeSorotan { order: 2; }
-.home-sorotan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: stretch; }
-@media (max-width: 760px) { .home-sorotan { grid-template-columns: 1fr; } }
+/* 3 kartu: Video Terbaik (views) · Paling Disukai (likes) · Lanjut Tonton.
+   req user 2026-06-14. Responsif 3 -> 2 -> 1. */
+.home-sorotan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: stretch; }
+@media (max-width: 1100px) { .home-sorotan { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .home-sorotan { grid-template-columns: 1fr; } }
 /* Kalau cuma 1 video (Terbaik = Terbaru), kartu tunggal isi lebar penuh. */
 .home-sorotan .hsv-card:only-child { grid-column: 1 / -1; }
 /* Warna/border/shadow kartu = SAMA dgn kartu lain Beranda (.home-level /
