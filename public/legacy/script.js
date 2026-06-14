@@ -34619,18 +34619,44 @@ function renderHomeAchievements() {
   const IC_TROPHY = '<svg ' + SI + '><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>';
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const ACH = [
-    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        ok: myVids.length >= 1 },
-    { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       ok: myVids.length >= 10 },
-    { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    ok: totalViews >= 100 },
-    { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  ok: totalViews >= 1000 },
-    { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        ok: totalLikes >= 100 },
-    { ico: IC_STAR,   name:"Idola Baru",       desc:"Capai 1.000 suka",      ok: totalLikes >= 1000 },
-    { ico: IC_USERS,  name:"Punya Pengikut",   desc:"Capai 10 pengikut",     ok: followers >= 10 },
-    { ico: IC_TROPHY, name:"Populer",          desc:"Capai 100 pengikut",    ok: followers >= 100 },
-  ];
+    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        cur: myVids.length, target: 1,    unit:"video" },
+    { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       cur: myVids.length, target: 10,   unit:"video" },
+    { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    cur: totalViews,    target: 100,  unit:"tontonan" },
+    { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  cur: totalViews,    target: 1000, unit:"tontonan" },
+    { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        cur: totalLikes,    target: 100,  unit:"suka" },
+    { ico: IC_STAR,   name:"Idola Baru",       desc:"Capai 1.000 suka",      cur: totalLikes,    target: 1000, unit:"suka" },
+    { ico: IC_USERS,  name:"Punya Pengikut",   desc:"Capai 10 pengikut",     cur: followers,     target: 10,   unit:"pengikut" },
+    { ico: IC_TROPHY, name:"Populer",          desc:"Capai 100 pengikut",    cur: followers,     target: 100,  unit:"pengikut" },
+  ].map(a => ({ ...a, ok: a.cur >= a.target }));
   const unlocked = ACH.filter(a => a.ok).length;
   const countEl = document.getElementById("haCount");
   if (countEl) countEl.textContent = `${unlocked}/${ACH.length} ter-unlock`;
+
+  // Dorongan pencapaian BERIKUTNYA (req user 2026-06-14): tunjukkan target
+  // terdekat yg belum terbuka → ada arah jelas, bukan cuma grid terkunci.
+  // Pilih yg progresnya paling dekat; seri → sisa paling sedikit.
+  const locked = ACH.filter(a => !a.ok);
+  let nudge = document.getElementById("haNudge");
+  if (!nudge) {
+    nudge = document.createElement("div");
+    nudge.id = "haNudge";
+    nudge.className = "ha-nudge";
+    grid.parentNode.insertBefore(nudge, grid);
+  }
+  if (locked.length) {
+    const next = locked.slice().sort((a, b) =>
+      (b.cur / b.target) - (a.cur / a.target) || (a.target - a.cur) - (b.target - b.cur))[0];
+    const remaining = Math.max(0, next.target - next.cur);
+    nudge.innerHTML = '<span class="ha-nudge-ico">' + next.ico + '</span>'
+      + '<span class="ha-nudge-txt"><b>' + remaining.toLocaleString("id-ID") + ' ' + next.unit
+      + '</b> lagi untuk membuka <b>' + escapeHtml(next.name) + '</b></span>';
+    nudge.style.display = "";
+  } else {
+    nudge.innerHTML = '<span class="ha-nudge-ico">' + IC_TROPHY + '</span>'
+      + '<span class="ha-nudge-txt">Semua pencapaian terbuka — luar biasa! 🎉</span>';
+    nudge.style.display = "";
+  }
+
   grid.innerHTML = ACH.map(a => `
     <div class="ha-badge ${a.ok ? "unlocked" : "locked"}">
       <div class="ha-badge-ico">${a.ok ? a.ico : IC_LOCK}</div>
