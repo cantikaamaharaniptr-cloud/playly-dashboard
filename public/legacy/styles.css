@@ -60978,8 +60978,13 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    wine icon box .sec-icon-v582 (32px) + h3 16/700 cream. req user 2026-06-14:
    samakan kolom ikon & judul (ukuran/font/warna) dgn kolom lain. */
 .hsv-head { display: flex; align-items: center; }
-.hsv-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.01em; text-transform: none; }
 .hsv-head .sec-icon-v582 { vertical-align: 0; }
+.hsv-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hsv-head-text h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.01em; text-transform: none; }
+/* Sub-keterangan DASAR pemilihan (mis. "Paling banyak ditonton") — gaya = subtitle
+   kartu lain (.hlv-sub): krem-muted 12.5/500. req user 2026-06-14: jelaskan
+   Video Terbaik berdasarkan apa. */
+.hsv-sub { font-size: 12.5px; font-weight: 500; color: var(--muted); line-height: 1.3; }
 /* Konten kartu (di bawah header) — baris: thumbnail kiri + info kanan */
 .hsv-content { display: flex; gap: 12px; }
 .hsv-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -61076,7 +61081,8 @@ section.view[data-view="home"] #homeSorotan .hsv-head h3 { font-size: 16px !impo
 /* SUBJUDUL kartu — 12.5/500 */
 section.view[data-view="home"] #homeCreatorLevel .hlv-sub,
 section.view[data-view="home"] .home-achievements .ha-sub,
-section.view[data-view="home"] #homeRankingSection small { font-size: 12.5px !important; font-weight: 500 !important; }
+section.view[data-view="home"] #homeRankingSection small,
+section.view[data-view="home"] #homeSorotan .hsv-sub { font-size: 12.5px !important; font-weight: 500 !important; }
 /* JUDUL badge pencapaian — 13.5/700 */
 section.view[data-view="home"] .ha-badge-text strong { font-size: 13.5px !important; font-weight: 700 !important; }
 /* JUDUL video (konten kartu, di bawah header h3) — 14.5/600, satu tingkat di

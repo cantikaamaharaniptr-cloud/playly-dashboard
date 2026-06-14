@@ -34533,7 +34533,16 @@ const _hsIco = (p) => '<svg ' + _HS_SI + '>' + p + '</svg>';
 const HS_IC_TROPHY = _hsIco('<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/>');
 const HS_IC_PLAY   = _hsIco('<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>');
 const HS_IC_FILM   = _hsIco('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>');
-function _homeVideoSlotHTML(v, cap, progress, capIco) {
+// Header kartu: ikon box + judul + sub-keterangan DASAR pemilihan (req user
+// 2026-06-14: "Video Terbaik berdasarkan apa" harus jelas). sub mis. "Paling
+// banyak ditonton".
+function _hsvHead(capIco, cap, sub) {
+  return '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span>'
+    + '<div class="hsv-head-text"><h3>' + escapeHtml(cap) + '</h3>'
+    + (sub ? '<small class="hsv-sub">' + escapeHtml(sub) + '</small>' : '')
+    + '</div></div>';
+}
+function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
   const eye   = _hsIco('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
   const heart = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
   const cmt   = _hsIco('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>');
@@ -34545,7 +34554,7 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
     : '<div class="hsv-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
       + '</span><span>' + cmt + fmt(Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0)) + '</span></div>';
   return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
-    + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
+    + _hsvHead(capIco, cap, headSub)
     + '<div class="hsv-content">'
       + '<div class="hsv-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
         + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
@@ -34557,9 +34566,9 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
 // Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon di kiri + konten kanan
 // (caption ber-ikon, judul jelas, sub, tombol). req user 2026-06-14: jangan
 // berantakan, harus ada ikon & judul jelas.
-function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco) {
+function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco, headSub) {
   return '<div class="hsv-card hsv-card-empty">'
-    + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
+    + _hsvHead(capIco, cap, headSub)
     + '<div class="hsv-content">'
       + '<div class="hsv-thumb hsv-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
       + '<div class="hsv-info">'
@@ -34615,8 +34624,8 @@ function _renderHomeSorotanVideo() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
   const top = myVids.sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
   const left = top
-    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_TROPHY)
-    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_TROPHY, HS_IC_FILM);
+    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_TROPHY, "Paling banyak ditonton")
+    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_TROPHY, HS_IC_FILM, "Paling banyak ditonton");
   // KANAN: Lanjut Tonton (continue watching terbaru)
   const hist = Array.isArray(state?.history) ? state.history : [];
   let contV = null, contH = null;
@@ -34627,8 +34636,8 @@ function _renderHomeSorotanVideo() {
     }
   }
   const right = contV
-    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0, HS_IC_PLAY)
-    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi", HS_IC_PLAY, HS_IC_PLAY);
+    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0, HS_IC_PLAY, "Lanjutkan tontonanmu")
+    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi", HS_IC_PLAY, HS_IC_PLAY, "Lanjutkan tontonanmu");
   wrap.innerHTML = left + right;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
