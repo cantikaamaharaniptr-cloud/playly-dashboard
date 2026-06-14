@@ -12337,17 +12337,20 @@ body:not([data-super-admin="true"]) [data-super-admin-only] { display: none !imp
 body:not([data-role="admin"]) #notifPanel .sp-head h3 {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  font-size: 18px;          /* judul lebih besar (req user 2026-06-14) */
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico {
   position: relative;
-  width: 30px; height: 30px;
-  border-radius: 9px;
+  width: 40px; height: 40px;  /* kotak ikon lebih besar */
+  border-radius: 12px;
   background: rgba(232, 216, 196, .1);
   vertical-align: 0;
   flex-shrink: 0;
 }
-body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico svg { width: 17px; height: 17px; }
+body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico svg { width: 21px; height: 21px; }
 /* Dot merah di lonceng header panel saat ADA notif belum dibaca (req user
    2026-06-14) — konsisten dgn dot lonceng topbar. Dikendalikan body.has-unread-notif
    yg di-toggle renderNotifications. */
