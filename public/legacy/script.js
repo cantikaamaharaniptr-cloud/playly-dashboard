@@ -48959,29 +48959,12 @@ function _matchNotifFilter(n, filter) {
     || n.type === "email-reply" || n.type === "admin-email" || n.type === "system";
   return true;
 }
-// "Perlu Perhatian" di ATAS halaman notif penuh (req user 2026-06-14: side panel
-// dipensiun, alert dipindah ke sini supaya tetap terlihat). Container dibuat
-// sekali lalu diisi/disembunyikan tiap render. Sembunyi total kalau tak ada alert.
-function _renderNotifPageAttention() {
-  const page = document.querySelector(".notif-page");
-  if (!page) return;
-  const rows = _getUserAttentionRows();
-  let sec = document.getElementById("notifPageAttention");
-  if (!rows.length) { if (sec) sec.style.display = "none"; return; }
-  if (!sec) {
-    const tri = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
-    sec = document.createElement("div");
-    sec.id = "notifPageAttention";
-    sec.className = "notif-section notif-page-attention";
-    sec.innerHTML = '<div class="notif-section-head"><h4><span class="nh-ico">' + tri + '</span> Perlu Perhatian</h4></div><ul class="admin-alerts" id="notifPageAlerts"></ul>';
-    page.insertBefore(sec, page.firstChild);
-  }
-  sec.style.display = "";
-  const ul = document.getElementById("notifPageAlerts");
-  if (ul) ul.innerHTML = _attentionRowsHTML(rows, null);
-}
+// Catatan: "Perlu Perhatian" TIDAK lagi di halaman penuh (req user 2026-06-14:
+// dikembalikan ke side panel saja supaya tidak dobel). _getUserAttentionRows /
+// _attentionRowsHTML tetap dipakai oleh renderUserNotifAlerts (side panel).
 function renderNotifPage() {
-  _renderNotifPageAttention();
+  // Safety: kalau ada sisa container attention dari sesi lama, buang.
+  document.getElementById("notifPageAttention")?.remove();
   const list = document.getElementById("notifPageList");
   if (!list) return;
   const all = Array.isArray(state?.notifications) ? state.notifications : [];
