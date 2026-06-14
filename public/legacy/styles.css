@@ -61058,16 +61058,36 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lt-body { padding: 9px 10px 11px; }
 .lt-title { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
-/* Empty state isi LEBAR PENUH grid (kalau tidak ke-squish dlm 1 kolom 190px),
-   TAPI konten (ikon+teks+tombol) dikelompokkan & ditengahkan biar tombol tak
-   terdampar jauh di kanan. req user 2026-06-14. */
-.lt-empty { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 22px 18px; border-radius: 14px; border: 1px dashed rgba(232, 216, 196, .18); }
+/* Empty state isi LEBAR PENUH grid (kalau tidak ke-squish dlm 1 kolom 190px).
+   Rata KIRI (bukan center) + punya WARNA kartu solid spt kartu lain (bukan
+   transparan). req user 2026-06-14. */
+.lt-empty {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--radius, 16px);
+  background: var(--bg-elev-2, var(--surface));
+  border: 1px solid var(--border-strong, var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+}
 .lt-empty-ico { flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; background: rgba(232, 216, 196, .1); color: var(--text); }
 .lt-empty-ico svg { width: 22px; height: 22px; }
-.lt-empty-txt { flex: 0 1 auto; min-width: 0; }
+.lt-empty-txt { flex: 1; min-width: 0; }
 .lt-empty-txt strong { display: block; font-size: 14px; color: var(--text); }
 .lt-empty-txt small { font-size: 12px; color: var(--muted); }
+/* Tombol Jelajahi: krem solid kontras tinggi. !important utk menimpa rule global
+   `body:not([data-role=admin]) .btn.primary { background:transparent; color:wine }`
+   yg bikin tombol user jadi outline wine nyaris tak kelihatan di bg wine gelap.
+   req user 2026-06-14. */
 .lt-empty .btn { flex-shrink: 0; }
+/* Prefix #homeLanjut → spesifisitas (1,3,0) menang atas rule global
+   body:not([data-role=admin]) .btn.primary (0,3,1) yg jg !important. */
+#homeLanjut .lt-empty .btn.primary,
+#homeLanjut .lt-empty .btn.primary:hover,
+#homeLanjut .lt-empty .btn.primary:focus,
+#homeLanjut .lt-empty .btn.primary:focus-visible,
+#homeLanjut .lt-empty .btn.primary:active { background: #e8d8c4 !important; color: #2a1418 !important; border-color: transparent !important; }
+#homeLanjut .lt-empty .btn.primary:hover { background: #f1e6d6 !important; transform: translateY(-1px); }
 
 /* ============================================================
    SKALA TIPOGRAFI SERAGAM BERANDA (req user 2026-06-14: ratakan SEMUA ukuran &
