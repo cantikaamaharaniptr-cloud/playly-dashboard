@@ -60674,12 +60674,14 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex-direction: column;
   gap: 16px;
 }
-/* req user 2026-06-14 (revisi): kartu COMPACT (tinggi = konten), JANGAN ada ruang
-   kosong di bawah (mis. Level Kreator yg lebih pendek dari Pencapaian). flex:1
-   sebelumnya bikin kartu pendek melar isi tinggi kolom -> ada void. Balik 0 0 auto. */
+/* req user 2026-06-14 (revisi lagi): kedua kartu SEJAJAR (rata tinggi) tanpa
+   kepotong. flex:1 → kartu pendek (Level Kreator) melar mengikuti yg tinggi
+   (Pencapaian); ruang lebih di Level Kreator diisi rapi dgn menempelkan chip
+   statistik (.hlv-break) ke bawah (lihat .home-level di bawah). Pencapaian yg
+   lebih tinggi tetap natural → tak ada badge kepotong. */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
@@ -60783,12 +60785,18 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* 📈 Level Kreator (XP) — per request user 2026-05-16 ("lawan" Pencapaian) */
 .home-level {
   width: 100%;
+  /* flex column → saat kartu melar menyamai Pencapaian, chip statistik
+     (.hlv-break) ditempel ke bawah (margin-top:auto) shg ruang lebih terisi
+     rapi, bukan jadi void. req user 2026-06-14. */
+  display: flex;
+  flex-direction: column;
   background: var(--bg-elev-2, var(--surface));
   border: 1px solid var(--border-strong, var(--border));
   border-radius: var(--radius, 16px);
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
+.home-level .hlv-break { margin-top: auto; }
 .hlv-head {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: 12px; margin-bottom: 16px;
