@@ -61081,8 +61081,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    per-komponen (sebagian rule lama lebih spesifik). */
 /* Judul SECTION (divider) — CAPSLOCK (req user 2026-06-14), 11.5/800 + spasi huruf */
 section.view[data-view="home"] .admin-section-divider span { font-size: 11.5px !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
-/* Label statistik — Title Case, 12/600 */
-section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
+/* Label statistik — Title Case, 12.5/600 */
+section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12.5px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
 /* Angka KPI besar — 20/800 (tetap elemen terbesar, tak kebesaran) */
 section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 20px !important; font-weight: 800 !important; }
 /* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
@@ -61093,15 +61093,17 @@ section.view[data-view="home"] #homeRankingSection h3 { font-size: 16px !importa
 section.view[data-view="home"] #homeCreatorLevel .hlv-sub,
 section.view[data-view="home"] .home-achievements .ha-sub,
 section.view[data-view="home"] #homeRankingSection small { font-size: 12.5px !important; font-weight: 500 !important; }
-/* JUDUL ITEM (badge pencapaian, judul video) — 13.5/700 */
-section.view[data-view="home"] .ha-badge-text strong,
+/* JUDUL badge pencapaian — 13.5/700 */
+section.view[data-view="home"] .ha-badge-text strong { font-size: 13.5px !important; font-weight: 700 !important; }
+/* JUDUL VIDEO (Sorotan) — 16/700 (kartu lapang, jangan kekecilan) */
 section.view[data-view="home"] #homeSorotan .hs-title,
-section.view[data-view="home"] #homeSorotan .hs-card-empty strong { font-size: 13.5px !important; font-weight: 700 !important; }
-/* DESKRIPSI / META item — 12/500 */
-section.view[data-view="home"] .ha-badge-text small,
+section.view[data-view="home"] #homeSorotan .hs-card-empty strong { font-size: 16px !important; font-weight: 700 !important; }
+/* DESKRIPSI badge pencapaian — 12/500 */
+section.view[data-view="home"] .ha-badge-text small { font-size: 12px !important; font-weight: 500 !important; }
+/* META video (stats / persen / empty desc) — 12.5/500 */
 section.view[data-view="home"] #homeSorotan .hs-stats span,
 section.view[data-view="home"] #homeSorotan .hs-watch,
-section.view[data-view="home"] #homeSorotan .hs-card-empty small { font-size: 12px !important; font-weight: 500 !important; }
+section.view[data-view="home"] #homeSorotan .hs-card-empty small { font-size: 12.5px !important; font-weight: 500 !important; }
 /* CAPTION pill (Title Case, tanpa capslock) — 11/700 + angka mikro */
 section.view[data-view="home"] #homeSorotan .hs-cap { font-size: 11px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
 section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; font-weight: 700 !important; }
