@@ -12302,27 +12302,34 @@ body:not([data-super-admin="true"]) [data-super-admin-only] { display: none !imp
 
 /* Alert "Perlu Perhatian" user — retheme ke wine/cream (kelas default-nya
    slate utk admin). Severity tetap kebaca: takedown=merah, pending=gold. */
-#userNotifAlerts .alert-row {
+#userNotifAlerts .alert-row,
+#notifPageAlerts .alert-row {
   border-radius: 12px;
   padding: 11px 14px;
   background: rgba(232, 216, 196, .04);
   border: 1px solid rgba(232, 216, 196, .12);
 }
-#userNotifAlerts .alert-row span { font-size: 12.5px; line-height: 1.4; }
-#userNotifAlerts .alert-row b {
+#userNotifAlerts .alert-row span,
+#notifPageAlerts .alert-row span { font-size: 12.5px; line-height: 1.4; }
+#userNotifAlerts .alert-row b,
+#notifPageAlerts .alert-row b {
   background: var(--primary-soft);
   border: 1px solid rgba(109, 41, 50, .35);
   color: #e8d8c4;
 }
-#userNotifAlerts .alert-row.red    { background: rgba(239, 68, 68, .07);  border-color: rgba(239, 68, 68, .30); }
-#userNotifAlerts .alert-row.red b  { background: rgba(239, 68, 68, .9);   color: #fff; border-color: transparent; }
-#userNotifAlerts .alert-row.amber  { background: rgba(220, 169, 109, .08);border-color: rgba(220, 169, 109, .32); }
-#userNotifAlerts .alert-row.amber b{ background: #DCA96D; color: #1a1410; border-color: transparent; }
-#userNotifAlerts .alert-row[data-jump]:hover {
+#userNotifAlerts .alert-row.red,    #notifPageAlerts .alert-row.red    { background: rgba(239, 68, 68, .07);  border-color: rgba(239, 68, 68, .30); }
+#userNotifAlerts .alert-row.red b,  #notifPageAlerts .alert-row.red b  { background: rgba(239, 68, 68, .9);   color: #fff; border-color: transparent; }
+#userNotifAlerts .alert-row.amber,  #notifPageAlerts .alert-row.amber  { background: rgba(220, 169, 109, .08);border-color: rgba(220, 169, 109, .32); }
+#userNotifAlerts .alert-row.amber b,#notifPageAlerts .alert-row.amber b{ background: #DCA96D; color: #1a1410; border-color: transparent; }
+#userNotifAlerts .alert-row[data-jump]:hover,
+#notifPageAlerts .alert-row[data-jump]:hover {
   background: rgba(232, 216, 196, .08);
   border-color: rgba(232, 216, 196, .20);
   transform: translateX(2px);
 }
+/* Section "Perlu Perhatian" di halaman notif penuh */
+.notif-page-attention { margin-bottom: 18px; }
+.notif-page-attention .admin-alerts { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
 /* Header panel + header section USER (req user 2026-06-14): ikon dibungkus
    chip kotak cream lembut biar menyatu dgn kartu di bawahnya & terlihat
@@ -12354,12 +12361,14 @@ body:not([data-role="admin"]).has-unread-notif #notifPanel .sp-head h3 .nh-ico::
   border: 2px solid var(--bg);
 }
 
-.notif-user-only .notif-section-head h4 {
+.notif-user-only .notif-section-head h4,
+.notif-page-attention .notif-section-head h4 {
   display: flex;
   align-items: center;
   gap: 9px;
 }
-.notif-user-only .notif-section-head h4 .nh-ico {
+.notif-user-only .notif-section-head h4 .nh-ico,
+.notif-page-attention .notif-section-head h4 .nh-ico {
   width: 23px; height: 23px;
   border-radius: 7px;
   background: rgba(232, 216, 196, .1);
@@ -12367,7 +12376,8 @@ body:not([data-role="admin"]).has-unread-notif #notifPanel .sp-head h3 .nh-ico::
   vertical-align: 0;
   flex-shrink: 0;
 }
-.notif-user-only .notif-section-head h4 .nh-ico svg { width: 13px; height: 13px; }
+.notif-user-only .notif-section-head h4 .nh-ico svg,
+.notif-page-attention .notif-section-head h4 .nh-ico svg { width: 13px; height: 13px; }
 
 /* Pemisah antar-section panel user (req user 2026-06-14): garis hairline cream
    di antara "Perlu Perhatian" & "Aktivitas Real-time" biar batas section jelas. */
@@ -55456,6 +55466,16 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   font-size: 12.5px;
   padding: 8px 14px;
 }
+/* Footer user: bisa 2 tombol — "Tandai semua dibaca" (kiri, sekunder) +
+   "Lihat semua" (kanan, isi sisa). req user 2026-06-14. */
+body:not([data-role="admin"]) #notifDropdown .ndd-foot { justify-content: flex-end; gap: 8px; }
+body:not([data-role="admin"]) #notifDropdown #notifDropdownOpenPanel { flex: 1; width: auto; }
+body:not([data-role="admin"]) #notifDropdown .ndd-markall {
+  flex: 0 0 auto; width: auto; white-space: nowrap;
+  font-size: 12px; padding: 8px 10px;
+  color: rgba(232, 216, 196, .7);
+}
+.ndd-foot-arrow { margin-left: 3px; opacity: .65; }
 
 /* Admin theme override — slate accent untuk dropdown */
 body[data-role="admin"] .notif-dropdown {

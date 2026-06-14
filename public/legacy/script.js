@@ -26418,33 +26418,39 @@ function renderAdminAlerts() {
 // Mirror struktur admin (Perlu Perhatian + Aktivitas Real-time) untuk user dashboard.
 // Pakai data dari state.myVideos / state.activities. Theme color via CSS vars.
 
-function renderUserNotifAlerts() {
-  const wrap = document.getElementById("userNotifAlerts");
-  if (!wrap) return;
+// Hitung baris "Perlu Perhatian" (video pending/takedown, status premium).
+// Dipakai bareng oleh side panel (dormant) & halaman notif penuh.
+function _getUserAttentionRows() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const pendingCount = myVids.filter(v => v.adminStatus === "pending").length;
   const takedownCount = myVids.filter(v => v.adminStatus === "takedown").length;
-  // Premium expiring dalam 7 hari
   let expiringSoon = 0;
   try {
     const acc = (typeof findAccountByEmail === "function" && user?.email)
-      ? findAccountByEmail(user.email)
-      : null;
+      ? findAccountByEmail(user.email) : null;
     if (acc?.tier === "premium" && acc.premiumExpiresAt) {
       const daysLeft = (acc.premiumExpiresAt - Date.now()) / 86400000;
       if (daysLeft > 0 && daysLeft < 7) expiringSoon = Math.ceil(daysLeft);
     }
   } catch {}
-  // Pending payment status
   const paymentPending = state?.premiumPaymentStatus === "pending" ? 1 : 0;
-
-  const rows = [
+  return [
     { cls: "amber", text: `${pendingCount} video menunggu review admin`, count: pendingCount, view: "videos" },
     { cls: "red",   text: `${takedownCount} video di-takedown admin`,    count: takedownCount, view: "videos" },
     { cls: "blue",  text: `Premium kedaluwarsa dalam ${expiringSoon} hari`, count: expiringSoon, view: "settings" },
     { cls: "gray",  text: `Pembayaran premium menunggu approval admin`,  count: paymentPending, view: "settings" },
   ].filter(r => r.count > 0);
-
+}
+function _attentionRowsHTML(rows, closeSp) {
+  const closeAttr = closeSp ? ` data-close-sp="${closeSp}"` : "";
+  return rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}"${closeAttr} role="button" tabindex="0" style="cursor:pointer">
+    <span>${r.text}</span><b>${r.count}</b>
+  </li>`).join("");
+}
+function renderUserNotifAlerts() {
+  const wrap = document.getElementById("userNotifAlerts");
+  if (!wrap) return;
+  const rows = _getUserAttentionRows();
   if (!rows.length) {
     wrap.innerHTML = `<li class="alert-empty">
       <span class="alert-empty-icon">✅</span>
@@ -26455,9 +26461,7 @@ function renderUserNotifAlerts() {
     </li>`;
     return;
   }
-  wrap.innerHTML = rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}" data-close-sp="notifPanel" role="button" tabindex="0" style="cursor:pointer">
-    <span>${r.text}</span><b>${r.count}</b>
-  </li>`).join("");
+  wrap.innerHTML = _attentionRowsHTML(rows, "notifPanel");
 }
 
 function renderUserLiveFeed() {
@@ -48950,7 +48954,29 @@ function _matchNotifFilter(n, filter) {
     || n.type === "email-reply" || n.type === "admin-email" || n.type === "system";
   return true;
 }
+// "Perlu Perhatian" di ATAS halaman notif penuh (req user 2026-06-14: side panel
+// dipensiun, alert dipindah ke sini supaya tetap terlihat). Container dibuat
+// sekali lalu diisi/disembunyikan tiap render. Sembunyi total kalau tak ada alert.
+function _renderNotifPageAttention() {
+  const page = document.querySelector(".notif-page");
+  if (!page) return;
+  const rows = _getUserAttentionRows();
+  let sec = document.getElementById("notifPageAttention");
+  if (!rows.length) { if (sec) sec.style.display = "none"; return; }
+  if (!sec) {
+    const tri = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+    sec = document.createElement("div");
+    sec.id = "notifPageAttention";
+    sec.className = "notif-section notif-page-attention";
+    sec.innerHTML = '<div class="notif-section-head"><h4><span class="nh-ico">' + tri + '</span> Perlu Perhatian</h4></div><ul class="admin-alerts" id="notifPageAlerts"></ul>';
+    page.insertBefore(sec, page.firstChild);
+  }
+  sec.style.display = "";
+  const ul = document.getElementById("notifPageAlerts");
+  if (ul) ul.innerHTML = _attentionRowsHTML(rows, null);
+}
 function renderNotifPage() {
+  _renderNotifPageAttention();
   const list = document.getElementById("notifPageList");
   if (!list) return;
   const all = Array.isArray(state?.notifications) ? state.notifications : [];
@@ -49044,17 +49070,31 @@ document.addEventListener("click", (e) => {
     toggleNotifDropdown();
     return;
   }
-  // Tombol "Lihat detail" di dropdown → buka side panel + close dropdown
+  // Tombol footer dropdown. USER (req user 2026-06-14: pensiun side panel) →
+  // langsung ke halaman notif penuh. ADMIN tetap buka side panel (alert + live
+  // feed admin masih dipakai di sana).
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
     closeNotifDropdown();
-    // Lazy-mount notif panel content on first open (v479).
-    if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
-    const panel = $("#notifPanel");
-    panel?.classList.add("open");
     if (document.body.dataset.role === "admin") {
+      if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
+      $("#notifPanel")?.classList.add("open");
       try { renderAdminAlerts?.(); renderAdminLiveFeed?.(); } catch {}
+    } else if (typeof switchView === "function") {
+      switchView("notifications");
     }
+    return;
+  }
+  // "Tandai semua dibaca" di dropdown (req user 2026-06-14).
+  if (t.closest("#notifDropdownMarkAll")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications.forEach(n => { n.unread = false; });
+      try { saveState(); } catch {}
+    }
+    try { renderNotifications?.(); } catch {}        // dot + #notifList
+    try { renderNotifDropdownContent?.(); } catch {} // refresh item dropdown
+    if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
     return;
   }
   // Close dropdown via X button atau outside click
@@ -53131,8 +53171,33 @@ function saveVideoEdit() {
 
 // ----------------------- NOTIF DROPDOWN POPUP (admin, anchored below bell) -----------------------
 // Per user 2026-05-10: admin dashboard bell → dropdown popup di bawah icon.
-// Tombol "Lihat detail" di footer buka side panel detail (#notifPanel) yang
-// punya section Perlu Perhatian + Aktivitas Real-time + user notifs.
+// Footer dropdown. USER (2026-06-14): tombol utama jadi "Lihat semua" → halaman
+// notif penuh, + tombol "Tandai semua dibaca" kalau ada unread. ADMIN: tombol
+// asli "Lihat detail" (→ side panel admin) dibiarkan.
+function _updateNotifDropdownFooter(isAdmin) {
+  const foot = document.querySelector("#notifDropdown .ndd-foot");
+  if (!foot) return;
+  const openBtn = document.getElementById("notifDropdownOpenPanel");
+  if (openBtn && !isAdmin) {
+    openBtn.innerHTML = 'Lihat semua <span class="ndd-foot-arrow" aria-hidden="true">→</span>';
+  }
+  let markBtn = document.getElementById("notifDropdownMarkAll");
+  const unread = Array.isArray(state?.notifications)
+    ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
+  if (!isAdmin && unread > 0) {
+    if (!markBtn) {
+      markBtn = document.createElement("button");
+      markBtn.id = "notifDropdownMarkAll";
+      markBtn.type = "button";
+      markBtn.className = "btn ghost sm ndd-markall";
+      markBtn.textContent = "✓ Tandai semua dibaca";
+      foot.insertBefore(markBtn, foot.firstChild);
+    }
+    markBtn.style.display = "";
+  } else if (markBtn) {
+    markBtn.style.display = "none";
+  }
+}
 function renderNotifDropdownContent() {
   const body = document.getElementById("notifDropdownBody");
   if (!body) return;
@@ -53171,6 +53236,9 @@ function renderNotifDropdownContent() {
       }));
     } catch {}
   }
+  // Footer: relabel tombol utama + tombol "Tandai semua dibaca" (req user
+  // 2026-06-14). Dipanggil sebelum cek empty supaya jalan di kedua kondisi.
+  _updateNotifDropdownFooter(isAdmin);
   if (!items.length) {
     // Empty state lebih ramah (req user 2026-06-13): ikon + judul + 1 baris
     // konteks, biar tidak terasa polos/seperti bug. Tetap kompak utk dropdown.
