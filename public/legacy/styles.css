@@ -12261,6 +12261,12 @@ body:not([data-super-admin="true"]) [data-super-admin-only] { display: none !imp
    #userNotifAlerts supaya TIDAK menyentuh panel admin (tema slate).
    ============================================================ */
 #userLiveFeed { gap: 8px; }
+/* Item feed bisa diklik (req user 2026-06-14) — hover + cursor. */
+#userLiveFeed li[data-feed-act] { cursor: pointer; transition: background .15s, border-color .15s; }
+#userLiveFeed li[data-feed-act]:hover {
+  background: rgba(232, 216, 196, .08);
+  border-color: rgba(232, 216, 196, .18);
+}
 #userLiveFeed li {
   align-items: flex-start;          /* ikon sejajar baris teks pertama */
   gap: 11px;

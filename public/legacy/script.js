@@ -26489,14 +26489,42 @@ function renderUserLiveFeed() {
       last.count++;
       last.lastTs = Math.max(last.lastTs || 0, a.ts || 0);
     } else {
-      groups.push({ key, icon: a.icon, text: a.text, lastTs: a.ts || 0, time: a.time, count: 1 });
+      // simpan aktivitas perwakilan (act) utk routing klik (req user 2026-06-14).
+      groups.push({ key, icon: a.icon, text: a.text, lastTs: a.ts || 0, time: a.time, count: 1, act: a });
     }
   });
-  list.innerHTML = groups.slice(0, 10).map(g => `<li>
+  list.innerHTML = groups.slice(0, 10).map(g => {
+    const a = g.act || {};
+    const vid = (a.videoId != null && a.videoId !== "") ? String(a.videoId) : "";
+    const sender = (!vid && typeof extractSenderFromText === "function") ? (extractSenderFromText(a.text) || "") : "";
+    return `<li data-feed-act="1" data-vid="${vid}" data-sender="${escapeHtml(sender)}" data-type="${escapeHtml(a.type || "")}" role="button" tabindex="0" style="cursor:pointer">
     <span class="feed-ico">${g.icon || "🔔"}</span>
     <span class="feed-text">${g.text || ""}${g.count > 1 ? ` <span class="feed-count">×${g.count}</span>` : ""}</span>
     <span class="feed-time">${g.lastTs ? relTime(g.lastTs) : (g.time || "")}</span>
-  </li>`).join("");
+  </li>`;
+  }).join("");
+}
+// Routing klik item feed aktivitas user → konten terkait (req user 2026-06-14:
+// feed harus bisa dibuka). videoId → player; @pengirim → profil; upload sendiri
+// → Video Saya; fallback → halaman notif.
+function handleUserFeedClick(li) {
+  if (!li) return;
+  try { document.getElementById("notifPanel")?.classList.remove("open"); } catch {}
+  const vid = li.dataset.vid;
+  const sender = li.dataset.sender;
+  const type = li.dataset.type;
+  if (vid && typeof openPlayer === "function") { openPlayer(+vid); return; }
+  if (sender && typeof openUserProfile === "function") { openUserProfile(sender); return; }
+  if (type === "upload" && typeof switchView === "function") { switchView("videos"); return; }
+  if (typeof switchView === "function") switchView("notifications");
+}
+if (!window.__userFeedKeyBound) {
+  window.__userFeedKeyBound = true;
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const li = e.target.closest && e.target.closest("#userLiveFeed li[data-feed-act]");
+    if (li) { e.preventDefault(); handleUserFeedClick(li); }
+  });
 }
 
 // =================== ADMIN ACTION CENTER (per 2026-05-07) ===================
@@ -49050,6 +49078,13 @@ document.addEventListener("click", (e) => {
 // Event delegation untuk bell + close side panel — robust di mobile
 document.addEventListener("click", (e) => {
   const t = e.target;
+  // Klik item feed "Aktivitas Real-time" → buka konten terkait (req user 2026-06-14).
+  const _feedLi = t.closest("#userLiveFeed li[data-feed-act]");
+  if (_feedLi) {
+    e.preventDefault();
+    handleUserFeedClick(_feedLi);
+    return;
+  }
   // Bell icon → BOTH admin & user: dropdown popup di bawah bell.
   // Per user 2026-05-10av: user dashboard juga dapat popup notif sama dgn admin.
   // Side panel detail tetap accessible via tombol "Lihat detail" di dropdown footer.
