@@ -2186,6 +2186,7 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _deCapsHomeLabels === "function") _deCapsHomeLabels();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -31438,6 +31439,7 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _deCapsHomeLabels === "function") _deCapsHomeLabels();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -34555,6 +34557,25 @@ function _homeVideoSlotEmpty(cap, title, sub, jump, btn) {
     + '<button type="button" class="btn primary sm" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
   + '</div>';
 }
+// Hilangkan CAPSLOCK pada divider section statis (teks aslinya HURUF BESAR di
+// markup) → Title Case, tanpa menghapus ikon dot di dalam span (req user
+// 2026-06-14: jangan ada teks capslock).
+function _deCapsHomeLabels() {
+  const MAP = {
+    "RINGKASAN STATISTIK": "Ringkasan Statistik",
+    "PROGRES & PENCAPAIAN": "Progres & Pencapaian",
+    "PAPAN PERINGKAT": "Papan Peringkat",
+    "VIDEO": "Video",
+  };
+  document.querySelectorAll('section.view[data-view="home"] .admin-section-divider span').forEach(span => {
+    span.childNodes.forEach(n => {
+      if (n.nodeType === 3) {
+        const key = n.textContent.trim();
+        if (MAP[key]) n.textContent = n.textContent.replace(key, MAP[key]);
+      }
+    });
+  });
+}
 function _renderHomeSorotanVideo() {
   const homeView = document.querySelector('section.view[data-view="home"]');
   const qs = document.getElementById("homeQuickStats");
@@ -34569,7 +34590,7 @@ function _renderHomeSorotanVideo() {
     divider.className = "admin-section-divider home-divider-sorotan";
     qs.insertAdjacentElement("afterend", divider);
   }
-  divider.innerHTML = '<span data-no-i18n>VIDEO</span>';
+  divider.innerHTML = '<span data-no-i18n>Video</span>';
   let wrap = document.getElementById("homeSorotan");
   if (!wrap) {
     wrap = document.createElement("div");
@@ -34581,8 +34602,8 @@ function _renderHomeSorotanVideo() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
   const top = myVids.sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
   const left = top
-    ? _homeVideoSlotHTML(top, "VIDEO TERBAIK", null)
-    : _homeVideoSlotEmpty("VIDEO TERBAIK", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video");
+    ? _homeVideoSlotHTML(top, "Video Terbaik", null)
+    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video");
   // KANAN: Lanjut Tonton (continue watching terbaru)
   const hist = Array.isArray(state?.history) ? state.history : [];
   let contV = null, contH = null;
@@ -34593,8 +34614,8 @@ function _renderHomeSorotanVideo() {
     }
   }
   const right = contV
-    ? _homeVideoSlotHTML(contV, "LANJUT TONTON", Number(contH.progress) || 0)
-    : _homeVideoSlotEmpty("LANJUT TONTON", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi");
+    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0)
+    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi");
   wrap.innerHTML = left + right;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).

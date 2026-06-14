@@ -61079,11 +61079,12 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    ============================================================ */
 /* Pakai !important: blok ini lapisan PENYERAGAM yg sengaja menimpa ukuran/weight
    per-komponen (sebagian rule lama lebih spesifik). */
-/* Label SECTION (divider) + label statistik — UPPERCASE 11/800 */
-section.view[data-view="home"] .admin-section-divider span,
-section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 11px !important; font-weight: 800 !important; letter-spacing: .06em; }
-/* Angka KPI besar — 22/800 (tetap elemen terbesar) */
-section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 22px !important; font-weight: 800 !important; }
+/* Judul SECTION (divider) — Title Case (TANPA capslock), 13/700 */
+section.view[data-view="home"] .admin-section-divider span { font-size: 13px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
+/* Label statistik — Title Case, 12/600 */
+section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
+/* Angka KPI besar — 20/800 (tetap elemen terbesar, tak kebesaran) */
+section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 20px !important; font-weight: 800 !important; }
 /* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
 section.view[data-view="home"] #homeCreatorLevel h3,
 section.view[data-view="home"] .home-achievements h3,
@@ -61101,8 +61102,8 @@ section.view[data-view="home"] .ha-badge-text small,
 section.view[data-view="home"] #homeSorotan .hs-stats span,
 section.view[data-view="home"] #homeSorotan .hs-watch,
 section.view[data-view="home"] #homeSorotan .hs-card-empty small { font-size: 12px !important; font-weight: 500 !important; }
-/* CAPTION pill + angka mikro — 10.5px */
-section.view[data-view="home"] #homeSorotan .hs-cap { font-size: 10.5px !important; font-weight: 800 !important; }
+/* CAPTION pill (Title Case, tanpa capslock) — 11/700 + angka mikro */
+section.view[data-view="home"] #homeSorotan .hs-cap { font-size: 11px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
 section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; font-weight: 700 !important; }
 
 .ha-grid {
