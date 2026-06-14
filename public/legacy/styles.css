@@ -12314,6 +12314,38 @@ body:not([data-super-admin="true"]) [data-super-admin-only] { display: none !imp
   transform: translateX(2px);
 }
 
+/* Header panel + header section USER (req user 2026-06-14): ikon dibungkus
+   chip kotak cream lembut biar menyatu dgn kartu di bawahnya & terlihat
+   teratur. Scoped non-admin / .notif-user-only supaya panel admin tak kena. */
+body:not([data-role="admin"]) #notifPanel .sp-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  background: rgba(232, 216, 196, .1);
+  vertical-align: 0;
+  flex-shrink: 0;
+}
+body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico svg { width: 17px; height: 17px; }
+
+.notif-user-only .notif-section-head h4 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.notif-user-only .notif-section-head h4 .nh-ico {
+  width: 23px; height: 23px;
+  border-radius: 7px;
+  background: rgba(232, 216, 196, .1);
+  color: var(--text);
+  vertical-align: 0;
+  flex-shrink: 0;
+}
+.notif-user-only .notif-section-head h4 .nh-ico svg { width: 13px; height: 13px; }
+
 /* Admin dashboard summary widget */
 .admin-summary-list {
   display: flex;
