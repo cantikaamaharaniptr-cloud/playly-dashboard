@@ -12333,6 +12333,7 @@ body:not([data-role="admin"]) #notifPanel .sp-head h3 {
   gap: 10px;
 }
 body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico {
+  position: relative;
   width: 30px; height: 30px;
   border-radius: 9px;
   background: rgba(232, 216, 196, .1);
@@ -12340,6 +12341,18 @@ body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico {
   flex-shrink: 0;
 }
 body:not([data-role="admin"]) #notifPanel .sp-head h3 .nh-ico svg { width: 17px; height: 17px; }
+/* Dot merah di lonceng header panel saat ADA notif belum dibaca (req user
+   2026-06-14) — konsisten dgn dot lonceng topbar. Dikendalikan body.has-unread-notif
+   yg di-toggle renderNotifications. */
+body:not([data-role="admin"]).has-unread-notif #notifPanel .sp-head h3 .nh-ico::after {
+  content: "";
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 2px solid var(--bg);
+}
 
 .notif-user-only .notif-section-head h4 {
   display: flex;

@@ -48737,12 +48737,16 @@ function renderNotifications() {
   // Titik notif di bell: tampil HANYA kalau ADA notif belum dibaca — bukan
   // dummy statis selalu-pulse yg menyesatkan (req user 2026-06-13). Dijalankan
   // sebelum guard #notifList karena bell ada di semua view.
+  var _unread = (typeof state !== "undefined" && state && Array.isArray(state.notifications))
+    ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
   var _dot = document.querySelector("#openNotif .dot-indicator");
   if (_dot) {
-    var _unread = (typeof state !== "undefined" && state && Array.isArray(state.notifications))
-      ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
     _dot.style.display = _unread > 0 ? "block" : "none";
   }
+  // Dot merah di lonceng HEADER panel notif juga (req user 2026-06-14): pakai
+  // class di body sbg single source of truth → CSS yg munculkan dot, robust
+  // walau panel baru di-mount belakangan.
+  try { document.body.classList.toggle("has-unread-notif", _unread > 0); } catch {}
 
   const list = $("#notifList");
   if (!list) return;
