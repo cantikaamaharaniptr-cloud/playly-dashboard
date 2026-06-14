@@ -61079,8 +61079,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    ============================================================ */
 /* Pakai !important: blok ini lapisan PENYERAGAM yg sengaja menimpa ukuran/weight
    per-komponen (sebagian rule lama lebih spesifik). */
-/* Judul SECTION (divider) — Title Case (TANPA capslock), 13/700 */
-section.view[data-view="home"] .admin-section-divider span { font-size: 13px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
+/* Judul SECTION (divider) — CAPSLOCK (req user 2026-06-14), 11.5/800 + spasi huruf */
+section.view[data-view="home"] .admin-section-divider span { font-size: 11.5px !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
 /* Label statistik — Title Case, 12/600 */
 section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
 /* Angka KPI besar — 20/800 (tetap elemen terbesar, tak kebesaran) */

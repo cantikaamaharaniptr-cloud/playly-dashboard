@@ -2186,7 +2186,6 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
-    if (typeof _deCapsHomeLabels === "function") _deCapsHomeLabels();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -31439,7 +31438,6 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
-    if (typeof _deCapsHomeLabels === "function") _deCapsHomeLabels();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
