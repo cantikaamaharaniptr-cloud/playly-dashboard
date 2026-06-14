@@ -60674,12 +60674,12 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex-direction: column;
   gap: 16px;
 }
-/* v591e (2026-05-28): kedua kartu compact tinggi sesuai konten, TAPI lebar
-   tetap fill kolom (default align-items: stretch parent). align-self: flex-start
-   sebelumnya bikin lebar nyusut ke konten — dihapus. */
+/* req user 2026-06-14: kedua kartu (Level Kreator & Pencapaian) HARUS sejajar &
+   seukuran. flex:1 → kartu mengisi penuh tinggi kolom (kolom sudah sama tinggi
+   via .home-2col align-items:stretch) shg kedua kartu rata tinggi. */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
@@ -60953,22 +60953,26 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 @media (max-width: 760px) { .home-sorotan { grid-template-columns: 1fr; } }
 /* Kalau cuma 1 video (Terbaik = Terbaru), kartu tunggal isi lebar penuh. */
 .home-sorotan .hsv-card:only-child { grid-column: 1 / -1; }
+/* Warna/border/shadow kartu = SAMA dgn kartu lain Beranda (.home-level /
+   .home-achievements): var(--bg-elev-2) + border-strong + radius + shadow.
+   req user 2026-06-14: samakan warna kolom dgn kolom lain. */
 .hsv-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 11px;
-  padding: 14px;
-  border-radius: 14px;
-  background: rgba(232, 216, 196, .03);
-  border: 1px solid var(--border);
+  padding: 16px 18px;
+  border-radius: var(--radius, 16px);
+  background: var(--bg-elev-2, var(--surface));
+  border: 1px solid var(--border-strong, var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
   cursor: pointer;
-  transition: background .15s, border-color .15s, transform .15s;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
 }
 .hsv-card:hover {
-  background: rgba(232, 216, 196, .07);
-  border-color: rgba(232, 216, 196, .2);
+  border-color: var(--primary, var(--border-strong));
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .4);
 }
 /* Header kartu — SAMA dgn kartu lain Beranda (Level/Pencapaian/Peringkat):
    wine icon box .sec-icon-v582 (32px) + h3 16/700 cream. req user 2026-06-14:
@@ -61010,7 +61014,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-prog i { display: block; height: 100%; background: #e8d8c4; }
 .hsv-watch { margin: auto 0 0; font-size: 12px; color: var(--muted); }
 /* Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon kiri + konten kanan. */
-.hsv-card.hsv-card-empty { border-style: dashed; border-color: rgba(232, 216, 196, .18); }
+.hsv-card.hsv-card-empty { border-style: dashed; border-color: var(--border-strong, var(--border)); box-shadow: none; }
 .hsv-card-empty .hsv-info { justify-content: center; }
 /* Placeholder ikon (ganti thumbnail) — ukuran sama dgn thumbnail biar sejajar */
 .hsv-thumb-ph { display: grid; place-items: center; color: rgba(232, 216, 196, .5); }
