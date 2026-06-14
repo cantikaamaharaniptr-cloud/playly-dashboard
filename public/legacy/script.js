@@ -48990,9 +48990,27 @@ function _matchNotifFilter(n, filter) {
 // Catatan: "Perlu Perhatian" TIDAK lagi di halaman penuh (req user 2026-06-14:
 // dikembalikan ke side panel saja supaya tidak dobel). _getUserAttentionRows /
 // _attentionRowsHTML tetap dipakai oleh renderUserNotifAlerts (side panel).
+// Angka hitung per filter di chip-tabs halaman notif (req user 2026-06-14:
+// rapikan + informatif). Tampil hanya kalau > 0.
+function _updateNotifFilterCounts() {
+  const all = Array.isArray(state?.notifications) ? state.notifications : [];
+  document.querySelectorAll("#notifPageFilters [data-notif-filter]").forEach(btn => {
+    const f = btn.dataset.notifFilter;
+    const count = all.filter(n => _matchNotifFilter(n, f)).length;
+    let badge = btn.querySelector(".chip-count");
+    if (count > 0) {
+      if (!badge) { badge = document.createElement("span"); badge.className = "chip-count"; btn.appendChild(badge); }
+      badge.textContent = count;
+      badge.style.display = "";
+    } else if (badge) {
+      badge.style.display = "none";
+    }
+  });
+}
 function renderNotifPage() {
   // Safety: kalau ada sisa container attention dari sesi lama, buang.
   document.getElementById("notifPageAttention")?.remove();
+  _updateNotifFilterCounts();
   const list = document.getElementById("notifPageList");
   if (!list) return;
   const all = Array.isArray(state?.notifications) ? state.notifications : [];

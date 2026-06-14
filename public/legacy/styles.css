@@ -9221,16 +9221,14 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 
 /* Notifications full page (v479) */
 .notif-page { display: flex; flex-direction: column; gap: 16px; }
-.notif-page-filters { gap: 8px; flex-wrap: wrap; }
+/* Filter hug konten (tidak melebar penuh & kosong di kanan) — req user 2026-06-14 */
+.notif-page-filters { gap: 4px; flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
+/* List = tumpukan kartu berdiri sendiri (TANPA kotak kontainer + min-height yg
+   bikin area kosong besar & dobel-border). req user 2026-06-14. */
 .notif-page-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px;
-  min-height: 200px;
+  gap: 10px;
 }
 .notif-page-item {
   position: relative;
@@ -9271,7 +9269,11 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 .notif-page-item .info p b { font-weight: 600; }
 .notif-page-item .info .time { font-size: 11.5px; color: var(--muted); }
 .notif-page-item .notif-page-see { flex-shrink: 0; }
-.notif-page-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.notif-page-empty {
+  text-align: center; padding: 48px 20px; color: var(--muted);
+  border: 1px dashed rgba(232, 216, 196, .16);
+  border-radius: 14px;
+}
 .notif-page-empty h4 { margin: 10px 0 4px; font-weight: 700; color: var(--text); }
 .notif-page-empty p { font-size: 12.5px; margin: 0; }
 .notif-page-more { text-align: center; padding: 10px 0; }
