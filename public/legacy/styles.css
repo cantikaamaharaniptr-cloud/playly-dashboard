@@ -60949,6 +60949,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 #homeSorotanDivider, #homeSorotan { order: 2; }
 .home-sorotan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 @media (max-width: 760px) { .home-sorotan { grid-template-columns: 1fr; } }
+/* Kalau cuma 1 video (Terbaik = Terbaru), kartu tunggal isi lebar penuh —
+   jangan setengah kolom kosong (req user 2026-06-14). */
+.home-sorotan .hs-card:only-child { grid-column: 1 / -1; }
 .hs-card {
   display: flex;
   gap: 12px;
