@@ -25885,6 +25885,37 @@ function startAdminEventSimulator() {
   // no-op — pakai data real saja
 }
 
+// Tingkat kepentingan toast notif → warna accent (req user 2026-06-14):
+// notif penting tampil menonjol, bukan semua "info" biru polos. Pakai kelas
+// toast yg sudah ada (.toast.success/.warning/.error → pill hijau/gold/merah).
+function notifToastSeverity(type) {
+  switch (type) {
+    case "premium-approved":            return "success";  // hijau
+    case "premium-rejected":
+    case "tier-downgrade":              return "warning";  // gold
+    case "video-takedown":              return "error";    // merah
+    default:                            return "info";
+  }
+}
+
+// Sinkronisasi notifikasi user dari state terbaru — dipakai oleh BOTH cross-tab
+// (`storage`) DAN cross-device (`playly:cloud-applied`). Update lonceng/panel +
+// widget home, lalu toast di atas utk notif yg benar-benar baru (id teratas
+// berubah & belum dibaca), dgn warna sesuai tingkat kepentingannya.
+function syncUserNotificationsFromState(fresh) {
+  if (!user || !fresh || !Array.isArray(fresh.notifications)) return;
+  const prevTopId = state.notifications?.[0]?.id;
+  state.notifications = fresh.notifications;
+  try { renderNotifications?.(); } catch {}
+  try { renderHomeNotifLatest?.(); } catch {}
+  try { renderHomeTierWidget?.(); } catch {}
+  const newest = fresh.notifications[0];
+  if (newest && newest.id !== prevTopId && newest.unread) {
+    const plain = String(newest.text || "").replace(/<[^>]*>/g, "");
+    toast(`🔔 ${plain}`, notifToastSeverity(newest.type));
+  }
+}
+
 // Live sync untuk USER (non-admin): kalau admin mengirim pesan dari tab lain,
 // inbox user di tab ini ikut ter-update tanpa reload.
 function setupUserMessageSync() {
@@ -25923,22 +25954,23 @@ function setupUserMessageSync() {
         toast(`📨 Pesan baru dari <b>@${escapeHtml(m.name)}</b> (${label})`, "info");
       }
     }
-    // Notifikasi dari user lain (like / comment / follow) — sync agar lonceng
-    // di topbar dan panel notifikasi langsung update.
-    if (Array.isArray(fresh.notifications)) {
-      const prevTopId = state.notifications?.[0]?.id;
-      state.notifications = fresh.notifications;
-      if (typeof renderNotifications === "function") renderNotifications();
-      // Re-render home notif widget supaya real-time (per request 2026-05-03 fix bug)
-      if (typeof renderHomeNotifLatest === "function") renderHomeNotifLatest();
-    renderHomeTierWidget();
-      // Toast cuma kalau notifikasi baru benar-benar masuk (id paling atas berubah)
-      const newest = fresh.notifications[0];
-      if (newest && newest.id !== prevTopId && newest.unread) {
-        const plain = String(newest.text || "").replace(/<[^>]*>/g, "");
-        toast(`🔔 ${plain}`, "info");
-      }
-    }
+    // Notifikasi dari user lain (like / comment / follow) — sync lonceng + panel
+    // + widget home, lalu toast utk notif baru (warna per tingkat kepentingan).
+    syncUserNotificationsFromState(fresh);
+  });
+
+  // Cross-DEVICE (via Supabase cloud-sync): saat state user ini di-apply dari
+  // cloud, `storage` TIDAK fire di tab yg sama, jadi kita dengar event
+  // `playly:cloud-applied` supaya notif dari perangkat lain tetap muncul toast
+  // di atas + lonceng update. (req user 2026-06-14: toast cross-device.)
+  window.addEventListener("playly:cloud-applied", e => {
+    if (!user) return;
+    const keys = e.detail?.keys || [];
+    if (!keys.includes(`playly-state-${user.username}`)) return;
+    let fresh;
+    try { fresh = JSON.parse(localStorage.getItem(`playly-state-${user.username}`) || "null"); }
+    catch { return; }
+    syncUserNotificationsFromState(fresh);
   });
 }
 setupUserMessageSync();
