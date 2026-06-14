@@ -5027,7 +5027,7 @@ function applyPrefSideEffects(key, val) {
   if (key === "notif.message") toast(val ? "✓ Notif pesan baru aktif" : "✓ Notif pesan baru dimatikan", "success");
   if (key === "notif.comment") toast(val ? "✓ Notif komentar aktif" : "✓ Notif komentar dimatikan", "success");
   if (key === "notif.follower") toast(val ? "✓ Notif follower baru aktif" : "✓ Notif follower baru dimatikan", "success");
-  if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "info");
+  if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "success");
 
   // Privasi
   if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya follower yang lihat detail lengkap", "success");
