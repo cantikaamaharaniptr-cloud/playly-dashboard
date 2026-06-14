@@ -34541,16 +34541,16 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
   const hasProg = progress != null;
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   const meta = hasProg
-    ? '<p class="hs-watch">@' + escapeHtml(v.creator || "—") + ' · ' + pct + '% selesai</p>'
-    : '<div class="hs-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
+    ? '<p class="hsv-watch">@' + escapeHtml(v.creator || "—") + ' · ' + pct + '% selesai</p>'
+    : '<div class="hsv-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
       + '</span><span>' + cmt + fmt(Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0)) + '</span></div>';
-  return '<div class="hs-card" data-vid="' + v.id + '" role="button" tabindex="0">'
+  return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
     + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
-    + '<div class="hs-content">'
-      + '<div class="hs-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
-        + (v.duration ? '<span class="hs-dur">' + escapeHtml(v.duration) + '</span>' : '')
-        + (hasProg ? '<div class="hs-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
-      + '<div class="hs-info"><h4 class="hs-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
+    + '<div class="hsv-content">'
+      + '<div class="hsv-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+        + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
+        + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
+      + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
     + '</div>'
   + '</div>';
 }
@@ -34558,14 +34558,14 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
 // (caption ber-ikon, judul jelas, sub, tombol). req user 2026-06-14: jangan
 // berantakan, harus ada ikon & judul jelas.
 function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco) {
-  return '<div class="hs-card hs-card-empty">'
+  return '<div class="hsv-card hsv-card-empty">'
     + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
-    + '<div class="hs-content">'
-      + '<div class="hs-thumb hs-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
-      + '<div class="hs-info">'
-        + '<h4 class="hs-title">' + escapeHtml(title) + '</h4>'
-        + '<small class="hs-empty-sub">' + escapeHtml(sub) + '</small>'
-        + '<button type="button" class="btn primary sm hs-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+    + '<div class="hsv-content">'
+      + '<div class="hsv-thumb hsv-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
+      + '<div class="hsv-info">'
+        + '<h4 class="hsv-title">' + escapeHtml(title) + '</h4>'
+        + '<small class="hsv-empty-sub">' + escapeHtml(sub) + '</small>'
+        + '<button type="button" class="btn primary sm hsv-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
       + '</div>'
     + '</div>'
   + '</div>';
@@ -34633,7 +34633,7 @@ function _renderHomeSorotanVideo() {
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
 document.addEventListener("click", (e) => {
-  const c = e.target.closest("#homeSorotan .hs-card[data-vid]");
+  const c = e.target.closest("#homeSorotan .hsv-card[data-vid]");
   if (!c) return;
   e.preventDefault();
   const vid = Number(c.dataset.vid);
