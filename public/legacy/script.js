@@ -49075,18 +49075,17 @@ document.addEventListener("click", (e) => {
     toggleNotifDropdown();
     return;
   }
-  // Tombol footer dropdown. USER (req user 2026-06-14: pensiun side panel) →
-  // langsung ke halaman notif penuh. ADMIN tetap buka side panel (alert + live
-  // feed admin masih dipakai di sana).
+  // Tombol "Lihat detail" footer dropdown → buka side panel detail (req user
+  // 2026-06-14: dikembalikan; user TIDAK langsung ke halaman penuh).
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
     closeNotifDropdown();
+    if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
+    $("#notifPanel")?.classList.add("open");
     if (document.body.dataset.role === "admin") {
-      if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
-      $("#notifPanel")?.classList.add("open");
       try { renderAdminAlerts?.(); renderAdminLiveFeed?.(); } catch {}
-    } else if (typeof switchView === "function") {
-      switchView("notifications");
+    } else {
+      try { renderUserNotifAlerts?.(); renderUserLiveFeed?.(); renderNotifications?.(); } catch {}
     }
     return;
   }
@@ -53176,16 +53175,12 @@ function saveVideoEdit() {
 
 // ----------------------- NOTIF DROPDOWN POPUP (admin, anchored below bell) -----------------------
 // Per user 2026-05-10: admin dashboard bell → dropdown popup di bawah icon.
-// Footer dropdown. USER (2026-06-14): tombol utama jadi "Lihat semua" → halaman
-// notif penuh, + tombol "Tandai semua dibaca" kalau ada unread. ADMIN: tombol
-// asli "Lihat detail" (→ side panel admin) dibiarkan.
+// Footer dropdown: tombol "Lihat detail" (statis → side panel) dibiarkan apa
+// adanya (req user 2026-06-14: dikembalikan, BUKAN "Lihat semua"). Yang
+// ditambah cuma "Tandai semua dibaca" kalau ada notif belum dibaca.
 function _updateNotifDropdownFooter(isAdmin) {
   const foot = document.querySelector("#notifDropdown .ndd-foot");
   if (!foot) return;
-  const openBtn = document.getElementById("notifDropdownOpenPanel");
-  if (openBtn && !isAdmin) {
-    openBtn.innerHTML = 'Lihat semua <span class="ndd-foot-arrow" aria-hidden="true">→</span>';
-  }
   let markBtn = document.getElementById("notifDropdownMarkAll");
   const unread = Array.isArray(state?.notifications)
     ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
