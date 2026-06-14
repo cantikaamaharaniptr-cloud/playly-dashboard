@@ -12372,15 +12372,15 @@ body:not([data-role="admin"]).has-unread-notif #notifPanel .sp-head h3 .nh-ico::
 }
 .notif-user-only .notif-section-head h4 .nh-ico,
 .notif-page-attention .notif-section-head h4 .nh-ico {
-  width: 23px; height: 23px;
-  border-radius: 7px;
+  width: 32px; height: 32px;       /* setara chip ikon isi (34px) — req user 2026-06-14 */
+  border-radius: 10px;
   background: rgba(232, 216, 196, .1);
   color: var(--text);
   vertical-align: 0;
   flex-shrink: 0;
 }
 .notif-user-only .notif-section-head h4 .nh-ico svg,
-.notif-page-attention .notif-section-head h4 .nh-ico svg { width: 13px; height: 13px; }
+.notif-page-attention .notif-section-head h4 .nh-ico svg { width: 17px; height: 17px; }
 
 /* Pemisah antar-section panel user (req user 2026-06-14): garis hairline cream
    di antara "Perlu Perhatian" & "Aktivitas Real-time" biar batas section jelas. */
