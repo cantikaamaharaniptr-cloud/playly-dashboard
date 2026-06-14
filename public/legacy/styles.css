@@ -60994,7 +60994,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-thumb {
   position: relative;
   flex-shrink: 0;
-  width: 124px;
+  /* Proporsional thd lebar kartu (≈40%) biar seimbang di 3 kolom & tak ada ruang
+     kosong; dibatasi 124–200px. req user 2026-06-14. */
+  width: 40%;
+  min-width: 124px;
+  max-width: 200px;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
   overflow: hidden;
