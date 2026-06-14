@@ -61130,23 +61130,18 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 .ha-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
-/* Saat tinggi dibatasi agar sejajar Level Kreator (via _syncAchHeight), grid
-   bisa scroll — scrollbar tipis biar rapi. req user 2026-06-14. */
-#homeAchievementsGrid { scrollbar-width: thin; scrollbar-color: rgba(232,216,196,.25) transparent; }
-#homeAchievementsGrid[style*="overflow"] { padding-right: 6px; }
-#homeAchievementsGrid::-webkit-scrollbar { width: 7px; }
-#homeAchievementsGrid::-webkit-scrollbar-thumb { background: rgba(232,216,196,.22); border-radius: 999px; }
-#homeAchievementsGrid::-webkit-scrollbar-thumb:hover { background: rgba(232,216,196,.35); }
 @media (max-width: 900px) { .ha-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .ha-grid { grid-template-columns: 1fr; } }
 .ha-badge {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
+  gap: 10px;
+  /* compact (req user 2026-06-14): padding & ikon dikecilkan supaya kartu
+     Pencapaian lebih pendek, tanpa scroll/kepotong. */
+  padding: 10px 11px;
+  border-radius: 12px;
   border: 1px solid rgba(232, 216, 196, .12);
   /* #251419 — per request user 2026-05-16 (badge & unlocked sama) */
   background: var(--bg-elev);
@@ -61159,17 +61154,17 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 .ha-badge.unlocked:hover { transform: translateY(-2px); }
 .ha-badge.locked { opacity: .72; }
 .ha-badge-ico {
-  width: 42px; height: 42px;
+  width: 36px; height: 36px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 10px;
   /* ikon minimalis monokrom (per request user 2026-05-16) */
   color: var(--text);
   background: rgba(232, 216, 196, .06);
   border: 1px solid rgba(232, 216, 196, .10);
 }
-.ha-badge-ico svg { width: 20px; height: 20px; }
+.ha-badge-ico svg { width: 18px; height: 18px; }
 .ha-badge.unlocked .ha-badge-ico {
   background: rgba(232, 216, 196, .10);
   border-color: rgba(232, 216, 196, .14);
