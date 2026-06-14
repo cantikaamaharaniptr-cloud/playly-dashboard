@@ -60954,8 +60954,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .home-sorotan .hs-card:only-child { grid-column: 1 / -1; }
 .hs-card {
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px;
   border-radius: 14px;
   background: rgba(232, 216, 196, .03);
   border: 1px solid var(--border);
@@ -60967,6 +60968,15 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   border-color: rgba(232, 216, 196, .2);
   transform: translateY(-1px);
 }
+/* Header kartu — SAMA dgn kartu lain Beranda (Level/Pencapaian/Peringkat):
+   wine icon box .sec-icon-v582 (32px) + h3 16/700 cream. req user 2026-06-14:
+   samakan kolom ikon & judul (ukuran/font/warna) dgn kolom lain. */
+.hsv-head { display: flex; align-items: center; }
+.hsv-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.01em; text-transform: none; }
+.hsv-head .sec-icon-v582 { vertical-align: 0; }
+/* Konten kartu (di bawah header) — baris: thumbnail kiri + info kanan */
+.hs-content { display: flex; gap: 12px; }
+.hs-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .hs-thumb {
   position: relative;
   flex-shrink: 0;
@@ -61031,7 +61041,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* Slot kosong — SIMETRIS dgn kartu berisi (row: placeholder ikon kiri + konten
    kanan), bukan lagi kolom berantakan. req user 2026-06-14. */
 .hs-card.hs-card-empty { border-style: dashed; border-color: rgba(232, 216, 196, .18); }
-.hs-card-empty .hs-body { justify-content: center; }
+.hs-card-empty .hs-info { justify-content: center; }
 /* Placeholder ikon (ganti thumbnail) — ukuran sama dgn thumbnail biar sejajar */
 .hs-thumb-ph { display: grid; place-items: center; color: rgba(232, 216, 196, .5); }
 .hs-thumb-ph svg { width: 30px; height: 30px; }
@@ -61087,16 +61097,17 @@ section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 20px !imp
 /* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
 section.view[data-view="home"] #homeCreatorLevel h3,
 section.view[data-view="home"] .home-achievements h3,
-section.view[data-view="home"] #homeRankingSection h3 { font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em; }
+section.view[data-view="home"] #homeRankingSection h3,
+section.view[data-view="home"] #homeSorotan .hsv-head h3 { font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em; text-transform: none !important; }
 /* SUBJUDUL kartu — 12.5/500 */
 section.view[data-view="home"] #homeCreatorLevel .hlv-sub,
 section.view[data-view="home"] .home-achievements .ha-sub,
 section.view[data-view="home"] #homeRankingSection small { font-size: 12.5px !important; font-weight: 500 !important; }
 /* JUDUL badge pencapaian — 13.5/700 */
 section.view[data-view="home"] .ha-badge-text strong { font-size: 13.5px !important; font-weight: 700 !important; }
-/* JUDUL VIDEO (Sorotan) — 16/700 (kartu lapang, jangan kekecilan) */
-section.view[data-view="home"] #homeSorotan .hs-title,
-section.view[data-view="home"] #homeSorotan .hs-card-empty strong { font-size: 16px !important; font-weight: 700 !important; }
+/* JUDUL video (konten kartu, di bawah header h3) — 14.5/600, satu tingkat di
+   bawah judul kartu (h3) supaya hirarki jelas tapi tetap terbaca */
+section.view[data-view="home"] #homeSorotan .hs-title { font-size: 14.5px !important; font-weight: 600 !important; }
 /* DESKRIPSI badge pencapaian — 12/500 */
 section.view[data-view="home"] .ha-badge-text small { font-size: 12px !important; font-weight: 500 !important; }
 /* META video (stats / persen / empty desc) — 12.5/500 */

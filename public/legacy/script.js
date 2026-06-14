@@ -34545,11 +34545,13 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
     : '<div class="hs-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
       + '</span><span>' + cmt + fmt(Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0)) + '</span></div>';
   return '<div class="hs-card" data-vid="' + v.id + '" role="button" tabindex="0">'
-    + '<div class="hs-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
-      + (v.duration ? '<span class="hs-dur">' + escapeHtml(v.duration) + '</span>' : '')
-      + (hasProg ? '<div class="hs-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
-    + '<div class="hs-body"><span class="hs-cap">' + (capIco || "") + '<span>' + escapeHtml(cap) + '</span></span>'
-      + '<h4 class="hs-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
+    + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
+    + '<div class="hs-content">'
+      + '<div class="hs-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+        + (v.duration ? '<span class="hs-dur">' + escapeHtml(v.duration) + '</span>' : '')
+        + (hasProg ? '<div class="hs-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
+      + '<div class="hs-info"><h4 class="hs-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
+    + '</div>'
   + '</div>';
 }
 // Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon di kiri + konten kanan
@@ -34557,12 +34559,14 @@ function _homeVideoSlotHTML(v, cap, progress, capIco) {
 // berantakan, harus ada ikon & judul jelas.
 function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco) {
   return '<div class="hs-card hs-card-empty">'
-    + '<div class="hs-thumb hs-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
-    + '<div class="hs-body">'
-      + '<span class="hs-cap">' + (capIco || "") + '<span>' + escapeHtml(cap) + '</span></span>'
-      + '<h4 class="hs-title">' + escapeHtml(title) + '</h4>'
-      + '<small class="hs-empty-sub">' + escapeHtml(sub) + '</small>'
-      + '<button type="button" class="btn primary sm hs-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+    + '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span><h3>' + escapeHtml(cap) + '</h3></div>'
+    + '<div class="hs-content">'
+      + '<div class="hs-thumb hs-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
+      + '<div class="hs-info">'
+        + '<h4 class="hs-title">' + escapeHtml(title) + '</h4>'
+        + '<small class="hs-empty-sub">' + escapeHtml(sub) + '</small>'
+        + '<button type="button" class="btn primary sm hs-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+      + '</div>'
     + '</div>'
   + '</div>';
 }
