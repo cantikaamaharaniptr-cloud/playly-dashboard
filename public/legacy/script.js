@@ -34632,39 +34632,25 @@ function renderHomeAchievements() {
   const countEl = document.getElementById("haCount");
   if (countEl) countEl.textContent = `${unlocked}/${ACH.length} ter-unlock`;
 
-  // Dorongan pencapaian BERIKUTNYA (req user 2026-06-14): tunjukkan target
-  // terdekat yg belum terbuka → ada arah jelas, bukan cuma grid terkunci.
-  // Pilih yg progresnya paling dekat; seri → sisa paling sedikit.
-  const locked = ACH.filter(a => !a.ok);
-  let nudge = document.getElementById("haNudge");
-  if (!nudge) {
-    nudge = document.createElement("div");
-    nudge.id = "haNudge";
-    nudge.className = "ha-nudge";
-    grid.parentNode.insertBefore(nudge, grid);
-  }
-  if (locked.length) {
-    const next = locked.slice().sort((a, b) =>
-      (b.cur / b.target) - (a.cur / a.target) || (a.target - a.cur) - (b.target - b.cur))[0];
-    const remaining = Math.max(0, next.target - next.cur);
-    nudge.innerHTML = '<span class="ha-nudge-ico">' + next.ico + '</span>'
-      + '<span class="ha-nudge-txt"><b>' + remaining.toLocaleString("id-ID") + ' ' + next.unit
-      + '</b> lagi untuk membuka <b>' + escapeHtml(next.name) + '</b></span>';
-    nudge.style.display = "";
-  } else {
-    nudge.innerHTML = '<span class="ha-nudge-ico">' + IC_TROPHY + '</span>'
-      + '<span class="ha-nudge-txt">Semua pencapaian terbuka — luar biasa! 🎉</span>';
-    nudge.style.display = "";
-  }
-
-  grid.innerHTML = ACH.map(a => `
-    <div class="ha-badge ${a.ok ? "unlocked" : "locked"}">
-      <div class="ha-badge-ico">${a.ok ? a.ico : IC_LOCK}</div>
-      <div class="ha-badge-text">
-        <strong>${escapeHtml(a.name)}</strong>
-        <small>${escapeHtml(a.desc)}</small>
-      </div>
-    </div>`).join("");
+  // Progres per-pencapaian terkunci (req user 2026-06-14): tiap badge yg belum
+  // terbuka menampilkan bar progres + "cur/target" → kelihatan seberapa dekat,
+  // bukan sekadar terkunci. (Nudge baris tunggal dihapus krn mirip XP Level.)
+  // Buang sisa nudge dari versi sebelumnya kalau ada.
+  document.getElementById("haNudge")?.remove();
+  grid.innerHTML = ACH.map(a => {
+    const pct = a.target > 0 ? Math.min(100, Math.round((a.cur / a.target) * 100)) : 0;
+    const prog = a.ok ? "" :
+      '<div class="ha-badge-prog">'
+        + '<div class="ha-badge-bar"><i style="width:' + pct + '%"></i></div>'
+        + '<span class="ha-badge-frac">' + a.cur.toLocaleString("id-ID") + '/' + a.target.toLocaleString("id-ID") + '</span>'
+      + '</div>';
+    return '<div class="ha-badge ' + (a.ok ? "unlocked" : "locked") + '">'
+      + '<div class="ha-badge-ico">' + (a.ok ? a.ico : IC_LOCK) + '</div>'
+      + '<div class="ha-badge-text"><strong>' + escapeHtml(a.name) + '</strong>'
+        + '<small>' + escapeHtml(a.desc) + '</small>' + prog
+      + '</div>'
+    + '</div>';
+  }).join("");
 }
 
 // Wire up category tab clicks

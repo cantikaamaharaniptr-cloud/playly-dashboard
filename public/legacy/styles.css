@@ -60915,29 +60915,33 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
-/* Dorongan pencapaian berikutnya (req user 2026-06-14) — 1 baris, di atas grid. */
-.ha-nudge {
+/* Progres per-pencapaian terkunci (req user 2026-06-14): bar + cur/target. */
+.ha-badge-prog {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 13px;
-  margin-bottom: 12px;
-  border-radius: 11px;
-  background: var(--primary-soft);
-  border: 1px solid rgba(109, 41, 50, .3);
-  font-size: 12.5px;
-  color: var(--text);
+  gap: 6px;
+  margin-top: 6px;
 }
-.ha-nudge-ico {
+.ha-badge-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 216, 196, .14);
+  overflow: hidden;
+}
+.ha-badge-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+.ha-badge-frac {
   flex-shrink: 0;
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  border-radius: 8px;
-  background: rgba(232, 216, 196, .12);
-  color: #e8d8c4;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
 }
-.ha-nudge-ico svg { width: 16px; height: 16px; }
-.ha-nudge-txt b { font-weight: 700; color: #e8d8c4; }
 
 .ha-grid {
   display: grid;
@@ -60962,7 +60966,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   border-color: rgba(232, 216, 196, .22);
 }
 .ha-badge.unlocked:hover { transform: translateY(-2px); }
-.ha-badge.locked { opacity: .55; }
+.ha-badge.locked { opacity: .72; }
 .ha-badge-ico {
   width: 42px; height: 42px;
   flex-shrink: 0;
