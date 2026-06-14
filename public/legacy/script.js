@@ -34837,6 +34837,40 @@ function renderHomeAchievements() {
       + '</div>'
     + '</div>';
   }).join("");
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(_syncAchHeight);
+  else _syncAchHeight();
+}
+// Samakan TINGGI kartu Pencapaian dgn Level Kreator (req user 2026-06-14): kartu
+// Pencapaian lebih tinggi (8 badge) -> grid badge dibatasi tinggi = Level Kreator
+// + scroll, supaya 2 kartu sejajar TANPA ruang kosong di Level Kreator. Hanya
+// saat layout 2 kolom (≥981px); di layar sempit (stack) di-reset.
+function _syncAchHeight() {
+  const lvl = document.getElementById("homeCreatorLevel");
+  const ach = document.querySelector(".home-achievements");
+  const grid = document.getElementById("homeAchievementsGrid");
+  if (!lvl || !ach || !grid) return;
+  grid.style.maxHeight = "";
+  grid.style.overflowY = "";
+  grid.style.overflowX = "";
+  try { if (window.matchMedia("(max-width: 980px)").matches) return; } catch {}
+  const target = lvl.offsetHeight;
+  if (!target) return;
+  const chrome = ach.offsetHeight - grid.offsetHeight; // header + padding kartu
+  const gridMax = target - chrome;
+  if (gridMax > 80 && ach.offsetHeight > target + 8) {
+    grid.style.maxHeight = gridMax + "px";
+    // overflow-x hidden EKSPLISIT: kalau hanya overflow-y di-set, browser hitung
+    // overflow-x jadi auto (spec) -> kolom ke-4 badge bisa keclip.
+    grid.style.overflowX = "hidden";
+    grid.style.overflowY = "auto";
+  }
+}
+let __achSyncTO = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", () => {
+    if (__achSyncTO) clearTimeout(__achSyncTO);
+    __achSyncTO = setTimeout(_syncAchHeight, 150);
+  });
 }
 
 // Wire up category tab clicks

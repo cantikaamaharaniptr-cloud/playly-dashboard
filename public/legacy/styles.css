@@ -61132,6 +61132,13 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
+/* Saat tinggi dibatasi agar sejajar Level Kreator (via _syncAchHeight), grid
+   bisa scroll — scrollbar tipis biar rapi. req user 2026-06-14. */
+#homeAchievementsGrid { scrollbar-width: thin; scrollbar-color: rgba(232,216,196,.25) transparent; }
+#homeAchievementsGrid[style*="overflow"] { padding-right: 6px; }
+#homeAchievementsGrid::-webkit-scrollbar { width: 7px; }
+#homeAchievementsGrid::-webkit-scrollbar-thumb { background: rgba(232,216,196,.22); border-radius: 999px; }
+#homeAchievementsGrid::-webkit-scrollbar-thumb:hover { background: rgba(232,216,196,.35); }
 @media (max-width: 900px) { .ha-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .ha-grid { grid-template-columns: 1fr; } }
 .ha-badge {
