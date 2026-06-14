@@ -48835,26 +48835,41 @@ const NOTIF_VIEW_BY_TYPE = {
   "admin-email":       "messages",
   "message":           "messages",
   "system":            "messages",
-  // Status premium (bayar disetujui/ditolak/kode dikirim) → halaman Wawasan
-  // Premium (hub premium). Kalau sudah premium tampil insight; kalau belum,
-  // halaman itu sendiri yang munculkan ajakan upgrade. (req user 2026-06-14:
-  // jangan ke Pengaturan — kurang tepat utk notif pembayaran.)
+  // Status premium → halaman Wawasan Premium (hub premium). Kalau sudah premium
+  // tampil insight; kalau belum, halaman itu munculkan ajakan upgrade.
+  // (premium-rejected DITANGANI di NOTIF_ACTION_BY_TYPE karena buka modal.)
+  // req user 2026-06-14.
   "premium-approved":  "premium-insights",
-  "premium-rejected":  "premium-insights",
   "premium-code-sent": "premium-insights",
+  // Tier premium dicabut admin → Wawasan Premium (di sana ada CTA upgrade lagi).
+  "tier-downgrade":    "premium-insights",
+  // Update status tiket support → halaman Pesan.
+  "ticket-status":     "messages",
   // Video kena takedown admin → halaman Video Saya. PENTING: takedown punya
   // videoId tapi videonya sudah dihapus/dinonaktifkan, jadi JANGAN buka player
   // (akan kosong/error). Karena itu type-map dicek SEBELUM videoId.
   "video-takedown":    "videos",
 };
+// Sebagian notif lebih tepat buka MODAL (bukan pindah halaman) — req user
+// 2026-06-14: pembayaran ditolak → buka modal upgrade (plan picker) utk bayar
+// ulang langsung. Dicek paling awal di handler.
+const NOTIF_ACTION_BY_TYPE = {
+  "premium-rejected": () => {
+    if (typeof openPlanPicker === "function") openPlanPicker({ context: "upgrade" });
+    else if (typeof switchView === "function") switchView("premium-insights");
+  },
+};
 function handleNotificationClick(n) {
   if (!n) return;
   const closePanel = () => $("#notifPanel")?.classList.remove("open");
-  // 1) Jenis dgn halaman fitur khusus → langsung ke view-nya (dicek sebelum
+  // 1) Jenis yg buka MODAL (pembayaran ditolak/kode) → jalankan aksinya.
+  const action = NOTIF_ACTION_BY_TYPE[n.type];
+  if (typeof action === "function") { closePanel(); action(); return; }
+  // 2) Jenis dgn halaman fitur khusus → langsung ke view-nya (dicek sebelum
   //    videoId supaya takedown tidak nyoba buka video yg sudah hilang).
   const targetView = NOTIF_VIEW_BY_TYPE[n.type];
   if (targetView) { closePanel(); switchView(targetView); return; }
-  // 2) Terkait video tertentu (like/komentar/share) → buka player video itu.
+  // 3) Terkait video tertentu (like/komentar/share) → buka player video itu.
   if (n.videoId) { closePanel(); openPlayer(+n.videoId); return; }
   // 3) Notif sosial (follow/like/comment) → profil pengirim. Tapi kalau
   //    pengirimnya admin (tak punya profil publik) → arahkan ke Pesan, bukan
