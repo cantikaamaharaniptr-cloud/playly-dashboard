@@ -60674,12 +60674,12 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex-direction: column;
   gap: 16px;
 }
-/* req user 2026-06-14: kedua kartu (Level Kreator & Pencapaian) HARUS sejajar &
-   seukuran. flex:1 → kartu mengisi penuh tinggi kolom (kolom sudah sama tinggi
-   via .home-2col align-items:stretch) shg kedua kartu rata tinggi. */
+/* req user 2026-06-14 (revisi): kartu COMPACT (tinggi = konten), JANGAN ada ruang
+   kosong di bawah (mis. Level Kreator yg lebih pendek dari Pencapaian). flex:1
+   sebelumnya bikin kartu pendek melar isi tinggi kolom -> ada void. Balik 0 0 auto. */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
