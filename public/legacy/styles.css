@@ -61628,22 +61628,25 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   padding: 18px 22px;
 }
 .hqs-minimal .hqs-icon-box {
-  display: grid;             /* tampilkan lagi (di v35 di-hide) */
+  display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   border-radius: 11px;
   font-size: 18px;
   flex-shrink: 0;
-  color: var(--text);                /* ikon SVG minimalis monokrom (per req 2026-05-16) */
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  transition: background .2s var(--ease, ease), transform .2s var(--ease, ease);
+  /* req user 2026-06-14: samakan kotak ikon statistik dgn ikon header section
+     lain (.sec-icon-v582) → wine gradient + cream + inset shadow. */
+  color: #F5E3C0;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
+  border: 1px solid transparent;
+  box-shadow: 0 4px 12px rgba(109,41,50,.32), 0 0 0 1px rgba(190,151,82,.18) inset, 0 1px 0 rgba(255,255,255,.06) inset;
+  transition: transform .2s var(--ease, ease), box-shadow .2s var(--ease, ease);
 }
 .hqs-minimal .hqs-icon-box svg { width: 19px; height: 19px; }
 .hqs-minimal .hqs-card:hover .hqs-icon-box {
-  background: var(--primary-soft, rgba(109,41,50,.18));
   transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(109,41,50,.42), 0 0 0 1px rgba(190,151,82,.24) inset, 0 1px 0 rgba(255,255,255,.08) inset;
 }
 /* Chart DIKEMBALIKAN (request user 2026-05-17): bar tren + persen di
    sisi KANAN kartu. Warna disamakan dgn FONT TEXT BIASA (var(--text)
