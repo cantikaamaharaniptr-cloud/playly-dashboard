@@ -49014,6 +49014,10 @@ function renderNotifPage() {
   const list = document.getElementById("notifPageList");
   if (!list) return;
   const all = Array.isArray(state?.notifications) ? state.notifications : [];
+  // "Tandai semua dibaca" hanya muncul kalau ADA notif belum dibaca (req user
+  // 2026-06-14: kalau semua sudah dibaca, tombol tak ada gunanya).
+  const _markAll = document.getElementById("notifPageMarkAllRead");
+  if (_markAll) _markAll.style.display = all.some(n => n.unread) ? "" : "none";
   const filtered = all.filter(n => _matchNotifFilter(n, notifPageState.filter));
   const slice = filtered.slice(0, notifPageState.limit);
   if (!slice.length) {
