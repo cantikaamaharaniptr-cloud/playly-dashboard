@@ -2186,6 +2186,7 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -31438,6 +31439,7 @@ function switchView(name, { fromNav = false } = {}) {
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -34603,9 +34605,6 @@ function _renderHomeSorotanVideo() {
   const homeView = document.querySelector('section.view[data-view="home"]');
   const qs = document.getElementById("homeQuickStats");
   if (!homeView || !qs) return;
-  // Bersihkan section "Lanjut Tonton" terpisah dari versi sebelumnya (sudah digabung).
-  document.getElementById("homeLanjutDivider")?.remove();
-  document.getElementById("homeLanjut")?.remove();
   let divider = document.getElementById("homeSorotanDivider");
   if (!divider) {
     divider = document.createElement("div");
@@ -34632,19 +34631,8 @@ function _renderHomeSorotanVideo() {
   const mid = topLike
     ? _homeVideoSlotHTML(topLike, "Paling Disukai", null, HS_IC_HEART, "Paling banyak disukai")
     : _homeVideoSlotEmpty("Paling Disukai", "Belum ada video", "Upload untuk lihat video terfavoritmu.", "upload", "Unggah Video", HS_IC_HEART, HS_IC_FILM, "Paling banyak disukai");
-  // KANAN: Lanjut Tonton (continue watching terbaru)
-  const hist = Array.isArray(state?.history) ? state.history : [];
-  let contV = null, contH = null;
-  for (const h of hist) {
-    if ((Number(h.progress) || 0) < 100) {
-      const v = (typeof findVideo === "function") ? findVideo(h.videoId) : null;
-      if (v) { contV = v; contH = h; break; }
-    }
-  }
-  const right = contV
-    ? _homeVideoSlotHTML(contV, "Lanjut Tonton", Number(contH.progress) || 0, HS_IC_PLAY, "Lanjutkan tontonanmu")
-    : _homeVideoSlotEmpty("Lanjut Tonton", "Belum ada yang ditonton", "Video yang belum selesai muncul di sini.", "discover", "Jelajahi", HS_IC_PLAY, HS_IC_PLAY, "Lanjutkan tontonanmu");
-  wrap.innerHTML = left + mid + right;
+  // Lanjut Tonton dipindah ke section sendiri di bawah (_renderHomeLanjutTonton).
+  wrap.innerHTML = left + mid;
 }
 // Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
 document.addEventListener("click", (e) => {
@@ -34682,7 +34670,7 @@ function _renderHomeLanjutTonton() {
     divider = document.createElement("div");
     divider.id = "homeLanjutDivider";
     divider.className = "admin-section-divider home-divider-lanjut";
-    divider.innerHTML = '<span data-no-i18n>LANJUT TONTON</span>';
+    divider.innerHTML = '<span data-no-i18n>Lanjutkan Menonton</span>';
     anchor.insertAdjacentElement("afterend", divider);
   }
   let wrap = document.getElementById("homeLanjut");
