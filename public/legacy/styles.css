@@ -61056,7 +61056,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lt-body { padding: 9px 10px 11px; }
 .lt-title { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
-.lt-empty { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 14px; border: 1px dashed rgba(232, 216, 196, .18); }
+/* Empty state isi LEBAR PENUH grid — kalau tidak, ke-squish dlm 1 kolom 190px
+   (teks pecah 1 kata per baris, ikon/tombol numpuk). req user 2026-06-14. */
+.lt-empty { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 14px; border: 1px dashed rgba(232, 216, 196, .18); }
 .lt-empty-ico { flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; background: rgba(232, 216, 196, .1); color: var(--text); }
 .lt-empty-ico svg { width: 22px; height: 22px; }
 .lt-empty-txt { flex: 1; min-width: 0; }
