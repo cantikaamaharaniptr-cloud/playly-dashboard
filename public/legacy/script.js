@@ -34713,15 +34713,26 @@ function _renderHomeLanjutTonton() {
   }
   const oldNote = document.getElementById("homeLanjutNote");
   if (oldNote) oldNote.remove();
-  if (!cards.length) {
-    // Kosong: SEMBUNYIKAN section + divider (req user 2026-06-15: skeleton/label
-    // di atas tak disukai). Muncul otomatis setelah ada riwayat tonton.
-    if (divider) divider.style.display = "none";
-    if (wrap) { wrap.style.display = "none"; wrap.innerHTML = ""; }
-    return;
-  }
   if (divider) divider.style.display = "";
   if (wrap) wrap.style.display = "";
+  if (!cards.length) {
+    // Kosong: tetap tampil skeleton + teks empty di TENGAH grid (req user
+    // 2026-06-15: teks jangan di atas; dipindah ke tengah).
+    let html = '';
+    for (let i = 0; i < 4; i++) {
+      html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
+        + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
+        + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
+      + '</div>';
+    }
+    wrap.innerHTML = html;
+    const note = document.createElement("div");
+    note.id = "homeLanjutNote";
+    note.className = "lt-empty-center";
+    note.textContent = "Belum ada video yang ditonton";
+    wrap.appendChild(note);   // di TENGAH grid (CSS absolute center)
+    return;
+  }
   wrap.innerHTML = cards.join("");
 }
 // Klik kartu Lanjut Tonton → resume player.
