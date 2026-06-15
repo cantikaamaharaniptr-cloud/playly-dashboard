@@ -61199,19 +61199,22 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    req user 2026-06-15. */
 .home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 /* Empty state RINGKAS: satu bar full-width (req user 2026-06-15: 4 kartu besar
-   terkesan kosong). Ikon + pesan + link, compact. */
+   terkesan kosong). Konten DI TENGAH sbg satu grup (req user: perbaiki bentuk),
+   tidak melebar dgn celah kosong di tengah. */
 .lt-card.lt-empty-bar {
   grid-column: 1 / -1;
   cursor: default;
-  display: flex; align-items: center; gap: 12px;
-  padding: 15px 20px;
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 8px;
+  padding: 16px 20px;
   border-style: dashed;
   border-color: var(--border-strong, rgba(232, 216, 196, .14));
   background: rgba(232, 216, 196, .02);
 }
-.lt-empty-bar > svg { width: 19px; height: 19px; color: var(--muted); flex-shrink: 0; }
-.lt-empty-bar-txt { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--cream, #E8D8C4); }
-.lt-empty-link { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
+.lt-empty-bar > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+.lt-empty-bar-txt { font-size: 13.5px; font-weight: 600; color: var(--cream, #E8D8C4); }
+.lt-empty-link { font-size: 13px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
+.lt-empty-link::before { content: "·"; margin-right: 8px; color: var(--muted); font-weight: 700; }
 .lt-empty-link:hover { text-decoration: underline; }
 .lt-card {
   cursor: pointer;
