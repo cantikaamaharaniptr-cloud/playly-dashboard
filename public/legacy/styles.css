@@ -4210,6 +4210,8 @@ body[data-theme="light"] .trending-retry-btn:hover {
 #home-hero .hero-content { align-items: flex-start !important; }
 #home-hero .hero-clock.user { flex: 0 1 580px; max-width: 600px; min-width: 380px; padding: 16px 24px !important; }
 #home-hero .hero-profile-card { gap: 13px; }
+/* bio dipindah ke dalam .hpc-id (bawah @username) → beri jarak kecil dari username */
+#home-hero .hpc-id .hpc-bio { margin-top: 6px; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua

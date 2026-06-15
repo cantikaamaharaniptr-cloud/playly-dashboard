@@ -32899,6 +32899,16 @@ function _patchHomeProfileCard() {
       _top.appendChild(_tier);
     }
   } catch {}
+  // Pindah bio ke dalam .hpc-id (bawah @username) → hapus 1 baris terpisah shg
+  // kartu profil lebih pendek & PERSIS sejajar dgn hero, isi tetap rapi
+  // (req user 2026-06-15).
+  try {
+    const _id = document.querySelector(".hpc-id");
+    const _bio = document.getElementById("hpcBio");
+    if (_id && _bio && _bio.parentElement !== _id) {
+      _id.appendChild(_bio);
+    }
+  } catch {}
   const btn = document.getElementById("hpcUploadBtn");
   if (!btn || btn.dataset.repurposed === "1") return;
   btn.dataset.repurposed = "1";
