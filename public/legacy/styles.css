@@ -61194,12 +61194,23 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* Preview kosong: catatan + kartu placeholder skeleton (req user 2026-06-15:
    preview ada tapi kosong sesuai data). On-palette (krem/neutral samar). */
 .lt-ph-note {
-  margin: 0 0 10px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 12px;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--text-2, var(--muted));
   line-height: 1.45;
 }
-.lt-ph-note a { color: var(--cream, #E8D8C4); font-weight: 600; cursor: pointer; }
+/* pill "Pratinjau" — penanda jelas bhw kartu di bawah cuma contoh/kosong */
+.lt-ph-tag {
+  flex-shrink: 0;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px;
+  color: var(--cream, #E8D8C4);
+  background: var(--surface-2);
+  border: 1px solid rgba(232, 216, 196, .22);
+}
+.lt-ph-note-txt { min-width: 0; }
+.lt-ph-note a { color: var(--cream, #E8D8C4); font-weight: 600; cursor: pointer; white-space: nowrap; }
 .lt-ph-note a:hover { text-decoration: underline; }
 .lt-card-ph {
   cursor: default;

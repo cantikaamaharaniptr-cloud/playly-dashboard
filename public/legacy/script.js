@@ -34731,14 +34731,17 @@ function _renderHomeLanjutTonton() {
       + '</div>';
     }
     wrap.innerHTML = ph;
-    if (!oldNote) {
-      const noteEl = document.createElement("div");
-      noteEl.id = "homeLanjutNote";
-      noteEl.className = "lt-ph-note";
-      noteEl.innerHTML = 'Belum ada yang ditonton — video yang belum selesai kamu tonton akan muncul di sini. '
-        + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a>';
-      wrap.insertAdjacentElement("beforebegin", noteEl);
-    }
+    // Catatan PREVIEW (req user 2026-06-15: kartu kosong membingungkan → jelaskan
+    // bhw ini cuma contoh/pratinjau). Selalu refresh supaya pasti tampil.
+    if (oldNote) oldNote.remove();
+    const noteEl = document.createElement("div");
+    noteEl.id = "homeLanjutNote";
+    noteEl.className = "lt-ph-note";
+    noteEl.innerHTML = '<span class="lt-ph-tag">Pratinjau</span>'
+      + '<span class="lt-ph-note-txt">Ini cuma contoh tampilan dan masih kosong. '
+      + 'Video yang belum selesai kamu tonton akan muncul di sini. '
+      + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a></span>';
+    wrap.insertAdjacentElement("beforebegin", noteEl);
     return;
   }
   if (oldNote) oldNote.remove();
