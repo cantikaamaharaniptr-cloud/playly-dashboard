@@ -61217,15 +61217,18 @@ section.view[data-view="home"] #homeRankingSection small,
 section.view[data-view="home"] #homeSorotan .hsv-sub { font-size: 12.5px !important; font-weight: 500 !important; }
 /* JUDUL badge pencapaian — 13.5/700 */
 section.view[data-view="home"] .ha-badge-text strong { font-size: 13.5px !important; font-weight: 700 !important; }
-/* JUDUL video (konten kartu, di bawah header h3) — 15/700 */
-section.view[data-view="home"] #homeSorotan .hsv-title { font-size: 15px !important; font-weight: 700 !important; }
+/* Skala font kartu Sorotan (req user 2026-06-15: rapikan ukuran teks).
+   Hirarki: header kategori 15/700 > judul video 14.5/600 > meta 12/500. */
+section.view[data-view="home"] #homeSorotan .hsv-head h3 { font-size: 15px !important; font-weight: 700 !important; }
+section.view[data-view="home"] #homeSorotan .hsv-sub { font-size: 12px !important; font-weight: 500 !important; }
+section.view[data-view="home"] #homeSorotan .hsv-title { font-size: 14.5px !important; font-weight: 600 !important; }
 /* DESKRIPSI badge pencapaian — 12/500 */
 section.view[data-view="home"] .ha-badge-text small { font-size: 12px !important; font-weight: 500 !important; }
-/* META video (kreator / stats / persen / empty desc) — 12.5/500 */
+/* META video (kreator / stats / persen / empty desc) — 12/500 */
 section.view[data-view="home"] #homeSorotan .hsv-creator,
 section.view[data-view="home"] #homeSorotan .hsv-stats span,
 section.view[data-view="home"] #homeSorotan .hsv-watch,
-section.view[data-view="home"] #homeSorotan .hsv-empty-sub { font-size: 12.5px !important; font-weight: 500 !important; }
+section.view[data-view="home"] #homeSorotan .hsv-empty-sub { font-size: 12px !important; font-weight: 500 !important; }
 section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; font-weight: 700 !important; }
 
 .ha-grid {
