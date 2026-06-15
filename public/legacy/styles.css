@@ -4398,8 +4398,8 @@ body[data-theme="light"] .trending-retry-btn:hover {
 /* @username (per request v57) — di bawah nama, di atas badge tier */
 .hpc-username {
   display: block;
-  margin-top: 1px;
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
@@ -4409,35 +4409,44 @@ body[data-theme="light"] .trending-retry-btn:hover {
 .hpc-id strong {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text);
   letter-spacing: -.01em;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hpc-id small {
-  display: inline-block;
-  margin-top: 3px;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 7px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: .06em;
+  letter-spacing: .05em;
   text-transform: uppercase;
-  padding: 2px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   /* Default (Free Plan) — neutral */
   color: var(--muted);
   background: var(--surface-2);
   border: 1px solid var(--border);
 }
-/* Premium → GOLD gradient (per request user 2026-05-15 v56) — sama dengan
-   badge premium di AI Assist / Subtitle (.upf-premium-pill). */
+/* Premium → gold LEMBUT (req user 2026-06-15: emas solid kemarin terlalu
+   mencolok). Tint emas tipis + teks/border emas + bintang kecil, bukan blok
+   emas penuh. */
 .hpc-id small.hpc-tier-premium {
-  color: #2a1a02;
-  background: linear-gradient(135deg, #f0c878, #d4a64a);
-  border-color: transparent;
-  box-shadow: 0 2px 8px -2px rgba(212, 166, 74, .55);
+  color: #e3b566;
+  background: rgba(212, 166, 74, .13);
+  border: 1px solid rgba(212, 166, 74, .38);
+  box-shadow: none;
+}
+.hpc-id small.hpc-tier-premium::before {
+  content: "\2605"; /* ★ */
+  margin-right: 4px;
+  font-size: 9px;
+  line-height: 1;
 }
 .hpc-arrow {
   flex-shrink: 0;
