@@ -34720,15 +34720,10 @@ function _renderHomeLanjutTonton() {
   const oldNote = document.getElementById("homeLanjutNote");
   if (oldNote) oldNote.remove();   // sisa note versi panel lama dibuang
   if (!cards.length) {
-    // EMPTY: keterangan pratinjau JADI ISI kartu pertama (req user 2026-06-15:
-    // di DALAM kolom, bukan baris di atas / panel mengambang). Sisanya 3 kartu
-    // skeleton sbg contoh tampilan.
-    // req user 2026-06-15: sisakan tombol "Jelajahi video" saja (pill & teks
-    // dihapus). data-jump="discover" → switchView("discover") (handler global).
-    let html = '<div class="lt-card lt-card-info">'
-      + '<a class="lt-info-cta" data-jump="discover" role="button" tabindex="0">Jelajahi video</a>'
-    + '</div>';
-    for (let i = 0; i < 3; i++) {
+    // EMPTY: 4 kartu skeleton sbg contoh tampilan, kosong sesuai data.
+    // req user 2026-06-15: info card "Jelajahi video" dihapus.
+    let html = '';
+    for (let i = 0; i < 4; i++) {
       html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
         + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
         + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
