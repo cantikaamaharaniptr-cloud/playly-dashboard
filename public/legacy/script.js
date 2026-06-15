@@ -34723,10 +34723,9 @@ function _renderHomeLanjutTonton() {
     // EMPTY: keterangan pratinjau JADI ISI kartu pertama (req user 2026-06-15:
     // di DALAM kolom, bukan baris di atas / panel mengambang). Sisanya 3 kartu
     // skeleton sbg contoh tampilan.
+    // req user 2026-06-15: sisakan tombol "Jelajahi video" saja (pill & teks
+    // dihapus). data-jump="discover" → switchView("discover") (handler global).
     let html = '<div class="lt-card lt-card-info">'
-      + '<span class="lt-ph-tag">Pratinjau</span>'
-      + '<p class="lt-info-txt">Ini cuma contoh tampilan dan masih kosong. '
-      + 'Video yang belum selesai kamu tonton akan muncul di sini.</p>'
       + '<a class="lt-info-cta" data-jump="discover" role="button" tabindex="0">Jelajahi video</a>'
     + '</div>';
     for (let i = 0; i < 3; i++) {
