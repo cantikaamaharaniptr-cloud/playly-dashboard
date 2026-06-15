@@ -32381,14 +32381,18 @@ function refreshHeroGreeting() {
     if (bioEl) {
       const bioTxt = (user.bio || ((typeof getPref === "function") ? getPref("bio", "") : "") || "").trim();
       if (bioTxt) {
-        bioEl.textContent = bioTxt;
+        // Tampilkan dgn ikon kutip kecil + teks miring → JELAS ini bio, bukan
+        // sekadar baris teks biasa (req user 2026-06-15).
+        bioEl.innerHTML = '<svg class="hpc-bio-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg><span>' + escapeHtml(bioTxt) + '</span>';
         bioEl.classList.remove("is-placeholder");
+        bioEl.classList.add("has-bio");
         bioEl.removeAttribute("data-jump");
       } else {
         // Placeholder bio sebagai chip "tambah" yg rapi (req user 2026-06-15:
         // tulisan "+ Tambah bio kamu" diperbaiki) — ikon pensil + teks.
         bioEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>Tambah bio kamu</span>';
         bioEl.classList.add("is-placeholder");
+        bioEl.classList.remove("has-bio");
         bioEl.setAttribute("data-jump", "profile");
         bioEl.setAttribute("title", "Tambah bio profilmu");
       }

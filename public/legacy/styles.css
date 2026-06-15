@@ -4596,6 +4596,21 @@ body[data-theme="light"] .trending-retry-btn:hover {
   overflow: hidden;
 }
 .hpc-bio:empty { display: none; }
+/* Bio terisi (req user 2026-06-15: bikin jelas ini BIO) — ikon kutip + teks miring */
+.hpc-bio.has-bio {
+  display: flex; align-items: flex-start; gap: 5px;
+  font-style: italic;
+  color: var(--text-2);
+  -webkit-line-clamp: none;
+}
+.hpc-bio.has-bio .hpc-bio-ico {
+  width: 13px; height: 13px; flex-shrink: 0; margin-top: 2px;
+  color: var(--muted); opacity: .9;
+}
+.hpc-bio.has-bio span {
+  min-width: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 /* Placeholder bio → chip "tambah" rapi dgn ikon pensil (req user 2026-06-15:
    tulisan + Tambah bio kamu diperbaiki). Bukan teks miring polos lagi. */
 .hpc-bio.is-placeholder {
