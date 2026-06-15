@@ -60904,7 +60904,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   font-size: 17px; font-weight: 800; color: var(--text);
   font-family: 'Inter', sans-serif; margin-bottom: 10px;
 }
-.hlv-xp { font-size: 12px; font-weight: 700; color: var(--primary, #d4a64a); }   /* teks dikembalikan ke asli (per request user 2026-05-16: hanya kolom yg diganti, teks jangan) */
+.hlv-xp { font-size: 12px; font-weight: 700; color: var(--cream, #E8D8C4); }   /* krem: wine (--primary) terlalu menyatu dgn tema gelap → tak terbaca (req user 2026-06-15) */
 .hlv-bar {
   height: 12px; border-radius: 999px; background: var(--surface-2);
   overflow: hidden; margin-bottom: 8px;
@@ -61322,9 +61322,11 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 }
 .ha-badge-ico svg { width: 16px; height: 16px; }
 .ha-badge.unlocked .ha-badge-ico {
-  background: var(--cream, #E8D8C4);
-  border-color: var(--cream, #E8D8C4);
-  color: #2a1216;          /* ikon gelap di atas krem solid → menonjol "sudah" */
+  /* wine solid + ikon krem = SAMA dgn ikon section (.sec-icon-v582) → on-theme,
+     tak lagi krem-putih mencolok di luar tema (req user 2026-06-15). */
+  background: var(--primary, #6D2932);
+  border-color: var(--primary, #6D2932);
+  color: var(--cream, #E8D8C4);
 }
 /* Status "✓ Tercapai" (badge yg sudah terbuka) — krem, sejajar slot progres. */
 .ha-badge-status {
