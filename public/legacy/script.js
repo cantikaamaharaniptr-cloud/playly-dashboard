@@ -34714,8 +34714,9 @@ function _renderHomeLanjutTonton() {
   const oldNote = document.getElementById("homeLanjutNote");
   if (oldNote) oldNote.remove();   // sisa note versi panel lama dibuang
   if (!cards.length) {
-    // EMPTY: 4 kartu skeleton sbg contoh tampilan, kosong sesuai data.
-    // req user 2026-06-15: info card "Jelajahi video" dihapus.
+    // EMPTY: label kecil + 4 kartu skeleton (req user 2026-06-15: kasih
+    // keterangan kecil 'Belum ada riwayat tonton' di atas skeleton biar tak
+    // membingungkan). info card "Jelajahi video" sebelumnya dihapus.
     let html = '';
     for (let i = 0; i < 4; i++) {
       html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
@@ -34724,6 +34725,11 @@ function _renderHomeLanjutTonton() {
       + '</div>';
     }
     wrap.innerHTML = html;
+    const note = document.createElement("div");
+    note.id = "homeLanjutNote";
+    note.className = "lt-empty-label";
+    note.textContent = "Belum ada riwayat tonton";
+    wrap.insertAdjacentElement("beforebegin", note);   // order:2 via CSS → di antara divider & grid
     return;
   }
   if (oldNote) oldNote.remove();

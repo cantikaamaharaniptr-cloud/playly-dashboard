@@ -61193,7 +61193,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-empty-btn { align-self: flex-start; }
 
 /* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
-#homeLanjutDivider, #homeLanjut { order: 2; }
+#homeLanjutDivider, #homeLanjutNote, #homeLanjut { order: 2; }
+/* label kecil saat Lanjutkan Menonton kosong (req user 2026-06-15) */
+.lt-empty-label { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
 /* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */
@@ -61218,27 +61220,6 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lt-body { padding: 9px 10px 11px; }
 .lt-title { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
-/* Empty state Lanjutkan Menonton (req user 2026-06-15): keterangan pratinjau JADI
-   ISI kartu pertama (di DALAM kolom, bukan baris di atas / panel mengambang).
-   Sisanya kartu skeleton sbg contoh tampilan. */
-.lt-card-info {
-  cursor: default;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; gap: 9px; padding: 16px 14px;
-  border-style: dashed;          /* senada baris preview */
-}
-/* pill "Pratinjau" — penanda jelas kartu ini contoh/kosong */
-.lt-ph-tag {
-  flex-shrink: 0;
-  font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
-  padding: 3px 9px; border-radius: 999px;
-  color: var(--cream, #E8D8C4);
-  background: var(--surface-2);
-  border: 1px solid rgba(232, 216, 196, .22);
-}
-.lt-info-txt { margin: 0; font-size: 12px; color: var(--text-2, var(--muted)); line-height: 1.5; }
-.lt-info-cta { font-size: 12px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
-.lt-info-cta:hover { text-decoration: underline; }
 .lt-card-ph {
   cursor: default;
   pointer-events: none;
