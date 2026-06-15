@@ -34574,17 +34574,19 @@ function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
   const meta = hasProg
     ? '<p class="hsv-watch">' + pct + '% selesai</p>'
     : stats;
-  // Baris kreator (mengisi info) + tombol play di kanan (mengisi sisi kanan yg
-  // tadinya kosong + perjelas kartu bisa diputar). req user 2026-06-15.
+  // Compact + tersusun (req user 2026-06-15): play jadi overlay di thumbnail
+  // (bukan tombol mengambang di kanan), dan baris meta (kreator + stats) dibuat
+  // space-between supaya STATS menempel ke kanan → tak ada ruang kosong.
+  const playOv = '<span class="hsv-playov" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
   return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
     + _hsvHead(capIco, cap, headSub)
     + '<div class="hsv-content">'
       + '<div class="hsv-thumb' + (v.thumb ? '' : ' hsv-thumb-ph') + '">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : HS_IC_FILM)
         + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
-        + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
+        + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + playOv + '</div>'
       + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
-        + '<p class="hsv-creator">@' + escapeHtml(v.creator || "—") + '</p>' + meta + '</div>'
-      + '<span class="hsv-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+        + '<div class="hsv-meta"><span class="hsv-creator">@' + escapeHtml(v.creator || "—") + '</span>' + meta + '</div>'
+      + '</div>'
     + '</div>'
   + '</div>';
 }
