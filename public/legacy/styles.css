@@ -61198,17 +61198,21 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */
 .home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-/* teks empty JADI ISI kartu pertama (req user 2026-06-15: teks di dalam kolom).
-   Gaya disamakan dgn kartu skeleton (dashed + bg samar) supaya 1 set menyatu. */
-.lt-card.lt-card-empty {
+/* Empty state RINGKAS: satu bar full-width (req user 2026-06-15: 4 kartu besar
+   terkesan kosong). Ikon + pesan + link, compact. */
+.lt-card.lt-empty-bar {
+  grid-column: 1 / -1;
   cursor: default;
-  display: flex; align-items: center; justify-content: center;
-  text-align: center; padding: 14px;
-  font-size: 14px; font-weight: 700; color: var(--cream, #E8D8C4);   /* lbh jelas, tak lagi tenggelam (req user 2026-06-15) */
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 20px;
   border-style: dashed;
   border-color: var(--border-strong, rgba(232, 216, 196, .14));
   background: rgba(232, 216, 196, .02);
 }
+.lt-empty-bar > svg { width: 19px; height: 19px; color: var(--muted); flex-shrink: 0; }
+.lt-empty-bar-txt { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--cream, #E8D8C4); }
+.lt-empty-link { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
+.lt-empty-link:hover { text-decoration: underline; }
 .lt-card {
   cursor: pointer;
   border-radius: 12px;

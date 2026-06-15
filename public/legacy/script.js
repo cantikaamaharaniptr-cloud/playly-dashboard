@@ -34716,16 +34716,14 @@ function _renderHomeLanjutTonton() {
   if (divider) divider.style.display = "";
   if (wrap) wrap.style.display = "";
   if (!cards.length) {
-    // Kosong: teks empty JADI ISI kartu pertama (req user 2026-06-15: teks di
-    // dalam kolom), sisanya 3 kartu skeleton.
-    let html = '<div class="lt-card lt-card-empty"><span>Belum ada video yang ditonton</span></div>';
-    for (let i = 0; i < 3; i++) {
-      html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
-        + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
-        + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
-      + '</div>';
-    }
-    wrap.innerHTML = html;
+    // Kosong: SATU bar ringkas full-width (req user 2026-06-15: 4 kartu besar
+    // terkesan kosong banget) — ikon riwayat + pesan + link Jelajahi.
+    const _ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>';
+    wrap.innerHTML = '<div class="lt-card lt-empty-bar">'
+      + _ico
+      + '<span class="lt-empty-bar-txt">Belum ada video yang ditonton</span>'
+      + '<a class="lt-empty-link" data-jump="discover" role="button" tabindex="0">Jelajahi video</a>'
+    + '</div>';
     return;
   }
   wrap.innerHTML = cards.join("");
