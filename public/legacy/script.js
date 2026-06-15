@@ -32381,9 +32381,9 @@ function refreshHeroGreeting() {
     if (bioEl) {
       const bioTxt = (user.bio || ((typeof getPref === "function") ? getPref("bio", "") : "") || "").trim();
       if (bioTxt) {
-        // Tampilkan dgn ikon kutip kecil + teks miring → JELAS ini bio, bukan
-        // sekadar baris teks biasa (req user 2026-06-15).
-        bioEl.innerHTML = '<svg class="hpc-bio-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg><span>' + escapeHtml(bioTxt) + '</span>';
+        // Bio terisi: teks MIRING dlm tanda kutip → jelas ini bio, rapi, &
+        // aman utk bio panjang (clamp 2 baris). req user 2026-06-15.
+        bioEl.textContent = "“" + bioTxt + "”";
         bioEl.classList.remove("is-placeholder");
         bioEl.classList.add("has-bio");
         bioEl.removeAttribute("data-jump");
