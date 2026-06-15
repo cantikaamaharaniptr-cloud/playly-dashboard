@@ -61201,10 +61201,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    per-komponen (sebagian rule lama lebih spesifik). */
 /* Judul SECTION (divider) — CAPSLOCK (req user 2026-06-14), 11.5/800 + spasi huruf */
 section.view[data-view="home"] .admin-section-divider span { font-size: 11.5px !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
-/* Label statistik — Title Case, 12.5/600 */
-section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12.5px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
-/* Angka KPI — diperbesar jadi 25/800 (req user 2026-06-15: perbesar angka). */
-section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 25px !important; font-weight: 800 !important; line-height: 1.1 !important; }
+/* Label statistik — Title Case, 12/600 */
+section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: .005em !important; }
+/* Angka KPI 22/800 + label 12/600 Title Case — skala harmonis (req user
+   2026-06-15: sesuaikan ukuran teks). */
+section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 22px !important; font-weight: 800 !important; line-height: 1.1 !important; }
 /* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
 section.view[data-view="home"] #homeCreatorLevel h3,
 section.view[data-view="home"] .home-achievements h3,
@@ -61718,7 +61719,9 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 .hqs-minimal .hqs-card {
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  justify-content: center;   /* req user 2026-06-15: konten ditengahkan biar
+                                kartu seimbang, sisi kanan tak terasa kosong. */
+  gap: 13px;
   padding: 18px 22px;
 }
 .hqs-minimal .hqs-icon-box {
@@ -61747,15 +61750,15 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
    / krem — auto-adapt light theme) menggantikan gold/merah, + efek
    GLOW bernapas (text-shadow persen + box-shadow bar + live-dot)
    supaya tetap terasa data real-time. */
+/* Tanpa sparkline, konten = angka + label saja → flex column ringkas yg bisa
+   ditengahkan bersama ikon (req user 2026-06-15). Badge tren (kalau ada) ikut
+   stack di bawah. */
 .hqs-minimal .hqs-content {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    "hqsv hqsc"
-    "hqsl hqsc";
-  align-items: center;
-  column-gap: 14px;
-  row-gap: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+  gap: 2px;
 }
 .hqs-minimal .hqs-value {
   grid-area: hqsv;
