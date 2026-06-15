@@ -66606,12 +66606,13 @@ body[data-role="admin"] .admin-kpi-stat .kpi-content small {
   font-size: 10.5px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
-  letter-spacing: .07em !important;
+  letter-spacing: .04em !important;
   color: #ADB5BD !important;
   -webkit-text-fill-color: #ADB5BD !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Label panjang (mis. "Pendapatan Bulan Ini") boleh turun 2 baris,
+     bukan kepotong "..." (req user 2026-06-15). */
+  white-space: normal;
+  line-height: 1.25;
 }
 /* Tren di KANAN, sejajar tengah (bukan di bawah angka) */
 body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
