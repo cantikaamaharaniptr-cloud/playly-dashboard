@@ -60741,13 +60741,13 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   gap: 16px;
 }
 /* req user 2026-06-14 (revisi lagi): kedua kartu SEJAJAR (rata tinggi) tanpa
-   kepotong. flex:1 → kartu pendek (Level Kreator) melar mengikuti yg tinggi
-   (Pencapaian); ruang lebih di Level Kreator diisi rapi dgn menempelkan chip
-   statistik (.hlv-break) ke bawah (lihat .home-level di bawah). Pencapaian yg
-   lebih tinggi tetap natural → tak ada badge kepotong. */
+   req user 2026-06-15 (revisi): JANGAN ada ruang kosong di Level Kreator. Kartu
+   = tinggi konten (flex 0 0 auto), tak melar → chip langsung di bawah konten,
+   tanpa jurang. (Konsekuensi: tinggi bisa beda dgn Pencapaian, tapi prioritas
+   user = no ruang kosong.) */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
@@ -60862,7 +60862,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
-.home-level .hlv-break { margin-top: auto; }
+.home-level .hlv-break { margin-top: 16px; }
 .hlv-head {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: 12px; margin-bottom: 16px;
@@ -60923,7 +60923,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   padding: 5px 10px; border-radius: 999px;
 }
 .hlv-chip svg { width: 13px; height: 13px; vertical-align: -2px; color: var(--text); }
-.hlv-chip b { color: var(--primary, #d4a64a); font-weight: 800; }   /* teks dikembalikan ke asli (hanya kolom yg diganti) */
+.hlv-chip b { color: var(--cream, #E8D8C4); font-weight: 800; }   /* angka chip: krem (req user 2026-06-15: wine kurang cocok) */
 @media (max-width: 560px) {
   .hlv-main { gap: 12px; }
   .hlv-badge { width: 62px; height: 62px; }
