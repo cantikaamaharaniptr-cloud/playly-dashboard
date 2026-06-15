@@ -32405,9 +32405,12 @@ function refreshHeroGreeting() {
         bioEl.classList.remove("is-placeholder");
         bioEl.removeAttribute("data-jump");
       } else {
-        bioEl.textContent = "+ Tambah bio kamu";
+        // Placeholder bio sebagai chip "tambah" yg rapi (req user 2026-06-15:
+        // tulisan "+ Tambah bio kamu" diperbaiki) — ikon pensil + teks.
+        bioEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>Tambah bio kamu</span>';
         bioEl.classList.add("is-placeholder");
         bioEl.setAttribute("data-jump", "profile");
+        bioEl.setAttribute("title", "Tambah bio profilmu");
       }
     }
   } catch {}

@@ -4377,8 +4377,8 @@ body[data-theme="light"] .trending-retry-btn:hover {
   gap: 12px;
 }
 .hpc-avatar {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   flex-shrink: 0;
   display: grid;
@@ -4534,9 +4534,27 @@ body[data-theme="light"] .trending-retry-btn:hover {
   overflow: hidden;
 }
 .hpc-bio:empty { display: none; }
+/* Placeholder bio → chip "tambah" rapi dgn ikon pensil (req user 2026-06-15:
+   tulisan + Tambah bio kamu diperbaiki). Bukan teks miring polos lagi. */
 .hpc-bio.is-placeholder {
+  display: inline-flex; align-items: center; gap: 6px;
+  width: fit-content;
+  margin-top: 1px;
+  padding: 4px 11px;
+  border: 1px dashed var(--border-strong, rgba(232, 216, 196, .28));
+  border-radius: 999px;
   color: var(--muted);
-  font-style: italic;
+  font-style: normal;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  -webkit-line-clamp: none;
+  transition: color .18s var(--ease, ease), border-color .18s var(--ease, ease), background .18s var(--ease, ease);
+}
+.hpc-bio.is-placeholder svg { width: 13px; height: 13px; flex-shrink: 0; }
+.hpc-bio.is-placeholder:hover {
+  color: var(--text);
+  border-color: var(--cream, #E8D8C4);
+  background: var(--surface-2);
 }
 
 /* --- Action buttons: Edit Profil + Bagikan (per request v56) --- */
@@ -4568,7 +4586,7 @@ body[data-theme="light"] .trending-retry-btn:hover {
 .hpc-act-btn.ghost {
   background: var(--surface-2);
   color: var(--text);
-  border-color: var(--border);
+  border-color: var(--border-strong, var(--border));
 }
 .hpc-act-btn.ghost:hover { background: var(--surface-3); border-color: var(--border-strong); transform: translateY(-1px); }
 .hpc-act-btn:active { transform: translateY(0); }
@@ -72252,12 +72270,12 @@ textarea#upDesc.upf-desc-textarea {
   transition: color .15s, opacity .15s;
 }
 .hpc-bio.is-placeholder:hover {
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 2px;
-  opacity: .85;
+  opacity: 1;
 }
 .hpc-bio.is-placeholder::after {
-  content: "\270E"; /* ✎ pensil — affordance edit */
+  content: ""; /* ✎ dihapus 2026-06-15 — ikon pensil sudah di kiri chip (SVG) */
   font-size: 11px;
   opacity: .8;
 /* (7e) Caption pengganti sparkline saat snapshot < 2 hari (honest, themed).
