@@ -34730,9 +34730,8 @@ function _renderHomeLanjutTonton() {
         + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
       + '</div>';
     }
-    wrap.innerHTML = ph;
-    // Catatan PREVIEW (req user 2026-06-15: kartu kosong membingungkan → jelaskan
-    // bhw ini cuma contoh/pratinjau). Selalu refresh supaya pasti tampil.
+    // Catatan PREVIEW diletakkan DI DALAM area kartu (overlay tengah grid), bukan
+    // baris terpisah di atas (req user 2026-06-15). Selalu refresh.
     if (oldNote) oldNote.remove();
     const noteEl = document.createElement("div");
     noteEl.id = "homeLanjutNote";
@@ -34741,7 +34740,8 @@ function _renderHomeLanjutTonton() {
       + '<span class="lt-ph-note-txt">Ini cuma contoh tampilan dan masih kosong. '
       + 'Video yang belum selesai kamu tonton akan muncul di sini. '
       + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a></span>';
-    wrap.insertAdjacentElement("beforebegin", noteEl);
+    wrap.innerHTML = ph;
+    wrap.appendChild(noteEl);   // di dalam grid (.home-lanjut position:relative)
     return;
   }
   if (oldNote) oldNote.remove();

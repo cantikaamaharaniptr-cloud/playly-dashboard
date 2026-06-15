@@ -61166,14 +61166,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-empty-btn { align-self: flex-start; }
 
 /* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
-/* #homeLanjutNote WAJIB ikut order:2 — home view flex-column pakai `order`;
-   tanpa ini note (default order:0) terlempar ke atas & seolah hilang
-   (req user 2026-06-15: keterangan pratinjau tidak muncul). */
-#homeLanjutDivider, #homeLanjutNote, #homeLanjut { order: 2; }
+#homeLanjutDivider, #homeLanjut { order: 2; }
 /* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */
-.home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.home-lanjut { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 .lt-card {
   cursor: pointer;
   border-radius: 12px;
@@ -61196,9 +61193,19 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
 /* Preview kosong: catatan + kartu placeholder skeleton (req user 2026-06-15:
    preview ada tapi kosong sesuai data). On-palette (krem/neutral samar). */
+/* Keterangan PRATINJAU di DALAM area kartu (overlay tengah grid), bukan baris
+   terpisah di atas (req user 2026-06-15). Panel semi-gelap supaya terbaca di atas
+   kartu skeleton. */
 .lt-ph-note {
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-  margin: 0 0 12px;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex; align-items: center; justify-content: center; gap: 9px; flex-wrap: wrap;
+  width: max-content; max-width: min(86%, 520px);
+  text-align: center; margin: 0;
+  padding: 12px 18px; border-radius: 12px;
+  background: rgba(18, 9, 11, .82);
+  border: 1px solid rgba(232, 216, 196, .18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
   font-size: 12.5px;
   color: var(--text-2, var(--muted));
   line-height: 1.45;
