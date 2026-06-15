@@ -4391,8 +4391,24 @@ body[data-theme="light"] .trending-retry-btn:hover {
   font-weight: 800;
   border: 2px solid rgba(232, 216, 196, .25);
 }
-.hpc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hpc-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+/* Tanda AKTIF (online) di kartu profil — req user 2026-06-15. img dibuat bulat
+   sendiri + avatar overflow:visible supaya dot di pojok tak ke-clip. */
+.hpc-avatar.hpc-has-presence { overflow: visible; position: relative; }
+.hpc-online-dot {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--success);
+  border: 2.5px solid var(--bg-elev-2, #1f1216);
+}
 .hpc-id { flex: 1; min-width: 0; }
+/* Label "Aktif sekarang" di kartu profil */
+.hpc-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 4px;
+  font-size: 11.5px; font-weight: 700; color: var(--success);
+}
+.hpc-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
 /* @username (per request v57) — di bawah nama, di atas badge tier */
 .hpc-username {
   display: block;
@@ -60889,9 +60905,18 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lb-medal { font-size: 18px; }
 .lb-num { font-size: 13px; font-weight: 800; color: var(--muted); }
 .lb-av {
+  position: relative;
   width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
   display: grid; place-items: center; font-size: 12px; font-weight: 800;
   color: #2a1206; background: linear-gradient(135deg, #f0c878, #d4a64a);
+}
+/* Dot AKTIF (online) di avatar leaderboard — req user 2026-06-15. Hijau --success
+   konsisten dgn .live-dot app. */
+.lb-av .lb-dot {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--success);
+  border: 2px solid var(--bg-elev-2, #1f1216);
 }
 .lb-name {
   flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--text);
