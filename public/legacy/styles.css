@@ -64417,20 +64417,22 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 /* Fill SOLID metalik (gradient) biar benar2 kelihatan emas/perak/
    perunggu (request user 2026-05-17: tint transparan lama keliatan
    kusam). Angka GELAP spt ukiran utk kontras di metal terang. */
-.home-ranking-section .lb-medal3[data-rank="1"] {           /* EMAS */
-  --m-edge: #a9781f;
-  --m-fill: linear-gradient(145deg, #fbe6a8 0%, #e8bd57 48%, #c7942f 100%);
-  --m-num: #5a3c0a; --m-ribbon: #d8af4e;
+/* On-palette (req user 2026-06-15: jangan warna di luar konsep). Rank tetap
+   bisa dibedakan: #1 wine pekat, #2 wine medium, #3 netral samar. Angka cream. */
+.home-ranking-section .lb-medal3[data-rank="1"] {
+  --m-edge: rgba(232, 216, 196, .45);
+  --m-fill: linear-gradient(145deg, #7d3640 0%, #561C24 100%);
+  --m-num: #F5E3C0;
 }
-.home-ranking-section .lb-medal3[data-rank="2"] {           /* PERAK */
-  --m-edge: #8c929c;
-  --m-fill: linear-gradient(145deg, #f6f8fb 0%, #d2d8e0 48%, #aab1bd 100%);
-  --m-num: #3a3f47; --m-ribbon: #c2c8d1;
+.home-ranking-section .lb-medal3[data-rank="2"] {
+  --m-edge: rgba(232, 216, 196, .26);
+  --m-fill: linear-gradient(145deg, #5a2b32 0%, #3e1820 100%);
+  --m-num: #E8D8C4;
 }
-.home-ranking-section .lb-medal3[data-rank="3"] {           /* PERUNGGU */
-  --m-edge: #80532b;
-  --m-fill: linear-gradient(145deg, #edbe8d 0%, #cd8a4c 48%, #9c5e2c 100%);
-  --m-num: #4a2b0d; --m-ribbon: #bb854e;
+.home-ranking-section .lb-medal3[data-rank="3"] {
+  --m-edge: rgba(232, 216, 196, .16);
+  --m-fill: rgba(232, 216, 196, .06);
+  --m-num: var(--muted);
 }
 /* Pita DIHAPUS — tidak ada lagi ::before/::after */
 .home-ranking-section .lb-medal3::before,
@@ -64447,13 +64449,12 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   border-radius: 50%;
   border: 1px solid var(--m-edge, rgba(232, 216, 196, 0.7));
   background: var(--m-fill, rgba(232, 216, 196, 0.12));
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.4),
-              inset 0 -1px 2px rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08),
+              inset 0 -1px 2px rgba(0,0,0,.2);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
   color: var(--m-num, var(--text));
-  text-shadow: 0 1px 0 rgba(255,255,255,.22);
 }
 
 /* ============================================================
