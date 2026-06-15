@@ -32269,7 +32269,7 @@ function tickLiveClock() {
   const adminHeroDate = $("#adminHeroDate");
   if (adminHeroDate) adminHeroDate.textContent = `${ID_DAYS_SHORT[day]}, ${date} ${ID_MONTHS_SHORT[month]} ${year}`;
   const liveTime = $("#liveTime");
-  if (liveTime) liveTime.textContent = `${hh}:${mm}:${ss}`;
+  if (liveTime) liveTime.textContent = `${hh}:${mm}`;   // tanpa detik (req user 2026-06-15: sederhanakan jam hero user)
   const adminLiveTime = $("#adminLiveTime");
   if (adminLiveTime) adminLiveTime.textContent = `${hh}:${mm}:${ss}`;
 
@@ -32317,29 +32317,9 @@ function refreshHeroGreeting() {
     var _grk = _grh < 5 ? "greet.night" : _grh < 11 ? "greet.morning"
       : _grh < 15 ? "greet.afternoon" : _grh < 19 ? "greet.evening" : "greet.night";
     greetEl.innerHTML = t(_grk) + ", " + user.name.split(" ")[0] + ' <span class="wave">' + _waveSvg + '</span>';
-    // Baris sapaan hangat (request user 2026-05-16: "saran yg seperti
-    // greeting") — kalimat motivasional pendek, ikut waktu, rotasi per
-    // HARI (stabil sehari → tak flicker walau refresh tiap menit).
-    var _wm = {
-      morning: ["Awali harimu dengan satu ide.", "Pagi yang pas buat berkarya.", "Semangat pagi — kontenmu dinanti.", "Hari baru, karya baru. Yuk mulai."],
-      afternoon: ["Tetap semangat, kreator hebat.", "Jaga momentum siang ini.", "Langkah kecil tetap kemajuan.", "Waktunya bikin sesuatu yang seru."],
-      evening: ["Sore yang pas buat rampungkan karya.", "Selesaikan satu hal sebelum senja.", "Konsistensi sore ini berbuah nanti.", "Masih ada waktu buat satu ide."],
-      night: ["Malam tenang, ide mengalir.", "Istirahat juga bagian dari berkarya.", "Tutup hari dengan satu progres kecil.", "Apresiasi dirimu — besok lanjut lagi."]
-    };
-    var _wk = _grh < 5 ? "night" : _grh < 11 ? "morning"
-      : _grh < 15 ? "afternoon" : _grh < 19 ? "evening" : "night";
-    var _warr = _wm[_wk];
-    var _wtext = _warr[Math.floor(Date.now() / 86400000) % _warr.length];
-    var _wEl = document.getElementById("heroWelcomeLine");
-    if (!_wEl) {
-      _wEl = document.createElement("p");
-      _wEl.id = "heroWelcomeLine";
-      _wEl.className = "hero-welcome";
-      _wEl.style.cssText = "margin:-3px 0 0;font-size:15.5px;line-height:1.2;" +
-        "color:var(--muted);font-weight:500;letter-spacing:.1px;opacity:.9";
-      greetEl.insertAdjacentElement("afterend", _wEl);
-    }
-    _wEl.textContent = _wtext;
+    // Baris sapaan hangat DIHAPUS (req user 2026-06-15: rapikan teks coaching →
+    // sisakan satu saja, yaitu Tip harian di bawah). Buang elemen lama kalau ada.
+    document.getElementById("heroWelcomeLine")?.remove();
   }
   // Baris subtitle stats ("Selamat pagi! N video • M kreator diikuti")
   // DIHAPUS per request user 2026-05-16 — hero cukup 2 baris: sapaan

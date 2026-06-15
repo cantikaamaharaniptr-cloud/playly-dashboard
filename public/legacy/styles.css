@@ -7155,6 +7155,9 @@ body[data-role="admin"] .hrk-h-ico {
   background: var(--success);
   animation: ping 1.6s ease-out infinite;
 }
+/* Jam hero USER: hapus titik hijau "live" yg ambigu (req user 2026-06-15:
+   sederhanakan jam). Admin clock (#adminLiveTime) tak terpengaruh. */
+.hero-pill.live:has(#liveTime) .live-dot { display: none; }
 
 /* Hero clock card */
 .hero-clock {
