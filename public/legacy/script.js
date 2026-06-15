@@ -35605,19 +35605,26 @@ function renderHomeCreatorLevel() {
         '<span class="hlv-lvnum">' + level + '</span></div>' +
       '<div class="hlv-body">' +
         '<div class="hlv-title">' + titleFor(level) +
-          // XP ditampilkan sbg progres ke level berikut (into / span), supaya
-          // jelas "454 dari 500 utk naik level" (req user 2026-06-15: bingung
-          // 454 XP itu utk apa). Di level maksimum tampilkan total saja.
+          // XP progres ke level berikut (into / span). Angka SEKARANG (into) krem
+          // tebal, TARGET (span) dibedakan jadi muted "dari N" → jelas 454 dari 500
+          // (req user 2026-06-15: bedakan angka pencapaiannya).
           '<span class="hlv-xp">' +
-            (remain > 0 ? fmtNum(into) + ' / ' + fmtNum(span) + ' XP'
-                        : fmtNum(xp) + ' XP') +
+            (remain > 0
+              ? '<b class="hlv-xp-cur">' + fmtNum(into) + '</b>' +
+                '<span class="hlv-xp-goal">/ ' + fmtNum(span) + ' XP</span>'
+              : '<b class="hlv-xp-cur">' + fmtNum(xp) + '</b><span class="hlv-xp-goal">XP</span>') +
           '</span></div>' +
         '<div class="hlv-bar"><i style="width:' + pct + '%"></i></div>' +
+        // Baris bawah bar: keterangan kiri + persentase kanan (req user 2026-06-15:
+        // sisi kanan kosong) → seimbang & informatif.
         '<div class="hlv-next">' +
-          (remain > 0
-            ? fmtNum(remain) + ' XP lagi menuju <b>Lv ' + (level + 1) +
-              ' &middot; ' + titleFor(level + 1) + '</b>'
-            : 'Level maksimum tercapai 🎉') +
+          '<span class="hlv-next-txt">' +
+            (remain > 0
+              ? fmtNum(remain) + ' XP lagi menuju <b>Lv ' + (level + 1) +
+                ' &middot; ' + titleFor(level + 1) + '</b>'
+              : 'Level maksimum tercapai 🎉') +
+          '</span>' +
+          (remain > 0 ? '<span class="hlv-next-pct">' + pct + '%</span>' : '') +
         '</div>' +
       '</div>' +
     '</div>' +
