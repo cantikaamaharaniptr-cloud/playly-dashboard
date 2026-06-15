@@ -2185,7 +2185,6 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeFollowingUpdates === "function") renderHomeFollowingUpdates();
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
-    if (typeof _renderHomePresence === "function") _renderHomePresence();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
     if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
@@ -31442,7 +31441,6 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderHomeSmartActions === "function") renderHomeSmartActions();
     updateHeroDmAlert();
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
-    if (typeof _renderHomePresence === "function") _renderHomePresence();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
     if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
     // Fix 2026-06-15: section ini sebelumnya hanya di-render di blok cloud-sync,
@@ -32908,29 +32906,9 @@ function _patchHomeProfileCard() {
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg> Lihat Profil';
 }
 
-// Tanda AKTIF (online) di Beranda (req user 2026-06-15): user sendiri jelas
-// "Aktif sekarang" + dot hijau di avatar kartu profil; presence kreator lain
-// (leaderboard) di-handle di renderHomeRanking pakai data real getPlatformCreators.
-function _renderHomePresence() {
-  const av = document.getElementById("hpcAvatar");
-  if (av) {
-    av.classList.add("hpc-has-presence");
-    if (!av.querySelector(".hpc-online-dot")) {
-      const dot = document.createElement("span");
-      dot.className = "hpc-online-dot";
-      dot.title = "Aktif sekarang";
-      av.appendChild(dot);
-    }
-    const idBox = av.parentElement && av.parentElement.querySelector(".hpc-id");
-    if (idBox && !idBox.querySelector(".hpc-status")) {
-      const s = document.createElement("span");
-      s.className = "hpc-status";
-      s.setAttribute("data-no-i18n", "");
-      s.innerHTML = '<i></i> Aktif sekarang';
-      idBox.appendChild(s);
-    }
-  }
-}
+// (Tanda "Aktif sekarang" di kartu profil sendiri DIHAPUS 2026-06-15 — redundan:
+// user jelas aktif saat membuka dashboard. Presence yg berguna = kreator LAIN,
+// tetap ada di leaderboard renderHomeRanking pakai data real getPlatformCreators.)
 
 function renderHomeStats() {
   // Legacy stats list (kalau ada di DOM) — backward compat
