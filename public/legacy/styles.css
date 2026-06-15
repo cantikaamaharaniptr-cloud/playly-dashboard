@@ -4196,11 +4196,12 @@ body[data-theme="light"] .trending-retry-btn:hover {
   position: relative;
   flex-wrap: wrap;
 }
-/* Hero USER: kartu = tinggi konten (jangan stretch). Setelah baris motivasi
-   dihapus, kartu kiri (greeting) ke-stretch menyamai kartu profil kanan →
-   muncul ruang kosong di bawah (req user 2026-06-15: perbaiki). flex-start =
-   tiap kartu setinggi isinya, tanpa void. */
-#home-hero .hero-content { align-items: flex-start !important; }  /* kalahkan rule stretch !important user hero */
+/* Hero USER (req user 2026-06-15): (1) kartu kanan dilebarkan supaya hero kiri
+   tak terlalu lebar/kosong; (2) kedua kartu SEJAJAR (rata tinggi) — base
+   align-items:stretch dibiarkan aktif; (3) hero kiri kontennya sedikit → tombol
+   aksi didorong ke bawah (margin-top:auto) shg tinggi terisi rapi, bukan void. */
+#home-hero .hero-clock.user { flex: 0 1 430px; max-width: 450px; min-width: 320px; }
+#home-hero .hero-text .hero-actions { margin-top: auto; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua
