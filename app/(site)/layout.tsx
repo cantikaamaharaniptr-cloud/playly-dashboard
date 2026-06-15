@@ -9,7 +9,7 @@ import type { Metadata, Viewport } from 'next';
 import { legacyAsset } from '@/app/_legacy/legacy-asset';
 
 // Cache-bust version preserved verbatim from legacy index.html.
-const STYLES_V = '20260611-beranda-v68';
+const STYLES_V = '20260611-beranda-v69';
 
 // FOUC guard (verbatim from index.html <head>): hide admin-only DOM on non-admin
 // views before styles.css finishes loading, so admin UI never flashes.

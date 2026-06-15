@@ -60915,17 +60915,29 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .hlv-next { font-size: 12px; color: var(--muted); }
 .hlv-next b { color: var(--text); }
+/* Rincian XP (req user 2026-06-15: kartu kurang informatif, sumber kenaikan XP
+   tidak jelas) → header kecil + baris chip "jumlah × poin = +XP". */
 .hlv-break {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+  display: flex; flex-direction: column; gap: 9px; margin-top: 16px;
   padding-top: 14px; border-top: 1px solid var(--border);
 }
+.hlv-break-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hlv-break-h > span { font-size: 12px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.hlv-break-h > small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.hlv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .hlv-chip {
+  display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; color: var(--text-2, var(--muted));
   background: var(--surface-2); border: 1px solid var(--border);
   padding: 5px 10px; border-radius: 999px;
 }
-.hlv-chip svg { width: 13px; height: 13px; vertical-align: -2px; color: var(--text); }
-.hlv-chip b { color: var(--cream, #E8D8C4); font-weight: 800; }   /* angka chip: krem (req user 2026-06-15: wine kurang cocok) */
+.hlv-chip svg { width: 13px; height: 13px; color: var(--text); }
+.hlv-chip-lab { color: var(--text); font-weight: 700; }
+/* "jumlah × poin" = penjelas perhitungan (kenapa +XP segini) → muted */
+.hlv-chip-calc { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hlv-chip b { color: var(--cream, #E8D8C4); font-weight: 800; }   /* total +XP: krem (req user 2026-06-15: wine kurang cocok) */
+/* faktor yg menyumbang XP > 0 sedikit ditonjolkan (border krem tipis) */
+.hlv-chip.is-active { border-color: rgba(232, 216, 196, .28); }
 @media (max-width: 560px) {
   .hlv-main { gap: 12px; }
   .hlv-badge { width: 62px; height: 62px; }
