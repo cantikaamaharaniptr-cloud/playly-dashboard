@@ -23077,10 +23077,13 @@ const ONBOARDING_STEPS = [
     position: 'center'
   },
   {
-    target: '#hpcUploadBtn',
+    // Fix 2026-06-15: dulu target #hpcUploadBtn, tapi tombol itu sudah diubah
+    // jadi "Lihat Profil" (_patchHomeProfileCard) → onboarding salah sorot.
+    // Arahkan ke nav Upload yg pasti ada & benar2 buat upload.
+    target: '.nav-item[data-view="upload"]',
     title: '📹 Upload Video Pertamamu',
-    body: 'Tombol ini buat upload video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
-    position: 'bottom'
+    body: 'Lewat menu Upload ini kamu unggah video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
+    position: 'right'
   },
   {
     target: '.nav-item[data-view="discover"]',
@@ -31440,6 +31443,13 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
     if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
     if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
+    // Fix 2026-06-15: section ini sebelumnya hanya di-render di blok cloud-sync,
+    // tak di switchView → kalau navigate ke Home setelah data berubah (upload,
+    // follow, dll.) Level/Pencapaian/Peringkat bisa stale. Render juga di sini.
+    if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
+    if (typeof renderHomeAchievements === "function") renderHomeAchievements();
+    if (typeof renderHomeRanking === "function") renderHomeRanking();
+    if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -33236,17 +33246,14 @@ function renderHomeQuickStatsCards() {
     if (cta) {
       e.stopPropagation();
       const ctaJump = cta.dataset.ctaJump;
-      if (typeof jumpTo === "function") jumpTo(ctaJump);
-      else if (typeof setActiveSection === "function") setActiveSection(ctaJump);
+      // Fix 2026-06-15: jumpTo/setActiveSection tak pernah ada → CTA mati.
+      // Pakai switchView (navigator app yg sebenarnya). data-cta-jump TIDAK
+      // ke-cover global handler [data-jump], jadi wajib ditangani di sini.
+      if (ctaJump && typeof switchView === "function") switchView(ctaJump);
       return;
     }
-    // Prio 2: card itself
-    const card = e.target.closest && e.target.closest(".hqs-card[data-jump]");
-    if (!card) return;
-    const jump = card.dataset.jump;
-    if (!jump) return;
-    if (typeof jumpTo === "function") jumpTo(jump);
-    else if (typeof setActiveSection === "function") setActiveSection(jump);
+    // Kartu .hqs-card[data-jump] sudah ditangani global handler [data-jump]
+    // (line ~31918, switchView) — tak perlu duplikasi di sini (hindari double-nav).
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -34559,7 +34566,7 @@ function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
   return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
     + _hsvHead(capIco, cap, headSub)
     + '<div class="hsv-content">'
-      + '<div class="hsv-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+      + '<div class="hsv-thumb' + (v.thumb ? '' : ' hsv-thumb-ph') + '">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : HS_IC_FILM)
         + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
         + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
       + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
@@ -34651,7 +34658,7 @@ document.addEventListener("click", (e) => {
 function _lanjutCardHTML(v, h) {
   const pct = Math.max(0, Math.min(100, Number(h.progress) || 0));
   return '<div class="lt-card" data-vid="' + v.id + '" role="button" tabindex="0">'
-    + '<div class="lt-thumb"><img src="' + (v.thumb || "") + '" alt="" loading="lazy"/>'
+    + '<div class="lt-thumb">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : '')
       + (v.duration ? '<span class="lt-dur">' + escapeHtml(v.duration) + '</span>' : '')
       + '<span class="lt-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
       + '<div class="lt-prog"><i style="width:' + pct + '%"></i></div></div>'
@@ -34681,11 +34688,16 @@ function _renderHomeLanjutTonton() {
     divider.insertAdjacentElement("afterend", wrap);
   }
   const hist = Array.isArray(state?.history) ? state.history : [];
-  const cont = hist.filter(h => (Number(h.progress) || 0) < 100);
+  // Fix 2026-06-15: hanya video yg BENAR2 sedang ditonton (0 < progress < 100;
+  // skip yg cuma dibuka tanpa diputar = progress 0) + DEDUP per videoId (history
+  // bisa punya >1 entry videoId sama lintas hari).
+  const cont = hist.filter(h => { const p = Number(h.progress) || 0; return p > 0 && p < 100; });
   const cards = [];
+  const seen = new Set();
   for (const h of cont) {
+    if (seen.has(h.videoId)) continue;
     const v = (typeof findVideo === "function") ? findVideo(h.videoId) : null;
-    if (v) cards.push(_lanjutCardHTML(v, h));
+    if (v) { seen.add(h.videoId); cards.push(_lanjutCardHTML(v, h)); }
     if (cards.length >= 4) break;
   }
   if (!cards.length) {
