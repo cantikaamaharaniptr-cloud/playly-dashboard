@@ -34879,7 +34879,7 @@ function renderHomeAchievements() {
       ? '<div class="ha-badge-status">' + IC_CHECK + '<span>Tercapai</span></div>'
       : '<div class="ha-badge-prog">'
           + '<div class="ha-badge-bar"><i style="width:' + pct + '%"></i></div>'
-          + '<span class="ha-badge-frac">' + a.cur.toLocaleString("id-ID") + '/' + a.target.toLocaleString("id-ID") + '</span>'
+          + '<span class="ha-badge-frac"><b>' + a.cur.toLocaleString("id-ID") + '</b> / ' + a.target.toLocaleString("id-ID") + '</span>'
         + '</div>';
     return '<div class="ha-badge ' + (a.ok ? "unlocked" : "locked") + '">'
       + '<div class="ha-badge-ico">' + (a.ok ? a.ico : IC_LOCK) + '</div>'
