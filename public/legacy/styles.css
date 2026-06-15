@@ -4201,8 +4201,8 @@ body[data-theme="light"] .trending-retry-btn:hover {
    dirapatkan supaya TURUN ke tinggi hero (sejajar PADA ukuran hero, bukan hero
    yg dipanjangkan ke kartu kanan). */
 #home-hero .hero-content { align-items: flex-start !important; }
-#home-hero .hero-clock.user { flex: 0 1 430px; max-width: 450px; min-width: 320px; padding: 12px 20px !important; }
-#home-hero .hero-profile-card { gap: 8px; }
+#home-hero .hero-clock.user { flex: 0 1 480px; max-width: 500px; min-width: 340px; padding: 8px 22px !important; }
+#home-hero .hero-profile-card { gap: 5px; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua
