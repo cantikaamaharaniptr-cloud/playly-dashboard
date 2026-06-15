@@ -60986,6 +60986,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   color: var(--cream, #E8D8C4);
   background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
 }
+/* Foto profil asli di avatar leaderboard (req user 2026-06-15: avatar tak sesuai
+   kalau cuma inisial). Img isi penuh lingkaran; bg/inisial ketutup. */
+.lb-av.has-img { background: none !important; }
+.lb-av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
 /* Dot AKTIF (online) di avatar leaderboard — req user 2026-06-15. Hijau --success
    konsisten dgn .live-dot app. */
 .lb-av .lb-dot {

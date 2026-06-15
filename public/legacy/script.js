@@ -35426,11 +35426,20 @@ function renderHomeRanking() {
   });
   const rankedAll = Object.keys(map).map(function (k) { return map[k]; })
     .sort(function (a, b) { return b.views - a.views; });
-  if (!rankedAll.length) {
-    if (empty) empty.hidden = false;
+  // Auto-hide (req user 2026-06-15): leaderboard terasa janggal saat kreator
+  // sangat sedikit ("Top 3 dari 1 kreator") → sembunyikan kartu + divider sampai
+  // kreator >= 5. Kalau sudah ramai, tampil lagi otomatis.
+  const MIN_CREATORS = 5;
+  const section = document.getElementById("homeRankingSection");
+  const divider = document.querySelector(".home-divider-ranking");
+  if (rankedAll.length < MIN_CREATORS) {
+    if (section) section.style.display = "none";
+    if (divider) divider.style.display = "none";
     row.innerHTML = "";
     return;
   }
+  if (section) section.style.display = "";
+  if (divider) divider.style.display = "";
   if (empty) empty.hidden = true;
 
   const me = ((user && user.username) || "").toLowerCase();
@@ -35441,9 +35450,16 @@ function renderHomeRanking() {
   // Presence kreator (req user 2026-06-15): dot hijau utk yg sedang aktif (real,
   // dari getPlatformCreators → online kalau aktivitas < 5 menit lalu).
   const onlineSet = new Set();
+  // Map avatar asli per kreator (req user 2026-06-15: avatar leaderboard "tidak
+  // sesuai" — dulu cuma inisial). Foto profil dari getPlatformCreators; fallback
+  // inisial kalau belum ada.
+  const avatarMap = {};
   try {
     (typeof getPlatformCreators === "function" ? getPlatformCreators() : []).forEach(function (c) {
-      if (c && c.online) onlineSet.add(String(c.name).toLowerCase());
+      if (!c || !c.name) return;
+      const k = String(c.name).toLowerCase();
+      if (c.online) onlineSet.add(k);
+      if (c.avatar) avatarMap[k] = c.avatar;
     });
   } catch (e) {}
 
@@ -35478,10 +35494,16 @@ function renderHomeRanking() {
       ? '<span class="lb-medal3" data-rank="' + (i + 1) + '">' +
           '<span class="lb-medal3-disc">' + (i + 1) + '</span></span>'
       : '<span class="lb-num">' + (i + 1) + '</span>';
-    const isOnline = isMe || onlineSet.has(String(c.name).toLowerCase());
+    const key = String(c.name).toLowerCase();
+    const isOnline = isMe || onlineSet.has(key);
+    // Avatar: foto profil asli (punyaku dari user.avatar), fallback inisial.
+    const avUrl = (isMe && user && user.avatar) ? user.avatar : (avatarMap[key] || null);
+    const avInner = avUrl
+      ? '<img class="lb-av-img" src="' + escapeHtml(avUrl) + '" alt="" loading="lazy">'
+      : escapeHtml(init);
     return '<div class="lb-row' + (isMe ? ' is-me' : '') + '">' +
       '<div class="lb-rank">' + rankCell + '</div>' +
-      '<div class="lb-av' + (isOnline ? ' is-online' : '') + '">' + escapeHtml(init) +
+      '<div class="lb-av' + (isOnline ? ' is-online' : '') + (avUrl ? ' has-img' : '') + '">' + avInner +
         (isOnline ? '<span class="lb-dot" title="Aktif"></span>' : '') + '</div>' +
       '<div class="lb-name">@' + escapeHtml(c.name) +
         (isMe ? '<span class="lb-you">kamu</span>' : '') + '</div>' +
