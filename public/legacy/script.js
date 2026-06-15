@@ -33153,33 +33153,17 @@ function hqsRenderSpark(statKey, series, current) {
     if (pct > 999) pct = 999;
     if (pct < -99) pct = -99;
   }
-  // Mini SVG sparkline (req user 2026-06-15: isi sisi kanan + rapikan "—").
-  // <2 titik (akun baru) → garis datar halus. Warna: hijau naik / merah turun /
-  // muted kalau belum ada tren.
-  let pts = arr.slice(-8);
-  if (pts.length < 2) { const b = curVal || 0; pts = [b, b]; }
-  const W = 56, H = 24, PAD = 3, n = pts.length;
-  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
-  const range = (max - min) || 1;
-  const coords = pts.map(function (v, i) {
-    const x = PAD + (n === 1 ? 0 : i * (W - PAD * 2) / (n - 1));
-    const y = H - PAD - ((v - min) / range) * (H - PAD * 2);
-    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
-  });
-  const linePath = coords.map(function (p, i) { return (i ? "L" : "M") + p[0] + " " + p[1]; }).join(" ");
-  const areaPath = "M" + coords[0][0] + " " + (H - PAD) + " " +
-    coords.map(function (p) { return "L" + p[0] + " " + p[1]; }).join(" ") +
-    " L" + coords[n - 1][0] + " " + (H - PAD) + " Z";
-  const up = (pct == null) ? null : (pct >= 0);
-  const col = (up == null) ? "var(--muted)" : (up ? "var(--success)" : "#e5707d");
-  const chip = (pct == null || curVal === 0)
-    ? '<span class="hqs-delta flat">—</span>'
-    : '<span class="hqs-delta ' + (up ? "up" : "down") + '">' + (up ? "↑" : "↓") + Math.abs(pct) + '%</span>';
-  el.innerHTML =
-    '<svg class="hqs-sparkline" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-      '<path d="' + areaPath + '" fill="' + col + '" opacity=".12"/>' +
-      '<path d="' + linePath + '" fill="none" stroke="' + col + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-    '</svg>' + chip;
+  // Realistis (req user 2026-06-15: sparkline dihapus — terkesan palsu utk data
+  // sedikit). Tampilkan badge tren % HANYA bila ada perubahan NYATA (≥2 snapshot
+  // history & berubah). Akun baru / belum berubah → KOSONG (kartu bersih, tanpa
+  // garis/strip palsu, tanpa "—" mengambang).
+  if (pct == null || curVal === 0 || pct === 0) {
+    el.innerHTML = "";
+    return;
+  }
+  const up = pct >= 0;
+  el.innerHTML = '<span class="hqs-delta ' + (up ? "up" : "down") + '">' +
+    (up ? "↑" : "↓") + " " + Math.abs(pct) + '%</span>';
 }
 
 function renderHomeQuickStatsCards() {
@@ -34605,17 +34589,22 @@ function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
   const fmt = (n) => (typeof fmtNum === "function") ? fmtNum(Number(n) || 0) : (Number(n) || 0);
   const hasProg = progress != null;
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
-  const meta = hasProg
-    ? '<p class="hsv-watch">@' + escapeHtml(v.creator || "—") + ' · ' + pct + '% selesai</p>'
-    : '<div class="hsv-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
+  const stats = '<div class="hsv-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
       + '</span><span>' + cmt + fmt(Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0)) + '</span></div>';
+  const meta = hasProg
+    ? '<p class="hsv-watch">' + pct + '% selesai</p>'
+    : stats;
+  // Baris kreator (mengisi info) + tombol play di kanan (mengisi sisi kanan yg
+  // tadinya kosong + perjelas kartu bisa diputar). req user 2026-06-15.
   return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
     + _hsvHead(capIco, cap, headSub)
     + '<div class="hsv-content">'
       + '<div class="hsv-thumb' + (v.thumb ? '' : ' hsv-thumb-ph') + '">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : HS_IC_FILM)
         + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
         + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + '</div>'
-      + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>' + meta + '</div>'
+      + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
+        + '<p class="hsv-creator">@' + escapeHtml(v.creator || "—") + '</p>' + meta + '</div>'
+      + '<span class="hsv-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
     + '</div>'
   + '</div>';
 }
