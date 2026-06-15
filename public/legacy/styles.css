@@ -61801,12 +61801,24 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 .hqs-minimal .hqs-value { white-space: nowrap; }
 .hqs-minimal .hqs-label { min-width: 0; }
 .hqs-minimal .hqs-spark .hqs-prog { display: none !important; }
-.hqs-watermark {
-  width: 50px; height: 50px;
-  color: var(--cream, #E8D8C4);
-  opacity: .07;
-  flex-shrink: 0;
+/* Petunjuk "Lihat detail" + panah — fungsional (kartu = link ke detail),
+   on-palette (muted → cream saat hover). req user 2026-06-15. */
+.hqs-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color .15s var(--ease, ease), transform .15s var(--ease, ease);
 }
+.hqs-go svg { width: 16px; height: 16px; flex-shrink: 0; }
+.hqs-card:hover .hqs-go { color: var(--cream, #E8D8C4); transform: translateX(2px); }
+/* Teks "Lihat detail" disembunyikan default (biar label tak ke-potong), muncul
+   saat hover — panah selalu tampil sbg petunjuk klik. */
+.hqs-go-txt { display: none; }
+.hqs-card:hover .hqs-go-txt { display: inline; }
 
 /* === Adaptive Bottom Block — Empty CTA + Delta Arrow ===================
    Per redesign user 2026-05-15 v24: card pintar adapt ke data state.

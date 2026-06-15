@@ -33136,18 +33136,14 @@ function hqsSetProgress() { /* removed: milestone replaced by adaptive empty/del
 function hqsRenderSpark(statKey, series, current) {
   const el = document.querySelector('.hqs-spark[data-spark="' + statKey + '"]');
   if (!el) return;
-  // SEDERHANA + on-palette (req user 2026-06-15: jangan busy, jangan warna di
-  // luar konsep). Isi sisi kanan dgn ikon metrik samar (krem) sbg dekorasi —
-  // tanpa bar/persen/warna oranye/hijau.
-  el.innerHTML = "";
-  const card = el.closest(".hqs-card");
-  const ico = card && card.querySelector(".hqs-icon-box svg");
-  if (ico) {
-    const clone = ico.cloneNode(true);
-    clone.setAttribute("class", "hqs-watermark");
-    clone.setAttribute("aria-hidden", "true");
-    el.appendChild(clone);
-  }
+  // Sisi kanan = FUNGSIONAL: petunjuk "Lihat detail" + panah (kartu bisa diklik
+  // ke halaman detail-nya). Sederhana + on-palette (krem/muted), tanpa warna di
+  // luar konsep. req user 2026-06-15.
+  el.innerHTML =
+    '<span class="hqs-go" aria-hidden="true">' +
+      '<span class="hqs-go-txt">Lihat detail</span>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>' +
+    '</span>';
 }
 
 function renderHomeQuickStatsCards() {
