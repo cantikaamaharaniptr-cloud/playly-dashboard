@@ -4196,12 +4196,13 @@ body[data-theme="light"] .trending-retry-btn:hover {
   position: relative;
   flex-wrap: wrap;
 }
-/* Hero USER (req user 2026-06-15): (1) kartu kanan dilebarkan supaya hero kiri
-   tak terlalu lebar/kosong; (2) kedua kartu SEJAJAR (rata tinggi) — base
-   align-items:stretch dibiarkan aktif; (3) hero kiri kontennya sedikit → tombol
-   aksi didorong ke bawah (margin-top:auto) shg tinggi terisi rapi, bukan void. */
-#home-hero .hero-clock.user { flex: 0 1 430px; max-width: 450px; min-width: 320px; }
-#home-hero .hero-text .hero-actions { margin-top: auto; }
+/* Hero USER (req user 2026-06-15): hero kiri TETAP setinggi kontennya (TANPA
+   void → jangan di-stretch). Kartu profil kanan dilebarkan + spacing-nya
+   dirapatkan supaya TURUN ke tinggi hero (sejajar PADA ukuran hero, bukan hero
+   yg dipanjangkan ke kartu kanan). */
+#home-hero .hero-content { align-items: flex-start !important; }
+#home-hero .hero-clock.user { flex: 0 1 430px; max-width: 450px; min-width: 320px; padding: 12px 20px !important; }
+#home-hero .hero-profile-card { gap: 8px; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua
