@@ -34718,11 +34718,19 @@ function _renderHomeLanjutTonton() {
     if (cards.length >= 4) break;
   }
   if (!cards.length) {
-    wrap.innerHTML = '<div class="lt-empty">'
-      + '<div class="lt-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg></div>'
-      + '<div class="lt-empty-txt"><strong>Belum ada yang ditonton</strong><small>Video yang belum selesai kamu tonton akan muncul di sini.</small></div>'
-      + '<button type="button" class="btn primary sm" data-jump="discover">Jelajahi Video</button>'
-    + '</div>';
+    // PREVIEW KOSONG (req user 2026-06-15): tampilkan slot kartu placeholder
+    // (skeleton) supaya struktur section kelihatan, TAPI kosong sesuai data
+    // (belum ada riwayat). Tetap on-palette (krem/neutral samar).
+    const note = '<div class="lt-ph-note">Belum ada yang ditonton — video yang belum selesai kamu tonton akan muncul di sini. '
+      + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a></div>';
+    let ph = '';
+    for (let i = 0; i < 4; i++) {
+      ph += '<div class="lt-card lt-card-ph" aria-hidden="true">'
+        + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
+        + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
+      + '</div>';
+    }
+    wrap.innerHTML = note + ph;
     return;
   }
   wrap.innerHTML = cards.join("");
