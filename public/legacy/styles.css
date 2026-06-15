@@ -61213,9 +61213,17 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lt-empty-bar > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
 .lt-empty-bar-txt { font-size: 13.5px; font-weight: 600; color: var(--cream, #E8D8C4); }
-.lt-empty-link { font-size: 13px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
-.lt-empty-link::before { content: "·"; margin-right: 8px; color: var(--muted); font-weight: 700; }
-.lt-empty-link:hover { text-decoration: underline; }
+/* "Jelajahi video" → pill button rapi (req user 2026-06-15: ganti bentuk) */
+.lt-empty-link {
+  flex-shrink: 0;
+  font-size: 12.5px; font-weight: 700; color: var(--cream, #E8D8C4);
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(232, 216, 196, .26);
+  background: rgba(232, 216, 196, .05);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.lt-empty-link:hover { background: rgba(232, 216, 196, .12); border-color: rgba(232, 216, 196, .4); }
 .lt-card {
   cursor: pointer;
   border-radius: 12px;
