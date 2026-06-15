@@ -33173,13 +33173,8 @@ function renderHomeQuickStatsCards() {
     return s + views * dur * 0.6;
   }, 0);
 
-  // ===== Snapshot history & hitung trend (vs entry SEBELUMNYA, sebelum push) =====
+  // ===== Snapshot history (trend dihitung di hqsRenderSpark dari array history) =====
   const hist = hqsLoadHistory();
-  const prevViews     = hist.views[hist.views.length - 1];
-  const prevLikes     = hist.likes[hist.likes.length - 1];
-  const prevFollowers = hist.followers[hist.followers.length - 1];
-  const prevWatch     = hist.watch[hist.watch.length - 1];
-
   hqsPushSnapshot(hist, "views", totalViews);
   hqsPushSnapshot(hist, "likes", totalLikes);
   hqsPushSnapshot(hist, "followers", totalFollowers);
@@ -33206,10 +33201,10 @@ function renderHomeQuickStatsCards() {
     watchEl.textContent = hqsFormatWatchTime(totalWatchSec);
   }
 
-  // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti —
-  // butuh ≥2 titik data (snapshot terkumpul seiring statistik berubah, ±2 hari
-  // aktif). Tampil di bawah kartu untuk user baru supaya tidak bingung lihat
-  // garis datar/kosong; hilang otomatis begitu data cukup.
+  // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti — butuh
+  // ≥2 titik data (snapshot terkumpul tiap statistik berubah, bukan per hari).
+  // Tampil di bawah kartu untuk user baru supaya tidak bingung lihat garis
+  // datar/kosong; hilang otomatis begitu data cukup.
   const _hqsMaxLen = Math.max(
     hist.views.length, hist.likes.length, hist.followers.length, hist.watch.length
   );
@@ -33223,7 +33218,7 @@ function renderHomeQuickStatsCards() {
         '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
-        '<span>Grafik tren muncul setelah 2+ hari aktif — data masih dikumpulkan.</span>';
+        '<span>Grafik tren muncul setelah statistikmu berubah beberapa kali — data masih dikumpulkan.</span>';
       wrap.insertAdjacentElement("afterend", _hqsNote);
     }
     if (_hqsNote) _hqsNote.hidden = false;
