@@ -61204,7 +61204,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   cursor: default;
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 14px;
-  font-size: 13px; font-weight: 600; color: var(--text-2, var(--muted));
+  font-size: 14px; font-weight: 700; color: var(--cream, #E8D8C4);   /* lbh jelas, tak lagi tenggelam (req user 2026-06-15) */
   border-style: dashed;
   border-color: var(--border-strong, rgba(232, 216, 196, .14));
   background: rgba(232, 216, 196, .02);
