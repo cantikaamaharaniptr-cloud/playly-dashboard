@@ -60948,8 +60948,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lb-row:hover { border-color: var(--primary); }
 .lb-row.is-me {
-  background: linear-gradient(155deg, rgba(240, 200, 120, .16), rgba(212, 166, 74, .06));
-  border-color: rgba(212, 166, 74, .5);
+  /* on-palette (req user 2026-06-15: jangan warna luar konsep) — tint wine, bukan emas */
+  background: linear-gradient(155deg, rgba(109, 41, 50, .28), rgba(109, 41, 50, .08));
+  border-color: rgba(232, 216, 196, .28);
 }
 .lb-rank { width: 28px; flex-shrink: 0; text-align: center; }
 .lb-medal { font-size: 18px; }
@@ -60958,7 +60959,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   position: relative;
   width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
   display: grid; place-items: center; font-size: 12px; font-weight: 800;
-  color: #2a1206; background: linear-gradient(135deg, #f0c878, #d4a64a);
+  /* on-palette: avatar wine + teks cream, konsisten dgn avatar lain (req user
+     2026-06-15: jangan emas/di luar konsep). */
+  color: var(--cream, #E8D8C4);
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
 }
 /* Dot AKTIF (online) di avatar leaderboard — req user 2026-06-15. Hijau --success
    konsisten dgn .live-dot app. */
@@ -60975,8 +60979,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lb-you {
   font-size: 10px; font-weight: 800; letter-spacing: .04em;
-  padding: 2px 6px; border-radius: 999px; color: #2a1206;
-  background: linear-gradient(135deg, #f0c878, #d4a64a); flex-shrink: 0;
+  padding: 2px 7px; border-radius: 999px; flex-shrink: 0;
+  /* on-palette: chip wine + teks cream (req user 2026-06-15: bukan emas). */
+  color: var(--cream, #E8D8C4);
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .18);
 }
 .lb-stats {
   display: flex; gap: 12px; flex-shrink: 0;
