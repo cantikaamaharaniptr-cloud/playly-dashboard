@@ -60954,7 +60954,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 
 /* 🏆 Leaderboard caption */
 .hrk-head h3 { white-space: nowrap; }
-#hrkSelf b { color: var(--primary, #d4a64a); }
+#hrkSelf b { color: var(--cream, #E8D8C4); }   /* wine terlalu menyatu dgn tema → krem (req user 2026-06-15) */
 
 /* Leaderboard list rapi (per request user 2026-05-16: ganti kartu flip/animasi
    lama yg sempit & tak fleksibel → daftar vertikal memanjang). Class lama
@@ -60969,9 +60969,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lb-row:hover { border-color: var(--primary); }
 .lb-row.is-me {
-  /* on-palette (req user 2026-06-15: jangan warna luar konsep) — tint wine, bukan emas */
-  background: linear-gradient(155deg, rgba(109, 41, 50, .28), rgba(109, 41, 50, .08));
-  border-color: rgba(232, 216, 196, .28);
+  /* req user 2026-06-15: baris kamu TIDAK dibedakan — sama spt kreator lain,
+     penanda cukup badge "Kamu" kecil. (Dulu di-highlight wine → user tak suka.) */
+  background: var(--surface);
+  border-color: var(--border);
 }
 .lb-rank { width: 28px; flex-shrink: 0; text-align: center; }
 .lb-medal { font-size: 18px; }
@@ -64379,8 +64380,9 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
    jelas. Scoped ke .home-ranking-section.
    ============================================================ */
 .home-ranking-section .lb-row.is-me {
-  background: rgba(232, 216, 196, 0.08) !important;
-  border-color: rgba(232, 216, 196, 0.38) !important;
+  /* req user 2026-06-15: baris kamu = sama dgn baris kreator lain (tanpa highlight) */
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
 }
 .home-ranking-section .lb-row:hover {
   border-color: var(--border-strong) !important;   /* bukan wine */
