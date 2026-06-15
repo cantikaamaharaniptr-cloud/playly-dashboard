@@ -60904,11 +60904,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   font-size: 17px; font-weight: 800; color: var(--text);
   font-family: 'Inter', sans-serif; margin-bottom: 10px;
 }
-/* XP progres: angka SEKARANG krem-tebal, TARGET muted (req user 2026-06-15:
-   bedakan angka). Wine (--primary) dulu terlalu menyatu dgn tema gelap. */
+/* XP progres: kontras KUAT current vs target (req user 2026-06-15: bedanya kurang
+   jelas) → angka SEKARANG besar+krem-tebal, TARGET kecil+muted "/ N XP". */
 .hlv-xp { font-size: 12px; font-weight: 700; display: inline-flex; align-items: baseline; gap: 4px; }
-.hlv-xp-cur { color: var(--cream, #E8D8C4); font-weight: 800; }
-.hlv-xp-goal { color: var(--muted); font-weight: 600; }
+.hlv-xp-cur { color: var(--cream, #E8D8C4); font-weight: 900; font-size: 17px; line-height: 1; }
+.hlv-xp-goal { color: var(--muted); font-weight: 600; font-size: 11px; }
 .hlv-bar {
   height: 12px; border-radius: 999px; background: var(--surface-2);
   overflow: hidden; margin-bottom: 8px;
