@@ -32427,7 +32427,8 @@ function refreshHeroGreeting() {
     }
   } catch {}
   // Stats (per request v59): Video · Pengikut · Yang diikuti — dari state.
-  // Tiap stat clickable: Video→videos, Pengikut→myprofile, Yang diikuti→discover.
+  // Klik: Video→videos; Pengikut→halaman Cari User tab Followers; Yang diikuti→
+  // tab Following (req user 2026-06-15: dulu Yang diikuti salah ke Discover).
   try {
     const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
     let followers = 0, following = 0;
@@ -32438,6 +32439,13 @@ function refreshHeroGreeting() {
     const el = $("#heroStatVideos");    if (el) el.textContent = String(vids.length);
     const ef = $("#heroStatFollowers"); if (ef) ef.textContent = String(followers);
     const eg = $("#heroStatFollowing"); if (eg) eg.textContent = String(following);
+    // Arahkan Pengikut/Yang diikuti ke view "people" (Cari User) pada tab yg pas
+    // (data-people-stat di-handle handler khusus). Hapus data-jump lama biar tak
+    // dobel-nav lewat global handler.
+    const fBtn = ef && ef.closest(".hpc-stat");
+    if (fBtn) { fBtn.removeAttribute("data-jump"); fBtn.setAttribute("data-people-stat", "followers"); }
+    const gBtn = eg && eg.closest(".hpc-stat");
+    if (gBtn) { gBtn.removeAttribute("data-jump"); gBtn.setAttribute("data-people-stat", "following"); }
   } catch {}
 
   // Home sidebar (Catatan / File / Aktivitas) — per redesign user 2026-05-15 v45
@@ -36818,6 +36826,24 @@ document.addEventListener("click", e => {
     b.classList.toggle("active", b.dataset.peopleTab === key);
   });
   if (typeof renderPeople === "function") renderPeople();
+});
+
+// Stat kartu profil Beranda (Pengikut/Yang diikuti) → buka view "people" pada
+// tab Followers/Following yang sesuai (req user 2026-06-15).
+document.addEventListener("click", e => {
+  const stat = e.target.closest && e.target.closest(".hpc-stat[data-people-stat]");
+  if (!stat) return;
+  e.preventDefault();
+  const tab = stat.dataset.peopleStat === "following" ? "following" : "followers";
+  if (typeof switchView === "function") switchView("people");
+  const view = document.querySelector('section.view[data-view="people"]');
+  if (view) {
+    view.dataset.peopleTab = tab;
+    document.querySelectorAll("button[data-people-tab]").forEach(b => {
+      b.classList.toggle("active", b.dataset.peopleTab === tab);
+    });
+    if (typeof renderPeople === "function") renderPeople();
+  }
 });
 
 function renderPurchaseHistory() {
