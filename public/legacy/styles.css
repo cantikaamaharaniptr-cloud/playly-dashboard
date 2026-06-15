@@ -61170,7 +61170,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */
-.home-lanjut { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 .lt-card {
   cursor: pointer;
   border-radius: 12px;
@@ -61191,26 +61191,16 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .lt-body { padding: 9px 10px 11px; }
 .lt-title { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
-/* Preview kosong: catatan + kartu placeholder skeleton (req user 2026-06-15:
-   preview ada tapi kosong sesuai data). On-palette (krem/neutral samar). */
-/* Keterangan PRATINJAU di DALAM area kartu (overlay tengah grid), bukan baris
-   terpisah di atas (req user 2026-06-15). Panel semi-gelap supaya terbaca di atas
-   kartu skeleton. */
-.lt-ph-note {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  z-index: 2;
-  display: flex; align-items: center; justify-content: center; gap: 9px; flex-wrap: wrap;
-  width: max-content; max-width: min(86%, 520px);
-  text-align: center; margin: 0;
-  padding: 12px 18px; border-radius: 12px;
-  background: rgba(18, 9, 11, .82);
-  border: 1px solid rgba(232, 216, 196, .18);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
-  font-size: 12.5px;
-  color: var(--text-2, var(--muted));
-  line-height: 1.45;
+/* Empty state Lanjutkan Menonton (req user 2026-06-15): keterangan pratinjau JADI
+   ISI kartu pertama (di DALAM kolom, bukan baris di atas / panel mengambang).
+   Sisanya kartu skeleton sbg contoh tampilan. */
+.lt-card-info {
+  cursor: default;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 9px; padding: 16px 14px;
+  border-style: dashed;          /* senada baris preview */
 }
-/* pill "Pratinjau" — penanda jelas bhw kartu di bawah cuma contoh/kosong */
+/* pill "Pratinjau" — penanda jelas kartu ini contoh/kosong */
 .lt-ph-tag {
   flex-shrink: 0;
   font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
@@ -61219,9 +61209,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   background: var(--surface-2);
   border: 1px solid rgba(232, 216, 196, .22);
 }
-.lt-ph-note-txt { min-width: 0; }
-.lt-ph-note a { color: var(--cream, #E8D8C4); font-weight: 600; cursor: pointer; white-space: nowrap; }
-.lt-ph-note a:hover { text-decoration: underline; }
+.lt-info-txt { margin: 0; font-size: 12px; color: var(--text-2, var(--muted)); line-height: 1.5; }
+.lt-info-cta { font-size: 12px; font-weight: 700; color: var(--cream, #E8D8C4); cursor: pointer; }
+.lt-info-cta:hover { text-decoration: underline; }
 .lt-card-ph {
   cursor: default;
   pointer-events: none;

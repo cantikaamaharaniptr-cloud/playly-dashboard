@@ -34717,31 +34717,25 @@ function _renderHomeLanjutTonton() {
     if (v) { seen.add(h.videoId); cards.push(_lanjutCardHTML(v, h)); }
     if (cards.length >= 4) break;
   }
-  // Catatan empty di LUAR grid (kalau di dalam + span semua kolom, auto-fit tak
-  // bisa kolapskan track kosong → ada kolom kosong). req user 2026-06-15.
   const oldNote = document.getElementById("homeLanjutNote");
+  if (oldNote) oldNote.remove();   // sisa note versi panel lama dibuang
   if (!cards.length) {
-    // PREVIEW KOSONG: slot kartu placeholder (skeleton) supaya struktur section
-    // kelihatan, TAPI kosong sesuai data. On-palette (krem/neutral samar).
-    let ph = '';
-    for (let i = 0; i < 4; i++) {
-      ph += '<div class="lt-card lt-card-ph" aria-hidden="true">'
+    // EMPTY: keterangan pratinjau JADI ISI kartu pertama (req user 2026-06-15:
+    // di DALAM kolom, bukan baris di atas / panel mengambang). Sisanya 3 kartu
+    // skeleton sbg contoh tampilan.
+    let html = '<div class="lt-card lt-card-info">'
+      + '<span class="lt-ph-tag">Pratinjau</span>'
+      + '<p class="lt-info-txt">Ini cuma contoh tampilan dan masih kosong. '
+      + 'Video yang belum selesai kamu tonton akan muncul di sini.</p>'
+      + '<a class="lt-info-cta" data-jump="discover" role="button" tabindex="0">Jelajahi video</a>'
+    + '</div>';
+    for (let i = 0; i < 3; i++) {
+      html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
         + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
         + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
       + '</div>';
     }
-    // Catatan PREVIEW diletakkan DI DALAM area kartu (overlay tengah grid), bukan
-    // baris terpisah di atas (req user 2026-06-15). Selalu refresh.
-    if (oldNote) oldNote.remove();
-    const noteEl = document.createElement("div");
-    noteEl.id = "homeLanjutNote";
-    noteEl.className = "lt-ph-note";
-    noteEl.innerHTML = '<span class="lt-ph-tag">Pratinjau</span>'
-      + '<span class="lt-ph-note-txt">Ini cuma contoh tampilan dan masih kosong. '
-      + 'Video yang belum selesai kamu tonton akan muncul di sini. '
-      + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a></span>';
-    wrap.innerHTML = ph;
-    wrap.appendChild(noteEl);   // di dalam grid (.home-lanjut position:relative)
+    wrap.innerHTML = html;
     return;
   }
   if (oldNote) oldNote.remove();
