@@ -32909,6 +32909,16 @@ function renderHomeActivity() {
 // Profil" (→ myprofile, profil publik) — lebih relevan di kartu profil, upload
 // tetap prominent di hero. Patch via JS (markup-nya statis/rapuh di index-markup).
 function _patchHomeProfileCard() {
+  // Pindah badge tier (Premium/Free) ke KANAN baris header biar sisi kanan tak
+  // kosong (req user 2026-06-15). Dikasih class lokasi-independen .hpc-tier-badge.
+  try {
+    const _top = document.querySelector(".hpc-top");
+    const _tier = document.getElementById("heroClockTier");
+    if (_top && _tier && _tier.parentElement !== _top) {
+      _tier.classList.add("hpc-tier-badge");
+      _top.appendChild(_tier);
+    }
+  } catch {}
   const btn = document.getElementById("hpcUploadBtn");
   if (!btn || btn.dataset.repurposed === "1") return;
   btn.dataset.repurposed = "1";
