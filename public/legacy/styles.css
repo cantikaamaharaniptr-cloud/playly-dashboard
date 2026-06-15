@@ -60740,14 +60740,14 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex-direction: column;
   gap: 16px;
 }
-/* req user 2026-06-14 (revisi lagi): kedua kartu SEJAJAR (rata tinggi) tanpa
-   req user 2026-06-15 (revisi): JANGAN ada ruang kosong di Level Kreator. Kartu
-   = tinggi konten (flex 0 0 auto), tak melar → chip langsung di bawah konten,
-   tanpa jurang. (Konsekuensi: tinggi bisa beda dgn Pencapaian, tapi prioritas
-   user = no ruang kosong.) */
+/* req user 2026-06-15 (final): Pencapaian dikecilkan (badge compact) supaya
+   tinggi alaminya ~= Level Kreator, lalu KEDUA kartu di-stretch mengisi kolom
+   (flex 1 1 auto) → bottom rata = SEJAJAR. Selisih kecil diserap: Level taruh
+   chip di bawah (margin-top:auto), Pencapaian sebar 2 baris badge (align-content
+   space-between) → tetap rapi tanpa void besar. */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
@@ -60862,7 +60862,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
-.home-level .hlv-break { margin-top: 16px; }
+/* chip pin ke bawah saat kartu di-stretch sejajar Pencapaian (req user 2026-06-15);
+   min 16px kalau kartu pas setinggi konten → tetap rapat, tak ada void besar. */
+.home-level .hlv-break { margin-top: auto; padding-top: 16px; }
 .hlv-head {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: 12px; margin-bottom: 16px;
@@ -60999,6 +61001,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    Pencapaian sebelumnya tanpa kotak → terlihat tidak sejajar dgn Level). */
 .home-achievements {
   width: 100%;
+  /* flex column → grid badge bisa flex:1 mengisi tinggi kartu (sejajar Level) */
+  display: flex;
+  flex-direction: column;
   background: var(--bg-elev-2, var(--surface));
   border: 1px solid var(--border-strong, var(--border));
   border-radius: var(--radius, 16px);
@@ -61010,7 +61015,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 .ha-badge-bar {
   flex: 1;
@@ -61262,17 +61267,20 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 .ha-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;            /* req user 2026-06-15: kecilkan Pencapaian agar setinggi Level */
+  /* kalau kartu di-stretch setinggi Level, 2 baris badge sebar rata (no void) */
+  flex: 1;
+  align-content: space-between;
 }
 @media (max-width: 900px) { .ha-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .ha-grid { grid-template-columns: 1fr; } }
 .ha-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  /* compact (req user 2026-06-14): padding & ikon dikecilkan supaya kartu
-     Pencapaian lebih pendek, tanpa scroll/kepotong. */
-  padding: 10px 11px;
+  gap: 9px;
+  /* compact (req user 2026-06-14, dikecilkan lagi 2026-06-15): padding & ikon
+     diperkecil supaya kartu Pencapaian setinggi Level Kreator (sejajar). */
+  padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid rgba(232, 216, 196, .12);
   /* #251419 — per request user 2026-05-16 (badge & unlocked sama) */
@@ -61286,7 +61294,7 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 .ha-badge.unlocked:hover { transform: translateY(-2px); }
 .ha-badge.locked { opacity: .72; }
 .ha-badge-ico {
-  width: 36px; height: 36px;
+  width: 32px; height: 32px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -61296,7 +61304,7 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
   background: rgba(232, 216, 196, .06);
   border: 1px solid rgba(232, 216, 196, .10);
 }
-.ha-badge-ico svg { width: 18px; height: 18px; }
+.ha-badge-ico svg { width: 16px; height: 16px; }
 .ha-badge.unlocked .ha-badge-ico {
   background: rgba(232, 216, 196, .10);
   border-color: rgba(232, 216, 196, .14);
