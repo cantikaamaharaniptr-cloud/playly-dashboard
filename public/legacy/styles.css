@@ -61193,9 +61193,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-empty-btn { align-self: flex-start; }
 
 /* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
-#homeLanjutDivider, #homeLanjutNote, #homeLanjut { order: 2; }
-/* label kecil saat Lanjutkan Menonton kosong (req user 2026-06-15) */
-.lt-empty-label { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+#homeLanjutDivider, #homeLanjut { order: 2; }
 /* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */

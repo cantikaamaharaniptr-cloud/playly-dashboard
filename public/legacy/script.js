@@ -34712,27 +34712,16 @@ function _renderHomeLanjutTonton() {
     if (cards.length >= 4) break;
   }
   const oldNote = document.getElementById("homeLanjutNote");
-  if (oldNote) oldNote.remove();   // sisa note versi panel lama dibuang
+  if (oldNote) oldNote.remove();
   if (!cards.length) {
-    // EMPTY: label kecil + 4 kartu skeleton (req user 2026-06-15: kasih
-    // keterangan kecil 'Belum ada riwayat tonton' di atas skeleton biar tak
-    // membingungkan). info card "Jelajahi video" sebelumnya dihapus.
-    let html = '';
-    for (let i = 0; i < 4; i++) {
-      html += '<div class="lt-card lt-card-ph" aria-hidden="true">'
-        + '<div class="lt-thumb"><span class="lt-ph-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>'
-        + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
-      + '</div>';
-    }
-    wrap.innerHTML = html;
-    const note = document.createElement("div");
-    note.id = "homeLanjutNote";
-    note.className = "lt-empty-label";
-    note.textContent = "Belum ada riwayat tonton";
-    wrap.insertAdjacentElement("beforebegin", note);   // order:2 via CSS → di antara divider & grid
+    // Kosong: SEMBUNYIKAN section + divider (req user 2026-06-15: skeleton/label
+    // di atas tak disukai). Muncul otomatis setelah ada riwayat tonton.
+    if (divider) divider.style.display = "none";
+    if (wrap) { wrap.style.display = "none"; wrap.innerHTML = ""; }
     return;
   }
-  if (oldNote) oldNote.remove();
+  if (divider) divider.style.display = "";
+  if (wrap) wrap.style.display = "";
   wrap.innerHTML = cards.join("");
 }
 // Klik kartu Lanjut Tonton → resume player.
