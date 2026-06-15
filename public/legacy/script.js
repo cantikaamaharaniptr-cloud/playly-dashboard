@@ -30583,6 +30583,62 @@ function adminVideoStatusBadge(status) {
   return `<span class="gv-status ${m.cls}">${m.label}</span>`;
 }
 
+// ===== FILTER KATA TERLARANG — auto-flag video yg judul/desc/tag mengandung kata terlarang =====
+const BANNED_WORDS_KEY = "playly-banned-words";
+function getBannedWords() {
+  try { const a = JSON.parse(localStorage.getItem(BANNED_WORDS_KEY) || "[]"); return Array.isArray(a) ? a.filter(Boolean) : []; } catch { return []; }
+}
+function setBannedWords(arr) {
+  try { localStorage.setItem(BANNED_WORDS_KEY, JSON.stringify(arr)); } catch {}
+}
+function videoBannedMatches(v) {
+  const words = getBannedWords();
+  if (!words.length) return [];
+  const hay = `${v.title || ""} ${v.desc || ""} ${v.tags || ""}`.toLowerCase();
+  return words.filter(w => hay.includes(String(w).toLowerCase()));
+}
+function openBannedWordsModal() {
+  document.getElementById("bannedWordsModal")?.remove();
+  const back = document.createElement("div");
+  back.id = "bannedWordsModal";
+  back.style.cssText = "position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px";
+  const chips = () => getBannedWords().map(w =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(192,57,43,.16);color:#E88;border:1px solid rgba(192,57,43,.35);font-size:13px">${escapeHtml(w)} <b data-bw-del="${escapeHtml(w)}" style="cursor:pointer;color:#fff;opacity:.7" title="Hapus">✕</b></span>`
+  ).join(" ") || `<span style="color:var(--muted);font-size:13px">Belum ada kata terlarang.</span>`;
+  back.innerHTML =
+    `<div style="background:var(--bg-elev,#1a2233);border:1px solid var(--border);border-radius:16px;max-width:480px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h3 style="margin:0;font-size:17px;color:var(--text)">🚫 Kata Terlarang</h3>
+        <button data-bw-close style="background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px">Video yang judul/deskripsi/tag-nya mengandung kata ini otomatis ditandai (tab 🚩 Ditandai).</p>
+      <div id="bwChips" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;min-height:30px">${chips()}</div>
+      <div style="display:flex;gap:8px">
+        <input id="bwInput" type="text" placeholder="ketik kata lalu Enter / Tambah" autocomplete="off" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px"/>
+        <button class="btn primary sm" id="bwAdd">Tambah</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  const refresh = () => { const c = document.getElementById("bwChips"); if (c) c.innerHTML = chips(); if (typeof renderAdminVideos === "function") renderAdminVideos(); };
+  const addWord = () => {
+    const inp = document.getElementById("bwInput");
+    const w = (inp.value || "").trim().toLowerCase();
+    if (!w) return;
+    const arr = getBannedWords();
+    if (!arr.includes(w)) { arr.push(w); setBannedWords(arr); }
+    inp.value = ""; inp.focus(); refresh();
+  };
+  back.querySelector("#bwAdd").addEventListener("click", addWord);
+  back.querySelector("#bwInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addWord(); } });
+  back.addEventListener("click", e => {
+    if (e.target === back || e.target.closest("[data-bw-close]")) { back.remove(); return; }
+    const del = e.target.closest("[data-bw-del]");
+    if (del) { setBannedWords(getBannedWords().filter(x => x !== del.dataset.bwDel)); refresh(); }
+  });
+  setTimeout(() => document.getElementById("bwInput")?.focus(), 50);
+}
+document.getElementById("adminBannedWordsBtn")?.addEventListener("click", openBannedWordsModal);
+
 function renderAdminVideos() {
   const tbody = $("#adminVideoTbody"); if (!tbody) return;
 
@@ -30602,10 +30658,14 @@ function renderAdminVideos() {
   $("#gvStatPending") && ($("#gvStatPending").textContent = all.filter(v => getAdminVideoStatus(v) === "pending").length);
   $("#gvStatPublished") && ($("#gvStatPublished").textContent = all.filter(v => getAdminVideoStatus(v) === "published").length);
   $("#gvStatTakedown") && ($("#gvStatTakedown").textContent = all.filter(v => getAdminVideoStatus(v) === "takedown").length);
+  (() => { const fc = all.filter(v => videoBannedMatches(v).length > 0).length; const el = $("#gvFlaggedCount"); if (el) el.textContent = fc > 0 ? fc : ""; })();
 
   // Apply filters
   let list = all.slice();
-  if (adminVideoState.filter === "new") {
+  if (adminVideoState.filter === "flagged") {
+    // Ditandai = video yg mengandung kata terlarang (judul/desc/tag)
+    list = list.filter(v => videoBannedMatches(v).length > 0);
+  } else if (adminVideoState.filter === "new") {
     // "New videos" — published & uploaded < 24 jam
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     list = list.filter(v => getAdminVideoStatus(v) === "published"
@@ -30670,6 +30730,7 @@ function renderAdminVideos() {
     if (empty) empty.hidden = true;
     tbody.innerHTML = list.map(v => {
       const status = getAdminVideoStatus(v);
+      const flags = videoBannedMatches(v);
       const checked = adminVideoState.selected.has(v.id) ? "checked" : "";
       const thumb = v.thumb || "https://picsum.photos/seed/playly/120/72";
       return `<tr data-vid="${v.id}" class="${checked ? "gv-row-selected" : ""}">
@@ -30682,7 +30743,7 @@ function renderAdminVideos() {
             </div>
             <div class="gv-video-meta">
               <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || t("video.untitled"))}</strong>
-              <small>${escapeHtml(v.duration || "0:00")} • ${escapeHtml(v.visibility || "public")}</small>
+              <small>${escapeHtml(v.duration || "0:00")} • ${escapeHtml(v.visibility || "public")}${flags.length ? ` • <span style="color:#E88;font-weight:700">🚩 ${escapeHtml(flags.join(", "))}</span>` : ""}</small>
             </div>
           </div>
         </td>
