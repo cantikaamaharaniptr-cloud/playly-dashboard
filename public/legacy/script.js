@@ -30457,7 +30457,8 @@ const adminVideoState = {
   dateFrom: null,     // epoch ms — filter tanggal upload (Dari)
   dateTo: null,       // epoch ms — filter tanggal upload (Sampai)
   selectMode: false,  // checkbox column hidden until admin opts in
-  selected: new Set() // ids of selected videos
+  selected: new Set(), // ids of selected videos
+  limit: 20           // pagination — jumlah video ditampilkan (Muat lebih banyak)
 };
 
 // Timestamp upload yang dipakai kolom "Upload" — sumber kebenaran tunggal
@@ -30796,13 +30797,20 @@ function renderAdminVideos() {
   };
   list.sort(sorters[adminVideoState.sort] || sorters.newest);
 
+  // Pagination "Muat lebih banyak" — render maksimal `limit` video dari list
+  const GV_PAGE = 20;
+  if (typeof adminVideoState.limit !== "number") adminVideoState.limit = GV_PAGE;
+  const gvTotal = list.length;
+  const gvShown = Math.min(adminVideoState.limit, gvTotal);
+  const pageList = list.slice(0, gvShown);
+
   const empty = $("#gvEmpty");
   if (!list.length) {
     tbody.innerHTML = "";
     if (empty) empty.hidden = false;
   } else {
     if (empty) empty.hidden = true;
-    tbody.innerHTML = list.map(v => {
+    tbody.innerHTML = pageList.map(v => {
       const status = getAdminVideoStatus(v);
       const flags = videoBannedMatches(v);
       const checked = adminVideoState.selected.has(v.id) ? "checked" : "";
@@ -30845,6 +30853,17 @@ function renderAdminVideos() {
         </td>
       </tr>`;
     }).join("");
+  }
+
+  // Footer "Muat lebih banyak" + penghitung
+  const lm = document.getElementById("gvLoadMore");
+  if (lm) {
+    if (!gvTotal) {
+      lm.innerHTML = "";
+    } else {
+      lm.innerHTML = `<span class="gv-lm-count">Menampilkan ${gvShown} dari ${gvTotal} video</span>` +
+        (gvShown < gvTotal ? ` <button class="btn ghost sm" data-gv-loadmore>↓ Muat ${Math.min(GV_PAGE, gvTotal - gvShown)} lagi</button>` : "");
+    }
   }
 
   // Sync bulk bar
@@ -31146,13 +31165,23 @@ function setupAdminVideoEvents() {
     $$(".gv-tab").forEach(t => t.classList.toggle("active", t === tab));
     adminVideoState.filter = tab.dataset.gvFilter;
     adminVideoState.selected.clear();
+    adminVideoState.limit = 20;
     _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
 
   // Search & dropdowns
+  // Pagination — "Muat lebih banyak" nambah limit lalu render ulang
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-gv-loadmore]")) {
+      adminVideoState.limit = (adminVideoState.limit || 20) + 20;
+      renderAdminVideos();
+    }
+  });
+
   $("#adminVideoSearch")?.addEventListener("input", e => {
     adminVideoState.search = e.target.value;
+    adminVideoState.limit = 20;
     _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
