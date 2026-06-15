@@ -61187,8 +61187,8 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 section.view[data-view="home"] .admin-section-divider span { font-size: 11.5px !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
 /* Label statistik — Title Case, 12.5/600 */
 section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12.5px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
-/* Angka KPI besar — 20/800 (tetap elemen terbesar, tak kebesaran) */
-section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 20px !important; font-weight: 800 !important; }
+/* Angka KPI — diperbesar jadi 25/800 (req user 2026-06-15: perbesar angka). */
+section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 25px !important; font-weight: 800 !important; line-height: 1.1 !important; }
 /* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
 section.view[data-view="home"] #homeCreatorLevel h3,
 section.view[data-view="home"] .home-achievements h3,
@@ -61758,37 +61758,36 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Mini sparkline + delta chip di kanan kartu (req user 2026-06-15: isi sisi
+   kanan, rapikan "—"). Spark = kolom: garis tren di atas, persen kecil di bawah. */
 .hqs-minimal .hqs-spark {
   display: flex !important;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
   grid-area: hqsc;
   margin-top: 0;
   align-self: center;
   justify-self: end;
   width: auto;
-  min-width: 0;
+  min-width: 56px;
 }
-/* Garis tipis (bar progres) DIHAPUS per request user 2026-05-17 —
-   sisakan hanya angka/persen. */
 .hqs-minimal .hqs-spark .hqs-prog { display: none !important; }
-/* Persen "↑ N%" — warna = font text biasa + glow bernapas.
-   Bulatan/live-dot juga dihapus (request user). */
+.hqs-sparkline { width: 56px; height: 24px; display: block; }
+/* Persen "↑ N%" / "—" — kecil & rapi, warna sesuai tren (bukan glow lama). */
 .hqs-minimal .hqs-spark .hqs-delta {
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: .005em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
   width: auto;
   flex-shrink: 0;
-  color: var(--text) !important;
-  animation: hqsDeltaGlow 2.4s ease-in-out infinite;
+  animation: none;
 }
+.hqs-minimal .hqs-spark .hqs-delta.flat { color: var(--muted) !important; }
+.hqs-minimal .hqs-spark .hqs-delta.up   { color: var(--success) !important; }
+.hqs-minimal .hqs-spark .hqs-delta.down { color: #e5707d !important; }
 .hqs-minimal .hqs-spark .hqs-delta::before { content: none !important; }
-@keyframes hqsDeltaGlow {
-  0%, 100% { text-shadow: 0 0 0 rgba(232,216,196,0); }
-  50%      { text-shadow: 0 0 11px rgba(232,216,196,.6); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hqs-minimal .hqs-spark .hqs-delta { animation: none; }
-}
 
 /* === Adaptive Bottom Block — Empty CTA + Delta Arrow ===================
    Per redesign user 2026-05-15 v24: card pintar adapt ke data state.

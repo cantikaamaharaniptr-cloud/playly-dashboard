@@ -33153,22 +33153,33 @@ function hqsRenderSpark(statKey, series, current) {
     if (pct > 999) pct = 999;
     if (pct < -99) pct = -99;
   }
-  if (pct === null || curVal === 0) {
-    // Empty / no real delta — tanpa persen palsu. Nilai 0 → bar KOSONG (jujur,
-    // jangan tampak ~8% progres utk user baru); ada value tapi tanpa history
-    // delta → sliver minimum 8%. (req user 2026-06-14)
-    const w = curVal > 0 ? 8 : 0;
-    el.innerHTML =
-      '<div class="hqs-prog"><i style="width:' + w + '%"></i></div>' +
-      '<span class="hqs-delta flat">—</span>';
-    return;
-  }
-  const up = pct >= 0;
-  const barW = Math.max(8, Math.min(100, Math.abs(pct) * 6));
+  // Mini SVG sparkline (req user 2026-06-15: isi sisi kanan + rapikan "—").
+  // <2 titik (akun baru) → garis datar halus. Warna: hijau naik / merah turun /
+  // muted kalau belum ada tren.
+  let pts = arr.slice(-8);
+  if (pts.length < 2) { const b = curVal || 0; pts = [b, b]; }
+  const W = 56, H = 24, PAD = 3, n = pts.length;
+  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+  const range = (max - min) || 1;
+  const coords = pts.map(function (v, i) {
+    const x = PAD + (n === 1 ? 0 : i * (W - PAD * 2) / (n - 1));
+    const y = H - PAD - ((v - min) / range) * (H - PAD * 2);
+    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+  });
+  const linePath = coords.map(function (p, i) { return (i ? "L" : "M") + p[0] + " " + p[1]; }).join(" ");
+  const areaPath = "M" + coords[0][0] + " " + (H - PAD) + " " +
+    coords.map(function (p) { return "L" + p[0] + " " + p[1]; }).join(" ") +
+    " L" + coords[n - 1][0] + " " + (H - PAD) + " Z";
+  const up = (pct == null) ? null : (pct >= 0);
+  const col = (up == null) ? "var(--muted)" : (up ? "var(--success)" : "#e5707d");
+  const chip = (pct == null || curVal === 0)
+    ? '<span class="hqs-delta flat">—</span>'
+    : '<span class="hqs-delta ' + (up ? "up" : "down") + '">' + (up ? "↑" : "↓") + Math.abs(pct) + '%</span>';
   el.innerHTML =
-    '<div class="hqs-prog"><i style="width:' + barW + '%"></i></div>' +
-    '<span class="hqs-delta ' + (up ? "up" : "down") + '">' +
-      (up ? "↑" : "↓") + ' ' + Math.abs(pct) + '%</span>';
+    '<svg class="hqs-sparkline" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<path d="' + areaPath + '" fill="' + col + '" opacity=".12"/>' +
+      '<path d="' + linePath + '" fill="none" stroke="' + col + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>' + chip;
 }
 
 function renderHomeQuickStatsCards() {
