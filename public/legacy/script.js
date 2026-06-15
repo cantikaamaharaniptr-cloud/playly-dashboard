@@ -33136,34 +33136,18 @@ function hqsSetProgress() { /* removed: milestone replaced by adaptive empty/del
 function hqsRenderSpark(statKey, series, current) {
   const el = document.querySelector('.hqs-spark[data-spark="' + statKey + '"]');
   if (!el) return;
-  // 1 BAR PROGRES TIPIS + persen (per request user 2026-05-16). Tren =
-  // (nilai sekarang vs snapshot terlama di window history). Kalau histori
-  // belum cukup → tren kecil deterministik (stabil, positif).
-  const arr = Array.isArray(series)
-    ? series.map(Number).filter(function (n) { return isFinite(n); })
-    : [];
-  const c = Number(current);
-  const curVal = isFinite(c) ? c : (arr.length ? arr[arr.length - 1] : 0);
-  // Real data only: hitung delta dari history asli. Kalau nilai 0 / belum
-  // ada history nyata → JANGAN bikin angka palsu (sebelumnya 3..12 hardcode
-  // bikin user melihat "↑ 3%" padahal value 0 — keliatan tidak real).
-  let pct = null;
-  if (arr.length >= 2 && arr[0] > 0) {
-    pct = Math.round(((curVal - arr[0]) / arr[0]) * 100);
-    if (pct > 999) pct = 999;
-    if (pct < -99) pct = -99;
+  // SEDERHANA + on-palette (req user 2026-06-15: jangan busy, jangan warna di
+  // luar konsep). Isi sisi kanan dgn ikon metrik samar (krem) sbg dekorasi —
+  // tanpa bar/persen/warna oranye/hijau.
+  el.innerHTML = "";
+  const card = el.closest(".hqs-card");
+  const ico = card && card.querySelector(".hqs-icon-box svg");
+  if (ico) {
+    const clone = ico.cloneNode(true);
+    clone.setAttribute("class", "hqs-watermark");
+    clone.setAttribute("aria-hidden", "true");
+    el.appendChild(clone);
   }
-  // Realistis (req user 2026-06-15: sparkline dihapus — terkesan palsu utk data
-  // sedikit). Tampilkan badge tren % HANYA bila ada perubahan NYATA (≥2 snapshot
-  // history & berubah). Akun baru / belum berubah → KOSONG (kartu bersih, tanpa
-  // garis/strip palsu, tanpa "—" mengambang).
-  if (pct == null || curVal === 0 || pct === 0) {
-    el.innerHTML = "";
-    return;
-  }
-  const up = pct >= 0;
-  el.innerHTML = '<span class="hqs-delta ' + (up ? "up" : "down") + '">' +
-    (up ? "↑" : "↓") + " " + Math.abs(pct) + '%</span>';
 }
 
 function renderHomeQuickStatsCards() {

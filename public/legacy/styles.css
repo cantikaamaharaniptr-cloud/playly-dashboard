@@ -61719,8 +61719,6 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 .hqs-minimal .hqs-card {
   flex-direction: row;
   align-items: center;
-  justify-content: center;   /* req user 2026-06-15: konten ditengahkan biar
-                                kartu seimbang, sisi kanan tak terasa kosong. */
   gap: 13px;
   padding: 18px 22px;
 }
@@ -61750,16 +61748,22 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
    / krem — auto-adapt light theme) menggantikan gold/merah, + efek
    GLOW bernapas (text-shadow persen + box-shadow bar + live-dot)
    supaya tetap terasa data real-time. */
-/* Tanpa sparkline, konten = angka + label saja → flex column ringkas yg bisa
-   ditengahkan bersama ikon (req user 2026-06-15). Badge tren (kalau ada) ikut
-   stack di bawah. */
+/* Rata kiri: angka+label kiri, progress menuju target di KANAN (isi sisi kanan,
+   req user 2026-06-15: jangan tengah, isi kekosongan). */
 .hqs-minimal .hqs-content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: auto;
-  gap: 2px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "hqsv hqsc"
+    "hqsl hqsc";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
 }
+.hqs-minimal .hqs-value { grid-area: hqsv; }
+.hqs-minimal .hqs-label { grid-area: hqsl; }
+.hqs-minimal .hqs-spark { grid-area: hqsc; }
 .hqs-minimal .hqs-value {
   grid-area: hqsv;
   font-size: 19px;
@@ -61780,34 +61784,29 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Tren badge HANYA muncul bila ada perubahan nyata (req user 2026-06-15:
-   sparkline dihapus). Kalau kosong → tak makan ruang (kartu bersih). */
+/* Sisi kanan kartu = ikon metrik SAMAR (krem) sbg dekorasi — SEDERHANA &
+   on-palette (req user 2026-06-15: jangan busy, jangan warna di luar konsep). */
 .hqs-minimal .hqs-spark {
   display: flex !important;
   align-items: center;
+  justify-content: flex-end;
   grid-area: hqsc;
   margin-top: 0;
   align-self: center;
   justify-self: end;
   width: auto;
   min-width: 0;
+  pointer-events: none;
 }
-.hqs-minimal .hqs-spark:empty { display: none !important; }
+.hqs-minimal .hqs-value { white-space: nowrap; }
+.hqs-minimal .hqs-label { min-width: 0; }
 .hqs-minimal .hqs-spark .hqs-prog { display: none !important; }
-.hqs-minimal .hqs-spark .hqs-delta {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0;
-  padding: 2px 8px;
-  border-radius: 999px;
+.hqs-watermark {
+  width: 50px; height: 50px;
+  color: var(--cream, #E8D8C4);
+  opacity: .07;
   flex-shrink: 0;
-  animation: none;
 }
-.hqs-minimal .hqs-spark .hqs-delta.up   { color: var(--success) !important; background: rgba(16, 185, 129, .12); }
-.hqs-minimal .hqs-spark .hqs-delta.down { color: #e5707d !important; background: rgba(229, 112, 125, .12); }
-.hqs-minimal .hqs-spark .hqs-delta::before { content: none !important; }
 
 /* === Adaptive Bottom Block — Empty CTA + Delta Arrow ===================
    Per redesign user 2026-05-15 v24: card pintar adapt ke data state.
