@@ -4200,9 +4200,13 @@ body[data-theme="light"] .trending-retry-btn:hover {
    void → jangan di-stretch). Kartu profil kanan dilebarkan + spacing-nya
    dirapatkan supaya TURUN ke tinggi hero (sejajar PADA ukuran hero, bukan hero
    yg dipanjangkan ke kartu kanan). */
+/* Hero kiri TETAP tinggi konten (flex-start) → TANPA void (preferensi kuat user).
+   Kartu profil = spacing rapi/nyaman (req user 2026-06-15: jangan sesak) + lebih
+   lebar. Konsekuensi: profil sedikit lebih tinggi dari hero (kontennya lbh banyak);
+   itu trade-off tidy vs sejajar-persis. */
 #home-hero .hero-content { align-items: flex-start !important; }
-#home-hero .hero-clock.user { flex: 0 1 480px; max-width: 500px; min-width: 340px; padding: 8px 22px !important; }
-#home-hero .hero-profile-card { gap: 5px; }
+#home-hero .hero-clock.user { flex: 0 1 480px; max-width: 500px; min-width: 340px; padding: 13px 22px !important; }
+#home-hero .hero-profile-card { gap: 9px; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua
