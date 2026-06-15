@@ -60910,15 +60910,12 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hlv-xp-cur { color: var(--cream, #E8D8C4); font-weight: 900; font-size: 17px; line-height: 1; }
 .hlv-xp-goal { color: var(--muted); font-weight: 600; font-size: 11px; }
 .hlv-bar {
-  height: 10px; border-radius: 999px; background: var(--surface-2);
+  height: 12px; border-radius: 999px; background: var(--surface-2);
   overflow: hidden; margin-bottom: 8px;
-  border: 1px solid rgba(232, 216, 196, .10);   /* track kebaca di atas kartu */
 }
 .hlv-bar > i {
   display: block; height: 100%; border-radius: 999px;
-  /* krem: wine (--primary) menyatu dgn kartu gelap → progres tak jelas
-     (req user 2026-06-15: perbaiki garisnya). */
-  background: var(--cream, #E8D8C4); transition: width .5s ease;
+  background: var(--primary, #6D2932); transition: width .5s ease;   /* wine — per request user 2026-05-16 */
 }
 /* keterangan kiri + persen kanan (req user 2026-06-15: sisi kanan jangan kosong) */
 .hlv-next { font-size: 12px; color: var(--muted); display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
@@ -60929,7 +60926,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    tidak jelas) → header kecil + baris chip "jumlah × poin = +XP". */
 .hlv-break {
   display: flex; flex-direction: column; gap: 9px; margin-top: 16px;
-  padding-top: 14px; border-top: 1px solid var(--border);
+  padding-top: 14px;   /* garis pembatas dihapus (req user 2026-06-15: garis tipis terlalu menyatu dgn badge level di atasnya) */
 }
 .hlv-break-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .hlv-break-h > span { font-size: 12px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
