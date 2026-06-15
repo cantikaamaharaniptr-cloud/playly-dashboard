@@ -61131,7 +61131,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 
 /* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
 #homeLanjutDivider, #homeLanjut { order: 2; }
-.home-lanjut { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+/* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
+   kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
+   req user 2026-06-15. */
+.home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 .lt-card {
   cursor: pointer;
   border-radius: 12px;
@@ -61155,8 +61158,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* Preview kosong: catatan + kartu placeholder skeleton (req user 2026-06-15:
    preview ada tapi kosong sesuai data). On-palette (krem/neutral samar). */
 .lt-ph-note {
-  grid-column: 1 / -1;
-  margin: 0 0 2px;
+  margin: 0 0 10px;
   font-size: 12.5px;
   color: var(--muted);
   line-height: 1.45;

@@ -34717,12 +34717,12 @@ function _renderHomeLanjutTonton() {
     if (v) { seen.add(h.videoId); cards.push(_lanjutCardHTML(v, h)); }
     if (cards.length >= 4) break;
   }
+  // Catatan empty di LUAR grid (kalau di dalam + span semua kolom, auto-fit tak
+  // bisa kolapskan track kosong → ada kolom kosong). req user 2026-06-15.
+  const oldNote = document.getElementById("homeLanjutNote");
   if (!cards.length) {
-    // PREVIEW KOSONG (req user 2026-06-15): tampilkan slot kartu placeholder
-    // (skeleton) supaya struktur section kelihatan, TAPI kosong sesuai data
-    // (belum ada riwayat). Tetap on-palette (krem/neutral samar).
-    const note = '<div class="lt-ph-note">Belum ada yang ditonton — video yang belum selesai kamu tonton akan muncul di sini. '
-      + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a></div>';
+    // PREVIEW KOSONG: slot kartu placeholder (skeleton) supaya struktur section
+    // kelihatan, TAPI kosong sesuai data. On-palette (krem/neutral samar).
     let ph = '';
     for (let i = 0; i < 4; i++) {
       ph += '<div class="lt-card lt-card-ph" aria-hidden="true">'
@@ -34730,9 +34730,18 @@ function _renderHomeLanjutTonton() {
         + '<div class="lt-body"><span class="lt-ph-line"></span><span class="lt-ph-line sm"></span></div>'
       + '</div>';
     }
-    wrap.innerHTML = note + ph;
+    wrap.innerHTML = ph;
+    if (!oldNote) {
+      const noteEl = document.createElement("div");
+      noteEl.id = "homeLanjutNote";
+      noteEl.className = "lt-ph-note";
+      noteEl.innerHTML = 'Belum ada yang ditonton — video yang belum selesai kamu tonton akan muncul di sini. '
+        + '<a data-jump="discover" role="button" tabindex="0">Jelajahi video</a>';
+      wrap.insertAdjacentElement("beforebegin", noteEl);
+    }
     return;
   }
+  if (oldNote) oldNote.remove();
   wrap.innerHTML = cards.join("");
 }
 // Klik kartu Lanjut Tonton → resume player.
