@@ -33226,6 +33226,21 @@ function renderHomeQuickStatsCards() {
     watchEl.textContent = hqsFormatWatchTime(totalWatchSec);
   }
 
+  // Target klik kartu (req user 2026-06-15): Tontonan/Suka/Waktu = metrik →
+  // halaman Statistik; Total Followers → daftar pengikut (view people, tab
+  // Followers) via handler [data-people-stat]. Dulu Followers salah ke Edit Profil.
+  try {
+    const _setCardJump = (stat, jump) => {
+      const c = wrap.querySelector('.hqs-card[data-stat="' + stat + '"]');
+      if (c) { c.removeAttribute("data-people-stat"); c.setAttribute("data-jump", jump); }
+    };
+    _setCardJump("views", "stats");
+    _setCardJump("likes", "stats");
+    _setCardJump("watch", "stats");
+    const _fc = wrap.querySelector('.hqs-card[data-stat="followers"]');
+    if (_fc) { _fc.removeAttribute("data-jump"); _fc.setAttribute("data-people-stat", "followers"); }
+  } catch {}
+
   // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti — butuh
   // ≥2 titik data (snapshot terkumpul tiap statistik berubah, bukan per hari).
   // Tampil di bawah kartu untuk user baru supaya tidak bingung lihat garis
@@ -36838,10 +36853,12 @@ document.addEventListener("click", e => {
   if (typeof renderPeople === "function") renderPeople();
 });
 
-// Stat kartu profil Beranda (Pengikut/Yang diikuti) → buka view "people" pada
-// tab Followers/Following yang sesuai (req user 2026-06-15).
+// Stat Beranda (kartu profil Pengikut/Yang diikuti + kartu Ringkasan Statistik
+// Total Followers) → buka view "people" pada tab Followers/Following (req user
+// 2026-06-15). Selektor umum [data-people-stat] supaya berlaku utk .hpc-stat &
+// .hqs-card.
 document.addEventListener("click", e => {
-  const stat = e.target.closest && e.target.closest(".hpc-stat[data-people-stat]");
+  const stat = e.target.closest && e.target.closest("[data-people-stat]");
   if (!stat) return;
   e.preventDefault();
   const tab = stat.dataset.peopleStat === "following" ? "following" : "followers";
