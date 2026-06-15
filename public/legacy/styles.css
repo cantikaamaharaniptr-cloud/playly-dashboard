@@ -61166,7 +61166,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-empty-btn { align-self: flex-start; }
 
 /* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
-#homeLanjutDivider, #homeLanjut { order: 2; }
+/* #homeLanjutNote WAJIB ikut order:2 — home view flex-column pakai `order`;
+   tanpa ini note (default order:0) terlempar ke atas & seolah hilang
+   (req user 2026-06-15: keterangan pratinjau tidak muncul). */
+#homeLanjutDivider, #homeLanjutNote, #homeLanjut { order: 2; }
 /* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
    kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
    req user 2026-06-15. */
