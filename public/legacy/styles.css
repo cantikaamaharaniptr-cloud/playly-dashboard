@@ -61299,12 +61299,16 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
   background: var(--bg-elev);
   transition: border-color .18s var(--ease, ease), transform .18s var(--ease, ease);
 }
+/* SUDAH tercapai: jelas menonjol (req user 2026-06-15) — tint krem + border krem
+   lebih tebal + ikon krem solid. */
 .ha-badge.unlocked {
-  background: var(--bg-elev);
-  border-color: rgba(232, 216, 196, .22);
+  background: rgba(232, 216, 196, .07);
+  border-color: rgba(232, 216, 196, .34);
 }
 .ha-badge.unlocked:hover { transform: translateY(-2px); }
-.ha-badge.locked { opacity: .72; }
+/* BELUM tercapai: jelas redup + ikon gembok (kontras kuat dgn yg sudah). */
+.ha-badge.locked { opacity: .58; }
+.ha-badge.locked .ha-badge-ico { color: var(--muted); }
 .ha-badge-ico {
   width: 32px; height: 32px;
   flex-shrink: 0;
@@ -61318,9 +61322,18 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 }
 .ha-badge-ico svg { width: 16px; height: 16px; }
 .ha-badge.unlocked .ha-badge-ico {
-  background: rgba(232, 216, 196, .10);
-  border-color: rgba(232, 216, 196, .14);
+  background: var(--cream, #E8D8C4);
+  border-color: var(--cream, #E8D8C4);
+  color: #2a1216;          /* ikon gelap di atas krem solid → menonjol "sudah" */
 }
+/* Status "✓ Tercapai" (badge yg sudah terbuka) — krem, sejajar slot progres. */
+.ha-badge-status {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 5px;
+  font-size: 11px; font-weight: 700;
+  color: var(--cream, #E8D8C4);
+}
+.ha-badge-status svg { width: 13px; height: 13px; flex-shrink: 0; }
 .ha-badge-text { min-width: 0; }
 .ha-badge-text strong {
   display: block;

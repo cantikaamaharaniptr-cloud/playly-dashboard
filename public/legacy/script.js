@@ -34850,6 +34850,7 @@ function renderHomeAchievements() {
   const IC_USERS  = '<svg ' + SI + '><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
   const IC_TROPHY = '<svg ' + SI + '><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>';
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const IC_CHECK  = '<svg ' + SI + '><polyline points="20 6 9 17 4 12"/></svg>';
   const ACH = [
     { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        cur: myVids.length, target: 1,    unit:"video" },
     { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       cur: myVids.length, target: 10,   unit:"video" },
@@ -34871,11 +34872,15 @@ function renderHomeAchievements() {
   document.getElementById("haNudge")?.remove();
   grid.innerHTML = ACH.map(a => {
     const pct = a.target > 0 ? Math.min(100, Math.round((a.cur / a.target) * 100)) : 0;
-    const prog = a.ok ? "" :
-      '<div class="ha-badge-prog">'
-        + '<div class="ha-badge-bar"><i style="width:' + pct + '%"></i></div>'
-        + '<span class="ha-badge-frac">' + a.cur.toLocaleString("id-ID") + '/' + a.target.toLocaleString("id-ID") + '</span>'
-      + '</div>';
+    // Status jelas (req user 2026-06-15: kurang jelas mana yg sudah/belum):
+    //  - sudah  -> "✓ Tercapai" (krem)
+    //  - belum  -> bar progres + "cur/target" (seberapa dekat)
+    const prog = a.ok
+      ? '<div class="ha-badge-status">' + IC_CHECK + '<span>Tercapai</span></div>'
+      : '<div class="ha-badge-prog">'
+          + '<div class="ha-badge-bar"><i style="width:' + pct + '%"></i></div>'
+          + '<span class="ha-badge-frac">' + a.cur.toLocaleString("id-ID") + '/' + a.target.toLocaleString("id-ID") + '</span>'
+        + '</div>';
     return '<div class="ha-badge ' + (a.ok ? "unlocked" : "locked") + '">'
       + '<div class="ha-badge-ico">' + (a.ok ? a.ico : IC_LOCK) + '</div>'
       + '<div class="ha-badge-text"><strong>' + escapeHtml(a.name) + '</strong>'
@@ -35575,14 +35580,12 @@ function renderHomeCreatorLevel() {
   const ICV_HEART = '<svg ' + _si + '><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
   const ICV_VIDEO = '<svg ' + _si + '><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>';
   const ICV_USERS = '<svg ' + _si + '><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-  // Chip rincian XP: tampilkan jumlah aktivitas × poin/satuan = total XP, supaya
-  // jelas KENAIKAN XP dari faktor apa & berapa (req user 2026-06-15: kurang
-  // informatif / sumber XP tidak jelas).
+  // Chip rincian XP: cukup tampilkan faktor + total XP-nya (req user 2026-06-15:
+  // versi "jumlah × poin" terlalu ribet → disederhanakan jadi "Faktor +XP").
   const chip = function (ico, label, count, rate) {
     const xpv = count * rate;
     return '<span class="hlv-chip' + (xpv > 0 ? ' is-active' : '') + '">' + ico +
       ' <span class="hlv-chip-lab">' + label + '</span>' +
-      ' <span class="hlv-chip-calc">' + fmtNum(count) + ' &times; ' + rate + '</span>' +
       ' <b>+' + fmtNum(xpv) + ' XP</b></span>';
   };
 
@@ -35602,7 +35605,13 @@ function renderHomeCreatorLevel() {
         '<span class="hlv-lvnum">' + level + '</span></div>' +
       '<div class="hlv-body">' +
         '<div class="hlv-title">' + titleFor(level) +
-          '<span class="hlv-xp">' + fmtNum(xp) + ' XP</span></div>' +
+          // XP ditampilkan sbg progres ke level berikut (into / span), supaya
+          // jelas "454 dari 500 utk naik level" (req user 2026-06-15: bingung
+          // 454 XP itu utk apa). Di level maksimum tampilkan total saja.
+          '<span class="hlv-xp">' +
+            (remain > 0 ? fmtNum(into) + ' / ' + fmtNum(span) + ' XP'
+                        : fmtNum(xp) + ' XP') +
+          '</span></div>' +
         '<div class="hlv-bar"><i style="width:' + pct + '%"></i></div>' +
         '<div class="hlv-next">' +
           (remain > 0
@@ -35615,7 +35624,6 @@ function renderHomeCreatorLevel() {
     '<div class="hlv-break">' +
       '<div class="hlv-break-h">' +
         '<span>Rincian XP</span>' +
-        '<small>tiap aktivitas channel menambah poin</small>' +
       '</div>' +
       '<div class="hlv-chips">' +
         chip(ICV_EYE, 'Tontonan', views, 1) +
