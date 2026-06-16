@@ -18010,8 +18010,14 @@ function renderDashboardPaymentPill() {
     return;
   }
   const isID = (typeof currentLang === "function") ? (currentLang() === "id") : true;
-  // Removed checkmark (✅) from approved per request — use star (⭐) instead.
-  const iconMap  = { pending: "⏳", approved: "⭐", rejected: "✕" };
+  // 2026-06-16: ikon emoji (⏳/⭐/✕) diganti SVG monokrom cream (currentColor) —
+  // selaras ikon lonceng/tema/search & tetap on-palette (tanpa emas/kuning emoji).
+  const _atppSvg = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+  const iconMap  = {
+    pending:  _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    approved: _atppSvg('<path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/>'),
+    rejected: _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>'),
+  };
   const labelMap = isID
     ? { pending: "Pembayaran",  approved: "Premium aktif!",   rejected: "Pembayaran" }
     : { pending: "Payment",     approved: "Premium active!",  rejected: "Payment"    };
@@ -18022,7 +18028,7 @@ function renderDashboardPaymentPill() {
   pill.dataset.status = p.status;
   pill.dataset.code = p.code;
   pill.innerHTML =
-    '<span class="atpp-icon">' + (iconMap[p.status] || "⏳") + '</span>' +
+    '<span class="atpp-icon">' + (iconMap[p.status] || iconMap.pending) + '</span>' +
     '<span class="atpp-text">' +
       '<span class="atpp-label">' + (labelMap[p.status] || labelMap.pending) + '</span>' +
       '<span class="atpp-status">' + (statusMap[p.status] || statusMap.pending) + '</span>' +
@@ -18066,7 +18072,7 @@ function renderDashboardTierPill() {
   pill.dataset.tier = tier;
   if (tier === "premium") {
     pill.innerHTML =
-      '<span class="dtp-icon">⭐</span>' +
+      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/></svg></span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">Premium</span>' +
         '<span class="dtp-status">' + (isID ? "Aktif" : "Active") + '</span>' +
@@ -49072,12 +49078,20 @@ searchInput.addEventListener("input", e => {
     return;
   }
 
-  // User context: search videos (existing behavior)
-  const matches = allVideos().filter(v =>
-    v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q) || (v.category || "").includes(q)
-  ).slice(0, 6);
+  // User context: cari video — pencocokan "nyambung" (universal): tetap cocok walau
+  // beda tanda/spasi/angka (normalisasi huruf+angka) + substring biasa. Field di-guard
+  // supaya tidak crash kalau title/creator/category kosong.
+  const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nq = norm(q);
+  const matches = allVideos().filter(v => {
+    const t = String(v.title || "").toLowerCase();
+    const c = String(v.creator || "").toLowerCase();
+    const cat = String(v.category || "").toLowerCase();
+    return t.includes(q) || c.includes(q) || cat.includes(q) ||
+      (nq && (norm(t).includes(nq) || norm(c).includes(nq) || norm(cat).includes(nq)));
+  }).slice(0, 6);
   sugg.innerHTML = matches.length
-    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} views</small></div></div>`).join("")
+    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}">${v.thumb ? `<img src="${v.thumb}" onerror="this.style.display='none'"/>` : ``}<div><strong>${escapeHtml ? escapeHtml(v.title || "Video") : (v.title || "Video")}</strong><small>@${escapeHtml ? escapeHtml(v.creator || "") : (v.creator || "")} • ${v.views || (typeof fmtNum === "function" ? fmtNum(v.viewsNum || 0) : (v.viewsNum || 0))} views</small></div></div>`).join("")
     : `<div class="suggestion"><div><strong>Tidak ditemukan</strong><small>Coba kata kunci lain</small></div></div>`;
   $$("[data-vid]", sugg).forEach(s => s.addEventListener("click", () => {
     openPlayer(+s.dataset.vid);
@@ -52674,41 +52688,11 @@ function saveVideoEdit() {
   }
 
   function buildNav() {
-    if (document.body && document.body.dataset.role === "admin") return;
-    var topbar = document.querySelector(".topbar");
-    if (!topbar) return;
-    if (topbar.querySelector(".topbar-home-nav")) return;
-
-    var nav = document.createElement("nav");
-    nav.className = "topbar-home-nav";
-    SECTIONS.forEach(function (s) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "thn-link";
-      btn.innerHTML = (s.icon ? s.icon : "") + '<span>' + s.label + '</span>';
-      btn.dataset.thnTarget = s.id;
-      btn.setAttribute("data-no-i18n", "");
-      btn.addEventListener("click", function () {
-        var target = document.querySelector("[data-home-section='" + s.id + "']") || document.getElementById(s.id);
-        if (!target) return;
-        // Make sure home view is active first
-        var homeNavBtn = document.querySelector('[data-view="home"]');
-        if (homeNavBtn && typeof switchView === "function") {
-          try { switchView("home"); } catch (e) {}
-        }
-        setTimeout(function () {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      });
-      nav.appendChild(btn);
-    });
-
-    var breadcrumb = topbar.querySelector(".breadcrumb");
-    if (breadcrumb && breadcrumb.parentNode === topbar) {
-      breadcrumb.parentNode.insertBefore(nav, breadcrumb.nextSibling);
-    } else {
-      topbar.insertBefore(nav, topbar.firstChild);
-    }
+    // 2026-06-16: nav home di topbar DIHAPUS. Isinya cuma 1 pill "Beranda" yang
+    // dobel dengan breadcrumb. Breadcrumb kini jadi penanda halaman tunggal yang
+    // konsisten — tidak ada lagi label "Beranda" ganda di topbar.
+    var existing = document.querySelector(".topbar-home-nav");
+    if (existing) existing.remove();
   }
 
   function setupActiveTracker() {
