@@ -618,10 +618,12 @@ function getPlatformCreators({ activeOnly = false } = {}) {
       let videoCount = 0;
       let latestUploadAt = 0;
       let lastActivity = 0;
+      let followerCount = 0;
       try {
         const s = JSON.parse(stateRaw);
         const myVids = Array.isArray(s?.myVideos) ? s.myVideos : [];
         videoCount = myVids.length;
+        followerCount = Array.isArray(s?.followers) ? s.followers.length : 0; // pengikut kreator
         for (const v of myVids) {
           const t = Number(v?.uploadedAt || v?.createdAt || v?.ts || 0);
           if (t > latestUploadAt) latestUploadAt = t;
@@ -649,6 +651,7 @@ function getPlatformCreators({ activeOnly = false } = {}) {
         online: isOnline,
         init: (a.name || a.username).slice(0, 2).toUpperCase(),
         videoCount,
+        followers: followerCount,
         avatar: a.avatar || null,
         latestUploadAt,
         lastActivity
@@ -35350,9 +35353,41 @@ function _rankSuggestedCreators(creators) {
   return creators.slice().sort((a, b) => score(b) - score(a));
 }
 
+// Skeleton baris sidebar utk empty state Trending & Kreator Disarankan (req user
+// 2026-06-16): tampilkan STRUKTUR daftar (preview) saat kosong, bukan cuma ikon
+// + pesan. Konsisten dgn skeleton feed. Pakai shimmer .fyp-sk.
+function trendingSkeletonHTML() {
+  let rows = "";
+  // 3 baris teks supaya akurat dgn baris trending asli (jumlah video / #tag /
+  // "lagi ramai") + rank — biar kolom tidak terbaca kosong (req user 2026-06-16).
+  for (let i = 0; i < 3; i++) rows += '<div class="trend-sk-item">'
+    + '<span class="fyp-sk trend-sk-rank"></span>'
+    + '<span class="trend-sk-info"><span class="fyp-sk fyp-sk-line" style="width:40%"></span><span class="fyp-sk fyp-sk-line" style="width:100%"></span><span class="fyp-sk fyp-sk-line" style="width:60%"></span></span>'
+  + '</div>';
+  return '<div class="trend-sk" aria-hidden="true">' + rows + '</div>';
+}
+function suggestSkeletonHTML() {
+  let rows = "";
+  for (let i = 0; i < 3; i++) rows += '<div class="sug-sk-item">'
+    + '<span class="fyp-sk sug-sk-av"></span>'
+    + '<span class="sug-sk-info"><span class="fyp-sk fyp-sk-line" style="width:100%"></span><span class="fyp-sk fyp-sk-line" style="width:85%"></span></span>'
+  + '</div>';
+  return '<div class="sug-sk" aria-hidden="true">' + rows + '</div>';
+}
+
 function renderSuggestUsers() {
   const wrap = document.querySelector("#suggestUsersList");
   if (!wrap) return;
+  // v744: header kartu disamakan gaya dgn Trending (ikon + judul + subjudul).
+  // Dibangun via JS sekali (markup statis rapuh, dihindari). Guard anti dobel.
+  const _sugCard = wrap.closest(".suggest-card");
+  const _sugHead = _sugCard ? _sugCard.querySelector(".suggest-head") : null;
+  if (_sugHead && !_sugHead.querySelector(".suggest-title")) {
+    _sugHead.innerHTML = '<div class="suggest-title lib-header-flex">'
+      + '<span class="sec-icon-v582 sec-icon-lg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>'
+      + '<div class="lib-header-text"><h2>Kreator Disarankan</h2><p>Kreator yang mungkin kamu suka</p></div>'
+      + '</div>';
+  }
   let creators = [];
   try {
     creators = (typeof getPlatformCreators === "function" ? getPlatformCreators({ activeOnly: true }) : []) || [];
@@ -35366,12 +35401,8 @@ function renderSuggestUsers() {
   const following = (state?.followingCreators || []).map(x => String(x).toLowerCase());
 
   if (top.length === 0) {
-    wrap.innerHTML = `
-      <div class="suggest-empty">
-        <div class="suggest-empty-icon">👥</div>
-        <p>Belum ada kreator lain</p>
-        <small>Kreator akan muncul di sini setelah ada pengguna yang mengunggah video.</small>
-      </div>`;
+    wrap.innerHTML = suggestSkeletonHTML()
+      + `<p class="sidebar-empty-note">Belum ada kreator lain — muncul di sini setelah ada pengguna yang mengunggah video.</p>`;
     return;
   }
 
@@ -35380,7 +35411,8 @@ function renderSuggestUsers() {
   wrap.innerHTML = top.map(c => {
     const uname = String(c.name || c.username || "").toLowerCase();
     const display = c.displayName || c.name || c.username || "Kreator";
-    const init = (display.split(/\s+/).map(s => s[0]).slice(0, 2).join("") || "U").toUpperCase();
+    // v744: avatar default = 1 huruf pertama USERNAME (selaras standar avatar app).
+    const init = ((uname || display || "U").trim()[0] || "U").toUpperCase();
     const isFollowing = following.includes(uname);
     const videoCount = c.videos || c.videoCount || 0;
     // Fresh ring — kreator yang upload < 24 jam dapat ring gradient (Instagram-style).
@@ -35390,7 +35422,7 @@ function renderSuggestUsers() {
       <div class="${avatarCls}"${isFresh ? ' title="Baru upload — &lt; 24 jam"' : ""}>${c.avatar ? `<img src="${escapeHtml(c.avatar)}" alt=""/>` : `<span>${escapeHtml(init)}</span>`}</div>
       <div class="suggest-info">
         <strong>${escapeHtml(display)}</strong>
-        <small>@${escapeHtml(uname)} · ${videoCount} video</small>
+        <small>@${escapeHtml(uname)} · ${isFresh ? "Baru upload" : (fmtNum(c.followers || 0) + " pengikut")}</small>
       </div>
       <button class="btn ${isFollowing ? "ghost" : "primary"} sm" data-suggest-action="follow" type="button">
         ${isFollowing ? "✓ Following" : "+ Follow"}
@@ -35400,9 +35432,28 @@ function renderSuggestUsers() {
 
   wrap.querySelectorAll(".suggest-item").forEach(item => {
     const uname = item.dataset.suggestUname;
-    // Klik area card (selain tombol follow) → buka profil kreator
+    // v746: avatar fresh (ring "baru upload <24 jam") → buka VIDEO TERBARU kreator,
+    // sesuai makna ring (mirip story IG). Klik nama/area lain → profil kreator.
+    const freshAv = item.querySelector(".suggest-avatar.fresh");
+    if (freshAv) {
+      freshAv.style.cursor = "pointer";
+      freshAv.setAttribute("title", "Lihat video terbaru");
+      freshAv.addEventListener("click", e => {
+        e.stopPropagation();
+        let newest = null;
+        try {
+          newest = (typeof getPlatformVideos === "function" ? getPlatformVideos() : [])
+            .filter(v => (v.creator || "").toLowerCase() === uname)
+            .sort((a, b) => ((typeof _fypTime === "function" ? _fypTime(b) : 0) || 0) - ((typeof _fypTime === "function" ? _fypTime(a) : 0) || 0))[0];
+        } catch {}
+        if (newest && typeof openPlayer === "function") openPlayer(newest.id);
+        else if (typeof openUserProfile === "function") openUserProfile(uname); // fallback ke profil
+      });
+    }
+    // Klik area card (selain tombol follow & avatar fresh) → buka profil kreator
     item.addEventListener("click", e => {
       if (e.target.closest("[data-suggest-action]")) return;
+      if (e.target.closest(".suggest-avatar.fresh")) return;
       if (typeof openUserProfile === "function") openUserProfile(uname);
       else { switchView("user-profile"); }
     });
@@ -37525,6 +37576,22 @@ function linkifyHashtags(text) {
 function videoMatchesTag(v, tag) {
   if (!tag) return true;
   const t = tag.toLowerCase();
+  // 1) Hashtag yang ditulis di JUDUL/deskripsi (gaya TikTok, mis. #pialadunia2026)
+  //    — inilah sumber utama tren. extractHashtags ambil token #kata persis.
+  if (extractHashtags(`${v.title || ""} ${v.desc || v.description || ""}`).includes(t)) return true;
+  // 2) Hashtag dari kolom tag video (kalau kreator mengisinya via field hashtag) —
+  //    disamakan dgn hashtag judul supaya klik tren selalu konsisten (req user 2026-06-16).
+  if (Array.isArray(v.tags) && v.tags.some(x => String(x).toLowerCase().replace(/^#/, "").trim() === t)) return true;
+  // 3) Cocok "nyambung" ternormalisasi (huruf saja: abaikan #, spasi, angka, tanda
+  //    baca) — biar klik topik tren frasa "piala dunia" menyaring "#pialadunia2026",
+  //    "Piala Dunia 2026", dst. (option B universal, req user 2026-06-16).
+  const norm = s => String(s || "").toLowerCase().replace(/[^a-z]/g, "");
+  const tn = norm(t);
+  if (tn && tn.length >= 4) {
+    const hayN = norm(`${v.title || ""} ${v.desc || v.description || ""} ${Array.isArray(v.tags) ? v.tags.join(" ") : ""}`);
+    if (hayN.includes(tn)) return true;
+  }
+  // 4) Fallback longgar: kategori / kata di judul-deskripsi (biar tag kategori tetap jalan).
   const haystack = `${v.title || ""} ${v.desc || ""} ${v.category || ""}`.toLowerCase();
   return haystack.includes("#" + t) || haystack.includes(t);
 }
@@ -37574,8 +37641,14 @@ function _fypContext() {
     for (const tk of _fypTokens(vid)) profile[tk] = (profile[tk] || 0) + w;
   };
   (st.liked || []).forEach(id => addTokens(idMap.get(id), 3));         // di-like = sinyal terkuat
-  (st.history || []).slice(0, 25).forEach((h, i) =>                    // history: makin baru makin berbobot
-    addTokens(idMap.get(h && h.videoId), 2 * (1 - i / 30)));
+  (st.saved || []).forEach(id => addTokens(idMap.get(id), 3));         // disimpan = sinyal minat kuat (ref Reels: save)
+  // History: makin baru makin berbobot, DIKALI completion (% ditonton). Video
+  // ditonton tuntas = minat kuat; skip / tonton-pendek (progress rendah) =
+  // kontribusi minim (ref TikTok/Reels watch-time + Spotify skip, 2026-06-16).
+  (st.history || []).slice(0, 25).forEach((h, i) => {
+    const prog = Math.max(0, Math.min(100, Number(h && h.progress) || 0)) / 100;
+    addTokens(idMap.get(h && h.videoId), 2 * (1 - i / 30) * (0.25 + 0.75 * prog));
+  });
   (st.myVideos || []).forEach(v => addTokens(v, 1.5));                 // video sendiri = selera kuat
   for (const vid of idMap.values())                                   // konten kreator yang di-follow
     if (following.has((vid.creator || "").toLowerCase())) addTokens(vid, 0.8);
@@ -37629,7 +37702,7 @@ function _fypScore(v, ctx) {
       1.0 * Math.log10(1 + _fypViews(v))
     + 1.6 * Math.log10(1 + _fypLikes(v))
     + 2.2 * Math.log10(1 + _fypComments(v))
-    + 1.8 * Math.log10(1 + _fypShares(v));
+    + 2.0 * Math.log10(1 + _fypShares(v));   // share/send dinaikkan — jangkauan audiens baru (ref Reels 2026-06-16)
 
   // 2) Recency — decay half-life 48 jam (1.0 baru → .5 @48j → .25 @96j).
   //    req user 2026-06-16: lebih berat ke recency (half-life 60→48 + mix 0.55→0.60).
@@ -37679,7 +37752,27 @@ function _fypRank(list) {
     if (c === lastCreator) streak++; else { lastCreator = c; streak = 1; }
   }
   for (const item of deferred) out.push(item); // sisanya menyusul (tetap urut skor)
-  return out.map(x => x.v);
+  return _fypInjectExploration(out, ctx).map(x => x.v);
+}
+
+// Eksplorasi (ref Netflix contextual-bandit / X 50-50, 2026-06-16): sisipkan video
+// afinitas-konten RENDAH ("penemuan") tiap slot ke-5 supaya feed tidak filter-bubble
+// & konten di luar minat / baru tetap kebagian. Deterministik (tanpa Math.random).
+function _fypInjectExploration(items, ctx) {
+  if (items.length < 6 || !ctx._affMax) return items;   // butuh cukup item + ada profil minat
+  const explore = [], exploit = [];
+  for (const it of items) {
+    const affN = (ctx._affOf.get(it.v) || 0) / ctx._affMax;
+    (affN < 0.25 ? explore : exploit).push(it);          // <25% afinitas = kandidat penemuan
+  }
+  if (!explore.length || !exploit.length) return items;  // tak ada yg bisa dicampur
+  const merged = []; let ei = 0, xi = 0;
+  for (let pos = 0; pos < items.length; pos++) {
+    if (pos % 5 === 4 && xi < explore.length) merged.push(explore[xi++]);  // slot ke-5,10,… = penemuan
+    else if (ei < exploit.length) merged.push(exploit[ei++]);
+    else if (xi < explore.length) merged.push(explore[xi++]);
+  }
+  return merged;
 }
 
 function getFypVideos() {
@@ -37702,15 +37795,48 @@ function getFypVideos() {
     all = all.filter(v => videoMatchesTag(v, fypTagFilter));
   }
   if (discoverQuery) {
-    const q = discoverQuery.toLowerCase();
-    all = all.filter(v =>
-      (v.title || "").toLowerCase().includes(q) ||
-      (v.creator || "").toLowerCase().includes(q) ||
-      (v.desc || "").toLowerCase().includes(q)
-    );
+    const q = discoverQuery.toLowerCase().trim();
+    // Pencocokan "nyambung" (gaya cari topik TikTok, req user 2026-06-16):
+    // abaikan #, spasi, dan tanda baca di KEDUA sisi supaya ketik "#pialadunia"
+    // tetap menemukan judul "#pialadunia2026", "Final piala dunia 2026", maupun
+    // hashtag di kolom tag — video TIDAK harus memuat hashtag persis.
+    const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
+    const qn = norm(q);
+    all = all.filter(v => {
+      if ((v.title || "").toLowerCase().includes(q) ||
+          (v.creator || "").toLowerCase().includes(q) ||
+          (v.desc || "").toLowerCase().includes(q)) return true;
+      if (!qn) return false;
+      const hay = norm(`${v.title || ""} ${v.desc || ""} ${Array.isArray(v.tags) ? v.tags.join(" ") : ""} ${v.creator || ""}`);
+      return hay.includes(qn);
+    });
   }
   // Terapkan algoritma peringkat (skor + diversifikasi) sebelum dirender.
   return _fypRank(all);
+}
+
+// Skeleton kartu feed Jelajahi — placeholder STRUKTURAL (bukan konten dummy)
+// utk empty state "belum ada konten": avatar + baris nama + caption + area video
+// + baris aksi, semua shimmer. Supaya layout/fitur feed tetap bisa di-review saat
+// kosong (req user 2026-06-16).
+function fypSkeletonCardHTML() {
+  const _svg = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  const acts = [
+    '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>',          // like
+    '<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>',                                               // komentar
+    '<path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"/>',                                                                              // bagikan
+    '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',                                  // views
+    '<path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"/>'                                                            // simpan
+  ].map((p, i) => '<span class="fyp-sk-act">' + _svg(p) + (i < 4 ? '<span class="fyp-sk fyp-sk-count"></span>' : '') + '</span>').join("");  // angka di like/komentar/bagikan/views, simpan tanpa
+  return '<div class="fyp-card-skel" aria-hidden="true">'
+    + '<div class="fyp-sk-head"><span class="fyp-sk fyp-sk-av"></span>'
+      + '<span class="fyp-sk-meta"><span class="fyp-sk fyp-sk-line" style="width:120px"></span>'
+      + '<span class="fyp-sk fyp-sk-line" style="width:72px"></span></span>'
+      + '<span class="fyp-sk-follow">+ Ikuti</span></div>'
+    + '<span class="fyp-sk fyp-sk-line fyp-sk-cap"></span>'
+    + '<div class="fyp-sk-video"><span class="fyp-sk-play">' + _svg('<circle cx="12" cy="12" r="10"/><path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" stroke="none"/>') + '</span></div>'
+    + '<div class="fyp-sk-actions">' + acts + '</div>'
+  + '</div>';
 }
 
 function renderFYP() {
@@ -37732,11 +37858,18 @@ function renderFYP() {
       ? { icon: _IC.search, h: `Tidak ada hasil untuk "${escapeHtml(discoverQuery)}"`, p: "Coba kata kunci lain atau kosongkan kolom pencarian.",
           actions: `<button type="button" class="btn ghost" data-fyp-clear="search"><span data-no-i18n>Kosongkan pencarian</span></button>` }
       : fypTagFilter
-      ? { icon: _IC.tag, h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas.",
+      ? { icon: _IC.tag, h: `Tidak ada video untuk topik "${escapeHtml(_fypTopicLabel(fypTagFilter))}"`, p: "Coba topik lain atau hapus filter di atas.",
           actions: `<button type="button" class="btn ghost" data-fyp-clear="tag"><span data-no-i18n>Hapus filter</span></button>` }
-      : { icon: _IC.compass, h: "Belum ada video di feed", p: "Unggah video pertamamu atau ikuti kreator lain untuk mengisi feed!",
-          actions: `<button type="button" class="btn primary" data-jump="upload"><span data-no-i18n>Unggah Video</span></button><button type="button" class="btn ghost" data-jump="people"><span data-no-i18n>Cari Kreator</span></button>` };
-    feed.innerHTML = `<div class="fyp-empty"><div class="fyp-empty-icon">${emptyMsg.icon}</div><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p><div class="fyp-empty-actions">${emptyMsg.actions}</div></div>`;
+      : { icon: _IC.compass, h: "Belum ada video di feed", p: "Begini tampilan feed-mu nanti — unggah video atau ikuti kreator untuk mengisinya.",
+          actions: `<button type="button" class="btn primary" data-jump="upload"><svg class="fyp-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span data-no-i18n>Unggah Video</span></button><button type="button" class="btn ghost" data-jump="people"><svg class="fyp-btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span data-no-i18n>Cari Kreator</span></button>` };
+    // Empty "belum ada konten" (bukan hasil search/tag) → tampilkan skeleton kartu
+    // feed supaya struktur/kolom tetap terlihat & bisa di-review (req user
+    // 2026-06-16). Search/tag kosong tetap pesan biasa.
+    const _isDefaultEmpty = !discoverQuery && !fypTagFilter;
+    const _skel = _isDefaultEmpty
+      ? `<div class="fyp-skeletons" aria-hidden="true">${fypSkeletonCardHTML()}</div>`
+      : "";
+    feed.innerHTML = `<div class="fyp-empty${_isDefaultEmpty ? " fyp-empty-compact" : ""}"><div class="fyp-empty-icon">${emptyMsg.icon}</div><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p><div class="fyp-empty-actions">${emptyMsg.actions}</div></div>${_skel}`;
     feed.querySelector('[data-fyp-clear="search"]')?.addEventListener("click", () => {
       discoverQuery = ""; const i = document.getElementById("discoverSearch"); if (i) i.value = ""; renderFYP();
     });
@@ -37952,6 +38085,83 @@ document.addEventListener("click", (e) => {
 // diberi bobot engagement×recency dari video platform. Klik tag → filter feed
 // (fypTagFilter) — sinergi dgn algoritma konten. (renderTrendingNews tetap ada
 // untuk pemakai lain spt home, tidak dihapus.)
+// Stopword (ID + EN + kata pengisi judul) — dibuang saat ekstraksi topik judul
+// supaya tren = kata bermakna, bukan "yang/dan/video/viral" dst.
+const _FYP_STOP = new Set((
+  "yang dan atau ini itu nya untuk pada dengan dari ke di buat bikin biar aja saja juga lagi kok sih dong nih " +
+  "yg utk dgn dlm pun gak nggak tidak ada akan udah sudah bisa kita kami mereka dia aku kamu gue gua lo lu kah " +
+  "the and or of to in on for with this that these those you your our their they them his her its are was were been " +
+  "video vlog part bagian eps episode full new baru terbaru viral seru banget bgt kemarin hari ini nanti pas saat " +
+  "cover momen tips trik cara belajar nobar top best official asli wajib coba review kompilasi " +
+  "paling semua tanpa pakai pake versi terbaik terburuk biar makin jadi gitu loh"
+).split(/\s+/).filter(Boolean));
+
+// Label topik tampil: tanpa #, Title Case (mis. "piala dunia" → "Piala Dunia").
+function _fypTopicLabel(tag) {
+  return String(tag || "").replace(/^#/, "").replace(/\b\p{L}/gu, c => c.toUpperCase());
+}
+
+// Topik tren UNIVERSAL (option B, req user 2026-06-16): selain hashtag (#...),
+// ekstrak juga FRASA & kata dari JUDUL video (tanpa perlu #) — mis. judul
+// "Final Piala Dunia 2026" menyumbang topik "piala dunia". Semua dinormalisasi
+// (huruf saja) sehingga "#pialadunia2026", "Piala Dunia 2026", & "piala dunia"
+// MELEBUR jadi satu topik. Bobot = engagement×recency, naik untuk topik yang
+// muncul di banyak video. Deterministik (tanpa Math.random).
+function _fypTrendingTopics(vids) {
+  const now = Date.now();
+  const norm = s => String(s || "").toLowerCase().replace(/[^a-z]/g, ""); // huruf saja → lebur #/spasi/angka
+  const agg = {}; // key -> { weight, vids:Set, surfaces:{surface:bobot} }
+  const bump = (key, surface, w, id, views) => {
+    if (!key || key.length < 4) return;
+    const a = agg[key] || (agg[key] = { weight: 0, vids: new Map(), surfaces: {} });
+    a.weight += w;
+    if (!a.vids.has(id)) a.vids.set(id, views || 0);   // tayangan per video, hitung sekali
+    a.surfaces[surface] = (a.surfaces[surface] || 0) + w;
+  };
+  for (const v of vids) {
+    const eng = Math.log10(1 + _fypViews(v)) + 0.8 * Math.log10(1 + _fypLikes(v)) + 1.2 * Math.log10(1 + _fypComments(v));
+    const t = _fypTime(v);
+    let rec = 0.6;
+    if (t > 0) rec = Math.pow(0.5, Math.max(0, (now - t) / 3600000) / 72); // half-life 72 jam
+    const w = (eng + 0.2) * (0.5 + 0.5 * rec);
+    const views = _fypViews(v);
+    const title = String(v.title || "");
+    const desc = String(v.desc || v.description || "");
+    // 1) Hashtag eksplisit (sinyal kuat) — bobot ekstra.
+    extractHashtags(title + " " + desc).forEach(h => bump(norm(h), "#" + h, w * 1.3, v.id, views));
+    // 2) Hashtag dari kolom tag video.
+    if (Array.isArray(v.tags)) v.tags.forEach(tg => { const s = String(tg).replace(/^#/, "").trim().toLowerCase(); if (s) bump(norm(s), s, w, v.id, views); });
+    // 3) Frasa & kata dari JUDUL (tanpa #) — inti option B.
+    const clean = title.toLowerCase().replace(/#[\p{L}\p{N}_]+/gu, " ");
+    const toks = (clean.match(/[\p{L}]{3,}/gu) || []).filter(x => !_FYP_STOP.has(x));
+    for (let i = 0; i < toks.length - 1; i++) {            // bigram = topik lebih spesifik (mis. "piala dunia")
+      bump(norm(toks[i] + toks[i + 1]), toks[i] + " " + toks[i + 1], w, v.id, views);
+    }
+    toks.forEach(u => bump(norm(u), u, w * 0.55, v.id, views));    // unigram, bobot lebih kecil
+  }
+  // TREN = topik LINTAS-VIDEO (muncul di ≥2 video) supaya bukan sekadar pecahan
+  // judul satu video (mis. "final piala", "rumahan anti"). Skor = bobot × (1 +
+  // log distinct video) → makin banyak video makin naik.
+  const topics = Object.entries(agg)
+    .filter(([, a]) => a.vids.size >= 2)
+    .map(([key, a]) => {
+      const surfaces = Object.entries(a.surfaces).sort((x, y) => y[1] - x[1]);
+      const phrase = surfaces.find(s => s[0].includes(" "));  // utamakan frasa 2-kata utk label
+      const surface = (phrase ? phrase[0] : surfaces[0][0]).replace(/^#/, "");
+      const views = [...a.vids.values()].reduce((s, x) => s + x, 0);
+      return { key, surface, vids: a.vids.size, views, score: a.weight * (1 + Math.log10(a.vids.size + 1)) };
+    }).sort((a, b) => b.score - a.score);
+  // Dedup tumpang-tindih: buang topik yg key-nya bagian dari topik lain yg lebih
+  // kuat (mis. "piala"/"dunia" lebur ke "pialadunia"). Sudah terurut skor desc.
+  const kept = [];
+  for (const tp of topics) {
+    if (kept.some(k => k.key.includes(tp.key) || tp.key.includes(k.key))) continue;
+    kept.push(tp);
+    if (kept.length >= 6) break;
+  }
+  return kept;
+}
+
 function renderDiscoverTrendingInternal() {
   const list = document.getElementById("discoverTrendingList");
   if (!list) return;
@@ -37973,34 +38183,21 @@ function renderDiscoverTrendingInternal() {
       .filter(v => (v.creator || "").toLowerCase() !== me)
       .filter(v => showAdult || String(v.audience || v.age || v.ageRating || "").toLowerCase() !== "18+");
   } catch {}
-  const now = Date.now();
-  const agg = {}; // tag -> { weight, count }
-  for (const v of vids) {
-    const eng = Math.log10(1 + _fypViews(v)) + 0.8 * Math.log10(1 + _fypLikes(v)) + 1.2 * Math.log10(1 + _fypComments(v));
-    const t = _fypTime(v);
-    let rec = 0.6;
-    if (t > 0) rec = Math.pow(0.5, Math.max(0, (now - t) / 3600000) / 72); // half-life 72 jam
-    const w = (eng + 0.2) * (0.5 + 0.5 * rec);
-    const tags = new Set();
-    if (Array.isArray(v.tags)) v.tags.forEach(t => { const s = String(t).toLowerCase().replace(/^#/, "").trim(); if (s) tags.add(s); });
-    if (typeof extractHashtags === "function") extractHashtags((v.title || "") + " " + (v.desc || v.description || "")).forEach(t => tags.add(t));
-    tags.forEach(tag => { const a = agg[tag] || (agg[tag] = { weight: 0, count: 0 }); a.weight += w; a.count++; });
-  }
-  const top = Object.entries(agg).sort((a, b) => b[1].weight - a[1].weight).slice(0, 6);
-  if (!top.length) {
-    list.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">🔥</div><p>Belum ada tren. Mulai unggah &amp; beri tag videomu!</p></div>`;
+  const topics = _fypTrendingTopics(vids);
+  if (!topics.length) {
+    list.innerHTML = trendingSkeletonHTML()
+      + `<p class="sidebar-empty-note">Belum ada tren — unggah video, topik dari judulnya otomatis muncul di sini.</p>`;
     return;
   }
-  const trendIcon = (i) => i === 0 ? "↑" : i === 1 ? "→" : "↗";
-  list.innerHTML = top.map(([tag, info], i) => `
-    <div class="trending-item${fypTagFilter === tag ? " active" : ""}" data-fyp-tag="${escapeHtml(tag)}" role="button" tabindex="0">
+  // Layout bersih 2 baris: topik (menonjol) + sub "N video · lagi ramai".
+  // Panah arah tren dihapus — arbitrer per-ranking, tidak mewakili data apa pun.
+  list.innerHTML = topics.map((tp, i) => `
+    <div class="trending-item${fypTagFilter === tp.surface ? " active" : ""}" data-fyp-tag="${escapeHtml(tp.surface)}" role="button" tabindex="0">
       <span class="trending-rank">#${i + 1}</span>
       <span class="trending-info">
-        <span class="trending-cat">${info.count} video</span>
-        <strong>#${escapeHtml(tag)}</strong>
-        <small>lagi ramai</small>
+        <strong>${escapeHtml(_fypTopicLabel(tp.surface))}</strong>
+        <small>${tp.vids} video · ${fmtNum(tp.views)} tayangan</small>
       </span>
-      <span class="trending-trend">${trendIcon(i)}</span>
     </div>`).join("");
   const apply = (b) => {
     const tag = b.dataset.fypTag;
@@ -38090,8 +38287,8 @@ function syncFypTagBar() {
   }
   bar.innerHTML = `
     <div class="fyp-tag-bar-inner">
-      <span class="fyp-tag-bar-label">Filter tag:</span>
-      <span class="fyp-tag-bar-tag">#${escapeHtml(fypTagFilter)}</span>
+      <span class="fyp-tag-bar-label">Topik:</span>
+      <span class="fyp-tag-bar-tag">${escapeHtml(_fypTopicLabel(fypTagFilter))}</span>
       <button class="fyp-tag-bar-clear" id="fypTagClear" title="Hapus filter">✕ Reset</button>
     </div>
   `;
@@ -38106,7 +38303,8 @@ function fypCardHTML(v) {
   const saved = state?.saved?.includes(v.id);
   const following = state?.followingCreators?.includes(v.creator);
   const init = (v.creator || "U").split(/[\s_]/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
-  const commentCount = state?.comments?.[v.id]?.length || 0;
+  const commentCount = (typeof getVideoComments === "function") ? getVideoComments(v.id).length : (state?.comments?.[v.id]?.length || 0);
+  const myInit = ((user?.username || "U").trim()[0] || "U").toUpperCase(); // avatar composer (1 huruf)
   const shareCount = getShareCount(v.id);
   // Real-time relative timestamp — pakai _fypTime (publishedAt/uploadedAt/
   // createdAt) supaya video kreator platform (yang pakai publishedAt) ikut
@@ -38169,7 +38367,17 @@ function fypCardHTML(v) {
           <svg viewBox="0 0 24 24" fill="${saved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"/></svg>
         </button>
       </footer>
-      ${fypCommentsPanelHTML(v.id)}
+
+      <!-- Komentar INLINE gaya X (req user 2026-06-16): muncul di bawah kartu saat
+           tombol komentar diklik — composer balasan + thread, bukan popup. -->
+      <div class="fyp-comments" data-cm-wrap="${v.id}" hidden>
+        <div class="fyp-cm-compose">
+          <div class="fyp-cm-av fyp-cm-av-me"><span>${myInit}</span></div>
+          <input type="text" class="fyp-cm-field" data-cm-field="${v.id}" placeholder="Tulis komentar..." maxlength="500"/>
+          <button type="button" class="btn primary sm fyp-cm-send-btn" data-cm-send="${v.id}">Kirim</button>
+        </div>
+        <div class="fyp-cm-thread" data-cm-thread="${v.id}"></div>
+      </div>
     </article>
   `;
 }
@@ -38218,19 +38426,9 @@ function bindFypCards(scope) {
       if (username && typeof openUserProfile === "function") openUserProfile(username);
     });
   });
-  // Sync wrap aspect-ratio dari poster image (sebelum video loaded) supaya
-  // tidak ada letterbox area di luar visible video — slider/controls stay inside.
-  $$(".fyp-video-wrap", scope).forEach(w => {
-    const poster = w.querySelector(".fyp-poster");
-    if (!poster) return;
-    const syncAspect = () => {
-      if (poster.naturalWidth && poster.naturalHeight) {
-        w.style.aspectRatio = `${poster.naturalWidth} / ${poster.naturalHeight}`;
-      }
-    };
-    if (poster.complete) syncAspect();
-    else poster.addEventListener("load", syncAspect, { once: true });
-  });
+  // v752: TIDAK lagi menyetel aspect-ratio wrap dari dimensi poster/video. Bentuk
+  // area video kini TETAP (ditentukan CSS kolom), video yang menyesuaikan via
+  // object-fit: cover. (req user: "video lah yang menyesuaikan kolom").
   // Tap video → single-tap buka player (req 2026-05-26), double-tap → like + heart pop
   $$(".fyp-video-wrap", scope).forEach(w => {
     let tapTimer = null;
@@ -38330,14 +38528,45 @@ function bindFypCards(scope) {
       }
     });
   });
-  // Comment → buka player modal di section comment
+  // Comment → toggle panel komentar INLINE di bawah kartu (gaya X, bukan popup).
+  // req user 2026-06-16. Store komentar kanonik supaya sinkron dgn player.
   $$("[data-fyp-comment]", scope).forEach(b => {
     b.addEventListener("click", e => {
       e.stopPropagation();
       const id = +b.dataset.fypComment;
-      pauseAllFypVideos();
-      openPlayer(id);
-      setTimeout(() => $("#commentField")?.focus(), 300);
+      const card = b.closest(".fyp-card");
+      const wrap = card?.querySelector(`[data-cm-wrap="${id}"]`);
+      if (!wrap) return;
+      if (wrap.hasAttribute("hidden")) {
+        wrap.removeAttribute("hidden");
+        renderFypCommentThread(id);
+        setTimeout(() => wrap.querySelector(`[data-cm-field="${id}"]`)?.focus(), 60);
+      } else {
+        wrap.setAttribute("hidden", "");
+      }
+    });
+  });
+  // Delegasi aksi di dalam panel komentar: composer utama "Kirim" + tombol "Balas"
+  // per-komentar + kirim balasan. Delegasi karena thread di-render dinamis.
+  $$(".fyp-comments", scope).forEach(wrap => {
+    if (wrap.__cmWired) return;
+    wrap.__cmWired = true;
+    const vid = +wrap.dataset.cmWrap;
+    wrap.addEventListener("click", e => {
+      e.stopPropagation();
+      const send = e.target.closest("[data-cm-send]");
+      if (send) { submitInlineComment(vid); return; }
+      const replyToggle = e.target.closest("[data-cm-reply]");
+      if (replyToggle) { toggleReplyBox(replyToggle.dataset.cmReply); return; }
+      const replySend = e.target.closest("[data-cm-replysend]");
+      if (replySend) { submitReply(vid, replySend.dataset.cmReplysend); return; }
+    });
+    wrap.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      const mf = e.target.closest("[data-cm-field]");
+      if (mf) { e.preventDefault(); submitInlineComment(vid); return; }
+      const rf = e.target.closest("[data-cm-replyfield]");
+      if (rf) { e.preventDefault(); submitReply(vid, rf.dataset.cmReplyfield); return; }
     });
   });
   // Share / Kirim → buka share modal (gabungan: kirim ke user + share eksternal)
@@ -38526,13 +38755,8 @@ async function createFypVideo(wrap) {
   });
   video.addEventListener("play", () => { wrap.classList.add("playing"); wrap.classList.remove("paused"); });
   video.addEventListener("pause", () => { wrap.classList.add("paused"); wrap.classList.remove("playing"); });
-  // Sync wrap aspect-ratio dengan video saat metadata loaded — eliminates letterbox
-  // sehingga slider/controls tidak appear di area kosong di luar video frame.
-  video.addEventListener("loadedmetadata", () => {
-    if (video.videoWidth && video.videoHeight) {
-      wrap.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
-    }
-  });
+  // v752: aspect-ratio wrap TIDAK lagi disinkronkan dgn dimensi video — bentuk area
+  // tetap (CSS kolom), video mengisi via object-fit: cover. (req user)
   // Gate 18+: preview FYP_GATE_SECONDS detik → pertanyaan konfirmasi (req user
   // 2026-06-16). Non-18+ / sudah dikonfirmasi sebelumnya → tanpa gate.
   if (_isVideo18(v) && !_fyp18Confirmed.has(id)) {
@@ -38690,7 +38914,9 @@ function openShareModal(videoId, opts = {}) {
   const v = findVideo(videoId);
   if (!v) return;
   __shareCurrentVideoId = videoId;
-  $("#shareSubtitle").textContent = `"${v.title}" • @${v.creator}`;
+  // v754: deskripsi = helper aksi yg jelas (req user perbaiki deskripsi), bukan
+  // sekadar echo judul video.
+  $("#shareSubtitle").textContent = "Kirim ke pengguna lain atau bagikan ke aplikasi favoritmu";
   $("#shareUserSearch").value = "";
   renderShareUsersList("");
   // Reset QR preview tiap kali modal dibuka
@@ -38705,6 +38931,98 @@ function closeShareModal() {
   __shareCurrentVideoId = null;
   const qrBox = document.getElementById("shareQrBox");
   if (qrBox) qrBox.hidden = true;
+}
+
+// ===== Komentar INLINE feed Jelajahi (gaya X, req user 2026-06-16) — panel di
+// bawah kartu (composer + thread), BUKAN popup. Store komentar kanonik
+// (getVideoComments/setVideoComments) supaya sinkron dgn player. =====
+function _fypCmInit(c) {
+  const name = c.name || c.author || "User";
+  return c.init || (String(name).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase()) || "U";
+}
+function fypReplyItemHTML(r) {
+  const name = r.name || r.author || "User";
+  const time = (typeof relTime === "function" && r.ts) ? relTime(r.ts) : "";
+  return '<div class="fyp-cm-item fyp-cm-reply-item">'
+    + `<div class="fyp-cm-av"><span>${escapeHtml(_fypCmInit(r))}</span></div>`
+    + '<div class="fyp-cm-body">'
+    +   `<div class="fyp-cm-meta"><strong>@${escapeHtml(name)}</strong>${time ? `<small>· ${escapeHtml(time)}</small>` : ""}</div>`
+    +   `<div class="fyp-cm-text">${escapeHtml(r.text || "")}</div>`
+    + '</div></div>';
+}
+function fypCommentItemHTML(c, videoId, replies) {
+  replies = replies || [];
+  const name = c.name || c.author || "User";
+  const time = (typeof relTime === "function" && c.ts) ? relTime(c.ts) : "";
+  const cid = String(c.id);
+  const repliesHTML = replies.length ? `<div class="fyp-cm-replies">${replies.map(fypReplyItemHTML).join("")}</div>` : "";
+  return `<div class="fyp-cm-item" data-cm-id="${escapeHtml(cid)}">`
+    + `<div class="fyp-cm-av"><span>${escapeHtml(_fypCmInit(c))}</span></div>`
+    + '<div class="fyp-cm-body">'
+    +   `<div class="fyp-cm-meta"><strong>@${escapeHtml(name)}</strong>${time ? `<small>· ${escapeHtml(time)}</small>` : ""}</div>`
+    +   `<div class="fyp-cm-text">${escapeHtml(c.text || "")}</div>`
+    +   `<button type="button" class="fyp-cm-reply-link" data-cm-reply="${escapeHtml(cid)}">Balas</button>`
+    +   `<div class="fyp-cm-replybox" data-cm-replybox="${escapeHtml(cid)}" hidden>`
+    +     `<input type="text" class="fyp-cm-field" data-cm-replyfield="${escapeHtml(cid)}" placeholder="Balas @${escapeHtml(name)}..." maxlength="500"/>`
+    +     `<button type="button" class="btn primary sm" data-cm-replysend="${escapeHtml(cid)}">Kirim</button>`
+    +   `</div>`
+    +   repliesHTML
+    + '</div></div>';
+}
+function renderFypCommentThread(videoId) {
+  const thread = document.querySelector(`[data-cm-thread="${videoId}"]`);
+  if (!thread) return;
+  const all = getVideoComments(videoId).map(_normalizeComment);
+  const top = all.filter(c => !c.parentId).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const byParent = {};
+  all.filter(c => c.parentId).forEach(c => { (byParent[c.parentId] = byParent[c.parentId] || []).push(c); });
+  Object.keys(byParent).forEach(k => byParent[k].sort((a, b) => (a.ts || 0) - (b.ts || 0))); // balasan: lama→baru
+  thread.innerHTML = top.length
+    ? top.map(c => fypCommentItemHTML(c, videoId, byParent[c.id] || [])).join("")
+    : '<div class="fyp-cm-empty">Belum ada komentar. Jadilah yang pertama!</div>';
+}
+// Tambah komentar/balasan (parentId null = komentar utama, string = balasan). Store kanonik.
+function _fypAddComment(videoId, text, parentId) {
+  const txt = (text || "").trim();
+  if (!txt) return false;
+  const initials = (user && (user.name || user.username) || "U").split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const listData = getVideoComments(videoId).map(_normalizeComment);
+  listData.unshift({
+    id: _genCommentId(), parentId: parentId || null,
+    name: user && user.username || "anon", init: initials,
+    text: txt, ts: Date.now(), likes: [], reports: []
+  });
+  setVideoComments(videoId, listData);
+  renderFypCommentThread(videoId);
+  const cnt = getVideoComments(videoId).length;
+  document.querySelectorAll(`[data-fyp-comment-count="${videoId}"]`).forEach(el => { el.textContent = fmtNum(cnt); });
+  const v = findVideo(videoId);
+  if (v && v.creator && v.creator !== user.username && typeof deliverNotification === "function") {
+    deliverNotification(v.creator, {
+      type: "comment", videoId, init: initials, fromUsername: user.username,
+      text: `<b>@${user.username}</b> ${parentId ? "membalas komentar di" : "berkomentar di"} videomu "<b>${escapeHtml(v.title || "")}</b>": "${escapeHtml(txt.length > 80 ? txt.slice(0, 77) + "..." : txt)}"`
+    });
+  }
+  if (typeof toast === "function") toast(parentId ? "💬 Balasan terkirim" : "💬 Komentar terkirim", "success");
+  return true;
+}
+function submitInlineComment(videoId) {
+  if (videoId == null || isNaN(videoId)) return;
+  const field = document.querySelector(`[data-cm-field="${videoId}"]`);
+  if (_fypAddComment(videoId, field && field.value, null) && field) field.value = "";
+}
+function toggleReplyBox(commentId) {
+  const box = document.querySelector('[data-cm-replybox="' + commentId + '"]');
+  if (!box) return;
+  const willOpen = box.hasAttribute("hidden");
+  document.querySelectorAll("[data-cm-replybox]").forEach(b => { if (b !== box) b.setAttribute("hidden", ""); });
+  if (willOpen) { box.removeAttribute("hidden"); setTimeout(() => box.querySelector("[data-cm-replyfield]")?.focus(), 40); }
+  else box.setAttribute("hidden", "");
+}
+function submitReply(videoId, parentId) {
+  if (videoId == null || isNaN(videoId) || !parentId) return;
+  const field = document.querySelector('[data-cm-replyfield="' + parentId + '"]');
+  _fypAddComment(videoId, field && field.value, parentId); // thread re-render → reply box reset
 }
 
 function getShareableUsers(query = "") {
@@ -38752,14 +39070,16 @@ function renderShareUsersList(query) {
     list.innerHTML = `<div class="share-users-empty">${query ? "Tidak ada user yang cocok" : "Belum ada user lain di platform. Undang temanmu untuk bergabung!"}</div>`;
     return;
   }
+  // v757: teks Indonesia + ikon paper-plane (req user: bahasa & tampilan tombol kirim).
+  const _sendIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"></path></svg>';
   list.innerHTML = users.map(u => `
-    <button class="share-user" data-share-to="${escapeHtml(u.username)}" title="Send to @${escapeHtml(u.username)}">
+    <button class="share-user" data-share-to="${escapeHtml(u.username)}" title="Kirim ke @${escapeHtml(u.username)}">
       <div class="share-user-avatar"><span>${escapeHtml(u.init)}</span></div>
       <div class="share-user-info">
         <strong>@${escapeHtml(u.username)}</strong>
-        <small>${u.source === "recent" ? "💬 Active chat" : u.source === "following" ? "✓ Following" : escapeHtml(u.name)}</small>
+        <small>${u.source === "recent" ? "💬 Chat aktif" : u.source === "following" ? "✓ Diikuti" : escapeHtml(u.name)}</small>
       </div>
-      <span class="share-user-send">Send</span>
+      <span class="share-user-send">${_sendIco}<span>Kirim</span></span>
     </button>
   `).join("");
   list.querySelectorAll("[data-share-to]").forEach(btn => {
@@ -38767,7 +39087,7 @@ function renderShareUsersList(query) {
       const target = btn.dataset.shareTo;
       sendVideoToUser(target, __shareCurrentVideoId);
       btn.classList.add("sent");
-      btn.querySelector(".share-user-send").textContent = "✓ Sent";
+      btn.querySelector(".share-user-send").innerHTML = "✓ Terkirim";
       btn.disabled = true;
     });
   });
@@ -39102,6 +39422,10 @@ $("#fypShareModal")?.querySelectorAll("[data-share-act]").forEach(btn => {
         // wa.me canonical → buka picker chat lalu prefilled text. Mobile pakai
         // app langsung, desktop buka WhatsApp Web compose.
         openExternal = `https://api.whatsapp.com/send?text=${enc(shareText + " " + shareUrl)}`;
+        break;
+      case "email":
+        // Email client (mailto) — subject + body berisi judul & link share.
+        openExternal = `mailto:?subject=${enc(shareText)}&body=${enc(shareText + "\n" + shareUrl)}`;
         break;
       case "telegram":
         // t.me/share langsung buka dialog "Forward to" di Telegram
