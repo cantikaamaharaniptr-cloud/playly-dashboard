@@ -32372,7 +32372,7 @@ function refreshHeroGreeting() {
   const clockTier = $("#heroClockTier");
   if (clockTier) {
     const isPrem = user.tier === "premium" || user.role === "admin";
-    clockTier.textContent = isPrem ? "Premium" : "Free Plan";
+    clockTier.textContent = isPrem ? "Premium" : "Gratis";
     clockTier.classList.toggle("hpc-tier-premium", isPrem);
   }
   // Bio singkat (per request v56) — user.bio / prefs; empty → placeholder clickable
@@ -34547,6 +34547,10 @@ const HS_IC_TROPHY = _hsIco('<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17
 const HS_IC_PLAY   = _hsIco('<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>');
 const HS_IC_FILM   = _hsIco('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>');
 const HS_IC_HEART  = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
+// Eye = "paling banyak ditonton" (views), sejajar dgn HEART utk "Paling Disukai".
+// Dipakai di kartu "Video Terbaik" (req user 2026-06-16: jangan trophy — itu sama
+// dgn ikon Papan Peringkat). Trophy tetap utk leaderboard saja.
+const HS_IC_EYE    = _hsIco('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
 // Header kartu: ikon box + judul + sub-keterangan DASAR pemilihan (req user
 // 2026-06-14: "Video Terbaik berdasarkan apa" harus jelas). sub mis. "Paling
 // banyak ditonton".
@@ -34642,13 +34646,13 @@ function _renderHomeSorotanVideo() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
   const top = myVids.slice().sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
   const left = top
-    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_TROPHY, "Paling banyak ditonton")
-    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Upload untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_TROPHY, HS_IC_FILM, "Paling banyak ditonton");
+    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_EYE, "Paling banyak ditonton")
+    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Unggah untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_EYE, HS_IC_FILM, "Paling banyak ditonton");
   // TENGAH: Paling Disukai (likes tertinggi) — req user 2026-06-14
   const topLike = myVids.slice().sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))[0];
   const mid = topLike
     ? _homeVideoSlotHTML(topLike, "Paling Disukai", null, HS_IC_HEART, "Paling banyak disukai")
-    : _homeVideoSlotEmpty("Paling Disukai", "Belum ada video", "Upload untuk lihat video terfavoritmu.", "upload", "Unggah Video", HS_IC_HEART, HS_IC_FILM, "Paling banyak disukai");
+    : _homeVideoSlotEmpty("Paling Disukai", "Belum ada video", "Unggah untuk lihat video terfavoritmu.", "upload", "Unggah Video", HS_IC_HEART, HS_IC_FILM, "Paling banyak disukai");
   // Lanjut Tonton dipindah ke section sendiri di bawah (_renderHomeLanjutTonton).
   wrap.innerHTML = left + mid;
 }
@@ -34836,8 +34840,8 @@ function renderHomeAchievements() {
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const IC_CHECK  = '<svg ' + SI + '><polyline points="20 6 9 17 4 12"/></svg>';
   const ACH = [
-    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        cur: myVids.length, target: 1,    unit:"video" },
-    { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       cur: myVids.length, target: 10,   unit:"video" },
+    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Unggah 1 video",        cur: myVids.length, target: 1,    unit:"video" },
+    { ico: IC_STACK,  name:"Produktif",        desc:"Unggah 10 video",       cur: myVids.length, target: 10,   unit:"video" },
     { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    cur: totalViews,    target: 100,  unit:"tontonan" },
     { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  cur: totalViews,    target: 1000, unit:"tontonan" },
     { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        cur: totalLikes,    target: 100,  unit:"suka" },
@@ -34847,7 +34851,7 @@ function renderHomeAchievements() {
   ].map(a => ({ ...a, ok: a.cur >= a.target }));
   const unlocked = ACH.filter(a => a.ok).length;
   const countEl = document.getElementById("haCount");
-  if (countEl) countEl.textContent = `${unlocked}/${ACH.length} ter-unlock`;
+  if (countEl) countEl.textContent = `${unlocked}/${ACH.length} terbuka`;
 
   // Progres per-pencapaian terkunci (req user 2026-06-14): tiap badge yg belum
   // terbuka menampilkan bar progres + "cur/target" → kelihatan seberapa dekat,
@@ -35418,7 +35422,17 @@ function renderHomeRanking() {
   if (section) section.style.display = "";
   if (divider) divider.style.display = "";
   if (rankedAll.length === 0) {
-    if (empty) empty.hidden = false;
+    if (empty) {
+      // Empty state TERSTRUKTUR (req user 2026-06-16): ikon + judul + sub + tombol,
+      // selaras dgn empty card Sorotan/Pencapaian — bukan teks melayang di kotak
+      // besar kosong.
+      empty.innerHTML =
+        '<span class="rk-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/></svg></span>' +
+        '<div class="rk-empty-text"><h4 class="rk-empty-title">Belum ada peringkat</h4>' +
+        '<small class="rk-empty-sub">Unggah video &amp; kumpulkan tontonan untuk masuk papan peringkat.</small></div>' +
+        '<button type="button" class="btn primary sm rk-empty-btn" data-jump="upload">Unggah Video</button>';
+      empty.hidden = false;
+    }
     row.innerHTML = "";
     return;
   }
@@ -35541,7 +35555,7 @@ function renderHomeRankingSelf() {
     if (String(ranked[i].name).toLowerCase() === me) { pos = i + 1; break; }
   }
   if (pos > 0) el.innerHTML = "Peringkat kamu: <b>#" + pos + "</b> dari " + total + " kreator";
-  else el.textContent = "Top kreator berdasarkan total tontonan";
+  else el.textContent = "Kreator teratas berdasarkan total tontonan";
 }
 
 // ---- 📈 Level Kreator (XP) — "lawan" Pencapaian: progress kontinu, tak
