@@ -35422,20 +35422,21 @@ function renderHomeRanking() {
   if (section) section.style.display = "";
   if (divider) divider.style.display = "";
   if (rankedAll.length === 0) {
+    // Empty: tampil SAMA dgn bar "Lanjutkan Menonton" (req user 2026-06-16) —
+    // satu bar dashed full-width (ikon + pesan + pill), TANPA kartu solid &
+    // TANPA header. Class rk-is-empty melucuti chrome kartu + sembunyikan header.
+    if (section) section.classList.add("rk-is-empty");
     if (empty) {
-      // Empty state TERSTRUKTUR (req user 2026-06-16): ikon + judul + sub + tombol,
-      // selaras dgn empty card Sorotan/Pencapaian — bukan teks melayang di kotak
-      // besar kosong.
       empty.innerHTML =
-        '<span class="rk-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/></svg></span>' +
-        '<div class="rk-empty-text"><h4 class="rk-empty-title">Belum ada peringkat</h4>' +
-        '<small class="rk-empty-sub">Unggah video &amp; kumpulkan tontonan untuk masuk papan peringkat.</small></div>' +
-        '<button type="button" class="btn primary sm rk-empty-btn" data-jump="upload">Unggah Video</button>';
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/></svg>' +
+        '<span class="lt-empty-bar-txt">Belum ada peringkat</span>' +
+        '<a class="lt-empty-link" data-jump="upload" role="button" tabindex="0">Unggah Video</a>';
       empty.hidden = false;
     }
     row.innerHTML = "";
     return;
   }
+  if (section) section.classList.remove("rk-is-empty");
   if (empty) empty.hidden = true;
 
   const me = ((user && user.username) || "").toLowerCase();
