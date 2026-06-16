@@ -64444,8 +64444,10 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   border-color: var(--text) !important;
 }
 .home-ranking-section .lb-av {
-  background: rgba(232, 216, 196, 0.20) !important; /* bukan gold */
-  color: var(--text) !important;
+  /* wine gradient + cream — SAMA dgn avatar topbar/profil biar tampilan avatar
+     konsisten app-wide (req user 2026-06-16). Tetap "bukan gold". */
+  background: linear-gradient(135deg, #6D2932, #561C24) !important;
+  color: var(--cream, #E8D8C4) !important;
 }
 .home-ranking-section .lb-you {
   background: rgba(232, 216, 196, 0.20) !important; /* bukan gold */
