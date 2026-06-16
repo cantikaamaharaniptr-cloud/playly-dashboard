@@ -28741,6 +28741,52 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   align-items: center;
   justify-content: center;
 }
+/* === Gate 18+ feed Jelajahi (req user 2026-06-16): setelah preview 15 detik,
+   video konten 18+ pause + blur + PERTANYAAN konfirmasi sebelum lanjut nonton. === */
+.fyp-gate {
+  position: absolute; inset: 0; z-index: 7;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: rgba(26, 12, 16, .50);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  animation: fypGateIn .2s ease;
+  cursor: default;
+}
+@keyframes fypGateIn { from { opacity: 0; } to { opacity: 1; } }
+.fyp-gate-card {
+  max-width: 320px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  padding: 22px 22px 20px; border-radius: 16px;
+  background: rgba(26, 12, 16, .72);
+  border: 1px solid rgba(232, 216, 196, .2);
+}
+.fyp-gate-badge {
+  font-size: 13px; font-weight: 900; letter-spacing: .03em;
+  color: var(--cream, #E8D8C4);
+  padding: 3px 12px; border-radius: 999px;
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .3);
+}
+.fyp-gate-q { margin: 2px 0 0; font-size: 16px; font-weight: 800; color: var(--cream, #E8D8C4); }
+.fyp-gate-sub { margin: 0; font-size: 12.5px; line-height: 1.45; color: rgba(232, 216, 196, .7); }
+.fyp-gate-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 5px; }
+.fyp-gate-btn {
+  width: 100%; padding: 9px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.fyp-gate-yes {
+  color: var(--cream, #E8D8C4);
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .3);
+}
+.fyp-gate-yes:hover { transform: translateY(-1px); background: #7d3640; }
+.fyp-gate-no {
+  color: rgba(232, 216, 196, .8);
+  background: rgba(232, 216, 196, .06);
+  border: 1px solid rgba(232, 216, 196, .2);
+}
+.fyp-gate-no:hover { background: rgba(232, 216, 196, .14); }
 .fyp-video-wrap video,
 .fyp-video-wrap img.fyp-poster {
   width: 100%;
@@ -29061,6 +29107,20 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
 .fyp-empty-actions {
   display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
   margin-top: 18px;
+}
+/* Tombol "Unggah Video" di empty feed Jelajahi — pill cream (req user 2026-06-16).
+   Default .btn.primary user = outline wine pudar (rule global), kontras rendah →
+   selaras dgn pill cream empty CTA lain. Spesifisitas (0,5,1) > global (0,3,1). */
+section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
+  color: var(--cream, #E8D8C4) !important;
+  background: rgba(232, 216, 196, .05) !important;
+  border: 1px solid rgba(232, 216, 196, .26) !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+}
+section.view[data-view="discover"] .fyp-empty-actions .btn.primary:hover {
+  background: rgba(232, 216, 196, .12) !important;
+  border-color: rgba(232, 216, 196, .4) !important;
 }
 
 @keyframes spin {

@@ -35370,7 +35370,7 @@ function renderSuggestUsers() {
       <div class="suggest-empty">
         <div class="suggest-empty-icon">👥</div>
         <p>Belum ada kreator lain</p>
-        <small>Kreator akan muncul di sini setelah ada user yang upload video.</small>
+        <small>Kreator akan muncul di sini setelah ada pengguna yang mengunggah video.</small>
       </div>`;
     return;
   }
@@ -37631,22 +37631,23 @@ function _fypScore(v, ctx) {
     + 2.2 * Math.log10(1 + _fypComments(v))
     + 1.8 * Math.log10(1 + _fypShares(v));
 
-  // 2) Recency — decay half-life 60 jam (1.0 baru → .5 @60j → .25 @120j).
+  // 2) Recency — decay half-life 48 jam (1.0 baru → .5 @48j → .25 @96j).
+  //    req user 2026-06-16: lebih berat ke recency (half-life 60→48 + mix 0.55→0.60).
   let recency = 0.5;
   const t = _fypTime(v);
   if (t > 0) {
     const ageH = Math.max(0, (ctx.now - t) / 3600000);
-    recency = Math.pow(0.5, ageH / 60);
+    recency = Math.pow(0.5, ageH / 48);
   }
   // +0.3 baseline: video 0-engagement (baru upload) tetap dapat skor dari
   //    recency → cold-start, tidak langsung tenggelam.
-  let score = (engagement + 0.3) * (0.45 + 0.55 * recency);
+  let score = (engagement + 0.3) * (0.40 + 0.60 * recency);
 
   // 3) Konten (content-based) — dorong video yang KONTENNYA mirip minat user.
   //    Afinitas dinormalisasi 0..1 antar kandidat (ctx._affMax, dihitung di _fypRank).
   if (ctx._affMax > 0) {
     const affN = (ctx._affOf.get(v) || 0) / ctx._affMax;        // 0..1
-    score *= 1 + 1.4 * affN;                                    // s/d ~2.4x untuk match konten terkuat
+    score *= 1 + 2.0 * affN;                                    // s/d ~3x utk match konten terkuat (req user 2026-06-16: lebih berat ke konten)
   } else if (v.category && ctx.favCats.has(v.category)) {
     score *= 1.25;                                              // fallback kategori favorit
   }
@@ -37733,7 +37734,7 @@ function renderFYP() {
       : fypTagFilter
       ? { icon: _IC.tag, h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas.",
           actions: `<button type="button" class="btn ghost" data-fyp-clear="tag"><span data-no-i18n>Hapus filter</span></button>` }
-      : { icon: _IC.compass, h: "Belum ada video di feed", p: "Upload video pertamamu atau follow kreator lain untuk mengisi feed!",
+      : { icon: _IC.compass, h: "Belum ada video di feed", p: "Unggah video pertamamu atau ikuti kreator lain untuk mengisi feed!",
           actions: `<button type="button" class="btn primary" data-jump="upload"><span data-no-i18n>Unggah Video</span></button><button type="button" class="btn ghost" data-jump="people"><span data-no-i18n>Cari Kreator</span></button>` };
     feed.innerHTML = `<div class="fyp-empty"><div class="fyp-empty-icon">${emptyMsg.icon}</div><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p><div class="fyp-empty-actions">${emptyMsg.actions}</div></div>`;
     feed.querySelector('[data-fyp-clear="search"]')?.addEventListener("click", () => {
@@ -37987,7 +37988,7 @@ function renderDiscoverTrendingInternal() {
   }
   const top = Object.entries(agg).sort((a, b) => b[1].weight - a[1].weight).slice(0, 6);
   if (!top.length) {
-    list.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">🔥</div><p>Belum ada tren. Mulai upload &amp; beri tag videomu!</p></div>`;
+    list.innerHTML = `<div class="trending-empty"><div class="trending-empty-icon">🔥</div><p>Belum ada tren. Mulai unggah &amp; beri tag videomu!</p></div>`;
     return;
   }
   const trendIcon = (i) => i === 0 ? "↑" : i === 1 ? "→" : "↗";
@@ -38451,6 +38452,44 @@ function toggleFypPlay(wrap) {
   }
 }
 
+// === Gate 18+ feed Jelajahi (req user 2026-06-16): video konten 18+ hanya boleh
+// preview FYP_GATE_SECONDS detik, lalu pause + muncul PERTANYAAN konfirmasi
+// ("Ya, lanjut nonton" / "Lewati"). Berlaku DI FEED JELAJAHI (bukan player —
+// player tetap autoplay). Non-18+ / sudah dikonfirmasi → tanpa gate. ===
+const FYP_GATE_SECONDS = 15;
+const _fyp18Confirmed = new Set();
+function _isVideo18(v) {
+  return String((v && (v.audience || v.age || v.ageRating)) || "").toLowerCase() === "18+";
+}
+function _showFyp18Gate(wrap, video, id) {
+  try { video.pause(); } catch (e) {}
+  if (!wrap || wrap.querySelector(".fyp-gate")) return;
+  const gate = document.createElement("div");
+  gate.className = "fyp-gate";
+  gate.innerHTML =
+    '<div class="fyp-gate-card">' +
+      '<span class="fyp-gate-badge">18+</span>' +
+      '<h4 class="fyp-gate-q">Konten ini untuk usia 18+</h4>' +
+      '<p class="fyp-gate-sub">Video ini mengandung konten dewasa. Lanjut nonton hanya jika kamu berusia 18 tahun ke atas.</p>' +
+      '<div class="fyp-gate-actions">' +
+        '<button type="button" class="fyp-gate-btn fyp-gate-yes">Ya, lanjut nonton</button>' +
+        '<button type="button" class="fyp-gate-btn fyp-gate-no">Lewati</button>' +
+      '</div>' +
+    '</div>';
+  gate.addEventListener("click", function (e) { e.stopPropagation(); });
+  gate.querySelector(".fyp-gate-yes").addEventListener("click", function () {
+    if (id != null) _fyp18Confirmed.add(id);   // jangan tanya lagi utk video ini
+    gate.remove();
+    try { video.play(); } catch (e) {}
+  });
+  gate.querySelector(".fyp-gate-no").addEventListener("click", function () {
+    gate.remove();
+    try { video.pause(); video.currentTime = 0; } catch (e) {}
+    wrap.classList.add("paused"); wrap.classList.remove("playing");
+  });
+  wrap.appendChild(gate);
+}
+
 async function createFypVideo(wrap) {
   const id = +wrap.dataset.vid;
   const v = findVideo(id);
@@ -38494,6 +38533,16 @@ async function createFypVideo(wrap) {
       wrap.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
     }
   });
+  // Gate 18+: preview FYP_GATE_SECONDS detik → pertanyaan konfirmasi (req user
+  // 2026-06-16). Non-18+ / sudah dikonfirmasi sebelumnya → tanpa gate.
+  if (_isVideo18(v) && !_fyp18Confirmed.has(id)) {
+    let gated = false;
+    video.addEventListener("timeupdate", () => {
+      if (gated || _fyp18Confirmed.has(id) || video.currentTime < FYP_GATE_SECONDS) return;
+      gated = true;
+      _showFyp18Gate(wrap, video, id);
+    });
+  }
   return video;
 }
 
