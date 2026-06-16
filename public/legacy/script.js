@@ -647,7 +647,7 @@ function getPlatformCreators({ activeOnly = false } = {}) {
         displayName: a.name,
         subs: videoCount > 0 ? `${videoCount} video` : "New creator",
         online: isOnline,
-        init: (a.name || a.username).slice(0, 2).toUpperCase(),
+        init: avatarInitial(a),
         videoCount,
         avatar: a.avatar || null,
         latestUploadAt,
@@ -4031,8 +4031,20 @@ window.addEventListener("storage", e => {
   if (e.key && e.key.startsWith("playly-account-")) forceLogoutIfSuspended();
 });
 
+// Avatar default SERAGAM (req user 2026-06-16): SATU huruf pertama dari USERNAME
+// (fallback ke name), selalu kapital. Dipakai di SEMUA avatar inisial app-wide
+// supaya tampilannya konsisten (dulu campur: "CP"/"CA"/"C"). Terima string ATAU
+// objek user/akun (ambil .username dulu, baru .name).
+function avatarInitial(src) {
+  let s = "";
+  if (src && typeof src === "object") s = src.username || src.name || "";
+  else s = (src == null) ? "" : src;
+  const ch = String(s).trim().replace(/[^A-Za-z0-9]/g, "").charAt(0);
+  return (ch || "U").toUpperCase();
+}
+
 function applyUserToUI() {
-  const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = avatarInitial(user);
   // Admin avatars pakai role-based ICON, bukan inisial (jangan teks A/P):
   // - Super admin → crown SVG (slate monokrom #C7CDD4)
   // - Admin biasa → shield SVG (slate-blue)
@@ -4103,7 +4115,7 @@ function syncAvatarImages() {
   // avatar bulat dengan initial fallback + img overlay.
   const heroAvatar = $("#heroHcAvatar");
   if (heroAvatar && user) {
-    const init = (user.name || user.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const init = avatarInitial(user);
     let span = heroAvatar.querySelector(".hc-id-initials");
     if (!span) {
       span = document.createElement("span");
@@ -4144,8 +4156,7 @@ function syncAvatarImages() {
 // gambar gagal/missing → initial otomatis kelihatan. Tak pernah render kosong.
 // Container harus punya overflow:hidden + place-items:center (mis. .cs-avatar).
 function homeAvatarMarkup(avatar, displayName) {
-  const initials = String(displayName || "?")
-    .trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const initials = avatarInitial(displayName);
   const safeInit = (typeof escapeHtml === "function") ? escapeHtml(initials) : initials;
   const initSpan = `<span class="ha-initials">${safeInit}</span>`;
   if (!avatar) return initSpan;
@@ -4173,7 +4184,7 @@ function populateProfileForm() {
       av.innerHTML = `<span>${iconSvg}</span>`;
       av.classList.add("avatar-has-icon");
     } else {
-      av.innerHTML = `<span>${(user.name || "U").split(/\s+/).map(p => p[0]).slice(0,2).join("").toUpperCase()}</span>`;
+      av.innerHTML = `<span>${avatarInitial(user)}</span>`;
       av.classList.remove("avatar-has-icon");
     }
   }
@@ -26522,8 +26533,7 @@ function renderUserCommunityStack() {
   }));
   const more = Math.max(0, total - items.length);
   const html = items.map(it => {
-    const init = String(it.label || "U")
-      .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const init = avatarInitial(it);
     const handle = escapeHtml(it.username || "");
     const tooltip = `${escapeHtml(it.label)} (@${handle}) — buka profil`;
     if (it.avatar) {
@@ -26603,8 +26613,7 @@ function _renderAvatarStack(selector, items, total) {
   const visible = items.slice(0, 4);
   const more = Math.max(0, total - visible.length);
   const html = visible.map(it => {
-    const init = String(it.label || "U")
-      .split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const init = avatarInitial(it);
     if (it.avatar) {
       return `<div class="ast-item"><img src="${escapeHtml(it.avatar)}" alt=""/></div>`;
     }
@@ -26984,7 +26993,7 @@ function renderAdminUsers() {
     online: "Online", offline: "Offline", deactive: "Deactive", suspend: "Suspend"
   };
   tbody.innerHTML = filtered.map(r => {
-    const init = (r.name || r.username).split(" ").map(p => p[0]).slice(0,2).join("").toUpperCase();
+    const init = avatarInitial(r);
     const statusLabel = STATUS_LABEL[r.status] || r.status;
     const isPrem = r.tier === "premium";
     const tierLabel = isPrem
@@ -27564,7 +27573,7 @@ function openUserDetail(username) {
 
 function fillUserDetailModal(acc) {
   // Header
-  const init = (acc.name || acc.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const init = avatarInitial(acc);
   const av = $("#audAvatar");
   av.innerHTML = acc.avatar
     ? `<img src="${acc.avatar}" alt=""/>`
@@ -27766,7 +27775,7 @@ function openAdminSendMsg({ targets = [], broadcast = false } = {}) {
     $("#asmSubtitle").textContent = `Pesan ini akan dikirim ke seluruh ${targets.length} user terdaftar.`;
   } else {
     list.innerHTML = targets.map(u => {
-      const init = u.slice(0, 2).toUpperCase();
+      const init = avatarInitial(u);
       return `<div class="asm-chip"><span class="asm-chip-avatar">${init}</span>@${escapeHtml(u)}</div>`;
     }).join("");
     $("#asmSubtitle").textContent = targets.length === 1
@@ -27799,7 +27808,7 @@ function deliverAdminMessage(username, text) {
   if (!Array.isArray(s.messages)) s.messages = [];
 
   const senderName = user?.username || "admin";
-  const senderInit = (user?.name || senderName).slice(0, 2).toUpperCase();
+  const senderInit = avatarInitial(user || senderName);
 
   let thread = s.messages.find(m => m.name === senderName);
   if (!thread) {
@@ -28412,7 +28421,7 @@ function renderAnPerUserCharts(series, periodTotal) {
     <div class="an-per-user-grid">
       ${arr.map((u, i) => {
         const color = palette[i % palette.length];
-        const init = String(u.name || "U").slice(0, 2).toUpperCase();
+        const init = avatarInitial(u);
         return `
           <div class="an-per-user-card" data-username="${escapeHtml(u.name)}">
             <div class="an-per-user-head-row">
@@ -28858,7 +28867,7 @@ function renderAnTopCreatorsList(allVideos) {
   const maxViews = Math.max(...creators.map(c => c.views), 1);
   list.innerHTML = creators.map((c, i) => {
     const pct = (c.views / maxViews) * 100;
-    const init = c.name.slice(0, 2).toUpperCase();
+    const init = avatarInitial(c);
     return `<div class="an-top-row">
       <span class="an-rank rank-${i + 1}">${i + 1}</span>
       <div class="an-top-thumb an-creator-avatar"><span>${escapeHtml(init)}</span></div>
@@ -28902,7 +28911,7 @@ function renderAnUserAchievement(allVideos) {
     catch { c.followers = 0; }
   });
   const arr = Object.values(grouped);
-  const initOf = (name) => String(name || "U").slice(0, 2).toUpperCase();
+  const initOf = (name) => avatarInitial(name);
   const fillCol = (id, sortKey, valFmt, metaFn) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -29731,7 +29740,7 @@ function renderCommsInbox() {
       inbox.push({
         threadIdx, msgIdx,
         senderName: h.from || thread.name || "user",
-        senderInit: thread.init || (thread.name || "U").slice(0, 2).toUpperCase(),
+        senderInit: thread.init || avatarInitial(thread),
         text: String(h.text || ""),
         ts: typeof h.ts === "number" ? h.ts : 0,
         threadUnread: !!thread.unread
@@ -29839,7 +29848,7 @@ function renderCommsThreads() {
 
   list.innerHTML = threads.map((t, i) => {
     const idx = state.messages.indexOf(t);
-    const init = escapeHtml(t.init || (t.name || "U").slice(0, 2).toUpperCase());
+    const init = escapeHtml(t.init || avatarInitial(t));
     const preview = escapeHtml((t.preview || "—").slice(0, 80));
     const time = chatRelTime(t.ts);
     return `<div class="comms-thread-item" data-comms-thread="${idx}">
@@ -29956,7 +29965,7 @@ function renderCommsUserList(query = "") {
   }
 
   list.innerHTML = accounts.slice(0, 50).map(a => {
-    const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+    const init = avatarInitial(a);
     const isAdmin = a.role === "admin";
     return `<div class="comms-user-item">
       <div class="avatar"><span>${escapeHtml(init)}</span></div>
@@ -30300,7 +30309,7 @@ function renderAdminInbox() {
     return {
       idx,
       name: th.name || "user",
-      init: th.init || (th.name || "U").slice(0, 2).toUpperCase(),
+      init: th.init || avatarInitial(th),
       unread: !!th.unread,
       lastText: last ? String(last.text || "") : "",
       lastFrom: last?.from || "",
@@ -30375,7 +30384,7 @@ function renderAdminInbox() {
   const ticketLabels = { new: "NEW", progress: "IN PROGRESS", resolved: "RESOLVED" };
 
   // Inisial avatar dari nama
-  const initOf = (name) => (String(name || "U").trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("") || "U").toUpperCase();
+  const initOf = (name) => avatarInitial(name);
 
   // Email row — Gmail-style: avatar, sender, subject + preview snippet, time.
   // Unread = bold sender + subject. Klik = detail.
@@ -32405,7 +32414,7 @@ function refreshHeroGreeting() {
     const avEl = document.getElementById("hpcAvatar");
     const initEl = document.getElementById("hpcInit");
     const avatarUrl = user.avatar || ((typeof getPref === "function") ? getPref("avatar.url", null) : null);
-    if (initEl) initEl.textContent = (user.name || user.username || "U").trim().charAt(0).toUpperCase();
+    if (initEl) initEl.textContent = avatarInitial(user);
     if (avEl && avatarUrl) {
       avEl.innerHTML = `<img src="${avatarUrl}" alt="" onerror="this.remove()"/>`;
     }
@@ -35469,7 +35478,7 @@ function renderHomeRanking() {
   const LB_VIDEO = '<svg ' + _lbsi + '><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>';
   const rows = ranked.map(function (c, i) {
     const isMe = String(c.name).toLowerCase() === me;
-    const init = (String(c.name).replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase()) || "U";
+    const init = avatarInitial(c);
     // Rank 1-3 = MEDALI jelas (pita + medalion + angka di tengah) —
     // request user 2026-05-17 ("medali tapi yang jelas"). Netral krem.
     const rankCell = (i < 3)
@@ -35680,7 +35689,7 @@ function renderSuggestUsers() {
   wrap.innerHTML = top.map(c => {
     const uname = String(c.name || c.username || "").toLowerCase();
     const display = c.displayName || c.name || c.username || "Kreator";
-    const init = (display.split(/\s+/).map(s => s[0]).slice(0, 2).join("") || "U").toUpperCase();
+    const init = avatarInitial(display);
     const isFollowing = following.includes(uname);
     const videoCount = c.videos || c.videoCount || 0;
     // Fresh ring — kreator yang upload < 24 jam dapat ring gradient (Instagram-style).
@@ -35985,7 +35994,7 @@ function toggleFollow(name) {
   if (findAccountByUsername(name)) {
     setFollowerOnOtherUser(name, !wasFollowing);
     if (!wasFollowing) {
-      const initials = (user?.name || user?.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+      const initials = avatarInitial(user);
       deliverNotification(name, {
         type: "follow",
         init: initials,
@@ -38161,7 +38170,7 @@ function fypCardHTML(v) {
   const liked = state?.liked?.includes(v.id);
   const saved = state?.saved?.includes(v.id);
   const following = state?.followingCreators?.includes(v.creator);
-  const init = (v.creator || "U").split(/[\s_]/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const init = avatarInitial(v.creator);
   const commentCount = state?.comments?.[v.id]?.length || 0;
   const shareCount = getShareCount(v.id);
   // Real-time relative timestamp — pakai createdAt (atau fallback ke id yang juga Date.now())
@@ -38237,7 +38246,7 @@ function fypCommentsPanelHTML(videoId) {
   const more = Math.max(0, comments.length - top.length);
   const rows = top.map(c => {
     const name = c.author || c.name || c.username || "User";
-    const init = String(name).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const init = avatarInitial(name);
     const ts = c.ts ? (typeof relTime === "function" ? relTime(c.ts) : "") : (c.time || "");
     return `
       <div class="fyp-comments-panel-item">
@@ -38373,7 +38382,7 @@ function bindFypCards(scope) {
         b.querySelector("svg")?.setAttribute("fill", likedNow ? "currentColor" : "none");
         // Notif ke creator saat like baru (bukan unlike, bukan video sendiri)
         if (!wasLiked && v.creator && v.creator !== user.username) {
-          const init = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+          const init = avatarInitial(user);
           deliverNotification(v.creator, {
             type: "like", videoId: id, init,
             fromUsername: user.username,
@@ -38440,7 +38449,7 @@ function bindFypCards(scope) {
         toast(`✓ Following @${creator}`, "success");
         // Notif ke creator
         if (creator !== user.username) {
-          const init = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+          const init = avatarInitial(user);
           deliverNotification(creator, {
             type: "follow", init,
             fromUsername: user.username,
@@ -38581,7 +38590,7 @@ function triggerFypDoubleTapLike(wrap, evt) {
       // Kirim notif ke creator
       const v2 = findVideo(id);
       if (v2 && v2.creator && v2.creator !== user.username) {
-        const init = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+        const init = avatarInitial(user);
         deliverNotification(v2.creator, {
           type: "like", videoId: id, init,
           fromUsername: user.username,
@@ -38725,7 +38734,7 @@ function getShareableUsers(query = "") {
   for (const c of state?.followingCreators || []) {
     if (seen.has(c)) continue;
     const acc = findAccountByUsername(c);
-    users.push({ username: c, name: acc?.name || c, init: (acc?.name || c).slice(0, 2).toUpperCase(), source: "following" });
+    users.push({ username: c, name: acc?.name || c, init: avatarInitial(acc || c), source: "following" });
     seen.add(c);
   }
   // Semua user terdaftar
@@ -38736,7 +38745,7 @@ function getShareableUsers(query = "") {
       const a = JSON.parse(localStorage.getItem(k));
       if (!a?.username || a.username === user.username) continue;
       if (seen.has(a.username)) continue;
-      users.push({ username: a.username, name: a.name || a.username, init: (a.name || a.username).slice(0, 2).toUpperCase(), source: "all" });
+      users.push({ username: a.username, name: a.name || a.username, init: avatarInitial(a), source: "all" });
       seen.add(a.username);
     } catch {}
   }
@@ -38786,7 +38795,7 @@ function sendVideoToUser(recipientUsername, videoId, note = "") {
   if (recipientUsername === user.username) return toast("⚠ Tidak bisa kirim ke diri sendiri", "warning");
 
   const senderUsername = user.username;
-  const senderInit = (user.name || senderUsername).slice(0, 2).toUpperCase();
+  const senderInit = avatarInitial(user || senderUsername);
   const previewText = `📹 ${v.title || "Video"}`;
   const nowTs = Date.now();
   const messageBase = {
@@ -38838,7 +38847,7 @@ function sendVideoToUser(recipientUsername, videoId, note = "") {
     const recipAcc = findAccountByUsername(recipientUsername);
     senderThread = {
       name: recipientUsername,
-      init: (recipAcc?.name || recipientUsername).slice(0, 2).toUpperCase(),
+      init: avatarInitial(recipAcc || recipientUsername),
       preview: "", time: "baru", ts: nowTs, unread: false, online: false, history: []
     };
     state.messages.unshift(senderThread);
@@ -39338,7 +39347,7 @@ function renderPeople() {
 
   // myUsername sudah di-deklarasi di atas saat hitung followers/following.
   grid.innerHTML = visible.map(a => {
-    const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+    const init = avatarInitial(a);
     const isAdmin = a.role === "admin";
     const isSuperAdminAcc = isAdmin && (a.email || "").toLowerCase() === OFFICIAL_ADMIN_EMAIL;
     const isPremium = !isAdmin && a.tier === "premium";
@@ -39452,7 +39461,7 @@ function startChatWithUser(username) {
       }
     }
   }
-  const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const init = avatarInitial(acc);
   const isAdminTarget = acc.role === "admin";
 
   // Reset filter ke "all" supaya thread baru pasti terlihat di list kiri
@@ -40233,7 +40242,7 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
   if (!Array.isArray(s.messages)) s.messages = [];
 
   const senderName = user?.username || "user";
-  const senderInit = (user?.name || senderName).slice(0, 2).toUpperCase();
+  const senderInit = avatarInitial(user || senderName);
 
   const deliverTs = Date.now();
   let thread = s.messages.find(m => m.name === senderName);
@@ -40650,7 +40659,7 @@ function openChatUserPicker() {
     }
     list.innerHTML = accounts.map(a => {
       const label = a.name || a.username || "U";
-      const init = String(label).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+      const init = avatarInitial(label);
       const handle = escapeHtml(a.username || "");
       const avatar = a.avatar
         ? `<div class="avatar"><img src="${escapeHtml(a.avatar)}" alt=""/></div>`
@@ -45409,7 +45418,7 @@ function openEmailUserPicker() {
     }
     list.innerHTML = creators.map(c => {
       const label = c.displayName || c.name || "U";
-      const init = String(label).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+      const init = avatarInitial(label);
       const handle = escapeHtml(c.name || "");
       const avatar = c.avatar
         ? `<div class="avatar"><img src="${escapeHtml(c.avatar)}" alt=""/></div>`
@@ -45713,7 +45722,7 @@ function renderMyProfile() {
   // Premium Insight / tier widget dipindah ke My Profile (per request user
   // 2026-05-15 v54). Render di sini supaya keisi tiap kali My Profile dibuka.
   try { renderHomeTierWidget(); } catch (e) { console.warn("[myprofile-tier]", e); }
-  const init = (user.name || user.username || "U").split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase();
+  const init = avatarInitial(user);
   const avatarEl = document.getElementById("myProfileAvatar");
   const initEl = document.getElementById("myProfileInit");
   if (initEl) initEl.textContent = init;
@@ -46067,7 +46076,7 @@ function refreshLibInlineComments(id) {
   }
   list.innerHTML = comments.map(c => {
     const name = c.author || c.name || c.username || "User";
-    const init = String(name).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
+    const init = avatarInitial(name);
     const ts = c.ts ? (typeof relTime === "function" ? relTime(c.ts) : "") : (c.time || "");
     return `
       <div class="lib-inline-comment-item">
@@ -46889,7 +46898,7 @@ async function openPlayer(id) {
   state.currentVideo = id;
   $("#playerTitle").textContent = v.title;
   $("#playerCreator").textContent = "@" + v.creator;
-  $("#playerCreatorInit").textContent = v.creator.slice(0, 2).toUpperCase();
+  $("#playerCreatorInit").textContent = avatarInitial(v.creator);
   $("#playerViewCount").textContent = v.views || fmtNum(v.viewsNum || 0);
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
@@ -47684,7 +47693,7 @@ function _submitCommentReply(videoId, parentId) {
   const txt = input?.value?.trim();
   if (!txt) return;
   const list = getVideoComments(videoId).map(_normalizeComment);
-  const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = avatarInitial(user);
   list.unshift({
     id: _genCommentId(),
     parentId,
@@ -48803,7 +48812,7 @@ function sendComment() {
   const txt = $("#commentField").value.trim();
   if (!txt) return;
   const id = state.currentVideo;
-  const initials = user.name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = avatarInitial(user);
   const list = getVideoComments(id).map(_normalizeComment);
   list.unshift({
     id: _genCommentId(),
@@ -48843,7 +48852,7 @@ $("#likeBtn")?.addEventListener("click", () => {
   if (!wasLiked) {
     const v = findVideo(id);
     if (v && v.creator && v.creator !== user.username) {
-      const initials = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+      const initials = avatarInitial(user);
       deliverNotification(v.creator, {
         type: "like", videoId: id,
         init: initials,
@@ -48879,7 +48888,7 @@ $("#followBtn")?.addEventListener("click", () => {
   $("#followBtn").textContent = state.followingCreators.includes(v.creator) ? "✓ Following" : "Follow";
   // Notifikasi ke kreator saat user mulai follow (bukan unfollow, bukan diri sendiri)
   if (!wasFollowing && v.creator !== user.username) {
-    const initials = (user.name || user.username).split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+    const initials = avatarInitial(user);
     deliverNotification(v.creator, {
       type: "follow",
       init: initials,
@@ -49054,7 +49063,7 @@ function renderUserProfile() {
   const videos = profileVisible ? getUserVideos(username) : [];
 
   const displayName = acc?.name || username;
-  const init = (acc?.name || username).slice(0, 2).toUpperCase();
+  const init = avatarInitial(acc || username);
   const rawBio = profileVisible ? acc?.bio?.trim() : "";
 
   $("#upAvatar").innerHTML = acc?.avatar ? `<img src="${acc.avatar}" alt="${escapeHtml(displayName)}"/>` : `<span>${escapeHtml(init)}</span>`;
@@ -49289,7 +49298,7 @@ $("#upMessageBtn")?.addEventListener("click", () => {
       const acc = (typeof findAccountByUsername === "function") ? findAccountByUsername(username) : null;
       state.messages.unshift({
         name: username,
-        init: (acc?.name || username).slice(0, 2).toUpperCase(),
+        init: avatarInitial(acc || username),
         preview: "", time: "baru", ts: Date.now(), unread: false, online: false, history: []
       });
       idx = 0;
@@ -49527,7 +49536,7 @@ function renderNotifPage() {
   } else {
     list.innerHTML = slice.map(n => {
       const sender = n.fromUsername || extractSenderFromText(n.text) || "—";
-      const init = n.init || (sender.slice(0, 2).toUpperCase());
+      const init = n.init || (avatarInitial(sender));
       const text = n.text || `@${sender}`;
       const time = n.ts ? (typeof relTime === "function" ? relTime(n.ts) : new Date(n.ts).toLocaleString()) : "";
       return `<div class="notif-page-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}">
@@ -49904,7 +49913,7 @@ function renderSwitchAccountList() {
     return (a.name || "").localeCompare(b.name || "");
   });
   list.innerHTML = accounts.map(a => {
-    const init = (a.name || a.username || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+    const init = avatarInitial(a);
     const isCurrent = a.email === user?.email;
     return `
       <div class="switch-item-wrap" style="position:relative">
@@ -50210,7 +50219,7 @@ function openLiveChatPicker() {
   const itemsHtml = admins.map(a => {
     const isSelf = user && a.username === user.username;
     const isSuper = isOfficialAdminEmail(a.email);
-    const init = (a.name || a.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+    const init = avatarInitial(a);
     const tag = isSuper
       ? `<span style="font-size:9px; padding:2px 7px; background:linear-gradient(90deg,#6D2932,#C7B7A3); color:#fff; border-radius:4px; font-weight:700">SUPER</span>`
       : `<span style="font-size:9px; padding:2px 7px; background:rgba(199,183,163,0.18); color:var(--muted); border-radius:4px; font-weight:700">ADMIN</span>`;
@@ -50871,7 +50880,7 @@ if (tryAutoBoot()) {
   }
   function avatarHtml(account) {
     if (account?.avatar) return `<img src="${esc(account.avatar)}" alt=""/>`;
-    const init = (account?.name || account?.username || "?").slice(0, 2).toUpperCase();
+    const init = avatarInitial(account);
     return `<span>${esc(init)}</span>`;
   }
   function thumbHtml(video) {
@@ -51059,7 +51068,7 @@ if (tryAutoBoot()) {
         ? emptyHtml("📬", "Belum ada pesan baru.")
         : `<div class="cd-list">${items.slice(0, 12).map(({thread, msg}) => `
           <button type="button" class="cd-list-item" data-popup-jump-thread="${esc(thread.id || thread.username || "")}">
-            <div class="cd-li-avatar">${thread.avatar ? `<img src="${esc(thread.avatar)}" alt=""/>` : `<span>${esc((thread.name||thread.username||"?").slice(0,2).toUpperCase())}</span>`}</div>
+            <div class="cd-li-avatar">${thread.avatar ? `<img src="${esc(thread.avatar)}" alt=""/>` : `<span>${esc(avatarInitial(thread))}</span>`}</div>
             <div class="cd-li-text">
               <strong>${esc(thread.name || thread.username || "User")}</strong>
               <small>${esc(String(msg.text || msg.body || "(tanpa teks)").slice(0, 60))}</small>
@@ -52014,7 +52023,7 @@ function maybeOfferSaveCard() {
     }
     if (emptyEl) emptyEl.hidden = true;
     listEl.innerHTML = filtered.map(a => {
-      const init = ((a.name || a.username) || "U").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+      const init = avatarInitial(a);
       const isAdmin = a.role === "admin";
       const tagHTML = isAdmin
         ? '<span class="ipr-tag ipr-tag-admin">ADMIN</span>'

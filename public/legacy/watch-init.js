@@ -109,7 +109,8 @@
       function renderMeta(meta, creator) {
         $("videoTitle").textContent = meta.title || "Video";
         $("creatorName").textContent = "@" + creator;
-        const init = String(creator || "U").slice(0, 2).toUpperCase();
+        // Avatar default seragam: SATU huruf pertama username (req user 2026-06-16).
+        const init = (String(creator || "U").trim().charAt(0).toUpperCase()) || "U";
         $("creatorInit").textContent = init;
         const stats = [];
         if (meta.views) stats.push(meta.views + " views");
