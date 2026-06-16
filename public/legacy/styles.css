@@ -66625,6 +66625,25 @@ body[data-role="admin"] .admin-kpi-stat .admin-kpi-card .kpi-trend {
 body[data-role="admin"] .admin-kpi-stat .kpi-trend.up { color: #10B981 !important; -webkit-text-fill-color: #10B981 !important; }
 
 /* =========================================================
+   TARGET BULAN INI — kartu progress (req user 2026-06-16: rapikan).
+   ikon + bar lebih tebal + tiap baris berpisah, biar tak polos/kosong.
+   ========================================================= */
+body[data-role="admin"] .admin-targets .admin-targets-body { display: flex; flex-direction: column; }
+body[data-role="admin"] .admin-targets .atg-row { display: flex; align-items: center; gap: 14px; padding: 15px 2px; }
+body[data-role="admin"] .admin-targets .atg-row + .atg-row { border-top: 1px solid rgba(165,175,195,.1); }
+body[data-role="admin"] .admin-targets .atg-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+body[data-role="admin"] .admin-targets .atg-icon svg { width: 21px; height: 21px; }
+body[data-role="admin"] .admin-targets .atg-main { flex: 1; min-width: 0; }
+body[data-role="admin"] .admin-targets .atg-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+body[data-role="admin"] .admin-targets .atg-label { font-weight: 700; font-size: 14px; color: var(--text); }
+body[data-role="admin"] .admin-targets .atg-done { font-size: 11px; font-weight: 700; color: #6FD6A0; margin-left: 4px; }
+body[data-role="admin"] .admin-targets .atg-val { font-size: 13px; color: var(--muted); white-space: nowrap; }
+body[data-role="admin"] .admin-targets .atg-val b { color: var(--text); font-size: 15px; font-weight: 800; }
+body[data-role="admin"] .admin-targets .atg-pct { font-weight: 800; margin-left: 4px; }
+body[data-role="admin"] .admin-targets .atg-bar { height: 11px; border-radius: 999px; background: rgba(165,175,195,.13); overflow: hidden; }
+body[data-role="admin"] .admin-targets .atg-bar i { display: block; height: 100%; border-radius: 999px; transition: width .8s cubic-bezier(.22,.61,.36,1); }
+
+/* =========================================================
    KOLOM PENDAPATAN di beranda admin (req user 2026-05-18) —
    ringkasan KPI pendapatan di samping PUSAT AKSI. Tema admin.
    ========================================================= */

@@ -27130,20 +27130,23 @@ function renderAdminTargets() {
     const r = computeRevenueFromLedger();
     revMonth = (r.ledger || []).filter(l => Number(l.ts) >= monthStart).reduce((s, l) => s + (Number(l.amount) || 0), 0);
   } catch {}
+  const peopleIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><circle cx="17.6" cy="9" r="2.3"/><path d="M16.4 14.6a4.3 4.3 0 0 1 5.2 4.2"/></svg>`;
+  const moneyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="2.4"/></svg>`;
   const rows = [
-    { label: "User Baru",  cur: newUsers, tgt: Number(tg.users) || 0,   fmt: fmtNum,     grad: "#5B7BB4,#9DB4DA" },
-    { label: "Pendapatan", cur: revMonth, tgt: Number(tg.revenue) || 0, fmt: fmtRpShort, grad: "#3FB37F,#7BE0A9" },
+    { label: "User Baru",  cur: newUsers, tgt: Number(tg.users) || 0,   fmt: fmtNum,     grad: "#5B7BB4,#9DB4DA", accent: "#9DB4DA", iconBg: "rgba(91,123,180,.18)", icon: peopleIcon },
+    { label: "Pendapatan", cur: revMonth, tgt: Number(tg.revenue) || 0, fmt: fmtRpShort, grad: "#3FB37F,#7BE0A9", accent: "#6FD6A0", iconBg: "rgba(63,179,127,.16)", icon: moneyIcon },
   ];
   body.innerHTML = rows.map(r => {
     const pct = r.tgt > 0 ? Math.min(100, Math.round((r.cur / r.tgt) * 100)) : 0;
     const done = r.tgt > 0 && r.cur >= r.tgt;
-    return `<div class="atg-row" style="margin:14px 0 4px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;gap:10px">
-          <span style="font-weight:700;color:var(--text)">${r.label}${done ? " 🎉" : ""}</span>
-          <span style="color:var(--muted);white-space:nowrap">${r.fmt(r.cur)} / ${r.fmt(r.tgt)} <b style="color:var(--text)">(${pct}%)</b></span>
-        </div>
-        <div style="height:9px;border-radius:999px;background:rgba(165,175,195,.15);overflow:hidden;margin-top:7px">
-          <i style="display:block;height:100%;width:${pct}%;border-radius:999px;background:linear-gradient(90deg,${r.grad});transition:width .7s ease"></i>
+    return `<div class="atg-row">
+        <div class="atg-icon" style="background:${r.iconBg};color:${r.accent}">${r.icon}</div>
+        <div class="atg-main">
+          <div class="atg-top">
+            <span class="atg-label">${r.label}${done ? ` <span class="atg-done">&#10003; tercapai</span>` : ""}</span>
+            <span class="atg-val"><b>${r.fmt(r.cur)}</b> / ${r.fmt(r.tgt)} <span class="atg-pct" style="color:${r.accent}">${pct}%</span></span>
+          </div>
+          <div class="atg-bar"><i style="width:${pct}%;background:linear-gradient(90deg,${r.grad})"></i></div>
         </div>
       </div>`;
   }).join("");
