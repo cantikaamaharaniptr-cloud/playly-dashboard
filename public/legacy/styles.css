@@ -36377,6 +36377,10 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
   width: 100%;
   text-align: center;
 }
+/* Hormati attr [hidden]: rule .ranking-empty-state{display:flex} di atas
+   meng-override UA [hidden]{display:none}, jadi sembunyikan eksplisit saat
+   ada data peringkat (req user 2026-06-16). */
+.ranking-empty-state[hidden] { display: none; }
 
 .cards {
   position: relative;

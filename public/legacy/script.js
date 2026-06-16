@@ -35410,20 +35410,18 @@ function renderHomeRanking() {
   });
   const rankedAll = Object.keys(map).map(function (k) { return map[k]; })
     .sort(function (a, b) { return b.views - a.views; });
-  // Auto-hide (req user 2026-06-15): leaderboard terasa janggal saat kreator
-  // sangat sedikit ("Top 3 dari 1 kreator") → sembunyikan kartu + divider sampai
-  // kreator >= 5. Kalau sudah ramai, tampil lagi otomatis.
-  const MIN_CREATORS = 5;
+  // Selalu tampil seperti section beranda lain (req user 2026-06-16): TIDAK
+  // di-hide lagi saat kreator sedikit. Kalau belum ada data peringkat sama
+  // sekali, tampilkan empty state #rankingEmpty (bukan sembunyikan kartu+divider).
   const section = document.getElementById("homeRankingSection");
   const divider = document.querySelector(".home-divider-ranking");
-  if (rankedAll.length < MIN_CREATORS) {
-    if (section) section.style.display = "none";
-    if (divider) divider.style.display = "none";
+  if (section) section.style.display = "";
+  if (divider) divider.style.display = "";
+  if (rankedAll.length === 0) {
+    if (empty) empty.hidden = false;
     row.innerHTML = "";
     return;
   }
-  if (section) section.style.display = "";
-  if (divider) divider.style.display = "";
   if (empty) empty.hidden = true;
 
   const me = ((user && user.username) || "").toLowerCase();
