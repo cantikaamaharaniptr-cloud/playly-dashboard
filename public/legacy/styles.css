@@ -45455,17 +45455,18 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   background: rgba(255, 255, 255, .1);
   color: #FFFFFF;
 }
-.admin-reset-actions .btn.danger {
-  background: linear-gradient(135deg, #C0392B 0%, #8E2532 100%);
-  border: 1px solid rgba(192, 57, 43, .5);
-  color: #FFF;
-  box-shadow: 0 4px 14px rgba(192, 57, 43, .35), inset 0 1px 0 rgba(255, 255, 255, .15);
+body[data-role="admin"] .admin-reset-actions .btn.danger {
+  background: #22304A !important;
+  border: 1px solid rgba(165, 175, 195, .32) !important;
+  color: #FFF !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
 }
-.admin-reset-actions .btn.danger:hover {
-  background: linear-gradient(135deg, #D04437 0%, #9E2A37 100%);
+body[data-role="admin"] .admin-reset-actions .btn.danger:hover {
+  background: #2A3A57 !important;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(192, 57, 43, .5), inset 0 1px 0 rgba(255, 255, 255, .2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .12) !important;
 }
+body[data-role="admin"] .admin-reset-actions .btn.danger svg { color: #FF8A80 !important; }
 
 /* =============================================================
    USER MANAGEMENT — hide kolom Tier & Videos hanya di Admin tab.
