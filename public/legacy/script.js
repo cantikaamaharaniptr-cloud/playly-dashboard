@@ -19369,9 +19369,12 @@ function renderAdminPremiumQueue() {
   // === Card layout v2 (2026-05-30) ===
   list.innerHTML = shown.map(p => {
     const dt = new Date(p.paidAt);
-    const dateStr = dt.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
-      + " " + dt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-    const relAgo = typeof relTime === "function" ? relTime(Number(p.paidAt)) : "";
+    const _validDate = !isNaN(dt.getTime());
+    const dateStr = _validDate
+      ? dt.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+        + " " + dt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+      : "tanggal tidak tersedia";
+    const relAgo = (_validDate && typeof relTime === "function") ? relTime(dt.getTime()) : "";
     const userLabel = p.email || p.username || (p.flowContext === "signup"
       ? (isIDQ ? "Signup pending" : "Pending signup")
       : (isIDQ ? "Anonim" : "Anonymous"));
