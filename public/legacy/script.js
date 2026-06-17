@@ -7861,7 +7861,7 @@ const I18N = {
     "notif.empty.home":           "Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.",
     "notif.empty.home.cta":       "Jelajahi kreator",
     "inbox.card.dm":              "DM",
-    "inbox.card.bc":              "Broadcast Admin",
+    "inbox.card.bc":              "Pengumuman",
     "inbox.card.req":             "Permintaan",
     "inbox.card.arc":             "Arsip",
     "inbox.thread.you":           "Kamu: ",
@@ -15895,6 +15895,8 @@ function autoTranslateByText() {
       // Settings/Help dengan icon), JANGAN replace textContent karena bakal
       // wipe svg icon-nya. Kasus ini di-handle via text-node replacement di
       // bawah, bukan textContent assignment.
+      // 2026-06-17: hormati translate="no" (label kustom mis. "Cari Kreator"/"ANALITIK" jangan di-retranslate reverse map)
+      if (el.closest('[translate="no"]')) return;
       if (el.querySelector("button, input, select, textarea, span, b, i")) return;
       // Kalau sudah ada data-i18n explicit → skip (handled di loop utama)
       if (el.hasAttribute("data-i18n")) return;
