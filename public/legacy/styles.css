@@ -45456,15 +45456,15 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   color: #FFFFFF;
 }
 .admin-reset-actions .btn.danger {
-  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
-  border: 1px solid rgba(239, 68, 68, .5);
+  background: linear-gradient(135deg, #C0392B 0%, #8E2532 100%);
+  border: 1px solid rgba(192, 57, 43, .5);
   color: #FFF;
-  box-shadow: 0 4px 14px rgba(220, 38, 38, .35), inset 0 1px 0 rgba(255, 255, 255, .15);
+  box-shadow: 0 4px 14px rgba(192, 57, 43, .35), inset 0 1px 0 rgba(255, 255, 255, .15);
 }
 .admin-reset-actions .btn.danger:hover {
-  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+  background: linear-gradient(135deg, #D04437 0%, #9E2A37 100%);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(220, 38, 38, .5), inset 0 1px 0 rgba(255, 255, 255, .2);
+  box-shadow: 0 8px 20px rgba(192, 57, 43, .5), inset 0 1px 0 rgba(255, 255, 255, .2);
 }
 
 /* =============================================================
