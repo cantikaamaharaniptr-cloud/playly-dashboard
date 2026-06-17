@@ -455,10 +455,220 @@ function removeDeviceAccount(email) {
 // Tidak pakai interceptor setItem supaya proses auto-boot, role-recovery, atau
 // profile-update tidak ikut menambah email ke daftar perangkat.
 
+/* =========================================================================
+   UI ICON SET (Iconsax-style: outline minimalis, monokrom currentColor) —
+   pengganti emoji UI (2026-06-17). width/height 1em → ikut font-size seperti
+   emoji. Dipakai via emojiToIcon() di helper render & langsung di markup.
+   HANYA untuk emoji UI hardcoded (BUKAN konten user spt judul video). ======= */
+function _ixSvg(d){
+  return '<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" style="vertical-align:-0.14em" aria-hidden="true">'+d+'</svg>';
+}
+const EMOJI_ICON = {
+  '🗑': _ixSvg('<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>'),
+  '💬': _ixSvg('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>'),
+  '⭐': _ixSvg('<path d="M12 3.2l2.6 5.3 5.8.85-4.2 4.1 1 5.8L12 16.6 6.8 19.3l1-5.8L3.6 9.35l5.8-.85z"/>'),
+  '🌟': _ixSvg('<path d="M12 3.2l2.6 5.3 5.8.85-4.2 4.1 1 5.8L12 16.6 6.8 19.3l1-5.8L3.6 9.35l5.8-.85z"/>'),
+  '👤': _ixSvg('<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'),
+  '👥': _ixSvg('<circle cx="9" cy="8" r="3.4"/><path d="M3 19c0-3 2.7-4.6 6-4.6s6 1.6 6 4.6"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.6"/><path d="M17 14.6c2.3.4 4 1.7 4 4"/>'),
+  '📤': _ixSvg('<path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>'),
+  '📥': _ixSvg('<path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>'),
+  '⏳': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  '🎬': _ixSvg('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M8 6l-1.5 4M14 6l-1.5 4"/>'),
+  '📹': _ixSvg('<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'),
+  '🎥': _ixSvg('<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'),
+  '📺': _ixSvg('<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 3l4 4 4-4"/>'),
+  '📊': _ixSvg('<path d="M4 20V11M10 20V4M16 20v-7"/><path d="M3 20h18"/>'),
+  '📈': _ixSvg('<path d="M4 20h16"/><path d="M5 16l4-5 3 3 5-7"/>'),
+  '📉': _ixSvg('<path d="M4 4h16"/><path d="M5 8l4 5 3-3 5 7"/>'),
+  '📢': _ixSvg('<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6"/>'),
+  '📧': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📨': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📩': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '🔒': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
+  '🔐': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
+  '🔓': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 7.5-1.8"/>'),
+  '🔑': _ixSvg('<circle cx="8" cy="14" r="4"/><path d="M11 11l8-8M16 3l3 3M14 5l2 2"/>'),
+  '❤': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🔗': _ixSvg('<path d="M9.5 14.5l5-5"/><path d="M10.5 7l1.2-1.2a3.6 3.6 0 0 1 5 5L15.5 12"/><path d="M13.5 17l-1.2 1.2a3.6 3.6 0 0 1-5-5L8.5 12"/>'),
+  '🛡': _ixSvg('<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/>'),
+  '🔥': _ixSvg('<path d="M12 3s5 3.6 5 8.5a5 5 0 0 1-10 0c0-1.8.8-3 .8-3s.2 1.8 1.8 2.2c.3-2.8 2.4-4.7 2.4-7.7z"/>'),
+  '🎫': _ixSvg('<path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4 2 2 0 0 0 0-4z"/><path d="M14 6v12"/>'),
+  '🏷': _ixSvg('<path d="M3 12l8-8h7a2 2 0 0 1 2 2v7l-8 8z"/><circle cx="16" cy="8" r="1.3"/>'),
+  '📋': _ixSvg('<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h6"/>'),
+  '📝': _ixSvg('<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
+  '👁': _ixSvg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'),
+  '🎨': _ixSvg('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5 0-2 2 0 3 0a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>'),
+  '✨': _ixSvg('<path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/><path d="M18 15l.6 1.6L20.5 17l-1.7.6L18 19.5l-.6-1.7L15.7 17l1.7-.6z"/>'),
+  '⚙': _ixSvg('<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><path d="M10.6 2.8 9.9 5.2a7.3 7.3 0 0 0-1.7 1l-2.4-.8-1.7 3 1.9 1.6a7.3 7.3 0 0 0 0 2l-1.9 1.6 1.7 3 2.4-.8a7.3 7.3 0 0 0 1.7 1l.7 2.4h3.4l.7-2.4a7.3 7.3 0 0 0 1.7-1l2.4.8 1.7-3-1.9-1.6a7.3 7.3 0 0 0 0-2l1.9-1.6-1.7-3-2.4.8a7.3 7.3 0 0 0-1.7-1l-.7-2.4z"/>'),
+  '🔍': _ixSvg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>'),
+  '📡': _ixSvg('<path d="M5 15a8 8 0 0 1 8-8"/><path d="M5 11a4 4 0 0 1 4-4"/><circle cx="6" cy="18" r="1.4"/><path d="M11 13l5 8"/>'),
+  '🚀': _ixSvg('<path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5"/><path d="M9 15l-2-2c1-5 5-9 11-9 0 6-4 10-9 11z"/><circle cx="14.5" cy="9.5" r="1.3"/>'),
+  '👋': _ixSvg('<path d="M7 11V6.6a1.4 1.4 0 0 1 2.8 0V11m0-1.2V5a1.4 1.4 0 0 1 2.8 0v4.8m0-.5V6a1.4 1.4 0 0 1 2.8 0v6a6 6 0 0 1-6 6 5 5 0 0 1-3.5-1.5L4 14a1.4 1.4 0 0 1 2-2l1 1"/>'),
+  '🐛': _ixSvg('<rect x="7" y="8" width="10" height="11" rx="5"/><path d="M12 8V5M8.5 5l-1-1M15.5 5l1-1M7 11H4M20 11h-3M7 15H4M20 15h-3M7 12.5h10"/>'),
+  '👑': _ixSvg('<path d="M4 17l-1.2-8.5 5 3.5L12 5l4.2 4 5-3.5L20 17z"/><path d="M4 17h16"/>'),
+  '⚡': _ixSvg('<path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/>'),
+  '🔔': _ixSvg('<path d="M6 9a6 6 0 1 1 12 0c0 5.5 2 6.5 2 6.5H4S6 14.5 6 9z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>'),
+  '🌐': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>'),
+  '✏': _ixSvg('<path d="M5 19h3L18.5 8.5l-3-3L5 16z"/><path d="M14 6.5l3 3"/>'),
+  '🎉': _ixSvg('<path d="M4 20l5-13 8 8z"/><path d="M14 4s1 1 0 2M18 6s1 0 1 1M16 10c2-1 3 0 3 0"/>'),
+  '📦': _ixSvg('<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>'),
+  '⌨': _ixSvg('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/>'),
+  '🌱': _ixSvg('<path d="M12 21v-7"/><path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/>'),
+  '🎯': _ixSvg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>'),
+  '💡': _ixSvg('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/>'),
+  '📌': _ixSvg('<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 16v5"/>'),
+  '🏆': _ixSvg('<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3M10 14h4M9 20h6M11 14v4M13 14v4"/>'),
+  '🎵': _ixSvg('<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>'),
+  '🎙': _ixSvg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>'),
+  '🖼': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5L5 19"/>'),
+  '🚩': _ixSvg('<path d="M5 21V4h11l-2 3 2 3H5"/>'),
+  '⛔': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>'),
+  '❓': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/>'),
+  '✅': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '✔': _ixSvg('<path d="M5 13l4 4L19 7"/>'),
+  '✓': _ixSvg('<path d="M5 13l4 4L19 7"/>'),
+  '☑': _ixSvg('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '❌': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>'),
+  '✖': _ixSvg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  '✕': _ixSvg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  '⚠': _ixSvg('<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>'),
+  '→': _ixSvg('<path d="M5 12h13M13 6l6 6-6 6"/>'),
+  '←': _ixSvg('<path d="M19 12H6M11 6l-6 6 6 6"/>'),
+  '↑': _ixSvg('<path d="M12 19V6M6 11l6-6 6 6"/>'),
+  '↓': _ixSvg('<path d="M12 5v13M6 13l6 6 6-6"/>'),
+  '↗': _ixSvg('<path d="M7 17 17 7M9 7h8v8"/>'),
+  '↻': _ixSvg('<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/>'),
+  '🔄': _ixSvg('<path d="M4 12a8 8 0 0 1 13-6.2L20 8M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13 6.2L4 16M4 20v-4h4"/>'),
+  '🚫': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'),
+  '✦': _ixSvg('<path d="M12 3l1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/>'),
+  '✧': _ixSvg('<path d="M12 3l1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/>'),
+  '♥': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🎲': _ixSvg('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.1"/><circle cx="15" cy="15" r="1.1"/><circle cx="15" cy="9" r="1.1"/><circle cx="9" cy="15" r="1.1"/>'),
+  '🏠': _ixSvg('<path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>'),
+  '📞': _ixSvg('<path d="M5 4h3l1.5 4.5L7.5 10a12 12 0 0 0 6 6l1.5-2L20 16v3a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z"/>'),
+  '🔊': _ixSvg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/>'),
+  '🔇': _ixSvg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6"/>'),
+  '🔕': _ixSvg('<path d="M6 9a6 6 0 0 1 9-5M18 9c0 5.5 2 6.5 2 6.5H8M4 4l16 16M10 19.5a2 2 0 0 0 4 0"/>'),
+  '⏰': _ixSvg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/>'),
+  '📁': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  '📂': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2H3z"/><path d="M3 9h18l-2 9a2 2 0 0 1-2 1.5H5L3 9z"/>'),
+  '🕒': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  '📱': _ixSvg('<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'),
+  '💻': _ixSvg('<rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/>'),
+  '🌍': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>'),
+  '💰': _ixSvg('<circle cx="12" cy="13" r="7"/><path d="M12 9.5a2 2 0 0 0 0 4 2 2 0 0 1 0 4M12 8v1.5M12 17.5V19M9 5l2-2h2l2 2"/>'),
+  '💎': _ixSvg('<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l-3 5 6 11 6-11-3-5"/>'),
+  '🆓': _ixSvg('<path d="M3 12l8-8h7a2 2 0 0 1 2 2v7l-8 8z"/><circle cx="16" cy="8" r="1.3"/>'),
+  '🆘': _ixSvg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.5 5.5l3.4 3.4M15.1 15.1l3.4 3.4M18.5 5.5l-3.4 3.4M8.9 15.1l-3.4 3.4"/>'),
+  '🆕': _ixSvg('<path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/>'),
+  '🆗': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '🔴': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟢': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟡': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🔵': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟠': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🎓': _ixSvg('<path d="M3 9l9-4 9 4-9 4z"/><path d="M7 11v4c0 1.2 2.2 2.5 5 2.5s5-1.3 5-2.5v-4M21 9v4"/>'),
+  '📅': _ixSvg('<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>'),
+  '📆': _ixSvg('<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>'),
+  '📍': _ixSvg('<path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  '🔖': _ixSvg('<path d="M6 4h12v17l-6-4-6 4z"/>'),
+  '🥇': _ixSvg('<circle cx="12" cy="14" r="6"/><path d="M9 3l3 5 3-5"/><path d="M12 11.5v5M10 14h4"/>'),
+  '🏅': _ixSvg('<circle cx="12" cy="14" r="6"/><path d="M9 3l3 5 3-5"/><path d="M10.5 13.5l1.5-1v4"/>'),
+  '🎁': _ixSvg('<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16M12 9v11M12 9c-1-3-5-3-5-1s4 1 5 1zM12 9c1-3 5-3 5-1s-4 1-5 1z"/>'),
+  '💳': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/>'),
+  '▶': _ixSvg('<path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/>'),
+  '⏸': _ixSvg('<path d="M8 5v14M16 5v14"/>'),
+  '⏯': _ixSvg('<path d="M6 5l9 7-9 7z"/><path d="M19 5v14"/>'),
+  '✉': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📎': _ixSvg('<path d="M8 12l7-7a3.5 3.5 0 0 1 5 5l-9 9a5.5 5.5 0 0 1-8-8l8-8"/>'),
+  '🗂': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/>'),
+};
+function emojiToIcon(str){
+  if (str == null) return str;
+  var s = String(str);
+  if (s.indexOf('️') !== -1) s = s.replace(/️/g, '');
+  for (var e in EMOJI_ICON){ if (s.indexOf(e) !== -1) s = s.split(e).join(EMOJI_ICON[e]); }
+  return s;
+}
+window.emojiToIcon = emojiToIcon;
+
+// Selektor KONTEN USER — JANGAN konversi emoji di sini (judul video, komentar,
+// nama, bio, chat, input). Hanya chrome UI yang dikonversi. =====================
+var _UI_EMOJI_SKIP = '.fyp-title,.fyp-desc,.fyp-card-caption,.fyp-cm-text,.fyp-cm-item,.fyp-cm-replies,.fyp-comments,.comment-text,.comment-body,.cmt-text,.cmt-body,.lib-meta,.lib-title,.video-title,.vid-title,.pv-title,#playerTitle,#playerDesc,.pv-desc,.pv-creator-row,.user-name,.creator-name,.people-name,.people-handle,.dm-thread-preview,.dm-thread-top,.dm-msg,.dm-bubble,.dm-chat-msg,.bnp-text,.bio,.hpc-bio,.suggest-name,.suggest-handle,.lb-name,input,textarea,[contenteditable],[data-no-emi]';
+var _UI_EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}]/u;
+// Ganti emoji UI -> ikon SVG, HANYA di text-node chrome (lewati konten user &
+// svg/script/style). Operasi pada text-node (elemen + listener tetap utuh).
+function convertUiEmojis(root) {
+  if (!root || typeof emojiToIcon !== "function" || !document.createTreeWalker) return;
+  var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (node) {
+      var v = node.nodeValue;
+      if (!v || !_UI_EMOJI_RE.test(v)) return NodeFilter.FILTER_REJECT;
+      var p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      var tag = p.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA") return NodeFilter.FILTER_REJECT;
+      if (p.closest("svg")) return NodeFilter.FILTER_REJECT;
+      if (p.closest(_UI_EMOJI_SKIP)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [], n;
+  while ((n = tw.nextNode())) nodes.push(n);
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    var html = emojiToIcon(node.nodeValue);
+    if (html === node.nodeValue) continue;
+    var tmp = document.createElement("template");
+    tmp.innerHTML = html;
+    node.parentNode.replaceChild(tmp.content, node);
+  }
+}
+window.convertUiEmojis = convertUiEmojis;
+
+// Observer: konversi subtree yg baru dirender. Disconnect saat memproses supaya
+// sisipan SVG kita sendiri tidak memicu loop. Debounce 150ms.
+var _emiObs = null, _emiQueue = null, _emiTimer = null;
+function _emiFlush() {
+  _emiTimer = null;
+  if (_emiObs) _emiObs.disconnect();
+  try {
+    _emiQueue.forEach(function (node) { if (node && node.isConnected) convertUiEmojis(node); });
+  } catch (e) {}
+  _emiQueue.clear();
+  var root = document.body;
+  if (_emiObs && root) _emiObs.observe(root, { childList: true, subtree: true });
+}
+function initUiEmojiConvert() {
+  // Root = body supaya mencakup chrome di LUAR .views: sidebar, top bar, ticker,
+  // dan MODAL (edit video, bagikan, dll) yang di-append ke body. Aman karena
+  // skip-list konten user + lewati svg/script + guard admin.
+  var root = document.body;
+  if (!root) return;
+  if (document.body && document.body.dataset.role === "admin") return; // user dashboard saja
+  try { convertUiEmojis(root); } catch (e) {}
+  if (window.MutationObserver && !_emiObs) {
+    _emiQueue = new Set();
+    _emiObs = new MutationObserver(function (muts) {
+      for (var j = 0; j < muts.length; j++) {
+        var added = muts[j].addedNodes;
+        for (var k = 0; k < added.length; k++) {
+          var nd = added[k];
+          if (nd.nodeType === 1) _emiQueue.add(nd);
+          else if (nd.nodeType === 3 && nd.parentElement) _emiQueue.add(nd.parentElement);
+        }
+      }
+      if (_emiQueue.size && !_emiTimer) _emiTimer = setTimeout(_emiFlush, 150);
+    });
+    _emiObs.observe(root, { childList: true, subtree: true });
+  }
+}
+window.initUiEmojiConvert = initUiEmojiConvert;
+
 function toast(msg, type = "") {
   const t = document.createElement("div");
   t.className = `toast ${type}`;
-  t.innerHTML = msg;
+  t.innerHTML = emojiToIcon(msg);
   const host = $("#toastHost");
   host.append(t);
   // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke
@@ -3806,6 +4016,9 @@ function bootDashboard() {
   console.log("[bootDashboard] guards passed → rendering dashboard");
   hideAuth();
   ensureAdminGradients();
+  // Konversi emoji UI -> ikon Iconsax-style (2026-06-17). Jalan setelah render
+  // awal; observer akan menangani view/konten yang dirender belakangan.
+  setTimeout(function () { try { initUiEmojiConvert(); } catch (e) {} }, 350);
   // Refresh all UI bound to user
   applyUserToUI();
   applyRoleToUI();
@@ -15542,6 +15755,9 @@ function deepTranslateTextNodes(root) {
     // ke key lain (cth: "HAPUS" → "word.delete" → "Hapus" alih2 stay di
     // explicit key "lp.preview.badge.takedown" = "HAPUS"). Per fix 2026-05-20.
     "[data-i18n]",
+    /* 2026-06-17: jangan translate highlight <mark> & teks translate="no" (fix a->Ke di hasil search) */
+    "mark",
+    "[translate=\"no\"]",
   ];
 
   // Build accept function for TreeWalker
@@ -15577,8 +15793,15 @@ function deepTranslateTextNodes(root) {
       if (stripped) key = __i18nReverse[stripped] || __i18nReverse[stripped.toUpperCase()];
     }
     if (!key) continue;
-    const newText = t(key);
+    let newText = t(key);
     if (!newText || newText === trimmed) continue;
+    // 2026-06-17: kalau elemen induk SUDAH punya ikon hasil konversi emoji, buang
+    // emoji prefix dari terjemahan — kalau tidak, tiap siklus i18n menambah ikon
+    // baru (bug centang menumpuk di daftar Bagikan).
+    if (node.parentElement && node.parentElement.querySelector(".ui-ico")) {
+      newText = newText.replace(EMOJI_PREFIX_RE, "").trim();
+      if (!newText || newText === trimmed) continue;
+    }
     // Preserve leading/trailing whitespace
     const leading = original.match(/^\s*/)[0];
     const trailing = original.match(/\s*$/)[0];
@@ -15676,7 +15899,7 @@ const I18N_AUTO_SELECTORS = [
 
 // Regex untuk strip emoji prefix di awal text — dipakai untuk sanitize
 // label sidebar (logo brand only, no emoji per request user).
-const EMOJI_PREFIX_RE = /^[\s\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]+/gu;
+const EMOJI_PREFIX_RE = /^[\s\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]+/gu;
 
 function autoTranslateByText() {
   if (!__i18nReverse) __i18nReverse = buildI18nReverseMap();
@@ -15709,7 +15932,10 @@ function autoTranslateByText() {
       // di sidebar per request user). Detect via closest match ke selector
       // sidebar — kalau element ada di dalam .sidebar atau .sidebar-footer,
       // bersihkan emoji prefix dari hasil translate.
-      if (translated && el.closest(".sidebar, .sidebar-footer")) {
+      if (translated && (el.closest(".sidebar, .sidebar-footer") || el.querySelector(".ui-ico"))) {
+        // 2026-06-17: kalau elemen SUDAH punya ikon hasil konversi emoji, JANGAN
+        // ikut sertakan emoji dari nilai terjemahan (mis. "✓ Mengikuti") — kalau
+        // tidak, tiap siklus i18n menambah ikon baru (centang menumpuk).
         translated = translated.replace(EMOJI_PREFIX_RE, "").trim();
       }
       if (translated && translated !== txt) {
@@ -15791,6 +16017,13 @@ function applyI18n(lang) {
   document.documentElement.setAttribute("dir", currentLang() === "ar" ? "rtl" : "ltr");
   // Set body.dataset.lang juga supaya helper format tanggal/Intl pakai locale benar
   if (document.body) document.body.dataset.lang = currentLang();
+  // 2026-06-17: i18n re-set teks via textContent (bisa mengandung emoji spt "→")
+  // → tidak terpantau observer (characterData). Konversi ulang emoji UI -> ikon.
+  try {
+    if (typeof convertUiEmojis === "function" && document.body && document.body.dataset.role !== "admin") {
+      convertUiEmojis(document.body);
+    }
+  } catch (e) {}
 }
 
 // Apply i18n saat load awal — default Bahasa Indonesia untuk new user.
@@ -32862,7 +33095,7 @@ function refreshAllVideoGrids() {
 function emptyHTML(icon, title, desc, btnText, btnAction) {
   return `
     <div class="empty-state">
-      <div class="empty-icon">${icon}</div>
+      <div class="empty-icon">${typeof emojiToIcon === "function" ? emojiToIcon(icon) : icon}</div>
       <h4>${title}</h4>
       <p>${desc}</p>
       ${btnText ? `<button class="btn primary" data-jump="${btnAction}">${btnText}</button>` : ""}
@@ -47892,6 +48125,12 @@ function _gsSearchHashtags(query) {
 
 // v619 (2026-05-28): search halaman/section — quick-nav untuk navigasi
 // (mis. user ketik "stats" → jump ke Statistik).
+function _gsPageIcon(name) {
+  var E = { home: "🏠", compass: "🌐", folder: "📁", upload: "📤", clock: "🕒", chart: "📊", star: "⭐", users: "👥", message: "💬", bell: "🔔", user: "👤", settings: "⚙" };
+  var e = E[name] || "📁";
+  return (typeof emojiToIcon === "function") ? emojiToIcon(e) : "";
+}
+
 function _gsSearchPages(query) {
   const q = query.toLowerCase();
   const PAGES = [
@@ -47996,11 +48235,10 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     html += `<div class="ss-section">
       <div class="ss-section-title">HALAMAN</div>
       ${pageMatches.map(p => `
-        <button type="button" class="ss-item" data-ss-page="${escapeHtml(p.view)}">
-          <div class="ss-page-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <button type="button" class="ss-item ss-item-page" data-ss-page="${escapeHtml(p.view)}">
+          <div class="ss-page-icon" aria-hidden="true">${_gsPageIcon(p.icon)}</div>
           <div class="ss-info">
             <strong>${_gsHighlight(p.label, query)}</strong>
-            <small>Buka halaman</small>
           </div>
         </button>
       `).join("")}
@@ -48016,7 +48254,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
           <div class="ss-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
           <div class="ss-info">
             <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
-            <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views</small>
+            <small>@${escapeHtml(v.creator || v.username || "anon")} · ${fmtNum(v.viewsNum || 0)} tontonan</small>
           </div>
         </button>`;
       }).join("")}
@@ -48057,6 +48295,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     <button type="button" class="ss-see-all" data-ss-see-all="${escapeHtml(query)}">
       Lihat semua hasil untuk "<b>${escapeHtml(query)}</b>" (${totalCount}) →
     </button>
+    <div class="ss-kbd-hints" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> Navigasi</span><span><kbd>↵</kbd> Buka</span><span><kbd>Esc</kbd> Tutup</span></div>
   </div>`;
   drop.innerHTML = html;
   drop.classList.add("show");
@@ -48110,87 +48349,45 @@ function _renderSearchResultsOverlay() {
 
   overlay.innerHTML = `
     <div class="sr-backdrop" data-sr-close></div>
-    <div class="sr-panel">
+    <div class="sr-panel" role="dialog" aria-label="Hasil pencarian">
       <header class="sr-header">
-        <div class="sr-header-left">
-          <button type="button" class="sr-close-btn" data-sr-close aria-label="Tutup">×</button>
-          <div>
-            <h2 class="sr-title">Hasil pencarian</h2>
-            <p class="sr-subtitle">"${escapeHtml(query)}" · ${total} hasil</p>
-          </div>
+        <button type="button" class="sr-close-btn" data-sr-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="sr-search-box">
+          <svg class="sr-search-ic" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" class="sr-query-input" id="srQueryInput" value="${escapeHtml(query)}" placeholder="Cari video, kreator, atau tag..." autocomplete="off" translate="no"/>
         </div>
-        <input type="text" class="sr-query-input" id="srQueryInput" value="${escapeHtml(query)}" placeholder="Cari lagi..."/>
       </header>
-
+      <div class="sr-toolbar">
+        <div class="sr-toolbar-meta"><strong>${total}</strong> hasil untuk "<span class="sr-q" translate="no">${escapeHtml(query)}</span>"</div>
+        <div class="sr-filtbar">
+          <div class="sr-fl"><span class="sr-fl-label">Durasi</span>${filterChip("duration","all","Semua",!filters.duration||filters.duration==="all")}${filterChip("duration","short","< 5 mnt",filters.duration==="short")}${filterChip("duration","medium","5–20 mnt",filters.duration==="medium")}${filterChip("duration","long","> 20 mnt",filters.duration==="long")}</div>
+          <div class="sr-fl"><span class="sr-fl-label">Waktu</span>${filterChip("date","all","Kapan saja",!filters.date||filters.date==="all")}${filterChip("date","today","Hari ini",filters.date==="today")}${filterChip("date","week","Minggu ini",filters.date==="week")}${filterChip("date","month","Bulan ini",filters.date==="month")}${filterChip("date","year","Tahun ini",filters.date==="year")}</div>
+          <div class="sr-fl"><span class="sr-fl-label">Urutkan</span>${filterChip("sort","relevance","Relevansi",sort==="relevance")}${filterChip("sort","newest","Terbaru",sort==="newest")}${filterChip("sort","views","Terpopuler",sort==="views")}${filterChip("sort","likes","Disukai",sort==="likes")}</div>
+        </div>
+      </div>
       <div class="sr-body">
-        <aside class="sr-sidebar">
-          <div class="sr-filter-group">
-            <h4>Durasi</h4>
-            ${filterChip("duration", "all", "Semua", !filters.duration || filters.duration === "all")}
-            ${filterChip("duration", "short", "< 5 menit", filters.duration === "short")}
-            ${filterChip("duration", "medium", "5–20 menit", filters.duration === "medium")}
-            ${filterChip("duration", "long", "> 20 menit", filters.duration === "long")}
-          </div>
-          <div class="sr-filter-group">
-            <h4>Tanggal Upload</h4>
-            ${filterChip("date", "all", "Kapan saja", !filters.date || filters.date === "all")}
-            ${filterChip("date", "today", "Hari ini", filters.date === "today")}
-            ${filterChip("date", "week", "Minggu ini", filters.date === "week")}
-            ${filterChip("date", "month", "Bulan ini", filters.date === "month")}
-            ${filterChip("date", "year", "Tahun ini", filters.date === "year")}
-          </div>
-          <div class="sr-filter-group">
-            <h4>Urutkan</h4>
-            ${filterChip("sort", "relevance", "Relevansi", sort === "relevance")}
-            ${filterChip("sort", "newest", "Terbaru", sort === "newest")}
-            ${filterChip("sort", "views", "Terpopuler", sort === "views")}
-            ${filterChip("sort", "likes", "Terbanyak Like", sort === "likes")}
-          </div>
-        </aside>
-
         <main class="sr-content">
           ${creators.length ? `
             <section class="sr-section">
-              <h3 class="sr-section-title">Kreator (${creators.length})</h3>
+              <h3 class="sr-section-title">Kreator <span class="sr-sec-count">${creators.length}</span></h3>
               <div class="sr-creators-grid">
-                ${creators.map(a => {
-                  const init = String(a.name || a.username || "?")[0].toUpperCase();
-                  return `<button type="button" class="sr-creator-card" data-ss-user="${escapeHtml(a.username || "")}">
-                    <div class="sr-creator-avatar">${escapeHtml(init)}</div>
-                    <div class="sr-creator-info">
-                      <strong>${_gsHighlight(a.name || a.username, query)}</strong>
-                      <small>@${escapeHtml(a.username || "")}</small>
-                    </div>
-                  </button>`;
-                }).join("")}
+                ${creators.map(a => { var init = String(a.name || a.username || "?")[0].toUpperCase(); return `<button type="button" class="sr-creator-card" translate="no" data-ss-user="${escapeHtml(a.username || "")}"><span class="sr-creator-avatar">${escapeHtml(init)}</span><span class="sr-creator-info"><strong translate="no">${_gsHighlight(a.name || a.username, query)}</strong><small translate="no">@${escapeHtml(a.username || "")}</small></span><span class="sr-creator-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></button>`; }).join("")}
               </div>
             </section>
           ` : ""}
-
           ${videos.length ? `
             <section class="sr-section">
-              <h3 class="sr-section-title">Video (${videos.length})</h3>
+              <h3 class="sr-section-title">Video <span class="sr-sec-count">${videos.length}</span></h3>
               <div class="sr-videos-grid">
-                ${videos.map(v => {
-                  const thumb = v.thumb || v.thumbnail || "";
-                  const init = String(v.creator || v.username || "?")[0].toUpperCase();
-                  return `<button type="button" class="sr-video-card" data-ss-video="${escapeHtml(String(v.id))}">
-                    <div class="sr-video-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
-                    <div class="sr-video-info">
-                      <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
-                      <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views · ❤ ${v.likes || 0}</small>
-                    </div>
-                  </button>`;
-                }).join("")}
+                ${videos.map(v => { var thumb = v.thumb || v.thumbnail || ""; var init = String(v.creator || v.username || "?")[0].toUpperCase(); return `<button type="button" class="sr-video-card" translate="no" data-ss-video="${escapeHtml(String(v.id))}"><span class="sr-video-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy"/>` : `<span class="sr-thumb-fb">${init}</span>`}${v.duration ? `<span class="sr-video-dur" translate="no">${escapeHtml(String(v.duration))}</span>` : ""}</span><span class="sr-video-info"><strong class="sr-video-title" translate="no">${_gsHighlight(v.title || "(tanpa judul)", query)}</strong><span class="sr-video-by"><span class="sr-by-ava">${init}</span><span class="sr-by-name" translate="no">@${escapeHtml(v.creator || v.username || "anon")}</span></span><span class="sr-video-stats">${fmtNum(v.viewsNum || 0)} tontonan · ❤ ${fmtNum(v.likes || 0)}</span></span></button>`; }).join("")}
               </div>
             </section>
           ` : ""}
-
           ${total === 0 ? `
             <div class="sr-empty">
-              <div class="sr-empty-icon">🔍</div>
+              <div class="sr-empty-icon">${typeof emojiToIcon==="function"?emojiToIcon("🔍"):"🔍"}</div>
               <h3>Tidak ada hasil</h3>
-              <p>Coba kata kunci lain atau ubah filter.</p>
+              <p>Coba kata kunci lain atau ubah filter di atas.</p>
             </div>
           ` : ""}
         </main>
@@ -48266,22 +48463,63 @@ document.addEventListener("input", e => {
   window._srQueryTimer = setTimeout(() => _renderSearchResultsOverlay(), 220);
 });
 
-// Enter di topbar #globalSearch → open full results
+// Keyboard nav #globalSearch (ala command palette): ArrowDown/Up pilih saran,
+// Enter buka saran yg aktif (atau hasil penuh kalau belum ada yg dipilih).
+let _ssActiveIdx = -1;
+function _ssItems() {
+  const drop = document.getElementById("searchSuggestions");
+  if (!drop || !drop.classList.contains("show")) return [];
+  return Array.from(drop.querySelectorAll(".ss-item"));
+}
+function _ssSetActive(idx) {
+  const items = _ssItems();
+  const drop = document.getElementById("searchSuggestions");
+  if (drop) drop.setAttribute("role", "listbox");
+  if (!items.length) { _ssActiveIdx = -1; return; }
+  if (idx < 0) idx = items.length - 1;
+  if (idx >= items.length) idx = 0;
+  _ssActiveIdx = idx;
+  items.forEach((el, i) => {
+    el.setAttribute("role", "option");
+    const on = i === idx;
+    el.classList.toggle("is-active", on);
+    el.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) el.scrollIntoView({ block: "nearest" });
+  });
+}
+function _ssClearActive() {
+  _ssActiveIdx = -1;
+  const drop = document.getElementById("searchSuggestions");
+  if (drop) drop.querySelectorAll(".ss-item.is-active").forEach(el => el.classList.remove("is-active"));
+}
 document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.id === "globalSearch") {
-    e.preventDefault();
-    const q = e.target.value.trim();
-    if (q) openSearchResults(q);
+  if (e.target.id === "globalSearch") {
+    const dropShown = document.getElementById("searchSuggestions")?.classList.contains("show");
+    if (e.key === "ArrowDown" && dropShown) { e.preventDefault(); _ssSetActive(_ssActiveIdx + 1); return; }
+    if (e.key === "ArrowUp" && dropShown) { e.preventDefault(); _ssSetActive(_ssActiveIdx - 1); return; }
+    if (e.key === "Enter") {
+      const items = _ssItems();
+      if (dropShown && _ssActiveIdx >= 0 && items[_ssActiveIdx]) { e.preventDefault(); items[_ssActiveIdx].click(); return; }
+      e.preventDefault();
+      const q = e.target.value.trim();
+      if (q) openSearchResults(q);
+      return;
+    }
   }
   // ESC tutup overlay
   if (e.key === "Escape" && document.getElementById("searchResultsOverlay")?.classList.contains("show")) {
     document.getElementById("searchResultsOverlay")?.remove();
   }
 });
+// Hover mouse mereset pilihan keyboard biar tak dobel sorot
+document.addEventListener("mouseover", e => {
+  if (e.target.closest && e.target.closest("#searchSuggestions .ss-item")) _ssClearActive();
+});
 
 // Wire global search input
 document.addEventListener("input", e => {
   if (!e.target.matches("#globalSearch")) return;
+  _ssActiveIdx = -1;
   if (_globalSearchTimer) clearTimeout(_globalSearchTimer);
   const q = e.target.value;
   _globalSearchTimer = setTimeout(() => _gsRun(q), 180);
@@ -48348,10 +48586,49 @@ document.addEventListener("click", e => {
 // Escape closes dropdown
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && document.activeElement?.id === "globalSearch") {
+    _ssClearActive();
     document.getElementById("searchSuggestions")?.classList.remove("show");
     document.activeElement.blur();
   }
 });
+
+// Custom caret kolom search #globalSearch (req user 2026-06-17): caret native disembunyikan,
+// diganti garis pendek custom (11px) yg mengikuti posisi kursor.
+function _initTsCaret(inp){
+  if (!inp || inp._tsCaretInit) return;
+  var wrap = inp.closest('.topbar-search');
+  if (!wrap) return;
+  inp._tsCaretInit = true;
+  wrap.classList.add('ts-caret-on');
+  var caret = document.createElement('span');
+  caret.className = 'ts-caret'; caret.setAttribute('aria-hidden','true');
+  var meas = document.createElement('span');
+  meas.className = 'ts-caret-measure'; meas.setAttribute('aria-hidden','true');
+  wrap.appendChild(caret); wrap.appendChild(meas);
+  function update(){
+    if (document.activeElement !== inp){ caret.classList.remove('show'); return; }
+    var cs = getComputedStyle(inp);
+    meas.style.fontFamily = cs.fontFamily; meas.style.fontSize = cs.fontSize;
+    meas.style.fontWeight = cs.fontWeight; meas.style.letterSpacing = cs.letterSpacing;
+    var pos = inp.selectionStart || 0;
+    meas.textContent = (inp.value || '').substring(0, pos);
+    var textW = meas.getBoundingClientRect().width;
+    var ir = inp.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    var padLeft = parseFloat(cs.paddingLeft) || 0;
+    caret.style.left = Math.round((ir.left - wr.left) + padLeft + textW - inp.scrollLeft) + 'px';
+    caret.classList.add('show');
+  }
+  inp.addEventListener('focus', update);
+  inp.addEventListener('blur', function(){ caret.classList.remove('show'); });
+  inp.addEventListener('input', update);
+  inp.addEventListener('keyup', update);
+  inp.addEventListener('click', update);
+  inp.addEventListener('scroll', update);
+  document.addEventListener('selectionchange', function(){ if (document.activeElement===inp) update(); });
+  if (document.activeElement === inp) update();
+}
+document.addEventListener('focusin', function(e){ if (e.target && e.target.id === 'globalSearch') _initTsCaret(e.target); });
+
 
 window._search = {
   run: _gsRun,
@@ -53347,7 +53624,7 @@ function saveVideoEdit() {
   window.__pjUserHomeTopbarNav = true;
 
   var SECTIONS = [
-    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>' }
+    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>' }
   ];
 
   function tagSections() {
