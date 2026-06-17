@@ -464,6 +464,9 @@ function _ixSvg(d){
   return '<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" style="vertical-align:-0.14em" aria-hidden="true">'+d+'</svg>';
 }
 const EMOJI_ICON = {
+  /* help iconsax extra */
+  '💾': _ixSvg('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>'),
+  '📚': _ixSvg('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>'),
   '🗑': _ixSvg('<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>'),
   '💬': _ixSvg('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>'),
   '⭐': _ixSvg('<path d="M12 3.2l2.6 5.3 5.8.85-4.2 4.1 1 5.8L12 16.6 6.8 19.3l1-5.8L3.6 9.35l5.8-.85z"/>'),
@@ -504,7 +507,7 @@ const EMOJI_ICON = {
   '📡': _ixSvg('<path d="M5 15a8 8 0 0 1 8-8"/><path d="M5 11a4 4 0 0 1 4-4"/><circle cx="6" cy="18" r="1.4"/><path d="M11 13l5 8"/>'),
   '🚀': _ixSvg('<path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5"/><path d="M9 15l-2-2c1-5 5-9 11-9 0 6-4 10-9 11z"/><circle cx="14.5" cy="9.5" r="1.3"/>'),
   '👋': _ixSvg('<path d="M7 11V6.6a1.4 1.4 0 0 1 2.8 0V11m0-1.2V5a1.4 1.4 0 0 1 2.8 0v4.8m0-.5V6a1.4 1.4 0 0 1 2.8 0v6a6 6 0 0 1-6 6 5 5 0 0 1-3.5-1.5L4 14a1.4 1.4 0 0 1 2-2l1 1"/>'),
-  '🐛': _ixSvg('<rect x="7" y="8" width="10" height="11" rx="5"/><path d="M12 8V5M8.5 5l-1-1M15.5 5l1-1M7 11H4M20 11h-3M7 15H4M20 15h-3M7 12.5h10"/>'),
+  '🐛': _ixSvg('<g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M12 6.8C9 6.8 6.8 9.4 6.8 12.9C6.8 16.6 9.1 19.8 12 19.8C14.9 19.8 17.2 16.6 17.2 12.9C17.2 9.4 15 6.8 12 6.8Z"/><path d="M12 7.6V19.4"/><path d="M9.7 9.4C10.3 8.1 11 7.3 12 7.3C13 7.3 13.7 8.1 14.3 9.4"/><path d="M10.6 7.1C9.6 5.5 8.1 4.4 6.6 4.4"/><path d="M13.4 7.1C14.4 5.5 15.9 4.4 17.4 4.4"/><path d="M6.9 11C5.4 10.4 4.4 9.4 3.9 8.2"/><path d="M6.6 13.9C5.2 13.9 4.2 13.8 3.3 13.4"/><path d="M7 16.7C5.6 17.3 4.6 18.3 4.1 19.5"/><path d="M17.1 11C18.6 10.4 19.6 9.4 20.1 8.2"/><path d="M17.4 13.9C18.8 13.9 19.8 13.8 20.7 13.4"/><path d="M17 16.7C18.4 17.3 19.4 18.3 19.9 19.5"/></g>'),
   '👑': _ixSvg('<path d="M4 17l-1.2-8.5 5 3.5L12 5l4.2 4 5-3.5L20 17z"/><path d="M4 17h16"/>'),
   '⚡': _ixSvg('<path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/>'),
   '🔔': _ixSvg('<path d="M6 9a6 6 0 1 1 12 0c0 5.5 2 6.5 2 6.5H4S6 14.5 6 9z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>'),
@@ -5065,7 +5068,7 @@ const I18N = {
     "settings.security.2fa.btn": "Enable 2FA",
     "settings.security.off":     "OFF",
     // Help center
-    "help.title":                "❓ Help Center",
+    "help.title":                "Help Center",
     "help.search":               "Search help...",
     "help.search.hint":          "(ctrl: upload, account)",
     "help.email.admin":          "Email Super Admin",
@@ -6060,7 +6063,7 @@ const I18N = {
     "settings.notif.push":       "Push notifications",
     "settings.desc":             "Adjust app preferences to your needs.",
     // Help
-    "help.center":               "❓ Help Center",
+    "help.center":               "Help Center",
     // Common placeholders
     "ph.search.menu":            "Search menu...",
     "ph.search.video":           "Search video, creator, or tag...",
@@ -6617,7 +6620,7 @@ const I18N = {
     "settings.security.2fa.btn": "Aktifkan 2FA",
     "settings.security.off":     "MATI",
     // Help
-    "help.title":                "❓ Pusat Bantuan",
+    "help.title":                "Pusat Bantuan",
     "help.search":               "Cari bantuan...",
     "help.search.hint":          "(ctrl: unggah, akun)",
     "help.email.admin":          "Email Super Admin",
@@ -6995,7 +6998,7 @@ const I18N = {
     "settings.notif.follower":   "Follower baru",
     "settings.notif.email":      "Email notifikasi",
     "settings.notif.push":       "Push notifikasi",
-    "help.center":               "❓ Pusat Bantuan",
+    "help.center":               "Pusat Bantuan",
     // Captcha + 2FA modal ID
     "captcha.title":             "Verifikasi: Susun Kotak",
     "captcha.desc.prefix":       "Klik kotak berurutan dari",
@@ -8098,7 +8101,7 @@ const I18N = {
     "settings.security.2fa.hint": "Tambah lapisan keselamatan dengan PIN 6-digit yang diperlukan semasa log masuk.",
     "settings.security.2fa.btn": "Aktifkan 2FA",
     "settings.security.off":     "MATI",
-    "help.title":                "❓ Pusat Bantuan",
+    "help.title":                "Pusat Bantuan",
     "help.search":               "Cari bantuan...",
     "help.search.hint":          "(ctrl: muat naik, akaun)",
     "help.email.admin":          "E-mel Super Admin",
@@ -8884,7 +8887,7 @@ const I18N = {
     "settings.confirmpw":        "Sahkan Kata Laluan Baharu",
     "settings.changepw.btn":     "Tukar Kata Laluan",
     "settings.appearance":       "Penampilan",
-    "help.center":               "❓ Pusat Bantuan",
+    "help.center":               "Pusat Bantuan",
     "ph.search.menu":            "Cari menu...",
     "ph.search.video":           "Cari video, pencipta, atau tag...",
     "ph.search.admin":           "Cari pengguna, tiket, laporan pepijat, atau laporan...",
@@ -9378,7 +9381,7 @@ const I18N = {
     "settings.security.2fa.hint": "ログイン時に6桁PINを要求するセキュリティ層を追加。",
     "settings.security.2fa.btn": "2FAを有効化",
     "settings.security.off":     "オフ",
-    "help.title":                "❓ ヘルプセンター",
+    "help.title":                "ヘルプセンター",
     "help.search":               "ヘルプを検索...",
     "help.search.hint":          "(ctrl: アップロード、アカウント)",
     "help.email.admin":          "スーパー管理者へメール",
@@ -10164,7 +10167,7 @@ const I18N = {
     "settings.confirmpw":        "新しいパスワードを確認",
     "settings.changepw.btn":     "パスワード変更",
     "settings.appearance":       "外観",
-    "help.center":               "❓ ヘルプセンター",
+    "help.center":               "ヘルプセンター",
     "ph.search.menu":            "メニューを検索...",
     "ph.search.video":           "動画、クリエイター、タグを検索...",
     "ph.search.admin":           "ユーザー、チケット、バグレポート、報告を検索...",
@@ -10658,7 +10661,7 @@ const I18N = {
     "settings.security.2fa.hint": "أضف طبقة أمان مع PIN من 6 أرقام مطلوب عند تسجيل الدخول.",
     "settings.security.2fa.btn": "تفعيل 2FA",
     "settings.security.off":     "إيقاف",
-    "help.title":                "❓ مركز المساعدة",
+    "help.title":                "مركز المساعدة",
     "help.search":               "ابحث في المساعدة...",
     "help.search.hint":          "(ctrl: رفع، حساب)",
     "help.email.admin":          "بريد المسؤول الرئيسي",
@@ -11444,7 +11447,7 @@ const I18N = {
     "settings.confirmpw":        "تأكيد كلمة المرور الجديدة",
     "settings.changepw.btn":     "تغيير كلمة المرور",
     "settings.appearance":       "المظهر",
-    "help.center":               "❓ مركز المساعدة",
+    "help.center":               "مركز المساعدة",
     "ph.search.menu":            "ابحث في القائمة...",
     "ph.search.video":           "ابحث عن فيديو، منشئ، أو وسم...",
     "ph.search.admin":           "ابحث عن مستخدم، تذكرة، تقرير خطأ، أو بلاغ...",
@@ -11938,7 +11941,7 @@ const I18N = {
     "settings.security.2fa.hint": "添加一层安全，登录时需要 6 位 PIN 码。",
     "settings.security.2fa.btn": "启用 2FA",
     "settings.security.off":     "关闭",
-    "help.title":                "❓ 帮助中心",
+    "help.title":                "帮助中心",
     "help.search":               "搜索帮助...",
     "help.search.hint":          "(ctrl: 上传、账户)",
     "help.email.admin":          "联系超级管理员",
@@ -12724,7 +12727,7 @@ const I18N = {
     "settings.confirmpw":        "确认新密码",
     "settings.changepw.btn":     "更改密码",
     "settings.appearance":       "外观",
-    "help.center":               "❓ 帮助中心",
+    "help.center":               "帮助中心",
     "ph.search.menu":            "搜索菜单...",
     "ph.search.video":           "搜索视频、创作者或标签...",
     "ph.search.admin":           "搜索用户、工单、Bug 报告或举报...",
@@ -13218,7 +13221,7 @@ const I18N = {
     "settings.security.2fa.hint": "로그인 시 6자리 PIN이 필요한 보안 계층을 추가하세요.",
     "settings.security.2fa.btn": "2FA 활성화",
     "settings.security.off":     "꺼짐",
-    "help.title":                "❓ 도움말 센터",
+    "help.title":                "도움말 센터",
     "help.search":               "도움말 검색...",
     "help.search.hint":          "(ctrl: 업로드, 계정)",
     "help.email.admin":          "수퍼 관리자에게 이메일",
@@ -14004,7 +14007,7 @@ const I18N = {
     "settings.confirmpw":        "새 비밀번호 확인",
     "settings.changepw.btn":     "비밀번호 변경",
     "settings.appearance":       "외관",
-    "help.center":               "❓ 도움말 센터",
+    "help.center":               "도움말 센터",
     "ph.search.menu":            "메뉴 검색...",
     "ph.search.video":           "동영상, 크리에이터 또는 태그 검색...",
     "ph.search.admin":           "사용자, 티켓, 버그 신고 또는 보고 검색...",
@@ -14498,7 +14501,7 @@ const I18N = {
     "settings.security.2fa.hint": "Añade una capa de seguridad con un PIN de 6 dígitos requerido al iniciar sesión.",
     "settings.security.2fa.btn": "Activar 2FA",
     "settings.security.off":     "APAGADO",
-    "help.title":                "❓ Centro de Ayuda",
+    "help.title":                "Centro de Ayuda",
     "help.search":               "Buscar ayuda...",
     "help.search.hint":          "(ctrl: subir, cuenta)",
     "help.email.admin":          "Correo al Super Admin",
@@ -15284,7 +15287,7 @@ const I18N = {
     "settings.confirmpw":        "Confirmar Nueva Contraseña",
     "settings.changepw.btn":     "Cambiar Contraseña",
     "settings.appearance":       "Apariencia",
-    "help.center":               "❓ Centro de Ayuda",
+    "help.center":               "Centro de Ayuda",
     "ph.search.menu":            "Buscar menú...",
     "ph.search.video":           "Buscar video, creador o etiqueta...",
     "ph.search.admin":           "Buscar usuario, ticket, reporte de bug o reporte...",
@@ -45530,7 +45533,7 @@ function openEmailToAdminCompose() {
     icon: "📧",
     title: "Email to Admin",
     desc: "Your message will go directly to the Playly admin Inbox.",
-    subjectDefault: `Support request from ${fromName}`,
+    subjectDefault: `Permintaan bantuan dari ${fromName}`,
     bodyDefault: `Hi Super Admin,\n\nI'm ${fromName} (@${username}) and I need help with:\n\n[Write your question/issue here]\n\nThanks.`
   });
 }
@@ -50347,6 +50350,8 @@ $("#openHelp")?.addEventListener("click", () => {
   // First-open: inject template content + close handler delegation sudah jalan
   // via global document listener (closest "[data-close-sp]").
   ensureLazyPanelMounted("helpPanel");
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis(panel); } catch (e) {} }
+  if (typeof applyI18n === "function") { try { applyI18n(); } catch (e) {} }
   const willOpen = !panel.classList.contains("open");
   panel.classList.toggle("open");
   if (willOpen) {
@@ -50358,7 +50363,8 @@ $("#openHelp")?.addEventListener("click", () => {
   }
 });
 
-$("#helpSearch")?.addEventListener("input", e => {
+document.addEventListener("input", e => {
+  if (!e.target || e.target.id !== "helpSearch") return;
   const q = e.target.value.toLowerCase().trim();
   const role = user?.role === "admin" ? "admin" : "user";
   let visibleCount = 0;
@@ -50416,19 +50422,20 @@ function openLiveChatPicker() {
   const itemsHtml = admins.map(a => {
     const isSelf = user && a.username === user.username;
     const isSuper = isOfficialAdminEmail(a.email);
+    const handle = (a.email || "").split("@")[0] || a.username;
     const init = (a.name || a.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
     const tag = isSuper
-      ? `<span style="font-size:9px; padding:2px 7px; background:linear-gradient(90deg,#6D2932,#C7B7A3); color:#fff; border-radius:4px; font-weight:700">SUPER</span>`
-      : `<span style="font-size:9px; padding:2px 7px; background:rgba(199,183,163,0.18); color:var(--muted); border-radius:4px; font-weight:700">ADMIN</span>`;
+      ? `<span style="font-size:9px; padding:3px 7px; background:#6D2932; color:#E8D8C4; border:1px solid #6D2932; border-radius:5px; font-weight:700; letter-spacing:.3px">SUPER ADMIN</span>`
+      : `<span style="font-size:9px; padding:3px 7px; background:transparent; color:#E8D8C4; border:1px solid rgba(232,216,196,.45); border-radius:5px; font-weight:700; letter-spacing:.3px">ADMIN</span>`;
     const avatar = a.avatar
       ? `<img src="${escapeHtml(a.avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`
       : `<span>${escapeHtml(init)}</span>`;
     return `
-      <button class="lcp-item" data-lcp-username="${escapeHtml(a.username)}" ${isSelf ? "disabled" : ""} style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:transparent;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:${isSelf ? "not-allowed" : "pointer"};opacity:${isSelf ? "0.45" : "1"};text-align:left;color:var(--text);transition:background .15s">
-        <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;flex-shrink:0;overflow:hidden">${avatar}</div>
+      <button class="lcp-item" data-lcp-username="${escapeHtml(a.username)}" ${isSelf ? "disabled" : ""} style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:rgba(232,216,196,.04);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:${isSelf ? "not-allowed" : "pointer"};opacity:${isSelf ? "0.45" : "1"};text-align:left;color:var(--text);transition:background .15s">
+        
         <div style="flex:1;min-width:0">
-          <strong style="display:flex;align-items:center;gap:6px;font-size:14px">${escapeHtml(a.name || a.username)} ${tag}</strong>
-          <small style="color:var(--muted);font-size:12px">@${escapeHtml(a.username)}${isSelf ? " (kamu)" : ""}</small>
+          <strong style="display:flex;align-items:center;gap:6px;font-size:14px">${escapeHtml(handle)} ${tag}</strong>
+          <small style="color:var(--muted);font-size:12px">@${escapeHtml(handle)}${isSelf ? " (kamu)" : ""}</small>
         </div>
       </button>
     `;
@@ -50438,9 +50445,9 @@ function openLiveChatPicker() {
     <div class="modal-backdrop" data-lcp-close></div>
     <div class="modal-panel" style="max-width:440px;padding:22px">
       <button class="modal-close" data-lcp-close>✕</button>
-      <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px">💬 Live Chat dengan Admin</h3>
-      <p class="muted" style="margin:0 0 16px;font-size:13px">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung lewat in-app messaging.</p>
-      <div class="lcp-list" style="max-height:60vh;overflow-y:auto">${itemsHtml}</div>
+      <div style="width:56px;height:56px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:15px;background:rgba(232,216,196,.10);border:1px solid rgba(232,216,196,.16);color:#E8D8C4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></div><h3 style="margin:0 0 5px;text-align:center;font-size:19px;font-weight:700;letter-spacing:-.2px;color:#E8D8C4">Live Chat dengan Admin</h3>
+      <p class="muted" style="margin:0 auto 18px;text-align:center;font-size:12.5px;line-height:1.55;max-width:340px;color:rgba(232,216,196,.55)">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung di dalam aplikasi.</p>
+      <div class="lcp-list" translate="no" style="max-height:60vh;overflow-y:auto">${itemsHtml}</div>
     </div>
   `;
   document.body.appendChild(modal);
@@ -50478,9 +50485,13 @@ function openSupportCompose({ type, subjectDefault, bodyDefault, title, desc, ic
   form.querySelector('[name="type"]').value = type;
   form.querySelector('[name="subject"]').value = subjectDefault || "";
   form.querySelector('[name="body"]').value = bodyDefault || "";
+  { const _h = form.querySelector(".field-hint"); const _t = form.querySelector('[name="body"]'); const _u = () => { if (_h && _t) { const n = _t.value.length; _h.textContent = n + " dari 2.000 karakter" + (n < 10 ? " · minimal 10 karakter" : ""); } }; if (_t && !_t._cntBound) { _t.addEventListener("input", _u); _t._cntBound = true; } _u(); }
   $("#supportComposeTitle").textContent = title || "Contact Super Admin";
   $("#supportComposeDesc").textContent = desc || "Your message will go directly to the Playly admin Inbox.";
   $("#supportComposeIcon").textContent = icon || "📧";
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis($("#supportComposeIcon")); } catch (e) {} }
+  { const _tp = document.getElementById("supportTopics"); if (_tp) { _tp.hidden = (type === "bug"); _tp.querySelectorAll(".support-topic-chip").forEach(c => c.classList.remove("active")); } }
+  if (!window._supportTopicsBound) { window._supportTopicsBound = true; document.addEventListener("click", (e) => { const chip = e.target.closest(".support-topic-chip"); if (!chip) return; const t = chip.dataset.topic; const fm = document.getElementById("supportComposeForm"); if (!fm) return; const sj = fm.querySelector('[name="subject"]'); const bd = fm.querySelector('[name="body"]'); if (sj) sj.value = "Bantuan: " + t; if (bd) { bd.value = bd.value.replace(/butuh bantuan terkait[^:]*:/, "butuh bantuan terkait " + t + ":"); bd.dispatchEvent(new Event("input", { bubbles: true })); } fm.querySelectorAll(".support-topic-chip").forEach(c => c.classList.toggle("active", c === chip)); }); }
 
   // Reset proof state + UI
   _supportProofData = null;
@@ -50706,8 +50717,8 @@ document.addEventListener("click", (e) => {
       icon: "📧",
       title: "Hubungi Super Admin",
       desc: "Pesanmu akan langsung masuk ke Inbox admin Playly.",
-      subjectDefault: `Support request from ${fromName}`,
-      bodyDefault: `Halo Super Admin,\n\nSaya ${fromName} (@${username}) butuh bantuan terkait:\n\n[Tulis pertanyaan/keluhan di sini]\n\nTerima kasih.`
+      subjectDefault: `Permintaan bantuan dari ${fromName}`,
+      bodyDefault: `Halo Super Admin,\nSaya ${fromName} (@${username}) butuh bantuan terkait:\n\n[Tulis pertanyaan atau keluhan di sini]\n\nTerima kasih.`
     });
     return;
   }
@@ -50724,7 +50735,7 @@ document.addEventListener("click", (e) => {
       title: "Lapor Bug ke Admin",
       desc: "Laporan bug-mu masuk ke Inbox admin Playly.",
       subjectDefault: `Bug: `,
-      bodyDefault: `Halo Super Admin,\n\nSaya menemukan bug:\n\n📍 Halaman: ${location.pathname}\n🐛 Deskripsi: [Jelaskan bug-nya]\n🔁 Cara reproduksi: [Langkah-langkahnya]\n\nTerima kasih.`
+      bodyDefault: `Halo Super Admin,\nSaya menemukan bug:\n\n📍 Halaman: ${location.pathname}\n🐛 Deskripsi: [Jelaskan bug-nya]\n🔁 Cara reproduksi: [Langkah-langkahnya]\n\nTerima kasih.`
     });
     return;
   }
