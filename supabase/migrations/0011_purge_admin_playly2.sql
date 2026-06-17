@@ -1,7 +1,34 @@
+-- ============================================================
+-- ⛔ DINONAKTIFKAN / NEUTRALIZED — 2026-06-17 ⛔
+-- ============================================================
+-- JANGAN JALANKAN FILE INI.
+--
+-- Semua perintah DELETE di bawah sudah DIKOMENTARI (dinonaktifkan),
+-- jadi menjalankan file ini sekarang TIDAK melakukan apa-apa (no-op).
+--
+-- ALASAN:
+--   admin.playly2@gmail.com SEKARANG adalah admin SAH (level senior),
+--   terdaftar di admin-allowlist (playly-admin-allowlist), aksesnya
+--   dibuat oleh super admin admin.playly@gmail.com sesuai aturan dashboard.
+--   Akun ini dipulihkan pada 2026-06-17 (auth.users + profiles + kv account).
+--
+--   Migrasi ini ditulis 2026-05-25 dengan ASUMSI admin.playly2 = sampah
+--   test. Asumsi itu SUDAH USANG / KELIRU. Menjalankan ulang file ini akan
+--   menghapus akun admin.playly2 yang aktif → JANGAN.
+--
+-- File dipertahankan hanya sebagai catatan sejarah. Isi asli ada di bawah,
+-- seluruhnya dikomentari.
+-- ============================================================
+
+
+-- ============================================================
+-- ===== ISI ASLI (DINONAKTIFKAN — semua di-comment) ==========
+-- ============================================================
 -- Purge admin.playly2 (2026-05-25 v543).
 --
 -- Konfirmasi user: admin.playly2@gmail.com BUKAN akun admin real.
 -- Sisa test data. Real admin tunggal = admin.playly@gmail.com.
+-- [CATATAN 2026-06-17: pernyataan di atas SUDAH TIDAK BERLAKU — lihat header.]
 --
 -- Migration 0010 (v542) sebelumnya mengira admin.playly2 = backup admin
 -- karena listed di ADMIN_EMAILS_PROTECTED. Salah — list itu mengandung
@@ -12,53 +39,49 @@
 -- ============================================================
 -- 1. kv table — delete admin.playly2 account row
 -- ============================================================
-delete from public.kv
-where key = 'playly-account-admin.playly2@gmail.com';
+-- delete from public.kv
+-- where key = 'playly-account-admin.playly2@gmail.com';
 
 -- Plus delete kv data lain yang mungkin orphan (state/prefs/welcomed/etc)
-delete from public.kv
-where (
-  key like 'playly-state-%' or
-  key like 'playly-prefs-%' or
-  key like 'playly-welcomed-%' or
-  key like 'playly-welcome-%' or
-  key like 'playly-onboarding-%' or
-  key like 'playly-notif-%' or
-  key like 'playly-2fa-%'
-) and (
-  -- Match suffix admin.playly2 atau email-nya
-  key like '%admin.playly2%' or
-  key like '%admin.playly2@gmail.com'
-);
+-- delete from public.kv
+-- where (
+--   key like 'playly-state-%' or
+--   key like 'playly-prefs-%' or
+--   key like 'playly-welcomed-%' or
+--   key like 'playly-welcome-%' or
+--   key like 'playly-onboarding-%' or
+--   key like 'playly-notif-%' or
+--   key like 'playly-2fa-%'
+-- ) and (
+--   -- Match suffix admin.playly2 atau email-nya
+--   key like '%admin.playly2%' or
+--   key like '%admin.playly2@gmail.com'
+-- );
 
 -- ============================================================
 -- 2. profiles (B2) cleanup kalau ada
 -- ============================================================
-delete from public.profiles
-where email = 'admin.playly2@gmail.com'
-   or username = 'admin.playly2';
+-- delete from public.profiles
+-- where email = 'admin.playly2@gmail.com'
+--    or username = 'admin.playly2';
 
 -- ============================================================
 -- 3. user_state (B3) cleanup kalau ada
 -- ============================================================
-delete from public.user_state
-where user_id in (
-  select id from auth.users where email = 'admin.playly2@gmail.com'
-);
+-- delete from public.user_state
+-- where user_id in (
+--   select id from auth.users where email = 'admin.playly2@gmail.com'
+-- );
 
 -- ============================================================
 -- 4. auth.users — delete (cascade ke profiles + user_state)
 -- ============================================================
-delete from auth.users
-where email = 'admin.playly2@gmail.com';
+-- delete from auth.users
+-- where email = 'admin.playly2@gmail.com';
 
 -- ============================================================
--- DONE. Verifikasi:
+-- DONE. (Verifikasi asli dibiarkan sbg dokumentasi)
 --   select * from kv where key like '%admin.playly2%';        -- 0 rows
 --   select * from profiles where email like '%admin.playly2%'; -- 0 rows
 --   select * from auth.users where email = 'admin.playly2@gmail.com'; -- 0 rows
---
---   -- Cek orphan tersisa di kv (harusnya semua bersih sekarang)
---   select count(*) from kv where key like 'playly-account-%' and user_id is null;
---   -- harus return 0
 -- ============================================================
