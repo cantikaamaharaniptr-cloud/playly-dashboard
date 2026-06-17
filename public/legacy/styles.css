@@ -45421,16 +45421,16 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(34, 197, 94, .08);
-  border: 1px solid rgba(34, 197, 94, .25);
+  background: rgba(16, 185, 129, .10);
+  border: 1px solid rgba(16, 185, 129, .28);
   border-radius: 10px;
   margin-bottom: 18px;
   font-size: 12.5px;
   color: #86EFAC;
   text-align: left;
 }
-.admin-reset-protected svg { width: 18px; height: 18px; flex-shrink: 0; color: #22C55E; }
-.admin-reset-protected b { color: #BBF7D0; font-weight: 800; }
+.admin-reset-protected svg { width: 18px; height: 18px; flex-shrink: 0; color: #10B981; }
+.admin-reset-protected b { color: #A7F3D0; font-weight: 800; }
 
 .admin-reset-actions {
   display: flex;
