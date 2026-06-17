@@ -17224,9 +17224,15 @@ body:not([data-view="home"]) .fab-upload { display: none !important; }
 /* === NAV TIER BADGE (gold star di sidebar item premium-only untuk free user) === */
 .nav-tier-badge {
   margin-left: auto;
-  font-size: 13px;
-  color: #f0c878;
-  filter: drop-shadow(0 0 3px rgba(240, 200, 120, .35));
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  color: #E8D8C4;
+  background: var(--primary);
+  padding: 1.5px 6px;
+  border-radius: 999px;
+  line-height: 1.45;
+  filter: none;
 }
 /* Hide tier badge for premium users (they have access) */
 body[data-tier="premium"] .nav-tier-badge { display: none; }
