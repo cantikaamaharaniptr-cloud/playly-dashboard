@@ -2991,6 +2991,63 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .suggestion small { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
 
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
+/* 2026-06-17: Pusat Bantuan polish (dark) — hierarki teks + susunan + warna kolom */
+.help-panel .help-quick-card svg.ui-ico { width: 20px !important; height: 20px !important; }
+body[data-theme="dark"] .help-panel .help-quick-card:focus-visible { outline: 2px solid rgba(232,216,196,.4) !important; outline-offset: 2px !important; }
+.help-panel .sp-head h3 { display: flex !important; align-items: center !important; gap: 9px !important; }
+.help-panel .sp-head h3 svg.ui-ico { width: 36px !important; height: 36px !important; padding: 5px !important; box-sizing: border-box !important; background: rgba(232,216,196,.10) !important; border: 1px solid rgba(232,216,196,.16) !important; border-radius: 10px !important; }
+.help-panel .sp-head h3 .picon-w, .help-panel .sp-head h3 .picon-w svg { width: 19px !important; height: 19px !important; flex: 0 0 auto !important; }
+body[data-theme="dark"] .help-panel .help-quick-card small { color: rgba(232,216,196,.6) !important; line-height: 1.35 !important; }
+body[data-theme="dark"] .help-panel .help-quick-card b { color: rgba(232,216,196,.95) !important; }
+body[data-theme="dark"] .help-panel details.faq > p { color: rgba(232,216,196,.72) !important; }
+body[data-theme="dark"] .help-panel details.faq p b { color: rgba(232,216,196,.92) !important; }
+body[data-theme="dark"] .help-panel details.faq summary { color: rgba(232,216,196,.92) !important; }
+body[data-theme="dark"] .help-panel details.faq summary { background: rgba(232,216,196,.12) !important; }
+body[data-theme="dark"] .help-panel details.faq[open] > p { background: rgba(0,0,0,.20) !important; }
+body[data-theme="dark"] .help-panel details.faq > p { padding: 11px 16px 13px 30px !important; line-height: 1.6 !important; }
+/* 2026-06-18: Hubungi Admin modal — fokus cream (no wine/gold), hero icon chip, susunan rapi */
+.support-compose-panel .support-compose-icon { width: 56px !important; height: 56px !important; margin: 0 auto 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 15px !important; background: rgba(232,216,196,.10) !important; border: 1px solid rgba(232,216,196,.16) !important; font-size: 26px !important; }
+.support-compose-panel .support-compose-icon svg.ui-ico { width: 28px !important; height: 28px !important; color: #E8D8C4 !important; }
+.support-compose-panel .auth-field { margin-bottom: 16px !important; }
+.support-compose-panel .auth-field > span { display: block !important; margin-bottom: 7px !important; }
+.support-compose-panel .input-wrap input:focus, .support-compose-panel .input-wrap input:focus-visible { outline: none !important; box-shadow: none !important; border-color: rgba(232,216,196,.14) !important; background: rgba(232,216,196,.075) !important; }
+.support-compose-panel textarea:focus, .support-compose-panel textarea:focus-visible { outline: none !important; box-shadow: none !important; border-color: rgba(232,216,196,.14) !important; background: rgba(232,216,196,.075) !important; }
+.support-compose-panel .field-hint { color: rgba(232,216,196,.6) !important; }
+#supportComposeModal .field-hint { color: rgba(232,216,196,.5) !important; font-size: 11px !important; text-align: right !important; }
+.support-compose-panel .support-topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.support-compose-panel .support-topics[hidden] { display: none; }
+.support-compose-panel .support-topics-label { width: 100%; font-size: 11px; color: rgba(232,216,196,.6); margin-bottom: 4px; }
+.support-compose-panel .support-topic-chip { font-family: inherit; font-size: 12px; padding: 6px 12px; border-radius: 9px; background: rgba(232,216,196,.09); border: 1px solid rgba(232,216,196,.2); color: rgba(232,216,196,.85); cursor: pointer; transition: all .14s ease; }
+.support-compose-panel .support-topic-chip:hover { background: rgba(232,216,196,.14); border-color: rgba(232,216,196,.3); }
+.support-compose-panel .support-topic-chip.active { background: #6d2932; border-color: #6d2932; color: #E8D8C4; font-weight: 600; }
+.lcp-modal .lcp-item:hover { background: rgba(232,216,196,.09) !important; border-color: rgba(232,216,196,.28) !important; }
+/* fields: tampilan kolom konsisten + 3-zona pembatas (Carbon/Primer pattern) */
+.support-compose-panel .input-wrap input, .support-compose-panel textarea { background: rgba(232,216,196,.045) !important; border: 1px solid rgba(232,216,196,.14) !important; border-radius: 10px !important; }
+.support-compose-panel .muted { padding-bottom: 0 !important; margin-bottom: 22px !important; border-bottom: none !important; }
+/* Subjek: buang ikon dalam-kolom (seragam dgn Pesan, label di atas cukup) */
+.support-compose-panel .input-wrap svg { display: none !important; }
+.support-compose-panel .input-wrap input { padding-left: 14px !important; }
+.support-compose-panel textarea { min-height: 180px !important; }
+.support-compose-panel .input-wrap input, .support-compose-panel textarea { font-size: 14px !important; }
+.support-compose-panel .modal-actions { border-top: none !important; padding-top: 0 !important; margin-top: 18px !important; }
+/* primary CTA solid cream (override global outline-wine) + Batal ghost halus */
+.support-compose-panel .modal-actions .btn.primary { background: #6d2932 !important; color: #E8D8C4 !important; border: 1px solid #6d2932 !important; font-weight: 700 !important; }
+.support-compose-panel .modal-actions .btn.primary:hover { background: #843543 !important; border-color: #843543 !important; color: #E8D8C4 !important; }
+.support-compose-panel .modal-actions .btn.ghost { background: transparent !important; color: rgba(232,216,196,.85) !important; border: 1px solid rgba(232,216,196,.16) !important; }
+.support-compose-panel .modal-actions .btn.ghost:hover { background: rgba(232,216,196,.08) !important; border-color: rgba(232,216,196,.28) !important; }
+/* header: hierarki judul vs deskripsi + jarak (2026-06-18) */
+.support-compose-panel .support-compose-icon { margin-bottom: 14px !important; }
+.support-compose-panel h3 { font-size: 19px !important; font-weight: 700 !important; letter-spacing: -.2px !important; line-height: 1.25 !important; margin-bottom: 5px !important; color: #E8D8C4 !important; }
+.support-compose-panel .muted { color: rgba(232,216,196,.55) !important; font-size: 12.5px !important; line-height: 1.55 !important; max-width: 340px !important; margin-left: auto !important; margin-right: auto !important; }
+.help-panel details.faq summary::before { color: var(--muted) !important; }
+body[data-theme="dark"] .help-panel details.faq summary::before { color: rgba(232,216,196,.6) !important; }
+body[data-theme="dark"] .help-panel .help-section > h4 { border-bottom: 1px solid rgba(232,216,196,.12) !important; padding-bottom: 7px !important; margin: 12px 0 9px !important; letter-spacing: .01em !important; }
+.help-panel .help-section h4 { display: flex !important; align-items: center !important; gap: 9px !important; }
+.help-panel .help-section h4 svg.ui-ico { width: 28px !important; height: 28px !important; padding: 5px !important; box-sizing: border-box !important; background: rgba(232,216,196,.09) !important; border: 1px solid rgba(232,216,196,.14) !important; border-radius: 8px !important; flex: 0 0 auto !important; }
+body[data-theme="dark"] .help-panel details.faq, body[data-theme="dark"] .help-panel .help-quick-card { transition: background .14s ease, border-color .14s ease !important; }
+body[data-theme="dark"] .help-panel details.faq:hover, body[data-theme="dark"] .help-panel details.faq[open] { background: rgba(232,216,196,.085) !important; border-color: rgba(232,216,196,.20) !important; }
+body[data-theme="dark"] .help-panel .help-quick-card:hover { border-color: rgba(232,216,196,.32) !important; background: rgba(232,216,196,.07) !important; }
+
 /* 2026-06-17: top bar — font 13px/500 + ikon stroke 1.6 (di awal file: hindari parser drop) */
 .topbar .breadcrumb a,
 .topbar .topbar-home-nav .thn-link,
@@ -11652,8 +11709,8 @@ section.view.focus-mode .messages-3col {
   transition: all .15s var(--ease);
 }
 .help-quick-card:hover {
-  border-color: var(--primary);
-  background: var(--primary-soft);
+  border-color: rgba(232,216,196,.32);
+  background: rgba(232,216,196,.07);
   transform: translateY(-2px);
 }
 .help-quick-card span { font-size: 22px; margin-bottom: 6px; }
@@ -48304,7 +48361,7 @@ body:not([data-role="admin"]):not(.auth-mode) input:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) select:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) textarea:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
-  outline: 2px solid rgba(220, 169, 109, .65);
+  outline: 2px solid rgba(232, 216, 196, .5);
   outline-offset: 2px;
   border-radius: 6px;
 }
