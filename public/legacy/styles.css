@@ -45468,6 +45468,15 @@ body[data-role="admin"] .admin-reset-actions .btn.danger:hover {
 }
 body[data-role="admin"] .admin-reset-actions .btn.danger svg { color: #FF8A80 !important; }
 
+/* Tombol "Reset Data" di header Manajemen Akun — ikut warna tema navy (req user) */
+body[data-role="admin"] #adminResetPlatformBtn {
+  background: #22304A !important;
+  border: 1px solid rgba(165, 175, 195, .32) !important;
+  color: #FFF !important;
+}
+body[data-role="admin"] #adminResetPlatformBtn:hover { background: #2A3A57 !important; }
+body[data-role="admin"] #adminResetPlatformBtn svg { color: #FF8A80 !important; }
+
 /* =============================================================
    USER MANAGEMENT — hide kolom Tier & Videos hanya di Admin tab.
    Section User tetap pakai full kolom (Tier + Videos visible).
