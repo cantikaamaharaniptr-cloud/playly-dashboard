@@ -50244,10 +50244,10 @@ function renderAdminChatPopupBody(username) {
     if (h.replyTo) inner += '<div class="acp-quote">' + escapeHtml(String(h.replyTo).slice(0, 90)) + '</div>';
     if (imgs.length) inner += '<div class="acp-imgs ' + (imgs.length > 1 ? "multi" : "single") + '">'
       + imgs.map(s => '<img class="acp-img" src="' + escapeHtml(s) + '" alt="lampiran"/>').join("") + '</div>';
-    // Menu titik-3 menempel di BUBBLE TEKS — bukan di gambar. Gambar cukup diklik
-    // untuk lihat preview (lightbox). Pesan gambar-saja tidak punya menu.
-    if (h.text) inner += '<div class="acp-bubblewrap">' + menuBtn + '<div class="acp-bubble">' + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div></div>';
-    else if (!imgs.length) inner = '<div class="acp-bubblewrap">' + menuBtn + '<div class="acp-bubble">[pesan]</div></div>';
+    // Menu titik-3 mengambang di POJOK bubble (bukan di samping, bukan di gambar).
+    // Gambar cukup diklik untuk preview. Klik-kanan pesan apa pun juga buka menu.
+    if (h.text) inner += '<div class="acp-bubble">' + menuBtn + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div>';
+    else if (!imgs.length) inner = '<div class="acp-bubble">' + menuBtn + '[pesan]</div>';
     return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '" data-acp-msg="' + idx + '">'
       + inner
       + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
@@ -50263,12 +50263,12 @@ function _acpReadImageScaled(file, cb) {
   reader.onload = () => {
     const img = new Image();
     img.onload = () => {
-      let w = img.width, h = img.height; const max = 1024;
+      let w = img.width, h = img.height; const max = 1600;   // resolusi lebih tinggi -> jelas saat di-zoom
       if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
       try {
         const c = document.createElement("canvas"); c.width = w; c.height = h;
         c.getContext("2d").drawImage(img, 0, 0, w, h);
-        cb(c.toDataURL("image/jpeg", 0.82));
+        cb(c.toDataURL("image/jpeg", 0.85));
       } catch (e) { cb(reader.result); }
     };
     img.onerror = () => cb(reader.result);
@@ -50380,7 +50380,7 @@ function openAdminChatPopup(username) {
   const _acpShowCtx = (label) => { const c = wrap.querySelector("#acpCtx"), t = wrap.querySelector("#acpCtxText"); if (t) t.textContent = label; if (c) c.hidden = false; };
   const _acpHideCtx = () => { acpReplyIdx = null; acpEditIdx = null; const c = wrap.querySelector("#acpCtx"); if (c) c.hidden = true; };
   const _acpCloseMsgMenu = () => { wrap.querySelector("#acpMsgPop")?.remove(); };
-  const _acpOpenMsgMenu = (idx, btn) => {
+  const _acpOpenMsgMenu = (idx, x, y) => {
     _acpCloseMsgMenu();
     const th = _acpThread(); const h = th && th.history[idx]; if (!h) return;
     const mine = h.from === "me";
@@ -50392,10 +50392,16 @@ function openAdminChatPopup(username) {
     pop.id = "acpMsgPop"; pop.className = "acp-msgpop"; pop.style.position = "fixed";
     pop.innerHTML = items.map(it => '<button type="button" class="acp-msgpop-item' + (it.danger ? " danger" : "") + '" data-acp-msgact="' + it.act + '" data-acp-msgidx="' + idx + '">' + it.label + '</button>').join("");
     wrap.appendChild(pop);   // di wrap (bukan panel) supaya tak ke-clip overflow
-    const br = btn.getBoundingClientRect();
-    pop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - 160)) + "px";
-    pop.style.top = Math.min(br.bottom + 4, window.innerHeight - 8 - pop.offsetHeight) + "px";
+    pop.style.left = Math.max(8, Math.min(x, window.innerWidth - 160)) + "px";
+    pop.style.top = Math.min(y + 4, window.innerHeight - 8 - pop.offsetHeight) + "px";
   };
+  // Klik-kanan pesan apa pun (teks/gambar) -> menu yang sama dgn titik-3.
+  wrap.addEventListener("contextmenu", ev => {
+    const row = ev.target.closest("[data-acp-msg]");
+    if (!row) return;
+    ev.preventDefault();
+    _acpOpenMsgMenu(+row.dataset.acpMsg, ev.clientX, ev.clientY);
+  });
   wrap.addEventListener("click", ev => {
     if (ev.target.closest("[data-acp-close]")) { wrap.remove(); window._acpOpenUser = null; return; }
     if (ev.target.closest("#acpCtxCancel")) { const wasEdit = acpEditIdx != null; _acpHideCtx(); if (wasEdit) { const i0 = wrap.querySelector("#acpInput"); if (i0) i0.value = ""; } return; }
@@ -50405,7 +50411,7 @@ function openAdminChatPopup(username) {
     const _pimg = ev.target.closest(".acp-img, .acp-pv-thumb img");
     if (_pimg && _pimg.src) { if (typeof openImageLightbox === "function") openImageLightbox({ src: _pimg.src, name: "Lampiran" }); return; }
     const _mm = ev.target.closest("[data-acp-msgmenu]");
-    if (_mm) { ev.stopPropagation(); _acpOpenMsgMenu(+_mm.dataset.acpMsgmenu, _mm); return; }
+    if (_mm) { ev.stopPropagation(); const br = _mm.getBoundingClientRect(); _acpOpenMsgMenu(+_mm.dataset.acpMsgmenu, br.left, br.bottom); return; }
     const _ma = ev.target.closest("[data-acp-msgact]");
     if (_ma) {
       const a2 = _ma.dataset.acpMsgact, idx = +_ma.dataset.acpMsgidx; _acpCloseMsgMenu();
