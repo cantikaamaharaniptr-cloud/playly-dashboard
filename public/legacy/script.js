@@ -51382,7 +51382,14 @@ function _repositionContactHub() {
     h.textContent = "Masih butuh bantuan?";
     sec.insertBefore(h, sec.firstChild);
   }
-  if (body.lastElementChild !== sec) body.appendChild(sec);
+  // Letakkan tepat SEBELUM footer "Tentang Playly" (data-help-cat="tentang") supaya
+  // © footer tetap jadi penutup panel; kalau footer tak ada, taruh paling bawah.
+  const about = body.querySelector('.help-section[data-help-cat="tentang"]');
+  if (about && about !== sec) {
+    if (sec.nextElementSibling !== about) body.insertBefore(sec, about);
+  } else if (body.lastElementChild !== sec) {
+    body.appendChild(sec);
+  }
 }
 
 $("#openHelp")?.addEventListener("click", () => {
