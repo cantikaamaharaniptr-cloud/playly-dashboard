@@ -40177,7 +40177,8 @@ function renderDmChatBody() {
       return `
         <div class="dm-bubble ${fromMe ? 'me' : 'them'} ${h.isAdmin ? 'is-admin' : ''}" data-dm-msg-idx="${hIdx}">
           ${adminTag}
-          <div class="dm-bubble-text">${escapeHtml(h.text || "")}</div>
+          ${h.image ? `<img class="dm-bubble-img" src="${escapeHtml(h.image)}" alt="lampiran"/>` : ''}
+          ${h.text ? `<div class="dm-bubble-text">${escapeHtml(h.text)}</div>` : ''}
           <small class="dm-bubble-time">${escapeHtml(ts)}</small>
           ${fromMe ? `<button type="button" class="dm-bubble-del" data-dm-bubble-del="${hIdx}" title="Hapus pesan" aria-label="Delete">×</button>` : ''}
         </div>
@@ -40608,7 +40609,7 @@ function renderChat() {
 // Antar pesan dari current user ke inbox penerima.
 // Tulis ke `playly-state-{recipient}.messages` — cross-tab/cross-device sync
 // otomatis lewat storage event + cloud-sync.
-function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
+function deliverChatToRecipient(recipientUsername, text, fromAdmin, image) {
   // Privasi: kalau recipient mematikan "Izinkan DM dari semua orang" dan kita bukan
   // admin & belum di-follow oleh recipient, hentikan chat. Admin selalu boleh.
   if (!fromAdmin && user?.role !== "admin") {
@@ -40650,8 +40651,8 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
     thread.isAdmin = !!fromAdmin;
     s.messages = [thread, ...s.messages.filter(t => t !== thread)];
   }
-  thread.history.push({ from: "them", text, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
-  thread.preview = text.length > 60 ? text.slice(0, 57) + "..." : text;
+  thread.history.push({ from: "them", text, image: image || null, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
+  thread.preview = image ? "📷 Gambar" : (text.length > 60 ? text.slice(0, 57) + "..." : text);
   thread.time = "baru";
   thread.ts = deliverTs;
   thread.unread = true;
@@ -50765,12 +50766,38 @@ function renderAdminChatPopupBody(username) {
   body.innerHTML = hist.map(h => {
     const mine = h.from === "me";
     const time = (typeof chatRelTime === "function" && h.ts) ? chatRelTime(h.ts) : "";
+    let inner = "";
+    if (h.image) inner += '<img class="acp-img" src="' + escapeHtml(h.image) + '" alt="lampiran" />';
+    if (h.text) inner += '<div class="acp-bubble">' + escapeHtml(h.text) + '</div>';
+    if (!inner) inner = '<div class="acp-bubble">[pesan]</div>';
     return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '">'
-      + '<div class="acp-bubble">' + escapeHtml(h.text || "[pesan]") + '</div>'
+      + inner
       + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
       + '</div>';
   }).join("");
   body.scrollTop = body.scrollHeight;
+}
+
+// Baca file gambar -> downscale (maks 1024px, JPEG q0.82) -> dataURL kecil.
+// Supaya tidak membengkakkan localStorage + cloud kv saat kirim lampiran.
+function _acpReadImageScaled(file, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height; const max = 1024;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      try {
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        cb(c.toDataURL("image/jpeg", 0.82));
+      } catch (e) { cb(reader.result); }
+    };
+    img.onerror = () => cb(reader.result);
+    img.src = reader.result;
+  };
+  reader.onerror = () => cb(null);
+  reader.readAsDataURL(file);
 }
 
 function openAdminChatPopup(username) {
@@ -50815,6 +50842,11 @@ function openAdminChatPopup(username) {
         + '</button>'
       + '</div>'
       + '<div class="acp-menu" id="acpMenu" hidden>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="help">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>'
+          + '<span>Pusat Bantuan (FAQ)</span>'
+        + '</button>'
+        + '<div class="acp-menu-sep"></div>'
         + '<button type="button" class="acp-menu-item" data-acp-act="copy-email">'
           + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
           + '<span>Salin email admin</span>'
@@ -50831,6 +50863,10 @@ function openAdminChatPopup(username) {
       + '</div>'
       + '<div class="acp-body" id="acpBody"></div>'
       + '<form class="acp-foot" id="acpForm">'
+        + '<input type="file" id="acpFile" accept="image/*" hidden />'
+        + '<button type="button" class="acp-attach" id="acpAttach" aria-label="Lampirkan gambar" title="Lampirkan gambar">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
+        + '</button>'
         + '<input type="text" id="acpInput" autocomplete="off" placeholder="Tulis pesan untuk admin..." />'
         + '<button type="submit" class="acp-send" aria-label="Kirim">'
           + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
@@ -50839,15 +50875,17 @@ function openAdminChatPopup(username) {
     + '</div>';
   document.body.appendChild(wrap);
   renderAdminChatPopupBody(username);
+  window._acpOpenUser = username;   // dipakai auto-refresh saat admin balas
 
   const menu = wrap.querySelector("#acpMenu");
   wrap.addEventListener("click", ev => {
-    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); return; }
+    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); window._acpOpenUser = null; return; }
     if (ev.target.closest("#acpGear")) { if (menu) menu.hidden = !menu.hidden; return; }
     const act = ev.target.closest("[data-acp-act]");
     if (act) {
       if (menu) menu.hidden = true;
       const a = act.dataset.acpAct;
+      if (a === "help") { wrap.remove(); window._acpOpenUser = null; document.getElementById("openHelp")?.click(); return; }
       const th = (state.messages || []).find(m => m.name === username);
       if (a === "copy-email") {
         const email = acc.email || "";
@@ -50895,6 +50933,48 @@ function openAdminChatPopup(username) {
       try { deliverChatToRecipient(username, txt, false); } catch (e) {}
     }
   });
+
+  // Lampirkan gambar (kirim screenshot ke admin).
+  const fileInput = wrap.querySelector("#acpFile");
+  wrap.querySelector("#acpAttach").addEventListener("click", () => fileInput && fileInput.click());
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = "";
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { if (typeof toast === "function") toast("Hanya file gambar yang didukung", "warning"); return; }
+    _acpReadImageScaled(file, (dataURL) => {
+      if (!dataURL) { if (typeof toast === "function") toast("Gagal membaca gambar", "error"); return; }
+      const th = (state.messages || []).find(m => m.name === username);
+      if (!th) return;
+      const now = Date.now();
+      th.history = th.history || [];
+      th.history.push({ from: "me", text: "", image: dataURL, time: "baru", ts: now });
+      th.preview = "📷 Gambar"; th.time = "baru"; th.ts = now;
+      if (typeof saveState === "function") saveState();
+      renderAdminChatPopupBody(username);
+      if (username !== user?.username && typeof deliverChatToRecipient === "function") {
+        try { deliverChatToRecipient(username, "", false, dataURL); } catch (e) {}
+      }
+    });
+  });
+
+  // Auto-refresh: saat admin balas (cloud-sync / cross-tab), re-render isi popup
+  // selama popup terbuka — supaya balasan admin muncul tanpa tutup-buka manual.
+  if (!window._acpCloudBound) {
+    window._acpCloudBound = true;
+    const _acpRefresh = () => {
+      if (!document.getElementById("adminChatPopup") || !window._acpOpenUser) return;
+      try {
+        const k = "playly-state-" + (user?.username || "");
+        const fresh = JSON.parse(localStorage.getItem(k) || "{}");
+        if (Array.isArray(fresh.messages)) state.messages = fresh.messages;
+      } catch (e) {}
+      renderAdminChatPopupBody(window._acpOpenUser);
+    };
+    window.addEventListener("playly:cloud-applied", _acpRefresh);
+    window.addEventListener("storage", (e) => { if (e.key && e.key.startsWith("playly-state-")) _acpRefresh(); });
+  }
+
   setTimeout(() => wrap.querySelector("#acpInput")?.focus(), 80);
 }
 
