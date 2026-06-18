@@ -39636,8 +39636,11 @@ function startChatWithUser(username) {
   const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const isAdminTarget = acc.role === "admin";
 
-  // Reset filter ke "all" supaya thread baru pasti terlihat di list kiri
-  if (typeof dmState !== "undefined") dmState.filter = "all";
+  // Buka di tab "DM" supaya layout chat (list + panel percakapan) tampil dan
+  // chat-nya langsung kebuka. (Dulu "all" — tapi sejak redesign Inbox, "all"
+  // = overview kartu yang MENYEMBUNYIKAN panel chat, jadi openDmChat tak pernah
+  // kelihatan. Akibatnya klik baris Live Chat / "Kirim Pesan" mentok di overview.)
+  if (typeof dmState !== "undefined") dmState.filter = "dm";
 
   const existing = state.messages.findIndex(m => m.name === username);
   if (existing >= 0) {
@@ -39645,7 +39648,12 @@ function startChatWithUser(username) {
     if (state.messages[existing].archived) state.messages[existing].archived = false;
     saveState();
     switchView("messages");
-    setTimeout(() => openDmChat(existing), 100);
+    setTimeout(() => {
+      // Terapkan layout tab DM dulu (un-hide #dmLayout sesuai filter) baru buka
+      // chat — kalau tidak, openDmChat reveal panel di dalam container ke-hidden.
+      if (typeof _dmApplyView === "function") _dmApplyView();
+      openDmChat(existing);
+    }, 100);
     return;
   }
   state.messages.unshift({
@@ -39657,6 +39665,8 @@ function startChatWithUser(username) {
   switchView("messages");
   // Buka chat setelah view aktif
   setTimeout(() => {
+    // Un-hide #dmLayout sesuai filter "dm" dulu, baru render list + buka chat.
+    if (typeof _dmApplyView === "function") _dmApplyView();
     renderDmList();
     setTimeout(() => openDmChat(0), 50);
   }, 80);
