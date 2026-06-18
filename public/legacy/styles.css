@@ -3038,6 +3038,10 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-row.acp-mine { align-self: flex-end; align-items: flex-end; }
 .acp-row.acp-them { align-self: flex-start; align-items: flex-start; }
 .acp-bubble { padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45; word-break: break-word; }
+.acp-img { max-width: 100%; max-height: 220px; border-radius: 12px; display: block; object-fit: cover; }
+.acp-mine .acp-img { border-bottom-right-radius: 4px; }
+.acp-them .acp-img { border-bottom-left-radius: 4px; }
+.acp-img + .acp-bubble { margin-top: 4px; }
 .acp-them .acp-bubble { background: rgba(232,216,196,.1); color: #E8D8C4; border-bottom-left-radius: 4px; }
 .acp-mine .acp-bubble { background: #6D2932; color: #E8D8C4; border-bottom-right-radius: 4px; }
 .acp-time { font-size: 9.5px; color: rgba(232,216,196,.4); margin-top: 2px; padding: 0 4px; }
@@ -3048,6 +3052,10 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-foot input { flex: 1; min-width: 0; background: rgba(232,216,196,.06); border: 1px solid rgba(232,216,196,.14); border-radius: 10px; padding: 9px 12px; color: #E8D8C4; font-size: 13px; outline: none; }
 .acp-foot input:focus { outline: none !important; box-shadow: none !important; border-color: rgba(232,216,196,.14) !important; }
 .acp-foot input::placeholder { color: rgba(232,216,196,.42); }
+.acp-attach { flex: none; width: 36px; border: none; border-radius: 10px; background: transparent; color: rgba(232,216,196,.6); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.acp-attach svg { width: 18px; height: 18px; }
+.acp-attach:hover { background: rgba(232,216,196,.08); color: #E8D8C4; }
+.dm-bubble-img { max-width: 240px; max-height: 240px; border-radius: 10px; display: block; margin: 2px 0; object-fit: cover; }
 .acp-send { flex: none; width: 40px; border: none; border-radius: 10px; background: #6D2932; color: #E8D8C4; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .acp-send svg { width: 17px; height: 17px; }
 .acp-send:hover { background: #843543; }
