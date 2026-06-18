@@ -39232,11 +39232,11 @@ function startChatWithUser(username) {
   const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const isAdminTarget = acc.role === "admin";
 
-  // Buka di tab yg layout chat-nya tampil (list + panel percakapan) supaya chat
-  // langsung kebuka. Target admin -> tab "Admin" (live chat khusus admin); user
-  // biasa -> tab "DM". (Dulu "all" — sejak redesign Inbox, "all" = overview kartu
-  // yang MENYEMBUNYIKAN panel chat, jadi klik baris mentok di overview.)
-  if (typeof dmState !== "undefined") dmState.filter = (isAdminTarget ? "admin" : "dm");
+  // Buka di tab "DM" supaya layout chat (list + panel percakapan) tampil dan chat
+  // langsung kebuka. (Dulu "all" — sejak redesign Inbox, "all" = overview kartu
+  // yang MENYEMBUNYIKAN panel chat, jadi klik baris mentok di overview.) Chat
+  // dengan admin TIDAK lewat sini lagi — admin pakai popup (openAdminChatPopup).
+  if (typeof dmState !== "undefined") dmState.filter = "dm";
 
   const existing = state.messages.findIndex(m => m.name === username);
   if (existing >= 0) {
@@ -39321,22 +39321,6 @@ function renderDmList() {
   const list = document.getElementById("dmThreadList");
   if (!list) return;
 
-  // Inject tab "Admin" (live chat 2 arah dgn tim admin) sekali — disisipkan
-  // setelah tab "DM". Handler klik tab sudah delegated di document, jadi tab
-  // dinamis ini langsung berfungsi. Pengumuman tetap tab notifikasi terpisah.
-  (function ensureAdminTab() {
-    const tabs = document.querySelector(".dm-section-tabs");
-    if (!tabs || tabs.querySelector('[data-dm-filter="admin"]')) return;
-    const dmTab = tabs.querySelector('[data-dm-filter="dm"]');
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dm-section-tab";
-    btn.setAttribute("data-dm-filter", "admin");
-    btn.innerHTML = '<span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg></span><span translate="no">Admin</span>';
-    if (dmTab && dmTab.nextSibling) tabs.insertBefore(btn, dmTab.nextSibling);
-    else tabs.appendChild(btn);
-  })();
-
   // Reload state.messages dari localStorage supaya sync pesan masuk dari user
   // lain (cross-tab + cloud-applied). PENTING: jangan replace reference,
   // tapi merge in-place supaya state.chatOpen index tetap valid.
@@ -39405,7 +39389,6 @@ function renderDmList() {
     broadcast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg>',
     requests:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
-    admin:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>',
   };
   if (iconEl) {
     iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
@@ -39421,12 +39404,6 @@ function renderDmList() {
     descEl.textContent = t(meta.d);
     descEl.dataset.origText = "";
   }
-  // Tab "Admin" tak punya key i18n — set label langsung (sama di semua bahasa).
-  if (dmState.filter === "admin") {
-    if (titleEl) { titleEl.textContent = "Admin"; titleEl.dataset.origText = ""; }
-    if (descEl) { descEl.textContent = "Live chat langsung dengan tim admin Playly."; descEl.dataset.origText = ""; }
-  }
-
   // Filter berdasarkan tab aktif
   const visible = allMsgs.filter(m => !m.archived);
   let filtered;
@@ -39439,11 +39416,9 @@ function renderDmList() {
     filtered = visible.filter(dmIsRequest);
   } else if (dmState.filter === "archived") {
     filtered = allMsgs.filter(m => m.archived);
-  } else if (dmState.filter === "admin") {
-    // Tab "Admin" = live chat 2 arah dgn tim admin (isAdmin, BUKAN broadcast).
-    filtered = visible.filter(m => m.isAdmin && !m.isBroadcast);
   } else {
     // DM = chat antar user biasa; thread admin & broadcast dikecualikan.
+    // (Chat admin kini lewat POPUP, bukan halaman Pesan.)
     filtered = visible.filter(m => !m.isAdmin && !m.isBroadcast && !dmIsRequest(m));
   }
   filtered = filterByQ(filtered);
@@ -39458,7 +39433,6 @@ function renderDmList() {
       broadcast: q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.bc"),
       requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
       archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
-      admin:     q ? t("inbox.list.empty.noresults") : "Belum ada percakapan dengan admin. Mulai lewat tombol Live Chat dengan Admin.",
     };
     list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
     return;
@@ -40271,7 +40245,6 @@ document.addEventListener("click", function (e) {
   if (m) {
     if (m.archived) filter = "archived";
     else if (m.isBroadcast) filter = "broadcast";
-    else if (m.isAdmin) filter = "admin";
     else if (typeof dmIsRequest === "function" && dmIsRequest(m)) filter = "requests";
   }
   if (typeof _dmOpenCategory === "function") _dmOpenCategory(filter);
@@ -50109,12 +50082,112 @@ function openLiveChatPicker() {
     const username = item.dataset.lcpUsername;
     modal.remove();
     closeHelpPanel();
-    if (typeof startChatWithUser === "function") {
+    // Klik admin -> buka POPUP chat melayang (bukan halaman Pesan).
+    if (typeof openAdminChatPopup === "function") {
+      openAdminChatPopup(username);
+    } else if (typeof startChatWithUser === "function") {
       startChatWithUser(username);
-    } else {
-      switchView("messages");
     }
   });
+}
+
+// ----------------------- POPUP CHAT ADMIN (LIVE CHAT) -----------------------
+// Chat melayang dengan admin, muncul saat user klik admin di picker Live Chat.
+// Sengaja TIDAK pakai halaman Pesan — percakapan tetap disimpan di thread admin
+// (state.messages, isAdmin) supaya persist & terkirim ke inbox admin via
+// deliverChatToRecipient, tapi thread itu disembunyikan dari tab Pesan.
+function renderAdminChatPopupBody(username) {
+  const body = document.getElementById("acpBody");
+  if (!body) return;
+  const thread = (state.messages || []).find(m => m.name === username);
+  const hist = (thread && Array.isArray(thread.history)) ? thread.history : [];
+  if (!hist.length) {
+    body.innerHTML = '<div class="acp-empty"><div class="acp-empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></div><p>Belum ada pesan.<br/>Sapa admin duluan!</p></div>';
+    return;
+  }
+  body.innerHTML = hist.map(h => {
+    const mine = h.from === "me";
+    const time = (typeof chatRelTime === "function" && h.ts) ? chatRelTime(h.ts) : "";
+    return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '">'
+      + '<div class="acp-bubble">' + escapeHtml(h.text || "[pesan]") + '</div>'
+      + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
+      + '</div>';
+  }).join("");
+  body.scrollTop = body.scrollHeight;
+}
+
+function openAdminChatPopup(username) {
+  const acc = (typeof getAllAccounts === "function" ? getAllAccounts() : []).find(a => a.username === username);
+  if (!acc) { if (typeof toast === "function") toast("⚠️ Admin tidak ditemukan", "warning"); return; }
+  const isSuper = typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(acc.email);
+  const handle = (acc.email || "").split("@")[0] || acc.username;
+  const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+
+  // Get/create thread (persist; isAdmin -> disembunyikan dari tab Pesan).
+  let thread = (state.messages || []).find(m => m.name === username);
+  if (!thread) {
+    thread = { name: username, init, preview: "", time: "baru", ts: Date.now(), unread: false, online: true, isAdmin: true, history: [] };
+    state.messages.unshift(thread);
+  } else {
+    thread.isAdmin = true;
+    if (thread.unread) thread.unread = false;
+  }
+  if (typeof saveState === "function") saveState();
+
+  document.getElementById("adminChatPopup")?.remove();
+  const badge = isSuper
+    ? '<span class="acp-badge acp-badge-super" translate="no">SUPER ADMIN</span>'
+    : '<span class="acp-badge" translate="no">ADMIN</span>';
+  const wrap = document.createElement("div");
+  wrap.className = "acp-modal";
+  wrap.id = "adminChatPopup";
+  wrap.innerHTML =
+    '<div class="acp-backdrop" data-acp-close></div>'
+    + '<div class="acp-panel" role="dialog" aria-label="Chat dengan admin">'
+      + '<div class="acp-head">'
+        + '<div class="acp-ava" aria-hidden="true">' + escapeHtml(init) + '</div>'
+        + '<div class="acp-meta">'
+          + '<strong translate="no">' + escapeHtml(handle) + ' ' + badge + '</strong>'
+          + '<span class="acp-status">Tim Admin Playly · biasanya balas cepat</span>'
+        + '</div>'
+        + '<button type="button" class="acp-close" data-acp-close aria-label="Tutup">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+        + '</button>'
+      + '</div>'
+      + '<div class="acp-body" id="acpBody"></div>'
+      + '<form class="acp-foot" id="acpForm">'
+        + '<input type="text" id="acpInput" autocomplete="off" placeholder="Tulis pesan untuk admin..." />'
+        + '<button type="submit" class="acp-send" aria-label="Kirim">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
+        + '</button>'
+      + '</form>'
+    + '</div>';
+  document.body.appendChild(wrap);
+  renderAdminChatPopupBody(username);
+
+  wrap.addEventListener("click", ev => {
+    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); }
+  });
+  wrap.querySelector("#acpForm").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const inp = wrap.querySelector("#acpInput");
+    const txt = (inp.value || "").trim();
+    if (!txt) return;
+    const th = (state.messages || []).find(m => m.name === username);
+    if (!th) return;
+    const now = Date.now();
+    th.history = th.history || [];
+    th.history.push({ from: "me", text: txt, time: "baru", ts: now });
+    th.preview = "Kamu: " + txt; th.time = "baru"; th.ts = now;
+    if (typeof saveState === "function") saveState();
+    inp.value = "";
+    renderAdminChatPopupBody(username);
+    // Kirim ke inbox admin (real, bukan auto-reply).
+    if (username !== user?.username && typeof deliverChatToRecipient === "function") {
+      try { deliverChatToRecipient(username, txt, false); } catch (e) {}
+    }
+  });
+  setTimeout(() => wrap.querySelector("#acpInput")?.focus(), 80);
 }
 
 // ----------------------- IN-APP SUPPORT COMPOSE -----------------------
