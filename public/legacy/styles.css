@@ -3104,6 +3104,20 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-fab-dot { position: absolute; top: 9px; right: 10px; width: 13px; height: 13px; border-radius: 50%; background: #ef4444; border: 2px solid #251419; }
 @media (max-width: 520px) { .acp-modal .acp-panel { right: 0; bottom: 0; width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; } }
 
+/* 2026-06-18: Hub "Hubungi Admin" — satu picker berisi Email Dukungan / Lapor Bug / Live Chat */
+.support-hub-modal .sh-hero { width: 54px; height: 54px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 15px; background: rgba(232,216,196,.10); border: 1px solid rgba(232,216,196,.16); color: #E8D8C4; }
+.support-hub-modal .sh-hero svg { width: 27px; height: 27px; }
+.support-hub-modal .sh-title { margin: 0 0 5px; text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.2px; color: #E8D8C4; }
+.support-hub-modal .sh-desc { margin: 0 auto 18px; text-align: center; font-size: 12.5px; line-height: 1.55; max-width: 320px; color: rgba(232,216,196,.55); }
+.support-hub-modal .sh-list { display: flex; flex-direction: column; gap: 10px; }
+.support-hub-modal .sh-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: rgba(232,216,196,.04); color: var(--text); text-decoration: none; transition: background .15s, border-color .15s; }
+.support-hub-modal .sh-card:hover { background: rgba(232,216,196,.09); border-color: rgba(232,216,196,.28); }
+.support-hub-modal .sh-ic { flex: none; width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: rgba(232,216,196,.08); color: #E8D8C4; }
+.support-hub-modal .sh-ic svg { width: 20px; height: 20px; }
+.support-hub-modal .sh-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.support-hub-modal .sh-txt b { font-size: 14px; font-weight: 600; color: #E8D8C4; }
+.support-hub-modal .sh-txt small { font-size: 11.5px; line-height: 1.4; color: rgba(232,216,196,.55); }
+
 /* 2026-06-17: Pusat Bantuan polish (dark) — hierarki teks + susunan + warna kolom */
 .help-panel .help-quick-card svg.ui-ico { width: 20px !important; height: 20px !important; }
 body[data-theme="dark"] .help-panel .help-quick-card:focus-visible { outline: 2px solid rgba(232,216,196,.4) !important; outline-offset: 2px !important; }

@@ -50990,11 +50990,41 @@ $("#supportComposeForm")?.addEventListener("submit", e => {
   closeHelpPanel();
 });
 
+// Hub "Hubungi Admin" — satu pintu masuk berisi 3 kanal: Email Dukungan, Lapor
+// Bug, Live Chat. Tiap kartu pakai id lama (#emailSupport/#reportBug/#contactChat)
+// supaya handler di bawah otomatis membuka flow-nya.
+function openSupportHub() {
+  if (!user) { if (typeof toast === "function") toast("⚠️ Login dulu untuk hubungi admin", "warning"); return; }
+  document.getElementById("supportHubModal")?.remove();
+  const icMail = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+  const icBug = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M12 6V4M8.5 8 6 6M15.5 8 18 6M8 12H4M20 12h-4M8.5 16 6 18M15.5 16 18 18"/></svg>';
+  const icChat = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+  const wrap = document.createElement("div");
+  wrap.className = "modal show support-hub-modal"; wrap.id = "supportHubModal"; wrap.style.cssText = "z-index:10010";
+  wrap.innerHTML =
+    '<div class="modal-backdrop" data-hub-close></div>'
+    + '<div class="modal-panel" style="max-width:430px;padding:22px">'
+      + '<button class="modal-close" data-hub-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>'
+      + '<div class="sh-hero"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-5a9 9 0 0 1 18 0v5"/><path d="M21 19a2 2 0 0 1-2 2h-2v-5h2a2 2 0 0 1 2 2zM3 19a2 2 0 0 0 2 2h2v-5H5a2 2 0 0 0-2 2z"/></svg></div>'
+      + '<h3 class="sh-title">Hubungi Admin</h3>'
+      + '<p class="sh-desc">Pilih cara menghubungi tim admin Playly.</p>'
+      + '<div class="sh-list" translate="no">'
+        + '<a href="#" class="sh-card" id="emailSupport"><span class="sh-ic">' + icMail + '</span><span class="sh-txt"><b>Email Dukungan</b><small>Pertanyaan / bantuan umum — masuk ke tiket support</small></span></a>'
+        + '<a href="#" class="sh-card" id="reportBug"><span class="sh-ic">' + icBug + '</span><span class="sh-txt"><b>Lapor Bug</b><small>Laporan teknis terstruktur — masuk ke Bug Reports</small></span></a>'
+        + '<a href="#" class="sh-card" id="contactChat"><span class="sh-ic">' + icChat + '</span><span class="sh-txt"><b>Live Chat</b><small>Obrolan langsung dengan admin (popup)</small></span></a>'
+      + '</div>'
+    + '</div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener("click", (ev) => { if (ev.target.closest("[data-hub-close]")) wrap.remove(); });
+}
+
 document.addEventListener("click", (e) => {
+  if (e.target.closest("#contactAdmin")) { e.preventDefault(); e.stopPropagation(); openSupportHub(); return; }
   const card = e.target.closest("#emailSupport, #contactChat, #reportBug");
   if (!card) return;
   e.preventDefault();
   e.stopPropagation();
+  document.getElementById("supportHubModal")?.remove();   // tutup hub kalau dipilih dari hub
   if (!user) { toast("⚠️ Login dulu untuk hubungi admin", "warning"); return; }
   const fromName = user?.name || user?.username || "User";
   const username = user?.username || "anonymous";
