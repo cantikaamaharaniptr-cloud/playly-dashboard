@@ -24141,7 +24141,7 @@ function renderAdminTopInsights() {
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
       </button>
     </div>
-  `).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No videos yet.</div>`;
+  `).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Belum ada video.</div>`;
     $$("[data-open-video]", tvEl).forEach(b => {
       b.addEventListener("click", () => {
         const vid = Number(b.dataset.openVideo);
@@ -24314,7 +24314,7 @@ function renderAdminLiveActivity(accounts, videos) {
   if (!top.length) {
     list.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--muted)">
       <div style="font-size:36px;opacity:.55;margin-bottom:8px">⏳</div>
-      <p style="font-size:13px">No user activity yet. Activity will appear in real-time once a user signs up or uploads a video.</p>
+      <p style="font-size:13px">Belum ada aktivitas user. Aktivitas akan muncul real-time begitu ada user daftar atau upload video.</p>
     </div>`;
     return;
   }
@@ -31872,6 +31872,7 @@ function renderAuditTimeline(filter, query) {
   };
   const fmtTime = (ts) => {
     const d = new Date(ts);
+    if (isNaN(d.getTime())) return "—";
     return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
   const renderRow = (e, idx) => {
@@ -33042,7 +33043,7 @@ function renderAdminBugs() {
 
   list.innerHTML = bugs.map(b => `<div class="bug-item" data-bug-id="${b.id}">
     <div>
-      <h4><span class="sev ${b.sev}">${b.sev.toUpperCase()}</span>${b.title} ${b.status === "closed" ? `<small style='color:#10b981;font-weight:600;margin-left:8px'>✓ ${t("admin.bug.status.closed")}</small>` : b.status === "assigned" ? `<small style='color:#f59e0b;font-weight:600;margin-left:8px'>👤 ${t("admin.bug.status.assigned")}</small>` : ""}</h4>
+      <h4><span class="sev ${b.sev || "medium"}">${(b.sev || "medium").toUpperCase()}</span>${b.title} ${b.status === "closed" ? `<small style='color:#10b981;font-weight:600;margin-left:8px'>✓ ${t("admin.bug.status.closed")}</small>` : b.status === "assigned" ? `<small style='color:#f59e0b;font-weight:600;margin-left:8px'>👤 ${t("admin.bug.status.assigned")}</small>` : ""}</h4>
       <p>${b.desc}</p>
       <div class="bug-meta">📌 ${b.reporter} • ${relTime(b.createdAt)} • 🖥️ ${b.browser}</div>
     </div>
