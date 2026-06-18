@@ -50320,6 +50320,13 @@ function openAdminChatPopup(username) {
         + '</button>'
       + '</div>'
       + '<div class="acp-body" id="acpBody"></div>'
+      + '<div class="acp-preview" id="acpPreview" hidden>'
+        + '<img class="acp-preview-img" id="acpPreviewImg" alt="pratinjau lampiran" />'
+        + '<span class="acp-preview-label">Gambar siap dikirim — tulis keterangan (opsional) lalu Kirim.</span>'
+        + '<button type="button" class="acp-preview-remove" id="acpPreviewRemove" aria-label="Hapus lampiran" title="Hapus lampiran">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+        + '</button>'
+      + '</div>'
       + '<form class="acp-foot" id="acpForm">'
         + '<input type="file" id="acpFile" accept="image/*" hidden />'
         + '<button type="button" class="acp-attach" id="acpAttach" aria-label="Lampirkan gambar" title="Lampirkan gambar">'
@@ -50336,8 +50343,15 @@ function openAdminChatPopup(username) {
   window._acpOpenUser = username;   // dipakai auto-refresh saat admin balas
 
   const menu = wrap.querySelector("#acpMenu");
+  let acpPending = null;   // dataURL gambar yg sudah dipilih tapi BELUM dikirim
+  const _acpClearPreview = () => {
+    acpPending = null;
+    const pv = wrap.querySelector("#acpPreview"); if (pv) pv.hidden = true;
+    const inp0 = wrap.querySelector("#acpInput"); if (inp0) inp0.placeholder = "Tulis pesan untuk admin...";
+  };
   wrap.addEventListener("click", ev => {
     if (ev.target.closest("[data-acp-close]")) { wrap.remove(); window._acpOpenUser = null; return; }
+    if (ev.target.closest("#acpPreviewRemove")) { _acpClearPreview(); return; }
     if (ev.target.closest("#acpGear")) { if (menu) menu.hidden = !menu.hidden; return; }
     const act = ev.target.closest("[data-acp-act]");
     if (act) {
@@ -50376,19 +50390,22 @@ function openAdminChatPopup(username) {
     ev.preventDefault();
     const inp = wrap.querySelector("#acpInput");
     const txt = (inp.value || "").trim();
-    if (!txt) return;
+    if (!txt && !acpPending) return;   // tak ada teks & tak ada gambar -> jangan kirim
     const th = (state.messages || []).find(m => m.name === username);
     if (!th) return;
     const now = Date.now();
+    const sentImage = acpPending;   // gambar yg di-stage (kalau ada)
     th.history = th.history || [];
-    th.history.push({ from: "me", text: txt, time: "baru", ts: now });
-    th.preview = "Kamu: " + txt; th.time = "baru"; th.ts = now;
+    th.history.push({ from: "me", text: txt, image: sentImage || null, time: "baru", ts: now });
+    th.preview = sentImage ? ("📷 " + (txt || "Gambar")) : ("Kamu: " + txt);
+    th.time = "baru"; th.ts = now;
     if (typeof saveState === "function") saveState();
     inp.value = "";
+    _acpClearPreview();
     renderAdminChatPopupBody(username);
-    // Kirim ke inbox admin (real, bukan auto-reply).
+    // Kirim ke inbox admin (real, bukan auto-reply) — teks + gambar (kalau ada).
     if (username !== user?.username && typeof deliverChatToRecipient === "function") {
-      try { deliverChatToRecipient(username, txt, false); } catch (e) {}
+      try { deliverChatToRecipient(username, txt, false, sentImage || undefined); } catch (e) {}
     }
   });
 
@@ -50402,17 +50419,13 @@ function openAdminChatPopup(username) {
     if (!/^image\//.test(file.type)) { if (typeof toast === "function") toast("Hanya file gambar yang didukung", "warning"); return; }
     _acpReadImageScaled(file, (dataURL) => {
       if (!dataURL) { if (typeof toast === "function") toast("Gagal membaca gambar", "error"); return; }
-      const th = (state.messages || []).find(m => m.name === username);
-      if (!th) return;
-      const now = Date.now();
-      th.history = th.history || [];
-      th.history.push({ from: "me", text: "", image: dataURL, time: "baru", ts: now });
-      th.preview = "📷 Gambar"; th.time = "baru"; th.ts = now;
-      if (typeof saveState === "function") saveState();
-      renderAdminChatPopupBody(username);
-      if (username !== user?.username && typeof deliverChatToRecipient === "function") {
-        try { deliverChatToRecipient(username, "", false, dataURL); } catch (e) {}
-      }
+      // Stage dulu (pratinjau) — JANGAN langsung kirim. Dikirim saat user klik Kirim.
+      acpPending = dataURL;
+      const pv = wrap.querySelector("#acpPreview"), pvi = wrap.querySelector("#acpPreviewImg");
+      if (pvi) pvi.src = dataURL;
+      if (pv) pv.hidden = false;
+      const inp2 = wrap.querySelector("#acpInput");
+      if (inp2) { inp2.placeholder = "Tulis keterangan gambar (opsional)..."; inp2.focus(); }
     });
   });
 
