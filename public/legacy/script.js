@@ -39089,11 +39089,11 @@ function startChatWithUser(username) {
   const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const isAdminTarget = acc.role === "admin";
 
-  // Buka di tab "DM" supaya layout chat (list + panel percakapan) tampil dan
-  // chat-nya langsung kebuka. (Dulu "all" — tapi sejak redesign Inbox, "all"
-  // = overview kartu yang MENYEMBUNYIKAN panel chat, jadi openDmChat tak pernah
-  // kelihatan. Akibatnya klik baris Live Chat / "Kirim Pesan" mentok di overview.)
-  if (typeof dmState !== "undefined") dmState.filter = "dm";
+  // Buka di tab yg layout chat-nya tampil (list + panel percakapan) supaya chat
+  // langsung kebuka. Target admin -> tab "Admin" (live chat khusus admin); user
+  // biasa -> tab "DM". (Dulu "all" — sejak redesign Inbox, "all" = overview kartu
+  // yang MENYEMBUNYIKAN panel chat, jadi klik baris mentok di overview.)
+  if (typeof dmState !== "undefined") dmState.filter = (isAdminTarget ? "admin" : "dm");
 
   const existing = state.messages.findIndex(m => m.name === username);
   if (existing >= 0) {
@@ -39178,6 +39178,22 @@ function renderDmList() {
   const list = document.getElementById("dmThreadList");
   if (!list) return;
 
+  // Inject tab "Admin" (live chat 2 arah dgn tim admin) sekali — disisipkan
+  // setelah tab "DM". Handler klik tab sudah delegated di document, jadi tab
+  // dinamis ini langsung berfungsi. Pengumuman tetap tab notifikasi terpisah.
+  (function ensureAdminTab() {
+    const tabs = document.querySelector(".dm-section-tabs");
+    if (!tabs || tabs.querySelector('[data-dm-filter="admin"]')) return;
+    const dmTab = tabs.querySelector('[data-dm-filter="dm"]');
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dm-section-tab";
+    btn.setAttribute("data-dm-filter", "admin");
+    btn.innerHTML = '<span class="dmt-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg></span><span translate="no">Admin</span>';
+    if (dmTab && dmTab.nextSibling) tabs.insertBefore(btn, dmTab.nextSibling);
+    else tabs.appendChild(btn);
+  })();
+
   // Reload state.messages dari localStorage supaya sync pesan masuk dari user
   // lain (cross-tab + cloud-applied). PENTING: jangan replace reference,
   // tapi merge in-place supaya state.chatOpen index tetap valid.
@@ -39246,6 +39262,7 @@ function renderDmList() {
     broadcast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg>',
     requests:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
+    admin:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>',
   };
   if (iconEl) {
     iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
@@ -39261,6 +39278,11 @@ function renderDmList() {
     descEl.textContent = t(meta.d);
     descEl.dataset.origText = "";
   }
+  // Tab "Admin" tak punya key i18n — set label langsung (sama di semua bahasa).
+  if (dmState.filter === "admin") {
+    if (titleEl) { titleEl.textContent = "Admin"; titleEl.dataset.origText = ""; }
+    if (descEl) { descEl.textContent = "Live chat langsung dengan tim admin Playly."; descEl.dataset.origText = ""; }
+  }
 
   // Filter berdasarkan tab aktif
   const visible = allMsgs.filter(m => !m.archived);
@@ -39274,10 +39296,12 @@ function renderDmList() {
     filtered = visible.filter(dmIsRequest);
   } else if (dmState.filter === "archived") {
     filtered = allMsgs.filter(m => m.archived);
+  } else if (dmState.filter === "admin") {
+    // Tab "Admin" = live chat 2 arah dgn tim admin (isAdmin, BUKAN broadcast).
+    filtered = visible.filter(m => m.isAdmin && !m.isBroadcast);
   } else {
-    // Chat admin (live chat, isAdmin) ikut tampil di DM — itu percakapan 2 arah,
-    // bukan broadcast. Hanya isBroadcast (pengumuman 1 arah) yang dikecualikan.
-    filtered = visible.filter(m => !m.isBroadcast && !dmIsRequest(m));
+    // DM = chat antar user biasa; thread admin & broadcast dikecualikan.
+    filtered = visible.filter(m => !m.isAdmin && !m.isBroadcast && !dmIsRequest(m));
   }
   filtered = filterByQ(filtered);
 
@@ -39291,6 +39315,7 @@ function renderDmList() {
       broadcast: q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.bc"),
       requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
       archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
+      admin:     q ? t("inbox.list.empty.noresults") : "Belum ada percakapan dengan admin. Mulai lewat tombol Live Chat dengan Admin.",
     };
     list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
     return;
@@ -40021,7 +40046,7 @@ function renderDmOverview() {
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var visible = all.filter(function (m) { return !m.archived; });
   var isReq = (typeof dmIsRequest === "function") ? dmIsRequest : function () { return false; };
-  var dmList  = visible.filter(function (m) { return !m.isBroadcast && !isReq(m); });
+  var dmList  = visible.filter(function (m) { return !m.isAdmin && !m.isBroadcast && !isReq(m); });
   var bcList  = visible.filter(function (m) { return m.isBroadcast; });
   var reqList = visible.filter(isReq);
   var arcList = all.filter(function (m) { return m.archived; });
@@ -40103,6 +40128,7 @@ document.addEventListener("click", function (e) {
   if (m) {
     if (m.archived) filter = "archived";
     else if (m.isBroadcast) filter = "broadcast";
+    else if (m.isAdmin) filter = "admin";
     else if (typeof dmIsRequest === "function" && dmIsRequest(m)) filter = "requests";
   }
   if (typeof _dmOpenCategory === "function") _dmOpenCategory(filter);
