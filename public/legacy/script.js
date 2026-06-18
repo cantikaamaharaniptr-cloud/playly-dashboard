@@ -27754,7 +27754,9 @@ const _auState = {
   filterStatus: "all",      // "all" | "online" | "offline" | "deactive" | "suspend"
   filterJoined: "all",      // "all" | "7" | "30" | "90"
   selected: new Set(),      // Set of usernames yg di-checkbox
+  limit: 20,                // pagination "Muat lebih banyak" — render maks N baris
 };
+const AU_PAGE = 20;         // jumlah baris per "halaman" / per klik Muat lagi
 function _auHasFilter() {
   return _auState.filterTier !== "all" || _auState.filterStatus !== "all" || _auState.filterJoined !== "all";
 }
@@ -27765,6 +27767,7 @@ function _auResetFilter() {
   const t = document.getElementById("auFilterTier"); if (t) t.value = "all";
   const s = document.getElementById("auFilterStatus"); if (s) s.value = "all";
   const j = document.getElementById("auFilterJoined"); if (j) j.value = "all";
+  _auState.limit = AU_PAGE;   // reset pagination saat reset filter
   renderAdminUsers();
 }
 function _auClearSelection() {
@@ -27892,6 +27895,7 @@ function renderAdminUsers() {
       ? "Tidak ada user yang cocok dengan filter"
       : (activeRoleTab === "admin" ? "Belum ada akun admin" : "Belum ada user terdaftar");
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">${emptyMsg}</td></tr>`;
+    const _auLm0 = document.getElementById("auLoadMore"); if (_auLm0) _auLm0.innerHTML = "";
     _auUpdateBulkBar();
     return;
   }
@@ -27899,7 +27903,12 @@ function renderAdminUsers() {
   const STATUS_LABEL = {
     online: "Online", offline: "Offline", deactive: "Deactive", suspend: "Suspend"
   };
-  tbody.innerHTML = filtered.map(r => {
+  // Pagination "Muat lebih banyak" — render maksimal `limit` baris (pola sama Kontrol Konten)
+  if (typeof _auState.limit !== "number") _auState.limit = AU_PAGE;
+  const auTotal = filtered.length;
+  const auShown = Math.min(_auState.limit, auTotal);
+  const pageRows = filtered.slice(0, auShown);
+  tbody.innerHTML = pageRows.map(r => {
     const init = (r.name || r.username).split(" ").map(p => p[0]).slice(0,2).join("").toUpperCase();
     const statusLabel = STATUS_LABEL[r.status] || r.status;
     const isPrem = r.tier === "premium";
@@ -28000,6 +28009,13 @@ function renderAdminUsers() {
     });
   });
 
+  // Footer "Muat lebih banyak" + penghitung (pola sama spt Kontrol Konten)
+  const _auLm = document.getElementById("auLoadMore");
+  if (_auLm) {
+    _auLm.innerHTML = `<span class="gv-lm-count">Menampilkan ${auShown} dari ${auTotal} user</span>` +
+      (auShown < auTotal ? ` <button class="btn ghost sm" data-au-loadmore>↓ Muat ${Math.min(AU_PAGE, auTotal - auShown)} lagi</button>` : "");
+  }
+
   // Sync bulk bar setelah render (kalau ada selection dari render sebelumnya)
   _auUpdateBulkBar();
 }
@@ -28010,6 +28026,10 @@ function renderAdminUsers() {
   document.addEventListener("change", e => {
     const t = e.target;
     if (!t || !t.id) return;
+    // Reset pagination saat filter berubah (mulai dari halaman 1)
+    if (t.id === "auFilterTier" || t.id === "auFilterStatus" || t.id === "auFilterJoined") {
+      _auState.limit = AU_PAGE;
+    }
     if (t.id === "auFilterTier") {
       _auState.filterTier = t.value;
       _auClearSelection();         // reset selection saat filter berubah (avoid stale)
@@ -28042,6 +28062,12 @@ function renderAdminUsers() {
   });
   // Reset filter button
   document.addEventListener("click", e => {
+    // Pagination "Muat lebih banyak" — nambah limit lalu render ulang
+    if (e.target.closest("[data-au-loadmore]")) {
+      _auState.limit = (_auState.limit || AU_PAGE) + AU_PAGE;
+      renderAdminUsers();
+      return;
+    }
     if (e.target.closest("#auFilterReset")) {
       e.preventDefault();
       _auResetFilter();
@@ -28172,6 +28198,7 @@ document.addEventListener("click", e => {
   // Set attribute pada view supaya CSS bisa hide kolom Tier/Videos di Admin tab
   const view = document.querySelector('section.view[data-view="admin-users"]');
   if (view) view.dataset.activeTab = tab.dataset.userRoleTab;
+  _auState.limit = AU_PAGE;   // reset pagination saat pindah tab User/Admin
   syncCreateAccountBtnLabel();
   if (typeof renderAdminUsers === "function") renderAdminUsers();
 });
@@ -33009,7 +33036,7 @@ function setupAdminEvents() {
   const search = $("#adminUserSearch");
   if (search && !search.dataset.bound) {
     search.dataset.bound = "1";
-    search.addEventListener("input", () => renderAdminUsers());
+    search.addEventListener("input", () => { _auState.limit = AU_PAGE; renderAdminUsers(); });
   }
 
   // Refresh button — narik state terbaru dari Supabase lalu re-render
