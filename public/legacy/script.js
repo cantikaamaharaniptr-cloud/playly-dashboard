@@ -50239,14 +50239,16 @@ function renderAdminChatPopupBody(username) {
     const mine = h.from === "me";
     const time = (typeof chatRelTime === "function" && h.ts) ? chatRelTime(h.ts) : "";
     const imgs = Array.isArray(h.images) ? h.images : (h.image ? [h.image] : []);
+    const menuBtn = '<button type="button" class="acp-msg-menu" data-acp-msgmenu="' + idx + '" aria-label="Opsi pesan"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>';
     let inner = "";
     if (h.replyTo) inner += '<div class="acp-quote">' + escapeHtml(String(h.replyTo).slice(0, 90)) + '</div>';
     if (imgs.length) inner += '<div class="acp-imgs ' + (imgs.length > 1 ? "multi" : "single") + '">'
       + imgs.map(s => '<img class="acp-img" src="' + escapeHtml(s) + '" alt="lampiran"/>').join("") + '</div>';
-    if (h.text) inner += '<div class="acp-bubble">' + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div>';
-    if (!inner) inner = '<div class="acp-bubble">[pesan]</div>';
+    // Menu titik-3 menempel di BUBBLE TEKS — bukan di gambar. Gambar cukup diklik
+    // untuk lihat preview (lightbox). Pesan gambar-saja tidak punya menu.
+    if (h.text) inner += '<div class="acp-bubblewrap">' + menuBtn + '<div class="acp-bubble">' + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div></div>';
+    else if (!imgs.length) inner = '<div class="acp-bubblewrap">' + menuBtn + '<div class="acp-bubble">[pesan]</div></div>';
     return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '" data-acp-msg="' + idx + '">'
-      + '<button type="button" class="acp-msg-menu" data-acp-msgmenu="' + idx + '" aria-label="Opsi pesan"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>'
       + inner
       + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
       + '</div>';
@@ -50413,7 +50415,7 @@ function openAdminChatPopup(username) {
       else if (a2 === "edit") { acpReplyIdx = null; acpEditIdx = idx; const inp = wrap.querySelector("#acpInput"); if (inp) { inp.value = h.text || ""; inp.focus(); } _acpShowCtx("Mengedit pesan"); }
       else if (a2 === "delete") {
         const _doDel = () => { const t2 = _acpThread(); if (t2 && t2.history[idx]) { t2.history.splice(idx, 1); if (typeof saveState === "function") saveState(); renderAdminChatPopupBody(username); } };
-        if (typeof openConfirm === "function") openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus pesan", desc: "Pesan ini akan dihapus dari obrolan kamu.", btnText: "Hapus", btnClass: "danger", onConfirm: _doDel });
+        if (typeof openConfirm === "function") { openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus pesan", desc: "Pesan ini akan dihapus dari obrolan kamu.", btnText: "Hapus", btnClass: "danger", onConfirm: _doDel }); try { if (typeof convertUiEmojis === "function") convertUiEmojis(document.getElementById("confirmIcon")); } catch (e) {} }
         else _doDel();
       }
       return;
@@ -50443,7 +50445,7 @@ function openAdminChatPopup(username) {
         }
       } else if (a === "clear") {
         const _doClear = () => { const t2 = (state.messages || []).find(m => m.name === username); if (t2) { t2.history = []; t2.preview = ""; if (typeof saveState === "function") saveState(); } renderAdminChatPopupBody(username); if (typeof toast === "function") toast("Obrolan dibersihkan", "success"); };
-        if (typeof openConfirm === "function") openConfirm({ icon: "🧹", iconClass: "danger", title: "Bersihkan obrolan", desc: "Semua pesan di obrolan ini akan dihapus.", btnText: "Bersihkan", btnClass: "danger", onConfirm: _doClear });
+        if (typeof openConfirm === "function") { openConfirm({ icon: "🗑️", iconClass: "danger", title: "Bersihkan obrolan", desc: "Semua pesan di obrolan ini akan dihapus.", btnText: "Bersihkan", btnClass: "danger", onConfirm: _doClear }); try { if (typeof convertUiEmojis === "function") convertUiEmojis(document.getElementById("confirmIcon")); } catch (e) {} }
         else _doClear();
       }
       return;
