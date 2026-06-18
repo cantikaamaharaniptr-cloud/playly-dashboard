@@ -50770,8 +50770,26 @@ function openAdminChatPopup(username) {
           + '<strong translate="no">' + escapeHtml(handle) + ' ' + badge + '</strong>'
           + '<span class="acp-status">Tim Admin Playly · biasanya balas cepat</span>'
         + '</div>'
+        + '<button type="button" class="acp-gear" id="acpGear" aria-label="Pengaturan" aria-haspopup="true">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+        + '</button>'
         + '<button type="button" class="acp-close" data-acp-close aria-label="Tutup">'
           + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+        + '</button>'
+      + '</div>'
+      + '<div class="acp-menu" id="acpMenu" hidden>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="copy-email">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+          + '<span>Salin email admin</span>'
+        + '</button>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="copy-transcript">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>'
+          + '<span>Salin transkrip obrolan</span>'
+        + '</button>'
+        + '<div class="acp-menu-sep"></div>'
+        + '<button type="button" class="acp-menu-item danger" data-acp-act="clear">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+          + '<span>Bersihkan obrolan</span>'
         + '</button>'
       + '</div>'
       + '<div class="acp-body" id="acpBody"></div>'
@@ -50785,8 +50803,41 @@ function openAdminChatPopup(username) {
   document.body.appendChild(wrap);
   renderAdminChatPopupBody(username);
 
+  const menu = wrap.querySelector("#acpMenu");
   wrap.addEventListener("click", ev => {
-    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); }
+    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); return; }
+    if (ev.target.closest("#acpGear")) { if (menu) menu.hidden = !menu.hidden; return; }
+    const act = ev.target.closest("[data-acp-act]");
+    if (act) {
+      if (menu) menu.hidden = true;
+      const a = act.dataset.acpAct;
+      const th = (state.messages || []).find(m => m.name === username);
+      if (a === "copy-email") {
+        const email = acc.email || "";
+        if (email && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(email)
+            .then(() => { if (typeof toast === "function") toast("✓ Email admin disalin (" + email + ")", "success"); })
+            .catch(() => { if (typeof toast === "function") toast("Email admin: " + email, "info"); });
+        } else if (typeof toast === "function") { toast(email ? ("Email admin: " + email) : "Email admin tidak tersedia", "info"); }
+      } else if (a === "copy-transcript") {
+        const hist = (th && Array.isArray(th.history)) ? th.history : [];
+        if (!hist.length) { if (typeof toast === "function") toast("Belum ada pesan untuk disalin", "warning"); return; }
+        const lines = hist.map(h => (h.from === "me" ? "Kamu" : "Admin") + ": " + (h.text || ""));
+        const text = lines.join("\n");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => { if (typeof toast === "function") toast("✓ Transkrip obrolan disalin", "success"); }).catch(() => {});
+        }
+      } else if (a === "clear") {
+        if (window.confirm("Bersihkan semua pesan dengan admin ini?")) {
+          if (th) { th.history = []; th.preview = ""; if (typeof saveState === "function") saveState(); }
+          renderAdminChatPopupBody(username);
+          if (typeof toast === "function") toast("Obrolan dibersihkan", "success");
+        }
+      }
+      return;
+    }
+    // Klik di area lain dalam popup -> tutup menu kalau lagi kebuka.
+    if (menu && !menu.hidden) menu.hidden = true;
   });
   wrap.querySelector("#acpForm").addEventListener("submit", ev => {
     ev.preventDefault();
