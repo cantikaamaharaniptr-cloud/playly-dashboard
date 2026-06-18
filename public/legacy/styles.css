@@ -2998,6 +2998,8 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 
 /* 2026-06-18: Popup chat admin (live chat melayang) — buka dari picker Live Chat */
 .acp-modal { position: fixed; inset: 0; z-index: 10050; }
+/* Dialog konfirmasi (hapus/bersihkan) harus DI ATAS popup chat (10050) */
+#confirmModal { z-index: 12010; }
 .acp-modal .acp-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.32); }
 .acp-modal .acp-panel {
   position: fixed; right: 24px; bottom: 24px;
