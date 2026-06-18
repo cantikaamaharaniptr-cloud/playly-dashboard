@@ -51077,7 +51077,17 @@ function openAdminChatPopup(username) {
       } else if (a === "copy-transcript") {
         const hist = (th && Array.isArray(th.history)) ? th.history : [];
         if (!hist.length) { if (typeof toast === "function") toast("Belum ada pesan untuk disalin", "warning"); return; }
-        const lines = hist.map(h => (h.from === "me" ? "Kamu" : "Admin") + ": " + (h.text || ""));
+        let _imgNo = 0;
+        const _clock = (ts) => { try { const d = new Date(ts); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); } catch (e) { return ""; } };
+        const lines = hist.map(h => {
+          const who = h.from === "me" ? "Kamu" : "Admin";
+          const jam = h.ts ? _clock(h.ts) : "";
+          const imgs = Array.isArray(h.images) ? h.images : (h.image ? [h.image] : []);
+          let body = h.text || "";
+          if (imgs.length) { const names = imgs.map(() => "gambar-" + (++_imgNo) + ".png").join(", "); body = body ? (names + " — " + body) : names; }
+          if (!body) body = "[pesan]";
+          return (jam ? "[" + jam + "] " : "") + who + ": " + body;
+        });
         const text = lines.join("\n");
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(() => { if (typeof toast === "function") toast("✓ Transkrip obrolan disalin", "success"); }).catch(() => {});
