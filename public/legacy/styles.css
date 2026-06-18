@@ -19346,13 +19346,13 @@ html body[data-theme="light"][data-role="admin"] .ap-ctrl-bar .ap-ctrl-vol {
 
 /* Publish button — green accent for admin player */
 .ap-btn-publish {
-  background: rgba(34, 197, 94, .15);
-  border: 1px solid rgba(34, 197, 94, .4);
-  color: #4ade80;
+  background: rgba(16, 185, 129, .15);
+  border: 1px solid rgba(16, 185, 129, .4);
+  color: #10B981;
 }
 .ap-btn-publish:hover {
-  background: rgba(34, 197, 94, .28);
-  border-color: rgba(34, 197, 94, .65);
+  background: rgba(16, 185, 129, .28);
+  border-color: rgba(16, 185, 129, .65);
 }
 /* Restore button — blue accent */
 .ap-btn-restore {
@@ -24789,8 +24789,8 @@ body[data-theme="light"][data-role="admin"] .modal-panel .ud-stat small {
   color: #495057 !important;
 }
 /* Status pill di admin theme — perkuat kontras */
-body[data-role="admin"] .row-status { color: #34d399; }
-body[data-role="admin"] .row-status::before { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, .6); }
+body[data-role="admin"] .row-status { color: #10B981; }
+body[data-role="admin"] .row-status::before { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, .6); }
 body[data-role="admin"] .row-status.suspended { color: #ADB5BD; }
 body[data-role="admin"] .row-status.suspended::before { background: #ADB5BD; box-shadow: 0 0 6px rgba(173, 181, 189, .55); }
 body[data-role="admin"] .row-status.pending { color: #FFFFFF; }
@@ -24836,8 +24836,8 @@ body[data-role="admin"] .row-actions button.danger:hover {
 }
 .row-actions button:hover { background: var(--surface-2); color: var(--text); }
 .row-actions button.danger:hover { background: rgba(52, 58, 64, .14); color: #343A40; border-color: rgba(52, 58, 64, .4); }
-.row-actions button.success { color: #4ade80; border-color: rgba(34,197,94,.35); }
-.row-actions button.success:hover { background: rgba(34,197,94,.14); color: #4ade80; border-color: rgba(34,197,94,.55); }
+.row-actions button.success { color: #10B981; border-color: rgba(16,185,129,.35); }
+.row-actions button.success:hover { background: rgba(16,185,129,.14); color: #10B981; border-color: rgba(16,185,129,.55); }
 
 /* Moderation */
 .mod-tabs { display: flex; gap: 6px; }
@@ -26376,7 +26376,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
   font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px;
   white-space: nowrap; color: var(--muted); background: rgba(255,255,255,0.06);
 }
-.an-mon-badge.an-mon-ok   { color: #22c55e; background: rgba(34,197,94,0.12); }
+.an-mon-badge.an-mon-ok   { color: #10B981; background: rgba(16,185,129,0.12); }
 .an-mon-badge.an-mon-warn { color: #f59e0b; background: rgba(245,158,11,0.12); }
 .an-mon-badge.an-mon-crit { color: #ef4444; background: rgba(239,68,68,0.12); }
 .an-mon-updated { font-size: 10px; color: var(--muted); }
@@ -26397,9 +26397,9 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
 .an-mon-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 5px 0 3px; }
 .an-mon-bar > span { display: block; height: 100%; border-radius: 3px; transition: width .3s; }
 /* status accents (item) */
-.an-mon-item.an-mon-ok   { border-left-color: #22c55e; }
-.an-mon-item.an-mon-ok   .an-mon-dot { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.6); }
-.an-mon-item.an-mon-ok   .an-mon-bar > span { background: #22c55e; }
+.an-mon-item.an-mon-ok   { border-left-color: #10B981; }
+.an-mon-item.an-mon-ok   .an-mon-dot { background: #10B981; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+.an-mon-item.an-mon-ok   .an-mon-bar > span { background: #10B981; }
 .an-mon-item.an-mon-warn { border-left-color: #f59e0b; }
 .an-mon-item.an-mon-warn .an-mon-dot { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.6); }
 .an-mon-item.an-mon-warn .an-mon-bar > span { background: #f59e0b; }
@@ -32018,8 +32018,8 @@ body[data-role="admin"] .settings-card-security .settings-session-badge {
   align-items: center;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(52, 211, 153, .18);
-  color: #34d399;
+  background: rgba(16, 185, 129, .18);
+  color: #10B981;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -32313,10 +32313,10 @@ body[data-role="admin"] section[data-view="settings"] #createUserCard .cu-tier-o
 
 /* Status User Management — varian baru: online / active / inactive / suspended.
    Real-time, di-compute dari last activity (upload/history). */
-body[data-role="admin"] .row-status.status-online { color: #34d399; }
+body[data-role="admin"] .row-status.status-online { color: #10B981; }
 body[data-role="admin"] .row-status.status-online::before {
-  background: #34d399;
-  box-shadow: 0 0 8px rgba(52, 211, 153, .65);
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, .65);
   animation: rowStatusPulse 1.6s ease-in-out infinite;
 }
 body[data-role="admin"] .row-status.status-active { color: #ADB5BD; }
@@ -34482,8 +34482,8 @@ body[data-role="admin"] .admin-kpi-icon.videos {
   color: #A8A2F0 !important;
 }
 body[data-role="admin"] .admin-kpi-icon.views {
-  background: rgba(52, 211, 153, .14) !important;
-  color: #34D399 !important;
+  background: rgba(16, 185, 129, .14) !important;
+  color: #10B981 !important;
 }
 body[data-role="admin"] .admin-kpi-icon.revenue {
   background: rgba(251, 191, 36, .14) !important;
@@ -52772,8 +52772,8 @@ html body[data-role="admin"].auth-mode .admin-foot-section .afs-status-dot {
   width: 8px !important;
   height: 8px !important;
   border-radius: 50% !important;
-  background: #22c55e !important;
-  box-shadow: 0 0 8px rgba(34, 197, 94, .65) !important;
+  background: #10B981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, .65) !important;
   animation: afsStatusPulse 2.4s ease-in-out infinite !important;
 }
 @keyframes afsStatusPulse {
@@ -53001,8 +53001,8 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 12px rgba(34, 197, 94, .8);
+  background: #10B981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, .8);
   animation: afsStatusPulseDot 2.4s ease-in-out infinite;
 }
 @keyframes afsStatusPulseDot {
@@ -53035,8 +53035,8 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
   background: rgba(165, 175, 195, .3);
 }
 .afs-info-body .afs-sl-dot.ok {
-  background: #22c55e;
-  box-shadow: 0 0 6px rgba(34, 197, 94, .5);
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, .5);
 }
 .afs-info-body .afs-sl-dot.warn {
   background: #f59e0b;
@@ -53051,7 +53051,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
   font-weight: 700;
   letter-spacing: .5px;
   text-transform: uppercase;
-  color: rgba(34, 197, 94, .9);
+  color: rgba(16, 185, 129, .9);
 }
 .afs-info-body .afs-status-meta {
   font-size: 13.5px;
@@ -53059,7 +53059,7 @@ html body[data-role="admin"].auth-mode .admin-foot-section .admin-foot-card .afc
   text-align: center;
   margin: 6px 0 0;
 }
-.afs-info-body .afs-status-meta strong { color: #22c55e; }
+.afs-info-body .afs-status-meta strong { color: #10B981; }
 .afs-info-body .afs-status-meta em {
   color: rgba(255, 255, 255, .5);
   font-style: normal;
@@ -67064,12 +67064,12 @@ html body[data-theme="light"][data-role="admin"] .role-tag.creator {
    online → HIJAU · active → KUNING · inactive/suspended → ABU-ABU. */
 html body[data-role="admin"] .admin-table .row-status.status-online,
 html body[data-role="admin"] .row-status.status-online {
-  color: #22C55E !important;
+  color: #10B981 !important;
 }
 html body[data-role="admin"] .admin-table .row-status.status-online::before,
 html body[data-role="admin"] .row-status.status-online::before {
-  background: #22C55E !important;
-  box-shadow: 0 0 7px rgba(34, 197, 94, .6) !important;
+  background: #10B981 !important;
+  box-shadow: 0 0 7px rgba(16, 185, 129, .6) !important;
 }
 html body[data-role="admin"] .admin-table .row-status.status-active,
 html body[data-role="admin"] .row-status.status-active {
@@ -68210,8 +68210,8 @@ html body[data-role="admin"][data-role="admin"] section[data-view="admin-users"]
    Flat (tanpa pulse/glow) sesuai tema admin.
    ========================================================= */
 /* ---- DARK (default) ---- */
-html body[data-role="admin"] .admin-table .row-status.status-online { color: #34D399 !important; }
-html body[data-role="admin"] .admin-table .row-status.status-online::before { background: #34D399 !important; box-shadow: none !important; animation: none !important; }
+html body[data-role="admin"] .admin-table .row-status.status-online { color: #10B981 !important; }
+html body[data-role="admin"] .admin-table .row-status.status-online::before { background: #10B981 !important; box-shadow: none !important; animation: none !important; }
 html body[data-role="admin"] .admin-table .row-status.status-offline { color: #9AA4B2 !important; }
 html body[data-role="admin"] .admin-table .row-status.status-offline::before { background: #9AA4B2 !important; box-shadow: none !important; animation: none !important; }
 html body[data-role="admin"] .admin-table .row-status.status-deactive { color: #FAFFCB !important; }
