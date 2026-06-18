@@ -3010,7 +3010,9 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   animation: acpPop .18s ease;
 }
 @keyframes acpPop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
-.acp-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(232,216,196,.1); }
+.acp-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(232,216,196,.1); cursor: grab; user-select: none; touch-action: none; }
+.acp-head:active { cursor: grabbing; }
+.acp-head button { cursor: pointer; }
 .acp-ava { width: 38px; height: 38px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #E8D8C4; background: linear-gradient(135deg,#561C24,#6D2932); }
 .acp-meta { flex: 1; min-width: 0; }
 .acp-meta strong { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #E8D8C4; }
@@ -3048,13 +3050,15 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-empty { margin: auto; text-align: center; color: rgba(232,216,196,.5); font-size: 13px; line-height: 1.5; }
 .acp-empty-ic { width: 44px; height: 44px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(232,216,196,.08); color: rgba(232,216,196,.55); }
 .acp-empty-ic svg { width: 22px; height: 22px; }
-.acp-preview { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-top: 1px solid rgba(232,216,196,.1); }
+.acp-preview { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; border-top: 1px solid rgba(232,216,196,.1); }
 .acp-preview[hidden] { display: none; }
-.acp-preview-img { width: 46px; height: 46px; border-radius: 9px; object-fit: cover; flex: none; border: 1px solid rgba(232,216,196,.16); }
-.acp-preview-label { flex: 1; min-width: 0; font-size: 11.5px; line-height: 1.35; color: rgba(232,216,196,.65); }
-.acp-preview-remove { flex: none; width: 28px; height: 28px; border: none; border-radius: 8px; background: transparent; color: rgba(232,216,196,.6); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.acp-preview-remove svg { width: 15px; height: 15px; }
-.acp-preview-remove:hover { background: rgba(239,68,68,.14); color: #ef4444; }
+.acp-preview-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.acp-pv-thumb { position: relative; width: 52px; height: 52px; flex: none; }
+.acp-pv-thumb img { width: 100%; height: 100%; border-radius: 9px; object-fit: cover; border: 1px solid rgba(232,216,196,.18); }
+.acp-pv-x { position: absolute; top: -6px; right: -6px; width: 19px; height: 19px; border-radius: 50%; border: none; background: #251419; color: #E8D8C4; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.5); padding: 0; }
+.acp-pv-x svg { width: 11px; height: 11px; }
+.acp-pv-x:hover { background: #ef4444; color: #fff; }
+.acp-preview-label { font-size: 11.5px; line-height: 1.35; color: rgba(232,216,196,.6); }
 .acp-foot { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid rgba(232,216,196,.1); }
 .acp-foot input { flex: 1; min-width: 0; background: rgba(232,216,196,.06); border: 1px solid rgba(232,216,196,.14); border-radius: 10px; padding: 9px 12px; color: #E8D8C4; font-size: 13px; outline: none; }
 .acp-foot input:focus { outline: none !important; box-shadow: none !important; border-color: rgba(232,216,196,.14) !important; }
@@ -3066,6 +3070,11 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-send { flex: none; width: 40px; border: none; border-radius: 10px; background: #6D2932; color: #E8D8C4; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .acp-send svg { width: 17px; height: 17px; }
 .acp-send:hover { background: #843543; }
+/* FAB bulat "ada balasan admin" — muncul saat popup tertutup & ada balasan baru */
+.acp-fab { position: fixed; right: 24px; bottom: 24px; z-index: 10040; width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #E8D8C4; background: linear-gradient(135deg,#561C24,#6D2932); box-shadow: 0 10px 30px rgba(0,0,0,.45); animation: acpPop .2s ease; }
+.acp-fab svg { width: 24px; height: 24px; }
+.acp-fab:hover { background: linear-gradient(135deg,#6D2932,#843543); }
+.acp-fab-dot { position: absolute; top: 9px; right: 10px; width: 13px; height: 13px; border-radius: 50%; background: #ef4444; border: 2px solid #251419; }
 @media (max-width: 520px) { .acp-modal .acp-panel { right: 0; bottom: 0; width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; } }
 
 /* 2026-06-17: Pusat Bantuan polish (dark) — hierarki teks + susunan + warna kolom */
