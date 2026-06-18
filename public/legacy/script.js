@@ -53023,14 +53023,14 @@ if (tryAutoBoot()) {
       const total = accts.length;
       const newest = accts.slice(0, 8);
       cdIcon.textContent = "👥";
-      cdTitle.textContent = "Total Users";
+      cdTitle.textContent = "Total Pengguna";
       cdSubtitle.textContent = "User terbaru di platform";
       cdStat.hidden = false;
       cdStatValue.textContent = num(total);
       cdStatLabel.textContent = "user";
       cdBody.innerHTML = newest.length === 0
         ? emptyHtml("👤", "Belum ada user yang signup.")
-        : `<div class="cd-section"><div class="cd-section-head"><h4>${newest.length} Latest Users</h4><span class="cd-section-meta">of ${num(total)} total</span></div><div class="cd-list">${newest.map(a => `
+        : `<div class="cd-section"><div class="cd-section-head"><h4>${newest.length} User Terbaru</h4><span class="cd-section-meta">dari ${num(total)} total</span></div><div class="cd-list">${newest.map(a => `
           <button type="button" class="cd-list-item" data-popup-jump-user="${esc(a.username)}">
             <div class="cd-li-avatar">${avatarHtml(a)}</div>
             <div class="cd-li-text">
@@ -53039,7 +53039,7 @@ if (tryAutoBoot()) {
             </div>
             <div class="cd-li-meta">${esc(rel(a.joinedAt ? new Date(a.joinedAt).getTime() : 0))}</div>
           </button>`).join("")}</div></div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-users">Buka User Management</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-users">Buka Manajemen Akun</button>`;
     },
 
     "kpi-videos": () => {
@@ -53047,23 +53047,23 @@ if (tryAutoBoot()) {
       const total = vids.length;
       const newest = vids.slice(0, 6);
       cdIcon.textContent = "🎬";
-      cdTitle.textContent = "Total Videos";
+      cdTitle.textContent = "Total Video";
       cdSubtitle.textContent = "Video terbaru di platform";
       cdStat.hidden = false;
       cdStatValue.textContent = num(total);
       cdStatLabel.textContent = "video";
       cdBody.innerHTML = newest.length === 0
         ? emptyHtml("🎥", "Belum ada video yang di-upload.")
-        : `<div class="cd-section"><div class="cd-section-head"><h4>${newest.length} Latest Videos</h4><span class="cd-section-meta">of ${num(total)} total</span></div><div class="cd-list">${newest.map(v => `
+        : `<div class="cd-section"><div class="cd-section-head"><h4>${newest.length} Video Terbaru</h4><span class="cd-section-meta">dari ${num(total)} total</span></div><div class="cd-list">${newest.map(v => `
           <button type="button" class="cd-list-item" data-popup-jump-video="${esc(v.id)}">
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views · ${num(v.likes||0)} likes</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan · ${num(v.likes||0)} suka</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div></div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-videos">Buka Content Control</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-videos">Buka Kontrol Konten</button>`;
     },
 
     "kpi-views": () => {
@@ -53076,7 +53076,7 @@ if (tryAutoBoot()) {
       const today = new Date(); today.setHours(0,0,0,0);
       for (let i = 6; i >= 0; i--) {
         const d = new Date(today.getTime() - i*86400000);
-        labels.push(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]);
+        labels.push(["Min","Sen","Sel","Rab","Kam","Jum","Sab"][d.getDay()]);
       }
       const startWindow = today.getTime() - 6*86400000;
       vids.forEach(v => {
@@ -53091,13 +53091,13 @@ if (tryAutoBoot()) {
       });
       const maxBar = Math.max(1, ...buckets);
       cdIcon.textContent = "👁️";
-      cdTitle.textContent = "Total Views";
+      cdTitle.textContent = "Total Tayangan";
       cdSubtitle.textContent = "Distribusi 7 hari terakhir & top performers";
       cdStat.hidden = false;
       cdStatValue.textContent = num(totalViews);
-      cdStatLabel.textContent = "views";
+      cdStatLabel.textContent = "tayangan";
       const barsHtml = `<div class="cd-bars">${buckets.map((b,i) => `
-        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} views">
+        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} tayangan">
           <div class="cd-bar-fill" style="height: ${Math.max(4, (b/maxBar)*70)}px"></div>
           <div class="cd-bar-label">${esc(labels[i])}</div>
         </div>`).join("")}</div>`;
@@ -53110,18 +53110,18 @@ if (tryAutoBoot()) {
               <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")}</small>
             </div>
-            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>views</small></div>
+            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>tayangan</small></div>
           </button>`).join("")}</div>`;
       cdBody.innerHTML = `
         <div class="cd-section">
-          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} views</span></div>
+          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} tayangan</span></div>
           ${barsHtml}
         </div>
         <div class="cd-section">
-          <div class="cd-section-head"><h4>Top Performers</h4><span class="cd-section-meta">${top.length}/${vids.length} video</span></div>
+          <div class="cd-section-head"><h4>Video Teratas</h4><span class="cd-section-meta">${top.length}/${vids.length} video</span></div>
           ${topHtml}
         </div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-analytics">Buka Analytics</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-analytics">Buka Analitik</button>`;
     },
 
     "hc-users": () => {
@@ -53147,7 +53147,7 @@ if (tryAutoBoot()) {
             </div>
             <div class="cd-li-meta">${esc(rel(new Date(a.joinedAt).getTime()))}</div>
           </button>`).join("")}</div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-users">Buka User Management</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-users">Buka Manajemen Akun</button>`;
     },
 
     "hc-messages": () => {
@@ -53169,7 +53169,7 @@ if (tryAutoBoot()) {
             </div>
             <div class="cd-li-meta">${esc(rel(msg.ts))}</div>
           </button>`).join("")}</div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-comms">Buka Conversation</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-comms">Buka Inbox</button>`;
     },
 
     "hc-videos": () => {
@@ -53191,11 +53191,11 @@ if (tryAutoBoot()) {
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div>`;
-      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-videos">Review Content</button>`;
+      cdFoot.innerHTML = `<button type="button" class="btn ghost" data-close>Tutup</button><button type="button" class="btn primary" data-popup-jump="admin-videos">Tinjau Konten</button>`;
     },
   };
 
