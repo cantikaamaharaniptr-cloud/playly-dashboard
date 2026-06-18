@@ -50760,6 +50760,9 @@ function openAdminChatPopup(username) {
     if (ev.target.closest("#acpCtxCancel")) { const wasEdit = acpEditIdx != null; _acpHideCtx(); if (wasEdit) { const i0 = wrap.querySelector("#acpInput"); if (i0) i0.value = ""; } return; }
     const _pvx = ev.target.closest("[data-acp-pvremove]");
     if (_pvx) { const i = +_pvx.dataset.acpPvremove; if (i >= 0) acpPending.splice(i, 1); _acpRenderPreview(); return; }
+    // Klik gambar (terkirim / pratinjau) -> buka lightbox full.
+    const _pimg = ev.target.closest(".acp-img, .acp-pv-thumb img");
+    if (_pimg && _pimg.src) { if (typeof openImageLightbox === "function") openImageLightbox({ src: _pimg.src, name: "Lampiran" }); return; }
     const _mm = ev.target.closest("[data-acp-msgmenu]");
     if (_mm) { ev.stopPropagation(); _acpOpenMsgMenu(+_mm.dataset.acpMsgmenu, _mm); return; }
     const _ma = ev.target.closest("[data-acp-msgact]");
@@ -50769,7 +50772,11 @@ function openAdminChatPopup(username) {
       if (a2 === "reply") { acpEditIdx = null; acpReplyIdx = idx; _acpShowCtx("Membalas: " + _acpSnippet(h)); wrap.querySelector("#acpInput")?.focus(); }
       else if (a2 === "copy") { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(h.text || "").then(() => { if (typeof toast === "function") toast("✓ Teks disalin", "success"); }).catch(() => {}); }
       else if (a2 === "edit") { acpReplyIdx = null; acpEditIdx = idx; const inp = wrap.querySelector("#acpInput"); if (inp) { inp.value = h.text || ""; inp.focus(); } _acpShowCtx("Mengedit pesan"); }
-      else if (a2 === "delete") { if (window.confirm("Hapus pesan ini?")) { th.history.splice(idx, 1); if (typeof saveState === "function") saveState(); renderAdminChatPopupBody(username); } }
+      else if (a2 === "delete") {
+        const _doDel = () => { const t2 = _acpThread(); if (t2 && t2.history[idx]) { t2.history.splice(idx, 1); if (typeof saveState === "function") saveState(); renderAdminChatPopupBody(username); } };
+        if (typeof openConfirm === "function") openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus pesan", desc: "Pesan ini akan dihapus dari obrolan kamu.", btnText: "Hapus", btnClass: "danger", onConfirm: _doDel });
+        else _doDel();
+      }
       return;
     }
     if (!ev.target.closest("#acpMsgPop")) _acpCloseMsgMenu();
@@ -50796,11 +50803,9 @@ function openAdminChatPopup(username) {
           navigator.clipboard.writeText(text).then(() => { if (typeof toast === "function") toast("✓ Transkrip obrolan disalin", "success"); }).catch(() => {});
         }
       } else if (a === "clear") {
-        if (window.confirm("Bersihkan semua pesan dengan admin ini?")) {
-          if (th) { th.history = []; th.preview = ""; if (typeof saveState === "function") saveState(); }
-          renderAdminChatPopupBody(username);
-          if (typeof toast === "function") toast("Obrolan dibersihkan", "success");
-        }
+        const _doClear = () => { const t2 = (state.messages || []).find(m => m.name === username); if (t2) { t2.history = []; t2.preview = ""; if (typeof saveState === "function") saveState(); } renderAdminChatPopupBody(username); if (typeof toast === "function") toast("Obrolan dibersihkan", "success"); };
+        if (typeof openConfirm === "function") openConfirm({ icon: "🧹", iconClass: "danger", title: "Bersihkan obrolan", desc: "Semua pesan di obrolan ini akan dihapus.", btnText: "Bersihkan", btnClass: "danger", onConfirm: _doClear });
+        else _doClear();
       }
       return;
     }
