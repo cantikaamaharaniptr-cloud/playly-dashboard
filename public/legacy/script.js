@@ -27858,10 +27858,13 @@ function renderAdminUsers() {
   const activeRoleTab = (document.querySelector('[data-user-role-tab].active')?.dataset.userRoleTab) || "user";
   const roleFiltered = activeRoleTab === "admin" ? adminRows : userRows;
 
+  // Guard: sebagian akun lama bisa punya field kosong (name/username/email
+  // undefined) — tanpa `|| ""` filter akan crash (.toLowerCase of undefined)
+  // dan search seolah "tidak jalan". (#existing dgn name undefined memicu ini.)
   let filtered = search ? roleFiltered.filter(r =>
-    r.name.toLowerCase().includes(search) ||
-    r.username.toLowerCase().includes(search) ||
-    r.email.toLowerCase().includes(search)
+    (r.name || "").toLowerCase().includes(search) ||
+    (r.username || "").toLowerCase().includes(search) ||
+    (r.email || "").toLowerCase().includes(search)
   ) : roleFiltered;
 
   // Apply advanced filters
@@ -27933,7 +27936,7 @@ function renderAdminUsers() {
     const canSelect = !isSuperAdminRow; // super admin gak boleh di-bulk-action
     return `<tr data-username="${r.username}" class="${isSelected ? 'au-row-selected' : ''}">
       <td class="col-check">${canSelect ? `<input type="checkbox" class="au-check au-row-check" data-username="${escapeHtml(r.username)}" ${isSelected ? "checked" : ""} aria-label="Pilih ${escapeHtml(r.username)}"/>` : ""}</td>
-      <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="" referrerpolicy="no-referrer"/>` : init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
+      <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="" referrerpolicy="no-referrer"/>` : init}</div><div><b>${r.name || r.username || "—"}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username || "—"}</small></div></div></td>
       <td>${r.email}</td>
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
       <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? `<svg class="tier-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.6 6.8 19.3l1-5.9L3.5 9.3l5.9-.9Z"/></svg>` : ""}${tierLabel}</span></td>
