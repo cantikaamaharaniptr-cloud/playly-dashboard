@@ -39800,13 +39800,15 @@ function renderDmList() {
     // Semua pesan — DM + Broadcast + Requests (gabungan, kecuali archived)
     filtered = visible;
   } else if (dmState.filter === "broadcast") {
-    filtered = visible.filter(m => m.isAdmin || m.isBroadcast);
+    filtered = visible.filter(m => m.isBroadcast);
   } else if (dmState.filter === "requests") {
     filtered = visible.filter(dmIsRequest);
   } else if (dmState.filter === "archived") {
     filtered = allMsgs.filter(m => m.archived);
   } else {
-    filtered = visible.filter(m => !m.isAdmin && !m.isBroadcast && !dmIsRequest(m));
+    // Chat admin (live chat, isAdmin) ikut tampil di DM — itu percakapan 2 arah,
+    // bukan broadcast. Hanya isBroadcast (pengumuman 1 arah) yang dikecualikan.
+    filtered = visible.filter(m => !m.isBroadcast && !dmIsRequest(m));
   }
   filtered = filterByQ(filtered);
 
@@ -40507,7 +40509,7 @@ function renderDmBroadcast() {
   var wrap = document.getElementById("dmBroadcastList");
   if (!wrap) return;
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
-  var bc = all.filter(function (m) { return m.isAdmin || m.isBroadcast; });
+  var bc = all.filter(function (m) { return m.isBroadcast; });
   var items = [];
   bc.forEach(function (m) {
     var hist = Array.isArray(m.history) ? m.history : [];
@@ -40550,8 +40552,8 @@ function renderDmOverview() {
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var visible = all.filter(function (m) { return !m.archived; });
   var isReq = (typeof dmIsRequest === "function") ? dmIsRequest : function () { return false; };
-  var dmList  = visible.filter(function (m) { return !m.isAdmin && !m.isBroadcast && !isReq(m); });
-  var bcList  = visible.filter(function (m) { return m.isAdmin || m.isBroadcast; });
+  var dmList  = visible.filter(function (m) { return !m.isBroadcast && !isReq(m); });
+  var bcList  = visible.filter(function (m) { return m.isBroadcast; });
   var reqList = visible.filter(isReq);
   var arcList = all.filter(function (m) { return m.archived; });
   var sortByTs = function (a, b) { return (b.ts || 0) - (a.ts || 0); };
@@ -40631,7 +40633,7 @@ document.addEventListener("click", function (e) {
   var filter = "dm";
   if (m) {
     if (m.archived) filter = "archived";
-    else if (m.isAdmin || m.isBroadcast) filter = "broadcast";
+    else if (m.isBroadcast) filter = "broadcast";
     else if (typeof dmIsRequest === "function" && dmIsRequest(m)) filter = "requests";
   }
   if (typeof _dmOpenCategory === "function") _dmOpenCategory(filter);
