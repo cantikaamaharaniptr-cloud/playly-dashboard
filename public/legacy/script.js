@@ -50669,11 +50669,29 @@ function ensureLazyPanelMounted(panelId) {
   return true;
 }
 
+// Pindahkan kartu "Hubungi Admin" ke BAWAH Pusat Bantuan (setelah FAQ) sebagai
+// escalation "Masih butuh bantuan?" — FAQ dulu, kontak admin langkah terakhir.
+function _repositionContactHub() {
+  const body = document.getElementById("helpBody");
+  const ca = document.getElementById("contactAdmin");
+  if (!body || !ca) return;
+  const sec = ca.closest(".help-section");
+  if (!sec) return;
+  if (!sec.querySelector(".help-contact-head")) {
+    const h = document.createElement("div");
+    h.className = "help-contact-head";
+    h.textContent = "Masih butuh bantuan?";
+    sec.insertBefore(h, sec.firstChild);
+  }
+  if (body.lastElementChild !== sec) body.appendChild(sec);
+}
+
 $("#openHelp")?.addEventListener("click", () => {
   const panel = $("#helpPanel");
   // First-open: inject template content + close handler delegation sudah jalan
   // via global document listener (closest "[data-close-sp]").
   ensureLazyPanelMounted("helpPanel");
+  if (typeof _repositionContactHub === "function") { try { _repositionContactHub(); } catch (e) {} }
   if (typeof convertUiEmojis === "function") { try { convertUiEmojis(panel); } catch (e) {} }
   if (typeof applyI18n === "function") { try { applyI18n(); } catch (e) {} }
   const willOpen = !panel.classList.contains("open");
