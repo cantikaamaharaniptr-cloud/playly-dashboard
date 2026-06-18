@@ -2999,7 +2999,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   width: 360px; max-width: calc(100vw - 32px);
   height: 520px; max-height: calc(100vh - 48px);
   display: flex; flex-direction: column;
-  background: #2a1a1e; background: var(--surface-2, #2a1a1e);
+  background: var(--bg-elev, #251419);
   border: 1px solid rgba(232,216,196,.16); border-radius: 16px;
   overflow: hidden; box-shadow: 0 20px 56px rgba(0,0,0,.5);
   animation: acpPop .18s ease;
