@@ -39707,7 +39707,7 @@ function renderDmChatBody() {
       return `
         <div class="dm-bubble ${fromMe ? 'me' : 'them'} ${h.isAdmin ? 'is-admin' : ''}" data-dm-msg-idx="${hIdx}">
           ${adminTag}
-          ${h.image ? `<img class="dm-bubble-img" src="${escapeHtml(h.image)}" alt="lampiran"/>` : ''}
+          ${(Array.isArray(h.images) ? h.images : (h.image ? [h.image] : [])).map(s => `<img class="dm-bubble-img" src="${escapeHtml(s)}" alt="lampiran"/>`).join("")}
           ${h.text ? `<div class="dm-bubble-text">${escapeHtml(h.text)}</div>` : ''}
           <small class="dm-bubble-time">${escapeHtml(ts)}</small>
           ${fromMe ? `<button type="button" class="dm-bubble-del" data-dm-bubble-del="${hIdx}" title="Hapus pesan" aria-label="Delete">×</button>` : ''}
@@ -40181,8 +40181,9 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin, image) {
     thread.isAdmin = !!fromAdmin;
     s.messages = [thread, ...s.messages.filter(t => t !== thread)];
   }
-  thread.history.push({ from: "them", text, image: image || null, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
-  thread.preview = image ? "📷 Gambar" : (text.length > 60 ? text.slice(0, 57) + "..." : text);
+  const _imgArr = Array.isArray(image) ? image : (image ? [image] : null);
+  thread.history.push({ from: "them", text, images: _imgArr, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
+  thread.preview = (_imgArr && _imgArr.length) ? "📷 Gambar" : (text.length > 60 ? text.slice(0, 57) + "..." : text);
   thread.time = "baru";
   thread.ts = deliverTs;
   thread.unread = true;
@@ -40205,7 +40206,7 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin, image) {
         type: "message",
         fromUsername: senderName,
         init: senderInit,
-        text: "Admin membalas: " + (image ? "📷 Gambar" : (text || "pesan baru"))
+        text: "Admin membalas: " + ((Array.isArray(image) ? image.length : image) ? "📷 Gambar" : (text || "pesan baru"))
       });
     } catch (e) {}
   }
@@ -50330,14 +50331,18 @@ function renderAdminChatPopupBody(username) {
     body.innerHTML = '<div class="acp-empty"><div class="acp-empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></div><p>Belum ada pesan.<br/>Sapa admin duluan!</p></div>';
     return;
   }
-  body.innerHTML = hist.map(h => {
+  body.innerHTML = hist.map((h, idx) => {
     const mine = h.from === "me";
     const time = (typeof chatRelTime === "function" && h.ts) ? chatRelTime(h.ts) : "";
+    const imgs = Array.isArray(h.images) ? h.images : (h.image ? [h.image] : []);
     let inner = "";
-    if (h.image) inner += '<img class="acp-img" src="' + escapeHtml(h.image) + '" alt="lampiran" />';
-    if (h.text) inner += '<div class="acp-bubble">' + escapeHtml(h.text) + '</div>';
+    if (h.replyTo) inner += '<div class="acp-quote">' + escapeHtml(String(h.replyTo).slice(0, 90)) + '</div>';
+    if (imgs.length) inner += '<div class="acp-imgs ' + (imgs.length > 1 ? "multi" : "single") + '">'
+      + imgs.map(s => '<img class="acp-img" src="' + escapeHtml(s) + '" alt="lampiran"/>').join("") + '</div>';
+    if (h.text) inner += '<div class="acp-bubble">' + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div>';
     if (!inner) inner = '<div class="acp-bubble">[pesan]</div>';
-    return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '">'
+    return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '" data-acp-msg="' + idx + '">'
+      + '<button type="button" class="acp-msg-menu" data-acp-msgmenu="' + idx + '" aria-label="Opsi pesan"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>'
       + inner
       + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
       + '</div>';
@@ -50395,6 +50400,7 @@ function openAdminChatPopup(username) {
   wrap.innerHTML =
     '<div class="acp-backdrop" data-acp-close></div>'
     + '<div class="acp-panel" role="dialog" aria-label="Chat dengan admin">'
+      + '<div class="acp-resize" id="acpResize" aria-hidden="true" title="Tarik untuk ubah ukuran"></div>'
       + '<div class="acp-head">'
         + '<div class="acp-ava" aria-hidden="true">' + escapeHtml(init) + '</div>'
         + '<div class="acp-meta">'
@@ -50429,6 +50435,7 @@ function openAdminChatPopup(username) {
         + '</button>'
       + '</div>'
       + '<div class="acp-body" id="acpBody"></div>'
+      + '<div class="acp-ctx" id="acpCtx" hidden><div class="acp-ctx-text" id="acpCtxText"></div><button type="button" class="acp-ctx-x" id="acpCtxCancel" aria-label="Batal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'
       + '<div class="acp-preview" id="acpPreview" hidden>'
         + '<div class="acp-preview-thumbs" id="acpPreviewThumbs"></div>'
         + '<span class="acp-preview-label" id="acpPreviewLabel"></span>'
@@ -50460,10 +50467,47 @@ function openAdminChatPopup(username) {
     if (inp0) inp0.placeholder = "Tulis keterangan gambar (opsional)...";
   };
   const _acpClearPreview = () => { acpPending = []; _acpRenderPreview(); };
+  // Balas/Edit state + helper untuk menu per-pesan.
+  let acpReplyIdx = null, acpEditIdx = null;
+  const _acpThread = () => (state.messages || []).find(m => m.name === username);
+  const _acpSnippet = (h) => !h ? "" : (h.text ? h.text : (((Array.isArray(h.images) && h.images.length) || h.image) ? "📷 Gambar" : "[pesan]"));
+  const _acpShowCtx = (label) => { const c = wrap.querySelector("#acpCtx"), t = wrap.querySelector("#acpCtxText"); if (t) t.textContent = label; if (c) c.hidden = false; };
+  const _acpHideCtx = () => { acpReplyIdx = null; acpEditIdx = null; const c = wrap.querySelector("#acpCtx"); if (c) c.hidden = true; };
+  const _acpCloseMsgMenu = () => { wrap.querySelector("#acpMsgPop")?.remove(); };
+  const _acpOpenMsgMenu = (idx, btn) => {
+    _acpCloseMsgMenu();
+    const th = _acpThread(); const h = th && th.history[idx]; if (!h) return;
+    const mine = h.from === "me";
+    const items = [{ act: "reply", label: "Balas" }];
+    if (h.text) items.push({ act: "copy", label: "Salin teks" });
+    if (mine && h.text) items.push({ act: "edit", label: "Edit" });
+    if (mine) items.push({ act: "delete", label: "Hapus", danger: true });
+    const pop = document.createElement("div");
+    pop.id = "acpMsgPop"; pop.className = "acp-msgpop"; pop.style.position = "fixed";
+    pop.innerHTML = items.map(it => '<button type="button" class="acp-msgpop-item' + (it.danger ? " danger" : "") + '" data-acp-msgact="' + it.act + '" data-acp-msgidx="' + idx + '">' + it.label + '</button>').join("");
+    wrap.appendChild(pop);   // di wrap (bukan panel) supaya tak ke-clip overflow
+    const br = btn.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - 160)) + "px";
+    pop.style.top = Math.min(br.bottom + 4, window.innerHeight - 8 - pop.offsetHeight) + "px";
+  };
   wrap.addEventListener("click", ev => {
     if (ev.target.closest("[data-acp-close]")) { wrap.remove(); window._acpOpenUser = null; return; }
+    if (ev.target.closest("#acpCtxCancel")) { const wasEdit = acpEditIdx != null; _acpHideCtx(); if (wasEdit) { const i0 = wrap.querySelector("#acpInput"); if (i0) i0.value = ""; } return; }
     const _pvx = ev.target.closest("[data-acp-pvremove]");
     if (_pvx) { const i = +_pvx.dataset.acpPvremove; if (i >= 0) acpPending.splice(i, 1); _acpRenderPreview(); return; }
+    const _mm = ev.target.closest("[data-acp-msgmenu]");
+    if (_mm) { ev.stopPropagation(); _acpOpenMsgMenu(+_mm.dataset.acpMsgmenu, _mm); return; }
+    const _ma = ev.target.closest("[data-acp-msgact]");
+    if (_ma) {
+      const a2 = _ma.dataset.acpMsgact, idx = +_ma.dataset.acpMsgidx; _acpCloseMsgMenu();
+      const th = _acpThread(); const h = th && th.history[idx]; if (!h) return;
+      if (a2 === "reply") { acpEditIdx = null; acpReplyIdx = idx; _acpShowCtx("Membalas: " + _acpSnippet(h)); wrap.querySelector("#acpInput")?.focus(); }
+      else if (a2 === "copy") { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(h.text || "").then(() => { if (typeof toast === "function") toast("✓ Teks disalin", "success"); }).catch(() => {}); }
+      else if (a2 === "edit") { acpReplyIdx = null; acpEditIdx = idx; const inp = wrap.querySelector("#acpInput"); if (inp) { inp.value = h.text || ""; inp.focus(); } _acpShowCtx("Mengedit pesan"); }
+      else if (a2 === "delete") { if (window.confirm("Hapus pesan ini?")) { th.history.splice(idx, 1); if (typeof saveState === "function") saveState(); renderAdminChatPopupBody(username); } }
+      return;
+    }
+    if (!ev.target.closest("#acpMsgPop")) _acpCloseMsgMenu();
     if (ev.target.closest("#acpGear")) { if (menu) menu.hidden = !menu.hidden; return; }
     const act = ev.target.closest("[data-acp-act]");
     if (act) {
@@ -50502,29 +50546,36 @@ function openAdminChatPopup(username) {
     ev.preventDefault();
     const inp = wrap.querySelector("#acpInput");
     const txt = (inp.value || "").trim();
-    const imgs = acpPending.slice();   // gambar yg di-stage (bisa beberapa)
-    if (!txt && !imgs.length) return;  // tak ada teks & tak ada gambar -> jangan kirim
     const th = (state.messages || []).find(m => m.name === username);
     if (!th) return;
     th.history = th.history || [];
-    // Susun pesan: tiap gambar = 1 pesan; keterangan (kalau ada) nempel di gambar pertama.
-    const outgoing = imgs.length
-      ? imgs.map((img, i) => ({ text: i === 0 ? txt : "", image: img }))
-      : [{ text: txt, image: null }];
-    const baseTs = Date.now();
-    outgoing.forEach((o, i) => th.history.push({ from: "me", text: o.text, image: o.image, time: "baru", ts: baseTs + i }));
+    // EDIT mode: update pesan yg sedang diedit (lokal — tampilan kamu).
+    if (acpEditIdx != null) {
+      const m = th.history[acpEditIdx];
+      if (m && txt) { m.text = txt; m.edited = true; if (typeof saveState === "function") saveState(); }
+      acpEditIdx = null; _acpHideCtx(); inp.value = ""; renderAdminChatPopupBody(username);
+      return;
+    }
+    const imgs = acpPending.slice();   // gambar yg di-stage (bisa beberapa)
+    if (!txt && !imgs.length) return;  // tak ada teks & tak ada gambar -> jangan kirim
+    // Semua gambar jadi SATU pesan (grid 2 kolom), keterangan opsional.
+    const replySnippet = (acpReplyIdx != null) ? _acpSnippet(th.history[acpReplyIdx]) : null;
+    const msg = { from: "me", text: txt, images: imgs.length ? imgs : null, time: "baru", ts: Date.now() };
+    if (replySnippet) msg.replyTo = replySnippet;
+    th.history.push(msg);
     th.preview = imgs.length ? ("📷 " + (txt || (imgs.length + " gambar"))) : ("Kamu: " + txt);
-    th.time = "baru"; th.ts = baseTs;
+    th.time = "baru"; th.ts = Date.now();
+    acpReplyIdx = null; _acpHideCtx();
     // PENTING: saveState() DULU sebelum deliver — deliverChatToRecipient memicu
-    // event cloud-applied yg me-reload state.messages dari localStorage; kalau
-    // belum disimpan, pesan yg baru di-push hilang (ke-clobber state lama).
+    // event cloud-applied yg me-reload state.messages; kalau belum disimpan,
+    // pesan baru ke-clobber state lama.
     if (typeof saveState === "function") saveState();
     inp.value = "";
     _acpClearPreview();
     renderAdminChatPopupBody(username);
-    // BARU kirim ke inbox admin (real, bukan auto-reply).
+    // BARU kirim ke inbox admin (real) — teks + semua gambar.
     if (username !== user?.username && typeof deliverChatToRecipient === "function") {
-      outgoing.forEach(o => { try { deliverChatToRecipient(username, o.text, false, o.image || undefined); } catch (e) {} });
+      try { deliverChatToRecipient(username, txt, false, imgs.length ? imgs : undefined); } catch (e) {}
     }
   });
 
@@ -50593,6 +50644,32 @@ function openAdminChatPopup(username) {
     const end = e => { dragging = false; head.style.cursor = ""; try { head.releasePointerCapture(e.pointerId); } catch (_) {} };
     head.addEventListener("pointerup", end);
     head.addEventListener("pointercancel", end);
+  })();
+
+  // Resize: tarik grip pojok kiri-atas -> ubah lebar/tinggi (pojok kanan-bawah tetap).
+  (function makeResizable() {
+    const panel = wrap.querySelector(".acp-panel"), grip = wrap.querySelector("#acpResize");
+    if (!panel || !grip) return;
+    let right, bottom, resizing = false;
+    grip.addEventListener("pointerdown", e => {
+      e.preventDefault(); e.stopPropagation();
+      const r = panel.getBoundingClientRect();
+      right = r.right; bottom = r.bottom; resizing = true;
+      try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    grip.addEventListener("pointermove", e => {
+      if (!resizing) return;
+      let w = right - e.clientX, h = bottom - e.clientY;
+      w = Math.max(300, Math.min(w, window.innerWidth - 16));
+      h = Math.max(340, Math.min(h, window.innerHeight - 16));
+      panel.style.width = w + "px"; panel.style.height = h + "px";
+      // jaga pojok kanan-bawah tetap saat panel sudah dipindah (mode left/top).
+      if (panel.style.left && panel.style.left !== "auto") panel.style.left = (right - w) + "px";
+      if (panel.style.top && panel.style.top !== "auto") panel.style.top = (bottom - h) + "px";
+    });
+    const rend = e => { resizing = false; try { grip.releasePointerCapture(e.pointerId); } catch (_) {} };
+    grip.addEventListener("pointerup", rend);
+    grip.addEventListener("pointercancel", rend);
   })();
 
   setTimeout(() => wrap.querySelector("#acpInput")?.focus(), 80);
