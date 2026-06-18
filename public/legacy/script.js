@@ -16315,6 +16315,7 @@ function exportUsersCsv() {
   toast(`✓ ${accounts.length} akun diekspor ke CSV`, "success");
 }
 document.getElementById("exportUsersCsv")?.addEventListener("click", exportUsersCsv);
+document.getElementById("adminCleanTestBtn")?.addEventListener("click", () => adminCleanupTestAccounts());
 
 document.getElementById("createUserModalClose")    ?.addEventListener("click", closeCreateUserModal);
 document.getElementById("createUserCancelBtn")     ?.addEventListener("click", closeCreateUserModal);
@@ -28131,7 +28132,7 @@ function _auExecuteBulkAction() {
           try { suspendUserAccount(username, false); okCount++; } catch {}
         } else if (action === "delete" && typeof deleteUserAccount === "function") {
           // deleteUserAccount nampilin confirm sendiri — bypass dengan flag
-          try { deleteUserAccount(username, { skipConfirm: true }); okCount++; } catch {}
+          try { deleteUserAccount(username, { skipConfirm: true, silent: true }); okCount++; } catch {}
         }
       });
       if (typeof toast === "function") {
@@ -28383,7 +28384,7 @@ document.addEventListener("keydown", (e) => {
 // Hapus akun user — destructive, butuh konfirmasi typed-text. Admin/super-admin
 // dilindungi (sama seperti suspend dulu). Cleanup localStorage account + state +
 // welcome flag, lalu push event ke audit log + toast.
-function deleteUserAccount(username) {
+function deleteUserAccount(username, opts = {}) {
   // Gate: hapus user PERMANEN hanya untuk super admin (admin biasa/admin2 dilarang).
   if (typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
     return toast("🔒 Hanya super admin yang bisa menghapus user permanen", "warning");
@@ -28397,12 +28398,7 @@ function deleteUserAccount(username) {
   if (isAllowedAdminEmail(acc.email)) {
     return toast("🔒 Akun Admin tidak bisa dihapus dari sini", "warning");
   }
-  openConfirm({
-    icon: "🗑️", iconClass: "danger",
-    title: "Delete Account Permanently?",
-    desc: `<b style="color:var(--danger)">This action cannot be undone.</b><br>Account <b>@${escapeHtml(username)}</b> along with all videos, messages, and related data will be permanently removed from the platform.`,
-    btnText: "🗑 Delete Permanently", btnClass: "danger", typeText: "DELETE",
-    onConfirm: async () => {
+  const _doDelete = async () => {
       // C-2 H4 fix (2026-05-21): EXTEND cleanup list + AWAIT cloud removal.
       // Sebelumnya leak: playly-prefs-*, playly-2fa-*, playly-premium-payments
       // entries dgn email user ini, IndexedDB video blobs, Supabase Storage
@@ -28567,10 +28563,63 @@ function deleteUserAccount(username) {
         }
       } catch (err) { console.warn("[deleteUser] cloud cleanup failed:", err); }
       pushAdminEvent("🗑️", `Akun <b>@${escapeHtml(username)}</b> (${escapeHtml(email)}) dihapus permanen`);
-      toast(`🗑️ Akun <b>@${escapeHtml(username)}</b> berhasil dihapus`, "success");
-      renderAdminUsers();
-      renderAdminLiveFeed?.();
-      renderAdminKPI?.();
+      if (!opts.silent) {
+        toast(`🗑️ Akun <b>@${escapeHtml(username)}</b> berhasil dihapus`, "success");
+        renderAdminUsers();
+        renderAdminLiveFeed?.();
+        renderAdminKPI?.();
+      }
+    };
+
+  // skipConfirm: dipakai aksi massal / "Bersihkan Akun Uji Coba" (konfirmasi sekali di luar).
+  // silent: jangan toast/render per-akun (biar batch nampilin satu ringkasan saja).
+  if (opts.skipConfirm) { _doDelete(); return; }
+  openConfirm({
+    icon: "🗑️", iconClass: "danger",
+    title: "Hapus Akun Permanen?",
+    desc: `<b style="color:var(--danger)">Tindakan ini tidak bisa di-undo.</b><br>Akun <b>@${escapeHtml(username)}</b> beserta semua video, pesan, dan data terkait akan dihapus permanen dari platform.`,
+    btnText: "🗑 Hapus Permanen", btnClass: "danger", typeText: "DELETE",
+    onConfirm: _doDelete,
+  });
+}
+
+// ── Bersihkan Akun Uji Coba — deteksi konservatif + hapus batch (1 konfirmasi) ──
+// "Uji coba" = email domain *.test / local.* (mis. qa@local.test, dummy@playly.test,
+// existing@local.dev) ATAU nama kosong. Akun admin & gmail/playly.com TIDAK kena.
+function _isTestAccount(a) {
+  if (!a || (a.role === "admin")) return false;
+  if (typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(a.email)) return false;
+  const email = String(a.email || "").toLowerCase();
+  const domain = email.split("@")[1] || "";
+  const name = a.name;
+  if (domain.endsWith(".test")) return true;          // *.test (local.test, playly.test)
+  if (domain.startsWith("local.")) return true;        // local.dev, local.test, dll
+  if (!name || String(name).trim() === "" || name === "undefined") return true; // nama kosong
+  return false;
+}
+function adminCleanupTestAccounts() {
+  if (typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+    return toast("🔒 Hanya super admin yang bisa membersihkan akun", "warning");
+  }
+  const accts = (typeof getAllAccounts === "function" ? getAllAccounts() : []).filter(_isTestAccount);
+  if (!accts.length) {
+    return toast("✓ Tidak ada akun uji coba terdeteksi", "info");
+  }
+  const list = accts.map(a =>
+    `<li><b>@${escapeHtml(a.username)}</b> <span style="color:var(--muted)">— ${escapeHtml(a.email || "tanpa email")}</span></li>`
+  ).join("");
+  openConfirm({
+    icon: "🧹", iconClass: "danger",
+    title: `Bersihkan ${accts.length} Akun Uji Coba?`,
+    desc: `Akun bertanda uji coba (email <b>.test</b> / <b>local.*</b> atau nama kosong) akan dihapus permanen:`
+      + `<ul style="text-align:left;margin:10px 0 0;padding-left:18px;line-height:1.7">${list}</ul>`
+      + `<br><b style="color:var(--danger)">Tindakan ini tidak bisa di-undo.</b>`,
+    btnText: `🧹 Hapus ${accts.length} akun`, btnClass: "danger", typeText: "BERSIHKAN",
+    onConfirm: () => {
+      let n = 0;
+      accts.forEach(a => { try { deleteUserAccount(a.username, { skipConfirm: true, silent: true }); n++; } catch {} });
+      try { renderAdminUsers(); renderAdminKPI?.(); renderAdminLiveFeed?.(); } catch {}
+      toast(`✅ ${n} akun uji coba dibersihkan`, "success");
     }
   });
 }
