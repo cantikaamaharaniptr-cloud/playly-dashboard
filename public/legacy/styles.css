@@ -3123,6 +3123,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .help-panel #contactAdmin.help-quick-card svg.ui-ico { width: 22px !important; height: 22px !important; }
 #contactAdmin.help-quick-card > b { grid-column: 2; grid-row: 1; margin: 0; font-size: 14px; align-self: end; }
 #contactAdmin.help-quick-card > small { grid-column: 2; grid-row: 2; align-self: start; font-size: 11.5px; }
+.help-panel .help-contact-head { font-size: 12px; font-weight: 600; color: rgba(232,216,196,.7); margin: 6px 2px 8px; }
 
 /* 2026-06-17: Pusat Bantuan polish (dark) — hierarki teks + susunan + warna kolom */
 .help-panel .help-quick-card svg.ui-ico { width: 20px !important; height: 20px !important; }
