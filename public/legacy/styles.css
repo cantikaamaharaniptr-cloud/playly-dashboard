@@ -3023,8 +3023,9 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .acp-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; background: transparent; color: #E8D8C4; font-size: 12.5px; text-align: left; border-radius: 8px; cursor: pointer; }
 .acp-menu-item:hover { background: rgba(232,216,196,.08); }
 .acp-menu-item svg { width: 16px; height: 16px; flex: none; color: rgba(232,216,196,.65); }
-.acp-menu-item.danger { color: #e6a4a4; }
-.acp-menu-item.danger svg { color: #e6a4a4; }
+.acp-menu-item.danger { color: var(--danger, #ef4444); }
+.acp-menu-item.danger svg { color: var(--danger, #ef4444); }
+.acp-menu-item.danger:hover { background: rgba(239,68,68,.12); }
 .acp-menu-sep { height: 1px; margin: 4px 6px; background: rgba(232,216,196,.1); }
 .acp-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 7px; }
 .acp-row { display: flex; flex-direction: column; max-width: 78%; }
