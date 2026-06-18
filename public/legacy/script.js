@@ -31090,13 +31090,42 @@ function openImageLightbox({ src, name, code } = {}) {
 
   const img = lb.querySelector(".ilb-img");
   const stage = lb.querySelector("[data-ilb-stage]");
-  let zoomed = false;
-  img?.addEventListener("click", () => {
-    zoomed = !zoomed;
-    img.classList.toggle("zoomed", zoomed);
-    stage.style.cursor = zoomed ? "zoom-out" : "zoom-in";
-    stage.style.overflow = zoomed ? "auto" : "hidden";
-  });
+  if (img) {
+    // Zoom + GESER (drag-to-pan). transform:scale tidak bisa di-scroll, jadi saat
+    // di-zoom kita geser pakai translate (di-clamp supaya gambar tak lepas layar).
+    const SCALE = 2.4;
+    let zoomed = false, panX = 0, panY = 0, dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+    const applyT = () => { img.style.transform = zoomed ? ("scale(" + SCALE + ") translate(" + panX + "px," + panY + "px)") : ""; };
+    const clampPan = () => {
+      const r = img.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      const mx = Math.max(0, (r.width - sr.width) / 2) / SCALE;
+      const my = Math.max(0, (r.height - sr.height) / 2) / SCALE;
+      panX = Math.max(-mx, Math.min(mx, panX)); panY = Math.max(-my, Math.min(my, panY));
+    };
+    img.addEventListener("pointerdown", (e) => {
+      if (!zoomed) return;
+      dragging = true; moved = false; sx = e.clientX; sy = e.clientY; ox = panX; oy = panY;
+      try { img.setPointerCapture(e.pointerId); } catch (_) {}
+      img.style.transition = "none"; stage.style.cursor = "grabbing"; e.preventDefault();
+    });
+    img.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      panX = ox + dx / SCALE; panY = oy + dy / SCALE; clampPan(); applyT();
+    });
+    const endDrag = (e) => { if (!dragging) return; dragging = false; try { img.releasePointerCapture(e.pointerId); } catch (_) {} img.style.transition = ""; stage.style.cursor = zoomed ? "grab" : "zoom-in"; };
+    img.addEventListener("pointerup", endDrag);
+    img.addEventListener("pointercancel", endDrag);
+    img.addEventListener("click", () => {
+      if (moved) { moved = false; return; }   // habis drag -> jangan toggle zoom
+      zoomed = !zoomed;
+      if (!zoomed) { panX = 0; panY = 0; }
+      img.classList.toggle("zoomed", zoomed);
+      stage.style.cursor = zoomed ? "grab" : "zoom-in";
+      applyT();
+    });
+  }
 
   const close = () => {
     lb.classList.remove("show");
