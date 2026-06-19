@@ -55748,27 +55748,27 @@ function saveVideoEdit() {
         <div class="amf-status-row">
           <span class="amf-status-dot"></span>
           <span class="amf-status-name">Dashboard & Auth</span>
-          <span class="amf-status-state">Operational</span>
+          <span class="amf-status-state">Beroperasi</span>
         </div>
         <div class="amf-status-row">
           <span class="amf-status-dot"></span>
           <span class="amf-status-name">Upload &amp; Storage</span>
-          <span class="amf-status-state">Operational</span>
+          <span class="amf-status-state">Beroperasi</span>
         </div>
         <div class="amf-status-row">
           <span class="amf-status-dot"></span>
           <span class="amf-status-name">Streaming &amp; Playback</span>
-          <span class="amf-status-state">Operational</span>
+          <span class="amf-status-state">Beroperasi</span>
         </div>
         <div class="amf-status-row">
           <span class="amf-status-dot"></span>
           <span class="amf-status-name">DM &amp; Notifikasi</span>
-          <span class="amf-status-state">Operational</span>
+          <span class="amf-status-state">Beroperasi</span>
         </div>
         <div class="amf-status-row">
           <span class="amf-status-dot"></span>
           <span class="amf-status-name">Cloud Sync (Supabase)</span>
-          <span class="amf-status-state">Operational</span>
+          <span class="amf-status-state">Beroperasi</span>
         </div>
         <p style="margin-top:10px;font-size:12px;color:var(--muted)">Update otomatis tiap 60 detik. Riwayat insiden 90 hari ke belakang: tidak ada gangguan signifikan.</p>`
     },

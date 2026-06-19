@@ -3568,7 +3568,7 @@
           <div class="an-pulse-cell" data-pulse-kpi="active">
             <div class="apc-icon apc-icon-live"><span class="apc-pulse-dot" aria-hidden="true"></span></div>
             <div class="apc-text">
-              <small>ACTIVE NOW</small>
+              <small>AKTIF SEKARANG</small>
               <b id="anPulseActive">0</b>
               <span class="apc-sub">user online</span>
             </div>
@@ -3578,7 +3578,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6"/></svg>
             </div>
             <div class="apc-text">
-              <small>TOTAL STORAGE PLATFORM</small>
+              <small>TOTAL PENYIMPANAN PLATFORM</small>
               <b id="anPulseStorage">0 B</b>
               <span class="apc-sub" id="anPulseStorageSub">dari 0 user · 0 video</span>
             </div>
@@ -3789,8 +3789,10 @@
           </div>
         </div>
 
-        <!-- ROW 5 (v620 2026-05-28): Trending Insights — Top Hashtag + Distribusi Geografis -->
-        <div class="grid-2" style="margin-top:18px">
+        <!-- ROW 5 (v620 2026-05-28): Top Hashtag Trending (full-width).
+             Distribusi Geografis dihapus 2026-06-19: datanya estimasi/ngarang
+             (% provinsi hardcode) — app tak menyimpan lokasi user. -->
+        <div style="margin-top:18px">
           <div class="card an-card">
             <div class="card-head">
               <div>
@@ -3799,16 +3801,6 @@
               </div>
             </div>
             <div class="an-hashtag-cloud" id="anHashtagCloud"></div>
-          </div>
-
-          <div class="card an-card">
-            <div class="card-head">
-              <div>
-                <h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>Distribusi Geografis</h3>
-                <small class="muted">Konsentrasi user per provinsi (estimasi)</small>
-              </div>
-            </div>
-            <div class="an-geo-list" id="anGeoList"></div>
           </div>
         </div>
       </section>
@@ -7714,7 +7706,7 @@
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel confirm-panel">
       <div class="confirm-icon" id="confirmIcon">⚠️</div>
-      <h3 id="confirmTitle">Confirm</h3>
+      <h3 id="confirmTitle">Konfirmasi</h3>
       <p class="confirm-desc" id="confirmDesc">Apakah kamu yakin?</p>
       <div class="confirm-input-wrap" id="confirmInputWrap" hidden>
         <label>Ketik <b id="confirmTypeText">HAPUS AKUN</b> untuk melanjutkan</label>
