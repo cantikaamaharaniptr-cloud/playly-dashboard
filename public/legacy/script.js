@@ -49921,12 +49921,22 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   pageMatches = pageMatches || [];
   const am = adminMatches || { users: [], tickets: [], bugs: [], pages: [] };
   const adminCount = am.users.length + am.tickets.length + am.bugs.length + am.pages.length;
-  if (!videoMatches.length && !creatorMatches.length && !hashtagMatches.length && !pageMatches.length && !adminCount) {
+  // v637: Mode admin — section "USER" (dari _gsSearchAdmin) sudah mewakili akun,
+  // jadi section sisi-user KREATOR/HASHTAG/HALAMAN disembunyikan biar tak DOBEL
+  // (dulu 1 user muncul 2x: USER + KREATOR). VIDEO tetap (admin bisa cari video).
+  const isAdminMode = adminMatches != null;
+  const showCreators = !isAdminMode && creatorMatches.length > 0;
+  const showHashtags = !isAdminMode && hashtagMatches.length > 0;
+  const showUserPages = !isAdminMode && pageMatches.length > 0;
+  const totalCount = videoMatches.length + adminCount
+    + (showCreators ? creatorMatches.length : 0)
+    + (showHashtags ? hashtagMatches.length : 0)
+    + (showUserPages ? pageMatches.length : 0);
+  if (!totalCount) {
     drop.innerHTML = `<div class="ss-empty">Tidak ada hasil untuk "<b>${escapeHtml(query)}</b>"</div>`;
     drop.classList.add("show");
     return;
   }
-  const totalCount = videoMatches.length + creatorMatches.length + hashtagMatches.length + pageMatches.length + adminCount;
   let html = "";
   // Admin sections (di paling atas — paling relevan buat admin)
   if (am.pages.length) {
@@ -49973,7 +49983,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     </div>`;
   }
   // v619 (2026-05-28): + HALAMAN section (quick-nav) di top
-  if (pageMatches.length) {
+  if (showUserPages) {
     html += `<div class="ss-section">
       <div class="ss-section-title">HALAMAN</div>
       ${pageMatches.map(p => `
@@ -50003,7 +50013,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
       }).join("")}
     </div>`;
   }
-  if (creatorMatches.length) {
+  if (showCreators) {
     html += `<div class="ss-section">
       <div class="ss-section-title">KREATOR</div>
       ${creatorMatches.slice(0, 4).map(a => {
@@ -50019,7 +50029,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     </div>`;
   }
   // v619 (2026-05-28): + HASHTAG section
-  if (hashtagMatches.length) {
+  if (showHashtags) {
     html += `<div class="ss-section">
       <div class="ss-section-title">HASHTAG</div>
       ${hashtagMatches.map(h => `
