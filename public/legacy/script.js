@@ -27755,9 +27755,38 @@ const _auState = {
   filterStatus: "all",      // "all" | "online" | "offline" | "deactive" | "suspend"
   filterJoined: "all",      // "all" | "7" | "30" | "90"
   selected: new Set(),      // Set of usernames yg di-checkbox
-  limit: 20,                // pagination "Muat lebih banyak" — render maks N baris
+  page: 1,                  // pagination bernomor — halaman aktif (1-based)
 };
-const AU_PAGE = 20;         // jumlah baris per "halaman" / per klik Muat lagi
+const AU_PAGE = 10;         // jumlah baris per halaman
+
+// Pagination bernomor (‹ Sebelumnya · 1 2 3 · Berikutnya ›). Untuk banyak halaman
+// dipangkas pakai elipsis "…" supaya tak meluber. Dipakai di footer Manajemen Akun.
+function _auPaginationHtml(page, totalPages, total, startIdx, count) {
+  if (!total) return "";
+  const from = startIdx + 1, to = startIdx + count;
+  const nums = [];
+  if (totalPages <= 7) {
+    for (let p = 1; p <= totalPages; p++) nums.push(p);
+  } else {
+    nums.push(1);
+    const lo = Math.max(2, page - 1), hi = Math.min(totalPages - 1, page + 1);
+    if (lo > 2) nums.push("…");
+    for (let p = lo; p <= hi; p++) nums.push(p);
+    if (hi < totalPages - 1) nums.push("…");
+    nums.push(totalPages);
+  }
+  const numHtml = nums.map(p => p === "…"
+    ? `<span class="au-pg-ellipsis">…</span>`
+    : `<button type="button" class="au-pg-num${p === page ? " active" : ""}" data-au-page="${p}"${p === page ? ' aria-current="page"' : ""}>${p}</button>`
+  ).join("");
+  return `<div class="au-pagination">`
+    + `<span class="au-pg-info">Menampilkan ${from}–${to} dari ${total} user</span>`
+    + `<div class="au-pg-controls">`
+    + `<button type="button" class="au-pg-btn" data-au-prev ${page <= 1 ? "disabled" : ""} aria-label="Halaman sebelumnya">‹ Sebelumnya</button>`
+    + numHtml
+    + `<button type="button" class="au-pg-btn" data-au-next ${page >= totalPages ? "disabled" : ""} aria-label="Halaman berikutnya">Berikutnya ›</button>`
+    + `</div></div>`;
+}
 function _auHasFilter() {
   return _auState.filterTier !== "all" || _auState.filterStatus !== "all" || _auState.filterJoined !== "all";
 }
@@ -27768,7 +27797,7 @@ function _auResetFilter() {
   const t = document.getElementById("auFilterTier"); if (t) t.value = "all";
   const s = document.getElementById("auFilterStatus"); if (s) s.value = "all";
   const j = document.getElementById("auFilterJoined"); if (j) j.value = "all";
-  _auState.limit = AU_PAGE;   // reset pagination saat reset filter
+  _auState.page = 1;   // reset pagination saat reset filter
   renderAdminUsers();
 }
 function _auClearSelection() {
@@ -27907,11 +27936,13 @@ function renderAdminUsers() {
   const STATUS_LABEL = {
     online: "Online", offline: "Offline", deactive: "Deactive", suspend: "Suspend"
   };
-  // Pagination "Muat lebih banyak" — render maksimal `limit` baris (pola sama Kontrol Konten)
-  if (typeof _auState.limit !== "number") _auState.limit = AU_PAGE;
+  // Pagination bernomor — potong baris sesuai halaman aktif
   const auTotal = filtered.length;
-  const auShown = Math.min(_auState.limit, auTotal);
-  const pageRows = filtered.slice(0, auShown);
+  const auTotalPages = Math.max(1, Math.ceil(auTotal / AU_PAGE));
+  if (typeof _auState.page !== "number" || _auState.page < 1) _auState.page = 1;
+  if (_auState.page > auTotalPages) _auState.page = auTotalPages;
+  const auStart = (_auState.page - 1) * AU_PAGE;
+  const pageRows = filtered.slice(auStart, auStart + AU_PAGE);
   tbody.innerHTML = pageRows.map(r => {
     const init = (r.name || r.username).split(" ").map(p => p[0]).slice(0,2).join("").toUpperCase();
     const statusLabel = STATUS_LABEL[r.status] || r.status;
@@ -28013,11 +28044,10 @@ function renderAdminUsers() {
     });
   });
 
-  // Footer "Muat lebih banyak" + penghitung (pola sama spt Kontrol Konten)
+  // Footer pagination bernomor (‹ Sebelumnya · 1 2 3 · Berikutnya ›)
   const _auLm = document.getElementById("auLoadMore");
   if (_auLm) {
-    _auLm.innerHTML = `<span class="gv-lm-count">Menampilkan ${auShown} dari ${auTotal} user</span>` +
-      (auShown < auTotal ? ` <button class="btn ghost sm" data-au-loadmore>↓ Muat ${Math.min(AU_PAGE, auTotal - auShown)} lagi</button>` : "");
+    _auLm.innerHTML = _auPaginationHtml(_auState.page, auTotalPages, auTotal, auStart, pageRows.length);
   }
 
   // Sync bulk bar setelah render (kalau ada selection dari render sebelumnya)
@@ -28032,7 +28062,7 @@ function renderAdminUsers() {
     if (!t || !t.id) return;
     // Reset pagination saat filter berubah (mulai dari halaman 1)
     if (t.id === "auFilterTier" || t.id === "auFilterStatus" || t.id === "auFilterJoined") {
-      _auState.limit = AU_PAGE;
+      _auState.page = 1;
     }
     if (t.id === "auFilterTier") {
       _auState.filterTier = t.value;
@@ -28066,9 +28096,20 @@ function renderAdminUsers() {
   });
   // Reset filter button
   document.addEventListener("click", e => {
-    // Pagination "Muat lebih banyak" — nambah limit lalu render ulang
-    if (e.target.closest("[data-au-loadmore]")) {
-      _auState.limit = (_auState.limit || AU_PAGE) + AU_PAGE;
+    // Pagination bernomor — klik nomor halaman / sebelumnya / berikutnya
+    const _pgNum = e.target.closest("[data-au-page]");
+    if (_pgNum) {
+      const p = parseInt(_pgNum.getAttribute("data-au-page"), 10);
+      if (Number.isFinite(p)) { _auState.page = p; renderAdminUsers(); }
+      return;
+    }
+    if (e.target.closest("[data-au-prev]")) {
+      _auState.page = Math.max(1, (_auState.page || 1) - 1);
+      renderAdminUsers();
+      return;
+    }
+    if (e.target.closest("[data-au-next]")) {
+      _auState.page = (_auState.page || 1) + 1;  // renderAdminUsers clamp ke halaman maks
       renderAdminUsers();
       return;
     }
@@ -28202,7 +28243,7 @@ document.addEventListener("click", e => {
   // Set attribute pada view supaya CSS bisa hide kolom Tier/Videos di Admin tab
   const view = document.querySelector('section.view[data-view="admin-users"]');
   if (view) view.dataset.activeTab = tab.dataset.userRoleTab;
-  _auState.limit = AU_PAGE;   // reset pagination saat pindah tab User/Admin
+  _auState.page = 1;   // reset pagination saat pindah tab User/Admin
   syncCreateAccountBtnLabel();
   if (typeof renderAdminUsers === "function") renderAdminUsers();
 });
@@ -33088,7 +33129,7 @@ function setupAdminEvents() {
   const search = $("#adminUserSearch");
   if (search && !search.dataset.bound) {
     search.dataset.bound = "1";
-    search.addEventListener("input", () => { _auState.limit = AU_PAGE; renderAdminUsers(); });
+    search.addEventListener("input", () => { _auState.page = 1; renderAdminUsers(); });
   }
 
   // Refresh button — narik state terbaru dari Supabase lalu re-render

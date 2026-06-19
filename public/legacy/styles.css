@@ -73329,3 +73329,34 @@ h3 > .sec-icon-v582.sec-icon-sm {
 }
 /* ============== END v585 ============== */
 
+/* ============== Pagination bernomor — Manajemen Akun (gaya HeroUI, tema emerald) ============== */
+.au-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; width: 100%;
+}
+.au-pg-info { color: var(--muted, #9AA4B2); font-size: 12.5px; }
+.au-pg-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.au-pagination .au-pg-btn,
+.au-pagination .au-pg-num {
+  min-width: 34px; height: 34px; padding: 0 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(165, 175, 195, .22); border-radius: 9px;
+  background: rgba(20, 30, 48, .45); color: #E8EEF5;
+  font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.au-pagination .au-pg-btn:hover:not([disabled]),
+.au-pagination .au-pg-num:hover:not(.active) {
+  background: rgba(16, 185, 129, .12);
+  border-color: rgba(16, 185, 129, .42);
+  color: #10B981;
+}
+.au-pagination .au-pg-num.active {
+  background: #10B981; border-color: #10B981; color: #06281a; cursor: default;
+}
+.au-pagination .au-pg-btn[disabled] { opacity: .4; cursor: not-allowed; }
+.au-pg-ellipsis {
+  min-width: 22px; text-align: center; color: var(--muted, #9AA4B2);
+  user-select: none;
+}
+
