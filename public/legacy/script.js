@@ -4706,7 +4706,7 @@ const I18N = {
     "page.stats":                "Statistics",
     "page.search":               "Search User",
     "page.activity":             "Activity",
-    "page.messages":             "Inbox",
+    "page.messages":             "Messages",
     "page.settings":             "Settings",
     "page.profile.edit":         "Edit Profile",
     "page.profile.creator":      "Creator Profile",
@@ -6264,7 +6264,7 @@ const I18N = {
     "page.stats":                "Statistik",
     "page.search":               "Cari User",
     "page.activity":             "Aktivitas",
-    "page.messages":             "Inbox",
+    "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
     "page.profile.edit":         "Edit Profil",
     "page.profile.creator":      "Profil Kreator",
@@ -7792,7 +7792,7 @@ const I18N = {
     "page.stats":                "Statistik",
     "page.search":               "Cari Pengguna",
     "page.activity":             "Aktiviti",
-    "page.messages":             "Inbox",
+    "page.messages":             "Mesej",
     "page.settings":             "Tetapan",
     "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Pencipta",
@@ -39727,6 +39727,8 @@ function renderMsgList() {
 }
 
 function renderDmList() {
+  // Refresh kartu overview (hitungan + sembunyikan badge 0) tiap kali list di-render.
+  if (typeof renderDmOverview === "function") renderDmOverview();
   const list = document.getElementById("dmThreadList");
   if (!list) return;
 
@@ -39816,7 +39818,8 @@ function renderDmList() {
   // revert. (titleKeys/meta/stripEmojiPrefix di atas kini tak terpakai —
   // dibiarkan, harmless.)
   if (iconEl) {
-    iconEl.innerHTML = iconSvg.all;
+    // Ikon judul = AMPLOP TERBUKA (ref user, tanpa panah) — beda dari Email (amplop tertutup) & DM (gelembung).
+    iconEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>';
   }
   if (titleEl) {
     titleEl.textContent = "Pesan";
@@ -39903,7 +39906,7 @@ function renderDmList() {
       requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
       archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
     };
-    list.innerHTML = backHTML + `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
+    list.innerHTML = backHTML + `<div class="dm-list-empty"><span class="dm-list-empty-ico">${iconSvg[dmState.filter] || iconSvg.dm}</span><p class="dm-list-empty-txt">${emptyMap[dmState.filter] || ""}</p></div>`;
     list.querySelectorAll("[data-dm-back]").forEach(el => el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm"); }));
     return;
   }
@@ -41556,7 +41559,15 @@ function renderDmOverview() {
   var sortByTs = function (a, b) { return (b.ts || 0) - (a.ts || 0); };
   dmList.sort(sortByTs); bcList.sort(sortByTs); reqList.sort(sortByTs); arcList.sort(sortByTs);
 
-  var set = function (id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
+  // Sembunyikan badge saat 0 (pola webmail). CSS .inbox-col-count pakai display !important,
+  // jadi hide harus inline !important; saat ada isi, hapus inline supaya balik ke CSS.
+  var set = function (id, n) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n;
+    if (n) el.style.removeProperty("display");
+    else el.style.setProperty("display", "none", "important");
+  };
   set("dmOvCountDm",  dmList.length);
   set("dmOvCountBc",  bcList.length);
   set("dmOvCountReq", reqList.length);

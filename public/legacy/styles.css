@@ -10637,6 +10637,12 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
 /* === DM "Semua" overview — kartu per kategori gaya admin Inbox
    (per request user 2026-05-16). Toggle hidden via JS. === */
 .dm-overview[hidden] { display: none; }
+/* Samakan ikon hardcode (chip header/tab/kartu/empty) ke stroke 1.6 — seragam
+   dgn ikon Iconsax (.ui-ico) app. Scoped ke <section> konten, kecuali ui-ico/picon. */
+section[data-view="messages"] svg:not(.ui-ico):not(.picon) { stroke-width: 1.6; }
+/* Ikon JUDUL (chip header) lebih besar dari ikon section di bawahnya — hierarki jelas. */
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg { width: 52px; height: 52px; }
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 28px; height: 28px; }
 .dm-ov-grid {
   grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)) !important;
   margin-top: 16px;
@@ -11052,11 +11058,27 @@ html body[data-active-view="messages"]:not(.auth-mode) .topbar .topbar-actions {
   padding: 6px;
 }
 .dm-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  min-height: 240px;
   padding: 32px 16px;
   text-align: center;
   font-size: 12.5px;
   color: var(--muted);
 }
+.dm-list-empty-ico {
+  display: grid; place-items: center;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  border: 1px solid rgba(232, 216, 196, .14);
+}
+.dm-list-empty-ico svg { width: 28px; height: 28px; color: var(--accent); }
+.dm-list-empty-txt { margin: 0; max-width: 260px; line-height: 1.5; }
 .dm-thread {
   display: flex;
   align-items: center;
