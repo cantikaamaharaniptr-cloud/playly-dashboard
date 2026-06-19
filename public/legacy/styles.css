@@ -73347,12 +73347,13 @@ h3 > .sec-icon-v582.sec-icon-sm {
 }
 .au-pagination .au-pg-btn:hover:not([disabled]),
 .au-pagination .au-pg-num:hover:not(.active) {
-  background: rgba(16, 185, 129, .12);
-  border-color: rgba(16, 185, 129, .42);
-  color: #10B981;
+  background: rgba(165, 175, 195, .14);
+  border-color: rgba(165, 175, 195, .4);
+  color: #fff;
 }
 .au-pagination .au-pg-num.active {
-  background: #10B981; border-color: #10B981; color: #06281a; cursor: default;
+  background: #22304A; border-color: rgba(165, 175, 195, .45);
+  color: #fff; cursor: default;
 }
 .au-pagination .au-pg-btn[disabled] { opacity: .4; cursor: not-allowed; }
 .au-pg-ellipsis {
