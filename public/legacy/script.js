@@ -27759,9 +27759,10 @@ const _auState = {
 };
 const AU_PAGE = 10;         // jumlah baris per halaman
 
-// Pagination bernomor (‹ Sebelumnya · 1 2 3 · Berikutnya ›). Untuk banyak halaman
-// dipangkas pakai elipsis "…" supaya tak meluber. Dipakai di footer Manajemen Akun.
-function _auPaginationHtml(page, totalPages, total, startIdx, count) {
+// Pagination bernomor (‹ Sebelumnya · 1 2 3 … · Berikutnya ›). Generik & dipakai
+// ulang: `ns` = namespace data-attr (au=akun, gv=video) supaya handler klik tepat,
+// `unit` = label hitungan ("user"/"video"). Banyak halaman dipangkas elipsis "…".
+function _pagerHtml(ns, unit, page, totalPages, total, startIdx, count) {
   if (!total) return "";
   const from = startIdx + 1, to = startIdx + count;
   const nums = [];
@@ -27777,15 +27778,18 @@ function _auPaginationHtml(page, totalPages, total, startIdx, count) {
   }
   const numHtml = nums.map(p => p === "…"
     ? `<span class="au-pg-ellipsis">…</span>`
-    : `<button type="button" class="au-pg-num${p === page ? " active" : ""}" data-au-page="${p}"${p === page ? ' aria-current="page"' : ""}>${p}</button>`
+    : `<button type="button" class="au-pg-num${p === page ? " active" : ""}" data-${ns}-page="${p}"${p === page ? ' aria-current="page"' : ""}>${p}</button>`
   ).join("");
   return `<div class="au-pagination">`
-    + `<span class="au-pg-info">Menampilkan ${from}–${to} dari ${total} user</span>`
+    + `<span class="au-pg-info">Menampilkan ${from}–${to} dari ${total} ${unit}</span>`
     + `<div class="au-pg-controls">`
-    + `<button type="button" class="au-pg-btn" data-au-prev ${page <= 1 ? "disabled" : ""} aria-label="Halaman sebelumnya">‹ Sebelumnya</button>`
+    + `<button type="button" class="au-pg-btn" data-${ns}-prev ${page <= 1 ? "disabled" : ""} aria-label="Halaman sebelumnya">‹ Sebelumnya</button>`
     + numHtml
-    + `<button type="button" class="au-pg-btn" data-au-next ${page >= totalPages ? "disabled" : ""} aria-label="Halaman berikutnya">Berikutnya ›</button>`
+    + `<button type="button" class="au-pg-btn" data-${ns}-next ${page >= totalPages ? "disabled" : ""} aria-label="Halaman berikutnya">Berikutnya ›</button>`
     + `</div></div>`;
+}
+function _auPaginationHtml(page, totalPages, total, startIdx, count) {
+  return _pagerHtml("au", "user", page, totalPages, total, startIdx, count);
 }
 function _auHasFilter() {
   return _auState.filterTier !== "all" || _auState.filterStatus !== "all" || _auState.filterJoined !== "all";
@@ -30584,7 +30588,7 @@ const adminVideoState = {
   dateTo: null,       // epoch ms — filter tanggal upload (Sampai)
   selectMode: false,  // checkbox column hidden until admin opts in
   selected: new Set(), // ids of selected videos
-  limit: 20           // pagination — jumlah video ditampilkan (Muat lebih banyak)
+  page: 1             // pagination bernomor — halaman aktif (1-based)
 };
 
 // Timestamp upload yang dipakai kolom "Upload" — sumber kebenaran tunggal
@@ -30923,12 +30927,14 @@ function renderAdminVideos() {
   };
   list.sort(sorters[adminVideoState.sort] || sorters.newest);
 
-  // Pagination "Muat lebih banyak" — render maksimal `limit` video dari list
-  const GV_PAGE = 20;
-  if (typeof adminVideoState.limit !== "number") adminVideoState.limit = GV_PAGE;
+  // Pagination bernomor — potong video sesuai halaman aktif
+  const GV_PAGE = 10;
   const gvTotal = list.length;
-  const gvShown = Math.min(adminVideoState.limit, gvTotal);
-  const pageList = list.slice(0, gvShown);
+  const gvTotalPages = Math.max(1, Math.ceil(gvTotal / GV_PAGE));
+  if (typeof adminVideoState.page !== "number" || adminVideoState.page < 1) adminVideoState.page = 1;
+  if (adminVideoState.page > gvTotalPages) adminVideoState.page = gvTotalPages;
+  const gvStart = (adminVideoState.page - 1) * GV_PAGE;
+  const pageList = list.slice(gvStart, gvStart + GV_PAGE);
 
   const empty = $("#gvEmpty");
   if (!list.length) {
@@ -30981,15 +30987,12 @@ function renderAdminVideos() {
     }).join("");
   }
 
-  // Footer "Muat lebih banyak" + penghitung
+  // Footer pagination bernomor (‹ Sebelumnya · 1 2 3 · Berikutnya ›)
   const lm = document.getElementById("gvLoadMore");
   if (lm) {
-    if (!gvTotal) {
-      lm.innerHTML = "";
-    } else {
-      lm.innerHTML = `<span class="gv-lm-count">Menampilkan ${gvShown} dari ${gvTotal} video</span>` +
-        (gvShown < gvTotal ? ` <button class="btn ghost sm" data-gv-loadmore>↓ Muat ${Math.min(GV_PAGE, gvTotal - gvShown)} lagi</button>` : "");
-    }
+    lm.innerHTML = gvTotal
+      ? _pagerHtml("gv", "video", adminVideoState.page, gvTotalPages, gvTotal, gvStart, pageList.length)
+      : "";
   }
 
   // Sync bulk bar
@@ -31291,23 +31294,35 @@ function setupAdminVideoEvents() {
     $$(".gv-tab").forEach(t => t.classList.toggle("active", t === tab));
     adminVideoState.filter = tab.dataset.gvFilter;
     adminVideoState.selected.clear();
-    adminVideoState.limit = 20;
+    adminVideoState.page = 1;
     _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
 
   // Search & dropdowns
-  // Pagination — "Muat lebih banyak" nambah limit lalu render ulang
+  // Pagination bernomor — klik nomor / sebelumnya / berikutnya
   document.addEventListener("click", e => {
-    if (e.target.closest("[data-gv-loadmore]")) {
-      adminVideoState.limit = (adminVideoState.limit || 20) + 20;
+    const _p = e.target.closest("[data-gv-page]");
+    if (_p) {
+      const n = parseInt(_p.getAttribute("data-gv-page"), 10);
+      if (Number.isFinite(n)) { adminVideoState.page = n; renderAdminVideos(); }
+      return;
+    }
+    if (e.target.closest("[data-gv-prev]")) {
+      adminVideoState.page = Math.max(1, (adminVideoState.page || 1) - 1);
       renderAdminVideos();
+      return;
+    }
+    if (e.target.closest("[data-gv-next]")) {
+      adminVideoState.page = (adminVideoState.page || 1) + 1;
+      renderAdminVideos();
+      return;
     }
   });
 
   $("#adminVideoSearch")?.addEventListener("input", e => {
     adminVideoState.search = e.target.value;
-    adminVideoState.limit = 20;
+    adminVideoState.page = 1;
     _saveAdminVideoState(); // C-3 V-M6: persist
     renderAdminVideos();
   });
