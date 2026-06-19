@@ -26407,7 +26407,7 @@ section[data-view='admin-videos']:not(.gv-select-mode) #gvBulkBar { display: non
 .an-mon-item.an-mon-crit .an-mon-dot { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
 .an-mon-item.an-mon-crit .an-mon-bar > span { background: #ef4444; }
 @media (max-width: 768px) { .an-mon-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 460px) { .an-mon-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .an-mon-grid { grid-template-columns: 1fr; } }
 @media (max-width: 980px) { .an-pulse-banner { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .an-pulse-banner { grid-template-columns: 1fr; } }
 .an-pulse-cell {
@@ -73359,5 +73359,30 @@ h3 > .sec-icon-v582.sec-icon-sm {
 .au-pg-ellipsis {
   min-width: 22px; text-align: center; color: var(--muted, #9AA4B2);
   user-select: none;
+}
+
+/* ===== HP (≤640px): rapihkan tabel & kartu admin biar tombol aksi tak kepotong.
+   Scoped via media query -> tampilan PC (layar lebar) TIDAK terpengaruh sama sekali. ===== */
+@media (max-width: 640px) {
+  /* Biar tabel mengecil mengikuti kolom yg tersisa (bukan dipaksa lebar) */
+  #adminUserTable, #adminVideoTable { min-width: 0 !important; }
+
+  /* Manajemen Akun — sisakan User · Status · Aksi. Sembunyikan Email/Peran/Tier/Video/Bergabung */
+  #adminUserTable th:nth-child(3), #adminUserTable td:nth-child(3),
+  #adminUserTable th:nth-child(4), #adminUserTable td:nth-child(4),
+  #adminUserTable .col-tier,
+  #adminUserTable .col-videos,
+  #adminUserTable th:nth-child(7), #adminUserTable td:nth-child(7) { display: none; }
+
+  /* Kontrol Konten — sisakan Video · Status · Aksi. Sembunyikan Kreator/Tayangan/Suka/Upload */
+  #adminVideoTable th:nth-child(3), #adminVideoTable td:nth-child(3),
+  #adminVideoTable th:nth-child(4), #adminVideoTable td:nth-child(4),
+  #adminVideoTable th:nth-child(5), #adminVideoTable td:nth-child(5),
+  #adminVideoTable th:nth-child(7), #adminVideoTable td:nth-child(7) { display: none; }
+
+  /* Analitik — kartu "Pencapaian" numpuk 1 kolom (samakan specificity aturan admin 2-kolom). */
+  body[data-role="admin"] section[data-view="admin-analytics"]:not(.focus-mode) .an-tops-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
