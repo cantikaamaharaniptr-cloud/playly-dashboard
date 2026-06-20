@@ -6529,7 +6529,7 @@ const I18N = {
     "upload.cancel":             "Batal",
     "upload.now":                "🚀 Unggah Sekarang",
     // AI Assist + Subtitle auto-generate (bilingual, per request user 2026-05-16)
-    "upload.ai.assist":          "Auto Judul & Tag",
+    "upload.ai.assist":          "Judul & Tag Otomatis",
     "upload.ai.assist.desc":     "Masukkan judul/topik — AI kasih saran judul, deskripsi & tag siap pakai.",
     "upload.ai.gen.title":       "Buat Judul",
     "upload.ai.gen.desc":        "Buat Deskripsi",
@@ -41519,6 +41519,12 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     e.stopPropagation();
     if (typeof window._openVideoEditor === "function") {
       window._openVideoEditor();
+      // Editor menutupi tombol Edit ini -> mouseleave/blur tak terpicu & fokus bisa
+      // men-trigger ulang tooltip; .upf-tip (Edit Video ...) bisa nyangkut melayang di
+      // atas modal editor. Paksa sembunyikan pada frame berikutnya. Bug user 2026-06-20.
+      requestAnimationFrame(function () {
+        document.querySelectorAll(".upf-tip.is-show").forEach(function (t) { t.classList.remove("is-show"); });
+      });
     } else {
       if (typeof toast === "function") toast("⚠️ Video editor belum siap", "warning");
     }
@@ -41554,6 +41560,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   function show(btn) {
     var label = btn.dataset.tip || btn.getAttribute("aria-label") || "";
     if (!label) return;
+    // Jangan tampilkan tooltip saat modal editor (video/thumbnail) terbuka: tombol
+    // Edit/Ganti/Hapus ketutup modal -> mouseleave/blur tak terpicu -> tooltip nyangkut
+    // melayang di atas modal. Cek deterministik (nol risiko bila editor tertutup). Bug user 2026-06-20.
+    var _ms = [document.getElementById("videoEditorModal"), document.getElementById("thumbEditorModal")];
+    for (var _i = 0; _i < _ms.length; _i++) {
+      var _m = _ms[_i];
+      if (_m && !_m.hidden && getComputedStyle(_m).display !== "none") return;
+    }
     tip.textContent = label;
     var tr = tip.getBoundingClientRect();
     var r = btn.getBoundingClientRect();
@@ -41577,6 +41591,8 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     btn.addEventListener("blur", hide);
     btn.addEventListener("click", hide);
   });
+  // Scroll bisa bikin tooltip melayang lepas dari tombol -> sembunyikan.
+  window.addEventListener("scroll", hide, true);
 })();
 
 // =====================================================================
@@ -42099,6 +42115,13 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (!previewBtn) return;
     const lbl = previewBtn.querySelector(".ve-preview-label");
     if (lbl) lbl.textContent = txt; else previewBtn.textContent = txt;
+    // Tukar ikon play <-> pause sesuai status (Jeda = sedang main -> ikon pause). User 2026-06-21.
+    const _svg = previewBtn.querySelector("svg");
+    if (_svg) {
+      _svg.innerHTML = /Jeda/i.test(txt)
+        ? '<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"></rect><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"></rect>'
+        : '<path d="M7 5v14l11-7z" fill="currentColor" stroke="none"></path>';
+    }
   }
 
   if (!modal || !video) {
@@ -42149,7 +42172,7 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     document.body.style.overflow = "";
     try { video.pause(); } catch {}
     previewMode = false;
-    if (previewBtn) setPreviewLabel("Putar Preview");
+    if (previewBtn) setPreviewLabel("Putar Pratinjau");
   }
 
   window._openVideoEditor = function () {
@@ -42199,47 +42222,55 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode && video.currentTime >= trimEnd) {
       video.pause();
       previewMode = false;
-      if (previewBtn) setPreviewLabel("Putar Preview");
+      if (previewBtn) setPreviewLabel("Putar Pratinjau");
     }
   });
 
-  // Drag handlers for trim handles
+  // Gerakan playhead HALUS: timeupdate cuma fire ~4x/detik -> patah2. Update tiap frame
+  // (requestAnimationFrame) selama video main. Per user 2026-06-21.
+  let _phRaf = null;
+  function _phTick() { updatePlayhead(); if (video && !video.paused && !video.ended) _phRaf = requestAnimationFrame(_phTick); }
+  video?.addEventListener("play", function () { cancelAnimationFrame(_phRaf); _phTick(); });
+  video?.addEventListener("pause", function () { cancelAnimationFrame(_phRaf); updatePlayhead(); });
+
+  // Drag handlers: handle trim (start/end) ATAU SCRUB di track (geser kursor ke detik mana
+  // saja utk lihat frame berbeda). Per user 2026-06-21.
   let dragHandle = null;
-  function onPointerDown(e) {
-    const handle = e.target.closest(".ve-trim-handle");
-    if (!handle) return;
-    e.preventDefault();
-    dragHandle = handle.dataset.handle;
-  }
-  function onPointerMove(e) {
-    if (!dragHandle || !duration || !trimTrack) return;
+  let scrubbing = false;
+  function _clientX(e) { return (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX)) || 0; }
+  function _seekToX(x) {
+    if (!duration || !trimTrack) return;
     const rect = trimTrack.getBoundingClientRect();
-    const x = (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0]?.clientX)) || 0;
     let pct = (x - rect.left) / rect.width;
     pct = Math.max(0, Math.min(1, pct));
-    const t = pct * duration;
-    if (dragHandle === "start") {
-      trimStart = Math.min(t, trimEnd - 0.1);
-      video.currentTime = trimStart;
-    } else {
-      trimEnd = Math.max(t, trimStart + 0.1);
-      video.currentTime = trimEnd;
-    }
-    updateTrimUI();
-  }
-  function onPointerUp() { dragHandle = null; }
-  trimTrack?.addEventListener("mousedown", onPointerDown);
-  document.addEventListener("mousemove", onPointerMove);
-  document.addEventListener("mouseup", onPointerUp);
-
-  // Click on track (not handle) = seek video
-  trimTrack?.addEventListener("click", function (e) {
-    if (e.target.closest(".ve-trim-handle")) return;
-    if (!duration) return;
-    const rect = trimTrack.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
     video.currentTime = pct * duration;
-  });
+    updatePlayhead();
+  }
+  function onPointerDown(e) {
+    const handle = e.target.closest(".ve-trim-handle");
+    if (handle) { e.preventDefault(); dragHandle = handle.dataset.handle; return; }
+    if (e.target.closest(".ve-trim-track")) { e.preventDefault(); scrubbing = true; _seekToX(_clientX(e)); }
+  }
+  function onPointerMove(e) {
+    if (dragHandle && duration && trimTrack) {
+      const rect = trimTrack.getBoundingClientRect();
+      let pct = (_clientX(e) - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const t = pct * duration;
+      if (dragHandle === "start") { trimStart = Math.min(t, trimEnd - 0.1); video.currentTime = trimStart; }
+      else { trimEnd = Math.max(t, trimStart + 0.1); video.currentTime = trimEnd; }
+      updateTrimUI();
+      return;
+    }
+    if (scrubbing) { e.preventDefault(); _seekToX(_clientX(e)); }
+  }
+  function onPointerUp() { dragHandle = null; scrubbing = false; }
+  trimTrack?.addEventListener("mousedown", onPointerDown);
+  trimTrack?.addEventListener("touchstart", onPointerDown, { passive: false });
+  document.addEventListener("mousemove", onPointerMove);
+  document.addEventListener("touchmove", onPointerMove, { passive: false });
+  document.addEventListener("mouseup", onPointerUp);
+  document.addEventListener("touchend", onPointerUp);
 
   // Speed pills
   speedPills?.forEach(p => p.addEventListener("click", function () {
@@ -42259,14 +42290,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode) {
       video.pause();
       previewMode = false;
-      setPreviewLabel("Putar Preview");
+      setPreviewLabel("Putar Pratinjau");
       return;
     }
     video.currentTime = trimStart;
     video.playbackRate = speed;
     video.muted = muted;
     previewMode = true;
-    setPreviewLabel("Pause Preview");
+    setPreviewLabel("Jeda Pratinjau");
     video.play().catch(err => console.warn("[VideoEditor] play failed:", err));
   });
 
@@ -42828,7 +42859,7 @@ window._applyPremiumLock = function (card, locked, opts) {
     // (overlay gembok yang memberi info). Free → blur + overlay via helper.
     if (noteEl) { noteEl.innerHTML = ""; noteEl.hidden = true; }
     if (typeof window._applyPremiumLock === "function") {
-      window._applyPremiumLock(card, locked, { title: "Auto Judul & Tag", sub: "Tersedia di Premium" });
+      window._applyPremiumLock(card, locked, { title: "Judul & Tag Otomatis", sub: "Tersedia di Premium" });
     } else {
       card.classList.toggle("locked", locked);
     }
@@ -43334,7 +43365,7 @@ self.onmessage = async (e) => {
     // Get current uploaded video file
     const videoFile = window._uploadCapturedFile || window._captured?.file;
     if (!videoFile) {
-      return toast("⚠️ Upload video dulu sebelum auto-generate subtitle", "warning");
+      return toast("⚠️ Unggah video dulu sebelum buat subtitle otomatis", "warning");
     }
     // Warn untuk file besar
     const fileMB = videoFile.size / (1024 * 1024);
@@ -44605,7 +44636,7 @@ function showUploadSuccessPopup(title, newVid, opts) {
     desc = `Video <b>${escapeHtml(title)}</b> tersimpan sebagai <b>privat</b> dan tidak tampil di feed maupun profil publik.`;
   } else if (visibility === "unlisted") {
     icon = "🔗"; heading = "Video Live (Tak Terdaftar)";
-    statusLine = "🔗 Unlisted — hanya via tautan";
+    statusLine = "🔗 Lewat Tautan — hanya via tautan";
     desc = `Video <b>${escapeHtml(title)}</b> sudah <b>live</b>, tapi tidak muncul di feed/pencarian. Hanya bisa diakses lewat tautan langsung.`;
   } else {
     icon = "🎉"; heading = "Video Sudah Live!";
@@ -44787,7 +44818,7 @@ function clearUploadFieldError(input) {
       desc:   I('<path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/>'),
       hash:   I('<path d="M5.5 9.5h14"/><path d="M4.5 14.5h14"/><path d="M10.5 4.5l-1.5 15"/><path d="M16 4.5l-1.5 15"/>'),
       tag:    I('<path d="M4 11V5a1 1 0 0 1 1-1h6l8 8a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0Z"/><circle cx="8" cy="8" r="1.2"/>'),
-      ai:     I('<path d="M12 4l1.9 5.1L19 11l-5.1 1.9L12 18l-1.9-5.1L5 11l5.1-1.9Z"/>'),
+      ai:     I('<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 8V5"/><circle cx="12" cy="3.8" r="1.1"/><path d="M9.5 12.5v1.8"/><path d="M14.5 12.5v1.8"/>'),
       cc:     I('<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 11h3"/><path d="M8 14.5h2"/><path d="M13.5 11h2.5"/><path d="M14.5 14.5h1.5"/>'),
       eye:    I('<path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Z"/><circle cx="12" cy="12" r="2.4"/>'),
       users:  I('<circle cx="9.5" cy="8.5" r="2.8"/><path d="M4.5 19a5 5 0 0 1 10 0"/><path d="M16 6.2a2.8 2.8 0 0 1 0 5.6"/><path d="M19.5 19a5 5 0 0 0-3-4.6"/>'),
@@ -44796,6 +44827,7 @@ function clearUploadFieldError(input) {
       image:  I('<rect x="4" y="4" width="16" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="M19.5 15.5 15 11l-8 8.5"/>'),
       film:   I('<rect x="4" y="6.5" width="12" height="11" rx="2"/><path d="M16 10.5l4-2.5v8l-4-2.5Z"/>'),
       clock:  I('<circle cx="12" cy="12" r="8"/><path d="M12 8v4.2l2.8 2"/>'),
+      chat:   I('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="M8 9.5h8"/><path d="M8 13h5"/>'),
     };
     const pickIcon = (t) => {
       t = (t || "").toLowerCase();
@@ -44806,7 +44838,7 @@ function clearUploadFieldError(input) {
       if (t.includes("subtitle")) return ICONS.cc;
       if (t.includes("visibilit")) return ICONS.eye;
       if (t.includes("audiens") || t.includes("audience")) return ICONS.users;
-      if (t.includes("engagement")) return ICONS.heart;
+      if (t.includes("interaksi") || t.includes("komentar") || t.includes("engagement")) return ICONS.chat;
       if (t.includes("info")) return ICONS.info;
       if (t.includes("frame")) return ICONS.image;
       if (t.includes("thumbnail")) return ICONS.image;
@@ -55769,11 +55801,47 @@ function getNotifList() {
     video.style.filter = f;
 
     if (videoWrap) {
-      const ratio = ASPECT_MAP[state.aspect] || "";
+      let ratio = ASPECT_MAP[state.aspect] || "";
+      // "Asli": bingkai = rasio ASLI video (intrinsik) -> video mengisi penuh, UTUH,
+      // TANPA bar gelap kiri-kanan & TIDAK terpotong. Box dibuat besar via sizing
+      // eksplisit di bawah. Per user 2026-06-21 (bingkai 16:9 bikin bar gelap besar
+      // -> jelek; mau video tampil utuh mengisi area).
+      if (state.aspect === "original" && video.videoWidth && video.videoHeight) {
+        ratio = video.videoWidth + " / " + video.videoHeight;
+      }
       videoWrap.style.aspectRatio = ratio;
       // v681: ratio chosen (not original/bebas) → object-fit cover crops to ratio.
-      const useCover = !!ratio && state.aspect !== "original" && state.aspect !== "bebas";
-      video.style.objectFit = useCover ? "cover" : "contain";
+      const useCover = !!ASPECT_MAP[state.aspect] && state.aspect !== "original" && state.aspect !== "bebas";
+      // object-fit !important inline supaya TAK PERNAH dikalahkan CSS cover
+      // (.ve-video-wrap[style*=aspect-ratio] video punya object-fit:cover di base 62300
+      // & media 62362). original -> contain (frame penuh, no crop). Bug user 2026-06-20.
+      video.style.setProperty("object-fit", useCover ? "cover" : "contain", "important");
+      // Sizing eksplisit (px): isi area preview (viewport) sambil jaga rasio target,
+      // supaya ukuran ~sama dgn preview form. Flex+aspect-ratio kadang bikin box
+      // kekecilan/inkonsisten antar-browser. Per user 2026-06-21.
+      (function _veFitWrap() {
+        var _ar = (ratio || "").split("/");
+        var _aw = parseFloat(_ar[0]), _ah = parseFloat(_ar[1]);
+        if (!_aw || !_ah) { videoWrap.style.removeProperty("width"); videoWrap.style.removeProperty("height"); return; }
+        var _stage = videoWrap.closest(".ve-stage");
+        var _vp = videoWrap.closest(".ve-stage-viewport") || videoWrap.parentElement;
+        var _availW = (_vp && _vp.clientWidth) || (_stage && _stage.clientWidth) || window.innerWidth;
+        var _availH = window.innerHeight * 0.6;
+        if (_stage) {
+          var _sc = getComputedStyle(_stage);
+          _availH = _stage.clientHeight - parseFloat(_sc.paddingTop || 0) - parseFloat(_sc.paddingBottom || 0);
+          var _gap = parseFloat(_sc.rowGap || _sc.gap || 0) || 0;
+          Array.prototype.forEach.call(_stage.children, function (ch) {
+            if (ch !== _vp && !ch.contains(videoWrap)) _availH -= (ch.offsetHeight + _gap);
+          });
+        }
+        _availW = Math.max(80, _availW - 4);
+        _availH = Math.max(80, _availH - 4);
+        var _bw = _availW, _bh = _bw * _ah / _aw;
+        if (_bh > _availH) { _bh = _availH; _bw = _bh * _aw / _ah; }
+        videoWrap.style.setProperty("width", Math.round(_bw) + "px", "important");
+        videoWrap.style.setProperty("height", Math.round(_bh) + "px", "important");
+      })();
       // Freeform "bebas" crop → clip the video via clip-path inset.
       if (state.aspect === "bebas" && state.crop) {
         const c = state.crop;
@@ -55817,6 +55885,13 @@ function getNotifList() {
       }
     }
   }
+
+  // Saat metadata video termuat (videoWidth baru tersedia), re-apply supaya mode "Asli"
+  // memakai rasio INTRINSIK video. Listener sekali (modul init); tiap buka editor set
+  // video.src baru -> loadedmetadata fire lagi. Bug user 2026-06-20.
+  video.addEventListener("loadedmetadata", applyEffects);
+  // Resize window -> hitung ulang ukuran box preview (sizing eksplisit). Bug user 2026-06-21.
+  window.addEventListener("resize", function () { try { applyEffects(); } catch (e) {} });
 
   function syncUI() {
     // v681: brightness/contrast/saturation now 0-centered (no "%" suffix on label)
@@ -56366,7 +56441,10 @@ function getNotifList() {
       }
       const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
       const prev = (pu && pu.videoEdit) || {};
-      state.aspect     = prev.aspect     || "original";
+      // SELALU buka pada "Asli" (video utuh, tak terpotong) — jangan pulihkan rasio
+      // crop terakhir. Per permintaan user 2026-06-20 ("mau lihat ukuran asli, jangan
+      // dibuat terpotong"). Rasio lain tetap bisa dipilih manual saat dibutuhkan.
+      state.aspect     = "original";
       state.zoom       = prev.zoom       != null ? prev.zoom       : 100;
       state.posX       = prev.posX       != null ? prev.posX       : 0;
       state.posY       = prev.posY       != null ? prev.posY       : 0;
@@ -56391,6 +56469,48 @@ function getNotifList() {
       syncUI(); applyEffects();
     };
   }
+})();
+
+// Badge waktu (.ve-time-display) DIHAPUS dari editor: redundan -> bar potong sudah punya
+// playhead (posisi main) + Durasi (panjang ter-trim). Per user 2026-06-21. Idempoten.
+(function removeVeTimeBadge() {
+  function go() {
+    var t = document.querySelector("#videoEditorModal .ve-time-display");
+    if (!t) return false;
+    t.remove();
+    return true;
+  }
+  if (!go()) document.addEventListener("DOMContentLoaded", go);
+})();
+
+// Bubble waktu di atas playhead: tampil saat Putar Preview, bergerak bersama playhead,
+// menunjukkan detik berjalan (pengganti badge yg dihapus). Sembunyi saat jeda. User 2026-06-21.
+(function vePlayheadTime() {
+  function fmt(s) { s = Math.max(0, Math.floor(s || 0)); var m = Math.floor(s / 60), x = s % 60; return m + ":" + (x < 10 ? "0" : "") + x; }
+  function setup() {
+    var ph = document.getElementById("veTrimPlayhead");
+    var vid = document.getElementById("veVideo");
+    if (!ph || !vid) return false;
+    var b = ph.querySelector(".ve-playhead-time");
+    if (!b) { b = document.createElement("span"); b.className = "ve-playhead-time"; ph.appendChild(b); }
+    var hideT = null;
+    function refresh() {
+      b.textContent = fmt(vid.currentTime);
+      if (hideT) { clearTimeout(hideT); hideT = null; }
+      b.style.display = "block";
+      // saat dijeda (mis. setelah scrub/seek), sembunyikan setelah jeda singkat
+      if (vid.paused) hideT = setTimeout(function () { b.style.display = "none"; }, 1100);
+    }
+    b.style.display = "none";
+    vid.addEventListener("play", refresh);
+    vid.addEventListener("playing", refresh);
+    vid.addEventListener("timeupdate", refresh);
+    vid.addEventListener("seeking", refresh);
+    vid.addEventListener("seeked", refresh);
+    vid.addEventListener("pause", refresh);
+    return true;
+  }
+  if (!setup()) document.addEventListener("DOMContentLoaded", setup);
 })();
 
 /* ============ v575: helper empty-state ilustrasi (item 24) ============

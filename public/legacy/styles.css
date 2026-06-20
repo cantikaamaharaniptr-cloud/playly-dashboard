@@ -46613,7 +46613,7 @@ body[data-role="admin"] .auth-card input:-webkit-autofill:active {
 .dz-pro[data-state="filled"] .dz-pro-filled { display: block; }
 .dz-pro-preview {
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform .35s var(--ease);
 }
@@ -62190,17 +62190,22 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
   background: #000;
 }
 .ve-time-display {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  padding: 4px 10px;
-  background: rgba(0, 0, 0, .7);
-  color: #fff;
-  font-size: 12px;
+  /* Per user 2026-06-21: di BAWAH video (bukan overlay). Reparent ke .ve-stage via JS.
+     Posisi main (current) ditonjolkan; "/ total" diredupkan supaya tak dobel dgn "Durasi". */
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 2px;
+  padding: 0;
+  color: var(--text);
+  font-size: 12.5px;
   font-weight: 700;
-  border-radius: 6px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
 }
+.ve-time-display #veTimeCurrent { color: var(--text); }
+.ve-time-display .ve-time-sep,
+.ve-time-display #veTimeTotal { color: rgba(232, 216, 196, .5); font-weight: 600; }
 .ve-time-sep { opacity: .5; margin: 0 4px; }
 
 /* v593 (2026-05-28): vignette + text overlay di atas video.
@@ -62444,6 +62449,27 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
   pointer-events: none;
   box-shadow: 0 0 4px rgba(255, 255, 255, .6);
 }
+/* Bubble waktu di ATAS playhead: muncul saat Putar Preview & bergerak bersama playhead
+   -> menunjukkan detik berjalan (pengganti badge yg dihapus). Sembunyi saat jeda.
+   Per user 2026-06-21. .ve-trim-track diberi ruang atas utk bubble. */
+.ve-trim-track { margin-top: 20px; }
+.ve-playhead-time {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  background: rgba(25, 12, 16, .97);
+  color: var(--text);
+  border: 1px solid rgba(232, 216, 196, .22);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+}
 .ve-trim-meta {
   display: flex;
   justify-content: space-between;
@@ -62517,6 +62543,24 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
 .ve-mute-label { font-size: 12.5px; font-weight: 600; color: var(--text); }
 
 .ve-preview-btn { align-self: flex-start; }
+/* Tombol Putar/Jeda Pratinjau: lebih berisi & jelas sbg kontrol play (per user 2026-06-21). */
+#videoEditorModal .ve-preview-btn {
+  padding: 12px 18px;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  /* Wine lembut (penuh) — per user 2026-06-21. Translucent wine + teks/ikon cream. */
+  background: rgba(109, 41, 50, .42) !important;
+  border: 1px solid rgba(109, 41, 50, .62) !important;
+  color: var(--text) !important;
+  transition: background .15s ease, border-color .15s ease;
+}
+#videoEditorModal .ve-preview-btn:hover {
+  background: rgba(109, 41, 50, .6) !important;
+  border-color: rgba(109, 41, 50, .82) !important;
+}
+#videoEditorModal .ve-preview-btn svg { width: 17px; height: 17px; }
 .ve-hint {
   font-size: 11px;
   color: var(--muted);
@@ -72740,27 +72784,26 @@ body:not([data-role="admin"]) .upf-field .upf-tags-wrap input#upTagsInput { font
    (tetap jelas "danger" tapi tidak norak). Scope .dz-pro-overlay supaya
    tombol kecil di baris subtitle (.upf-sub-filled-row) tidak terpengaruh.
    =================================================================== */
+/* Tombol overlay = PUTIH + ikon wine; Hapus = merah (req user 2026-06-20). */
 .dz-pro-overlay .dz-pro-action {
-  background: rgba(25, 12, 16, .62) !important;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(232, 216, 196, .22) !important;
-  color: #E8D8C4 !important;
+  background: rgba(255, 255, 255, .95) !important;
+  border: 1px solid rgba(0, 0, 0, .12) !important;
+  color: var(--primary, #6D2932) !important;
 }
 .dz-pro-overlay .dz-pro-action:hover {
-  background: rgba(45, 22, 28, .82) !important;
-  border-color: rgba(232, 216, 196, .42) !important;
+  background: #fff !important;
+  border-color: rgba(0, 0, 0, .2) !important;
   transform: translateY(-1px);
 }
 .dz-pro-overlay .dz-pro-action.danger {
-  background: rgba(25, 12, 16, .62) !important;
-  color: #ff8a8a !important;
-  border-color: rgba(255, 130, 130, .38) !important;
+  background: #d83a3a !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, .3) !important;
 }
 .dz-pro-overlay .dz-pro-action.danger:hover {
-  background: rgba(216, 58, 58, .9) !important;
+  background: #b32d2d !important;
   color: #fff !important;
-  border-color: rgba(255, 255, 255, .25) !important;
+  border-color: rgba(255, 255, 255, .45) !important;
 }
 
 /* Tooltip custom tombol overlay media — ganti tooltip NATIVE putih (tak bisa
