@@ -6478,7 +6478,7 @@ const I18N = {
     "discover.feed":             "Feed untukmu",
     "discover.feed.desc":        "Video terbaru dari kreator yang kamu ikuti",
     "discover.suggest":          "Sarankan Kreator",
-    "discover.trending":         "Trending Hari Ini",
+    "discover.trending":         "Tren Hari Ini",
     "discover.people":           "ORANG",
     "discover.more":             "lainnya",
     // My Library
