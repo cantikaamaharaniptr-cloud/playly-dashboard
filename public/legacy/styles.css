@@ -9634,6 +9634,11 @@ body[data-role="admin"] .view[data-view="premium-insights"] {
    Settings-grid penuh-lebar (no max-width). Settings-card-all pakai
    CSS multi-column biar 7 section flow ke 2-3 kolom otomatis sesuai
    lebar viewport, mengisi penuh halaman tanpa ruang kosong. */
+/* Pengaturan: samakan ikon hardcode (chip/kartu/tab) ke stroke 1.6 (kecuali ui-ico/picon) */
+section[data-view="settings"] svg:not(.ui-ico):not(.picon) { stroke-width: 1.6; }
+/* Focus <select> netral cream (taat aturan no-colored-focus-ring; sebelumnya border wine) */
+section[data-view="settings"] select:focus,
+section[data-view="settings"] select:focus-visible { border-color: rgba(232, 216, 196, .28) !important; }
 .settings-grid {
   display: flex;
   flex-direction: column;
@@ -11625,6 +11630,17 @@ section.view.focus-mode .messages-3col {
   gap: 6px;
   margin-top: 14px;
 }
+/* Sub-judul grup toggle (mis. "Jenis Notifikasi" / "Saluran") di kartu Pengaturan */
+.tog-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 12px 0 2px;
+}
+.card > .tog-group-label:first-of-type,
+.settings-grid .card .tog-group-label:first-of-type { margin-top: 4px; }
 .tog {
   display: flex;
   align-items: center;
@@ -12568,7 +12584,7 @@ body.reduced-motion .reveal-on-scroll {
    konten muat di viewport tanpa scroll berlebihan. Activated by toggle di
    Settings → Tampilan → Compact mode. */
 body.compact-mode .view {
-  padding-top: 14px;
+  gap: 12px;
 }
 body.compact-mode .view-header {
   margin-bottom: 12px;
@@ -72364,13 +72380,18 @@ section.view[data-view="settings"] .session-current-tag {
    1) Kontras tinggi → border/garis lebih tegas (override --border).
    2) Teks lebih tebal → font-weight dasar naik (diwarisi teks dashboard).
    3) Garis bawahi tautan → semua <a> digarisbawahi. */
-body.a11y-contrast { --border: rgba(232, 216, 196, .42); }
-body.a11y-contrast .card,
-body.a11y-contrast input,
-body.a11y-contrast select,
-body.a11y-contrast textarea { border-color: rgba(232, 216, 196, .42) !important; }
+/* Kontras tinggi (app-wide): kuatkan token border -> semua border berbasis token ikut;
+   + jaring lebar komponen ber-border hardcoded di SEMUA halaman (kecuali state aksen). */
+body.a11y-contrast { --border: rgba(232, 216, 196, .58); --border-strong: rgba(232, 216, 196, .64); }
+body.a11y-contrast :is(.card,.btn,.tog,.nav-item,.topbar,.hero,input,select,textarea,
+  [class*="-card"],[class*="-tab"],[class*="-badge"],[class*="-banner"],[class*="-pill"],
+  [class*="-chip"],[class*="-empty"],[class*="-box"],[class*="-item"],[class*="-tag"],
+  [class*="-cta"],[class*="-alert"],[class*="-panel"]):not(.active):not(.selected):not(.primary):not(.danger) {
+  border-color: rgba(232, 216, 196, .5) !important;
+}
+/* Teks lebih tebal (app-wide): UNIVERSAL -> semua teks non-judul jadi >=600 di SEMUA halaman. */
 body.a11y-bold-text { font-weight: 600; }
-body.a11y-underline a { text-decoration: underline; }
+body.a11y-bold-text *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(strong):not(b) { font-weight: 600 !important; }
 
 /* Dropdown custom pengganti <select> native (req user 2026-06-13): hapus
    highlight BIRU native OS + fokus ring berwarna. Hover cream, terpilih wine,

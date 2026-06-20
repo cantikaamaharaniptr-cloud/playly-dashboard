@@ -4851,18 +4851,18 @@ function _setupSettingsAccountCard() {
 // supaya jelas fungsinya (sebelumnya cuma label). Idempotent.
 function _setupSettingsToggleDesc() {
   var DESC = {
-    "notif.message":         "Notif saat ada pesan (DM) masuk.",
-    "notif.comment":         "Notif saat ada yang mengomentari videomu.",
-    "notif.follower":        "Notif saat ada yang mulai mengikutimu.",
+    "notif.message":         "Beri tahu saat ada pesan (DM) masuk.",
+    "notif.comment":         "Beri tahu saat ada yang mengomentari videomu.",
+    "notif.follower":        "Beri tahu saat ada yang mulai mengikutimu.",
+    "notif.like":            "Beri tahu saat ada yang menyukai videomu.",
     "notif.email":           "Kirim ringkasan notifikasi ke emailmu.",
     "notif.push":            "Tampilkan notifikasi langsung di perangkat ini.",
-    "display.autoplay":      "Putar video otomatis saat halaman dibuka.",
+    "display.autoplay":      "Video langsung diputar saat halaman dibuka.",
     "display.reducedMotion": "Kurangi animasi & transisi untuk tampilan lebih tenang.",
     "display.compact":       "Rapatkan tata letak — lebih banyak konten per layar.",
     "privacy.publicProfile": "Siapa pun bisa melihat profil & video publikmu.",
-    "privacy.showHistory":   "Izinkan orang lain melihat riwayat tontonmu.",
-    "privacy.allowDM":       "Kalau dimatikan, hanya yang kamu ikuti yang bisa kirim DM.",
-    "content.adult":         "Tampilkan video bertanda 18+ di feed Jelajah.",
+    "privacy.allowDM":       "Jika dimatikan, hanya yang kamu ikuti yang bisa kirim pesan langsung.",
+    "privacy.hideCounts":    "Angka pengikut & yang kamu ikuti disembunyikan dari orang lain.",
     "content.hideWatched":   "Video yang sudah kamu tonton tak muncul lagi di feed.",
   };
   var togs = document.querySelectorAll('section.view[data-view="settings"] label.tog');
@@ -4953,7 +4953,6 @@ function _setupSecurityHints() {
     if (umumPanel) {
       umumPanel.classList.add("set-panel-umum");
       _mergeA11yIntoTampilan();      // Opsi C: Aksesibilitas digabung ke Tampilan
-      _setupDataSaverCard(umumPanel); // kartu ke-6 baru: Hemat Data → grid 3+3
       // Ganti <select> native dgn dropdown custom (req user 2026-06-13: hapus
       // highlight biru native + fokus ring berwarna; native select tak bisa
       // di-CSS untuk itu). Idempotent.
@@ -4967,9 +4966,8 @@ function _setupSecurityHints() {
 // fungsional (class di body + CSS); toggle hemat-data menyimpan pref nyata
 // (data.saver juga set class body). Idempotent.
 var A11Y_TOGGLES = [
-  { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis & border antar elemen biar lebih jelas.", def: false },
-  { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca.", def: false },
-  { pref: "a11y.underlineLinks", label: "Garis bawahi tautan", desc: "Semua tautan digarisbawahi biar gampang dikenali.", def: false }
+  { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis tepi antar elemen agar lebih jelas.", def: false },
+  { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca.", def: false }
 ];
 var DATASAVER_TOGGLES = [
   { pref: "data.saver", label: "Mode hemat data", desc: "Kurangi pemakaian data: kualitas & preload ditekan.", def: false },
@@ -5185,11 +5183,11 @@ function applyPrefSideEffects(key, val) {
   }
   if (key === "display.compact") {
     document.body.classList.toggle("compact-mode", !!val);
-    toast(val ? "✓ Compact mode aktif — UI jadi padat" : "✓ Compact mode mati", "success");
+    toast(val ? "✓ Mode ringkas aktif — tampilan lebih padat" : "✓ Mode ringkas mati", "success");
   }
   if (key === "display.autoplay") {
     document.body.classList.toggle("no-autoplay", !val);
-    toast(val ? "✓ Autoplay video aktif" : "✓ Autoplay video dimatikan", "success");
+    toast(val ? "✓ Putar video otomatis aktif" : "✓ Putar video otomatis dimatikan", "success");
   }
 
   // Aksesibilitas → CSS class on body (req user 2026-06-13)
@@ -5223,11 +5221,6 @@ function applyPrefSideEffects(key, val) {
   }
 
   // Preferensi konten → pengaruhi feed Jelajah (filter dibaca di getFypVideos).
-  if (key === "content.adult") {
-    toast(val ? "✓ Konten 18+ ditampilkan" : "✓ Konten 18+ disembunyikan", "success");
-    try { if (typeof renderFYP === "function") renderFYP(); } catch {}
-    try { if (typeof renderDiscoverTrending === "function") renderDiscoverTrending(); } catch {}
-  }
   if (key === "content.hideWatched") {
     toast(val ? "✓ Video yang sudah ditonton disembunyikan" : "✓ Video yang sudah ditonton ditampilkan", "success");
     try { if (typeof renderFYP === "function") renderFYP(); } catch {}
@@ -5256,9 +5249,9 @@ function applyPrefSideEffects(key, val) {
   if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "success");
 
   // Privasi
-  if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya follower yang lihat detail lengkap", "success");
-  if (key === "privacy.showHistory") toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
-  if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim DM" : "✓ DM dibatasi — hanya kreator yang kamu follow yang bisa kirim", "success");
+  if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya pengikut yang lihat detail lengkap", "success");
+  if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim pesan langsung" : "✓ Pesan langsung dibatasi — hanya yang kamu ikuti yang bisa kirim", "success");
+  if (key === "privacy.hideCounts") toast(val ? "✓ Jumlah pengikut disembunyikan dari orang lain" : "✓ Jumlah pengikut ditampilkan", "success");
 
   // Bahasa & timezone — apply langsung ke UI
   if (key === "lang") {
@@ -5529,11 +5522,13 @@ const I18N = {
     "settings.notif.message":    "New message",
     "settings.notif.comment":    "Comment on video",
     "settings.notif.follower":   "New follower",
+    "settings.notif.like":   "Video likes",
     "settings.notif.email":      "Email notification",
     "settings.notif.push":       "Push notification",
     "settings.privacy.public":   "Public profile",
     "settings.privacy.history":  "Show watch history",
     "settings.privacy.dm":       "Allow DM from anyone",
+    "settings.privacy.hidecounts": "Hide follower count",
     "settings.security.oldpw":   "Old Password",
     "settings.security.newpw":   "New Password",
     "settings.security.confirmpw": "Confirm New Password",
@@ -6536,6 +6531,7 @@ const I18N = {
     "settings.notif.message":    "New messages",
     "settings.notif.comment":    "Video comments",
     "settings.notif.follower":   "New followers",
+    "settings.notif.like":   "Video likes",
     "settings.notif.email":      "Email notifications",
     "settings.notif.push":       "Push notifications",
     "settings.desc":             "Adjust app preferences to your needs.",
@@ -6906,9 +6902,9 @@ const I18N = {
     "settings.display":          "🎨 Tampilan",
     "settings.privacy":          "Privasi",
     "settings.security":         "Keamanan",
-    "settings.autoplay":         "Auto-play video",
+    "settings.autoplay":         "Putar video otomatis",
     "settings.reducedmotion":    "Animasi minimal",
-    "settings.compact":          "Mode kompak",
+    "settings.compact":          "Mode ringkas",
     "common.save":               "Simpan",
     "common.cancel":             "Batal",
     "common.search":             "Cari",
@@ -7081,11 +7077,13 @@ const I18N = {
     "settings.notif.message":    "Pesan baru",
     "settings.notif.comment":    "Komentar di video",
     "settings.notif.follower":   "Pengikut baru",
+    "settings.notif.like":   "Suka di video",
     "settings.notif.email":      "Notifikasi email",
     "settings.notif.push":       "Notifikasi push",
     "settings.privacy.public":   "Profil publik",
     "settings.privacy.history":  "Tampilkan riwayat tonton",
-    "settings.privacy.dm":       "Izinkan DM dari semua orang",
+    "settings.privacy.dm":       "Izinkan pesan langsung dari semua orang",
+    "settings.privacy.hidecounts": "Sembunyikan jumlah pengikut",
     "settings.security.oldpw":   "Kata Sandi Lama",
     "settings.security.newpw":   "Kata Sandi Baru",
     "settings.security.confirmpw": "Konfirmasi Kata Sandi Baru",
@@ -7472,9 +7470,10 @@ const I18N = {
     "settings.appearance":       "Tampilan",
     "settings.notif.message":    "Pesan baru",
     "settings.notif.comment":    "Komentar di video",
-    "settings.notif.follower":   "Follower baru",
-    "settings.notif.email":      "Email notifikasi",
-    "settings.notif.push":       "Push notifikasi",
+    "settings.notif.follower":   "Pengikut baru",
+    "settings.notif.like":   "Suka di video",
+    "settings.notif.email":      "Notifikasi email",
+    "settings.notif.push":       "Notifikasi push",
     "help.center":               "Pusat Bantuan",
     // Captcha + 2FA modal ID
     "captcha.title":             "Verifikasi: Susun Kotak",
@@ -8563,6 +8562,7 @@ const I18N = {
     "settings.notif.message":    "Mesej baharu",
     "settings.notif.comment":    "Komen pada video",
     "settings.notif.follower":   "Pengikut baharu",
+    "settings.notif.like":   "Suka pada video",
     "settings.notif.email":      "Pemberitahuan e-mel",
     "settings.notif.push":       "Pemberitahuan tolak",
     "settings.privacy.public":   "Profil awam",
@@ -9843,6 +9843,7 @@ const I18N = {
     "settings.notif.message":    "新しいメッセージ",
     "settings.notif.comment":    "動画へのコメント",
     "settings.notif.follower":   "新しいフォロワー",
+    "settings.notif.like":   "動画へのいいね",
     "settings.notif.email":      "メール通知",
     "settings.notif.push":       "プッシュ通知",
     "settings.privacy.public":   "公開プロフィール",
@@ -11123,6 +11124,7 @@ const I18N = {
     "settings.notif.message":    "رسالة جديدة",
     "settings.notif.comment":    "تعليق على الفيديو",
     "settings.notif.follower":   "متابع جديد",
+    "settings.notif.like":   "إعجاب بالفيديو",
     "settings.notif.email":      "إشعار البريد الإلكتروني",
     "settings.notif.push":       "إشعار الدفع",
     "settings.privacy.public":   "ملف شخصي عام",
@@ -12403,6 +12405,7 @@ const I18N = {
     "settings.notif.message":    "新消息",
     "settings.notif.comment":    "视频评论",
     "settings.notif.follower":   "新粉丝",
+    "settings.notif.like":   "视频点赞",
     "settings.notif.email":      "邮件通知",
     "settings.notif.push":       "推送通知",
     "settings.privacy.public":   "公开资料",
@@ -13683,6 +13686,7 @@ const I18N = {
     "settings.notif.message":    "새 메시지",
     "settings.notif.comment":    "동영상 댓글",
     "settings.notif.follower":   "새 팔로워",
+    "settings.notif.like":   "동영상 좋아요",
     "settings.notif.email":      "이메일 알림",
     "settings.notif.push":       "푸시 알림",
     "settings.privacy.public":   "공개 프로필",
@@ -14963,6 +14967,7 @@ const I18N = {
     "settings.notif.message":    "Nuevo mensaje",
     "settings.notif.comment":    "Comentario en video",
     "settings.notif.follower":   "Nuevo seguidor",
+    "settings.notif.like":   "Me gusta en video",
     "settings.notif.email":      "Notificación por correo",
     "settings.notif.push":       "Notificación push",
     "settings.privacy.public":   "Perfil público",
@@ -38290,6 +38295,10 @@ function getFypVideos() {
       (v.desc || "").toLowerCase().includes(q)
     );
   }
+  if (getPref("content.hideWatched", false)) {
+    const watched = new Set((Array.isArray(state?.history) ? state.history : []).map(h => h.videoId));
+    all = all.filter(v => !watched.has(v.id));
+  }
   return all;
 }
 
@@ -39796,6 +39805,7 @@ function renderPeople() {
         <button class="btn ghost" data-people-bug="${escapeHtml(a.username)}" title="Bug Report">🐞 Bug</button>
       `;
     }
+    const peopleHideCounts = !isAdminViewer && getOtherUserPrefByUsername(a.username, "privacy.hideCounts", false);
     // Avatar: pakai foto profil (a.avatar) kalau sudah di-set; fallback ke initial
     const avatarInner = a.avatar
       ? `<img src="${escapeHtml(a.avatar)}" alt="${escapeHtml(a.name || a.username || "user")}" loading="lazy"/>`
@@ -39809,7 +39819,7 @@ function renderPeople() {
       <div class="${cardClasses}" data-people-open="${escapeHtml(a.username)}">
         <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true">★</i>' : ''}</div>
         <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator">★ Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
-        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}</div>
+        <div class="people-handle">${handle}${!isAdmin && !peopleHideCounts ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}</div>
         ${a.bio ? `<p class="people-bio">${escapeHtml(a.bio)}</p>` : ""}
         <div class="people-actions">${actions}</div>
       </div>
@@ -49014,10 +49024,10 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Logout dari perangkat ini? Perangkat tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
-    if (typeof toast === "function") toast("✓ Device di-logout", "success");
+    if (typeof toast === "function") toast("✓ Perangkat di-logout", "success");
     return;
   }
   if (e.target.closest("#sessionsLogoutAllBtn")) {
@@ -49025,13 +49035,13 @@ document.addEventListener("click", e => {
     const sessions = getActiveSessions();
     const otherCount = sessions.filter(s => s.id !== _getOrCreateSessionId()).length;
     if (otherCount === 0) {
-      if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
+      if (typeof toast === "function") toast("Tidak ada perangkat lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Logout dari ${otherCount} perangkat lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
-    if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
+    if (typeof toast === "function") toast(`✓ ${otherCount} perangkat di-logout`, "success");
   }
 });
 
@@ -49628,9 +49638,10 @@ function renderUserProfile() {
 
   const followerList = getUserFollowers(username);
   const followingList = getUserFollowing(username);
+  const hideCounts = !isMe && user?.role !== "admin" && getOtherUserPrefByUsername(username, "privacy.hideCounts", false);
   $("#upStatVideos").textContent = videos.length.toLocaleString("id-ID");
-  $("#upStatFollowers") && ($("#upStatFollowers").textContent = followerList.length.toLocaleString("id-ID"));
-  $("#upStatFollowing") && ($("#upStatFollowing").textContent = followingList.length.toLocaleString("id-ID"));
+  $("#upStatFollowers") && ($("#upStatFollowers").textContent = hideCounts ? "—" : followerList.length.toLocaleString("id-ID"));
+  $("#upStatFollowing") && ($("#upStatFollowing").textContent = hideCounts ? "—" : followingList.length.toLocaleString("id-ID"));
   // Total likes = sum of likes di semua video kreator ini
   const totalLikes = videos.reduce((s, v) => s + (v.likes || 0), 0);
   $("#upStatLikes") && ($("#upStatLikes").textContent = totalLikes.toLocaleString("id-ID"));
