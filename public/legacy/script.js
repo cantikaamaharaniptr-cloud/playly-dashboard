@@ -2287,10 +2287,10 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Inbox", activity: "Aktivitas", discover: "Jelajahi", people: "Cari User", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Edit Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
-  "user-email": "Email",
-  "premium-insights": "Premium Insights",
+  "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
+  "premium-insights": "Insight Premium",
   "admin-dashboard": "Beranda", "admin-users": "Manajemen Akun",
   "admin-videos": "Kontrol Konten",
   "admin-comms": "Percakapan",
@@ -4544,9 +4544,9 @@ const I18N = {
     "page.upload":               "Upload New Video",
     "page.history":              "Watch History",
     "page.stats":                "Statistics",
-    "page.search":               "Search User",
+    "page.search":               "Search Creator",
     "page.activity":             "Activity",
-    "page.messages":             "Inbox",
+    "page.messages":             "Messages",
     "page.settings":             "Settings",
     "page.profile.edit":         "Edit Profile",
     "page.profile.creator":      "Creator Profile",
@@ -6111,9 +6111,9 @@ const I18N = {
     "page.upload":               "Unggah Video Baru",
     "page.history":              "Riwayat Tontonan",
     "page.stats":                "Statistik",
-    "page.search":               "Cari User",
+    "page.search":               "Cari Kreator",
     "page.activity":             "Aktivitas",
-    "page.messages":             "Inbox",
+    "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
     "page.profile.edit":         "Edit Profil",
     "page.profile.creator":      "Profil Kreator",
@@ -7648,9 +7648,9 @@ const I18N = {
     "page.upload":               "Muat Naik Video Baharu",
     "page.history":              "Sejarah Tontonan",
     "page.stats":                "Statistik",
-    "page.search":               "Cari Pengguna",
+    "page.search":               "Cari Kreator",
     "page.activity":             "Aktiviti",
-    "page.messages":             "Inbox",
+    "page.messages":             "Mesej",
     "page.settings":             "Tetapan",
     "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Pencipta",
@@ -31371,13 +31371,13 @@ function switchView(name, { fromNav = false } = {}) {
     let crumbLabel = trCrumb(name);
     if (name === "videos") {
       const labelMap = {
-        all:      "My Library",
+        all:      "Pustaka Saya",
         my:       "Video Saya",
         status:   "Status Video",
-        new:      "New Videos",
+        new:      "Video Baru",
         download: "Unduhan",
       };
-      crumbLabel = labelMap[state?.libTab || "all"] || "My Library";
+      crumbLabel = labelMap[state?.libTab || "all"] || "Pustaka Saya";
     }
     parts.push(`<span class="sep">/</span><a href="#" class="active">${crumbLabel}</a>`);
     crumb.innerHTML = parts.join("");
@@ -45897,12 +45897,12 @@ function setLibraryTab(tabKey) {
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast) {
     const labelMap = {
-      all:      "My Library",
+      all:      "Pustaka Saya",
       my:       "Video Saya",
       status:   "Status Video",
       download: "Unduhan",
     };
-    activeBcLast.textContent = labelMap[key] || "My Library";
+    activeBcLast.textContent = labelMap[key] || "Pustaka Saya";
   }
   // Auto-close inline player saat ganti tab
   try { closeLibInlinePlayer(); } catch {}
