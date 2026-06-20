@@ -61263,6 +61263,9 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 .hsv-stats { margin-top: 0; display: flex; gap: 12px; flex-shrink: 0; }
 .hsv-stats span { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
 .hsv-stats svg { width: 13px; height: 13px; opacity: .85; }
+.hsv-stats-link { align-self: flex-start; margin-top: 2px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: transparent; border: 1px solid var(--border-strong, var(--border)); border-radius: 8px; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+.hsv-stats-link svg { width: 13px; height: 13px; }
+.hsv-stats-link:hover { border-color: var(--primary); color: var(--text); background: rgba(232, 216, 196, .06); }
 /* Varian "Lanjut Tonton": progress bar + baris persen. */
 .hsv-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0, 0, 0, .45); }
 .hsv-prog i { display: block; height: 100%; background: #e8d8c4; }
@@ -61435,14 +61438,12 @@ section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; fo
 
 .ha-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 8px;            /* req user 2026-06-15: kecilkan Pencapaian agar setinggi Level */
   /* kalau kartu di-stretch setinggi Level, 2 baris badge sebar rata (no void) */
   flex: 1;
   align-content: space-between;
 }
-@media (max-width: 900px) { .ha-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .ha-grid { grid-template-columns: 1fr; } }
 .ha-badge {
   display: flex;
   align-items: center;

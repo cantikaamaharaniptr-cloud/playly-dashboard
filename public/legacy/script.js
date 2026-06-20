@@ -32624,13 +32624,13 @@ function refreshHeroGreeting() {
       "Share your video link on other social media for wider reach.",
     ];
     const TIPS_ID = [
-      "Upload di jam 7–9 malam untuk engagement tertinggi.",
+      "Unggah di jam 7–9 malam untuk interaksi tertinggi.",
       "Video 60–90 detik cenderung lebih banyak ditonton sampai selesai.",
-      "Thumbnail kontras dengan teks singkat meningkatkan click-through rate.",
-      "Jadwal upload yang konsisten membantu followers mengantisipasi kontenmu.",
-      "Balas komentar di 30 menit pertama setelah upload untuk boost jangkauan.",
+      "Thumbnail kontras dengan teks singkat bikin video lebih sering diklik.",
+      "Jadwal unggah yang konsisten membantu pengikut menantikan kontenmu.",
+      "Balas komentar di 30 menit pertama setelah unggah untuk dongkrak jangkauan.",
       "Judul berbentuk pertanyaan memicu rasa penasaran dan lebih banyak klik.",
-      "Bagikan link video ke media sosial lain untuk jangkauan lebih luas.",
+      "Bagikan tautan video ke media sosial lain untuk jangkauan lebih luas.",
     ];
     const tips = isId ? TIPS_ID : TIPS_EN;
     const idx = Math.floor(Date.now() / 86400000) % tips.length;
@@ -32664,6 +32664,8 @@ function refreshHeroGreeting() {
         bioEl.classList.remove("is-placeholder");
         bioEl.classList.add("has-bio");
         bioEl.removeAttribute("data-jump");
+        bioEl.removeAttribute("role");
+        bioEl.removeAttribute("tabindex");
       } else {
         // Placeholder bio sebagai chip "tambah" yg rapi (req user 2026-06-15:
         // tulisan "+ Tambah bio kamu" diperbaiki) — ikon pensil + teks.
@@ -32672,6 +32674,8 @@ function refreshHeroGreeting() {
         bioEl.classList.remove("has-bio");
         bioEl.setAttribute("data-jump", "profile");
         bioEl.setAttribute("title", "Tambah bio profilmu");
+        bioEl.setAttribute("role", "button");
+        bioEl.setAttribute("tabindex", "0");
       }
     }
   } catch {}
@@ -34861,6 +34865,7 @@ function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
         + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + playOv + '</div>'
       + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
         + '<div class="hsv-meta"><span class="hsv-creator">@' + escapeHtml(v.creator || "—") + '</span>' + meta + '</div>'
+        + '<button type="button" class="hsv-stats-link" data-jump="stats" title="Lihat statistik video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V8M17 16v-8"/></svg>Statistik</button>'
       + '</div>'
     + '</div>'
   + '</div>';
@@ -34937,6 +34942,7 @@ function _renderHomeSorotanVideo() {
 document.addEventListener("click", (e) => {
   const c = e.target.closest("#homeSorotan .hsv-card[data-vid]");
   if (!c) return;
+  if (e.target.closest(".hsv-stats-link")) return;
   e.preventDefault();
   const vid = Number(c.dataset.vid);
   if (!Number.isFinite(vid)) return;
@@ -35775,7 +35781,7 @@ function renderHomeRanking() {
     const avInner = avUrl
       ? '<img class="lb-av-img" src="' + escapeHtml(avUrl) + '" alt="" loading="lazy">'
       : escapeHtml(init);
-    return '<div class="lb-row' + (isMe ? ' is-me' : '') + '">' +
+    return '<div class="lb-row' + (isMe ? ' is-me' : '') + '" data-rk-user="' + escapeHtml(c.name) + '" role="button" tabindex="0" style="cursor:pointer">' +
       '<div class="lb-rank">' + rankCell + '</div>' +
       '<div class="lb-av' + (isOnline ? ' is-online' : '') + (avUrl ? ' has-img' : '') + '">' + avInner +
         (isOnline ? '<span class="lb-dot" title="Aktif"></span>' : '') + '</div>' +
@@ -35790,6 +35796,15 @@ function renderHomeRanking() {
   }).join("");
   row.innerHTML = '<div class="lb-cta">' + cta + '</div>' +
     '<div class="lb-list">' + rows + '</div>';
+  row.querySelectorAll(".lb-row").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var u = el.getAttribute("data-rk-user");
+      if (u && typeof openUserProfile === "function") openUserProfile(u);
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+    });
+  });
 }
 
 
@@ -35891,7 +35906,7 @@ function renderHomeCreatorLevel() {
         '<span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span>' +
         '<div class="hlv-titlewrap-text">' +
           '<h3>Level Kreator</h3>' +
-          '<small class="hlv-sub">Naik level dari aktivitas channel — terus tumbuh, tanpa batas</small>' +
+          '<small class="hlv-sub">Naik level dari aktivitas kanalmu — terus tumbuh, tanpa batas</small>' +
         '</div>' +
       '</div>' +
       '<small class="hlv-note">XP: tontonan + suka + video + pengikut</small>' +
