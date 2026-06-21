@@ -45683,6 +45683,17 @@ body[data-theme="light"]:not([data-role="admin"]) .nav-item.active svg {
   filter: none;
 }
 
+/* light contrast fix v3 2026-06-21: elemen pudar di light (spesifisitas tinggi aside.sidebar utk menang) */
+html body[data-theme="light"]:not([data-role="admin"]) aside.sidebar .nav-item.active {
+  background: var(--primary) !important; color: #FFFFFF !important; border-color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) aside.sidebar .nav-item.active svg { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; filter: none !important; }
+html body[data-theme="light"]:not([data-role="admin"]) aside.sidebar .nav-item.active span, html body[data-theme="light"]:not([data-role="admin"]) aside.sidebar .nav-item.active b { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) aside.sidebar .nav-item.active .badge { background: rgba(255,255,255,.22) !important; color: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .hpc-stat strong { background: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .psp-title { background: linear-gradient(135deg, #B45309, #6D2932) !important; -webkit-background-clip: text !important; background-clip: text !important; -webkit-text-fill-color: transparent !important; color: transparent !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .psp-date-row { background: var(--surface-2) !important; border-color: var(--border) !important; }
+
 /* === SIGNUP STEPPER (Profil/Username/Akun/Selesai) — light user ===
    Default state pakai `var(--surface-2)` + `var(--bg-elev)` yang sekarang sama
    warna dgn card bg cream → step pending & active jadi invisible. Plus user
@@ -51743,7 +51754,7 @@ html body:not([data-role="admin"]):not(.auth-mode) .topbar {
    per user 2026-05-08: bg merah, border cream sebagai focus ring TANPA glow. */
 html body:not([data-role="admin"]):not(.auth-mode) .nav-item.active,
 html body:not([data-role="admin"]):not(.auth-mode) .nav-subitem.active {
-  background: rgba(109, 41, 50, 0.55) !important;
+  background: var(--primary) !important;
   border: 1px solid rgba(232, 216, 196, 0.45) !important;
   box-shadow: none !important;
 }
