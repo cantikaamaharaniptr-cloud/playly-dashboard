@@ -33772,17 +33772,17 @@ function renderPremiumInsightsView() {
     wrap.innerHTML = `
       <div class="tier-locked-page">
         <div class="tier-locked-icon">📈</div>
-        <h3>Premium Insights is a Premium feature</h3>
-        <p>Unlock advanced analytics: engagement rate, watch-time funnels, audience demographics, predictive trends, and more.</p>
+        <h3>Insight Premium adalah fitur Premium</h3>
+        <p>Buka analitik lanjutan: tingkat keterlibatan, funnel waktu tonton, demografi audiens, tren prediktif, dan lainnya.</p>
         <ul class="tier-locked-features">
-          <li>✓ Engagement rate breakdown per video</li>
-          <li>✓ Watch-time funnels (drop-off analysis)</li>
-          <li>✓ Audience geo + device + age demographics</li>
-          <li>✓ Predictive trending analysis (AI-powered)</li>
-          <li>✓ Export analytics to CSV/PDF</li>
-          <li>✓ Compare your performance vs platform average</li>
+          <li>✓ Rincian tingkat keterlibatan per video</li>
+          <li>✓ Funnel waktu tonton (analisis drop-off)</li>
+          <li>✓ Demografi audiens: lokasi + perangkat + usia</li>
+          <li>✓ Analisis tren prediktif (bertenaga AI)</li>
+          <li>✓ Ekspor analitik ke CSV/PDF</li>
+          <li>✓ Bandingkan performamu vs rata-rata platform</li>
         </ul>
-        <button type="button" class="btn primary tier-locked-cta" id="insightsUpgrade">⭐ Upgrade to Premium</button>
+        <button type="button" class="btn primary tier-locked-cta" id="insightsUpgrade">⭐ Tingkatkan ke Premium</button>
       </div>
     `;
     document.getElementById("insightsUpgrade")?.addEventListener("click", () => {
