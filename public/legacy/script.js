@@ -3488,7 +3488,7 @@ async function openAdminPlayer(id) {
     statusEl.dataset.st = currentStatus;
   }
   if (descEl) descEl.textContent = v.desc || "(No description)";
-  if (descMetaEl) descMetaEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} views`;
+  if (descMetaEl) descMetaEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} tayangan`;
 
   // Sync action buttons visibility based on status
   const publishBtn  = document.getElementById("apActions")?.querySelector("[data-ap-act='publish']");
@@ -3534,7 +3534,7 @@ async function openAdminPlayer(id) {
           <div class="ap-side-meta">
             <strong>${escapeHtml(x.title || "(no title)")}</strong>
             <small>@${escapeHtml(x.creator || x._owner || "—")}</small>
-            <span class="ap-side-stats">${(x.viewsNum || 0).toLocaleString("en-US")} views · ${xUploaded}</span>
+            <span class="ap-side-stats">${(x.viewsNum || 0).toLocaleString("en-US")} tayangan · ${xUploaded}</span>
           </div>
         </div>
       `;
@@ -3601,7 +3601,7 @@ async function openAdminVideoPreview(id) {
 
   if (titleEl) titleEl.textContent = v.title || "(no title)";
   if (creatorEl) creatorEl.textContent = "@" + (v.creator || v._owner || "—");
-  if (viewsEl) viewsEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} views`;
+  if (viewsEl) viewsEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} tayangan`;
   if (likesEl) likesEl.textContent = `${(v.likes || 0).toLocaleString("en-US")} likes`;
   if (uploadedEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
@@ -24094,7 +24094,7 @@ function renderAdminTopInsights() {
             <strong>${escapeHtml(v.title)}</strong>
             <small>@${escapeHtml(v.creator)} • ${uploaded}</small>
           </div>
-          <b style="font-size:11px;color:var(--muted);font-weight:600">${fmtNum(v.viewsNum || 0)} views</b>
+          <b style="font-size:11px;color:var(--muted);font-weight:600">${fmtNum(v.viewsNum || 0)} tayangan</b>
           <button type="button" class="admin-row-play admin-row-play-prominent" data-open-video="${v.id}" title="Play video" aria-label="Play video">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
             <span>Play</span>
@@ -24138,7 +24138,7 @@ function renderAdminTopInsights() {
         <strong>@${escapeHtml(c.name)}</strong>
         <small>#${i + 1} • ${c.videos} video</small>
       </div>
-      <b>${fmtNum(c.views)} views</b>
+      <b>${fmtNum(c.views)} tayangan</b>
     </div>
   `;
   }).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Belum ada kreator aktif.</div>`;
@@ -27910,7 +27910,7 @@ function fillUserDetailModal(acc) {
       <span class="rank">🎬</span>
       <div>
         <strong>${escapeHtml(v.title)}</strong>
-        <small>${v.duration || "0:00"} • ${v.views || "0"} views</small>
+        <small>${v.duration || "0:00"} • ${v.views || "0"} tayangan</small>
       </div>
       <b>${fmtNum(v.likes || 0)} ♥</b>
     </div>
@@ -28225,7 +28225,7 @@ function renderAnKPIs() {
   $("#anKpiBandwidth") && ($("#anKpiBandwidth").textContent = anFormatBytes(m.bandwidthBytes));
   $("#anKpiEngagement") && ($("#anKpiEngagement").textContent = `${m.engagementPct.toFixed(1)}%`);
   $("#anKpiEngagementSub") && ($("#anKpiEngagementSub").textContent =
-    m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} views` : "likes ÷ views");
+    m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} tayangan` : "suka ÷ tayangan");
   $("#anKpiTotalSub") && ($("#anKpiTotalSub").textContent = m.videos.length ? `dari ${m.videos.length} video` : "global");
 }
 
@@ -28281,7 +28281,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "⏱️", title: "Total Watch Time", desc: "Estimasi total durasi tonton (views × durasi × retention).",
       value: anFormatWatchTime(sec),
-      valueSub: m.totalViews > 0 ? `dari ${fmtNum(m.totalViews)} views` : "belum ada views",
+      valueSub: m.totalViews > 0 ? `dari ${fmtNum(m.totalViews)} tayangan` : "belum ada tayangan",
       rows
     };
   },
@@ -28301,7 +28301,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "📡", title: "Bandwidth Estimasi", desc: "Estimasi konsumsi bandwidth dari semua views.",
       value: anFormatBytes(bytes),
-      valueSub: m.videos.length ? `${m.videos.length} video, ${fmtNum(m.totalViews)} views` : "belum ada konsumsi",
+      valueSub: m.videos.length ? `${m.videos.length} video, ${fmtNum(m.totalViews)} tayangan` : "belum ada konsumsi",
       rows
     };
   },
@@ -28329,7 +28329,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "❤️", title: "Engagement Rate", desc: "Rasio likes terhadap views — indikator kualitas konten.",
       value: rate.toFixed(1) + "%",
-      valueSub: m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} views` : "belum ada data",
+      valueSub: m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} tayangan` : "belum ada data",
       rows
     };
   },
@@ -28706,7 +28706,7 @@ function renderAnPerUserCharts(series, periodTotal) {
             </div>
             <div class="an-per-user-pills">
               <span class="an-per-user-pill" title="Views">
-                <i>👁️</i><b>${fmtNum(u.views)}</b><em>views</em>
+                <i>👁️</i><b>${fmtNum(u.views)}</b><em>tayangan</em>
               </span>
               <span class="an-per-user-pill" title="Followers">
                 <i>👥</i><b>${fmtNum(u.followers)}</b><em>followers</em>
@@ -28802,7 +28802,7 @@ function renderAnTrafficLegend(periodTotal) {
   el.innerHTML = `
     <div class="an-traffic-legend-head">
       <span>Distribution per user — top ${Math.min(5, top.length)}</span>
-      <span class="muted">total ${fmtNum(Math.round(periodTotal))} views</span>
+      <span class="muted">total ${fmtNum(Math.round(periodTotal))} tayangan</span>
     </div>
     <div class="an-traffic-legend-list">
       ${top.map((u, i) => {
@@ -29009,7 +29009,7 @@ function drawAnTrafficChart() {
   const m = anComputeMetrics();
   const series = anGenSeries(anState.range, m.totalViews);
   const total = series.values.reduce((s, v) => s + v, 0);
-  $("#anTrafficTotal") && ($("#anTrafficTotal").textContent = `${fmtNum(total)} views`);
+  $("#anTrafficTotal") && ($("#anTrafficTotal").textContent = `${fmtNum(total)} tayangan`);
   $("#anTrafficSubtitle") && ($("#anTrafficSubtitle").textContent =
     `Views distribution per user — ${anRangeLabel(anState.range)}`);
 
@@ -29112,7 +29112,7 @@ function renderAnTopVideosList(allVideos) {
         <div class="an-top-bar"><div class="an-top-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
       </div>
       <div class="an-top-stats">
-        <b>${fmtNum(v.viewsNum || 0)}</b><small>views</small>
+        <b>${fmtNum(v.viewsNum || 0)}</b><small>tayangan</small>
       </div>
     </div>`;
   }).join("");
@@ -29148,7 +29148,7 @@ function renderAnTopCreatorsList(allVideos) {
         <div class="an-top-bar"><div class="an-top-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
       </div>
       <div class="an-top-stats">
-        <b>${fmtNum(c.views)}</b><small>views</small>
+        <b>${fmtNum(c.views)}</b><small>tayangan</small>
       </div>
     </div>`;
   }).join("");
@@ -29736,7 +29736,7 @@ function openAdminVideoEdit(v) {
   $("#aveTags").value = v.tags || "";
   $("#aveVisibility").value = v.visibility || "public";
   $("#aveCreator").textContent = `@${v.creator || v._owner || "—"}`;
-  $("#aveStats").textContent = `${fmtNum(v.viewsNum || 0)} views • ${fmtNum(v.likes || 0)} likes`;
+  $("#aveStats").textContent = `${fmtNum(v.viewsNum || 0)} tayangan • ${fmtNum(v.likes || 0)} likes`;
   $("#aveThumb").src = v.thumb || "https://picsum.photos/seed/playly/240/140";
 
   const catSel = $("#aveCategory");
@@ -33053,7 +33053,7 @@ function videoCardHTML(v) {
       </div>
       <div class="video-info">
         <h4>${v.title}</h4>
-        <p><span class="creator">@${v.creator}</span> • ${v.views} views</p>
+        <p><span class="creator">@${v.creator}</span> • ${v.views} tayangan</p>
         <div class="video-actions">
           <button class="va-btn ${liked ? 'liked' : ''}" data-like="${v.id}">
             <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>
@@ -34501,7 +34501,7 @@ function renderHomeTierWidget() {
     ? myVideos.reduce((best, v) => (v.viewsNum || 0) > (best.viewsNum || 0) ? v : best, myVideos[0])
     : null;
   const topVideoLabel = topVideo ? `"${(topVideo.title || "Video").slice(0, 22)}${topVideo.title?.length > 22 ? "…" : ""}"` : "—";
-  const topVideoViews = topVideo ? `${topVideo.viewsNum || 0} views` : "Belum ada video";
+  const topVideoViews = topVideo ? `${topVideo.viewsNum || 0} tayangan` : "Belum ada video";
 
   // Member since — dari joinedAt akun
   const acc = (() => { try { return JSON.parse(localStorage.getItem(`playly-account-${user?.email}`) || "{}"); } catch { return {}; } })();
@@ -34526,7 +34526,7 @@ function renderHomeTierWidget() {
         <div class="tw-insight">
           <span class="tw-insight-label">Engagement rate</span>
           <strong>${engagement}%</strong>
-          <small>${totalViews} views · ${totalLikes} likes</small>
+          <small>${totalViews} tayangan · ${totalLikes} likes</small>
         </div>
         <div class="tw-insight">
           <span class="tw-insight-label">Rata-rata waktu tonton</span>
@@ -34832,7 +34832,7 @@ function _homeVideoCardHTML(v, opts) {
       </div>
       <div class="video-info">
         <h4>${escapeHtml(v.title || "")}</h4>
-        <p><span class="creator">@${escapeHtml(v.creator || "—")}</span> · ${views} views</p>
+        <p><span class="creator">@${escapeHtml(v.creator || "—")}</span> · ${views} tayangan</p>
       </div>
     </div>
   `;
@@ -35873,7 +35873,7 @@ function renderCreatorSpotlight() {
                 </div>
                 <div class="cs-top-vid-meta">
                   <strong>${escapeHtml(v.title || "Untitled")}</strong>
-                  <small>${fmtNum(v.viewsNum || 0)} views</small>
+                  <small>${fmtNum(v.viewsNum || 0)} tayangan</small>
                 </div>
               </button>
             `).join("")}
@@ -36120,7 +36120,7 @@ function renderFeatured() {
   // Real-time relative timestamp
   const ts = v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : null);
   const timeText = ts ? relTime(ts) : (v.time || "");
-  const viewsText = v.views ? `${v.views} views` : (typeof v.viewsNum === "number" ? `${fmtNum(v.viewsNum)} views` : "");
+  const viewsText = v.views ? `${v.views} tayangan` : (typeof v.viewsNum === "number" ? `${fmtNum(v.viewsNum)} tayangan` : "");
   // Badge "Baru" / "Trending" untuk visual distinction
   const badgeText = ownLatest ? "🆕 Video Baru" : "🔥 Trending";
 
@@ -37748,7 +37748,7 @@ function renderHistory() {
             <img class="rwt-thumb" src="${escapeHtml(v.thumb)}" alt=""/>
             <div class="rwt-video-meta">
               <strong>${escapeHtml(v.title)}</strong>
-              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} views</small>
+              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} tayangan</small>
             </div>
           </div>
         </td>
@@ -38330,7 +38330,7 @@ function renderDiscoverHero() {
       <div class="dh-text">
         <span class="dh-badge">🌟 TRENDING</span>
         <h2>${v.title}</h2>
-        <p>@${v.creator} • ${v.views} views • ${v.time}</p>
+        <p>@${v.creator} • ${v.views} tayangan • ${v.time}</p>
         <button class="btn primary" data-d-hero-play="${v.id}">▶ Tonton Sekarang</button>
       </div>
       <div class="dh-thumb">
@@ -45422,7 +45422,7 @@ function renderDownloadedList(currentId) {
   listEl.innerHTML = items.map(({ video: x, videoId }) => `
     <div class="upload-item ${videoId === currentId ? "active" : ""}" data-vid="${videoId}">
       <div class="mini-thumb"><img src="${x.thumb}" alt=""/><span class="duration">${x.duration}</span></div>
-      <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} views</p></div>
+      <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} tayangan</p></div>
     </div>
   `).join("");
   listEl.querySelectorAll(".upload-item").forEach(c => {
@@ -46235,7 +46235,7 @@ function openHsPopup(kind) {
       ] : [],
       list: myVideos.slice(0, 5).map(v => ({
         label: v.title || "Untitled",
-        value: `${fmtNum(v.viewsNum || 0)} views`
+        value: `${fmtNum(v.viewsNum || 0)} tayangan`
       })),
       jump: "videos",
     },
@@ -46252,7 +46252,7 @@ function openHsPopup(kind) {
       list: [...myVideos]
         .sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0))
         .slice(0, 5)
-        .map(v => ({ label: v.title || "Untitled", value: `${fmtNum(v.viewsNum || 0)} views` })),
+        .map(v => ({ label: v.title || "Untitled", value: `${fmtNum(v.viewsNum || 0)} tayangan` })),
     },
     following: {
       icon: "⭐",
@@ -46425,7 +46425,7 @@ function renderMyProfile() {
       </div>
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small>${views} views</small>
+        <small>${views} tayangan</small>
       </div>
     </div>`;
   };
@@ -47654,7 +47654,7 @@ async function openPlayer(id) {
             <div class="ps-related-meta">
               <strong>${escapeHtml(x.title || "(no title)")}</strong>
               <small>@${escapeHtml(x.creator || "—")}</small>
-              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} views · ${xUploaded}</span>
+              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} tayangan · ${xUploaded}</span>
             </div>
           </div>
         `;
@@ -47768,7 +47768,7 @@ async function openPlayer(id) {
     listEl.innerHTML = sideList.map(x => `
       <div class="upload-item ${x.id === id ? "active" : ""}" data-vid="${x.id}">
         <div class="mini-thumb"><img src="${x.thumb}" alt=""/><span class="duration">${x.duration}</span></div>
-        <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} views</p></div>
+        <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} tayangan</p></div>
         <button class="upload-item-dl" data-dl-vid="${x.id}" title="Download" aria-label="Download" type="button">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0-4-4m4 4 4-4M5 20h14"/></svg>
         </button>
@@ -49979,7 +49979,7 @@ function renderUserProfile() {
         </div>
         <div class="lib-meta">
           <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-          <small>${v.views || 0} views · ${escapeHtml(timeText)}</small>
+          <small>${v.views || 0} tayangan · ${escapeHtml(timeText)}</small>
         </div>
       </div>`;
     }).join("");
@@ -50042,7 +50042,7 @@ function renderUserProfile() {
           </div>
           <div class="lib-meta">
             <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} views</small>
+            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} tayangan</small>
           </div>
         </div>
       `).join("");
@@ -50525,7 +50525,7 @@ function buildAdminSearchResults(q) {
           type: "video",
           icon: "🎬",
           label: v.title,
-          sub: `@${v.creator} · ${v.views || 0} views`,
+          sub: `@${v.creator} · ${v.views || 0} tayangan`,
           payload: v.id,
           thumb: v.thumb,
         });
@@ -50571,7 +50571,7 @@ searchInput.addEventListener("input", e => {
     v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q) || (v.category || "").includes(q)
   ).slice(0, 6);
   sugg.innerHTML = matches.length
-    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} views</small></div></div>`).join("")
+    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} tayangan</small></div></div>`).join("")
     : `<div class="suggestion"><div><strong>Tidak ditemukan</strong><small>Coba kata kunci lain</small></div></div>`;
   $$("[data-vid]", sugg).forEach(s => s.addEventListener("click", () => {
     openPlayer(+s.dataset.vid);
@@ -52249,7 +52249,7 @@ if (tryAutoBoot()) {
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views · ${num(v.likes||0)} likes</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan · ${num(v.likes||0)} likes</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div></div>`;
@@ -52287,7 +52287,7 @@ if (tryAutoBoot()) {
       cdStatValue.textContent = num(totalViews);
       cdStatLabel.textContent = "views";
       const barsHtml = `<div class="cd-bars">${buckets.map((b,i) => `
-        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} views">
+        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} tayangan">
           <div class="cd-bar-fill" style="height: ${Math.max(4, (b/maxBar)*70)}px"></div>
           <div class="cd-bar-label">${esc(labels[i])}</div>
         </div>`).join("")}</div>`;
@@ -52300,11 +52300,11 @@ if (tryAutoBoot()) {
               <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")}</small>
             </div>
-            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>views</small></div>
+            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>tayangan</small></div>
           </button>`).join("")}</div>`;
       cdBody.innerHTML = `
         <div class="cd-section">
-          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} views</span></div>
+          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} tayangan</span></div>
           ${barsHtml}
         </div>
         <div class="cd-section">
@@ -52381,7 +52381,7 @@ if (tryAutoBoot()) {
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div>`;
