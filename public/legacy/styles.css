@@ -41636,6 +41636,10 @@ section[data-view="upload"] > .upload-tier-banner {
 .sf-status.sf-warn   { background: rgba(245, 158, 11, .15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, .3); }
 .sf-status.sf-ok     { background: rgba(16, 185, 129, .15); color: #86efac; border: 1px solid rgba(16, 185, 129, .3); }
 .sf-status.sf-bad    { background: rgba(239, 68, 68, .15);  color: #fca5a5; border: 1px solid rgba(239, 68, 68, .3); }
+/* v(light faint) sf-status: status pastel terang -> gelap di light supaya kebaca */
+body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-ok { color: #15803D; }
+body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-warn { color: #B45309; }
+body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-bad { color: #B91C1C; }
 .sf-status.sf-muted  { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
 .storage-file-size {
   font-weight: 700;
@@ -64877,7 +64881,7 @@ html body:not([data-role="admin"]) section[data-view="home"] .ha-badge-text smal
 /* Ajakan leaderboard (.lb-cta) di-set rgba .62 + !important → terlalu pudar
    utk kalimat motivasi penting. Naikkan ke .82 (tetap kalem, lebih kebaca). */
 html body:not([data-role="admin"]) section[data-view="home"] .home-ranking-section .lb-cta {
-  color: rgba(232, 216, 196, .82) !important;
+  color: var(--text-2) !important;
 }
 /* Clamp angka statistik di layar kecil supaya 4 kolom tak sesak. */
 @media (max-width: 560px) {
