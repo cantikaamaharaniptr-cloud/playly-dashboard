@@ -8678,6 +8678,16 @@ body[data-theme="light"].player-view-active .main {
   white-space: nowrap;
   padding: 0 6px;
 }
+/* v112 (responsif): padatkan control bar player di HP supaya 9 kontrol muat
+   (sebelumnya grup kanan tumpah ~17px keluar layar di <=480px). */
+@media (max-width: 480px) {
+  .cpl-controls { padding: 6px 4px 8px; }
+  .cpl-ctrl-btn { width: 30px; height: 30px; border-radius: 6px; }
+  .cpl-ctrl-btn svg { width: 16px; height: 16px; }
+  .cpl-ctrl-left { gap: 1px; }
+  .cpl-ctrl-right { gap: 0; }
+  .cpl-time { font-size: 11px; padding: 0 3px; letter-spacing: 0; }
+}
 
 /* ── 3-dots popup menu (muncul ke ATAS) ── */
 .cpl-dots-wrap { position: relative; display: flex; }
