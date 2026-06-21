@@ -33702,14 +33702,14 @@ body.sidebar-open .sidebar-backdrop {
   opacity: 1;
   pointer-events: auto;
 }
-@media (min-width: 769px) {
+@media (min-width: 901px) {
   /* Sidebar permanent di ≥769px — backdrop tidak diperlukan */
   .sidebar-backdrop { display: none !important; }
 }
 
 /* === HAMBURGER BUTTON visibility === */
 .icon-btn.mobile-only { display: none; }
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .icon-btn.mobile-only {
     display: grid;
     place-items: center;
