@@ -36350,11 +36350,20 @@ function ensureLibSort() {
     bar.innerHTML =
       '<div class="lib-bar-left">' +
         '<span class="dl-head-count" id="libVideoCount"></span>' +
-        '<div class="lib-vis-chips" role="group" aria-label="Filter visibilitas">' +
-          '<button type="button" data-visf="all">Semua</button>' +
-          '<button type="button" data-visf="public">Publik</button>' +
-          '<button type="button" data-visf="unlisted">Tidak terdaftar</button>' +
-          '<button type="button" data-visf="private">Privat</button>' +
+        // v818: chip 4-tombol diganti SATU dropdown "Filter" (visibilitas) supaya
+        // toolbar tak sesak. Pola sama dgn dropdown Urutkan.
+        '<div class="lib-vis-dd">' +
+          '<button type="button" class="lib-sort-trigger" id="libVisTrigger" aria-haspopup="listbox" aria-expanded="false" title="Filter visibilitas">' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>' +
+            '<span id="libVisCurrent">Semua</span>' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</button>' +
+          '<div class="lib-sort-menu" id="libVisMenu" role="listbox" hidden>' +
+            '<button type="button" role="option" data-visf="all">Semua</button>' +
+            '<button type="button" role="option" data-visf="public">Publik</button>' +
+            '<button type="button" role="option" data-visf="unlisted">Tidak terdaftar</button>' +
+            '<button type="button" role="option" data-visf="private">Privat</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="lib-bar-right">' +
@@ -36422,9 +36431,12 @@ function ensureLibSort() {
     const _ins = (el, ref) => { if (el.parentNode !== _lview || el.nextElementSibling !== ref) _lview.insertBefore(el, ref); };
     _ins(bulk, _firstSec); _ins(bar, bulk);
   }
-  { // sinkron chip aktif (value input dibiarkan agar fokus tak hilang)
+  { // sinkron dropdown filter visibilitas (label + opsi aktif)
+    const VISL = { all: "Semua", public: "Publik", unlisted: "Tidak terdaftar", private: "Privat" };
     const vf = state.libVisFilter || "all";
-    bar.querySelectorAll(".lib-vis-chips button").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
+    const vcur = document.getElementById("libVisCurrent");
+    if (vcur) vcur.textContent = VISL[vf] || "Semua";
+    bar.querySelectorAll("#libVisMenu button[data-visf]").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
   }
   // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
   {
@@ -36441,6 +36453,47 @@ function ensureLibSort() {
   bar.querySelectorAll(".lib-sort-menu button").forEach(b => b.classList.toggle("active", b.dataset.sort === cur));
   // v803: scoping toolbar per tab aktif (count + sembunyikan kontrol tak relevan).
   if (typeof _libSyncToolbar === "function") _libSyncToolbar();
+  // v818: gabung alat ke baris tab (satu baris: tab kiri, alat kanan).
+  if (typeof ensureLibMergedBar === "function") ensureLibMergedBar();
+}
+// v818: GABUNG alat ke baris tab — tab di kiri (.lib-tabs-group), alat di kanan
+// (.lib-tools-group: jumlah, filter, cari, toggle, urutkan, Pilih). Idempotent +
+// self-healing (tab/alat yg nyasar dikumpulkan ulang tiap render). Bar lama
+// (#libSortBar) dikosongkan & disembunyikan.
+function ensureLibMergedBar() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const tabBar = view.querySelector('.riwayat-tab-bar');
+  const sortBar = document.getElementById('libSortBar');
+  if (!tabBar || !sortBar) return;
+  // grup tab (kiri)
+  let tabsG = tabBar.querySelector(':scope > .lib-tabs-group');
+  if (!tabsG) { tabsG = document.createElement('div'); tabsG.className = 'lib-tabs-group'; tabBar.insertBefore(tabsG, tabBar.firstChild); }
+  // kumpulkan semua tombol tab (di mana pun di tabBar) ke grup, jaga urutan DOM
+  tabBar.querySelectorAll('.riwayat-tab').forEach(t => { if (t.parentNode !== tabsG) tabsG.appendChild(t); });
+  // grup alat (kanan)
+  let toolsG = tabBar.querySelector(':scope > .lib-tools-group');
+  if (!toolsG) { toolsG = document.createElement('div'); toolsG.className = 'lib-tools-group'; tabBar.appendChild(toolsG); }
+  // v822: jumlah video ("9 Video") dipindah ke HEADER (samping judul), keluar dari
+  // baris alat supaya tak rame. Disisipkan setelah h2 judul (deskripsi tetap baris bawah).
+  const headerText = view.querySelector('.view-header .lib-header-text');
+  const count = document.getElementById('libVideoCount');
+  if (headerText && count && count.parentNode !== headerText) {
+    const h2 = headerText.querySelector('h1, h2, h3');
+    if (h2) headerText.insertBefore(count, h2.nextSibling);
+    else headerText.appendChild(count);
+  }
+  // pindahkan kontrol ke grup alat dengan URUTAN tetap (skip kalau sudah di sana)
+  const order = [
+    sortBar.querySelector('.lib-vis-dd') || toolsG.querySelector('.lib-vis-dd'),
+    sortBar.querySelector('.lib-search') || toolsG.querySelector('.lib-search'),
+    sortBar.querySelector('.lib-view-toggle') || toolsG.querySelector('.lib-view-toggle'),
+    sortBar.querySelector('.lib-sort-dd') || toolsG.querySelector('.lib-sort-dd'),
+    document.getElementById('libPickBtn'),
+  ];
+  order.forEach(el => { if (el && el.parentNode !== toolsG) toolsG.appendChild(el); });
+  // bar lama kosong → sembunyikan (tetap di DOM agar tak di-rebuild & duplikat id)
+  sortBar.classList.add('lib-merged-empty');
 }
 // v803: sesuaikan toolbar dengan tab aktif. Video Saya/Draf = toolbar penuh
 // (cari, filter, Pilih, sort). Status/Unduhan = hanya toggle Grid/List (kontrol
@@ -36455,6 +36508,8 @@ function _libSyncToolbar() {
   const bar = document.getElementById("libSortBar");
   // own = toolbar penuh; lainnya = scope-other (hanya toggle Grid/List).
   if (bar) bar.classList.toggle("scope-other", !own);
+  // v818: scope juga di-level VIEW (alat kini di baris tab, bukan dlm #libSortBar).
+  view.dataset.libscope = own ? "own" : "other";
   if (!own && window._libSelectMode && typeof _libApplySelectMode === "function") _libApplySelectMode(false);
   if (own) {
     const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
@@ -36616,13 +36671,21 @@ document.addEventListener("click", (e) => {
     else if (inp && (inp.value || "").trim()) { inp.value = ""; if (typeof state !== "undefined") state.libSearch = ""; if (typeof _libApplySearchFilter === "function") _libApplySearchFilter(); }
     return;
   }
-  // v801: chip filter visibilitas
-  const visfBtn = e.target.closest(".lib-vis-chips button[data-visf]");
-  if (visfBtn) {
-    if (typeof state !== "undefined") state.libVisFilter = visfBtn.dataset.visf;
+  // v818: dropdown filter visibilitas (trigger toggle + pilih opsi + tutup luar)
+  const visMenu = document.getElementById("libVisMenu");
+  const visTrig = e.target.closest("#libVisTrigger");
+  if (visTrig) {
+    if (visMenu) { const willOpen = visMenu.hidden; visMenu.hidden = !willOpen; visTrig.setAttribute("aria-expanded", String(willOpen)); }
+    return;
+  }
+  const visOpt = e.target.closest("#libVisMenu button[data-visf]");
+  if (visOpt) {
+    if (typeof state !== "undefined") state.libVisFilter = visOpt.dataset.visf;
+    if (visMenu) visMenu.hidden = true;
     if (typeof renderMyLibrary === "function") renderMyLibrary();
     return;
   }
+  if (visMenu && !visMenu.hidden && !e.target.closest(".lib-vis-dd")) visMenu.hidden = true;
   // v799b: tombol "Pilih" → toggle mode pilih-banyak
   const pickBtn = e.target.closest("#libPickBtn");
   if (pickBtn) { _libApplySelectMode(!window._libSelectMode); return; }
@@ -36696,9 +36759,10 @@ function ensureDraftTab() {
   btn.dataset.focusTab = "draft";
   btn.innerHTML = `<span class="ptb-ico">${DRAFT_TAB_ICO}</span> Draf <span class="ptb-count" id="libDraftTabCount" hidden></span>`;
   // Sisipkan tepat setelah tab "Video Saya" (draf = lanjutan dari video saya).
+  // v818: pakai parent AKTUAL myTab (tab bisa pindah ke .lib-tabs-group saat alat
+  // digabung ke baris tab) supaya insertBefore tak error.
   const myTab = [...bar.querySelectorAll(".riwayat-tab")].find(t => t.dataset.focusTab === "my-video");
-  if (myTab && myTab.nextSibling) bar.insertBefore(btn, myTab.nextSibling);
-  else if (myTab) bar.appendChild(btn);
+  if (myTab) myTab.parentNode.insertBefore(btn, myTab.nextSibling);
   else bar.insertBefore(btn, bar.firstChild);
 }
 // v750: tab status "all" diberi makna PENDING saja → relabel "Bermasalah" jadi
@@ -36748,7 +36812,10 @@ function renderMyLibrary() {
   const renderCard = (v, opts = {}) => {
     const id = v.id;
     const title = escapeHtml(v.title || "Video");
-    const thumb = v.thumb || v.thumbnail || "";
+    let thumb = v.thumb || v.thumbnail || "";
+    // Abaikan placeholder SVG kosong (data:image/svg+xml...<svg/>) -> anggap TANPA thumbnail
+    // supaya tampil placeholder rapi (.lib-thumb-fallback), bukan kotak blank. User 2026-06-21.
+    if (thumb && (thumb.indexOf("%3Csvg%2F%3E") !== -1 || thumb.indexOf("<svg/>") !== -1)) thumb = "";
     const creator = escapeHtml(v.creator || v.uploader || "—");
     const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
     const duration = v.duration || "";
@@ -36756,7 +36823,7 @@ function renderMyLibrary() {
     // Info tambahan kartu: jumlah suka, badge visibilitas, tanggal upload (data asli).
     const likes = v.likesNum != null ? fmtNum(v.likesNum) : fmtNum(v.likes || 0);
     const cmts = (typeof state !== "undefined" && state.comments && Array.isArray(state.comments[id])) ? state.comments[id].length : 0;
-    const _visMap = { public: { t: "🌐 Publik", c: "pub" }, unlisted: { t: "🔗 Unlisted", c: "unl" }, private: { t: "🔒 Privat", c: "prv" } };
+    const _visMap = { public: { t: "🌐 Publik", c: "pub" }, unlisted: { t: "🔗 Tidak terdaftar", c: "unl" }, private: { t: "🔒 Privat", c: "prv" } };
     const _vis = _visMap[v.visibility] || _visMap.public;
     // Badge hanya untuk non-publik (unlisted/private) — publik = default, tak perlu.
     const visBadge = (v.visibility && v.visibility !== "public") ? `<span class="lib-thumb-vis ${_vis.c}">${_vis.t}</span>` : "";
@@ -36767,10 +36834,10 @@ function renderMyLibrary() {
     if (opts.showStatus) {
       const st = v.adminStatus || "published";
       const map = {
-        pending:   { label: "⏳ Pending Review", cls: "warn" },
-        published: { label: "✓ Published",       cls: "ok" },
-        rejected:  { label: "✕ Rejected",        cls: "bad" },
-        takedown:  { label: "⛔ Takedown",        cls: "bad" },
+        pending:   { label: "⏳ Menunggu Tinjauan", cls: "warn" },
+        published: { label: "✓ Terbit",       cls: "ok" },
+        rejected:  { label: "✕ Ditolak",        cls: "bad" },
+        takedown:  { label: "⛔ Diturunkan",        cls: "bad" },
       };
       const m = map[st];
       if (m && st !== "published") {
@@ -36837,7 +36904,7 @@ function renderMyLibrary() {
       ${menuHtml}
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small class="lib-meta-stats">${views} views · ${likes} suka · ${cmts} komentar</small>
+        <small class="lib-meta-stats">${views} tayangan · ${likes} suka · ${cmts} komentar</small>
         ${dateStr ? `<small class="lib-meta-date">${dateStr}</small>` : ""}
       </div>
     </div>`;
@@ -36893,7 +36960,7 @@ function renderMyLibrary() {
 
   // 1. My Videos — hanya yang sudah disetujui admin (+ delete button)
   renderLibSection(_libFilterList(myVideos), "myVideoGrid", "myVideoCount", LIB_FILM,
-    "No videos are live yet. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload now</a>",
+    "Belum ada video yang tayang. <a href='#' data-jump='upload' style='color:var(--primary)'>Unggah sekarang</a>",
     { showStatus: true, canDelete: true });
 
   // 2. Status Videos — render section sesuai sub-tab aktif.
@@ -37401,6 +37468,12 @@ document.addEventListener("click", e => {
   // setLibraryTab yang meng-update breadcrumb).
   if (view.dataset.view === "videos") {
     try { closeLibInlinePlayer(); } catch {}
+    // Sinkron sistem LAMA data-lib-active (CSS visibility section ber-data-lib di styles.css
+    // ~36607) supaya tab Status Video & Unduhan IKUT TAMPIL. Dulu klik tab halaman cuma
+    // applyFocus (data-focus-hidden); data-lib-active stale -> section status/download blank.
+    // Bug user 2026-06-21. Draft tak ber-data-lib jadi tak perlu (dikontrol focus saja).
+    const _f2l = { "my-video": "my", "status-videos": "status", "download": "download" };
+    if (_f2l[key] && typeof setLibraryTab === "function") setLibraryTab(_f2l[key]);
     const TAB_LABEL = { "my-video": "Video Saya", "draft": "Draf", "status-videos": "Status Video", "download": "Unduhan" };
     const last = document.getElementById("breadcrumb")?.querySelector("a.active");
     if (last && TAB_LABEL[key]) {

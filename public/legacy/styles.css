@@ -2655,6 +2655,11 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 18px;
 }
+/* Seragamkan stroke ikon GARIS di Pustaka Saya -> 1.8 (per user 2026-06-21).
+   Kecuali picon/ui-ico (sistem ikon sendiri) & ikon fill (kebab dot, fill != none). */
+.view[data-view="videos"] svg[fill="none"]:not(.picon):not(.ui-ico) {
+  stroke-width: 1.8px;
+}
 .lib-item {
   border-radius: 12px;
   overflow: hidden;
@@ -2674,7 +2679,27 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   background: var(--bg-elev-2) center/cover no-repeat;
   display: grid; place-items: center;
 }
-.lib-thumb-fallback { font-size: 32px; opacity: .55; }
+/* Placeholder thumbnail kosong (video tanpa thumbnail) — lebih rapi, tak melompong.
+   Gradient halus + ikon + label. Per user 2026-06-21. */
+.lib-thumb:has(> .lib-thumb-fallback) {
+  background-image: linear-gradient(135deg, var(--bg-elev-2), var(--bg-elev));
+}
+.lib-thumb-fallback {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 28px;
+  line-height: 1;
+  opacity: .42;
+}
+.lib-thumb-fallback::after {
+  content: "Tanpa thumbnail";
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  opacity: .9;
+}
 .lib-thumb-dur {
   position: absolute;
   bottom: 6px; right: 6px;
@@ -72105,19 +72130,29 @@ textarea#upDesc.upf-desc-textarea {
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
 
 /* ===================================================================
-   PUSTAKA SAYA — header jadi KARTU seperti halaman Statistik
-   (ikon + judul + deskripsi dalam kartu wine bertepi cream).
+   PUSTAKA SAYA — header POLOS (per user 2026-06-21): kartu wine besar
+   dibuang; jadi judul + deskripsi biasa supaya bagian atas ringan.
    =================================================================== */
 section[data-view="videos"] .view-header {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-elev)), var(--bg-elev)) !important;
-  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
-  border-radius: 16px !important;
-  padding: 18px 20px !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,.26) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 2px 2px !important;
+  box-shadow: none !important;
   align-items: center !important;
-  margin-bottom: 18px !important;
+  margin-bottom: 12px !important;
 }
 section[data-view="videos"] .view-header .lib-header-flex { align-items: center !important; }
+/* v819: ikon DIBESARKAN (user: kekecilan) — kotak aksen ~40px. */
+section[data-view="videos"] .view-header .sec-icon-lg { width: 40px !important; height: 40px !important; border-radius: 11px !important; }
+section[data-view="videos"] .view-header .sec-icon-lg svg { width: 22px !important; height: 22px !important; }
+section[data-view="videos"] .view-header .lib-header-flex h1,
+section[data-view="videos"] .view-header .lib-header-flex h2,
+section[data-view="videos"] .view-header .lib-header-flex h3 { font-size: 20px !important; }
+/* v822: "9 Video" pindah ke samping judul (baris 1); deskripsi tetap baris 2. */
+section[data-view="videos"] .view-header .lib-header-text { display: flex !important; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+section[data-view="videos"] .view-header .lib-header-text > p { flex-basis: 100%; margin: 0 !important; }
+section[data-view="videos"] .view-header .lib-header-text > #libVideoCount::before { content: "·"; margin-right: 8px; opacity: .5; }
 
 /* ===================================================================
    PUSTAKA SAYA — kartu: badge visibilitas + meta lebih kaya + sort bar.
@@ -72156,19 +72191,87 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v806: satu baris toolbar — grup kiri (jumlah+chip) & kanan (cari/Pilih/toggle/sort) */
 #libSortBar .lib-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
 /* v808: jumlah = teks polos (label), bukan kotak/pill spt chip → tidak terlihat
-   seperti tombol filter. */
-#libSortBar #libVideoCount.dl-head-count {
+   seperti tombol filter. (v818: view-scoped agar tetap berlaku saat count dipindah
+   ke baris tab.) */
+.view[data-view="videos"] #libVideoCount.dl-head-count {
   flex: none; background: transparent !important; border: 0 !important;
   padding: 0 !important; box-shadow: none !important;
   color: rgba(232,216,196,.6) !important; font-weight: 600 !important; font-size: 13px !important;
 }
 #libSortBar .lib-search.collapsible { margin-left: 0 !important; }
-/* Status/Unduhan: hanya toggle Grid/List */
+/* Status/Unduhan: hanya toggle Grid/List (kontrol lain disembunyikan).
+   v818: scope di-level VIEW karena alat kini hidup di baris tab, bukan #libSortBar. */
 .view[data-view="videos"] #libSortBar.scope-other { justify-content: flex-end !important; }
 #libSortBar.scope-other .lib-bar-left,
 #libSortBar.scope-other .lib-search,
 #libSortBar.scope-other #libPickBtn,
-#libSortBar.scope-other .lib-sort-dd { display: none !important; }
+#libSortBar.scope-other .lib-sort-dd,
+.view[data-view="videos"][data-libscope="other"] #libVideoCount,
+.view[data-view="videos"][data-libscope="other"] .lib-vis-dd,
+.view[data-view="videos"][data-libscope="other"] .lib-search,
+.view[data-view="videos"][data-libscope="other"] #libPickBtn,
+.view[data-view="videos"][data-libscope="other"] .lib-sort-dd { display: none !important; }
+/* v818: GABUNG alat ke baris tab — tab kiri, alat kanan, satu baris.
+   Tab & alat dibungkus grup; baris tab jadi space-between. */
+.view[data-view="videos"] .riwayat-tab-bar {
+  justify-content: space-between !important;
+  align-items: center !important;
+  row-gap: 10px !important;
+}
+.view[data-view="videos"] .lib-tabs-group,
+.view[data-view="videos"] .lib-tools-group {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0;
+}
+/* v820: SAMAKAN tinggi semua kontrol di baris tab (tab tadinya 35, alat 27-34 →
+   ragged). Semua jadi 34px + radius 10px + box-sizing border-box biar rata. */
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab,
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-search.collapsible input,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn {
+  height: 34px !important;
+  box-sizing: border-box !important;
+  border-radius: 10px !important;
+}
+/* trigger dropdown & tombol pakai flex center supaya konten center vertikal */
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle { display: inline-flex; align-items: center; }
+/* v821: ALAT kanan jadi RINGAN/ghost supaya baris tak rame — transparan tanpa
+   bingkai; hover baru muncul isian. Status aktif (toggle grid/list) tetap wine.
+   Tab kiri tetap kotak. Ini perubahan yg jelas terlihat. */
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger:hover,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn:hover,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle:hover,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle:hover {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+/* toggle grid/list: tombol AKTIF tetap wine (penanda mode aktif) */
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle .lib-vt-btn.active {
+  background: var(--primary) !important; color: #fff !important;
+}
+/* v822: TAB tak aktif juga diringankan (per user) — transparan tanpa kotak;
+   hanya tab AKTIF yang wine. Hover munculkan isian samar. */
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab:not(.active) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab:not(.active):hover {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+.view[data-view="videos"] #libSortBar.lib-merged-empty { display: none !important; }
 /* v799b: tombol Pilih + checkbox kartu + bar aksi massal */
 .lib-pick-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -72280,12 +72383,14 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 }
 .lib-search.collapsible.open input { width: 210px; opacity: 1; margin-left: 8px; pointer-events: auto; }
 .lib-vis-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+/* v818: chip filter dibuat SEKUNDER (flat/transparan) supaya tak terlihat seperti
+   baris tab kedua — hierarki: tab = kotak solid, chip = filter tipis. */
 .lib-vis-chips button {
   padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
-  background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.75);
+  background: transparent; border: 1px solid rgba(232,216,196,.14); color: rgba(232,216,196,.6);
   cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
-.lib-vis-chips button:hover { border-color: rgba(232,216,196,.5); color: var(--cream); }
+.lib-vis-chips button:hover { background: var(--bg-elev); border-color: rgba(232,216,196,.4); color: var(--cream); }
 .lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 /* v801b: pesan saat cari tak ada hasil */
 .lib-nomatch {
@@ -72433,6 +72538,9 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 .view[data-view="videos"] .lib-sort-bar { display: flex !important; align-items: center !important; gap: 8px !important; }
 .view[data-view="videos"] .lib-sort-label { font-size: 12px !important; color: var(--muted) !important; font-weight: 600 !important; }
 .lib-sort-dd { position: relative; }
+.lib-vis-dd { position: relative; }
+/* v818: menu filter visibilitas buka rata-KIRI (dropdown ada di sisi kiri bar). */
+#libVisMenu { right: auto; left: 0; }
 .lib-sort-trigger {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
@@ -72842,7 +72950,7 @@ section[data-view="videos"] .view-header .lib-header-flex { align-items: center 
 /* v751: rapatkan jarak tab utama ↔ sub-tab/konten. Gap-nya dari flex-gap view
    (20px) + margin → ~38px (mengambang). Kecilkan flex-gap jadi 14px & nol-kan
    margin tab-bar/section supaya jarak bersih & konsisten. */
-.view[data-view="videos"] { gap: 14px !important; }
+.view[data-view="videos"] { gap: 16px !important; }
 .view[data-view="videos"] .riwayat-tab-bar { margin-bottom: 0 !important; }
 .view[data-view="videos"] .lib-card.lib-card-bare { margin-top: 0 !important; }
 
