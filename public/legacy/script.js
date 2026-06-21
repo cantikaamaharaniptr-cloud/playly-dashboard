@@ -7599,7 +7599,7 @@ const I18N = {
     "stats.chart.comments":      "Grafik Stats Komentar",
     "stats.empty.video":         "Belum ada data video.",
     "stats.empty.views":         "Belum ada data views.",
-    "stats.empty.followers":     "Belum ada data followers.",
+    "stats.empty.followers":     "Belum ada data pengikut.",
     "trending.empty.title":      "Belum ada trending hari ini.",
     "trending.empty.desc":       "Konten akan muncul setelah ada aktivitas baru.",
     "activity.desc":             "Semua aktivitas yang berkaitan dengan akun kamu.",
@@ -32306,7 +32306,7 @@ function renderStatsRow() {
     { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
     { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
     { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
-    { label: "Followers", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
+    { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
     { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
   ];
 
@@ -37566,7 +37566,7 @@ function buildChartMetricTabs() {
   if (!bar) {
     bar = document.createElement("div");
     bar.className = "chart-metric-tabs";
-    const metrics = [["views", "Tontonan"], ["videos", "Video"], ["followers", "Followers"], ["comments", "Komentar"]];
+    const metrics = [["views", "Tontonan"], ["videos", "Video"], ["followers", "Pengikut"], ["comments", "Komentar"]];
     bar.innerHTML = metrics.map(([m, l]) => `<button type="button" class="cmt-btn" data-chart-metric-tab="${m}">${l}</button>`).join("");
     stack.parentElement.insertBefore(bar, stack);
     bar.addEventListener("click", (e) => {
@@ -52484,8 +52484,8 @@ function setStatsTab(tab) {
   // Update title + breadcrumb sesuai tab.
   const meta = {
     "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.", crumb: "Statistik" },
-    "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
-    "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },
+    "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, pengikut, dan engagement.",             crumb: "Ringkasan" },
+    "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, pengikut, dan komentar per minggu/bulan/tahun.",         crumb: "Grafik" },
     "top-video":  { title: "Performa Video",       desc: "Tabel performa tiap video — tontonan, suka, komentar, dan engagement.",       crumb: "Performa Video" },
     "traffic":    { title: "Sumber Trafik",        desc: "Dari mana penonton menemukan video kamu.",                                    crumb: "Sumber Trafik" },
     "geo":        { title: "Audiens per Negara",   desc: "Sebaran lokasi penonton berdasarkan negara.",                                 crumb: "Audiens" },
