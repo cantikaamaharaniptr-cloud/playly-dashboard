@@ -7590,7 +7590,7 @@ const I18N = {
     "user.live.desc":             "Stream live ke followers kamu real-time. Fitur Premium.",
     "user.stats.premium":         "Analytics lanjutan & tren prediktif — eksklusif untuk kreator Premium.",
     "user.followsyou":            "Mengikuti kamu",
-    "user.likes.empty":           "Belum ada video yang di-like.",
+    "user.likes.empty":           "Belum ada video yang disukai.",
     "user.comments.empty":        "Belum ada komentar.",
     "user.nodata":                "Belum ada data.",
     // ===== SETTINGS / SECURITY =====
