@@ -45152,6 +45152,57 @@ html body[data-theme="light"]:not([data-role="admin"]) .hpc-stat strong { backgr
 html body[data-theme="light"]:not([data-role="admin"]) .psp-title { background: linear-gradient(135deg, #B45309, #6D2932) !important; -webkit-background-clip: text !important; background-clip: text !important; -webkit-text-fill-color: transparent !important; color: transparent !important; }
 html body[data-theme="light"]:not([data-role="admin"]) .psp-date-row { background: var(--surface-2) !important; border-color: var(--border) !important; }
 
+/* light contrast fix v4 2026-06-21: KPI Statistik + sisa teks gold/cream pudar
+   di light → wine/abu terbaca, konsisten (user: "jangan ada warna pink"). Sumber
+   pudar: .stat-label pakai var(--cream)→#FFF (invisible), .stat-value #F5E3C0,
+   .stat-trend gold #BFA98A. Spesifisitas #statsRow + !important utk menang. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] #statsRow .stat-label,
+html body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-label {
+  color: var(--text-2) !important; -webkit-text-fill-color: var(--text-2) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] #statsRow .stat-value,
+html body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-value {
+  color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-trend.up {
+  color: #047857 !important; -webkit-text-fill-color: #047857 !important; background: rgba(4,120,87,.10) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-trend.up svg { color: #047857 !important; }
+html body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-trend.neutral {
+  color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important; background: var(--surface-2) !important;
+}
+/* Pusat Bantuan: eyebrow "Masih butuh bantuan?" pakai cream .7 (rule dark) →
+   pudar/pink di panel putih. Light: jadi abu wine terbaca. */
+html body[data-theme="light"]:not([data-role="admin"]) .help-panel .help-contact-head {
+  color: var(--text-2) !important; -webkit-text-fill-color: var(--text-2) !important;
+}
+/* Unggah: teks dropzone & tombol ghost subtitle pakai cream (didesain dropzone
+   gelap) → pudar/pink di light. Light: wine/abu terbaca, konsisten. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .dz-pro-empty p b,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-left .dz-pro-empty p b,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-right .dz-pro-empty p b {
+  color: var(--primary) !important; -webkit-text-fill-color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .dz-pro-empty p,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-left .dz-pro-empty p,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-right .dz-pro-empty p {
+  color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .dz-pro-empty small,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-left .dz-pro-empty small,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-right .dz-pro-empty small {
+  color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .dz-pro-empty small b,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-left .dz-pro-empty small b,
+html body[data-theme="light"]:not([data-role="admin"]) .upload-col-right .dz-pro-empty small b {
+  color: var(--text-2) !important; -webkit-text-fill-color: var(--text-2) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-btn,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-btn span {
+  color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+}
+
 /* === SIGNUP STEPPER (Profil/Username/Akun/Selesai) — light user ===
    Default state pakai `var(--surface-2)` + `var(--bg-elev)` yang sekarang sama
    warna dgn card bg cream → step pending & active jadi invisible. Plus user
