@@ -8,6 +8,14 @@
    yang banyak dipakai di .btn, .follow-back-tag, .admin-mode-banner, dll. */
 [hidden] { display: none !important; }
 
+/* Seragamkan ketebalan ikon GARIS (per user 2026-06-21): semua line-icon di
+   dashboard user -> stroke-width 1.8 supaya konsisten (dulu campur 1/1.6/2/2.2).
+   Kecuali .picon & .ui-ico (sistem ikon lain). Scope: non-admin. */
+body:not([data-role="admin"]) svg[fill="none"]:not(.picon):not(.ui-ico),
+body:not([data-role="admin"]) svg[fill="none"]:not(.picon):not(.ui-ico) * {
+  stroke-width: 1.8px !important;
+}
+
 :root {
   /* Dark Red & Warm Gray palette — 4 anchor colors:
        Near-Black #1a0c10 / Deep Red #6D2932 / Warm Gray #C7B7A3 / Light Gray #E8D8C4
