@@ -93,7 +93,7 @@ body[data-theme="light"] {
   --surface-3: rgba(17, 24, 39, 0.10);
   --border: rgba(17, 24, 39, 0.10);
   --border-strong: rgba(17, 24, 39, 0.20);
-  --text: #3F3A37;        /* Netral near-black — teks utama */
+  --text: #6D2932;        /* Netral near-black — teks utama */
   --text-2: #5F564E;      /* Netral slate — teks sekunder */
   --muted: #7A716A;       /* Netral gray — muted/meta */
   --primary: #842A3B;     /* Wine — aksen (tombol/active/link) DIPERTAHANKAN */
