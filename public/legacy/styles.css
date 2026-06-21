@@ -83,31 +83,33 @@ body[data-theme="light"] {
      light mode standar/profesional. Wine text & accents tetap = brand identity.
      2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
      nested chip slightly grey (#F5F5F5). */
-  --bg: #FAFAFA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
+  /* v(netral bersih 2026-06-21): struktur NETRAL (teks/muted/border/surface/shadow
+     abu netral), wine DIPERTAHANKAN hanya sebagai aksen (tombol/primary/active). */
+  --bg: #F7F8FA;          /* Page bg — netral clean off-white */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
-  --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(102, 34, 34, 0.04);
-  --surface-2: rgba(102, 34, 34, 0.07);
-  --surface-3: rgba(102, 34, 34, 0.12);
-  --border: rgba(102, 34, 34, 0.12);
-  --border-strong: rgba(102, 34, 34, 0.28);
-  --text: #662222;        /* Deep wine — main text */
-  --text-2: #842A3B;      /* Wine — secondary text */
-  --muted: #A3485A;       /* Light wine — muted/meta */
-  --primary: #842A3B;     /* Wine — primary actions */
-  --primary-hover: #662222; /* Deep wine — hover */
-  --primary-deep: #4A1818;  /* Darker wine — pressed/deepest */
+  --bg-elev-2: #FFFFFF;   /* Accent surface — pure white */
+  --surface: rgba(17, 24, 39, 0.03);
+  --surface-2: rgba(17, 24, 39, 0.06);
+  --surface-3: rgba(17, 24, 39, 0.10);
+  --border: rgba(17, 24, 39, 0.10);
+  --border-strong: rgba(17, 24, 39, 0.20);
+  --text: #1F2430;        /* Netral near-black — teks utama */
+  --text-2: #4B5563;      /* Netral slate — teks sekunder */
+  --muted: #6B7280;       /* Netral gray — muted/meta */
+  --primary: #842A3B;     /* Wine — aksen (tombol/active/link) DIPERTAHANKAN */
+  --primary-hover: #6D2932;
+  --primary-deep: #561C24;
   --primary-soft: rgba(132, 42, 59, 0.10);
-  --accent: #A3485A;      /* Light wine — accents */
-  --accent-soft: rgba(163, 72, 90, 0.18);
-  --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
-  --shadow-sm: 0 1px 2px rgba(102,34,34,.06), 0 2px 6px rgba(102,34,34,.05);
-  --shadow-md: 0 4px 12px rgba(102,34,34,.08), 0 12px 32px rgba(102,34,34,.07);
-  --shadow-lg: 0 8px 24px rgba(102,34,34,.10), 0 24px 60px rgba(102,34,34,.12);
-  --grad-soft:  linear-gradient(135deg, rgba(132, 42, 59, 0.08), rgba(132, 42, 59, 0.02));
+  --accent: #842A3B;      /* Wine — aksen */
+  --accent-soft: rgba(132, 42, 59, 0.14);
+  --cream: #FFFFFF;       /* White — teks di tombol wine */
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.06), 0 2px 6px rgba(17,24,39,.05);
+  --shadow-md: 0 4px 12px rgba(17,24,39,.08), 0 12px 32px rgba(17,24,39,.07);
+  --shadow-lg: 0 8px 24px rgba(17,24,39,.10), 0 24px 60px rgba(17,24,39,.12);
+  --grad-soft:  linear-gradient(135deg, rgba(17,24,39,0.04), rgba(17,24,39,0.01));
   --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #FFFFFF 100%);
-  --grad-card:  linear-gradient(140deg, rgba(255, 255, 255, 1) 0%, rgba(163, 72, 90, .06) 55%, rgba(132, 42, 59, .04) 100%);
-  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
+  --grad-card:  linear-gradient(140deg, #FFFFFF 0%, rgba(17,24,39,.02) 100%);
+  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%);
   --glow-soft:        none;
   --glow-soft-hover:  none;
   --glow-soft-cream:  none;
