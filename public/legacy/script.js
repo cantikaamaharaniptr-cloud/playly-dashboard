@@ -7592,13 +7592,14 @@ const I18N = {
     "pay.method":                 "Metode Pembayaran",
     "pay.waiting.verif":          "Menunggu verifikasi admin…",
     "pay.waiting.appr":           "Menunggu persetujuan admin…",
-    "stats.chart.title":         "Grafik Stats",
-    "stats.chart.videos":        "Grafik Stats Video",
-    "stats.chart.views":         "Grafik Stats Tontonan",
-    "stats.chart.followers":     "Grafik Stats Pengikut",
-    "stats.chart.comments":      "Grafik Stats Komentar",
+    "stats.chart.title":         "Grafik Statistik",
+    "stats.chart.videos":        "Grafik Video",
+    "stats.chart.views":         "Grafik Tontonan",
+    "stats.chart.followers":     "Grafik Pengikut",
+    "stats.chart.comments":      "Grafik Komentar",
     "stats.empty.video":         "Belum ada data video.",
-    "stats.empty.views":         "Belum ada data views.",
+    "stats.empty.views":         "Belum ada data tontonan.",
+    "stats.empty.comments":      "Belum ada data komentar.",
     "stats.empty.followers":     "Belum ada data pengikut.",
     "trending.empty.title":      "Belum ada trending hari ini.",
     "trending.empty.desc":       "Konten akan muncul setelah ada aktivitas baru.",
@@ -32302,9 +32303,9 @@ function renderStatsRow() {
   const engagementText = engagementPct > 0 ? engagementPct.toFixed(1) + "%" : "—";
 
   const cards = [
-    { label: "Total Videos", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
-    { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
-    { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
+    { label: "Total Video", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
+    { label: "Total Tontonan", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
+    { label: "Total Suka", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
     { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
     { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
     { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
