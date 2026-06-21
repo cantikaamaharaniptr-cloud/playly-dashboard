@@ -91,9 +91,9 @@ body[data-theme="light"] {
   --surface-3: rgba(17, 24, 39, 0.10);
   --border: rgba(17, 24, 39, 0.10);
   --border-strong: rgba(17, 24, 39, 0.20);
-  --text: #1F2430;        /* Deep wine — main text */
-  --text-2: #4B5563;      /* Wine — secondary text */
-  --muted: #6B7280;       /* Light wine — muted/meta */
+  --text: #3F3A37;        /* Deep wine — main text */
+  --text-2: #5F564E;      /* Wine — secondary text */
+  --muted: #7A716A;       /* Light wine — muted/meta */
   --primary: #842A3B;     /* Wine — primary actions */
   --primary-hover: #6D2932; /* Deep wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
