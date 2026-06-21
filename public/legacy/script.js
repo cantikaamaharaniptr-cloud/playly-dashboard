@@ -7854,9 +7854,9 @@ const I18N = {
     "inbox.preview.unit.req":     "permintaan — klik untuk buka",
     "inbox.preview.unit.arc":     "chat — klik untuk buka",
     "inbox.chat.back":            "Kembali ke daftar",
-    "people.subtitle":            "Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.",
-    "people.tab.followers":       "Followers",
-    "people.tab.following":       "Following",
+    "people.subtitle":            "Temukan pengguna, lihat pengikut kamu, dan kelola siapa yang kamu ikuti.",
+    "people.tab.followers":       "Pengikut",
+    "people.tab.following":       "Diikuti",
     "people.empty.all":           "Belum ada user lain — ajak teman daftar di Playly!",
     "people.empty.followers":     "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!",
     "people.empty.following":     "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.",
@@ -39439,7 +39439,7 @@ function renderPeople() {
       <div class="${cardClasses}" data-people-open="${escapeHtml(a.username)}">
         <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true">★</i>' : ''}</div>
         <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator">★ Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
-        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} follower</span>` : ''}${bioOnly ? ' <span class="people-bio-tag" title="Cocok di bio / profil">cocok di bio</span>' : ''}</div>
+        <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} pengikut</span>` : ''}${bioOnly ? ' <span class="people-bio-tag" title="Cocok di bio / profil">cocok di bio</span>' : ''}</div>
         ${a.bio ? `<p class="people-bio">${escapeHtml(a.bio)}</p>` : ""}
         ${previewHTML}
         <div class="people-actions">${actions}</div>
