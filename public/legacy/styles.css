@@ -72691,6 +72691,17 @@ section[data-view="stats"] .chart-metric-tabs { margin: 0 0 16px !important; }
 
 /* ---- Tabel Performa Video: kolom rapi, lebar tetap, sejajar ---- */
 section[data-view="stats"] .tp-table { table-layout: fixed; width: 100%; }
+/* v(resp 2026-06-21): tabel Performa Video punya kolom angka lebar-tetap (132px x4)
+   -> ~528px, tak muat di HP & ke-clip body(overflow-x:hidden). Bungkus scroll
+   horizontal HANYA pada wrapper yg berisi tabel (bukan grid kartu). */
+@media (max-width: 700px) {
+  section[data-view="stats"] .top-perf-4col:has(> .tp-table),
+  section[data-view="stats"] .top-perf-3col:has(> .tp-table) {
+    display: block !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 /* Kolom Video fleksibel (sisa lebar), kolom angka lebar tetap & seragam */
 section[data-view="stats"] .tp-table th.tp-num-h,
 section[data-view="stats"] .tp-table td.tp-num { width: 132px !important; }
