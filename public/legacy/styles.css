@@ -22,7 +22,7 @@
   --border-strong: rgba(232, 216, 196, 0.28);
   --text: #E8D8C4;
   --text-2: #C7B7A3;
-  --muted: #806a5e;
+  --muted: rgba(232, 216, 196, 0.62); /* kontras AA: dulu #806a5e ~3.1:1 */
   --primary: #6D2932;
   --primary-hover: #8c3a45;
   --primary-deep: #561C24;
