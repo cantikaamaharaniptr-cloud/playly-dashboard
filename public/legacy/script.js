@@ -2287,7 +2287,7 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
   "premium-insights": "Insight Premium",
@@ -6106,7 +6106,7 @@ const I18N = {
     "page.activity":             "Aktivitas",
     "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
-    "page.profile.edit":         "Edit Profil",
+    "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Kreator",
     "page.profile.my":           "Profil Saya",
     "page.email":                "Email",
@@ -6774,7 +6774,7 @@ const I18N = {
     "myprofile.liked.empty.title":"Belum ada video disukai",
     "myprofile.liked.empty.desc":"Like video supaya muncul di sini.",
     "myprofile.empty.upload":    "Belum ada video — upload sekarang",
-    "profile.edit.btn":          "Edit Profil",
+    "profile.edit.btn":          "Ubah Profil",
     // My Library ID
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "Video Baru",
@@ -6815,7 +6815,7 @@ const I18N = {
     "logout.title":              "Logout dari Playly?",
     "logout.desc.pre":           "Kamu akan keluar dari akun",
     "logout.desc.post":          ". Data tersimpan dan bisa diakses kembali setelah login.",
-    "logout.btn":                "Logout",
+    "logout.btn":                "Keluar",
     "logout.bye":                "Sampai jumpa",
     "logout.loggingout":         "Logging out...",
     "logout.toast.success":      "Berhasil logout.",
@@ -48950,7 +48950,7 @@ $("#upShareBtn")?.addEventListener("click", () => {
   toast("🔗 Link profil disalin", "success");
 });
 
-// Tombol "Edit Profil" di own channel → langsung ke editor profil
+// Tombol "Ubah Profil" di own channel → langsung ke editor profil
 $("#upEditBtn")?.addEventListener("click", () => switchView("profile"));
 
 $("#upMessageBtn")?.addEventListener("click", () => {
