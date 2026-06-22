@@ -22253,7 +22253,7 @@ function openAdminRecoveryOtpRequestModal(prefillId = "", opts = {}) {
     <div class="modal-backdrop" data-ar-back></div>
     <div class="modal-panel ar-panel-narrow" data-no-i18n>
       <h3 class="ar-text-center" data-no-i18n>🔐 Minta OTP ke ${_arEscapeHtml(_approverLabel)}</h3>
-      <p class="muted ar-text-center" data-no-i18n>Masukkan email/username akunmu. ${_arEscapeHtml(_approverDesc)} akan generate OTP dan kirim 4-digit OTP ke email kamu.</p>
+      <p class="muted ar-text-center" data-no-i18n>Masukkan email/username akunmu. ${_arEscapeHtml(_approverDesc)} akan membuat OTP dan mengirim OTP 4-digit ke email kamu.</p>
       <form class="ar-form" id="arOtpRequestForm">
         <label class="ar-label" data-no-i18n>Email atau Username</label>
         <input type="text" name="id" placeholder="kamu@email.com atau username" value="${_arEscapeHtml(prefillId)}" autocomplete="off" required />
@@ -22917,7 +22917,7 @@ function openUniversalRecoveryChoiceModal(prefillId = "") {
         <button type="button" class="ar-choice-card" data-ar-choice="otp">
           <div class="ar-choice-ico">📨</div>
           <strong data-no-i18n>Minta OTP via ${_arEscapeHtml(_approverLabel)}</strong>
-          <small data-no-i18n>${_arEscapeHtml(_approverDesc.charAt(0).toUpperCase() + _approverDesc.slice(1))} akan kirim OTP 4-digit ke email kamu. Cocok kalau lupa PIN 2FA atau belum aktifkan.</small>
+          <small data-no-i18n>${_arEscapeHtml(_approverDesc.charAt(0).toUpperCase() + _approverDesc.slice(1))} akan kirim OTP 4-digit ke email kamu. Cocok kalau lupa PIN 2FA atau belum mengaktifkannya.</small>
         </button>
       </div>
     </div>
