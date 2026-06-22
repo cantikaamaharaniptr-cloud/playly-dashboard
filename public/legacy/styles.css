@@ -44177,6 +44177,8 @@ html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .pre
 html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg * { stroke: #F2C76A !important; color: #F2C76A !important; }
 html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active { border-color: rgba(184,138,58,.45) !important; }
 html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active span, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg * { color: #F2C76A !important; stroke: #F2C76A !important; }
+/* Dark: link "Lupa kata sandi?" modal login -> cream (bukan emas accent), biar emas khusus Premium. din/landing. */
+html body[data-theme="dark"]:not([data-role="admin"]) #forgotPw.auth-link { color: #E8D8C4 !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
