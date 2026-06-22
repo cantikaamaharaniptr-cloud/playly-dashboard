@@ -45194,6 +45194,20 @@ html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload
   color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
 }
 
+/* light contrast fix v5 2026-06-21: audit tuntas semua view — 2 straggler tersisa.
+   .top-perf-rank.first (badge #1 Top Video) = var(--warning) amber → 2.15 di putih
+   jadi amber-gelap #B45309 (tetap kesan gold-medal). #startUpload bg rgba(50,26,32,.5)
+   tanpa qualifier tema → washed/pink di light; jadi wine solid (teks putih crisp). */
+html body[data-theme="light"]:not([data-role="admin"]) .top-perf-rank.first {
+  color: #B45309 !important; -webkit-text-fill-color: #B45309 !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .upload-actions-btns #startUpload {
+  background: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .upload-actions-btns #startUpload:hover {
+  background: #6D2932 !important;
+}
+
 /* === SIGNUP STEPPER (Profil/Username/Akun/Selesai) — light user ===
    Default state pakai `var(--surface-2)` + `var(--bg-elev)` yang sekarang sama
    warna dgn card bg cream → step pending & active jadi invisible. Plus user
