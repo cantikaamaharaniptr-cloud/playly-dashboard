@@ -44008,8 +44008,13 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending-h smal
   color: var(--muted) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb {
-  background: linear-gradient(135deg, rgba(17, 24, 39, .12), rgba(17, 24, 39, .05)) !important;
-  color: var(--muted) !important;
+  background: linear-gradient(135deg, #7d3640, #561C24) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb .picon-w {
+  background: rgba(255, 255, 255, .95) !important; color: #6D2932 !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb .picon {
+  color: #6D2932 !important;
 }
 /* Analytics: chart card + KPI tiles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart,
