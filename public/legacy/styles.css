@@ -44188,6 +44188,11 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card .auth-lin
 body:not([data-role="admin"]).auth-mode .auth-card .auth-link:hover, body:not([data-role="admin"]).auth-mode .auth-card .auth-switch a:hover { text-decoration: underline !important; text-underline-offset: 2px !important; }
 /* Badge hero (.floating-card) dark: glass cream (bukan putih off-theme), seragam dgn pill LIVE & tombol. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]) .auth-illus .floating-card { background: linear-gradient(135deg, rgba(232,216,196,.1) 0%, rgba(232,216,196,.03) 100%) !important; border-color: rgba(232,216,196,.18) !important; }
+/* Badge hero compact: pill rapat, font & ikon lebih kecil (2 tema). din/landing. */
+body:not([data-role="admin"]) .auth-illus .floating-card { height: 28px !important; min-height: 0 !important; padding: 0 12px !important; border-radius: 999px !important; gap: 6px !important; font-size: 11px !important; line-height: 1 !important; align-items: center !important; }
+body:not([data-role="admin"]) .auth-illus .floating-card b { font-size: 11px !important; font-weight: 700 !important; }
+html body:not([data-role="admin"]) .auth-illus .floating-card svg.picon, html body:not([data-role="admin"]) .auth-illus .floating-card svg { width: 14px !important; height: 14px !important; min-width: 14px !important; font-size: 14px !important; }
+html body:not([data-role="admin"]) .auth-illus .floating-card span { width: 14px !important; height: 14px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important; font-size: 12px !important; }
 /* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 /* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
