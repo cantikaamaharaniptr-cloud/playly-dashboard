@@ -44183,6 +44183,8 @@ body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-link
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input::placeholder { color: rgba(232,216,196,.42) !important; -webkit-text-fill-color: rgba(232,216,196,.42) !important; opacity: 1 !important; }
 /* Dark: footer link "Daftar gratis"/"Masuk di sini" (.auth-switch a) -> cream (wine --primary terlalu gelap & tampak pink di bg gelap). din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { color: #E8D8C4 !important; -webkit-text-fill-color: #E8D8C4 !important; text-decoration: underline !important; text-underline-offset: 2px !important; }
+/* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
