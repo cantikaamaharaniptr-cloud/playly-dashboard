@@ -44185,6 +44185,8 @@ body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input::pla
 body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { color: #E8D8C4 !important; -webkit-text-fill-color: #E8D8C4 !important; text-decoration: underline !important; text-underline-offset: 2px !important; }
 /* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
+/* Dark: angka step aktif (stepper Daftar) wine-di-atas-fill-wine tak terbaca (kontras 1.8) -> cream terang, border wine tetap penanda aktif. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: var(--primary) !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
