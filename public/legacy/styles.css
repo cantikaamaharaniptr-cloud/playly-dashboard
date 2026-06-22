@@ -44193,7 +44193,7 @@ body:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupT
 body:not([data-role="admin"]) #signupForm .auth-field .field-hint { display: none !important; }
 body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) { display: flex !important; flex-direction: column !important; }
 body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) .pw-strength { order: 2 !important; }
-body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { order: 1 !important; content: "Contoh: _ . ! ?" !important; display: block !important; font-size: 11px !important; font-weight: 600 !important; margin-top: 6px !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { order: 1 !important; content: "Lebih kuat dengan simbol: _ . ! ?" !important; display: block !important; font-size: 11px !important; font-weight: 600 !important; margin-top: 6px !important; }
 body[data-theme="dark"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(232,216,196,.62) !important; }
 body[data-theme="light"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(109,41,50,.75) !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
