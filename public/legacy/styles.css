@@ -44059,6 +44059,28 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   color: var(--text) !important;
   box-shadow: 0 6px 16px rgba(17, 24, 39, .10) !important;
 }
+/* light: LANDING marketing (PRATINJAU/CARA KERJA/FAQ/Hero) — hilangkan hint pink
+   di tema terang. Wine-tint surface (bg/gradient/border/glow) -> neutral abu.
+   Tombol/ikon/teks/garis chart solid wine TETAP. Light-only (dark landing aman),
+   class-doubling utk spesifisitas. din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-step.howit-step {
+  background:
+    radial-gradient(120% 85% at 50% 0%, rgba(17, 24, 39, .05), transparent 55%),
+    linear-gradient(160deg, var(--bg-elev), rgba(17, 24, 39, .03)) !important;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .10) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-card { background: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .pm-ad.pm-ad,
+html body[data-theme="light"]:not([data-role="admin"]) .pm-upgrade-banner.pm-upgrade-banner,
+html body[data-theme="light"]:not([data-role="admin"]) .pm-feature.pm-feature { background: rgba(17, 24, 39, .04) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .pm-tile.pm-tile { border-color: rgba(17, 24, 39, .12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-faq-section .faq-item.faq-item { border-color: rgba(17, 24, 39, .12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) #authFaqSection .faq-item.faq-item:hover,
+html body[data-theme="light"]:not([data-role="admin"]) #authFaqSection .faq-item.faq-item[open] {
+  border-color: var(--border-strong) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .floating-card.floating-card { box-shadow: 0 8px 22px rgba(17, 24, 39, .10) !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
