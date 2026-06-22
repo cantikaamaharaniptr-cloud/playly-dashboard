@@ -44194,6 +44194,8 @@ body:not([data-role="admin"]) #signupForm .auth-field .field-hint { display: non
 body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) { display: flex !important; flex-direction: column !important; }
 body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) .pw-strength { order: 2 !important; }
 body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { order: 1 !important; content: "Lebih kuat dengan simbol: ! @ # $ %" !important; display: block !important; font-size: 11px !important; font-weight: 600 !important; margin-top: 6px !important; }
+/* Recovery modal: samakan tinggi judul kartu (reserve 2 baris + center) biar deskripsi kedua kartu sejajar. din/landing. */
+body:not([data-role="admin"]) .ar-choice-card strong { display: flex !important; align-items: center !important; justify-content: center !important; text-align: center !important; min-height: 34px !important; }
 body[data-theme="dark"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(232,216,196,.62) !important; }
 body[data-theme="light"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(109,41,50,.75) !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
