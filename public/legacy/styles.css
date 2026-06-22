@@ -44094,6 +44094,19 @@ html body:not([data-role="admin"]) .umb-icon::after {
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / contain no-repeat !important;
   mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / contain no-repeat !important;
 }
+/* light: sisa "warna di luar tema" di landing -> neutral. Glow play button yg
+   UNGU (rgba 167,139,250), border floating-card wine, shadow tombol/ikon (wine),
+   dot carousel cream -> semua neutral rgba(17,24,39,.x). Aksen solid wine/teks/
+   logo/gradient TETAP. Scope .auth-screen (dashboard tak kena). din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-illus::before { background: radial-gradient(circle, rgba(17,24,39,0.04), transparent 70%) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .floating-card.floating-card { border-color: rgba(17,24,39,0.12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .apd-dot:not(.apd-active) { background: rgba(17,24,39,0.16) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-num,
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-icon { box-shadow: 0 4px 12px rgba(17,24,39,0.12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .auth-hero-cta .auth-hero-btn { box-shadow: 0 8px 24px rgba(17,24,39,0.15) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-card .plan-cta { box-shadow: 0 8px 24px rgba(17,24,39,0.15) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-features .pf-ico,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .preview-features .pf-ico { box-shadow: 0 2px 6px rgba(17,24,39,0.12) !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
