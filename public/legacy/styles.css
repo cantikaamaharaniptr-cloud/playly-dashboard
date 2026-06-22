@@ -44148,6 +44148,19 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .btn.
 html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free {
   border-color: rgba(109, 41, 50, .20) !important;
 }
+/* PRATINJAU preview Free: abu -> white + wine outline (pill/search/chip/hero/btn/
+   quota/KPI/banner + ikon fitur). Premium preview (gold) dibiarkan. din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free { border-color: rgba(109,41,50,.20) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-pill,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-search,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-hero,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-quota { background: #FFFFFF !important; border-color: rgba(109,41,50,.18) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-chip,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-btn:not(.pm-btn-primary) { background: #FFFFFF !important; border-color: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-ad,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-upgrade-banner { background: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-tile { border-color: rgba(109,41,50,.18) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-features .pf-ico { background: #FFFFFF !important; border-color: var(--primary) !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
