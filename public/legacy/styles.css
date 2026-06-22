@@ -44178,7 +44178,7 @@ html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .pre
 html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active { border-color: rgba(184,138,58,.45) !important; }
 html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active span, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg * { color: #F2C76A !important; stroke: #F2C76A !important; }
 /* Dark: link teks modal auth (.auth-link: Lupa kata sandi / Syarat & Ketentuan / Kebijakan Privasi) -> cream, bukan emas accent, biar emas khusus Premium. Underline tetap jadi affordance link aman. din/landing. */
-body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-link { color: #E8D8C4 !important; }
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-link { color: #E8D8C4 !important; text-decoration: underline !important; text-underline-offset: 2px !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
