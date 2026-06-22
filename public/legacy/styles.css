@@ -44185,8 +44185,8 @@ body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input::pla
 body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { color: #E8D8C4 !important; -webkit-text-fill-color: #E8D8C4 !important; text-decoration: underline !important; text-underline-offset: 2px !important; }
 /* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
-/* Dark: angka step aktif (stepper Daftar) wine-di-atas-fill-wine tak terbaca (kontras 1.8) -> cream terang, border wine tetap penanda aktif. din/landing. */
-body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: var(--primary) !important; }
+/* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: rgba(232,216,196,.7) !important; background: rgba(232,216,196,.12) !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
 body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
 /* Dark: border kolom modal auth netral cream (bukan rose/gold) — focus ring TANPA wine. din/landing. */
