@@ -44189,6 +44189,20 @@ body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-fiel
 body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: var(--primary) !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
 body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
+/* Dark: border kolom modal auth netral cream (bukan rose/gold) — focus ring TANPA wine. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"],
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"],
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"] { border-color: rgba(232,216,196,.16) !important; }
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"]:focus,
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"]:focus,
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"]:focus { border-color: rgba(232,216,196,.55) !important; box-shadow: none !important; }
+/* Light: border + focus ring kolom modal auth netral (bukan wine + glow wine). din/landing. */
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"],
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"],
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"] { border-color: rgba(17,24,39,.12) !important; }
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"]:focus,
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"]:focus,
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"]:focus { border-color: rgba(17,24,39,.35) !important; box-shadow: none !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
