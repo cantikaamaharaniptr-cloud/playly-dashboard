@@ -44186,6 +44186,8 @@ body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { col
 /* Underline link auth: hilang saat diam, muncul hanya saat hover (light + dark). din/landing. */
 body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card .auth-link, body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card .auth-switch a { text-decoration: none !important; }
 body:not([data-role="admin"]).auth-mode .auth-card .auth-link:hover, body:not([data-role="admin"]).auth-mode .auth-card .auth-switch a:hover { text-decoration: underline !important; text-underline-offset: 2px !important; }
+/* Badge hero (.floating-card) dark: glass cream (bukan putih off-theme), seragam dgn pill LIVE & tombol. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .auth-illus .floating-card { background: linear-gradient(135deg, rgba(232,216,196,.1) 0%, rgba(232,216,196,.03) 100%) !important; border-color: rgba(232,216,196,.18) !important; }
 /* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 /* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
