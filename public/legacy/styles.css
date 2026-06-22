@@ -52325,14 +52325,14 @@ html body:not([data-role="admin"]):not([data-theme="light"]).auth-mode #authFaqS
 }
 /* LIGHT mode FAQ open/hover — white bg + dark wine text (high specificity) */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item:hover {
-  border-color: rgba(132, 42, 59, .35) !important;
+  border-color: var(--border-strong) !important;
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(132, 42, 59, .55) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] {
-  border-color: rgba(132, 42, 59, .45) !important;
+  border-color: var(--border-strong) !important;
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(132, 42, 59, .75) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary * {
