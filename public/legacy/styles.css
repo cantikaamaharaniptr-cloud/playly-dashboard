@@ -44187,6 +44187,8 @@ body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { col
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 /* Dark: angka step aktif (stepper Daftar) wine-di-atas-fill-wine tak terbaca (kontras 1.8) -> cream terang, border wine tetap penanda aktif. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: var(--primary) !important; }
+/* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
+body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
