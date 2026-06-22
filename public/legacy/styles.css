@@ -44189,6 +44189,13 @@ body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-fiel
 body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: rgba(232,216,196,.7) !important; background: rgba(232,216,196,.12) !important; }
 /* Hapus pill "Paket dipilih: Gratis [Ubah]" di form Daftar (per request user) — paket tetap dipilih/diubah di layar "Pilih paket". din/landing. */
 body:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupTierPill { display: none !important; }
+/* Hapus hint Username; pindahkan keterangan ke field Kata Sandi ("Minimal 6 karakter"), tepat di bawah input (atas bar kekuatan). din/landing. */
+body:not([data-role="admin"]) #signupForm .auth-field .field-hint { display: none !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) { display: flex !important; flex-direction: column !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) .pw-strength { order: 2 !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { order: 1 !important; content: "Minimal 6 karakter" !important; display: block !important; font-size: 11.5px !important; font-weight: 700 !important; margin-top: 6px !important; }
+body[data-theme="dark"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(232,216,196,.62) !important; }
+body[data-theme="light"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(109,41,50,.75) !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
 body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
 /* Dark: border kolom modal auth netral cream (bukan rose/gold) — focus ring TANPA wine. din/landing. */
