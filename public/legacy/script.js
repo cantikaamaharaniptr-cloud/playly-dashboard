@@ -6590,7 +6590,7 @@ const I18N = {
     "auth.signin.here":          "Masuk di sini",
     "auth.admin.login":          "Login Panel Admin",
     "auth.admin.subtitle":       "Khusus administrator platform",
-    "auth.user.login":           "Login Kreator Playly",
+    "auth.user.login":           "Masuk Kreator Playly",
     "auth.user.subtitle":        "Mulai bagikan kreasimu",
     // Auth showcase ID
     "auth.showcase.user.title":      "Bagikan kreasimu,",
@@ -22906,13 +22906,13 @@ function openUniversalRecoveryChoiceModal(prefillId = "") {
   m.innerHTML = `
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel ar-panel-narrow" data-no-i18n>
-      <h3 class="ar-text-center" data-no-i18n>Pilih cara recovery akun</h3>
+      <h3 class="ar-text-center" data-no-i18n>Pilih cara pemulihan akun</h3>
       <p class="muted ar-text-center" data-no-i18n>Mau reset sendiri atau minta verifikasi dari ${_approverDesc}? Pilih yang paling cocok dengan situasimu.</p>
       <div class="ar-choice-grid">
         <button type="button" class="ar-choice-card" data-ar-choice="self">
           <div class="ar-choice-ico">🔐</div>
           <strong data-no-i18n>Reset Sendiri</strong>
-          <small data-no-i18n>Atur password baru langsung. Kalau akunmu aktif 2FA, perlu masukkan PIN 6-digit untuk verifikasi.</small>
+          <small data-no-i18n>Atur kata sandi baru langsung. Kalau akunmu aktif 2FA, perlu masukkan PIN 6-digit untuk verifikasi.</small>
         </button>
         <button type="button" class="ar-choice-card" data-ar-choice="otp">
           <div class="ar-choice-ico">📨</div>
