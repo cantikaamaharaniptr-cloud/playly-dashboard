@@ -44134,6 +44134,20 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-btn
 html body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings.open .auth-topbar-settings-btn {
   background: #FFFFFF !important; border-color: var(--text) !important; color: var(--text) !important;
 }
+/* HARGA kartu Free: abu -> wine outline (badge, ikon fitur, tombol, border).
+   Premium dibiarkan (aksen solid wine-nya sendiri). din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free .plan-badge {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free .pf-ico {
+  background: #FFFFFF !important; border-color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .btn.ghost.plan-cta {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free {
+  border-color: rgba(109, 41, 50, .20) !important;
+}
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
