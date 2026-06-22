@@ -42569,13 +42569,13 @@ body:not([data-role="admin"]) .hs-card::before {
   .auth-screen.show .auth-left .auth-showcase h2,
   .auth-screen.show .auth-left-admin .auth-showcase h2,
   .auth-screen.show .auth-card,
-  .auth-screen.show .floating-card,
   .auth-screen.show .play-orb,
   .auth-screen.show .auth-orb {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
+  /* floating-card dikeluarkan dari reset: badge hero sengaja tetap float (req user). din/landing. */
 }
 
 
@@ -44196,6 +44196,13 @@ html body:not([data-role="admin"]) .auth-illus .floating-card span { width: 14px
 /* Tombol CTA hero compact (2 tema). din/landing. */
 body:not([data-role="admin"]) .auth-hero-btn { padding: 10px 18px !important; font-size: 13.5px !important; border-radius: 10px !important; }
 body:not([data-role="admin"]) .auth-hero-btn svg { width: 15px !important; height: 15px !important; }
+/* Badge hero tetap float walau prefers-reduced-motion (dekoratif, gerak halus, per-badge beda ritme). din/landing. */
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-role="admin"]) .auth-illus .floating-card { animation-name: authChipFloat !important; animation-timing-function: ease-in-out !important; animation-iteration-count: infinite !important; }
+  body:not([data-role="admin"]) .auth-illus .f1 { animation-duration: 5.5s !important; animation-delay: 0s !important; }
+  body:not([data-role="admin"]) .auth-illus .f2 { animation-duration: 6.4s !important; animation-delay: -1.8s !important; }
+  body:not([data-role="admin"]) .auth-illus .f3 { animation-duration: 5s !important; animation-delay: -3.4s !important; }
+}
 /* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 /* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
