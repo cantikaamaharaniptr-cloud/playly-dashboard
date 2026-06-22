@@ -44107,6 +44107,16 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .auth-hero-c
 html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-card .plan-cta { box-shadow: 0 8px 24px rgba(17,24,39,0.15) !important; }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-features .pf-ico,
 html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .preview-features .pf-ico { box-shadow: 0 2px 6px rgba(17,24,39,0.12) !important; }
+/* no abu di "kolom" landing (per user): badge eyebrow + tombol sekunder -> wine
+   OUTLINE (bg putih + garis & teks wine), bukan abu. Tombol primer tetap solid
+   wine. din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-eyebrow {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .btn.ghost.auth-hero-btn,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .finalcta-btn-secondary {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
