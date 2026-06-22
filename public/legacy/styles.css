@@ -44081,24 +44081,11 @@ html body[data-theme="light"]:not([data-role="admin"]) #authFaqSection .faq-item
   box-shadow: -3px 0 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .floating-card.floating-card { box-shadow: 0 8px 22px rgba(17, 24, 39, .10) !important; }
-/* Modal login: tab bar/pill rose -> neutral. Logo "P" = gradient brand (setup user,
-   #6D2932->#C7B7A3->#E8D8C4) DI ATAS alas wine gelap (spt gambar 3 user) via CSS mask
-   — markup/shape logo TIDAK diubah, gradient kept apa adanya. din/landing 2026-06-22. */
+/* Modal login: tab bar/pill rose -> neutral. (Logo dibiarkan default — eksperimen
+   alas+gradient dicabut karena ujung wine gradient nyatu dgn alas gelap = muddy.)
+   din/landing 2026-06-22. */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-tabs.auth-tabs { background: rgba(17, 24, 39, .05) !important; }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-tab-pill.auth-tab-pill { background: #FFFFFF !important; box-shadow: 0 1px 3px rgba(17, 24, 39, .12) !important; }
-html body[data-theme="light"]:not([data-role="admin"]) .umb-icon {
-  background: linear-gradient(140deg, #4a1a22 0%, #1a0c10 100%) !important;
-  border-radius: 18px !important; width: 64px !important; height: 64px !important;
-  position: relative !important; padding: 0 !important;
-  box-shadow: 0 10px 24px rgba(17, 24, 39, .20) !important;
-}
-html body[data-theme="light"]:not([data-role="admin"]) .umb-icon > svg { opacity: 0 !important; }
-html body[data-theme="light"]:not([data-role="admin"]) .umb-icon::after {
-  content: '' !important; position: absolute !important; inset: 0 !important;
-  background: linear-gradient(135deg, #6D2932 0%, #C7B7A3 48%, #E8D8C4 100%) !important;
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / 38px 38px no-repeat !important;
-  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / 38px 38px no-repeat !important;
-}
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
