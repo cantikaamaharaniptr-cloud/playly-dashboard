@@ -6595,7 +6595,7 @@ const I18N = {
     // Auth showcase ID
     "auth.showcase.user.title":      "Bagikan kreasimu,",
     "auth.showcase.user.title.grad": "sentuh dunia",
-    "auth.showcase.user.desc":       "Platform video modern untuk kreator. Upload, tonton, terhubung dengan jutaan kreator hebat lainnya.",
+    "auth.showcase.user.desc":       "Platform video modern untuk kreator. Unggah, tonton, terhubung dengan jutaan kreator hebat lainnya.",
     "auth.showcase.admin.title":     "Kelola platform,",
     "auth.showcase.admin.title.grad":"jaga komunitas",
     "auth.showcase.admin.desc":      "Dashboard administrator untuk moderasi konten, analytics real-time, manajemen user, iklan, dan revenue platform.",
@@ -6605,7 +6605,7 @@ const I18N = {
     "auth.stat.monitoring":      "Monitoring aktif",
     "auth.stat.access":          "Akses kontrol",
     "auth.stat.analytics":       "Time analytics",
-    "auth.float.trending":       "Trending sekarang",
+    "auth.float.trending":       "Sedang tren",
     "auth.float.moderation":     "Moderasi aktif",
     "auth.float.revenue":        "Revenue tracker",
     "auth.locked.title":         "Akun terkunci sementara",
@@ -6891,7 +6891,7 @@ const I18N = {
     "pm.upgrade.bold":            "Upgrade ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa batas",
     "pm.insights.head":           "Insight Premium",
-    "pm.insights.engagement":     "Tingkat engagement",
+    "pm.insights.engagement":     "Tingkat interaksi",
     "pm.insights.watch":          "Rata-rata waktu tonton",
     "pm.insights.region":         "Wilayah teratas",
     "pm.feature.thumb":           "Thumb kustom",
@@ -6926,7 +6926,7 @@ const I18N = {
     "howit.step4.title":         "Bagikan & berinteraksi",
     "howit.step4.desc":          "Bagikan ke media sosial dengan satu klik. Balas komentar, DM fans, bangun komunitas langsung dari dashboard.",
     "howit.step5.title":         "Tumbuh dengan insight",
-    "howit.step5.desc":          "Lacak tayangan, suka, waktu tonton, wilayah teratas. Premium membuka metrik engagement lanjutan & tren prediktif.",
+    "howit.step5.desc":          "Lacak tayangan, suka, waktu tonton, wilayah teratas. Premium membuka metrik interaksi lanjutan & tren prediktif.",
     "howit.step6.title":         "Upgrade & monetisasi",
     "howit.step6.desc":          "Buka 4K, bebas iklan, thumbnail kustom, dan dukungan prioritas dengan Premium. Raih penghasilan dari badge kreator & status terverifikasi.",
     // ===== LANDING: FAQ =====
@@ -8077,7 +8077,7 @@ const I18N = {
     "auth.stat.monitoring":      "Pemantauan aktif",
     "auth.stat.access":          "Kawalan akses",
     "auth.stat.analytics":       "Analitik masa",
-    "auth.float.trending":       "Trending sekarang",
+    "auth.float.trending":       "Sedang tren",
     "auth.float.moderation":     "Moderasi aktif",
     "auth.float.revenue":        "Penjejak pendapatan",
     "auth.locked.title":         "Akaun dikunci sementara",
@@ -34369,7 +34369,7 @@ function renderHomeFollowingFeed() {
 
 // =================== HOME TRENDING SEKARANG + UNTUK KAMU ===================
 // Per user 2026-05-11: 2 section baru di akhir home view — 4-col grid video.
-// "Trending sekarang" = top platform videos by views (desc).
+// "Sedang tren" = top platform videos by views (desc).
 // "Untuk kamu" = platform videos filtered by category tag (Vlog/Gaming/etc).
 // Pakai existing .video-card style supaya konsisten dgn dashboard user theme.
 
