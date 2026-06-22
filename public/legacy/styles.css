@@ -12964,8 +12964,8 @@ body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin { display: flex
 }
 /* Light mode mirror — wine deep di bg terang biar terbaca jelas */
 body[data-theme="light"] .auth-pill-badge {
-  background: rgba(17, 24, 39, .05);
-  border-color: rgba(17, 24, 39, .12);
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary);
   color: #6D2932;
 }
 .auth-pill-dot {
