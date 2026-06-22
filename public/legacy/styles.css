@@ -44160,7 +44160,11 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .pr
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-ad,
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-upgrade-banner { background: #FFFFFF !important; }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-tile { border-color: rgba(109,41,50,.18) !important; }
-html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-features .pf-ico { background: #FFFFFF !important; border-color: var(--primary) !important; }
+/* Ikon fitur Free = wine; Premium = emas (warna premium yg sudah di-setup #B88A3A). din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico { background: #FFFFFF !important; border-color: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico svg * { stroke: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico { background: #FFFFFF !important; border-color: #B88A3A !important; color: #B88A3A !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico svg * { stroke: #B88A3A !important; color: #B88A3A !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
