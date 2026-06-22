@@ -44187,6 +44187,8 @@ body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { col
 body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
 /* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
 body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: rgba(232,216,196,.7) !important; background: rgba(232,216,196,.12) !important; }
+/* Dark: link "Ubah" di pill "Paket dipilih" -> cream (wine #6D2932 di pill gelap kontras rendah/merah). din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) #signupTierPill a { color: #E8D8C4 !important; -webkit-text-fill-color: #E8D8C4 !important; }
 /* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
 body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
 /* Dark: border kolom modal auth netral cream (bukan rose/gold) — focus ring TANPA wine. din/landing. */
