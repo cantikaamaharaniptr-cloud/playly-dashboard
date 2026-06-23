@@ -3820,8 +3820,8 @@ body[data-theme="light"] .trending-retry-btn:hover {
 .trending-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: transparent;
   border: 1px solid transparent;
@@ -3836,6 +3836,11 @@ body[data-theme="light"] .trending-retry-btn:hover {
   background: var(--surface-2);
   border-color: var(--border);
   transform: translateX(2px);
+}
+/* Tag tren yang sedang dipakai sebagai filter feed (active-state, wine OK). */
+.trending-item.active {
+  background: rgba(109, 41, 50, .18);
+  border-color: rgba(109, 41, 50, .45);
 }
 .trending-rank {
   font-family: 'Inter', sans-serif;
@@ -3869,11 +3874,11 @@ body[data-theme="light"] .trending-retry-btn:hover {
   letter-spacing: .08em;
 }
 .trending-info strong {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   letter-spacing: -.005em;
-  line-height: 1.35;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -3970,8 +3975,10 @@ body[data-theme="light"] .trending-retry-btn:hover {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  padding: 2px;
-  background: conic-gradient(from 200deg, #6D2932, #C7B7A3, #E8D8C4, #6D2932);
+  padding: 2.5px;
+  /* v745: gradien TERANG (cream/tan, tanpa wine) supaya ring "fresh" jelas penuh —
+     versi lama memuat wine yg menyatu dgn bg kartu jadi samar. (req user) */
+  background: conic-gradient(from 200deg, #E8D8C4, #F4EADB, #C7B7A3, #E8D8C4);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -3980,6 +3987,23 @@ body[data-theme="light"] .trending-retry-btn:hover {
   animation: avatarFreshSpin 8s linear infinite;
 }
 .suggest-avatar.fresh img { border-radius: 50%; }
+/* v747: badge play kecil di pojok avatar fresh — petunjuk bahwa avatar bisa diklik
+   untuk lihat VIDEO TERBARU kreator (req user). Wine + ikon play cream, on-palette.
+   pointer-events:none supaya klik tetap diteruskan ke handler avatar. */
+.discover-col-suggest .suggest-avatar.fresh::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #6D2932 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E8D8C4'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 8px 8px no-repeat;
+  border: 1.5px solid var(--bg-elev-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+  z-index: 3;
+  pointer-events: none;
+}
 .suggest-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .suggest-info strong {
   font-size: 13px; font-weight: 700; color: var(--text);
@@ -28079,17 +28103,70 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
 /* === Discover layout: 2 KOLOM. Feed Untukmu KIRI (besar), KANAN stack 2 card
  * masing-masing kolom sendiri: Trending atas, Suggested Creators bawah.
  * Per request user 2026-05-10e — Feed kiri | (Trending atas / Suggested bawah). === */
+/* Jelajah header: judul kiri + kotak cari feed kanan (v695). Sebaris,
+   wrap ke bawah di layar sempit. */
+.fyp-view .view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.disc-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 280px;
+  min-width: 200px;
+}
+.disc-search-ico {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: rgba(232, 216, 196, .55);
+  pointer-events: none;
+}
+.disc-search-input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border-radius: 10px;
+  background: var(--bg-elev, #251419);
+  border: 1px solid var(--border, rgba(232, 216, 196, .14));
+  color: var(--text, #E8D8C4);
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.disc-search-input::placeholder { color: rgba(232, 216, 196, .4); }
+/* Fokus & hover NETRAL cream — jangan wine/gold/merah (aturan dashboard) */
+.disc-search-input:hover  { border-color: rgba(232, 216, 196, .3); }
+.disc-search-input:focus  { border-color: rgba(232, 216, 196, .5); }
+/* Hilangkan tombol clear bawaan search agar konsisten tema */
+.disc-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+@media (max-width: 560px) {
+  .disc-search-wrap { flex: 1 1 100%; }
+}
+
 .discover-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 24vw);
   /* v590f (2026-05-27): "header header" row removed — header sekarang
      direct child .fyp-view (di luar discover-layout) supaya posisi sama
      dgn page lain (close to top-left). Grid hanya untuk content. */
+  /* v728 (2026-06-16): "sidefill" spacer row di kolom kanan supaya kelebihan
+     tinggi feed kiri (yg span beberapa baris) turun ke baris peredam itu —
+     bukan memisahkan kartu Trending & Kreator berjauhan. Keduanya nempel di
+     atas dgn jarak row-gap normal. (fix "kolom kosong & berjarak" req user) */
   grid-template-areas:
     "video    trending"
     "video    suggest"
+    "video    sidefill"
     "newvids  newvids"
     "footer   footer";
+  grid-template-rows: min-content min-content 1fr auto auto;
   column-gap: 18px;
   row-gap: 18px;
   flex: 1;
@@ -28108,6 +28185,9 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
 .discover-layout .discover-footer       { grid-area: footer; }
 /* Backward-compat: kalau ada wrapper sidebar lama nyangkut, hide */
 .discover-layout .discover-sidebar { display: none; }
+/* v738: badge "Live" (hijau) di kartu Trending Jelajahi disembunyikan — off-palette
+   & redundan; judul "Trending Hari Ini" sudah menandakan keterkinian. (req user) */
+.discover-col-trending .trending-live-pill { display: none !important; }
 
 /* Stack ke 1 kolom di layar narrow (mobile + tablet sempit) */
 @media (max-width: 980px) {
@@ -28152,6 +28232,38 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
   font-weight: 800;
   letter-spacing: -.02em;
   margin: 4px 0 4px;
+}
+/* v739: skala header kartu Trending Jelajahi utk konteks sidebar — h2 global
+   22px terlalu besar; subjudul & ikon diturunkan biar proporsional & nama topik
+   (konten) jadi relatif lebih menonjol. Scoped ke .discover-col-trending. (req user) */
+.discover-col-trending .trending-title h2 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+.discover-col-trending .trending-title p { font-size: 12px; }
+.discover-col-trending .trending-title > .sec-icon-v582 { width: 44px !important; height: 44px !important; border-radius: 12px !important; }
+.discover-col-trending .trending-title > .sec-icon-v582 svg { width: 22px !important; height: 22px !important; }
+.discover-col-trending .trending-info strong { font-size: 15px; }
+/* v740: badge rank Jelajahi — angka dibesarkan (14→16) & kotak dirapatkan
+   (40→38) biar angka mengisi, tidak tenggelam di kotak. (req user) */
+.discover-col-trending .trending-rank {
+  width: 38px !important; min-width: 38px !important; height: 38px !important;
+  font-size: 16px !important;
+}
+/* v743: garis pembatas header DIHAPUS (req user — gak cocok). */
+/* v744: kartu Kreator Disarankan diselaraskan dgn kartu Trending + tombol Follow
+   jadi pill cream menonjol (req user). */
+.discover-col-suggest .suggest-head { margin-bottom: 13px; }
+.discover-col-suggest .suggest-title h2 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.discover-col-suggest .suggest-title p { font-size: 12px; margin: 4px 0 0; }
+.discover-col-suggest .suggest-title > .sec-icon-v582 { width: 44px !important; height: 44px !important; border-radius: 12px !important; }
+.discover-col-suggest .suggest-title > .sec-icon-v582 svg { width: 22px !important; height: 22px !important; }
+.discover-col-suggest .suggest-info strong { font-size: 15px; }
+.discover-col-suggest .suggest-info small { font-size: 11px; }
+body:not([data-role="admin"]) .discover-col-suggest .suggest-item .btn.primary {
+  background: var(--cream, #E8D8C4) !important;
+  border: 1px solid transparent !important;
+  color: #2a1419 !important;
+}
+body:not([data-role="admin"]) .discover-col-suggest .suggest-item .btn.primary:hover {
+  background: #f0e4d4 !important;
 }
 .discover-col-trending .trending-title small {
   font-size: 11.5px;
@@ -28354,6 +28466,9 @@ body.light-mode .ds-bento-tag.tag-fyp { color: var(--primary); }
 .discover-layout .video-card {
   min-height: 600px;
   padding: 22px 22px 18px;
+  /* Isi tinggi area grid (sejajar rail kanan) supaya kolom feed tidak
+     menyisakan ruang kosong besar saat feed kosong/pendek. */
+  align-self: stretch;
 }
 .discover-layout .video-card .fyp-feed {
   width: 100%;
@@ -28364,10 +28479,42 @@ body.light-mode .ds-bento-tag.tag-fyp { color: var(--primary); }
   z-index: 1;
   align-items: stretch;
 }
-.discover-layout .video-card .fyp-card {
-  max-width: 100%;
-  padding: 14px 4px;
-  border-bottom: 0;
+/* Empty-state (pesan saja, mis. hasil search/tag) ditaruh di tengah vertikal. */
+.discover-layout .video-card .fyp-feed:has(.fyp-empty) { justify-content: center; }
+/* Tapi empty PREVIEW (ada kartu skeleton) → mulai dari ATAS, biar tidak ada
+   celah kosong besar di atas pesan (req user 2026-06-16). */
+.discover-layout .video-card .fyp-feed:has(.fyp-empty-compact) { justify-content: flex-start; }
+.discover-layout .video-card .fyp-card { max-width: 100%; }
+/* v750: kartu feed Jelajahi dapat KOTAK/wadah (sama spt skeleton preview) — border
+   + radius + bg + padding, biar tidak flush/naked (req user "buat kolomnya").
+   Spesifisitas tinggi + !important utk menang dari rule "flush feed" lama
+   (html body:not([data-role=admin])... .fyp-card yg set border/radius/bg ke 0). */
+html body:not([data-role="admin"]) .discover-layout .video-card .fyp-card {
+  padding: 16px !important;
+  border: 1px solid var(--border-strong, rgba(232, 216, 196, .12)) !important;
+  border-radius: 16px !important;
+  background: var(--bg-elev-2, rgba(255, 255, 255, .02)) !important;
+  margin-bottom: 16px !important;
+}
+html body:not([data-role="admin"]) .discover-layout .video-card .fyp-card:last-child { margin-bottom: 0 !important; }
+/* v752: area video = bentuk TETAP (portrait 4:5, terpusat) — video menyesuaikan
+   via object-fit cover, bukan kolom yg ikut ukuran video (req user). Aspect-ratio
+   tdk lagi disetel JS dari dimensi video. */
+html body:not([data-role="admin"]) .discover-layout .video-card .fyp-video-wrap {
+  aspect-ratio: 16 / 9 !important;   /* landscape → mengisi penuh lebar kolom, tinggi wajar */
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: 78vh !important;
+}
+.discover-layout .video-card .fyp-video-wrap video,
+.discover-layout .video-card .fyp-video-wrap img.fyp-poster {
+  object-fit: cover !important;   /* video mengisi penuh kolom, tanpa ruang kosong */
+}
+/* Skeleton video disamakan (mengisi penuh lebar kolom, 16/9). */
+.discover-layout .fyp-skeletons .fyp-sk-video {
+  aspect-ratio: 16 / 9;
+  max-width: none;
 }
 
 /* === Right sidebar — bento stack, scroll internal di tiap list === */
@@ -28825,7 +28972,9 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   position: relative;
   width: 100%;
   max-height: 70vh;
-  background: #000;
+  /* Gradient wine-gelap (bukan hitam polos) → letterbox & fallback thumbnail
+     gagal-load terlihat disengaja, bukan kotak hitam/ikon patah. */
+  background: linear-gradient(135deg, #1f0e13, #120a0c);
   border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
@@ -28835,6 +28984,52 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   align-items: center;
   justify-content: center;
 }
+/* === Gate 18+ feed Jelajahi (req user 2026-06-16): setelah preview 15 detik,
+   video konten 18+ pause + blur + PERTANYAAN konfirmasi sebelum lanjut nonton. === */
+.fyp-gate {
+  position: absolute; inset: 0; z-index: 7;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: rgba(26, 12, 16, .50);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  animation: fypGateIn .2s ease;
+  cursor: default;
+}
+@keyframes fypGateIn { from { opacity: 0; } to { opacity: 1; } }
+.fyp-gate-card {
+  max-width: 320px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  padding: 22px 22px 20px; border-radius: 16px;
+  background: rgba(26, 12, 16, .72);
+  border: 1px solid rgba(232, 216, 196, .2);
+}
+.fyp-gate-badge {
+  font-size: 13px; font-weight: 900; letter-spacing: .03em;
+  color: var(--cream, #E8D8C4);
+  padding: 3px 12px; border-radius: 999px;
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .3);
+}
+.fyp-gate-q { margin: 2px 0 0; font-size: 16px; font-weight: 800; color: var(--cream, #E8D8C4); }
+.fyp-gate-sub { margin: 0; font-size: 12.5px; line-height: 1.45; color: rgba(232, 216, 196, .7); }
+.fyp-gate-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 5px; }
+.fyp-gate-btn {
+  width: 100%; padding: 9px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.fyp-gate-yes {
+  color: var(--cream, #E8D8C4);
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .3);
+}
+.fyp-gate-yes:hover { transform: translateY(-1px); background: #7d3640; }
+.fyp-gate-no {
+  color: rgba(232, 216, 196, .8);
+  background: rgba(232, 216, 196, .06);
+  border: 1px solid rgba(232, 216, 196, .2);
+}
+.fyp-gate-no:hover { background: rgba(232, 216, 196, .14); }
 .fyp-video-wrap video,
 .fyp-video-wrap img.fyp-poster {
   width: 100%;
@@ -29133,6 +29328,126 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   color: var(--muted);
 }
 .fyp-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+/* Ikon dalam lingkaran — senada empty-state kartu samping (suggest/trending). */
+.fyp-empty-icon {
+  width: 72px; height: 72px;
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(232, 216, 196, .12), transparent 60%),
+    var(--grad-soft);
+  border: 1px solid var(--border-strong);
+  color: var(--cream, #E8D8C4);
+  position: relative;
+}
+.fyp-empty-icon::before {
+  content: ''; position: absolute; inset: -7px;
+  border-radius: 50%; border: 1px dashed var(--border); opacity: .45;
+}
+.fyp-empty-icon svg { width: 30px; height: 30px; }
+/* Baris tombol aksi */
+.fyp-empty-actions {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  margin-top: 18px;
+}
+/* KEDUA tombol empty feed Jelajahi = pill cream KONSISTEN (req user 2026-06-16):
+   bentuk/ukuran sama (radius 999px). Primary (Unggah Video) sedikit lebih terisi
+   sbg aksi utama; ghost (Cari Kreator) lebih subtle. Default .btn user = outline
+   wine pudar + ghost radius 10px → diseragamkan. Spesifisitas (0,5,1) > global. */
+section.view[data-view="discover"] .fyp-empty-actions .btn {
+  color: var(--cream, #E8D8C4) !important;
+  display: inline-flex !important; align-items: center; gap: 7px;
+  border-radius: 999px !important;
+  padding: 10px 18px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+.fyp-empty-actions .btn .fyp-btn-ic { width: 16px; height: 16px; flex-shrink: 0; }
+section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
+  background: rgba(232, 216, 196, .12) !important;
+  border: 1px solid rgba(232, 216, 196, .34) !important;
+}
+section.view[data-view="discover"] .fyp-empty-actions .btn.ghost {
+  background: rgba(232, 216, 196, .04) !important;
+  border: 1px solid rgba(232, 216, 196, .2) !important;
+}
+section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
+  background: rgba(232, 216, 196, .17) !important;
+  border-color: rgba(232, 216, 196, .45) !important;
+}
+/* Kartu PREVIEW feed Jelajahi saat kosong (req user 2026-06-16): kartu jelas
+   (header + area video ber-ikon play + baris aksi asli muted) supaya layout &
+   fitur feed bisa di-review. Bukan konten dummy — area video kosong ber-ikon. */
+/* Empty preview: tanpa ikon kompas besar (redundan di atas kartu preview),
+   judul + pesan + tombol ringkas saja, lalu kartu preview di bawah. */
+.fyp-empty-compact { padding: 14px 20px 2px !important; }
+.fyp-empty-compact .fyp-empty-icon { display: none; }
+.fyp-empty-compact h3 { font-size: 16px; margin-bottom: 6px; }
+.fyp-empty-compact p { font-size: 13px; }
+.fyp-skeletons { display: flex; flex-direction: column; gap: 18px; padding: 26px 2px 12px; }
+.fyp-card-skel {
+  pointer-events: none;
+  border: 1px solid var(--border-strong, rgba(232, 216, 196, .12));
+  border-radius: 16px; padding: 14px 16px;
+  background: var(--bg-elev-2, rgba(255, 255, 255, .02));
+}
+.fyp-sk-head { display: flex; align-items: center; gap: 10px; }
+.fyp-sk {
+  background: linear-gradient(100deg, rgba(232, 216, 196, .06) 30%, rgba(232, 216, 196, .15) 50%, rgba(232, 216, 196, .06) 70%);
+  background-size: 200% 100%;
+  animation: fypSkShimmer 1.5s ease-in-out infinite;
+  border-radius: 8px; display: block;
+}
+@keyframes fypSkShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.fyp-sk-av { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; }
+.fyp-sk-meta { display: inline-flex; flex-direction: column; gap: 8px; }
+.fyp-sk-line { height: 11px; }
+.fyp-sk-cap { width: 65%; height: 13px; margin: 12px 0 10px; }
+.fyp-sk-follow {
+  margin-left: auto; flex-shrink: 0;
+  font-size: 12px; font-weight: 700; color: rgba(232, 216, 196, .4);
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid rgba(232, 216, 196, .18);
+}
+/* Area video preview: SHIMMER terang + ikon play, PORTRAIT 4:5 (max 70vh) —
+   sama proporsi dgn kartu asli (req user 2026-06-16), tapi shimmer terang
+   (bukan kotak hitam). */
+.fyp-sk-video {
+  width: 100%; aspect-ratio: 4 / 5; max-height: 70vh; border-radius: 12px;
+  background: linear-gradient(100deg, rgba(232, 216, 196, .05) 30%, rgba(232, 216, 196, .13) 50%, rgba(232, 216, 196, .05) 70%);
+  background-size: 200% 100%;
+  animation: fypSkShimmer 1.5s ease-in-out infinite;
+  display: grid; place-items: center;
+}
+.fyp-sk-play {
+  width: 50px; height: 50px; display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(26, 12, 16, .45);
+  border: 1px solid rgba(232, 216, 196, .25);
+  color: rgba(232, 216, 196, .7);
+}
+.fyp-sk-play svg { width: 24px; height: 24px; margin-left: 3px; }
+.fyp-sk-actions { display: flex; gap: 18px; margin-top: 14px; align-items: center; }
+.fyp-sk-act { display: inline-flex; align-items: center; gap: 6px; color: rgba(232, 216, 196, .32); }
+.fyp-sk-act svg { width: 22px; height: 22px; }
+.fyp-sk-count { width: 22px; height: 11px; border-radius: 5px; }
+/* Skeleton baris sidebar (Trending & Kreator Disarankan) saat kosong (req user
+   2026-06-16): preview struktur daftar + catatan ringkas, ganti ikon+pesan besar. */
+.trend-sk, .sug-sk { display: flex; flex-direction: column; gap: 13px; margin-top: 4px; }
+.trend-sk-item, .sug-sk-item { display: flex; align-items: center; gap: 10px; }
+.trend-sk-rank { width: 28px; height: 20px; border-radius: 6px; flex-shrink: 0; }
+.trend-sk-info, .sug-sk-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+/* Trending skeleton: 3 baris (mirror baris asli) → jarak baris lebih rapat. */
+.trend-sk-info { gap: 6px; }
+.trend-sk-arrow { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.sug-sk-av { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+.sug-sk-btn { width: 62px; height: 26px; border-radius: 999px; flex-shrink: 0; }
+.sidebar-empty-note { margin: 16px 2px 2px; font-size: 12px; line-height: 1.45; color: var(--muted); text-align: center; }
+/* Tombol "lainnya" (people-more) disembunyikan saat Kreator Disarankan KOSONG —
+   tak ada yang bisa dilihat "lainnya"-nya + redundan dgn "Cari Kreator" (req user
+   2026-06-16). Muncul lagi otomatis saat sudah ada kreator disarankan. */
+.suggest-card:has(.sidebar-empty-note) .suggest-foot { display: none; }
 
 @keyframes spin {
   from { transform: rotate(0); }
@@ -29179,7 +29494,90 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -.02em;
+  margin: 0;
+  line-height: 1.2;
 }
+/* v755: header Bagikan = baris [ikon][kolom: judul+deskripsi] supaya judul & teks
+   tergrup rapat (req user: jangan berjauhan). */
+.share-head { display: flex; align-items: center; gap: 11px; }
+.share-head-text { display: flex; flex-direction: column; min-width: 0; }
+/* v761: hapus margin-bottom 18px dari .muted supaya blok teks tdk punya ruang
+   kosong bawah → judul+deskripsi center beneran thd ikon (req: jangan ke atas). */
+.share-head-text p { margin-top: 2px !important; margin-bottom: 0 !important; }
+/* v754: chip ikon header Bagikan (wine soft + ikon cream) — gantikan emoji 📤. */
+.share-head-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* v760: diperbesar agar tingginya span dari judul s/d deskripsi (blok teks ~57px). */
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--primary-soft, rgba(184, 90, 106, .18));
+  color: var(--cream, #E8D8C4);
+  flex-shrink: 0;
+}
+.share-head-ic svg { width: 26px; height: 26px; }
+
+/* v755: Komentar INLINE feed Jelajahi (gaya X, req user) — panel di bawah kartu:
+   composer balasan + thread. BUKAN popup. */
+.fyp-comments {
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fyp-cm-compose { display: flex; align-items: center; gap: 9px; }
+.fyp-cm-av {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 800;
+}
+.fyp-cm-av-me { width: 32px; height: 32px; }
+.fyp-cm-field {
+  flex: 1;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 13.5px;
+}
+.fyp-cm-field:focus { outline: none; border-color: rgba(232, 216, 196, .35); background: var(--surface-2); }
+.fyp-cm-compose .btn { flex-shrink: 0; }
+.fyp-cm-thread { display: flex; flex-direction: column; gap: 14px; }
+.fyp-cm-empty { color: var(--muted); font-size: 13px; padding: 2px 2px; }
+.fyp-cm-item { display: flex; gap: 10px; align-items: flex-start; }
+.fyp-cm-body { flex: 1; min-width: 0; }
+.fyp-cm-meta { display: flex; align-items: baseline; gap: 6px; }
+.fyp-cm-meta strong { font-size: 13px; font-weight: 700; color: var(--text); }
+.fyp-cm-meta small { font-size: 11px; color: var(--muted); }
+.fyp-cm-text { font-size: 13.5px; color: var(--text); line-height: 1.45; margin-top: 2px; word-break: break-word; white-space: pre-wrap; }
+/* v756: tombol "Balas" per-komentar + reply box + balasan nested (gaya X). */
+.fyp-cm-reply-link {
+  margin-top: 5px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fyp-cm-reply-link:hover { color: var(--cream, #E8D8C4); }
+.fyp-cm-replybox { display: flex; gap: 8px; align-items: center; margin-top: 9px; }
+.fyp-cm-replybox .fyp-cm-field { padding: 8px 13px; font-size: 13px; }
+.fyp-cm-replies {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+.fyp-cm-reply-item .fyp-cm-av { width: 28px; height: 28px; font-size: 11px; }
 .share-head p {
   margin-top: 4px;
   font-size: 12.5px;
@@ -29211,8 +29609,32 @@ body[data-role="admin"] .discover-show-more { color: var(--admin-accent); }
 }
 .share-search input:focus {
   outline: none;
-  border-color: var(--primary);
   background: var(--surface-2);
+}
+/* ============================================================================
+   v756 — STANDING RULE (req user 2026-06-16): TANPA focus ring di SELURUH field
+   dashboard user. Saat fokus, kolom tetap CLEAR — tidak ada outline, glow
+   (box-shadow), atau perubahan warna border. Berlaku di kolom & halaman mana pun.
+   (Admin dikecualikan agar tetap aksesibel.)
+   ============================================================================ */
+body:not([data-role="admin"]) input:focus,
+body:not([data-role="admin"]) input:focus-visible,
+body:not([data-role="admin"]) textarea:focus,
+body:not([data-role="admin"]) textarea:focus-visible,
+body:not([data-role="admin"]) select:focus,
+body:not([data-role="admin"]) select:focus-visible,
+body:not([data-role="admin"]) [contenteditable]:focus,
+body:not([data-role="admin"]) [contenteditable]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border) !important;
+}
+/* Wrapper search yg memakai :focus-within glow → ikut dimatikan. */
+body:not([data-role="admin"]) .topbar-search:focus-within,
+body:not([data-role="admin"]) .sidebar-search:focus-within,
+body:not([data-role="admin"]) .share-search:focus-within {
+  box-shadow: none !important;
+  border-color: var(--border) !important;
 }
 .share-users {
   flex: 1;
@@ -29265,9 +29687,13 @@ body[data-role="admin"] .share-user-avatar { background: var(--admin-grad); }
 .share-user-info strong { font-size: 13.5px; font-weight: 700; display: block; }
 .share-user-info small { font-size: 11.5px; color: var(--muted); display: block; }
 .share-user-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 6px 13px;
   border-radius: 999px;
   background: var(--primary);
   color: white;
@@ -29304,16 +29730,17 @@ body[data-role="admin"] .share-user-send { background: var(--admin-accent); colo
 }
 
 .share-actions {
+  /* v763: grid 4 kolom → 12 tile jadi 4×3 SEMPURNA (tak ada yg terpisah). (req user) */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 .share-act {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 6px;
+  gap: 7px;
+  padding: 12px 6px;
   border-radius: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -29327,18 +29754,18 @@ body[data-role="admin"] .share-user-send { background: var(--admin-accent); colo
   transform: translateY(-2px);
 }
 .share-act-icon {
-  font-size: 22px;
+  font-size: 26px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 }
 .share-act-icon svg {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 }
 .share-act small { font-size: 11px; font-weight: 700; }
 .share-act.danger:hover { border-color: var(--danger); color: var(--danger); }
@@ -33455,12 +33882,14 @@ body:not([data-role="admin"]) .role-tag,
 body:not([data-role="admin"]) .row-status::before {
   box-shadow: none !important;
 }
-/* Share user "Send" pill juga ghost — transparent bg, wine border + text */
+/* v757: tombol Kirim (per-user) — soft-filled cream biar jelas (bukan outline pucat),
+   + ikon paper-plane. req user "ubah tampilan ikon Send". */
 body:not([data-role="admin"]) .share-user-send {
-  background: transparent !important;
-  color: var(--primary) !important;
-  border: 1px solid var(--primary) !important;
+  background: var(--primary-soft, rgba(184, 90, 106, .22)) !important;
+  color: var(--cream, #E8D8C4) !important;
+  border: 1px solid rgba(232, 216, 196, .22) !important;
 }
+.share-user-send svg { width: 14px; height: 14px; flex-shrink: 0; }
 body:not([data-role="admin"]) .share-user.sent .share-user-send {
   background: rgba(16, 185, 129, .12) !important;
   color: var(--success) !important;
@@ -55544,13 +55973,14 @@ body:not([data-role="admin"]) [data-view="history"] .continue-list {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: 56px !important;
-  height: 56px !important;
-  padding: 0 8px !important;
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 6px !important;
   background: var(--bg-elev-2) !important;
   border: 1px solid var(--border-strong) !important;
-  border-radius: 10px !important;
-  font-size: 17px !important;
+  border-radius: 11px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   letter-spacing: -.02em !important;
   font-family: 'Inter', sans-serif !important;
