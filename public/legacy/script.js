@@ -859,6 +859,28 @@ try {
     if (!keys.length || keys.indexOf("playly-ad-config") >= 0 || keys.indexOf("playly-demo") >= 0) _purgeStoredDemo();
   });
 } catch (_) {}
+
+// Apakah video boleh tampil ke PUBLIK saat ini — dipakai sebagai SATU sumber
+// kebenaran oleh feed (Discover/Trending/Spotlight/Home) & profil kreator lain.
+// Kriteria:
+//  - adminStatus published (atau video lama tanpa field → anggap published)
+//  - visibility publik (private/unlisted/draft DISEMBUNYIKAN dari listing). Catatan:
+//    "unlisted" tetap bisa dibuka via link langsung karena findVideo() mencari
+//    semua state tanpa filter ini — sesuai semantik unlisted (tak terdaftar,
+//    tapi dapat diakses lewat tautan).
+//  - kalau dijadwalkan (scheduledAt di masa depan) → belum tampil sampai waktunya.
+//    Dihitung live dari Date.now() sehingga otomatis muncul saat waktunya tiba,
+//    tanpa perlu cron/flip status.
+function isPubliclyVisibleVideo(v) {
+  if (!v) return false;
+  const st = v.adminStatus;
+  if (st != null && st !== "published") return false; // pending/rejected/takedown/draft
+  const vis = v.visibility;
+  if (vis === "private" || vis === "unlisted" || vis === "draft") return false;
+  const sched = Number(v.scheduledAt || 0);
+  if (sched && sched > Date.now()) return false;       // terjadwal, belum waktunya
+  return true;
+}
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
