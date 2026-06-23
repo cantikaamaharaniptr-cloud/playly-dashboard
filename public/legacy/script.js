@@ -17820,6 +17820,26 @@ function t(key, fallback) {
   return (I18N[lang] && I18N[lang][key]) || (I18N.id && I18N.id[key]) || (I18N.en && I18N.en[key]) || fallback || key;
 }
 
+// tText(s): terjemahkan STRING UI yang sudah dikenal (teks Indonesia rendered)
+// ke bahasa aktif, via reverse-map EKSAK → key → t(key). AMAN dipakai di dalam
+// zona data-no-i18n: hanya menerjemahkan string yang PERSIS ada di kamus (exact
+// full-text match), jadi tidak menebak/mengorupsi data dinamis (nama, angka,
+// fragmen). Kembalikan apa adanya kalau: bahasa = id (default), input kosong,
+// atau tak ada di kamus. Dipakai saat BUILD HTML di fungsi render (konten yg
+// container-nya data-no-i18n sehingga tree-walker sengaja melewatinya).
+function tText(s) {
+  if (s == null) return s;
+  const str = String(s);
+  try {
+    if (typeof currentLang === "function" && currentLang() === "id") return str;
+    if (!__i18nReverse) __i18nReverse = buildI18nReverseMap();
+    const key = __i18nReverse[str.trim()];
+    if (!key) return str;
+    const tr = t(key);
+    return (tr && tr !== key) ? tr : str;
+  } catch (e) { return str; }
+}
+
 // AUTO-MATCH: text content lookup → translate. Mapping di-build sekali dari
 // I18N.en (English = canonical). Saat applyI18n jalan, walk selector tertentu
 // (sidebar nav, page titles, dll) → kalau text sekarang cocok salah satu nilai
@@ -36664,6 +36684,25 @@ function renderPremiumInsightsView() {
 
     </div>
   `;
+
+  // i18n (2026-06-23): label di hero + card-head + tombol perk sengaja ber-data-no-i18n
+  // (tree-walker melewatinya utk proteksi). Terjemahkan LABEL UI statisnya secara
+  // EKSAK via tText — nilai dinamis (tanggal, nama paket, harga, jumlah hari) TIDAK
+  // ikut diseleksi jadi tetap aman dari korupsi. Hanya jalan bila bahasa != id.
+  try {
+    if (typeof currentLang === "function" && currentLang() !== "id" && typeof tText === "function") {
+      wrap.querySelectorAll(
+        ".pi-hero5-sub, .pi-hero5-box-label, " +
+        ".pi-card-head h4[data-no-i18n], .pi-card-head small[data-no-i18n], " +
+        ".ppt-cta"
+      ).forEach(el => {
+        if (el.children.length !== 0) return;            // skip elemen yg punya anak
+        const cur = (el.textContent || "").trim();
+        const tr = tText(cur);
+        if (tr && tr !== cur) el.textContent = tr;
+      });
+    }
+  } catch (e) {}
 
   // ---- WIRE INTERACTIONS — simple toast / nav ----
   // v643: piCoinExchange/piCoinExtend dihapus (kartu Coin diganti Akses Cepat)
@@ -64352,14 +64391,17 @@ window._emptyRichV24 = function emptyRichV24(opts) {
     generic: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><path class="er-acc" d="M16 26c2 3 5 4 8 4s6-1 8-4M19 19h.01M29 19h.01"/></svg>`
   };
   const svg = svgMap[kind] || svgMap.generic;
+  // i18n: title/copy/cta = teks UI statis (bukan data dinamis) → terjemahkan eksak
+  // via tText saat build. data-no-i18n tetap dipertahankan supaya tree-walker tak
+  // menebak-nebak isi (proteksi anti-corrupt utuh); tText hanya match kamus persis.
   const ctaHtml = (cta && cta.label)
-    ? `<button type="button" class="er-cta btn primary sm" ${cta.view ? `data-navigate-view="${escapeHtml(cta.view)}"` : ""} data-no-i18n>${escapeHtml(cta.label)}</button>`
+    ? `<button type="button" class="er-cta btn primary sm" ${cta.view ? `data-navigate-view="${escapeHtml(cta.view)}"` : ""} data-no-i18n>${escapeHtml(tText(cta.label))}</button>`
     : "";
   const inlineCls = inline ? " er-inline" : "";
   return `<div class="empty-rich-v24${inlineCls}${extra ? " " + extra : ""}" data-no-i18n>
     <div class="er-illust" aria-hidden="true">${svg}</div>
-    <h4 class="er-title">${escapeHtml(title)}</h4>
-    ${copy ? `<p class="er-copy">${escapeHtml(copy)}</p>` : ""}
+    <h4 class="er-title">${escapeHtml(tText(title))}</h4>
+    ${copy ? `<p class="er-copy">${escapeHtml(tText(copy))}</p>` : ""}
     ${ctaHtml}
   </div>`;
 };
