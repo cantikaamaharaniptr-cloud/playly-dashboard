@@ -33520,23 +33520,23 @@ body:not([data-role="admin"]) .auth-screen .auth-card:hover,
 body:not([data-role="admin"]) .auth-screen .auth-card:focus-within {
   box-shadow: none !important;
 }
-/* Tombol primary di user role — GHOST/OUTLINE pure (per request 2026-05-03 revisi).
+/* Tombol primary di user role — SOLID wine + teks krem (req user 2026-06-23, balik outline 2026-05-03).
    ZERO wine bg di state apapun — rest, hover, focus, active semua transparent.
    Hanya border + text wine. Hover feedback via border-thicken / text-bolder. */
 body:not([data-role="admin"]) .btn.primary,
-body:not([data-role="admin"]) .btn.primary:hover,
 body:not([data-role="admin"]) .btn.primary:focus,
 body:not([data-role="admin"]) .btn.primary:focus-visible,
 body:not([data-role="admin"]) .btn.primary:active {
-  background: transparent !important;
-  color: var(--primary) !important;
+  background: var(--primary) !important;
+  color: #E8D8C4 !important;
   border: 1px solid var(--primary) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 body:not([data-role="admin"]) .btn.primary:hover {
+  background: var(--primary-hover) !important;
   border-color: var(--primary-hover) !important;
-  color: var(--primary-hover) !important;
+  color: #E8D8C4 !important;
 }
 /* Auth submit (Sign In Now / Create Account) — keep filled wine sebagai
    primary CTA login screen, tapi flat (no glow). User belum minta ghost
