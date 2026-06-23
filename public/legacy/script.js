@@ -455,10 +455,233 @@ function removeDeviceAccount(email) {
 // Tidak pakai interceptor setItem supaya proses auto-boot, role-recovery, atau
 // profile-update tidak ikut menambah email ke daftar perangkat.
 
+/* =========================================================================
+   UI ICON SET (Iconsax-style: outline minimalis, monokrom currentColor) —
+   pengganti emoji UI (2026-06-17). width/height 1em → ikut font-size seperti
+   emoji. Dipakai via emojiToIcon() di helper render & langsung di markup.
+   HANYA untuk emoji UI hardcoded (BUKAN konten user spt judul video). ======= */
+function _ixSvg(d){
+  return '<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" style="vertical-align:-0.14em" aria-hidden="true">'+d+'</svg>';
+}
+const EMOJI_ICON = {
+  /* help iconsax extra */
+  '💾': _ixSvg('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>'),
+  '📚': _ixSvg('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>'),
+  '🗑': _ixSvg('<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>'),
+  '💬': _ixSvg('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>'),
+  '⭐': _ixSvg('<path d="M12 3.2l2.6 5.3 5.8.85-4.2 4.1 1 5.8L12 16.6 6.8 19.3l1-5.8L3.6 9.35l5.8-.85z"/>'),
+  '🌟': _ixSvg('<path d="M12 3.2l2.6 5.3 5.8.85-4.2 4.1 1 5.8L12 16.6 6.8 19.3l1-5.8L3.6 9.35l5.8-.85z"/>'),
+  '👤': _ixSvg('<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'),
+  '👥': _ixSvg('<circle cx="9" cy="8" r="3.4"/><path d="M3 19c0-3 2.7-4.6 6-4.6s6 1.6 6 4.6"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.6"/><path d="M17 14.6c2.3.4 4 1.7 4 4"/>'),
+  '📤': _ixSvg('<path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>'),
+  '📥': _ixSvg('<path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>'),
+  '⏳': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  '🎬': _ixSvg('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M8 6l-1.5 4M14 6l-1.5 4"/>'),
+  '📹': _ixSvg('<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'),
+  '🎥': _ixSvg('<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'),
+  '📺': _ixSvg('<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 3l4 4 4-4"/>'),
+  '📊': _ixSvg('<path d="M4 20V11M10 20V4M16 20v-7"/><path d="M3 20h18"/>'),
+  '📈': _ixSvg('<path d="M4 20h16"/><path d="M5 16l4-5 3 3 5-7"/>'),
+  '📉': _ixSvg('<path d="M4 4h16"/><path d="M5 8l4 5 3-3 5 7"/>'),
+  '📢': _ixSvg('<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6"/>'),
+  '📧': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📨': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📩': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '🔒': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
+  '🔐': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
+  '🔓': _ixSvg('<rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 7.5-1.8"/>'),
+  '🔑': _ixSvg('<circle cx="8" cy="14" r="4"/><path d="M11 11l8-8M16 3l3 3M14 5l2 2"/>'),
+  '❤': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💜': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💙': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💚': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💛': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🧡': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🖤': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🤍': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🤎': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💗': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '💖': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🔗': _ixSvg('<path d="M9.5 14.5l5-5"/><path d="M10.5 7l1.2-1.2a3.6 3.6 0 0 1 5 5L15.5 12"/><path d="M13.5 17l-1.2 1.2a3.6 3.6 0 0 1-5-5L8.5 12"/>'),
+  '🛡': _ixSvg('<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/>'),
+  '🔥': _ixSvg('<path d="M12 3s5 3.6 5 8.5a5 5 0 0 1-10 0c0-1.8.8-3 .8-3s.2 1.8 1.8 2.2c.3-2.8 2.4-4.7 2.4-7.7z"/>'),
+  '🎫': _ixSvg('<path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4 2 2 0 0 0 0-4z"/><path d="M14 6v12"/>'),
+  '🏷': _ixSvg('<path d="M3 12l8-8h7a2 2 0 0 1 2 2v7l-8 8z"/><circle cx="16" cy="8" r="1.3"/>'),
+  '📋': _ixSvg('<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h6"/>'),
+  '📝': _ixSvg('<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
+  '👁': _ixSvg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'),
+  '🎨': _ixSvg('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5 0-2 2 0 3 0a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>'),
+  '✨': _ixSvg('<path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/><path d="M18 15l.6 1.6L20.5 17l-1.7.6L18 19.5l-.6-1.7L15.7 17l1.7-.6z"/>'),
+  '⚙': _ixSvg('<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><path d="M10.6 2.8 9.9 5.2a7.3 7.3 0 0 0-1.7 1l-2.4-.8-1.7 3 1.9 1.6a7.3 7.3 0 0 0 0 2l-1.9 1.6 1.7 3 2.4-.8a7.3 7.3 0 0 0 1.7 1l.7 2.4h3.4l.7-2.4a7.3 7.3 0 0 0 1.7-1l2.4.8 1.7-3-1.9-1.6a7.3 7.3 0 0 0 0-2l1.9-1.6-1.7-3-2.4.8a7.3 7.3 0 0 0-1.7-1l-.7-2.4z"/>'),
+  '🔍': _ixSvg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>'),
+  '📡': _ixSvg('<path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/>'),
+  '🚀': _ixSvg('<path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5"/><path d="M9 15l-2-2c1-5 5-9 11-9 0 6-4 10-9 11z"/><circle cx="14.5" cy="9.5" r="1.3"/>'),
+  '👋': _ixSvg('<path d="M7 11V6.6a1.4 1.4 0 0 1 2.8 0V11m0-1.2V5a1.4 1.4 0 0 1 2.8 0v4.8m0-.5V6a1.4 1.4 0 0 1 2.8 0v6a6 6 0 0 1-6 6 5 5 0 0 1-3.5-1.5L4 14a1.4 1.4 0 0 1 2-2l1 1"/>'),
+  '🐛': _ixSvg('<g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M12 6.8C9 6.8 6.8 9.4 6.8 12.9C6.8 16.6 9.1 19.8 12 19.8C14.9 19.8 17.2 16.6 17.2 12.9C17.2 9.4 15 6.8 12 6.8Z"/><path d="M12 7.6V19.4"/><path d="M9.7 9.4C10.3 8.1 11 7.3 12 7.3C13 7.3 13.7 8.1 14.3 9.4"/><path d="M10.6 7.1C9.6 5.5 8.1 4.4 6.6 4.4"/><path d="M13.4 7.1C14.4 5.5 15.9 4.4 17.4 4.4"/><path d="M6.9 11C5.4 10.4 4.4 9.4 3.9 8.2"/><path d="M6.6 13.9C5.2 13.9 4.2 13.8 3.3 13.4"/><path d="M7 16.7C5.6 17.3 4.6 18.3 4.1 19.5"/><path d="M17.1 11C18.6 10.4 19.6 9.4 20.1 8.2"/><path d="M17.4 13.9C18.8 13.9 19.8 13.8 20.7 13.4"/><path d="M17 16.7C18.4 17.3 19.4 18.3 19.9 19.5"/></g>'),
+  '👑': _ixSvg('<path d="M4 17l-1.2-8.5 5 3.5L12 5l4.2 4 5-3.5L20 17z"/><path d="M4 17h16"/>'),
+  '⚡': _ixSvg('<path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/>'),
+  '🔔': _ixSvg('<path d="M6 9a6 6 0 1 1 12 0c0 5.5 2 6.5 2 6.5H4S6 14.5 6 9z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>'),
+  '🌐': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>'),
+  '✏': _ixSvg('<path d="M5 19h3L18.5 8.5l-3-3L5 16z"/><path d="M14 6.5l3 3"/>'),
+  '🎉': _ixSvg('<path d="M4 20l5-13 8 8z"/><path d="M14 4s1 1 0 2M18 6s1 0 1 1M16 10c2-1 3 0 3 0"/>'),
+  '📦': _ixSvg('<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>'),
+  '⌨': _ixSvg('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/>'),
+  '🌱': _ixSvg('<path d="M12 21v-7"/><path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/>'),
+  '🎯': _ixSvg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>'),
+  '💡': _ixSvg('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/>'),
+  '📌': _ixSvg('<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 16v5"/>'),
+  '🏆': _ixSvg('<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3M10 14h4M9 20h6M11 14v4M13 14v4"/>'),
+  '🎵': _ixSvg('<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>'),
+  '🎙': _ixSvg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>'),
+  '🖼': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5L5 19"/>'),
+  '🚩': _ixSvg('<path d="M5 21V4h11l-2 3 2 3H5"/>'),
+  '⛔': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>'),
+  '❓': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/>'),
+  '✅': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '✔': _ixSvg('<path d="M5 13l4 4L19 7"/>'),
+  '✓': _ixSvg('<path d="M5 13l4 4L19 7"/>'),
+  '☑': _ixSvg('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '❌': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>'),
+  '✖': _ixSvg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  '✕': _ixSvg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  '⚠': _ixSvg('<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>'),
+  '→': _ixSvg('<path d="M5 12h13M13 6l6 6-6 6"/>'),
+  '←': _ixSvg('<path d="M19 12H6M11 6l-6 6 6 6"/>'),
+  '↑': _ixSvg('<path d="M12 19V6M6 11l6-6 6 6"/>'),
+  '↓': _ixSvg('<path d="M12 5v13M6 13l6 6 6-6"/>'),
+  '↗': _ixSvg('<path d="M7 17 17 7M9 7h8v8"/>'),
+  '↻': _ixSvg('<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/>'),
+  '🔄': _ixSvg('<path d="M4 12a8 8 0 0 1 13-6.2L20 8M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13 6.2L4 16M4 20v-4h4"/>'),
+  '🚫': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'),
+  '✦': _ixSvg('<path d="M12 3l1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/>'),
+  '✧': _ixSvg('<path d="M12 3l1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/>'),
+  '♥': _ixSvg('<path d="M12 20s-7-4.6-9.4-9A4.7 4.7 0 0 1 12 6.2 4.7 4.7 0 0 1 21.4 11c-2.4 4.4-9.4 9-9.4 9z"/>'),
+  '🎲': _ixSvg('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.1"/><circle cx="15" cy="15" r="1.1"/><circle cx="15" cy="9" r="1.1"/><circle cx="9" cy="15" r="1.1"/>'),
+  '🏠': _ixSvg('<path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>'),
+  '📞': _ixSvg('<path d="M5 4h3l1.5 4.5L7.5 10a12 12 0 0 0 6 6l1.5-2L20 16v3a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z"/>'),
+  '🔊': _ixSvg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/>'),
+  '🔇': _ixSvg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6"/>'),
+  '🔕': _ixSvg('<path d="M6 9a6 6 0 0 1 9-5M18 9c0 5.5 2 6.5 2 6.5H8M4 4l16 16M10 19.5a2 2 0 0 0 4 0"/>'),
+  '⏰': _ixSvg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/>'),
+  '📁': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  '📂': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2H3z"/><path d="M3 9h18l-2 9a2 2 0 0 1-2 1.5H5L3 9z"/>'),
+  '🕒': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  '📱': _ixSvg('<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'),
+  '💻': _ixSvg('<rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/>'),
+  '🌍': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>'),
+  '💰': _ixSvg('<circle cx="12" cy="13" r="7"/><path d="M12 9.5a2 2 0 0 0 0 4 2 2 0 0 1 0 4M12 8v1.5M12 17.5V19M9 5l2-2h2l2 2"/>'),
+  '💎': _ixSvg('<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l-3 5 6 11 6-11-3-5"/>'),
+  '🆓': _ixSvg('<path d="M3 12l8-8h7a2 2 0 0 1 2 2v7l-8 8z"/><circle cx="16" cy="8" r="1.3"/>'),
+  '🆘': _ixSvg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.5 5.5l3.4 3.4M15.1 15.1l3.4 3.4M18.5 5.5l-3.4 3.4M8.9 15.1l-3.4 3.4"/>'),
+  '🆕': _ixSvg('<path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/>'),
+  '🆗': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5-5.5"/>'),
+  '🔴': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟢': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟡': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🔵': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🟠': _ixSvg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),
+  '🎓': _ixSvg('<path d="M3 9l9-4 9 4-9 4z"/><path d="M7 11v4c0 1.2 2.2 2.5 5 2.5s5-1.3 5-2.5v-4M21 9v4"/>'),
+  '📅': _ixSvg('<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>'),
+  '📆': _ixSvg('<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>'),
+  '📍': _ixSvg('<path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  '🔖': _ixSvg('<path d="M6 4h12v17l-6-4-6 4z"/>'),
+  '🥇': _ixSvg('<circle cx="12" cy="14" r="6"/><path d="M9 3l3 5 3-5"/><path d="M12 11.5v5M10 14h4"/>'),
+  '🏅': _ixSvg('<circle cx="12" cy="14" r="6"/><path d="M9 3l3 5 3-5"/><path d="M10.5 13.5l1.5-1v4"/>'),
+  '🎁': _ixSvg('<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16M12 9v11M12 9c-1-3-5-3-5-1s4 1 5 1zM12 9c1-3 5-3 5-1s-4 1-5 1z"/>'),
+  '💳': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/>'),
+  '▶': _ixSvg('<path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/>'),
+  '⏸': _ixSvg('<path d="M8 5v14M16 5v14"/>'),
+  '⏯': _ixSvg('<path d="M6 5l9 7-9 7z"/><path d="M19 5v14"/>'),
+  '✉': _ixSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  '📎': _ixSvg('<path d="M8 12l7-7a3.5 3.5 0 0 1 5 5l-9 9a5.5 5.5 0 0 1-8-8l8-8"/>'),
+  '🗂': _ixSvg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/>'),
+};
+function emojiToIcon(str){
+  if (str == null) return str;
+  var s = String(str);
+  if (s.indexOf('️') !== -1) s = s.replace(/️/g, '');
+  for (var e in EMOJI_ICON){ if (s.indexOf(e) !== -1) s = s.split(e).join(EMOJI_ICON[e]); }
+  return s;
+}
+window.emojiToIcon = emojiToIcon;
+
+// Selektor KONTEN USER — JANGAN konversi emoji di sini (judul video, komentar,
+// nama, bio, chat, input). Hanya chrome UI yang dikonversi. =====================
+var _UI_EMOJI_SKIP = '.fyp-title,.fyp-desc,.fyp-card-caption,.fyp-cm-text,.fyp-cm-item,.fyp-cm-replies,.fyp-comments,.comment-text,.comment-body,.cmt-text,.cmt-body,.lib-meta,.lib-title,.video-title,.vid-title,.pv-title,#playerTitle,#playerDesc,.pv-desc,.pv-creator-row,.user-name,.creator-name,.people-name,.people-handle,.dm-thread-preview,.dm-thread-top,.dm-msg,.dm-bubble,.dm-chat-msg,.bnp-text,.bio,.hpc-bio,.suggest-name,.suggest-handle,.lb-name,input,textarea,[contenteditable],[data-no-emi]';
+var _UI_EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}]/u;
+// Ganti emoji UI -> ikon SVG, HANYA di text-node chrome (lewati konten user &
+// svg/script/style). Operasi pada text-node (elemen + listener tetap utuh).
+function convertUiEmojis(root) {
+  if (!root || typeof emojiToIcon !== "function" || !document.createTreeWalker) return;
+  var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (node) {
+      var v = node.nodeValue;
+      if (!v || !_UI_EMOJI_RE.test(v)) return NodeFilter.FILTER_REJECT;
+      var p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      var tag = p.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA") return NodeFilter.FILTER_REJECT;
+      if (p.closest("svg")) return NodeFilter.FILTER_REJECT;
+      if (p.closest(_UI_EMOJI_SKIP)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [], n;
+  while ((n = tw.nextNode())) nodes.push(n);
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    var html = emojiToIcon(node.nodeValue);
+    if (html === node.nodeValue) continue;
+    var tmp = document.createElement("template");
+    tmp.innerHTML = html;
+    node.parentNode.replaceChild(tmp.content, node);
+  }
+}
+window.convertUiEmojis = convertUiEmojis;
+
+// Observer: konversi subtree yg baru dirender. Disconnect saat memproses supaya
+// sisipan SVG kita sendiri tidak memicu loop. Debounce 150ms.
+var _emiObs = null, _emiQueue = null, _emiTimer = null;
+function _emiFlush() {
+  _emiTimer = null;
+  if (_emiObs) _emiObs.disconnect();
+  try {
+    _emiQueue.forEach(function (node) { if (node && node.isConnected) convertUiEmojis(node); });
+  } catch (e) {}
+  _emiQueue.clear();
+  var root = document.body;
+  if (_emiObs && root) _emiObs.observe(root, { childList: true, subtree: true });
+}
+function initUiEmojiConvert() {
+  // Root = body supaya mencakup chrome di LUAR .views: sidebar, top bar, ticker,
+  // dan MODAL (edit video, bagikan, dll) yang di-append ke body. Aman karena
+  // skip-list konten user + lewati svg/script + guard admin.
+  var root = document.body;
+  if (!root) return;
+  if (document.body && document.body.dataset.role === "admin") return; // user dashboard saja
+  try { convertUiEmojis(root); } catch (e) {}
+  if (window.MutationObserver && !_emiObs) {
+    _emiQueue = new Set();
+    _emiObs = new MutationObserver(function (muts) {
+      for (var j = 0; j < muts.length; j++) {
+        var added = muts[j].addedNodes;
+        for (var k = 0; k < added.length; k++) {
+          var nd = added[k];
+          if (nd.nodeType === 1) _emiQueue.add(nd);
+          else if (nd.nodeType === 3 && nd.parentElement) _emiQueue.add(nd.parentElement);
+        }
+      }
+      if (_emiQueue.size && !_emiTimer) _emiTimer = setTimeout(_emiFlush, 150);
+    });
+    _emiObs.observe(root, { childList: true, subtree: true });
+  }
+}
+window.initUiEmojiConvert = initUiEmojiConvert;
+
 function toast(msg, type = "") {
   const t = document.createElement("div");
   t.className = `toast ${type}`;
-  t.innerHTML = msg;
+  t.innerHTML = emojiToIcon(msg);
   const host = $("#toastHost");
   host.append(t);
   // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke
@@ -2064,10 +2287,10 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Inbox", activity: "Aktivitas", discover: "Jelajahi", people: "Cari User", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
-  "user-email": "Email",
-  "premium-insights": "Premium Insights",
+  "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
+  "premium-insights": "Insight Premium",
   "admin-dashboard": "Beranda", "admin-users": "Manajemen Akun",
   "admin-videos": "Kontrol Konten",
   "admin-comms": "Percakapan",
@@ -2134,7 +2357,7 @@ function applyRoleToUI() {
         : '<svg class="pd-rb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8.7 8 10 4.5-1.3 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>';
       badge.innerHTML = ico + (isSuperAdmin(user) ? "Super Admin" : "Admin");
     } else {
-      badge.textContent = "User";
+      badge.textContent = "Pengguna";
     }
     badge.dataset.role = role;
   }
@@ -2168,15 +2391,14 @@ function applyRoleToUI() {
       utb.hidden = true;
     } else if ((user?.tier || "free") === "premium") {
       utb.hidden = false;
-      if (utbTitle) utbTitle.textContent = "Premium · Upload Tanpa Batas";
-      if (utbDesc)  utbDesc.textContent  = "Tanpa batas ukuran file, tanpa batas durasi, tanpa kuota bulanan — upload video > 1 GB dan > 1 jam dengan bebas.";
-      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV<br/><span class="dz-promo">( Kamu Premium — upload tanpa batas ukuran, durasi &amp; kuota <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      if (utbTitle) utbTitle.textContent = "Premium · Kuota 100 GB/bulan";
+      if (utbDesc)  utbDesc.textContent  = "Tanpa batas ukuran file & durasi — kuota 100 GB + 100 video / bulan (10x lipat Free). Reset tiap tanggal 1.";
+      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV · 100 GB + 100 video/bulan<br/><span class="dz-promo">( Kamu Premium — tanpa batas ukuran file &amp; durasi <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     } else {
       utb.hidden = true;
-      // G audit (2026-05-25): copy lebih informatif (kasih konteks "cukup
-      // untuk ~10 video pendek") + framing "Butuh lebih?" instead of
-      // "Upgrade untuk tanpa batas" supaya tidak terasa limit-pressure.
-      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 1 GB/bulan (cukup untuk ~10 video pendek)<br/><span class="dz-promo">( Butuh lebih? Premium punya kuota tanpa batas <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      // G audit (2026-05-25): copy informatif + framing "Butuh lebih?" supaya
+      // tidak terasa limit-pressure. (5 Jun 2026: kuota free 10 GB + 30 video.)
+      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 10 GB + 30 video/bulan<br/><span class="dz-promo">( Butuh lebih? Premium 100 GB + 100 video/bulan <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
     }
   }
 
@@ -2909,7 +3131,7 @@ async function openAdminPlayer(id) {
     statusEl.dataset.st = currentStatus;
   }
   if (descEl) descEl.textContent = v.desc || "(No description)";
-  if (descMetaEl) descMetaEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} views`;
+  if (descMetaEl) descMetaEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} tayangan`;
 
   // Sync action buttons visibility based on status
   const publishBtn  = document.getElementById("apActions")?.querySelector("[data-ap-act='publish']");
@@ -2955,7 +3177,7 @@ async function openAdminPlayer(id) {
           <div class="ap-side-meta">
             <strong>${escapeHtml(x.title || "(no title)")}</strong>
             <small>@${escapeHtml(x.creator || x._owner || "—")}</small>
-            <span class="ap-side-stats">${(x.viewsNum || 0).toLocaleString("en-US")} views · ${xUploaded}</span>
+            <span class="ap-side-stats">${(x.viewsNum || 0).toLocaleString("en-US")} tayangan · ${xUploaded}</span>
           </div>
         </div>
       `;
@@ -3022,7 +3244,7 @@ async function openAdminVideoPreview(id) {
 
   if (titleEl) titleEl.textContent = v.title || "(no title)";
   if (creatorEl) creatorEl.textContent = "@" + (v.creator || v._owner || "—");
-  if (viewsEl) viewsEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} views`;
+  if (viewsEl) viewsEl.textContent = `${(v.viewsNum || 0).toLocaleString("en-US")} tayangan`;
   if (likesEl) likesEl.textContent = `${(v.likes || 0).toLocaleString("en-US")} likes`;
   if (uploadedEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
@@ -3491,6 +3713,9 @@ function bootDashboard() {
   console.log("[bootDashboard] guards passed → rendering dashboard");
   hideAuth();
   ensureAdminGradients();
+  // Konversi emoji UI -> ikon Iconsax-style (2026-06-17). Jalan setelah render
+  // awal; observer akan menangani view/konten yang dirender belakangan.
+  setTimeout(function () { try { initUiEmojiConvert(); } catch (e) {} }, 350);
   // Refresh all UI bound to user
   applyUserToUI();
   applyRoleToUI();
@@ -3551,8 +3776,16 @@ function bootDashboard() {
 // Sumber data:
 //   - Video blob di IndexedDB (`playly-videos`) — biasanya bagian terbesar
 //   - Semua key `playly-*` di localStorage (akun, state, admin data, dll.)
-// Kapasitas: 1 GB (cap visualisasi sesuai Supabase free tier).
-const STORAGE_CAPACITY_BYTES = 1024 * 1024 * 1024; // 1 GB
+// Kuota BULANAN per tier (5 Jun 2026): Free = 10 GB + 30 video, Premium = 100 GB
+// + 100 video. Reset tiap tgl 1; video lama tetap tersimpan selamanya. Premium
+// SENGAJA dibatasi (bukan unlimited) supaya biaya storage terkendali. Satu sumber
+// kebenaran untuk semua meter (ring sidebar, halaman penyimpanan, hint upload).
+function playlyQuota(tier) {
+  return (tier === "premium")
+    ? { bytes: 100 * 1024 * 1024 * 1024, videos: 100, gbLabel: "100 GB" }
+    : { bytes: 10 * 1024 * 1024 * 1024, videos: 30, gbLabel: "10 GB" };
+}
+const STORAGE_CAPACITY_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB (free base, viz)
 
 function computeLocalStorageBytes() {
   let total = 0;
@@ -3593,7 +3826,7 @@ async function refreshStorageUsage() {
     }
 
     // Tier-aware display (per request 2026-05-03):
-    //   - Free → "X MB / 1 GB monthly" + quota progress ring
+    //   - Free → "X MB / 10 GB monthly" + quota progress ring
     //   - Premium → "X MB / Unlimited" + ∞ ring
     const usedTxt = fmtStorageBytes(used);
     const tier = user?.tier || "free";
@@ -3601,8 +3834,8 @@ async function refreshStorageUsage() {
     const pctEl = document.getElementById("storageRingPct");
     const ringEl = document.getElementById("storageRingPath");
 
-    if (tier === "free" && user?.role !== "admin") {
-      // Hitung monthly upload bytes (bukan total seluruh device)
+    if (user?.role !== "admin") {
+      // Monthly upload bytes (free & premium sama-sama berkuota bulanan)
       const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
       const monthStart = new Date();
       monthStart.setDate(1); monthStart.setHours(0,0,0,0);
@@ -3610,13 +3843,14 @@ async function refreshStorageUsage() {
       const monthlyBytes = myVideos
         .filter(v => (v.createdAt || v.id || 0) >= mTs)
         .reduce((s, v) => s + (v.fileSize || 0), 0);
-      const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-      const pct = Math.min(100, Math.max(0, (monthlyBytes / FREE_QUOTA) * 100));
+      const q = playlyQuota(tier); // free 10GB / premium 100GB
+      const pct = Math.min(100, Math.max(0, (monthlyBytes / q.bytes) * 100));
       const monthlyTxt = fmtStorageBytes(monthlyBytes);
-      if (textEl) textEl.textContent = `${monthlyTxt} / 1 GB`;
+      if (textEl) textEl.textContent = `${monthlyTxt} / ${q.gbLabel}`;
       if (pctEl) pctEl.textContent = `${pct < 1 && monthlyBytes > 0 ? "<1" : Math.round(pct)}%`;
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
     } else {
+      // Admin: lihat total bucket cloud, tanpa kuota.
       if (textEl) textEl.textContent = `${usedTxt} / Unlimited`;
       if (pctEl) pctEl.textContent = "∞";
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `0, 100`);
@@ -4318,9 +4552,9 @@ const I18N = {
     "page.upload":               "Upload New Video",
     "page.history":              "Watch History",
     "page.stats":                "Statistics",
-    "page.search":               "Search User",
+    "page.search":               "Search Creator",
     "page.activity":             "Activity",
-    "page.messages":             "Inbox",
+    "page.messages":             "Messages",
     "page.settings":             "Settings",
     "page.profile.edit":         "Edit Profile",
     "page.profile.creator":      "Creator Profile",
@@ -4539,7 +4773,7 @@ const I18N = {
     "settings.security.2fa.btn": "Enable 2FA",
     "settings.security.off":     "OFF",
     // Help center
-    "help.title":                "❓ Help Center",
+    "help.title":                "Help Center",
     "help.search":               "Search help...",
     "help.search.hint":          "(ctrl: upload, account)",
     "help.email.admin":          "Email Super Admin",
@@ -5059,7 +5293,7 @@ const I18N = {
     "pm.feature.priority":        "Priority",
     // FREE features bullets
     "pf.free.1":                 "\"Free\" tier badge in profile",
-    "pf.free.2":                 "Monthly quota meter (60 videos / 1 GB)",
+    "pf.free.2":                 "Monthly quota meter (30 videos / 10 GB)",
     "pf.free.3":                 "Sponsored ads visible while watching",
     "pf.free.4":                 "Basic analytics (last 7 days only)",
     "pf.free.5":                 "\"Upgrade\" prompts in dropdown & sidebar",
@@ -5067,7 +5301,7 @@ const I18N = {
     "pf.free.7":                 "Standard creator badge",
     // PREMIUM features bullets
     "pf.premium.1":              "\"Premium\" verified badge throughout",
-    "pf.premium.2":              "No quota meter — unlimited",
+    "pf.premium.2":              "100 GB + 100 videos / month",
     "pf.premium.3":              "Ad-free — no banners or running text",
     "pf.premium.4":              "Full analytics + Premium Insights widget",
     "pf.premium.5":              "Quick access: Custom Thumbnails & Premium Insights",
@@ -5082,7 +5316,7 @@ const I18N = {
     "howit.step2.title":         "Customize your profile",
     "howit.step2.desc":          "Add an avatar, banner, bio, and links to your other socials. Build the brand that makes fans remember you.",
     "howit.step3.title":         "Upload your video",
-    "howit.step3.desc":          "Drag & drop any video file. Auto-thumbnail, auto-encode, instant preview. Free up to 1 GB/month, Premium unlimited.",
+    "howit.step3.desc":          "Drag & drop any video file. Auto-thumbnail, auto-encode, instant preview. Free up to 10 GB/month, Premium 100 GB/month.",
     "howit.step4.title":         "Share & engage",
     "howit.step4.desc":          "Share on socials with one click. Reply to comments, DM fans, build your community right inside the dashboard.",
     "howit.step5.title":         "Grow with insights",
@@ -5096,7 +5330,7 @@ const I18N = {
     "faq.q1":                    "Can I switch between Free and Premium anytime?",
     "faq.a1":                    "Yes! Upgrade to Premium any time from the profile menu. Your videos, followers, and stats stay the same. Downgrade back to Free is also available — you keep all uploaded content.",
     "faq.q2":                    "What happens if I hit the Free upload limit?",
-    "faq.a2":                    "You'll see a friendly prompt suggesting Premium when you reach 60 videos or 1 GB this month. Existing videos stay live forever — no auto-deletion. The quota simply resets on the 1st of next month.",
+    "faq.a2":                    "You'll see a friendly prompt suggesting Premium when you reach 30 videos or 10 GB this month. Existing videos stay live forever — no auto-deletion. The quota simply resets on the 1st of next month.",
     "faq.q3":                    "Are my videos really stored privately?",
     "faq.a3":                    "All uploads are encrypted at rest and in transit. We never share or sell your data. You control visibility (public, unlisted, private) per video.",
     "faq.q4":                    "Do Premium subscribers see ads while watching?",
@@ -5116,7 +5350,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Free forever option",
     "finalcta.live.tail":        "creators online right now",
     "finalcta.perks.title":      "What you get instantly",
-    "finalcta.perk1":            "60 free uploads / month — no credit card",
+    "finalcta.perk1":            "30 free uploads / month — no credit card",
     "finalcta.perk2":            "Cloud sync across all your devices",
     "finalcta.perk3":            "Real-time analytics & viewer insights",
     "finalcta.perk4":            "Unlimited views, followers & community DMs",
@@ -5127,8 +5361,8 @@ const I18N = {
     "testi.title":               "Loved by 12,000+ creators",
     "testi.subtitle":            "Real creators, real growth. Here's what they say about Playly.",
     "testi.q1":                  "\"Switched from YouTube to Playly Premium 3 months ago. My engagement rate jumped from 2% to 8%. The Premium Insights dashboard is gold.\"",
-    "testi.q2":                  "\"Free tier is more than enough to start. Hit 60 video limit in 2 weeks, upgraded to Premium, never looked back. Live streaming feature is super smooth.\"",
-    "testi.q3":                  "\"As a hobby gamer, the Free plan is perfect. 60 videos a month is exactly what I need. The dashboard is clean & no ads ruin the experience for my fans on Premium.\"",
+    "testi.q2":                  "\"Free tier is more than enough to start. Hit 30 video limit in 2 weeks, upgraded to Premium, never looked back. Live streaming feature is super smooth.\"",
+    "testi.q3":                  "\"As a hobby gamer, the Free plan is perfect. 30 videos a month is exactly what I need. The dashboard is clean & no ads ruin the experience for my fans on Premium.\"",
     // ===== AUTH / LANDING MISC =====
     "auth.welcome":              "Welcome to Playly",
     "auth.choose.continue":      "Choose how you want to continue",
@@ -5391,10 +5625,10 @@ const I18N = {
     "help.about.copy":            "© 2026 Playly. Made with 💜 in Indonesia.",
     // ===== USER VIEWS — empty / desc =====
     "user.upload.share":          "Share your creations with the world.",
-    "user.upload.nofilecap":      "No file-size cap, no duration limit, no monthly quota — upload videos > 1 GB and > 1 hour freely.",
+    "user.upload.nofilecap":      "No file-size or duration cap — upload files > 1 GB & > 1 hour freely. Quota 100 GB + 100 videos/month.",
     "user.upload.fromurl":        "From URL",
     "user.upload.dropor":         "or drag it here",
-    "user.upload.formats":        "MP4, MOV, MKV — Free: up to 1 GB/month · Premium: unlimited",
+    "user.upload.formats":        "MP4, MOV, MKV — Free: 10 GB + 30 video/month · Premium: 100 GB + 100 video/month",
     "user.upload.url.supported":  "Supported: YouTube, Vimeo, TikTok, Dailymotion, Twitch, direct .mp4/.webm URLs.",
     "user.upload.public.tail":    "— everyone can find & watch.",
     "user.live.desc":             "Stream live to your followers in real-time. Premium feature.",
@@ -5426,7 +5660,7 @@ const I18N = {
     "pp.eyebrow":                 "CHOOSE YOUR PLAN",
     "pp.title":                   "Unlock Playly Premium",
     "pp.subtitle":                "Start free for 7 days, upgrade anytime. Cancel whenever.",
-    "pp.foot":                    "All plans include unlimited uploads, 4K quality, ad-free, priority support.",
+    "pp.foot":                    "Premium: 100 GB/month quota, 4K quality, ad-free & priority support.",
     "pay.upgrade.title":          "Upgrade to Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Monthly",
     "pay.plan.monthly.desc":      "Auto-renew monthly. Cancel anytime from Settings.",
@@ -5534,7 +5768,7 @@ const I18N = {
     "settings.notif.push":       "Push notifications",
     "settings.desc":             "Adjust app preferences to your needs.",
     // Help
-    "help.center":               "❓ Help Center",
+    "help.center":               "Help Center",
     // Common placeholders
     "ph.search.menu":            "Search menu...",
     "ph.search.video":           "Search video, creator, or tag...",
@@ -5876,11 +6110,11 @@ const I18N = {
     "page.upload":               "Unggah Video Baru",
     "page.history":              "Riwayat Tontonan",
     "page.stats":                "Statistik",
-    "page.search":               "Cari User",
+    "page.search":               "Cari Kreator",
     "page.activity":             "Aktivitas",
-    "page.messages":             "Inbox",
+    "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
-    "page.profile.edit":         "Edit Profil",
+    "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Kreator",
     "page.profile.my":           "Profil Saya",
     "page.email":                "Email",
@@ -5888,7 +6122,7 @@ const I18N = {
     "btn.discover":              "Jelajahi",
     "btn.messages":              "Pesan",
     "btn.analytics":             "Analitik",
-    "btn.new.message":           "+ New Message",
+    "btn.new.message":           "+ Pesan Baru",
     "btn.save":                  "Simpan",
     "btn.cancel":                "Batal",
     "btn.search":                "Cari",
@@ -5900,7 +6134,7 @@ const I18N = {
     "settings.display":          "🎨 Tampilan",
     "settings.privacy":          "Privasi",
     "settings.security":         "Keamanan",
-    "settings.autoplay":         "Auto-play video",
+    "settings.autoplay":         "Putar Otomatis Video",
     "settings.reducedmotion":    "Animasi minimal",
     "settings.compact":          "Mode kompak",
     "common.save":               "Simpan",
@@ -5947,8 +6181,8 @@ const I18N = {
     "library.newvideos.desc":    "Video terbaru yang baru saja diunggah kreator lain.",
     "library.download.desc":     "Video yang berhasil kamu unduh untuk ditonton offline.",
     "status.tab.all":            "Status Video",
-    "status.tab.pending":        "Pending",
-    "status.tab.takedown":       "Takedown",
+    "status.tab.pending":        "Menunggu",
+    "status.tab.takedown":       "Diturunkan",
     "status.tab.trash":          "Sampah",
     "library.empty.status":      "Tidak ada video di status.",
     "library.empty.pending":     "Tidak ada video menunggu review.",
@@ -6043,7 +6277,7 @@ const I18N = {
     // Search
     "search.title":              "👥 Cari User",
     "search.desc":               "Temukan user lain di Playly dan mulai berinteraksi.",
-    "search.ph":                 "Search name or username...",
+    "search.ph":                 "Cari nama atau username...",
     "search.follower":           "pengikut",
     "search.followers":          "pengikut",
     // Follow
@@ -6064,7 +6298,7 @@ const I18N = {
     "dm.requests.desc":          "DM dari user lain yang belum kamu ikuti balik.",
     "dm.archived.title":         "📦 Arsip",
     "dm.archived.desc":          "Chat yang kamu arsipkan.",
-    "dm.btn.new":                "+ New Message",
+    "dm.btn.new":                "+ Pesan Baru",
     "dm.search.ph":              "Cari pesan atau user...",
     "dm.empty.choose":           "Pilih percakapan",
     "dm.input.ph":               "Tulis pesan...",
@@ -6091,7 +6325,7 @@ const I18N = {
     "settings.security.2fa.btn": "Aktifkan 2FA",
     "settings.security.off":     "MATI",
     // Help
-    "help.title":                "❓ Pusat Bantuan",
+    "help.title":                "Pusat Bantuan",
     "help.search":               "Cari bantuan...",
     "help.search.hint":          "(ctrl: unggah, akun)",
     "help.email.admin":          "Email Super Admin",
@@ -6114,7 +6348,7 @@ const I18N = {
     "help.shortcut.refresh":     "Refresh paksa (hapus cache)",
     "help.about":                "Tentang Playly",
     // Common
-    "common.now":                "just now",
+    "common.now":                "baru saja",
     "common.day":                "hari",
     "common.hour":               "jam",
     "common.minute":             "menit",
@@ -6213,7 +6447,7 @@ const I18N = {
     "phrase.report.bug":         "Lapor Bug",
     "phrase.contact.admin":      "Hubungi admin",
     "phrase.uploaded.just.now":  "Baru saja diunggah",
-    "phrase.no.results":         "No results.",
+    "phrase.no.results":         "Tidak ada hasil.",
     "phrase.no.video":           "Belum ada video",
     "phrase.no.followers":       "Belum ada pengikut",
     "phrase.empty.inbox":        "Inbox kosong",
@@ -6259,12 +6493,12 @@ const I18N = {
     "activity.you.liked":        "Kamu menyukai",
     "activity.you.commented":    "Kamu berkomentar di",
     "activity.you.uploaded":     "Kamu mengunggah",
-    "dm.start.conversation":     "Start a conversation...",
+    "dm.start.conversation":     "Mulai percakapan...",
     "dm.empty.with":             "Belum ada pesan dengan",
     "dm.empty.greet":            "Sapa duluan!",
-    "dm.picker.title":           "New Message",
+    "dm.picker.title":           "Pesan Baru",
     "dm.picker.desc":            "Choose a user to chat with.",
-    "dm.picker.search":          "Search name or username...",
+    "dm.picker.search":          "Cari nama atau username...",
     "common.following":          "Mengikuti",
     "common.justnow":            "baru saja",
     // ===== ADMIN DASHBOARD ID =====
@@ -6375,13 +6609,13 @@ const I18N = {
     "auth.showcase.admin.desc":      "Dashboard administrator untuk moderasi konten, analytics real-time, manajemen user, iklan, dan revenue platform.",
     "auth.stat.creators":        "Kreator aktif",
     "auth.stat.videos":          "Video",
-    "auth.stat.views":           "Views/bulan",
+    "auth.stat.views":           "Tontonan/bulan",
     "auth.stat.monitoring":      "Monitoring aktif",
     "auth.stat.access":          "Akses kontrol",
-    "auth.stat.analytics":       "Time analytics",
+    "auth.stat.analytics":       "Analitik waktu",
     "auth.float.trending":       "Trending sekarang",
     "auth.float.moderation":     "Moderasi aktif",
-    "auth.float.revenue":        "Revenue tracker",
+    "auth.float.revenue":        "Pelacak pendapatan",
     "auth.locked.title":         "Akun terkunci sementara",
     "auth.locked.try":           "Coba lagi dalam",
     "auth.reset.here":           "Reset di sini",
@@ -6444,7 +6678,7 @@ const I18N = {
     "user.email.replies":            "Balasan Email",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan dari admin Playly.",
-    "profile.edit.title":        "👤 Edit Profil",
+    "profile.edit.title":        "👤 Ubah Profil",
     "profile.edit.desc":         "Atur informasi yang ditampilkan di profilmu.",
     "profile.identity":          "🪪 Identitas",
     "profile.choose.photo":      "Pilih Foto",
@@ -6456,8 +6690,8 @@ const I18N = {
     "profile.account.info":      "📊 Info Akun",
     "profile.joined":            "Bergabung sejak",
     "profile.total.videos":      "Total Video",
-    "profile.total.following":   "Total Following",
-    "profile.role":              "Role",
+    "profile.total.following":   "Total Mengikuti",
+    "profile.role":              "Peran",
     "settings.security":         "Keamanan",
     "settings.oldpw":            "Password Lama",
     "settings.newpw":            "Password Baru",
@@ -6469,7 +6703,7 @@ const I18N = {
     "settings.notif.follower":   "Follower baru",
     "settings.notif.email":      "Email notifikasi",
     "settings.notif.push":       "Push notifikasi",
-    "help.center":               "❓ Pusat Bantuan",
+    "help.center":               "Pusat Bantuan",
     // Captcha + 2FA modal ID
     "captcha.title":             "Verifikasi: Susun Kotak",
     "captcha.desc.prefix":       "Klik kotak berurutan dari",
@@ -6525,14 +6759,14 @@ const I18N = {
     "word.replies":              "balasan",
     // Stat detail popups ID
     "stat.detail.viewdetails":   "Lihat detail →",
-    "stat.detail.totalupload":   "Total upload",
-    "stat.detail.totalviews":    "Total views",
-    "stat.detail.totallikes":    "Total likes",
+    "stat.detail.totalupload":   "Total Unggahan",
+    "stat.detail.totalviews":    "Total Tontonan",
+    "stat.detail.totallikes":    "Total Suka",
     "stat.detail.avgviews":      "Rata-rata views/video",
     "stat.detail.avglikes":      "Rata-rata likes/video",
     "stat.detail.avgper":        "Rata-rata/video",
     "stat.detail.totalvideos":   "Jumlah video",
-    "stat.detail.engagementrate":"Engagement rate",
+    "stat.detail.engagementrate":"Tingkat interaksi",
     "stat.detail.no.video":      "Belum ada video",
     "stat.detail.no.views":      "Belum ada view",
     "stat.detail.no.likes":      "Belum ada like",
@@ -6541,25 +6775,25 @@ const I18N = {
     "stat.detail.acc.from":      "Akumulasi dari",
     "stat.detail.creators.you.follow":"Kreator yang kamu ikuti",
     "stat.detail.your.followers":"Total followers kamu",
-    "stat.detail.total.following":"Total following",
+    "stat.detail.total.following":"Total Mengikuti",
     // My Profile / Liked Videos ID
     "myprofile.myvideos":        "Video Saya",
     "myprofile.likedvideos":     "Video yang Disukai",
     "myprofile.liked.empty.title":"Belum ada video disukai",
     "myprofile.liked.empty.desc":"Like video supaya muncul di sini.",
     "myprofile.empty.upload":    "Belum ada video — upload sekarang",
-    "profile.edit.btn":          "Edit Profil",
+    "profile.edit.btn":          "Ubah Profil",
     // My Library ID
-    "library.statusvideos.head": "Published",
+    "library.statusvideos.head": "Terbit",
     "library.newvideos.head":    "Video Baru",
     "library.download.head":     "Unduhan",
     "library.status.tab.all":    "Bermasalah",
     "library.status.tab.pending":"Menunggu",
     "library.status.tab.draft":  "Draf",
-    "library.status.tab.takedown":"Takedown",
+    "library.status.tab.takedown":"Diturunkan",
     "library.status.tab.trash":  "Sampah",
     "library.empty.live":        "Belum ada video yang sudah live.",
-    "library.empty.upload.now":  "Upload sekarang",
+    "library.empty.upload.now":  "Unggah sekarang",
     "library.empty.status":      "Tidak ada video di status.",
     "library.empty.pending":     "Tidak ada video pending review.",
     "library.empty.takedown":    "Tidak ada video yang di-takedown.",
@@ -6586,12 +6820,12 @@ const I18N = {
     "uemail.awaiting.admin":     "Menunggu balasan admin",
     "uemail.awaiting.user":      "Menunggu balasan user",
     // Logout / overlay ID
-    "logout.title":              "Logout dari Playly?",
+    "logout.title":              "Keluar dari Playly?",
     "logout.desc.pre":           "Kamu akan keluar dari akun",
     "logout.desc.post":          ". Data tersimpan dan bisa diakses kembali setelah login.",
-    "logout.btn":                "Logout",
+    "logout.btn":                "Keluar",
     "logout.bye":                "Sampai jumpa",
-    "logout.loggingout":         "Logging out...",
+    "logout.loggingout":         "Keluar...",
     "logout.toast.success":      "Berhasil logout.",
     // Share modal ID
     "share.empty.nomatch":       "Tidak ada user yang cocok",
@@ -6604,7 +6838,7 @@ const I18N = {
     "home.notif.title":          "NOTIFIKASI · TERBARU",
     "home.notif.empty":          "Belum ada notifikasi — interaksi di konten kamu akan muncul di sini.",
     "home.following.title":      "TERBARU · FOLLOWING",
-    "home.following.empty":      "Follow kreator untuk lihat video terbaru mereka di sini.",
+    "home.following.empty":      "Ikuti kreator untuk lihat video terbaru mereka di sini.",
     "home.following.empty.cta":  "Discover Kreator",
     "home.following.no.new":     "Belum ada video baru dari kreator yang kamu follow.",
     "home.activity.title":       "LIVE · AKTIVITAS PLATFORM",
@@ -6612,8 +6846,8 @@ const I18N = {
     "home.perf.title":           "PERFORMA HARI INI",
     "home.suggest.title":        "SARAN KREATOR",
     "home.streak.days":          "Hari Streak",
-    "home.streak.bar.label":     "Upload 7 hari terakhir",
-    "home.streak.cta":           "Upload hari ini →",
+    "home.streak.bar.label":     "Unggah 7 hari terakhir",
+    "home.streak.cta":           "Unggah hari ini →",
     // Compact chat-time abbreviations ID
     "chat.min.short":            "mnt",
     "chat.hour.short":           "jam",
@@ -6673,7 +6907,7 @@ const I18N = {
     "pm.feature.priority":        "Prioritas",
     // FREE features bullets
     "pf.free.1":                 "Badge \"Gratis\" di profil",
-    "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
+    "pf.free.2":                 "Meter kuota bulanan (30 video / 10 GB)",
     "pf.free.3":                 "Iklan sponsor saat menonton",
     "pf.free.4":                 "Analitik dasar (7 hari terakhir saja)",
     "pf.free.5":                 "Ajakan \"Upgrade\" di dropdown & sidebar",
@@ -6681,7 +6915,7 @@ const I18N = {
     "pf.free.7":                 "Badge kreator standar",
     // PREMIUM features bullets
     "pf.premium.1":              "Badge terverifikasi \"Premium\" di mana-mana",
-    "pf.premium.2":              "Tanpa meter kuota — tanpa batas",
+    "pf.premium.2":              "100 GB + 100 video / bulan",
     "pf.premium.3":              "Bebas iklan — tanpa banner atau running text",
     "pf.premium.4":              "Analitik lengkap + widget Premium Insights",
     "pf.premium.5":              "Akses cepat: Thumbnail kustom & Premium Insights",
@@ -6696,7 +6930,7 @@ const I18N = {
     "howit.step2.title":         "Atur profil kamu",
     "howit.step2.desc":          "Tambah avatar, banner, bio, dan link ke media sosial lainmu. Bangun brand yang bikin fans ingat kamu.",
     "howit.step3.title":         "Unggah video kamu",
-    "howit.step3.desc":          "Tarik & lepas file video apa saja. Thumbnail & encode otomatis, preview instan. Gratis hingga 1 GB/bulan, Premium tanpa batas.",
+    "howit.step3.desc":          "Tarik & lepas file video apa saja. Thumbnail & encode otomatis, preview instan. Gratis hingga 10 GB/bulan, Premium 100 GB/bulan.",
     "howit.step4.title":         "Bagikan & berinteraksi",
     "howit.step4.desc":          "Bagikan ke media sosial dengan satu klik. Balas komentar, DM fans, bangun komunitas langsung dari dashboard.",
     "howit.step5.title":         "Tumbuh dengan insight",
@@ -6710,7 +6944,7 @@ const I18N = {
     "faq.q1":                    "Bisakah saya pindah antara Gratis dan Premium kapan saja?",
     "faq.a1":                    "Ya! Upgrade ke Premium kapan saja dari menu profil. Video, follower, dan stats kamu tetap sama. Downgrade kembali ke Gratis juga tersedia — semua konten yang sudah diunggah tetap kamu miliki.",
     "faq.q2":                    "Apa yang terjadi jika saya mencapai batas unggah Gratis?",
-    "faq.a2":                    "Kamu akan melihat prompt ramah yang menyarankan Premium saat mencapai 60 video atau 1 GB bulan ini. Video yang sudah ada tetap online selamanya — tidak ada penghapusan otomatis. Kuota direset setiap tanggal 1 bulan berikutnya.",
+    "faq.a2":                    "Kamu akan melihat prompt ramah yang menyarankan Premium saat mencapai 30 video atau 10 GB bulan ini. Video yang sudah ada tetap online selamanya — tidak ada penghapusan otomatis. Kuota direset setiap tanggal 1 bulan berikutnya.",
     "faq.q3":                    "Apakah video saya benar-benar disimpan secara privat?",
     "faq.a3":                    "Semua unggahan dienkripsi saat tersimpan dan dalam transit. Kami tidak pernah membagikan atau menjual data kamu. Kamu mengontrol visibilitas (publik, tidak terdaftar, privat) per video.",
     "faq.q4":                    "Apakah pelanggan Premium melihat iklan saat menonton?",
@@ -6730,7 +6964,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Opsi gratis selamanya",
     "finalcta.live.tail":        "kreator online sekarang",
     "finalcta.perks.title":      "Yang langsung kamu dapatkan",
-    "finalcta.perk1":            "60 unggah gratis / bulan — tanpa kartu kredit",
+    "finalcta.perk1":            "30 unggah gratis / bulan — tanpa kartu kredit",
     "finalcta.perk2":            "Cloud sync di semua perangkat kamu",
     "finalcta.perk3":            "Analytics real-time & insight penonton",
     "finalcta.perk4":            "Tayangan, follower & DM komunitas tanpa batas",
@@ -6741,8 +6975,8 @@ const I18N = {
     "testi.title":                "Disukai oleh 12.000+ kreator",
     "testi.subtitle":            "Kreator nyata, pertumbuhan nyata. Inilah yang mereka katakan tentang Playly.",
     "testi.q1":                  "\"Pindah dari YouTube ke Playly Premium 3 bulan lalu. Engagement rate saya naik dari 2% ke 8%. Dashboard Premium Insights itu emas.\"",
-    "testi.q2":                  "\"Tier Gratis lebih dari cukup untuk mulai. Capai limit 60 video dalam 2 minggu, upgrade ke Premium, tidak pernah menyesal. Fitur live streaming-nya super mulus.\"",
-    "testi.q3":                  "\"Sebagai gamer hobi, paket Gratis itu sempurna. 60 video sebulan persis yang saya butuh. Dashboard-nya bersih & tanpa iklan merusak pengalaman fans saya yang Premium.\"",
+    "testi.q2":                  "\"Tier Gratis lebih dari cukup untuk mulai. Capai limit 30 video dalam 2 minggu, upgrade ke Premium, tidak pernah menyesal. Fitur live streaming-nya super mulus.\"",
+    "testi.q3":                  "\"Sebagai gamer hobi, paket Gratis itu sempurna. 30 video sebulan persis yang saya butuh. Dashboard-nya bersih & tanpa iklan merusak pengalaman fans saya yang Premium.\"",
     // ===== AUTH / LANDING MISC =====
     "auth.welcome":              "Selamat datang di Playly",
     "auth.choose.continue":      "Pilih cara kamu untuk lanjut",
@@ -7004,10 +7238,10 @@ const I18N = {
     "help.about.copy":            "© 2026 Playly. Dibuat dengan 💜 di Indonesia.",
     // ===== USER VIEWS =====
     "user.upload.share":          "Bagikan karyamu ke dunia.",
-    "user.upload.nofilecap":      "Tanpa batas ukuran file, tanpa batas durasi, tanpa kuota bulanan — unggah video > 1 GB dan > 1 jam dengan bebas.",
+    "user.upload.nofilecap":      "Tanpa batas ukuran file & durasi — unggah file > 1 GB & > 1 jam bebas. Kuota 100 GB + 100 video/bulan.",
     "user.upload.fromurl":        "Dari URL",
     "user.upload.dropor":         "atau seret ke sini",
-    "user.upload.formats":        "MP4, MOV, MKV — Gratis: hingga 1 GB/bulan · Premium: tanpa batas",
+    "user.upload.formats":        "MP4, MOV, MKV — Gratis: 10 GB + 30 video/bulan · Premium: 100 GB + 100 video/bulan",
     "user.upload.url.supported":  "Didukung: YouTube, Vimeo, TikTok, Dailymotion, Twitch, URL .mp4/.webm langsung.",
     "user.upload.public.tail":    "— semua orang bisa cari & tonton.",
     "user.live.desc":             "Stream live ke followers kamu real-time. Fitur Premium.",
@@ -7039,7 +7273,7 @@ const I18N = {
     "pp.eyebrow":                 "PILIH PAKET KAMU",
     "pp.title":                   "Buka Playly Premium",
     "pp.subtitle":                "Mulai gratis 7 hari, upgrade kapan saja. Batal kapan pun.",
-    "pp.foot":                    "Semua paket termasuk unggah tanpa batas, kualitas 4K, bebas iklan, dukungan prioritas.",
+    "pp.foot":                    "Premium: kuota 100 GB/bulan, kualitas 4K, bebas iklan, dukungan prioritas.",
     "pay.upgrade.title":          "Upgrade ke Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Bulanan",
     "pay.plan.monthly.desc":      "Auto-renew bulanan. Batal kapan saja dari Settings.",
@@ -7054,8 +7288,8 @@ const I18N = {
     "pay.waiting.appr":           "Menunggu persetujuan admin…",
     "stats.chart.title":         "Grafik Stats",
     "stats.chart.videos":        "Grafik Stats Video",
-    "stats.chart.views":         "Grafik Stats Views",
-    "stats.chart.followers":     "Grafik Stats Followers",
+    "stats.chart.views":         "Grafik Statistik Tontonan",
+    "stats.chart.followers":     "Grafik Statistik Pengikut",
     "stats.empty.video":         "Belum ada data video.",
     "stats.empty.views":         "Belum ada data views.",
     "stats.empty.followers":     "Belum ada data followers.",
@@ -7316,26 +7550,26 @@ const I18N = {
     "inbox.preview.unit.arc":     "chat — klik untuk buka",
     "inbox.chat.back":            "Kembali ke daftar",
     "people.subtitle":            "Temukan user, lihat followers kamu, dan kelola siapa yang kamu ikuti.",
-    "people.tab.followers":       "Followers",
-    "people.tab.following":       "Following",
+    "people.tab.followers":       "Pengikut",
+    "people.tab.following":       "Diikuti",
     "people.empty.all":           "Belum ada user lain — ajak teman daftar di Playly!",
     "people.empty.followers":     "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!",
     "people.empty.following":     "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.",
     "topperf.empty.title":        "Belum ada data performa",
-    "topperf.empty.desc":         "Upload video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.",
-    "topperf.empty.cta":          "Upload video pertama",
+    "topperf.empty.desc":         "Unggah video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.",
+    "topperf.empty.cta":          "Unggah video pertama",
     "topperf.empty.col":          "Data akan muncul saat video kamu mulai mendapat tontonan.",
     "notif.empty.rich.title":     "Belum ada notifikasi",
     "notif.empty.rich.desc":      "Notifikasi muncul ketika ada interaksi di konten kamu — like, komentar, follower baru, atau balasan pesan.",
     "notif.empty.rich.tip1":      "📤 <b>Upload video</b> supaya kreator lain bisa menonton & menyukai",
-    "notif.empty.rich.tip2":      "🔍 <b>Follow kreator</b> favoritmu di halaman Jelajahi",
+    "notif.empty.rich.tip2":      "🔍 <b>Ikuti kreator</b> favoritmu di halaman Jelajahi",
     "notif.empty.rich.tip3":      "💬 <b>Beri komentar</b> di video orang lain — biasanya direspons cepat",
     "notif.empty.rich.cta.explore":"Jelajahi kreator",
-    "notif.empty.rich.cta.upload":"Upload video",
+    "notif.empty.rich.cta.upload":"Unggah video",
     "notif.empty.home":           "Belum ada notifikasi — mulai dengan upload video atau follow kreator favoritmu.",
     "notif.empty.home.cta":       "Jelajahi kreator",
     "inbox.card.dm":              "DM",
-    "inbox.card.bc":              "Broadcast Admin",
+    "inbox.card.bc":              "Pengumuman",
     "inbox.card.req":             "Permintaan",
     "inbox.card.arc":             "Arsip",
     "inbox.thread.you":           "Kamu: ",
@@ -7404,9 +7638,9 @@ const I18N = {
     "page.upload":               "Muat Naik Video Baharu",
     "page.history":              "Sejarah Tontonan",
     "page.stats":                "Statistik",
-    "page.search":               "Cari Pengguna",
+    "page.search":               "Cari Kreator",
     "page.activity":             "Aktiviti",
-    "page.messages":             "Inbox",
+    "page.messages":             "Mesej",
     "page.settings":             "Tetapan",
     "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Pencipta",
@@ -7572,7 +7806,7 @@ const I18N = {
     "settings.security.2fa.hint": "Tambah lapisan keselamatan dengan PIN 6-digit yang diperlukan semasa log masuk.",
     "settings.security.2fa.btn": "Aktifkan 2FA",
     "settings.security.off":     "MATI",
-    "help.title":                "❓ Pusat Bantuan",
+    "help.title":                "Pusat Bantuan",
     "help.search":               "Cari bantuan...",
     "help.search.hint":          "(ctrl: muat naik, akaun)",
     "help.email.admin":          "E-mel Super Admin",
@@ -8016,14 +8250,14 @@ const I18N = {
     "pm.feature.live":            "Langsung",
     "pm.feature.priority":        "Keutamaan",
     "pf.free.1":                 "Lencana tahap \"Percuma\" dalam profil",
-    "pf.free.2":                 "Meter kuota bulanan (60 video / 1 GB)",
+    "pf.free.2":                 "Meter kuota bulanan (30 video / 10 GB)",
     "pf.free.3":                 "Iklan tajaan kelihatan ketika menonton",
     "pf.free.4":                 "Analitik asas (7 hari lepas sahaja)",
     "pf.free.5":                 "Petunjuk \"Naik taraf\" dalam dropdown & bar sisi",
     "pf.free.6":                 "Kualiti main balik 720p",
     "pf.free.7":                 "Lencana pencipta standard",
     "pf.premium.1":              "Lencana \"Premium\" disahkan di mana-mana",
-    "pf.premium.2":              "Tiada meter kuota — tanpa had",
+    "pf.premium.2":              "100 GB + 100 video / bulan",
     "pf.premium.3":              "Bebas iklan — tiada sepanduk atau teks berjalan",
     "pf.premium.4":              "Analitik penuh + widget Wawasan Premium",
     "pf.premium.5":              "Akses pantas: Lakaran Kustom & Premium Insights",
@@ -8033,7 +8267,7 @@ const I18N = {
     "howit.title":               "Daripada muat naik ke viral dalam 3 langkah",
     "howit.subtitle":            "Tiada kemahiran teknikal diperlukan — Playly mengendalikan semuanya.",
     "howit.step1.title":         "Muat naik video anda",
-    "howit.step1.desc":          "Seret & lepaskan mana-mana fail video. Auto-lakaran, auto-kod, pratonton segera. Percuma sehingga 1 GB/bulan, Premium tanpa had.",
+    "howit.step1.desc":          "Seret & lepaskan mana-mana fail video. Auto-lakaran, auto-kod, pratonton segera. Percuma sehingga 10 GB/bulan, Premium 100 GB/bulan.",
     "howit.step2.title":         "Kongsi & libatkan",
     "howit.step2.desc":          "Kongsi di media sosial dengan satu klik. Balas komen, DM peminat, bina komuniti anda terus dari papan pemuka.",
     "howit.step3.title":         "Berkembang dengan wawasan",
@@ -8044,7 +8278,7 @@ const I18N = {
     "faq.q1":                    "Bolehkah saya bertukar antara Percuma dan Premium bila-bila masa?",
     "faq.a1":                    "Ya! Naik taraf ke Premium bila-bila masa daripada menu profil. Video, pengikut, dan stats anda kekal sama. Turun taraf kembali ke Percuma juga tersedia — anda kekalkan semua kandungan yang dimuat naik.",
     "faq.q2":                    "Apa berlaku jika saya capai had muat naik Percuma?",
-    "faq.a2":                    "Anda akan lihat petunjuk mesra yang mencadangkan Premium apabila anda mencapai 60 video atau 1 GB bulan ini. Video sedia ada kekal aktif selama-lamanya — tiada penghapusan automatik. Kuota akan ditetapkan semula pada 1hb bulan berikutnya.",
+    "faq.a2":                    "Anda akan lihat petunjuk mesra yang mencadangkan Premium apabila anda mencapai 30 video atau 10 GB bulan ini. Video sedia ada kekal aktif selama-lamanya — tiada penghapusan automatik. Kuota akan ditetapkan semula pada 1hb bulan berikutnya.",
     "faq.q3":                    "Adakah video saya benar-benar disimpan secara peribadi?",
     "faq.a3":                    "Semua muat naik disulitkan semasa diam dan dalam transit. Kami tidak pernah berkongsi atau menjual data anda. Anda kawal keterlihatan (awam, tidak tersenarai, peribadi) setiap video.",
     "faq.q4":                    "Adakah pelanggan Premium nampak iklan ketika menonton?",
@@ -8063,7 +8297,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Pilihan percuma selama-lamanya",
     "finalcta.live.tail":        "pencipta dalam talian sekarang",
     "finalcta.perks.title":      "Apa yang anda dapat segera",
-    "finalcta.perk1":            "60 muat naik percuma / bulan — tiada kad kredit",
+    "finalcta.perk1":            "30 muat naik percuma / bulan — tiada kad kredit",
     "finalcta.perk2":            "Segerak awan merentas semua peranti anda",
     "finalcta.perk3":            "Analitik masa nyata & wawasan penonton",
     "finalcta.perk4":            "Tontonan, pengikut & DM komuniti tanpa had",
@@ -8073,8 +8307,8 @@ const I18N = {
     "testi.title":               "Disukai oleh 12,000+ pencipta",
     "testi.subtitle":            "Pencipta sebenar, pertumbuhan sebenar. Inilah kata mereka tentang Playly.",
     "testi.q1":                  "\"Berpindah dari YouTube ke Playly Premium 3 bulan lepas. Kadar penglibatan saya melonjak dari 2% ke 8%. Papan pemuka Wawasan Premium adalah emas.\"",
-    "testi.q2":                  "\"Tahap Percuma sudah memadai untuk mula. Capai had 60 video dalam 2 minggu, naik taraf ke Premium, tidak pernah menyesal. Ciri siaran langsung sangat lancar.\"",
-    "testi.q3":                  "\"Sebagai pemain hobi, pelan Percuma sangat sesuai. 60 video sebulan tepat dengan keperluan saya. Papan pemuka bersih & tiada iklan rosak pengalaman peminat saya yang Premium.\"",
+    "testi.q2":                  "\"Tahap Percuma sudah memadai untuk mula. Capai had 30 video dalam 2 minggu, naik taraf ke Premium, tidak pernah menyesal. Ciri siaran langsung sangat lancar.\"",
+    "testi.q3":                  "\"Sebagai pemain hobi, pelan Percuma sangat sesuai. 30 video sebulan tepat dengan keperluan saya. Papan pemuka bersih & tiada iklan rosak pengalaman peminat saya yang Premium.\"",
     "auth.choose.continue":      "Pilih cara anda mahu teruskan",
     "auth.new.pickplan":         "Baharu di Playly — pilih pelan",
     "auth.continue.free":        "Teruskan dengan Percuma →",
@@ -8242,10 +8476,10 @@ const I18N = {
     "help.about.tag":             "Platform perkongsian video moden",
     "help.about.copy":            "© 2026 Playly. Dibuat dengan 💜 di Indonesia.",
     "user.upload.share":          "Kongsi ciptaan anda dengan dunia.",
-    "user.upload.nofilecap":      "Tiada had saiz fail, tiada had tempoh, tiada kuota bulanan — muat naik video > 1 GB dan > 1 jam dengan bebas.",
+    "user.upload.nofilecap":      "Tiada had saiz fail & tempoh — muat naik fail > 1 GB & > 1 jam bebas. Kuota 100 GB + 100 video/bulan.",
     "user.upload.fromurl":        "Daripada URL",
     "user.upload.dropor":         "atau seret ke sini",
-    "user.upload.formats":        "MP4, MOV, MKV — Percuma: sehingga 1 GB/bulan · Premium: tanpa had",
+    "user.upload.formats":        "MP4, MOV, MKV — Percuma: 10 GB + 30 video/bulan · Premium: 100 GB + 100 video/bulan",
     "user.upload.url.supported":  "Disokong: YouTube, Vimeo, TikTok, Dailymotion, Twitch, URL .mp4/.webm langsung.",
     "user.upload.public.tail":    "— semua orang boleh cari & tonton.",
     "user.live.desc":             "Siar langsung kepada pengikut anda secara masa nyata. Ciri Premium.",
@@ -8274,7 +8508,7 @@ const I18N = {
     "pp.eyebrow":                 "PILIH PELAN ANDA",
     "pp.title":                   "Buka Playly Premium",
     "pp.subtitle":                "Mula percuma 7 hari, naik taraf bila-bila masa. Batalkan bila-bila.",
-    "pp.foot":                    "Semua pelan termasuk muat naik tanpa had, kualiti 4K, bebas iklan, sokongan keutamaan.",
+    "pp.foot":                    "Premium: kuota 100 GB/bulan, kualiti 4K, bebas iklan, sokongan keutamaan.",
     "pay.upgrade.title":          "Naik taraf ke Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Bulanan",
     "pay.plan.monthly.desc":      "Auto-baharui bulanan. Batalkan bila-bila masa daripada Tetapan.",
@@ -8358,7 +8592,7 @@ const I18N = {
     "settings.confirmpw":        "Sahkan Kata Laluan Baharu",
     "settings.changepw.btn":     "Tukar Kata Laluan",
     "settings.appearance":       "Penampilan",
-    "help.center":               "❓ Pusat Bantuan",
+    "help.center":               "Pusat Bantuan",
     "ph.search.menu":            "Cari menu...",
     "ph.search.video":           "Cari video, pencipta, atau tag...",
     "ph.search.admin":           "Cari pengguna, tiket, laporan pepijat, atau laporan...",
@@ -8852,7 +9086,7 @@ const I18N = {
     "settings.security.2fa.hint": "ログイン時に6桁PINを要求するセキュリティ層を追加。",
     "settings.security.2fa.btn": "2FAを有効化",
     "settings.security.off":     "オフ",
-    "help.title":                "❓ ヘルプセンター",
+    "help.title":                "ヘルプセンター",
     "help.search":               "ヘルプを検索...",
     "help.search.hint":          "(ctrl: アップロード、アカウント)",
     "help.email.admin":          "スーパー管理者へメール",
@@ -9296,14 +9530,14 @@ const I18N = {
     "pm.feature.live":            "ライブ",
     "pm.feature.priority":        "優先",
     "pf.free.1":                 "プロフィールに「無料」ティアバッジ",
-    "pf.free.2":                 "月次クォータメーター（60動画 / 1 GB）",
+    "pf.free.2":                 "月次クォータメーター（30動画 / 10 GB）",
     "pf.free.3":                 "視聴中にスポンサー広告表示",
     "pf.free.4":                 "基本分析（過去7日間のみ）",
     "pf.free.5":                 "ドロップダウンとサイドバーに「アップグレード」プロンプト",
     "pf.free.6":                 "720p再生品質",
     "pf.free.7":                 "標準クリエイターバッジ",
     "pf.premium.1":              "全体に「プレミアム」認証バッジ",
-    "pf.premium.2":              "クォータメーターなし — 無制限",
+    "pf.premium.2":              "月100 GB + 100動画",
     "pf.premium.3":              "広告なし — バナーやランニングテキストなし",
     "pf.premium.4":              "完全分析 + プレミアムインサイトウィジェット",
     "pf.premium.5":              "クイックアクセス：カスタムサムネイル & Premium Insights",
@@ -9313,7 +9547,7 @@ const I18N = {
     "howit.title":               "アップロードからバイラルまで3ステップ",
     "howit.subtitle":            "技術スキル不要 — Playlyが重い作業を処理。",
     "howit.step1.title":         "動画をアップロード",
-    "howit.step1.desc":          "任意の動画ファイルをドラッグ＆ドロップ。自動サムネイル、自動エンコード、即時プレビュー。無料は月1 GBまで、プレミアムは無制限。",
+    "howit.step1.desc":          "任意の動画ファイルをドラッグ＆ドロップ。自動サムネイル、自動エンコード、即時プレビュー。無料は月10 GBまで、プレミアムは月100 GB。",
     "howit.step2.title":         "共有して関わる",
     "howit.step2.desc":          "ワンクリックでソーシャルに共有。コメントに返信、ファンにDM、ダッシュボード内でコミュニティを構築。",
     "howit.step3.title":         "インサイトで成長",
@@ -9324,7 +9558,7 @@ const I18N = {
     "faq.q1":                    "無料とプレミアムをいつでも切り替えられますか？",
     "faq.a1":                    "はい！プロフィールメニューからいつでもプレミアムへアップグレード。動画、フォロワー、統計はそのまま。無料への戻しも可能 — アップロード済みコンテンツはすべて保持されます。",
     "faq.q2":                    "無料アップロード制限に達したらどうなりますか？",
-    "faq.a2":                    "今月60動画または1 GBに達するとプレミアムを推奨するフレンドリーなプロンプトが表示されます。既存動画は永久に残ります — 自動削除なし。クォータは翌月1日にリセット。",
+    "faq.a2":                    "今月30動画または10 GBに達するとプレミアムを推奨するフレンドリーなプロンプトが表示されます。既存動画は永久に残ります — 自動削除なし。クォータは翌月1日にリセット。",
     "faq.q3":                    "動画は本当にプライベートに保存されますか？",
     "faq.a3":                    "全アップロードは保管中も転送中も暗号化。データを共有・販売することは決してありません。動画ごとに公開設定（公開、限定公開、非公開）を制御。",
     "faq.q4":                    "プレミアム加入者は視聴中に広告を見ますか？",
@@ -9343,7 +9577,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ 永久無料オプション",
     "finalcta.live.tail":        "クリエイターが今オンライン",
     "finalcta.perks.title":      "今すぐ得られるもの",
-    "finalcta.perk1":            "月60回の無料アップロード — クレジットカード不要",
+    "finalcta.perk1":            "月30回の無料アップロード — クレジットカード不要",
     "finalcta.perk2":            "全デバイス間でクラウド同期",
     "finalcta.perk3":            "リアルタイム分析と視聴者インサイト",
     "finalcta.perk4":            "無制限の視聴、フォロワー、コミュニティDM",
@@ -9353,8 +9587,8 @@ const I18N = {
     "testi.title":               "12,000+ のクリエイターに愛されています",
     "testi.subtitle":            "本物のクリエイター、本物の成長。Playlyについての声をどうぞ。",
     "testi.q1":                  "「3ヶ月前にYouTubeからPlaylyプレミアムに切り替えました。エンゲージメント率が2%から8%にジャンプ。プレミアムインサイトダッシュボードは黄金です。」",
-    "testi.q2":                  "「無料ティアで始めるには十分。2週間で60動画制限に到達、プレミアムにアップグレードして後悔なし。ライブ配信機能は超スムーズ。」",
-    "testi.q3":                  "「趣味のゲーマーとして、無料プランは完璧。月60動画は私のニーズに丁度。ダッシュボードはきれいで、プレミアムのファンの体験を広告で台無しにしない。」",
+    "testi.q2":                  "「無料ティアで始めるには十分。2週間で30動画制限に到達、プレミアムにアップグレードして後悔なし。ライブ配信機能は超スムーズ。」",
+    "testi.q3":                  "「趣味のゲーマーとして、無料プランは完璧。月30動画は私のニーズに丁度。ダッシュボードはきれいで、プレミアムのファンの体験を広告で台無しにしない。」",
     "auth.choose.continue":      "続ける方法を選択",
     "auth.new.pickplan":         "Playly新規 — プランを選択",
     "auth.continue.free":        "無料で続ける →",
@@ -9522,10 +9756,10 @@ const I18N = {
     "help.about.tag":             "モダンな動画共有プラットフォーム",
     "help.about.copy":            "© 2026 Playly. インドネシアで💜と共に作成。",
     "user.upload.share":          "あなたの作品を世界と共有。",
-    "user.upload.nofilecap":      "ファイルサイズ制限なし、時間制限なし、月次クォータなし — 1 GB > および1時間 > の動画を自由にアップロード。",
+    "user.upload.nofilecap":      "ファイルサイズ・時間制限なし — 1 GB超・1時間超のファイルも自由にアップロード。月100 GB + 100動画のクォータ。",
     "user.upload.fromurl":        "URLから",
     "user.upload.dropor":         "またはここにドラッグ",
-    "user.upload.formats":        "MP4、MOV、MKV — 無料：月1 GBまで · プレミアム：無制限",
+    "user.upload.formats":        "MP4、MOV、MKV — 無料：月10 GB + 30動画 · プレミアム：月100 GB + 100動画",
     "user.upload.url.supported":  "サポート：YouTube、Vimeo、TikTok、Dailymotion、Twitch、直接 .mp4/.webm URL。",
     "user.upload.public.tail":    "— 誰でも見つけて視聴可能。",
     "user.live.desc":             "フォロワーへリアルタイムでライブ配信。プレミアム機能。",
@@ -9554,7 +9788,7 @@ const I18N = {
     "pp.eyebrow":                 "プランを選択",
     "pp.title":                   "Playlyプレミアムを解除",
     "pp.subtitle":                "7日間無料で開始、いつでもアップグレード。いつでもキャンセル。",
-    "pp.foot":                    "全プランに無制限アップロード、4K品質、広告なし、優先サポートを含む。",
+    "pp.foot":                    "プレミアム：月100 GBクォータ、4K品質、広告なし、優先サポート。",
     "pay.upgrade.title":          "Playlyプレミアムにアップグレード",
     "pay.plan.monthly":           "Playlyプレミアム · 月額",
     "pay.plan.monthly.desc":      "月次自動更新。設定からいつでもキャンセル。",
@@ -9638,7 +9872,7 @@ const I18N = {
     "settings.confirmpw":        "新しいパスワードを確認",
     "settings.changepw.btn":     "パスワード変更",
     "settings.appearance":       "外観",
-    "help.center":               "❓ ヘルプセンター",
+    "help.center":               "ヘルプセンター",
     "ph.search.menu":            "メニューを検索...",
     "ph.search.video":           "動画、クリエイター、タグを検索...",
     "ph.search.admin":           "ユーザー、チケット、バグレポート、報告を検索...",
@@ -10132,7 +10366,7 @@ const I18N = {
     "settings.security.2fa.hint": "أضف طبقة أمان مع PIN من 6 أرقام مطلوب عند تسجيل الدخول.",
     "settings.security.2fa.btn": "تفعيل 2FA",
     "settings.security.off":     "إيقاف",
-    "help.title":                "❓ مركز المساعدة",
+    "help.title":                "مركز المساعدة",
     "help.search":               "ابحث في المساعدة...",
     "help.search.hint":          "(ctrl: رفع، حساب)",
     "help.email.admin":          "بريد المسؤول الرئيسي",
@@ -10576,14 +10810,14 @@ const I18N = {
     "pm.feature.live":            "مباشر",
     "pm.feature.priority":        "أولوية",
     "pf.free.1":                 "شارة فئة \"مجاني\" في الملف الشخصي",
-    "pf.free.2":                 "عداد الحصة الشهرية (60 فيديو / 1 جيجا)",
+    "pf.free.2":                 "عداد الحصة الشهرية (30 فيديو / 10 جيجا)",
     "pf.free.3":                 "إعلانات برعاية مرئية أثناء المشاهدة",
     "pf.free.4":                 "تحليلات أساسية (آخر 7 أيام فقط)",
     "pf.free.5":                 "مطالبات \"الترقية\" في القائمة المنسدلة والشريط الجانبي",
     "pf.free.6":                 "جودة تشغيل 720p",
     "pf.free.7":                 "شارة منشئ قياسية",
     "pf.premium.1":              "شارة \"مميز\" موثقة في كل مكان",
-    "pf.premium.2":              "بدون عداد حصة — بلا حدود",
+    "pf.premium.2":              "100 جيجا + 100 فيديو / شهر",
     "pf.premium.3":              "بدون إعلانات — لا لافتات أو نص متحرك",
     "pf.premium.4":              "تحليلات كاملة + ودجت رؤى المميز",
     "pf.premium.5":              "وصول سريع: صور مصغرة مخصصة و Premium Insights",
@@ -10593,7 +10827,7 @@ const I18N = {
     "howit.title":               "من الرفع إلى الانتشار في 3 خطوات",
     "howit.subtitle":            "لا حاجة لمهارات تقنية — يتولى Playly المهام الصعبة.",
     "howit.step1.title":         "ارفع فيديوك",
-    "howit.step1.desc":          "اسحب وأفلت أي ملف فيديو. صورة مصغرة تلقائية، ترميز تلقائي، معاينة فورية. مجاني حتى 1 جيجا/شهر، المميز بلا حدود.",
+    "howit.step1.desc":          "اسحب وأفلت أي ملف فيديو. صورة مصغرة تلقائية، ترميز تلقائي، معاينة فورية. مجاني حتى 10 جيجا/شهر، المميز 100 جيجا/شهر.",
     "howit.step2.title":         "شارك وتفاعل",
     "howit.step2.desc":          "شارك على وسائل التواصل بنقرة واحدة. رد على التعليقات، أرسل DM للمعجبين، ابن مجتمعك مباشرة من اللوحة.",
     "howit.step3.title":         "انمُ مع الرؤى",
@@ -10604,7 +10838,7 @@ const I18N = {
     "faq.q1":                    "هل يمكنني التبديل بين المجاني والمميز في أي وقت؟",
     "faq.a1":                    "نعم! ارقَ إلى المميز في أي وقت من قائمة الملف الشخصي. تظل فيديوهاتك ومتابعوك وإحصائياتك كما هي. التخفيض إلى المجاني متاح أيضًا — تحتفظ بجميع المحتوى المرفوع.",
     "faq.q2":                    "ماذا يحدث إذا وصلت إلى حد الرفع المجاني؟",
-    "faq.a2":                    "سترى مطالبة ودية تقترح المميز عند الوصول إلى 60 فيديو أو 1 جيجا هذا الشهر. تظل الفيديوهات الموجودة مباشرة إلى الأبد — لا حذف تلقائي. تتم إعادة تعيين الحصة في الأول من الشهر التالي.",
+    "faq.a2":                    "سترى مطالبة ودية تقترح المميز عند الوصول إلى 30 فيديو أو 10 جيجا هذا الشهر. تظل الفيديوهات الموجودة مباشرة إلى الأبد — لا حذف تلقائي. تتم إعادة تعيين الحصة في الأول من الشهر التالي.",
     "faq.q3":                    "هل يتم تخزين فيديوهاتي بشكل خاص حقًا؟",
     "faq.a3":                    "جميع عمليات الرفع مشفرة في حالة السكون والنقل. لا نشارك أو نبيع بياناتك أبدًا. تتحكم في الرؤية (عام، غير مدرج، خاص) لكل فيديو.",
     "faq.q4":                    "هل يرى مشتركو المميز إعلانات أثناء المشاهدة؟",
@@ -10623,7 +10857,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ خيار مجاني للأبد",
     "finalcta.live.tail":        "منشئ متصل الآن",
     "finalcta.perks.title":      "ما تحصل عليه فورًا",
-    "finalcta.perk1":            "60 رفع مجاني / شهر — بدون بطاقة ائتمان",
+    "finalcta.perk1":            "30 رفع مجاني / شهر — بدون بطاقة ائتمان",
     "finalcta.perk2":            "مزامنة سحابية عبر جميع أجهزتك",
     "finalcta.perk3":            "تحليلات فورية ورؤى المشاهدين",
     "finalcta.perk4":            "مشاهدات بلا حدود ومتابعون ورسائل المجتمع",
@@ -10633,8 +10867,8 @@ const I18N = {
     "testi.title":               "محبوب من قبل أكثر من 12,000 منشئ",
     "testi.subtitle":            "منشئون حقيقيون، نمو حقيقي. هذا ما يقولونه عن Playly.",
     "testi.q1":                  "\"تحولت من YouTube إلى Playly Premium قبل 3 أشهر. قفز معدل تفاعلي من 2% إلى 8%. لوحة Premium Insights ذهبية.\"",
-    "testi.q2":                  "\"الفئة المجانية كافية للبدء. وصلت إلى حد 60 فيديو في أسبوعين، رقيت إلى المميز، لم أنظر للوراء أبدًا. ميزة البث المباشر سلسة جدًا.\"",
-    "testi.q3":                  "\"كلاعب هاوٍ، الخطة المجانية مثالية. 60 فيديو شهريًا هو بالضبط ما أحتاجه. اللوحة نظيفة ولا تفسد الإعلانات تجربة معجبيي على المميز.\"",
+    "testi.q2":                  "\"الفئة المجانية كافية للبدء. وصلت إلى حد 30 فيديو في أسبوعين، رقيت إلى المميز، لم أنظر للوراء أبدًا. ميزة البث المباشر سلسة جدًا.\"",
+    "testi.q3":                  "\"كلاعب هاوٍ، الخطة المجانية مثالية. 30 فيديو شهريًا هو بالضبط ما أحتاجه. اللوحة نظيفة ولا تفسد الإعلانات تجربة معجبيي على المميز.\"",
     "auth.choose.continue":      "اختر كيف تريد المتابعة",
     "auth.new.pickplan":         "جديد على Playly — اختر خطة",
     "auth.continue.free":        "تابع مع المجاني ←",
@@ -10802,10 +11036,10 @@ const I18N = {
     "help.about.tag":             "منصة مشاركة فيديو حديثة",
     "help.about.copy":            "© 2026 Playly. صنع بـ 💜 في إندونيسيا.",
     "user.upload.share":          "شارك إبداعاتك مع العالم.",
-    "user.upload.nofilecap":      "لا حد لحجم الملف، لا حد للمدة، لا حصة شهرية — ارفع فيديوهات > 1 جيجا و > 1 ساعة بحرية.",
+    "user.upload.nofilecap":      "لا حد لحجم الملف أو المدة — ارفع ملفات > 1 جيجا و > 1 ساعة بحرية. حصة 100 جيجا + 100 فيديو/شهر.",
     "user.upload.fromurl":        "من URL",
     "user.upload.dropor":         "أو اسحب هنا",
-    "user.upload.formats":        "MP4، MOV، MKV — مجاني: حتى 1 جيجا/شهر · مميز: بلا حدود",
+    "user.upload.formats":        "MP4، MOV، MKV — مجاني: 10 جيجا + 30 فيديو/شهر · مميز: 100 جيجا + 100 فيديو/شهر",
     "user.upload.url.supported":  "مدعوم: YouTube، Vimeo، TikTok، Dailymotion، Twitch، روابط .mp4/.webm المباشرة.",
     "user.upload.public.tail":    "— يمكن للجميع العثور عليه ومشاهدته.",
     "user.live.desc":             "بث مباشر لمتابعيك في الوقت الفعلي. ميزة المميز.",
@@ -10834,7 +11068,7 @@ const I18N = {
     "pp.eyebrow":                 "اختر خطتك",
     "pp.title":                   "افتح Playly Premium",
     "pp.subtitle":                "ابدأ مجانًا لمدة 7 أيام، ارقَ في أي وقت. ألغِ متى شئت.",
-    "pp.foot":                    "تشمل جميع الخطط رفعًا غير محدود، وجودة 4K، وبدون إعلانات، ودعمًا ذا أولوية.",
+    "pp.foot":                    "المميز: حصة 100 جيجا/شهر، جودة 4K، بدون إعلانات، دعم ذو أولوية.",
     "pay.upgrade.title":          "الترقية إلى Playly Premium",
     "pay.plan.monthly":           "Playly Premium · شهري",
     "pay.plan.monthly.desc":      "تجديد تلقائي شهري. ألغِ في أي وقت من الإعدادات.",
@@ -10918,7 +11152,7 @@ const I18N = {
     "settings.confirmpw":        "تأكيد كلمة المرور الجديدة",
     "settings.changepw.btn":     "تغيير كلمة المرور",
     "settings.appearance":       "المظهر",
-    "help.center":               "❓ مركز المساعدة",
+    "help.center":               "مركز المساعدة",
     "ph.search.menu":            "ابحث في القائمة...",
     "ph.search.video":           "ابحث عن فيديو، منشئ، أو وسم...",
     "ph.search.admin":           "ابحث عن مستخدم، تذكرة، تقرير خطأ، أو بلاغ...",
@@ -11412,7 +11646,7 @@ const I18N = {
     "settings.security.2fa.hint": "添加一层安全，登录时需要 6 位 PIN 码。",
     "settings.security.2fa.btn": "启用 2FA",
     "settings.security.off":     "关闭",
-    "help.title":                "❓ 帮助中心",
+    "help.title":                "帮助中心",
     "help.search":               "搜索帮助...",
     "help.search.hint":          "(ctrl: 上传、账户)",
     "help.email.admin":          "联系超级管理员",
@@ -11856,14 +12090,14 @@ const I18N = {
     "pm.feature.live":            "直播",
     "pm.feature.priority":        "优先级",
     "pf.free.1":                 "资料中的\"免费\"等级标识",
-    "pf.free.2":                 "每月配额表（60 视频 / 1 GB）",
+    "pf.free.2":                 "每月配额表（30 视频 / 10 GB）",
     "pf.free.3":                 "观看时显示赞助广告",
     "pf.free.4":                 "基础分析（仅最近 7 天）",
     "pf.free.5":                 "下拉菜单和侧边栏中的\"升级\"提示",
     "pf.free.6":                 "720p 播放质量",
     "pf.free.7":                 "标准创作者徽章",
     "pf.premium.1":              "全程显示\"高级\"认证徽章",
-    "pf.premium.2":              "无配额表 — 无限制",
+    "pf.premium.2":              "每月 100 GB + 100 视频",
     "pf.premium.3":              "无广告 — 没有横幅或滚动文字",
     "pf.premium.4":              "完整分析 + 高级洞察小组件",
     "pf.premium.5":              "快速访问：自定义封面和 Premium Insights",
@@ -11873,7 +12107,7 @@ const I18N = {
     "howit.title":               "从上传到爆红只需 3 步",
     "howit.subtitle":            "无需技术技能 — Playly 帮你处理一切繁琐工作。",
     "howit.step1.title":         "上传你的视频",
-    "howit.step1.desc":          "拖拽任何视频文件。自动缩略图、自动编码、即时预览。免费每月最多 1 GB，高级版无限制。",
+    "howit.step1.desc":          "拖拽任何视频文件。自动缩略图、自动编码、即时预览。免费每月最多 10 GB，高级版每月 100 GB。",
     "howit.step2.title":         "分享并互动",
     "howit.step2.desc":          "一键分享到社交媒体。回复评论、私信粉丝，直接在后台中建立你的社区。",
     "howit.step3.title":         "通过洞察成长",
@@ -11884,7 +12118,7 @@ const I18N = {
     "faq.q1":                    "我可以随时在免费版和高级版之间切换吗？",
     "faq.a1":                    "是的！随时从资料菜单升级到高级版。你的视频、粉丝和数据保持不变。降级回免费版也可以 — 你保留所有上传的内容。",
     "faq.q2":                    "如果我达到免费上传限制会怎样？",
-    "faq.a2":                    "当你本月达到 60 个视频或 1 GB 时，将看到友好的提示推荐高级版。已有的视频会永久保留 — 没有自动删除。配额会在下月 1 号重置。",
+    "faq.a2":                    "当你本月达到 30 个视频或 10 GB 时，将看到友好的提示推荐高级版。已有的视频会永久保留 — 没有自动删除。配额会在下月 1 号重置。",
     "faq.q3":                    "我的视频真的私密保存吗？",
     "faq.a3":                    "所有上传都在静态和传输中加密。我们绝不分享或出售你的数据。你可以为每个视频单独控制可见性（公开、不公开、私密）。",
     "faq.q4":                    "高级订阅者观看时会看到广告吗？",
@@ -11903,7 +12137,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ 永久免费选项",
     "finalcta.live.tail":        "位创作者正在线上",
     "finalcta.perks.title":      "你将立即获得",
-    "finalcta.perk1":            "每月 60 次免费上传 — 无需信用卡",
+    "finalcta.perk1":            "每月 30 次免费上传 — 无需信用卡",
     "finalcta.perk2":            "在你所有设备上的云同步",
     "finalcta.perk3":            "实时分析与观众洞察",
     "finalcta.perk4":            "无限观看、粉丝和社区私信",
@@ -11913,8 +12147,8 @@ const I18N = {
     "testi.title":               "深受 12,000+ 创作者喜爱",
     "testi.subtitle":            "真实的创作者，真实的成长。看看他们如何评价 Playly。",
     "testi.q1":                  "\"3 个月前从 YouTube 转到 Playly 高级版。我的互动率从 2% 跃升至 8%。高级洞察后台是黄金。\"",
-    "testi.q2":                  "\"免费版足以开始。2 周内达到 60 个视频限制，升级到高级版，从此不再回头。直播功能非常流畅。\"",
-    "testi.q3":                  "\"作为业余玩家，免费套餐很适合。每月 60 个视频正合我的需要。后台干净，没有广告破坏我那些高级版粉丝的体验。\"",
+    "testi.q2":                  "\"免费版足以开始。2 周内达到 30 个视频限制，升级到高级版，从此不再回头。直播功能非常流畅。\"",
+    "testi.q3":                  "\"作为业余玩家，免费套餐很适合。每月 30 个视频正合我的需要。后台干净，没有广告破坏我那些高级版粉丝的体验。\"",
     "auth.choose.continue":      "选择你想要的方式继续",
     "auth.new.pickplan":         "Playly 新用户 — 选择套餐",
     "auth.continue.free":        "继续使用免费版 →",
@@ -12082,10 +12316,10 @@ const I18N = {
     "help.about.tag":             "现代视频分享平台",
     "help.about.copy":            "© 2026 Playly. 在印尼用 💜 制作。",
     "user.upload.share":          "与世界分享你的作品。",
-    "user.upload.nofilecap":      "无文件大小限制、无时长限制、无月度配额 — 自由上传 > 1 GB 和 > 1 小时的视频。",
+    "user.upload.nofilecap":      "无文件大小和时长限制 — 自由上传 > 1 GB 和 > 1 小时的文件。每月配额 100 GB + 100 视频。",
     "user.upload.fromurl":        "从 URL",
     "user.upload.dropor":         "或拖拽到这里",
-    "user.upload.formats":        "MP4、MOV、MKV — 免费版：每月最多 1 GB · 高级版：无限制",
+    "user.upload.formats":        "MP4、MOV、MKV — 免费版：每月 10 GB + 30 视频 · 高级版：每月 100 GB + 100 视频",
     "user.upload.url.supported":  "支持：YouTube、Vimeo、TikTok、Dailymotion、Twitch、直接 .mp4/.webm URL。",
     "user.upload.public.tail":    "— 任何人都可以发现并观看。",
     "user.live.desc":             "实时直播给你的粉丝。高级功能。",
@@ -12114,7 +12348,7 @@ const I18N = {
     "pp.eyebrow":                 "选择你的套餐",
     "pp.title":                   "解锁 Playly 高级版",
     "pp.subtitle":                "免费 7 天开始，随时升级。随时取消。",
-    "pp.foot":                    "所有套餐均包含无限上传、4K 质量、无广告和优先支持。",
+    "pp.foot":                    "高级版：每月 100 GB 配额、4K 质量、无广告和优先支持。",
     "pay.upgrade.title":          "升级到 Playly 高级版",
     "pay.plan.monthly":           "Playly 高级版 · 每月",
     "pay.plan.monthly.desc":      "每月自动续订。可随时从设置中取消。",
@@ -12198,7 +12432,7 @@ const I18N = {
     "settings.confirmpw":        "确认新密码",
     "settings.changepw.btn":     "更改密码",
     "settings.appearance":       "外观",
-    "help.center":               "❓ 帮助中心",
+    "help.center":               "帮助中心",
     "ph.search.menu":            "搜索菜单...",
     "ph.search.video":           "搜索视频、创作者或标签...",
     "ph.search.admin":           "搜索用户、工单、Bug 报告或举报...",
@@ -12692,7 +12926,7 @@ const I18N = {
     "settings.security.2fa.hint": "로그인 시 6자리 PIN이 필요한 보안 계층을 추가하세요.",
     "settings.security.2fa.btn": "2FA 활성화",
     "settings.security.off":     "꺼짐",
-    "help.title":                "❓ 도움말 센터",
+    "help.title":                "도움말 센터",
     "help.search":               "도움말 검색...",
     "help.search.hint":          "(ctrl: 업로드, 계정)",
     "help.email.admin":          "수퍼 관리자에게 이메일",
@@ -13136,14 +13370,14 @@ const I18N = {
     "pm.feature.live":            "라이브",
     "pm.feature.priority":        "우선순위",
     "pf.free.1":                 "프로필의 \"무료\" 등급 배지",
-    "pf.free.2":                 "월간 할당량 미터 (60 동영상 / 1 GB)",
+    "pf.free.2":                 "월간 할당량 미터 (30 동영상 / 10 GB)",
     "pf.free.3":                 "시청 중 후원 광고 표시",
     "pf.free.4":                 "기본 분석 (최근 7일만)",
     "pf.free.5":                 "드롭다운 및 사이드바의 \"업그레이드\" 프롬프트",
     "pf.free.6":                 "720p 재생 품질",
     "pf.free.7":                 "표준 크리에이터 배지",
     "pf.premium.1":              "전체에서 \"프리미엄\" 인증 배지",
-    "pf.premium.2":              "할당량 미터 없음 — 무제한",
+    "pf.premium.2":              "월 100 GB + 100 동영상",
     "pf.premium.3":              "광고 없음 — 배너나 흐르는 텍스트 없음",
     "pf.premium.4":              "전체 분석 + 프리미엄 인사이트 위젯",
     "pf.premium.5":              "빠른 액세스: 맞춤 썸네일 및 Premium Insights",
@@ -13153,7 +13387,7 @@ const I18N = {
     "howit.title":               "업로드에서 입소문까지 3단계",
     "howit.subtitle":            "기술 능력 불필요 — Playly가 무거운 작업을 처리합니다.",
     "howit.step1.title":         "동영상 업로드",
-    "howit.step1.desc":          "모든 동영상 파일을 끌어다 놓으세요. 자동 썸네일, 자동 인코딩, 즉시 미리보기. 무료는 월 1 GB까지, 프리미엄은 무제한.",
+    "howit.step1.desc":          "모든 동영상 파일을 끌어다 놓으세요. 자동 썸네일, 자동 인코딩, 즉시 미리보기. 무료는 월 10 GB까지, 프리미엄은 월 100 GB.",
     "howit.step2.title":         "공유 및 참여",
     "howit.step2.desc":          "한 번의 클릭으로 소셜에 공유하세요. 댓글에 답장하고, 팬에게 DM을 보내고, 대시보드 안에서 커뮤니티를 구축하세요.",
     "howit.step3.title":         "인사이트로 성장",
@@ -13164,7 +13398,7 @@ const I18N = {
     "faq.q1":                    "무료와 프리미엄을 언제든 전환할 수 있나요?",
     "faq.a1":                    "예! 프로필 메뉴에서 언제든 프리미엄으로 업그레이드하세요. 동영상, 팔로워, 통계는 동일하게 유지됩니다. 무료로 다운그레이드도 가능 — 업로드한 모든 콘텐츠를 유지합니다.",
     "faq.q2":                    "무료 업로드 한도에 도달하면 어떻게 되나요?",
-    "faq.a2":                    "이번 달 60 동영상 또는 1 GB에 도달하면 프리미엄을 제안하는 친근한 프롬프트가 표시됩니다. 기존 동영상은 영구적으로 유지됩니다 — 자동 삭제 없음. 할당량은 다음 달 1일에 재설정됩니다.",
+    "faq.a2":                    "이번 달 30 동영상 또는 10 GB에 도달하면 프리미엄을 제안하는 친근한 프롬프트가 표시됩니다. 기존 동영상은 영구적으로 유지됩니다 — 자동 삭제 없음. 할당량은 다음 달 1일에 재설정됩니다.",
     "faq.q3":                    "내 동영상이 정말 비공개로 저장되나요?",
     "faq.a3":                    "모든 업로드는 저장 시 및 전송 시 암호화됩니다. 데이터를 공유하거나 판매하지 않습니다. 동영상별 가시성 (공개, 목록 미공개, 비공개)을 제어합니다.",
     "faq.q4":                    "프리미엄 구독자는 시청 중 광고를 보나요?",
@@ -13183,7 +13417,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ 영구 무료 옵션",
     "finalcta.live.tail":        "명의 크리에이터가 지금 온라인",
     "finalcta.perks.title":      "즉시 받는 것",
-    "finalcta.perk1":            "월 60회 무료 업로드 — 신용카드 불필요",
+    "finalcta.perk1":            "월 30회 무료 업로드 — 신용카드 불필요",
     "finalcta.perk2":            "모든 기기에서 클라우드 동기화",
     "finalcta.perk3":            "실시간 분석 및 시청자 인사이트",
     "finalcta.perk4":            "무제한 조회수, 팔로워 및 커뮤니티 DM",
@@ -13193,8 +13427,8 @@ const I18N = {
     "testi.title":               "12,000+ 크리에이터에게 사랑받는",
     "testi.subtitle":            "진짜 크리에이터, 진짜 성장. Playly에 대한 그들의 이야기를 들어보세요.",
     "testi.q1":                  "\"3개월 전 YouTube에서 Playly Premium으로 전환했습니다. 참여율이 2%에서 8%로 뛰었습니다. Premium Insights 대시보드는 황금입니다.\"",
-    "testi.q2":                  "\"무료 등급은 시작하기에 충분합니다. 2주 만에 60 동영상 한도에 도달했고, 프리미엄으로 업그레이드, 절대 후회하지 않습니다. 라이브 스트리밍 기능이 매우 매끄럽습니다.\"",
-    "testi.q3":                  "\"취미 게이머로서 무료 요금제는 완벽합니다. 월 60 동영상이 정확히 제 필요에 맞습니다. 대시보드는 깨끗하고 광고가 프리미엄 팬의 경험을 망치지 않습니다.\"",
+    "testi.q2":                  "\"무료 등급은 시작하기에 충분합니다. 2주 만에 30 동영상 한도에 도달했고, 프리미엄으로 업그레이드, 절대 후회하지 않습니다. 라이브 스트리밍 기능이 매우 매끄럽습니다.\"",
+    "testi.q3":                  "\"취미 게이머로서 무료 요금제는 완벽합니다. 월 30 동영상이 정확히 제 필요에 맞습니다. 대시보드는 깨끗하고 광고가 프리미엄 팬의 경험을 망치지 않습니다.\"",
     "auth.choose.continue":      "계속하는 방법 선택",
     "auth.new.pickplan":         "Playly 새 사용자 — 요금제 선택",
     "auth.continue.free":        "무료로 계속 →",
@@ -13362,10 +13596,10 @@ const I18N = {
     "help.about.tag":             "현대 동영상 공유 플랫폼",
     "help.about.copy":            "© 2026 Playly. 인도네시아에서 💜로 제작.",
     "user.upload.share":          "당신의 작품을 세상과 공유하세요.",
-    "user.upload.nofilecap":      "파일 크기 제한 없음, 시간 제한 없음, 월간 할당량 없음 — > 1 GB 및 > 1 시간 동영상을 자유롭게 업로드.",
+    "user.upload.nofilecap":      "파일 크기·시간 제한 없음 — > 1 GB 및 > 1 시간 파일도 자유롭게 업로드. 월 100 GB + 100 동영상 할당량.",
     "user.upload.fromurl":        "URL에서",
     "user.upload.dropor":         "또는 여기로 끌어오기",
-    "user.upload.formats":        "MP4, MOV, MKV — 무료: 월 1 GB까지 · 프리미엄: 무제한",
+    "user.upload.formats":        "MP4, MOV, MKV — 무료: 월 10 GB + 30 동영상 · 프리미엄: 월 100 GB + 100 동영상",
     "user.upload.url.supported":  "지원: YouTube, Vimeo, TikTok, Dailymotion, Twitch, 직접 .mp4/.webm URL.",
     "user.upload.public.tail":    "— 누구나 찾고 시청할 수 있습니다.",
     "user.live.desc":             "팔로워에게 실시간 라이브 스트림. 프리미엄 기능.",
@@ -13394,7 +13628,7 @@ const I18N = {
     "pp.eyebrow":                 "요금제 선택",
     "pp.title":                   "Playly Premium 잠금 해제",
     "pp.subtitle":                "7일 무료 시작, 언제든 업그레이드. 언제든 취소.",
-    "pp.foot":                    "모든 요금제는 무제한 업로드, 4K 품질, 광고 없음, 우선 지원을 포함합니다.",
+    "pp.foot":                    "프리미엄: 월 100 GB 할당량, 4K 품질, 광고 없음, 우선 지원.",
     "pay.upgrade.title":          "Playly Premium으로 업그레이드",
     "pay.plan.monthly":           "Playly Premium · 월간",
     "pay.plan.monthly.desc":      "월간 자동 갱신. 설정에서 언제든 취소.",
@@ -13478,7 +13712,7 @@ const I18N = {
     "settings.confirmpw":        "새 비밀번호 확인",
     "settings.changepw.btn":     "비밀번호 변경",
     "settings.appearance":       "외관",
-    "help.center":               "❓ 도움말 센터",
+    "help.center":               "도움말 센터",
     "ph.search.menu":            "메뉴 검색...",
     "ph.search.video":           "동영상, 크리에이터 또는 태그 검색...",
     "ph.search.admin":           "사용자, 티켓, 버그 신고 또는 보고 검색...",
@@ -13972,7 +14206,7 @@ const I18N = {
     "settings.security.2fa.hint": "Añade una capa de seguridad con un PIN de 6 dígitos requerido al iniciar sesión.",
     "settings.security.2fa.btn": "Activar 2FA",
     "settings.security.off":     "APAGADO",
-    "help.title":                "❓ Centro de Ayuda",
+    "help.title":                "Centro de Ayuda",
     "help.search":               "Buscar ayuda...",
     "help.search.hint":          "(ctrl: subir, cuenta)",
     "help.email.admin":          "Correo al Super Admin",
@@ -14416,14 +14650,14 @@ const I18N = {
     "pm.feature.live":            "En Vivo",
     "pm.feature.priority":        "Prioridad",
     "pf.free.1":                 "Insignia de nivel \"Gratis\" en el perfil",
-    "pf.free.2":                 "Medidor de cuota mensual (60 videos / 1 GB)",
+    "pf.free.2":                 "Medidor de cuota mensual (30 videos / 10 GB)",
     "pf.free.3":                 "Anuncios patrocinados visibles al ver",
     "pf.free.4":                 "Analítica básica (solo últimos 7 días)",
     "pf.free.5":                 "Avisos de \"Mejorar\" en el menú desplegable y barra lateral",
     "pf.free.6":                 "Calidad de reproducción 720p",
     "pf.free.7":                 "Insignia de creador estándar",
     "pf.premium.1":              "Insignia verificada \"Premium\" en todas partes",
-    "pf.premium.2":              "Sin medidor de cuota — ilimitado",
+    "pf.premium.2":              "100 GB + 100 videos / mes",
     "pf.premium.3":              "Sin anuncios — sin banners ni texto corriente",
     "pf.premium.4":              "Analítica completa + widget Premium Insights",
     "pf.premium.5":              "Acceso rápido: Miniaturas Personalizadas y Premium Insights",
@@ -14433,7 +14667,7 @@ const I18N = {
     "howit.title":               "De subir a viral en 3 pasos",
     "howit.subtitle":            "No se necesitan habilidades técnicas — Playly se encarga del trabajo pesado.",
     "howit.step1.title":         "Sube tu video",
-    "howit.step1.desc":          "Arrastra y suelta cualquier archivo de video. Auto-miniatura, auto-codificación, vista previa instantánea. Gratis hasta 1 GB/mes, Premium ilimitado.",
+    "howit.step1.desc":          "Arrastra y suelta cualquier archivo de video. Auto-miniatura, auto-codificación, vista previa instantánea. Gratis hasta 10 GB/mes, Premium 100 GB/mes.",
     "howit.step2.title":         "Comparte e interactúa",
     "howit.step2.desc":          "Comparte en redes sociales con un clic. Responde comentarios, envía MD a fans, construye tu comunidad directamente desde el panel.",
     "howit.step3.title":         "Crece con insights",
@@ -14444,7 +14678,7 @@ const I18N = {
     "faq.q1":                    "¿Puedo cambiar entre Gratis y Premium en cualquier momento?",
     "faq.a1":                    "¡Sí! Mejora a Premium en cualquier momento desde el menú de perfil. Tus videos, seguidores y estadísticas siguen iguales. Bajar a Gratis también está disponible — conservas todo el contenido subido.",
     "faq.q2":                    "¿Qué pasa si llego al límite de subida Gratis?",
-    "faq.a2":                    "Verás un aviso amistoso sugiriendo Premium cuando llegues a 60 videos o 1 GB este mes. Los videos existentes permanecen para siempre — sin eliminación automática. La cuota se restablece el día 1 del mes siguiente.",
+    "faq.a2":                    "Verás un aviso amistoso sugiriendo Premium cuando llegues a 30 videos o 10 GB este mes. Los videos existentes permanecen para siempre — sin eliminación automática. La cuota se restablece el día 1 del mes siguiente.",
     "faq.q3":                    "¿Mis videos se almacenan realmente de forma privada?",
     "faq.a3":                    "Todas las subidas están cifradas en reposo y en tránsito. Nunca compartimos ni vendemos tus datos. Tú controlas la visibilidad (público, no listado, privado) por video.",
     "faq.q4":                    "¿Los suscriptores Premium ven anuncios al ver?",
@@ -14463,7 +14697,7 @@ const I18N = {
     "finalcta.trust.free":       "✓ Opción gratuita para siempre",
     "finalcta.live.tail":        "creadores en línea ahora",
     "finalcta.perks.title":      "Lo que obtienes al instante",
-    "finalcta.perk1":            "60 subidas gratis / mes — sin tarjeta de crédito",
+    "finalcta.perk1":            "30 subidas gratis / mes — sin tarjeta de crédito",
     "finalcta.perk2":            "Sincronización en la nube en todos tus dispositivos",
     "finalcta.perk3":            "Analítica en tiempo real e insights del espectador",
     "finalcta.perk4":            "Vistas, seguidores y MDs de comunidad ilimitados",
@@ -14473,8 +14707,8 @@ const I18N = {
     "testi.title":               "Amado por más de 12,000 creadores",
     "testi.subtitle":            "Creadores reales, crecimiento real. Esto es lo que dicen sobre Playly.",
     "testi.q1":                  "\"Cambié de YouTube a Playly Premium hace 3 meses. Mi tasa de engagement saltó del 2% al 8%. El panel Premium Insights es oro.\"",
-    "testi.q2":                  "\"El nivel Gratis es más que suficiente para empezar. Llegué al límite de 60 videos en 2 semanas, mejoré a Premium, nunca miré atrás. La función de transmisión en vivo es muy fluida.\"",
-    "testi.q3":                  "\"Como gamer aficionado, el plan Gratis es perfecto. 60 videos al mes es exactamente lo que necesito. El panel está limpio y sin anuncios que arruinen la experiencia para mis fans Premium.\"",
+    "testi.q2":                  "\"El nivel Gratis es más que suficiente para empezar. Llegué al límite de 30 videos en 2 semanas, mejoré a Premium, nunca miré atrás. La función de transmisión en vivo es muy fluida.\"",
+    "testi.q3":                  "\"Como gamer aficionado, el plan Gratis es perfecto. 30 videos al mes es exactamente lo que necesito. El panel está limpio y sin anuncios que arruinen la experiencia para mis fans Premium.\"",
     "auth.choose.continue":      "Elige cómo quieres continuar",
     "auth.new.pickplan":         "Nuevo en Playly — elige un plan",
     "auth.continue.free":        "Continuar con Gratis →",
@@ -14642,10 +14876,10 @@ const I18N = {
     "help.about.tag":             "Plataforma moderna de compartir videos",
     "help.about.copy":            "© 2026 Playly. Hecho con 💜 en Indonesia.",
     "user.upload.share":          "Comparte tus creaciones con el mundo.",
-    "user.upload.nofilecap":      "Sin límite de tamaño de archivo, sin límite de duración, sin cuota mensual — sube videos > 1 GB y > 1 hora libremente.",
+    "user.upload.nofilecap":      "Sin límite de tamaño ni duración — sube archivos > 1 GB y > 1 hora libremente. Cuota 100 GB + 100 videos/mes.",
     "user.upload.fromurl":        "Desde URL",
     "user.upload.dropor":         "o arrástralo aquí",
-    "user.upload.formats":        "MP4, MOV, MKV — Gratis: hasta 1 GB/mes · Premium: ilimitado",
+    "user.upload.formats":        "MP4, MOV, MKV — Gratis: 10 GB + 30 video/mes · Premium: 100 GB + 100 video/mes",
     "user.upload.url.supported":  "Soportado: YouTube, Vimeo, TikTok, Dailymotion, Twitch, URLs directas .mp4/.webm.",
     "user.upload.public.tail":    "— todos pueden encontrarlo y verlo.",
     "user.live.desc":             "Transmite en vivo a tus seguidores en tiempo real. Función Premium.",
@@ -14674,7 +14908,7 @@ const I18N = {
     "pp.eyebrow":                 "ELIGE TU PLAN",
     "pp.title":                   "Desbloquea Playly Premium",
     "pp.subtitle":                "Empieza gratis por 7 días, mejora en cualquier momento. Cancela cuando quieras.",
-    "pp.foot":                    "Todos los planes incluyen subidas ilimitadas, calidad 4K, sin anuncios, soporte prioritario.",
+    "pp.foot":                    "Premium: cuota de 100 GB/mes, calidad 4K, sin anuncios y soporte prioritario.",
     "pay.upgrade.title":          "Mejorar a Playly Premium",
     "pay.plan.monthly":           "Playly Premium · Mensual",
     "pay.plan.monthly.desc":      "Auto-renovación mensual. Cancela en cualquier momento desde Configuración.",
@@ -14758,7 +14992,7 @@ const I18N = {
     "settings.confirmpw":        "Confirmar Nueva Contraseña",
     "settings.changepw.btn":     "Cambiar Contraseña",
     "settings.appearance":       "Apariencia",
-    "help.center":               "❓ Centro de Ayuda",
+    "help.center":               "Centro de Ayuda",
     "ph.search.menu":            "Buscar menú...",
     "ph.search.video":           "Buscar video, creador o etiqueta...",
     "ph.search.admin":           "Buscar usuario, ticket, reporte de bug o reporte...",
@@ -15213,6 +15447,9 @@ function deepTranslateTextNodes(root) {
     // ke key lain (cth: "HAPUS" → "word.delete" → "Hapus" alih2 stay di
     // explicit key "lp.preview.badge.takedown" = "HAPUS"). Per fix 2026-05-20.
     "[data-i18n]",
+    /* 2026-06-17: jangan translate highlight <mark> & teks translate="no" (fix a->Ke di hasil search) */
+    "mark",
+    "[translate=\"no\"]",
   ];
 
   // Build accept function for TreeWalker
@@ -15248,8 +15485,15 @@ function deepTranslateTextNodes(root) {
       if (stripped) key = __i18nReverse[stripped] || __i18nReverse[stripped.toUpperCase()];
     }
     if (!key) continue;
-    const newText = t(key);
+    let newText = t(key);
     if (!newText || newText === trimmed) continue;
+    // 2026-06-17: kalau elemen induk SUDAH punya ikon hasil konversi emoji, buang
+    // emoji prefix dari terjemahan — kalau tidak, tiap siklus i18n menambah ikon
+    // baru (bug centang menumpuk di daftar Bagikan).
+    if (node.parentElement && node.parentElement.querySelector(".ui-ico")) {
+      newText = newText.replace(EMOJI_PREFIX_RE, "").trim();
+      if (!newText || newText === trimmed) continue;
+    }
     // Preserve leading/trailing whitespace
     const leading = original.match(/^\s*/)[0];
     const trailing = original.match(/\s*$/)[0];
@@ -15347,7 +15591,7 @@ const I18N_AUTO_SELECTORS = [
 
 // Regex untuk strip emoji prefix di awal text — dipakai untuk sanitize
 // label sidebar (logo brand only, no emoji per request user).
-const EMOJI_PREFIX_RE = /^[\s\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]+/gu;
+const EMOJI_PREFIX_RE = /^[\s\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]+/gu;
 
 function autoTranslateByText() {
   if (!__i18nReverse) __i18nReverse = buildI18nReverseMap();
@@ -15359,6 +15603,8 @@ function autoTranslateByText() {
       // Settings/Help dengan icon), JANGAN replace textContent karena bakal
       // wipe svg icon-nya. Kasus ini di-handle via text-node replacement di
       // bawah, bukan textContent assignment.
+      // 2026-06-17: hormati translate="no" (label kustom mis. "Cari Kreator"/"ANALITIK" jangan di-retranslate reverse map)
+      if (el.closest('[translate="no"]')) return;
       if (el.querySelector("button, input, select, textarea, span, b, i")) return;
       // Kalau sudah ada data-i18n explicit → skip (handled di loop utama)
       if (el.hasAttribute("data-i18n")) return;
@@ -15380,7 +15626,10 @@ function autoTranslateByText() {
       // di sidebar per request user). Detect via closest match ke selector
       // sidebar — kalau element ada di dalam .sidebar atau .sidebar-footer,
       // bersihkan emoji prefix dari hasil translate.
-      if (translated && el.closest(".sidebar, .sidebar-footer")) {
+      if (translated && (el.closest(".sidebar, .sidebar-footer") || el.querySelector(".ui-ico"))) {
+        // 2026-06-17: kalau elemen SUDAH punya ikon hasil konversi emoji, JANGAN
+        // ikut sertakan emoji dari nilai terjemahan (mis. "✓ Mengikuti") — kalau
+        // tidak, tiap siklus i18n menambah ikon baru (centang menumpuk).
         translated = translated.replace(EMOJI_PREFIX_RE, "").trim();
       }
       if (translated && translated !== txt) {
@@ -15462,6 +15711,13 @@ function applyI18n(lang) {
   document.documentElement.setAttribute("dir", currentLang() === "ar" ? "rtl" : "ltr");
   // Set body.dataset.lang juga supaya helper format tanggal/Intl pakai locale benar
   if (document.body) document.body.dataset.lang = currentLang();
+  // 2026-06-17: i18n re-set teks via textContent (bisa mengandung emoji spt "→")
+  // → tidak terpantau observer (characterData). Konversi ulang emoji UI -> ikon.
+  try {
+    if (typeof convertUiEmojis === "function" && document.body && document.body.dataset.role !== "admin") {
+      convertUiEmojis(document.body);
+    }
+  } catch (e) {}
 }
 
 // Apply i18n saat load awal — default Bahasa Indonesia untuk new user.
@@ -18078,7 +18334,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
@@ -23482,7 +23738,7 @@ function renderAdminTopInsights() {
             <strong>${escapeHtml(v.title)}</strong>
             <small>@${escapeHtml(v.creator)} • ${uploaded}</small>
           </div>
-          <b style="font-size:11px;color:var(--muted);font-weight:600">${fmtNum(v.viewsNum || 0)} views</b>
+          <b style="font-size:11px;color:var(--muted);font-weight:600">${fmtNum(v.viewsNum || 0)} tayangan</b>
           <button type="button" class="admin-row-play admin-row-play-prominent" data-open-video="${v.id}" title="Play video" aria-label="Play video">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
             <span>Play</span>
@@ -23526,7 +23782,7 @@ function renderAdminTopInsights() {
         <strong>@${escapeHtml(c.name)}</strong>
         <small>#${i + 1} • ${c.videos} video</small>
       </div>
-      <b>${fmtNum(c.views)} views</b>
+      <b>${fmtNum(c.views)} tayangan</b>
     </div>
   `;
   }).join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Belum ada kreator aktif.</div>`;
@@ -27298,7 +27554,7 @@ function fillUserDetailModal(acc) {
       <span class="rank">🎬</span>
       <div>
         <strong>${escapeHtml(v.title)}</strong>
-        <small>${v.duration || "0:00"} • ${v.views || "0"} views</small>
+        <small>${v.duration || "0:00"} • ${v.views || "0"} tayangan</small>
       </div>
       <b>${fmtNum(v.likes || 0)} ♥</b>
     </div>
@@ -27613,7 +27869,7 @@ function renderAnKPIs() {
   $("#anKpiBandwidth") && ($("#anKpiBandwidth").textContent = anFormatBytes(m.bandwidthBytes));
   $("#anKpiEngagement") && ($("#anKpiEngagement").textContent = `${m.engagementPct.toFixed(1)}%`);
   $("#anKpiEngagementSub") && ($("#anKpiEngagementSub").textContent =
-    m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} views` : "likes ÷ views");
+    m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} tayangan` : "suka ÷ tayangan");
   $("#anKpiTotalSub") && ($("#anKpiTotalSub").textContent = m.videos.length ? `dari ${m.videos.length} video` : "global");
 }
 
@@ -27669,7 +27925,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "⏱️", title: "Total Watch Time", desc: "Estimasi total durasi tonton (views × durasi × retention).",
       value: anFormatWatchTime(sec),
-      valueSub: m.totalViews > 0 ? `dari ${fmtNum(m.totalViews)} views` : "belum ada views",
+      valueSub: m.totalViews > 0 ? `dari ${fmtNum(m.totalViews)} tayangan` : "belum ada tayangan",
       rows
     };
   },
@@ -27689,7 +27945,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "📡", title: "Bandwidth Estimasi", desc: "Estimasi konsumsi bandwidth dari semua views.",
       value: anFormatBytes(bytes),
-      valueSub: m.videos.length ? `${m.videos.length} video, ${fmtNum(m.totalViews)} views` : "belum ada konsumsi",
+      valueSub: m.videos.length ? `${m.videos.length} video, ${fmtNum(m.totalViews)} tayangan` : "belum ada konsumsi",
       rows
     };
   },
@@ -27717,7 +27973,7 @@ const KPI_DETAIL_PROVIDERS = {
     return {
       icon: "❤️", title: "Engagement Rate", desc: "Rasio likes terhadap views — indikator kualitas konten.",
       value: rate.toFixed(1) + "%",
-      valueSub: m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} views` : "belum ada data",
+      valueSub: m.totalViews > 0 ? `${fmtNum(m.totalLikes)} likes ÷ ${fmtNum(m.totalViews)} tayangan` : "belum ada data",
       rows
     };
   },
@@ -28094,7 +28350,7 @@ function renderAnPerUserCharts(series, periodTotal) {
             </div>
             <div class="an-per-user-pills">
               <span class="an-per-user-pill" title="Views">
-                <i>👁️</i><b>${fmtNum(u.views)}</b><em>views</em>
+                <i>👁️</i><b>${fmtNum(u.views)}</b><em>tayangan</em>
               </span>
               <span class="an-per-user-pill" title="Followers">
                 <i>👥</i><b>${fmtNum(u.followers)}</b><em>followers</em>
@@ -28190,7 +28446,7 @@ function renderAnTrafficLegend(periodTotal) {
   el.innerHTML = `
     <div class="an-traffic-legend-head">
       <span>Distribution per user — top ${Math.min(5, top.length)}</span>
-      <span class="muted">total ${fmtNum(Math.round(periodTotal))} views</span>
+      <span class="muted">total ${fmtNum(Math.round(periodTotal))} tayangan</span>
     </div>
     <div class="an-traffic-legend-list">
       ${top.map((u, i) => {
@@ -28397,7 +28653,7 @@ function drawAnTrafficChart() {
   const m = anComputeMetrics();
   const series = anGenSeries(anState.range, m.totalViews);
   const total = series.values.reduce((s, v) => s + v, 0);
-  $("#anTrafficTotal") && ($("#anTrafficTotal").textContent = `${fmtNum(total)} views`);
+  $("#anTrafficTotal") && ($("#anTrafficTotal").textContent = `${fmtNum(total)} tayangan`);
   $("#anTrafficSubtitle") && ($("#anTrafficSubtitle").textContent =
     `Views distribution per user — ${anRangeLabel(anState.range)}`);
 
@@ -28500,7 +28756,7 @@ function renderAnTopVideosList(allVideos) {
         <div class="an-top-bar"><div class="an-top-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
       </div>
       <div class="an-top-stats">
-        <b>${fmtNum(v.viewsNum || 0)}</b><small>views</small>
+        <b>${fmtNum(v.viewsNum || 0)}</b><small>tayangan</small>
       </div>
     </div>`;
   }).join("");
@@ -28536,7 +28792,7 @@ function renderAnTopCreatorsList(allVideos) {
         <div class="an-top-bar"><div class="an-top-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
       </div>
       <div class="an-top-stats">
-        <b>${fmtNum(c.views)}</b><small>views</small>
+        <b>${fmtNum(c.views)}</b><small>tayangan</small>
       </div>
     </div>`;
   }).join("");
@@ -29124,7 +29380,7 @@ function openAdminVideoEdit(v) {
   $("#aveTags").value = v.tags || "";
   $("#aveVisibility").value = v.visibility || "public";
   $("#aveCreator").textContent = `@${v.creator || v._owner || "—"}`;
-  $("#aveStats").textContent = `${fmtNum(v.viewsNum || 0)} views • ${fmtNum(v.likes || 0)} likes`;
+  $("#aveStats").textContent = `${fmtNum(v.viewsNum || 0)} tayangan • ${fmtNum(v.likes || 0)} likes`;
   $("#aveThumb").src = v.thumb || "https://picsum.photos/seed/playly/240/140";
 
   const catSel = $("#aveCategory");
@@ -30531,13 +30787,42 @@ function openImageLightbox({ src, name, code } = {}) {
 
   const img = lb.querySelector(".ilb-img");
   const stage = lb.querySelector("[data-ilb-stage]");
-  let zoomed = false;
-  img?.addEventListener("click", () => {
-    zoomed = !zoomed;
-    img.classList.toggle("zoomed", zoomed);
-    stage.style.cursor = zoomed ? "zoom-out" : "zoom-in";
-    stage.style.overflow = zoomed ? "auto" : "hidden";
-  });
+  if (img) {
+    // Zoom + GESER (drag-to-pan). transform:scale tidak bisa di-scroll, jadi saat
+    // di-zoom kita geser pakai translate (di-clamp supaya gambar tak lepas layar).
+    const SCALE = 2.4;
+    let zoomed = false, panX = 0, panY = 0, dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+    const applyT = () => { img.style.transform = zoomed ? ("scale(" + SCALE + ") translate(" + panX + "px," + panY + "px)") : ""; };
+    const clampPan = () => {
+      const r = img.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      const mx = Math.max(0, (r.width - sr.width) / 2) / SCALE;
+      const my = Math.max(0, (r.height - sr.height) / 2) / SCALE;
+      panX = Math.max(-mx, Math.min(mx, panX)); panY = Math.max(-my, Math.min(my, panY));
+    };
+    img.addEventListener("pointerdown", (e) => {
+      if (!zoomed) return;
+      dragging = true; moved = false; sx = e.clientX; sy = e.clientY; ox = panX; oy = panY;
+      try { img.setPointerCapture(e.pointerId); } catch (_) {}
+      img.style.transition = "none"; stage.style.cursor = "grabbing"; e.preventDefault();
+    });
+    img.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      panX = ox + dx / SCALE; panY = oy + dy / SCALE; clampPan(); applyT();
+    });
+    const endDrag = (e) => { if (!dragging) return; dragging = false; try { img.releasePointerCapture(e.pointerId); } catch (_) {} img.style.transition = ""; stage.style.cursor = zoomed ? "grab" : "zoom-in"; };
+    img.addEventListener("pointerup", endDrag);
+    img.addEventListener("pointercancel", endDrag);
+    img.addEventListener("click", () => {
+      if (moved) { moved = false; return; }   // habis drag -> jangan toggle zoom
+      zoomed = !zoomed;
+      if (!zoomed) { panX = 0; panY = 0; }
+      img.classList.toggle("zoomed", zoomed);
+      stage.style.cursor = zoomed ? "grab" : "zoom-in";
+      applyT();
+    });
+  }
 
   const close = () => {
     lb.classList.remove("show");
@@ -31070,13 +31355,13 @@ function switchView(name, { fromNav = false } = {}) {
     let crumbLabel = trCrumb(name);
     if (name === "videos") {
       const labelMap = {
-        all:      "My Library",
+        all:      "Pustaka Saya",
         my:       "Video Saya",
         status:   "Status Video",
-        new:      "New Videos",
+        new:      "Video Baru",
         download: "Unduhan",
       };
-      crumbLabel = labelMap[state?.libTab || "all"] || "My Library";
+      crumbLabel = labelMap[state?.libTab || "all"] || "Pustaka Saya";
     }
     parts.push(`<span class="sep">/</span><a href="#" class="active">${crumbLabel}</a>`);
     crumb.innerHTML = parts.join("");
@@ -32050,7 +32335,7 @@ function refreshHeroGreeting() {
   const clockTier = $("#heroClockTier");
   if (clockTier) {
     const isPrem = user.tier === "premium" || user.role === "admin";
-    clockTier.textContent = isPrem ? "Premium" : "Free Plan";
+    clockTier.textContent = isPrem ? "Premium" : "Gratis";
     clockTier.classList.toggle("hpc-tier-premium", isPrem);
   }
   // Bio singkat (per request v56) — user.bio / prefs; empty → placeholder clickable
@@ -32234,7 +32519,7 @@ function renderHomeSidebar() {
           <div class="hsb-files-empty-ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
-          <p>Belum ada video. Upload video pertama kamu.</p>
+          <p>Belum ada video. Unggah video pertama kamu.</p>
         </div>`;
     } else {
       filesBody.innerHTML = top.map(v => {
@@ -32361,7 +32646,7 @@ function videoCardHTML(v) {
       </div>
       <div class="video-info">
         <h4>${v.title}</h4>
-        <p><span class="creator">@${v.creator}</span> • ${v.views} views</p>
+        <p><span class="creator">@${v.creator}</span> • ${v.views} tayangan</p>
         <div class="video-actions">
           <button class="va-btn ${liked ? 'liked' : ''}" data-like="${v.id}">
             <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>
@@ -32525,7 +32810,7 @@ function refreshAllVideoGrids() {
 function emptyHTML(icon, title, desc, btnText, btnAction) {
   return `
     <div class="empty-state">
-      <div class="empty-icon">${icon}</div>
+      <div class="empty-icon">${typeof emojiToIcon === "function" ? emojiToIcon(icon) : icon}</div>
       <h4>${title}</h4>
       <p>${desc}</p>
       ${btnText ? `<button class="btn primary" data-jump="${btnAction}">${btnText}</button>` : ""}
@@ -33615,7 +33900,7 @@ function renderHomeStreak() {
         </div>
       </div>
       <div class="hsc-bars">
-        <div class="hsc-bars-label">Upload 7 hari terakhir</div>
+        <div class="hsc-bars-label">Unggah 7 hari terakhir</div>
         <div class="hsc-bars-row">${barsHtml}</div>
       </div>
       <div class="hsc-right">
@@ -33732,7 +34017,7 @@ function _renderWeatherHTML(card, d) {
 
 // ----------------------- HOME — TIER WIDGET (Free quota / Premium insights) -----------------------
 // Render widget berbeda di home page berdasarkan user tier:
-//   - FREE: monthly upload quota meter (60 video / 1 GB)
+//   - FREE: monthly upload quota meter (30 video / 10 GB)
 //   - PREMIUM: premium insights (engagement, avg watch time, top region)
 function renderHomeTierWidget() {
   const wrap = document.getElementById("homeTierWidget");
@@ -33747,8 +34032,9 @@ function renderHomeTierWidget() {
     const thisMonth = myVideos.filter(v => (v.createdAt || v.id || 0) >= mStartTs);
     const usedCount = thisMonth.length;
     const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
-    const MAX_COUNT = 60;
-    const MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+    const _q = playlyQuota("free");
+    const MAX_COUNT = _q.videos;          // 30
+    const MAX_BYTES = _q.bytes;           // 10 GB
     const pctCount = Math.min(100, Math.round((usedCount / MAX_COUNT) * 100));
     const pctBytes = Math.min(100, Math.round((usedBytes / MAX_BYTES) * 100));
     const usedMB = (usedBytes / (1024 * 1024)).toFixed(usedBytes < 1024*1024*100 ? 1 : 0);
@@ -33766,11 +34052,11 @@ function renderHomeTierWidget() {
             <div class="tw-bar"><i style="width:${pctCount}%"></i></div>
           </div>
           <div class="tw-meter">
-            <div class="tw-meter-row"><span>Storage used</span><b>${usedMB} MB / 1 GB</b></div>
+            <div class="tw-meter-row"><span>Storage used</span><b>${usedMB} MB / ${_q.gbLabel}</b></div>
             <div class="tw-bar"><i style="width:${pctBytes}%"></i></div>
           </div>
         </div>
-        <p class="tw-hint">Quota resets on the 1st of each month. Upgrade to Premium for unlimited uploads.</p>
+        <p class="tw-hint">Quota resets on the 1st of each month. Upgrade to Premium for 100 GB + 100 videos/month.</p>
       </div>
     `;
     wrap.querySelector("[data-tw-upgrade]")?.addEventListener("click", () => {
@@ -33809,7 +34095,7 @@ function renderHomeTierWidget() {
     ? myVideos.reduce((best, v) => (v.viewsNum || 0) > (best.viewsNum || 0) ? v : best, myVideos[0])
     : null;
   const topVideoLabel = topVideo ? `"${(topVideo.title || "Video").slice(0, 22)}${topVideo.title?.length > 22 ? "…" : ""}"` : "—";
-  const topVideoViews = topVideo ? `${topVideo.viewsNum || 0} views` : "Belum ada video";
+  const topVideoViews = topVideo ? `${topVideo.viewsNum || 0} tayangan` : "Belum ada video";
 
   // Member since — dari joinedAt akun
   const acc = (() => { try { return JSON.parse(localStorage.getItem(`playly-account-${user?.email}`) || "{}"); } catch { return {}; } })();
@@ -33834,7 +34120,7 @@ function renderHomeTierWidget() {
         <div class="tw-insight">
           <span class="tw-insight-label">Engagement rate</span>
           <strong>${engagement}%</strong>
-          <small>${totalViews} views · ${totalLikes} likes</small>
+          <small>${totalViews} tayangan · ${totalLikes} likes</small>
         </div>
         <div class="tw-insight">
           <span class="tw-insight-label">Rata-rata waktu tonton</span>
@@ -34140,7 +34426,7 @@ function _homeVideoCardHTML(v, opts) {
       </div>
       <div class="video-info">
         <h4>${escapeHtml(v.title || "")}</h4>
-        <p><span class="creator">@${escapeHtml(v.creator || "—")}</span> · ${views} views</p>
+        <p><span class="creator">@${escapeHtml(v.creator || "—")}</span> · ${views} tayangan</p>
       </div>
     </div>
   `;
@@ -34250,8 +34536,8 @@ function renderHomeAchievements() {
   const IC_TROPHY = '<svg ' + SI + '><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>';
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const ACH = [
-    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        ok: myVids.length >= 1 },
-    { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       ok: myVids.length >= 10 },
+    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Unggah 1 video",        ok: myVids.length >= 1 },
+    { ico: IC_STACK,  name:"Produktif",        desc:"Unggah 10 video",       ok: myVids.length >= 10 },
     { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    ok: totalViews >= 100 },
     { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  ok: totalViews >= 1000 },
     { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        ok: totalLikes >= 100 },
@@ -34400,7 +34686,7 @@ function renderHomePerfCard() {
     wrap.innerHTML = `
       <div class="hra-empty">
         <div class="hra-empty-icon">📊</div>
-        <p>Upload video pertamamu untuk mulai tracking performa di sini.</p>
+        <p>Unggah video pertamamu untuk mulai tracking performa di sini.</p>
         <button class="btn primary small" data-jump="upload" style="margin-top:10px">Upload Sekarang</button>
       </div>`;
     wrap.querySelector("[data-jump]")?.addEventListener("click", () => switchView?.("upload"));
@@ -34551,7 +34837,7 @@ function renderHomeTopPerformer() {
         <div class="htp-cta-icon">🎬</div>
         <div class="htp-cta-text">
           <strong>Belum ada video</strong>
-          <span>Upload video pertamamu dan mulai tracking performanya di sini.</span>
+          <span>Unggah video pertamamu dan mulai tracking performanya di sini.</span>
         </div>
         <button class="btn primary small" data-jump="upload">Upload Sekarang</button>
       </div>`;
@@ -34695,7 +34981,7 @@ function renderLiveMetrics() {
   const otherCreators = getPlatformCreators({ activeOnly: true }).length;
   const myHasVideos = (state?.myVideos?.length || 0) > 0 ? 1 : 0;
   const totalCreators = otherCreators + myHasVideos;
-  // Upload hari ini = video dengan createdAt < 24 jam yang lalu (atau id sebagai fallback timestamp)
+  // Unggah hari ini = video dengan createdAt < 24 jam yang lalu (atau id sebagai fallback timestamp)
   const now = Date.now();
   const oneDay = 24 * 60 * 60 * 1000;
   const todayCount = videos.filter(v => {
@@ -35181,7 +35467,7 @@ function renderCreatorSpotlight() {
                 </div>
                 <div class="cs-top-vid-meta">
                   <strong>${escapeHtml(v.title || "Untitled")}</strong>
-                  <small>${fmtNum(v.viewsNum || 0)} views</small>
+                  <small>${fmtNum(v.viewsNum || 0)} tayangan</small>
                 </div>
               </button>
             `).join("")}
@@ -35415,7 +35701,7 @@ function renderFeatured() {
       <div class="featured-empty">
         <div class="featured-empty-icon">🎬</div>
         <h4>Belum ada video</h4>
-        <p>Upload video pertamamu untuk muncul di sini sebagai sorotan utama.</p>
+        <p>Unggah video pertamamu untuk muncul di sini sebagai sorotan utama.</p>
         <button class="btn primary small" data-jump="upload">📤 Upload Sekarang</button>
       </div>
     `;
@@ -35428,7 +35714,7 @@ function renderFeatured() {
   // Real-time relative timestamp
   const ts = v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : null);
   const timeText = ts ? relTime(ts) : (v.time || "");
-  const viewsText = v.views ? `${v.views} views` : (typeof v.viewsNum === "number" ? `${fmtNum(v.viewsNum)} views` : "");
+  const viewsText = v.views ? `${v.views} tayangan` : (typeof v.viewsNum === "number" ? `${fmtNum(v.viewsNum)} tayangan` : "");
   // Badge "Baru" / "Trending" untuk visual distinction
   const badgeText = ownLatest ? "🆕 Video Baru" : "🔥 Trending";
 
@@ -35485,7 +35771,7 @@ function renderVideoGrid() {
 
   if (!list.length) {
     grid.innerHTML = emptyHTML("🎬", "Belum ada video",
-      "Upload video pertamamu untuk mulai berbagi kreasi ke seluruh dunia.",
+      "Unggah video pertamamu untuk mulai berbagi kreasi ke seluruh dunia.",
       "📤 Upload Video Pertama", "upload");
   } else {
     grid.innerHTML = list.map(videoCardHTML).join("");
@@ -35706,7 +35992,7 @@ function renderMyLibrary() {
       ${menuHtml}
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small>@${creator} · ${views} views</small>
+        <small>@${creator} · ${views} tayangan</small>
       </div>
     </div>`;
   };
@@ -36459,7 +36745,7 @@ function renderHistory() {
             <img class="rwt-thumb" src="${escapeHtml(v.thumb)}" alt=""/>
             <div class="rwt-video-meta">
               <strong>${escapeHtml(v.title)}</strong>
-              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} views</small>
+              <small>@${escapeHtml(v.creator)} · ${escapeHtml(String(v.views))} tayangan</small>
             </div>
           </div>
         </td>
@@ -37041,7 +37327,7 @@ function renderDiscoverHero() {
       <div class="dh-text">
         <span class="dh-badge">🌟 TRENDING</span>
         <h2>${v.title}</h2>
-        <p>@${v.creator} • ${v.views} views • ${v.time}</p>
+        <p>@${v.creator} • ${v.views} tayangan • ${v.time}</p>
         <button class="btn primary" data-d-hero-play="${v.id}">▶ Tonton Sekarang</button>
       </div>
       <div class="dh-thumb">
@@ -37207,7 +37493,7 @@ function renderFYP() {
       ? { h: `Tidak ada hasil untuk "${escapeHtml(discoverQuery)}"`, p: "Coba kata kunci lain atau kosongkan kolom pencarian." }
       : fypTagFilter
       ? { h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas." }
-      : { h: "Belum ada video di feed", p: "Upload video pertamamu atau follow kreator lain untuk mengisi feed!" };
+      : { h: "Belum ada video di feed", p: "Unggah video pertamamu atau follow kreator lain untuk mengisi feed!" };
     feed.innerHTML = `<div class="fyp-empty"><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p></div>`;
     return;
   }
@@ -38781,8 +39067,11 @@ function startChatWithUser(username) {
   const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const isAdminTarget = acc.role === "admin";
 
-  // Reset filter ke "all" supaya thread baru pasti terlihat di list kiri
-  if (typeof dmState !== "undefined") dmState.filter = "all";
+  // Buka di tab "DM" supaya layout chat (list + panel percakapan) tampil dan chat
+  // langsung kebuka. (Dulu "all" — sejak redesign Inbox, "all" = overview kartu
+  // yang MENYEMBUNYIKAN panel chat, jadi klik baris mentok di overview.) Chat
+  // dengan admin TIDAK lewat sini lagi — admin pakai popup (openAdminChatPopup).
+  if (typeof dmState !== "undefined") dmState.filter = "dm";
 
   const existing = state.messages.findIndex(m => m.name === username);
   if (existing >= 0) {
@@ -38790,7 +39079,12 @@ function startChatWithUser(username) {
     if (state.messages[existing].archived) state.messages[existing].archived = false;
     saveState();
     switchView("messages");
-    setTimeout(() => openDmChat(existing), 100);
+    setTimeout(() => {
+      // Terapkan layout tab DM dulu (un-hide #dmLayout sesuai filter) baru buka
+      // chat — kalau tidak, openDmChat reveal panel di dalam container ke-hidden.
+      if (typeof _dmApplyView === "function") _dmApplyView();
+      openDmChat(existing);
+    }, 100);
     return;
   }
   state.messages.unshift({
@@ -38802,6 +39096,8 @@ function startChatWithUser(username) {
   switchView("messages");
   // Buka chat setelah view aktif
   setTimeout(() => {
+    // Un-hide #dmLayout sesuai filter "dm" dulu, baru render list + buka chat.
+    if (typeof _dmApplyView === "function") _dmApplyView();
     renderDmList();
     setTimeout(() => openDmChat(0), 50);
   }, 80);
@@ -38930,7 +39226,7 @@ function renderDmList() {
     archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
   };
   if (iconEl) {
-    iconEl.innerHTML = iconSvg[dmState.filter] || iconSvg.all;
+    iconEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>';
   }
   if (titleEl) {
     // v590d (2026-05-27): icon sekarang di LUAR h2 (sibling), jadi
@@ -38943,7 +39239,6 @@ function renderDmList() {
     descEl.textContent = t(meta.d);
     descEl.dataset.origText = "";
   }
-
   // Filter berdasarkan tab aktif
   const visible = allMsgs.filter(m => !m.archived);
   let filtered;
@@ -38951,12 +39246,14 @@ function renderDmList() {
     // Semua pesan — DM + Broadcast + Requests (gabungan, kecuali archived)
     filtered = visible;
   } else if (dmState.filter === "broadcast") {
-    filtered = visible.filter(m => m.isAdmin || m.isBroadcast);
+    filtered = visible.filter(m => m.isBroadcast);
   } else if (dmState.filter === "requests") {
     filtered = visible.filter(dmIsRequest);
   } else if (dmState.filter === "archived") {
     filtered = allMsgs.filter(m => m.archived);
   } else {
+    // DM = chat antar user biasa; thread admin & broadcast dikecualikan.
+    // (Chat admin kini lewat POPUP, bukan halaman Pesan.)
     filtered = visible.filter(m => !m.isAdmin && !m.isBroadcast && !dmIsRequest(m));
   }
   filtered = filterByQ(filtered);
@@ -39107,7 +39404,8 @@ function renderDmChatBody() {
       return `
         <div class="dm-bubble ${fromMe ? 'me' : 'them'} ${h.isAdmin ? 'is-admin' : ''}" data-dm-msg-idx="${hIdx}">
           ${adminTag}
-          <div class="dm-bubble-text">${escapeHtml(h.text || "")}</div>
+          ${(Array.isArray(h.images) ? h.images : (h.image ? [h.image] : [])).map(s => `<img class="dm-bubble-img" src="${escapeHtml(s)}" alt="lampiran"/>`).join("")}
+          ${h.text ? `<div class="dm-bubble-text">${escapeHtml(h.text)}</div>` : ''}
           <small class="dm-bubble-time">${escapeHtml(ts)}</small>
           ${fromMe ? `<button type="button" class="dm-bubble-del" data-dm-bubble-del="${hIdx}" title="Hapus pesan" aria-label="Delete">×</button>` : ''}
         </div>
@@ -39538,7 +39836,7 @@ function renderChat() {
 // Antar pesan dari current user ke inbox penerima.
 // Tulis ke `playly-state-{recipient}.messages` — cross-tab/cross-device sync
 // otomatis lewat storage event + cloud-sync.
-function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
+function deliverChatToRecipient(recipientUsername, text, fromAdmin, image) {
   // Privasi: kalau recipient mematikan "Izinkan DM dari semua orang" dan kita bukan
   // admin & belum di-follow oleh recipient, hentikan chat. Admin selalu boleh.
   if (!fromAdmin && user?.role !== "admin") {
@@ -39580,8 +39878,9 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
     thread.isAdmin = !!fromAdmin;
     s.messages = [thread, ...s.messages.filter(t => t !== thread)];
   }
-  thread.history.push({ from: "them", text, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
-  thread.preview = text.length > 60 ? text.slice(0, 57) + "..." : text;
+  const _imgArr = Array.isArray(image) ? image : (image ? [image] : null);
+  thread.history.push({ from: "them", text, images: _imgArr, time: "baru", ts: deliverTs, isAdmin: !!fromAdmin });
+  thread.preview = (_imgArr && _imgArr.length) ? "📷 Gambar" : (text.length > 60 ? text.slice(0, 57) + "..." : text);
   thread.time = "baru";
   thread.ts = deliverTs;
   thread.unread = true;
@@ -39595,6 +39894,19 @@ function deliverChatToRecipient(recipientUsername, text, fromAdmin) {
       detail: { keys: [key] }
     }));
   } catch {}
+
+  // Balasan ADMIN -> sekalian kirim notifikasi (lonceng) ke user, supaya muncul
+  // "tanda admin sudah membalas" di panel notifikasi. (DM antar-user biasa tidak.)
+  if (fromAdmin && typeof deliverNotification === "function") {
+    try {
+      deliverNotification(recipientUsername, {
+        type: "message",
+        fromUsername: senderName,
+        init: senderInit,
+        text: "Admin membalas: " + ((Array.isArray(image) ? image.length : image) ? "📷 Gambar" : (text || "pesan baru"))
+      });
+    } catch (e) {}
+  }
 }
 
 // "Pesan Baru" → buka picker user (mirip email user picker), klik user →
@@ -39658,7 +39970,7 @@ function renderDmBroadcast() {
   var wrap = document.getElementById("dmBroadcastList");
   if (!wrap) return;
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
-  var bc = all.filter(function (m) { return m.isAdmin || m.isBroadcast; });
+  var bc = all.filter(function (m) { return m.isBroadcast; });
   var items = [];
   bc.forEach(function (m) {
     var hist = Array.isArray(m.history) ? m.history : [];
@@ -39702,7 +40014,7 @@ function renderDmOverview() {
   var visible = all.filter(function (m) { return !m.archived; });
   var isReq = (typeof dmIsRequest === "function") ? dmIsRequest : function () { return false; };
   var dmList  = visible.filter(function (m) { return !m.isAdmin && !m.isBroadcast && !isReq(m); });
-  var bcList  = visible.filter(function (m) { return m.isAdmin || m.isBroadcast; });
+  var bcList  = visible.filter(function (m) { return m.isBroadcast; });
   var reqList = visible.filter(isReq);
   var arcList = all.filter(function (m) { return m.archived; });
   var sortByTs = function (a, b) { return (b.ts || 0) - (a.ts || 0); };
@@ -39782,7 +40094,7 @@ document.addEventListener("click", function (e) {
   var filter = "dm";
   if (m) {
     if (m.archived) filter = "archived";
-    else if (m.isAdmin || m.isBroadcast) filter = "broadcast";
+    else if (m.isBroadcast) filter = "broadcast";
     else if (typeof dmIsRequest === "function" && dmIsRequest(m)) filter = "requests";
   }
   if (typeof _dmOpenCategory === "function") _dmOpenCategory(filter);
@@ -43465,7 +43777,8 @@ self.onmessage = async (e) => {
 function fmtBytes(n) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function fmtDurationSec(sec) {
@@ -43540,12 +43853,14 @@ async function handlePickedFile(file) {
   if (!file.type.startsWith("video/")) return toast("⚠️ File harus berupa video", "warning");
 
   // === FREE TIER LIMITS (per request 2026-05-03 — Free vs Premium) ===
-  // Free user: max 60 video upload/bulan, max 1 GB total upload size/bulan.
-  // Premium user: unlimited (skip checks). Limit per calendar month.
+  // Kuota BULANAN (per request 2026-05-03; angka diperbarui 5 Jun 2026):
+  // Free = 30 video + 10 GB/bulan, Premium = 100 video + 100 GB/bulan (premium
+  // dibatasi supaya biaya storage terkendali). Admin = tanpa batas. Per kalender
+  // bulan; video lama tetap tersimpan & tidak ikut kuota bulan berikutnya.
   const tier = user?.tier || "free";
-  if (tier === "free") {
-    const FREE_MAX_VIDEOS_PER_MONTH = 60;
-    const FREE_MAX_BYTES_PER_MONTH = 1024 * 1024 * 1024; // 1 GB
+  if ((tier === "free" || tier === "premium") && user?.role !== "admin") {
+    const q = playlyQuota(tier);
+    const isFree = tier !== "premium";
     const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -43553,23 +43868,26 @@ async function handlePickedFile(file) {
     const usedCount = thisMonth.length;
     const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
 
-    if (usedCount >= FREE_MAX_VIDEOS_PER_MONTH) {
+    if (usedCount >= q.videos) {
       return openConfirm({
         icon: "⭐", iconClass: "warn",
-        title: "Free upload limit reached",
-        desc: `You've uploaded <b>${usedCount}/${FREE_MAX_VIDEOS_PER_MONTH}</b> videos this month.<br><br>Upgrade to <b>Premium</b> for unlimited uploads.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+        title: isFree ? "Kuota video Free bulan ini penuh" : "Kuota video Premium bulan ini penuh",
+        desc: isFree
+          ? `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini.<br><br>Upgrade ke <b>Premium</b> untuk kuota 10x lebih besar (100 video + 100 GB).`
+          : `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini. Kuota reset otomatis tanggal 1 — video lama tetap aman.`,
+        btnText: isFree ? "⭐ Upgrade ke Premium" : "Mengerti", btnClass: "primary",
+        onConfirm: () => { if (isFree) document.getElementById("pdUpgradeBtn")?.click(); }
       });
     }
-    if (usedBytes + file.size > FREE_MAX_BYTES_PER_MONTH) {
-      const usedMB = (usedBytes / (1024 * 1024)).toFixed(0);
+    if (usedBytes + file.size > q.bytes) {
       return openConfirm({
         icon: "⭐", iconClass: "warn",
-        title: "Free storage quota exceeded",
-        desc: `You've used <b>${usedMB} MB / 1 GB</b> this month. This file (${fmtBytes(file.size)}) won't fit.<br><br>Upgrade to <b>Premium</b> for unlimited storage.`,
-        btnText: "⭐ Upgrade to Premium", btnClass: "primary",
-        onConfirm: () => document.getElementById("pdUpgradeBtn")?.click()
+        title: isFree ? "Kuota penyimpanan Free bulan ini penuh" : "Kuota penyimpanan Premium bulan ini penuh",
+        desc: isFree
+          ? `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(file.size)}) tidak muat.<br><br>Upgrade ke <b>Premium</b> untuk 100 GB + 100 video/bulan.`
+          : `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(file.size)}) tidak muat. Kuota reset tanggal 1.`,
+        btnText: isFree ? "⭐ Upgrade ke Premium" : "Mengerti", btnClass: "primary",
+        onConfirm: () => { if (isFree) document.getElementById("pdUpgradeBtn")?.click(); }
       });
     }
   }
@@ -44019,12 +44337,12 @@ $("#startUpload")?.addEventListener("click", () => {
             saveState();
             toast("☁️ Video tersimpan di cloud — bisa diputar di device lain.", "success");
           } else if (result && !result.ok) {
-            // Upload ke cloud gagal — beritahu user, tapi video tetap aman di lokal
+            // Unggah ke cloud gagal — beritahu user, tapi video tetap aman di lokal
             const reason =
               result.message ||
               (result.error === "file_too_large"
                 ? "File terlalu besar untuk Supabase Storage."
-                : "Upload ke cloud gagal — video disimpan lokal saja.");
+                : "Unggah ke cloud gagal — video disimpan lokal saja.");
             toast(`⚠️ ${reason} Video kamu masih bisa diputar di browser ini.`, "warning");
           }
         }).catch(err => {
@@ -44107,7 +44425,7 @@ function renderDownloadedList(currentId) {
   listEl.innerHTML = items.map(({ video: x, videoId }) => `
     <div class="upload-item ${videoId === currentId ? "active" : ""}" data-vid="${videoId}">
       <div class="mini-thumb"><img src="${x.thumb}" alt=""/><span class="duration">${x.duration}</span></div>
-      <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} views</p></div>
+      <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} tayangan</p></div>
     </div>
   `).join("");
   listEl.querySelectorAll(".upload-item").forEach(c => {
@@ -44694,7 +45012,7 @@ function openEmailToAdminCompose() {
     icon: "📧",
     title: "Email to Admin",
     desc: "Your message will go directly to the Playly admin Inbox.",
-    subjectDefault: `Support request from ${fromName}`,
+    subjectDefault: `Permintaan bantuan dari ${fromName}`,
     bodyDefault: `Hi Super Admin,\n\nI'm ${fromName} (@${username}) and I need help with:\n\n[Write your question/issue here]\n\nThanks.`
   });
 }
@@ -44920,7 +45238,7 @@ function openHsPopup(kind) {
       ] : [],
       list: myVideos.slice(0, 5).map(v => ({
         label: v.title || "Untitled",
-        value: `${fmtNum(v.viewsNum || 0)} views`
+        value: `${fmtNum(v.viewsNum || 0)} tayangan`
       })),
       jump: "videos",
     },
@@ -44937,7 +45255,7 @@ function openHsPopup(kind) {
       list: [...myVideos]
         .sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0))
         .slice(0, 5)
-        .map(v => ({ label: v.title || "Untitled", value: `${fmtNum(v.viewsNum || 0)} views` })),
+        .map(v => ({ label: v.title || "Untitled", value: `${fmtNum(v.viewsNum || 0)} tayangan` })),
     },
     following: {
       icon: "⭐",
@@ -45110,7 +45428,7 @@ function renderMyProfile() {
       </div>
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small>${views} views</small>
+        <small>${views} tayangan</small>
       </div>
     </div>`;
   };
@@ -45433,12 +45751,12 @@ function setLibraryTab(tabKey) {
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast) {
     const labelMap = {
-      all:      "My Library",
+      all:      "Pustaka Saya",
       my:       "Video Saya",
       status:   "Status Video",
       download: "Unduhan",
     };
-    activeBcLast.textContent = labelMap[key] || "My Library";
+    activeBcLast.textContent = labelMap[key] || "Pustaka Saya";
   }
   // Auto-close inline player saat ganti tab
   try { closeLibInlinePlayer(); } catch {}
@@ -46204,7 +46522,7 @@ async function openPlayer(id) {
             <div class="ps-related-meta">
               <strong>${escapeHtml(x.title || "(no title)")}</strong>
               <small>@${escapeHtml(x.creator || "—")}</small>
-              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} views · ${xUploaded}</span>
+              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} tayangan · ${xUploaded}</span>
             </div>
           </div>
         `;
@@ -46311,14 +46629,14 @@ async function openPlayer(id) {
       : `<div class="upnext-empty">
           <div class="upnext-empty-icon">🎬</div>
           <p>Belum ada video</p>
-          <small>Upload video pertamamu untuk muncul di sini.</small>
+          <small>Unggah video pertamamu untuk muncul di sini.</small>
           <button class="btn primary small" data-jump="upload" type="button">📤 Upload Sekarang</button>
         </div>`;
   } else {
     listEl.innerHTML = sideList.map(x => `
       <div class="upload-item ${x.id === id ? "active" : ""}" data-vid="${x.id}">
         <div class="mini-thumb"><img src="${x.thumb}" alt=""/><span class="duration">${x.duration}</span></div>
-        <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} views</p></div>
+        <div class="info"><h5>${escapeHtml(x.title)}</h5><p>@${escapeHtml(x.creator)} • ${x.views} tayangan</p></div>
         <button class="upload-item-dl" data-dl-vid="${x.id}" title="Download" aria-label="Download" type="button">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0-4-4m4 4 4-4M5 20h14"/></svg>
         </button>
@@ -47203,6 +47521,12 @@ function _gsSearchHashtags(query) {
 
 // v619 (2026-05-28): search halaman/section — quick-nav untuk navigasi
 // (mis. user ketik "stats" → jump ke Statistik).
+function _gsPageIcon(name) {
+  var E = { home: "🏠", compass: "🌐", folder: "📁", upload: "📤", clock: "🕒", chart: "📊", star: "⭐", users: "👥", message: "💬", bell: "🔔", user: "👤", settings: "⚙" };
+  var e = E[name] || "📁";
+  return (typeof emojiToIcon === "function") ? emojiToIcon(e) : "";
+}
+
 function _gsSearchPages(query) {
   const q = query.toLowerCase();
   const PAGES = [
@@ -47307,11 +47631,10 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     html += `<div class="ss-section">
       <div class="ss-section-title">HALAMAN</div>
       ${pageMatches.map(p => `
-        <button type="button" class="ss-item" data-ss-page="${escapeHtml(p.view)}">
-          <div class="ss-page-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <button type="button" class="ss-item ss-item-page" data-ss-page="${escapeHtml(p.view)}">
+          <div class="ss-page-icon" aria-hidden="true">${_gsPageIcon(p.icon)}</div>
           <div class="ss-info">
             <strong>${_gsHighlight(p.label, query)}</strong>
-            <small>Buka halaman</small>
           </div>
         </button>
       `).join("")}
@@ -47327,7 +47650,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
           <div class="ss-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
           <div class="ss-info">
             <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
-            <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views</small>
+            <small>@${escapeHtml(v.creator || v.username || "anon")} · ${fmtNum(v.viewsNum || 0)} tontonan</small>
           </div>
         </button>`;
       }).join("")}
@@ -47368,6 +47691,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
     <button type="button" class="ss-see-all" data-ss-see-all="${escapeHtml(query)}">
       Lihat semua hasil untuk "<b>${escapeHtml(query)}</b>" (${totalCount}) →
     </button>
+    <div class="ss-kbd-hints" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> Navigasi</span><span><kbd>↵</kbd> Buka</span><span><kbd>Esc</kbd> Tutup</span></div>
   </div>`;
   drop.innerHTML = html;
   drop.classList.add("show");
@@ -47421,87 +47745,45 @@ function _renderSearchResultsOverlay() {
 
   overlay.innerHTML = `
     <div class="sr-backdrop" data-sr-close></div>
-    <div class="sr-panel">
+    <div class="sr-panel" role="dialog" aria-label="Hasil pencarian">
       <header class="sr-header">
-        <div class="sr-header-left">
-          <button type="button" class="sr-close-btn" data-sr-close aria-label="Tutup">×</button>
-          <div>
-            <h2 class="sr-title">Hasil pencarian</h2>
-            <p class="sr-subtitle">"${escapeHtml(query)}" · ${total} hasil</p>
-          </div>
+        <button type="button" class="sr-close-btn" data-sr-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="sr-search-box">
+          <svg class="sr-search-ic" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" class="sr-query-input" id="srQueryInput" value="${escapeHtml(query)}" placeholder="Cari video, kreator, atau tag..." autocomplete="off" translate="no"/>
         </div>
-        <input type="text" class="sr-query-input" id="srQueryInput" value="${escapeHtml(query)}" placeholder="Cari lagi..."/>
       </header>
-
+      <div class="sr-toolbar">
+        <div class="sr-toolbar-meta"><strong>${total}</strong> hasil untuk "<span class="sr-q" translate="no">${escapeHtml(query)}</span>"</div>
+        <div class="sr-filtbar">
+          <div class="sr-fl"><span class="sr-fl-label">Durasi</span>${filterChip("duration","all","Semua",!filters.duration||filters.duration==="all")}${filterChip("duration","short","< 5 mnt",filters.duration==="short")}${filterChip("duration","medium","5–20 mnt",filters.duration==="medium")}${filterChip("duration","long","> 20 mnt",filters.duration==="long")}</div>
+          <div class="sr-fl"><span class="sr-fl-label">Waktu</span>${filterChip("date","all","Kapan saja",!filters.date||filters.date==="all")}${filterChip("date","today","Hari ini",filters.date==="today")}${filterChip("date","week","Minggu ini",filters.date==="week")}${filterChip("date","month","Bulan ini",filters.date==="month")}${filterChip("date","year","Tahun ini",filters.date==="year")}</div>
+          <div class="sr-fl"><span class="sr-fl-label">Urutkan</span>${filterChip("sort","relevance","Relevansi",sort==="relevance")}${filterChip("sort","newest","Terbaru",sort==="newest")}${filterChip("sort","views","Terpopuler",sort==="views")}${filterChip("sort","likes","Disukai",sort==="likes")}</div>
+        </div>
+      </div>
       <div class="sr-body">
-        <aside class="sr-sidebar">
-          <div class="sr-filter-group">
-            <h4>Durasi</h4>
-            ${filterChip("duration", "all", "Semua", !filters.duration || filters.duration === "all")}
-            ${filterChip("duration", "short", "< 5 menit", filters.duration === "short")}
-            ${filterChip("duration", "medium", "5–20 menit", filters.duration === "medium")}
-            ${filterChip("duration", "long", "> 20 menit", filters.duration === "long")}
-          </div>
-          <div class="sr-filter-group">
-            <h4>Tanggal Upload</h4>
-            ${filterChip("date", "all", "Kapan saja", !filters.date || filters.date === "all")}
-            ${filterChip("date", "today", "Hari ini", filters.date === "today")}
-            ${filterChip("date", "week", "Minggu ini", filters.date === "week")}
-            ${filterChip("date", "month", "Bulan ini", filters.date === "month")}
-            ${filterChip("date", "year", "Tahun ini", filters.date === "year")}
-          </div>
-          <div class="sr-filter-group">
-            <h4>Urutkan</h4>
-            ${filterChip("sort", "relevance", "Relevansi", sort === "relevance")}
-            ${filterChip("sort", "newest", "Terbaru", sort === "newest")}
-            ${filterChip("sort", "views", "Terpopuler", sort === "views")}
-            ${filterChip("sort", "likes", "Terbanyak Like", sort === "likes")}
-          </div>
-        </aside>
-
         <main class="sr-content">
           ${creators.length ? `
             <section class="sr-section">
-              <h3 class="sr-section-title">Kreator (${creators.length})</h3>
+              <h3 class="sr-section-title">Kreator <span class="sr-sec-count">${creators.length}</span></h3>
               <div class="sr-creators-grid">
-                ${creators.map(a => {
-                  const init = String(a.name || a.username || "?")[0].toUpperCase();
-                  return `<button type="button" class="sr-creator-card" data-ss-user="${escapeHtml(a.username || "")}">
-                    <div class="sr-creator-avatar">${escapeHtml(init)}</div>
-                    <div class="sr-creator-info">
-                      <strong>${_gsHighlight(a.name || a.username, query)}</strong>
-                      <small>@${escapeHtml(a.username || "")}</small>
-                    </div>
-                  </button>`;
-                }).join("")}
+                ${creators.map(a => { var init = String(a.name || a.username || "?")[0].toUpperCase(); return `<button type="button" class="sr-creator-card" translate="no" data-ss-user="${escapeHtml(a.username || "")}"><span class="sr-creator-avatar">${escapeHtml(init)}</span><span class="sr-creator-info"><strong translate="no">${_gsHighlight(a.name || a.username, query)}</strong><small translate="no">@${escapeHtml(a.username || "")}</small></span><span class="sr-creator-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></button>`; }).join("")}
               </div>
             </section>
           ` : ""}
-
           ${videos.length ? `
             <section class="sr-section">
-              <h3 class="sr-section-title">Video (${videos.length})</h3>
+              <h3 class="sr-section-title">Video <span class="sr-sec-count">${videos.length}</span></h3>
               <div class="sr-videos-grid">
-                ${videos.map(v => {
-                  const thumb = v.thumb || v.thumbnail || "";
-                  const init = String(v.creator || v.username || "?")[0].toUpperCase();
-                  return `<button type="button" class="sr-video-card" data-ss-video="${escapeHtml(String(v.id))}">
-                    <div class="sr-video-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt=""/>` : init}</div>
-                    <div class="sr-video-info">
-                      <strong>${_gsHighlight(v.title || "(tanpa judul)", query)}</strong>
-                      <small>@${escapeHtml(v.creator || v.username || "anon")} · ${v.viewsNum || 0} views · ❤ ${v.likes || 0}</small>
-                    </div>
-                  </button>`;
-                }).join("")}
+                ${videos.map(v => { var thumb = v.thumb || v.thumbnail || ""; var init = String(v.creator || v.username || "?")[0].toUpperCase(); return `<button type="button" class="sr-video-card" translate="no" data-ss-video="${escapeHtml(String(v.id))}"><span class="sr-video-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy"/>` : `<span class="sr-thumb-fb">${init}</span>`}${v.duration ? `<span class="sr-video-dur" translate="no">${escapeHtml(String(v.duration))}</span>` : ""}</span><span class="sr-video-info"><strong class="sr-video-title" translate="no">${_gsHighlight(v.title || "(tanpa judul)", query)}</strong><span class="sr-video-by"><span class="sr-by-ava">${init}</span><span class="sr-by-name" translate="no">@${escapeHtml(v.creator || v.username || "anon")}</span></span><span class="sr-video-stats">${fmtNum(v.viewsNum || 0)} tontonan · ❤ ${fmtNum(v.likes || 0)}</span></span></button>`; }).join("")}
               </div>
             </section>
           ` : ""}
-
           ${total === 0 ? `
             <div class="sr-empty">
-              <div class="sr-empty-icon">🔍</div>
+              <div class="sr-empty-icon">${typeof emojiToIcon==="function"?emojiToIcon("🔍"):"🔍"}</div>
               <h3>Tidak ada hasil</h3>
-              <p>Coba kata kunci lain atau ubah filter.</p>
+              <p>Coba kata kunci lain atau ubah filter di atas.</p>
             </div>
           ` : ""}
         </main>
@@ -47577,22 +47859,63 @@ document.addEventListener("input", e => {
   window._srQueryTimer = setTimeout(() => _renderSearchResultsOverlay(), 220);
 });
 
-// Enter di topbar #globalSearch → open full results
+// Keyboard nav #globalSearch (ala command palette): ArrowDown/Up pilih saran,
+// Enter buka saran yg aktif (atau hasil penuh kalau belum ada yg dipilih).
+let _ssActiveIdx = -1;
+function _ssItems() {
+  const drop = document.getElementById("searchSuggestions");
+  if (!drop || !drop.classList.contains("show")) return [];
+  return Array.from(drop.querySelectorAll(".ss-item"));
+}
+function _ssSetActive(idx) {
+  const items = _ssItems();
+  const drop = document.getElementById("searchSuggestions");
+  if (drop) drop.setAttribute("role", "listbox");
+  if (!items.length) { _ssActiveIdx = -1; return; }
+  if (idx < 0) idx = items.length - 1;
+  if (idx >= items.length) idx = 0;
+  _ssActiveIdx = idx;
+  items.forEach((el, i) => {
+    el.setAttribute("role", "option");
+    const on = i === idx;
+    el.classList.toggle("is-active", on);
+    el.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) el.scrollIntoView({ block: "nearest" });
+  });
+}
+function _ssClearActive() {
+  _ssActiveIdx = -1;
+  const drop = document.getElementById("searchSuggestions");
+  if (drop) drop.querySelectorAll(".ss-item.is-active").forEach(el => el.classList.remove("is-active"));
+}
 document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.id === "globalSearch") {
-    e.preventDefault();
-    const q = e.target.value.trim();
-    if (q) openSearchResults(q);
+  if (e.target.id === "globalSearch") {
+    const dropShown = document.getElementById("searchSuggestions")?.classList.contains("show");
+    if (e.key === "ArrowDown" && dropShown) { e.preventDefault(); _ssSetActive(_ssActiveIdx + 1); return; }
+    if (e.key === "ArrowUp" && dropShown) { e.preventDefault(); _ssSetActive(_ssActiveIdx - 1); return; }
+    if (e.key === "Enter") {
+      const items = _ssItems();
+      if (dropShown && _ssActiveIdx >= 0 && items[_ssActiveIdx]) { e.preventDefault(); items[_ssActiveIdx].click(); return; }
+      e.preventDefault();
+      const q = e.target.value.trim();
+      if (q) openSearchResults(q);
+      return;
+    }
   }
   // ESC tutup overlay
   if (e.key === "Escape" && document.getElementById("searchResultsOverlay")?.classList.contains("show")) {
     document.getElementById("searchResultsOverlay")?.remove();
   }
 });
+// Hover mouse mereset pilihan keyboard biar tak dobel sorot
+document.addEventListener("mouseover", e => {
+  if (e.target.closest && e.target.closest("#searchSuggestions .ss-item")) _ssClearActive();
+});
 
 // Wire global search input
 document.addEventListener("input", e => {
   if (!e.target.matches("#globalSearch")) return;
+  _ssActiveIdx = -1;
   if (_globalSearchTimer) clearTimeout(_globalSearchTimer);
   const q = e.target.value;
   _globalSearchTimer = setTimeout(() => _gsRun(q), 180);
@@ -47659,10 +47982,49 @@ document.addEventListener("click", e => {
 // Escape closes dropdown
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && document.activeElement?.id === "globalSearch") {
+    _ssClearActive();
     document.getElementById("searchSuggestions")?.classList.remove("show");
     document.activeElement.blur();
   }
 });
+
+// Custom caret kolom search #globalSearch (req user 2026-06-17): caret native disembunyikan,
+// diganti garis pendek custom (11px) yg mengikuti posisi kursor.
+function _initTsCaret(inp){
+  if (!inp || inp._tsCaretInit) return;
+  var wrap = inp.closest('.topbar-search');
+  if (!wrap) return;
+  inp._tsCaretInit = true;
+  wrap.classList.add('ts-caret-on');
+  var caret = document.createElement('span');
+  caret.className = 'ts-caret'; caret.setAttribute('aria-hidden','true');
+  var meas = document.createElement('span');
+  meas.className = 'ts-caret-measure'; meas.setAttribute('aria-hidden','true');
+  wrap.appendChild(caret); wrap.appendChild(meas);
+  function update(){
+    if (document.activeElement !== inp){ caret.classList.remove('show'); return; }
+    var cs = getComputedStyle(inp);
+    meas.style.fontFamily = cs.fontFamily; meas.style.fontSize = cs.fontSize;
+    meas.style.fontWeight = cs.fontWeight; meas.style.letterSpacing = cs.letterSpacing;
+    var pos = inp.selectionStart || 0;
+    meas.textContent = (inp.value || '').substring(0, pos);
+    var textW = meas.getBoundingClientRect().width;
+    var ir = inp.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    var padLeft = parseFloat(cs.paddingLeft) || 0;
+    caret.style.left = Math.round((ir.left - wr.left) + padLeft + textW - inp.scrollLeft) + 'px';
+    caret.classList.add('show');
+  }
+  inp.addEventListener('focus', update);
+  inp.addEventListener('blur', function(){ caret.classList.remove('show'); });
+  inp.addEventListener('input', update);
+  inp.addEventListener('keyup', update);
+  inp.addEventListener('click', update);
+  inp.addEventListener('scroll', update);
+  document.addEventListener('selectionchange', function(){ if (document.activeElement===inp) update(); });
+  if (document.activeElement === inp) update();
+}
+document.addEventListener('focusin', function(e){ if (e.target && e.target.id === 'globalSearch') _initTsCaret(e.target); });
+
 
 window._search = {
   run: _gsRun,
@@ -47846,7 +48208,7 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Keluar dari device ini? Device tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
     if (typeof toast === "function") toast("✓ Device di-logout", "success");
@@ -47860,7 +48222,7 @@ document.addEventListener("click", e => {
       if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Keluar dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
     if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
@@ -48485,7 +48847,7 @@ function renderUserProfile() {
         </div>
         <div class="lib-meta">
           <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-          <small>${v.views || 0} views · ${escapeHtml(timeText)}</small>
+          <small>${v.views || 0} tayangan · ${escapeHtml(timeText)}</small>
         </div>
       </div>`;
     }).join("");
@@ -48548,7 +48910,7 @@ function renderUserProfile() {
           </div>
           <div class="lib-meta">
             <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} views</small>
+            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} tayangan</small>
           </div>
         </div>
       `).join("");
@@ -48596,7 +48958,7 @@ $("#upShareBtn")?.addEventListener("click", () => {
   toast("🔗 Link profil disalin", "success");
 });
 
-// Tombol "Edit Profil" di own channel → langsung ke editor profil
+// Tombol "Ubah Profil" di own channel → langsung ke editor profil
 $("#upEditBtn")?.addEventListener("click", () => switchView("profile"));
 
 $("#upMessageBtn")?.addEventListener("click", () => {
@@ -49031,7 +49393,7 @@ function buildAdminSearchResults(q) {
           type: "video",
           icon: "🎬",
           label: v.title,
-          sub: `@${v.creator} · ${v.views || 0} views`,
+          sub: `@${v.creator} · ${v.views || 0} tayangan`,
           payload: v.id,
           thumb: v.thumb,
         });
@@ -49077,7 +49439,7 @@ searchInput.addEventListener("input", e => {
     v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q) || (v.category || "").includes(q)
   ).slice(0, 6);
   sugg.innerHTML = matches.length
-    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} views</small></div></div>`).join("")
+    ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} tayangan</small></div></div>`).join("")
     : `<div class="suggestion"><div><strong>Tidak ditemukan</strong><small>Coba kata kunci lain</small></div></div>`;
   $$("[data-vid]", sugg).forEach(s => s.addEventListener("click", () => {
     openPlayer(+s.dataset.vid);
@@ -49462,11 +49824,38 @@ function ensureLazyPanelMounted(panelId) {
   return true;
 }
 
+// Pindahkan kartu "Hubungi Admin" ke BAWAH Pusat Bantuan (setelah FAQ) sebagai
+// escalation "Masih butuh bantuan?" — FAQ dulu, kontak admin langkah terakhir.
+function _repositionContactHub() {
+  const body = document.getElementById("helpBody");
+  const ca = document.getElementById("contactAdmin");
+  if (!body || !ca) return;
+  const sec = ca.closest(".help-section");
+  if (!sec) return;
+  if (!sec.querySelector(".help-contact-head")) {
+    const h = document.createElement("div");
+    h.className = "help-contact-head";
+    h.textContent = "Masih butuh bantuan?";
+    sec.insertBefore(h, sec.firstChild);
+  }
+  // Letakkan tepat SEBELUM footer "Tentang Playly" (data-help-cat="tentang") supaya
+  // © footer tetap jadi penutup panel; kalau footer tak ada, taruh paling bawah.
+  const about = body.querySelector('.help-section[data-help-cat="tentang"]');
+  if (about && about !== sec) {
+    if (sec.nextElementSibling !== about) body.insertBefore(sec, about);
+  } else if (body.lastElementChild !== sec) {
+    body.appendChild(sec);
+  }
+}
+
 $("#openHelp")?.addEventListener("click", () => {
   const panel = $("#helpPanel");
   // First-open: inject template content + close handler delegation sudah jalan
   // via global document listener (closest "[data-close-sp]").
   ensureLazyPanelMounted("helpPanel");
+  if (typeof _repositionContactHub === "function") { try { _repositionContactHub(); } catch (e) {} }
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis(panel); } catch (e) {} }
+  if (typeof applyI18n === "function") { try { applyI18n(); } catch (e) {} }
   const willOpen = !panel.classList.contains("open");
   panel.classList.toggle("open");
   if (willOpen) {
@@ -49478,7 +49867,8 @@ $("#openHelp")?.addEventListener("click", () => {
   }
 });
 
-$("#helpSearch")?.addEventListener("input", e => {
+document.addEventListener("input", e => {
+  if (!e.target || e.target.id !== "helpSearch") return;
   const q = e.target.value.toLowerCase().trim();
   const role = user?.role === "admin" ? "admin" : "user";
   let visibleCount = 0;
@@ -49536,19 +49926,20 @@ function openLiveChatPicker() {
   const itemsHtml = admins.map(a => {
     const isSelf = user && a.username === user.username;
     const isSuper = isOfficialAdminEmail(a.email);
+    const handle = (a.email || "").split("@")[0] || a.username;
     const init = (a.name || a.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
     const tag = isSuper
-      ? `<span style="font-size:9px; padding:2px 7px; background:linear-gradient(90deg,#6D2932,#C7B7A3); color:#fff; border-radius:4px; font-weight:700">SUPER</span>`
-      : `<span style="font-size:9px; padding:2px 7px; background:rgba(199,183,163,0.18); color:var(--muted); border-radius:4px; font-weight:700">ADMIN</span>`;
+      ? `<span style="font-size:9px; padding:3px 7px; background:#6D2932; color:#E8D8C4; border:1px solid #6D2932; border-radius:5px; font-weight:700; letter-spacing:.3px">SUPER ADMIN</span>`
+      : `<span style="font-size:9px; padding:3px 7px; background:transparent; color:#E8D8C4; border:1px solid rgba(232,216,196,.45); border-radius:5px; font-weight:700; letter-spacing:.3px">ADMIN</span>`;
     const avatar = a.avatar
       ? `<img src="${escapeHtml(a.avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`
       : `<span>${escapeHtml(init)}</span>`;
     return `
-      <button class="lcp-item" data-lcp-username="${escapeHtml(a.username)}" ${isSelf ? "disabled" : ""} style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:transparent;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:${isSelf ? "not-allowed" : "pointer"};opacity:${isSelf ? "0.45" : "1"};text-align:left;color:var(--text);transition:background .15s">
-        <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;flex-shrink:0;overflow:hidden">${avatar}</div>
+      <button class="lcp-item" data-lcp-username="${escapeHtml(a.username)}" ${isSelf ? "disabled" : ""} style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:rgba(232,216,196,.04);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:${isSelf ? "not-allowed" : "pointer"};opacity:${isSelf ? "0.45" : "1"};text-align:left;color:var(--text);transition:background .15s">
+        
         <div style="flex:1;min-width:0">
-          <strong style="display:flex;align-items:center;gap:6px;font-size:14px">${escapeHtml(a.name || a.username)} ${tag}</strong>
-          <small style="color:var(--muted);font-size:12px">@${escapeHtml(a.username)}${isSelf ? " (kamu)" : ""}</small>
+          <strong style="display:flex;align-items:center;gap:6px;font-size:14px">${escapeHtml(handle)} ${tag}</strong>
+          <small style="color:var(--muted);font-size:12px">@${escapeHtml(handle)}${isSelf ? " (kamu)" : ""}</small>
         </div>
       </button>
     `;
@@ -49558,9 +49949,9 @@ function openLiveChatPicker() {
     <div class="modal-backdrop" data-lcp-close></div>
     <div class="modal-panel" style="max-width:440px;padding:22px">
       <button class="modal-close" data-lcp-close>✕</button>
-      <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px">💬 Live Chat dengan Admin</h3>
-      <p class="muted" style="margin:0 0 16px;font-size:13px">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung lewat in-app messaging.</p>
-      <div class="lcp-list" style="max-height:60vh;overflow-y:auto">${itemsHtml}</div>
+      <div style="width:56px;height:56px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:15px;background:rgba(232,216,196,.10);border:1px solid rgba(232,216,196,.16);color:#E8D8C4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></div><h3 style="margin:0 0 5px;text-align:center;font-size:19px;font-weight:700;letter-spacing:-.2px;color:#E8D8C4">Live Chat dengan Admin</h3>
+      <p class="muted" style="margin:0 auto 18px;text-align:center;font-size:12.5px;line-height:1.55;max-width:340px;color:rgba(232,216,196,.55)">Pilih admin yang ingin kamu hubungi. Pesan dikirim langsung di dalam aplikasi.</p>
+      <div class="lcp-list" translate="no" style="max-height:60vh;overflow-y:auto">${itemsHtml}</div>
     </div>
   `;
   document.body.appendChild(modal);
@@ -49572,12 +49963,422 @@ function openLiveChatPicker() {
     const username = item.dataset.lcpUsername;
     modal.remove();
     closeHelpPanel();
-    if (typeof startChatWithUser === "function") {
+    // Klik admin -> buka POPUP chat melayang (bukan halaman Pesan).
+    if (typeof openAdminChatPopup === "function") {
+      openAdminChatPopup(username);
+    } else if (typeof startChatWithUser === "function") {
       startChatWithUser(username);
-    } else {
-      switchView("messages");
     }
   });
+}
+
+// ----------------------- POPUP CHAT ADMIN (LIVE CHAT) -----------------------
+// Chat melayang dengan admin, muncul saat user klik admin di picker Live Chat.
+// Sengaja TIDAK pakai halaman Pesan — percakapan tetap disimpan di thread admin
+// (state.messages, isAdmin) supaya persist & terkirim ke inbox admin via
+// deliverChatToRecipient, tapi thread itu disembunyikan dari tab Pesan.
+function renderAdminChatPopupBody(username) {
+  const body = document.getElementById("acpBody");
+  if (!body) return;
+  const thread = (state.messages || []).find(m => m.name === username);
+  const hist = (thread && Array.isArray(thread.history)) ? thread.history : [];
+  if (!hist.length) {
+    body.innerHTML = '<div class="acp-empty"><div class="acp-empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg></div><p>Belum ada pesan.<br/>Sapa admin duluan!</p></div>';
+    return;
+  }
+  body.innerHTML = hist.map((h, idx) => {
+    const mine = h.from === "me";
+    const time = (typeof chatRelTime === "function" && h.ts) ? chatRelTime(h.ts) : "";
+    const imgs = Array.isArray(h.images) ? h.images : (h.image ? [h.image] : []);
+    const menuBtn = '<button type="button" class="acp-msg-menu" data-acp-msgmenu="' + idx + '" aria-label="Opsi pesan"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>';
+    let inner = "";
+    if (h.replyTo) inner += '<div class="acp-quote">' + escapeHtml(String(h.replyTo).slice(0, 90)) + '</div>';
+    if (imgs.length) inner += '<div class="acp-imgs ' + (imgs.length > 1 ? "multi" : "single") + '">'
+      + imgs.map(s => '<img class="acp-img" src="' + escapeHtml(s) + '" alt="lampiran"/>').join("") + '</div>';
+    // Menu titik-3 mengambang di POJOK bubble (bukan di samping, bukan di gambar).
+    // Gambar cukup diklik untuk preview. Klik-kanan pesan apa pun juga buka menu.
+    if (h.text) inner += '<div class="acp-bubble">' + menuBtn + escapeHtml(h.text) + (h.edited ? ' <span class="acp-edited">(diedit)</span>' : '') + '</div>';
+    else if (!imgs.length) inner = '<div class="acp-bubble">' + menuBtn + '[pesan]</div>';
+    return '<div class="acp-row ' + (mine ? "acp-mine" : "acp-them") + '" data-acp-msg="' + idx + '">'
+      + inner
+      + (time ? '<span class="acp-time">' + escapeHtml(time) + '</span>' : '')
+      + '</div>';
+  }).join("");
+  body.scrollTop = body.scrollHeight;
+}
+
+// Baca file gambar -> downscale (maks 1024px, JPEG q0.82) -> dataURL kecil.
+// Supaya tidak membengkakkan localStorage + cloud kv saat kirim lampiran.
+function _acpReadImageScaled(file, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height; const max = 1600;   // resolusi lebih tinggi -> jelas saat di-zoom
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      try {
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        cb(c.toDataURL("image/jpeg", 0.85));
+      } catch (e) { cb(reader.result); }
+    };
+    img.onerror = () => cb(reader.result);
+    img.src = reader.result;
+  };
+  reader.onerror = () => cb(null);
+  reader.readAsDataURL(file);
+}
+
+function openAdminChatPopup(username) {
+  const acc = (typeof getAllAccounts === "function" ? getAllAccounts() : []).find(a => a.username === username);
+  if (!acc) { if (typeof toast === "function") toast("⚠️ Admin tidak ditemukan", "warning"); return; }
+  const isSuper = typeof isOfficialAdminEmail === "function" && isOfficialAdminEmail(acc.email);
+  const handle = (acc.email || "").split("@")[0] || acc.username;
+  const init = (acc.name || acc.username).split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+
+  // Get/create thread (persist; isAdmin -> disembunyikan dari tab Pesan).
+  let thread = (state.messages || []).find(m => m.name === username);
+  if (!thread) {
+    thread = { name: username, init, preview: "", time: "baru", ts: Date.now(), unread: false, online: true, isAdmin: true, history: [] };
+    state.messages.unshift(thread);
+  } else {
+    thread.isAdmin = true;
+    if (thread.unread) thread.unread = false;
+  }
+  if (typeof saveState === "function") saveState();
+
+  document.getElementById("adminChatPopup")?.remove();
+  const badge = isSuper
+    ? '<span class="acp-badge acp-badge-super" translate="no">SUPER ADMIN</span>'
+    : '<span class="acp-badge" translate="no">ADMIN</span>';
+  const wrap = document.createElement("div");
+  wrap.className = "acp-modal";
+  wrap.id = "adminChatPopup";
+  wrap.innerHTML =
+    '<div class="acp-backdrop" data-acp-close></div>'
+    + '<div class="acp-panel" role="dialog" aria-label="Chat dengan admin">'
+      + '<div class="acp-resize" id="acpResize" aria-hidden="true" title="Tarik untuk ubah ukuran"></div>'
+      + '<div class="acp-head">'
+        + '<div class="acp-ava" aria-hidden="true">' + escapeHtml(init) + '</div>'
+        + '<div class="acp-meta">'
+          + '<strong translate="no">' + escapeHtml(handle) + ' ' + badge + '</strong>'
+          + '<span class="acp-status">Tim Admin Playly · biasanya balas cepat</span>'
+        + '</div>'
+        + '<button type="button" class="acp-gear" id="acpGear" aria-label="Pengaturan" aria-haspopup="true">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+        + '</button>'
+        + '<button type="button" class="acp-close" data-acp-close aria-label="Tutup">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+        + '</button>'
+      + '</div>'
+      + '<div class="acp-menu" id="acpMenu" hidden>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="help">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>'
+          + '<span>Pusat Bantuan (FAQ)</span>'
+        + '</button>'
+        + '<div class="acp-menu-sep"></div>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="copy-email">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+          + '<span>Salin email admin</span>'
+        + '</button>'
+        + '<button type="button" class="acp-menu-item" data-acp-act="copy-transcript">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>'
+          + '<span>Salin transkrip obrolan</span>'
+        + '</button>'
+        + '<div class="acp-menu-sep"></div>'
+        + '<button type="button" class="acp-menu-item danger" data-acp-act="clear">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+          + '<span>Bersihkan obrolan</span>'
+        + '</button>'
+      + '</div>'
+      + '<div class="acp-body" id="acpBody"></div>'
+      + '<div class="acp-ctx" id="acpCtx" hidden><div class="acp-ctx-text" id="acpCtxText"></div><button type="button" class="acp-ctx-x" id="acpCtxCancel" aria-label="Batal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'
+      + '<div class="acp-preview" id="acpPreview" hidden>'
+        + '<div class="acp-preview-thumbs" id="acpPreviewThumbs"></div>'
+        + '<span class="acp-preview-label" id="acpPreviewLabel"></span>'
+      + '</div>'
+      + '<form class="acp-foot" id="acpForm">'
+        + '<input type="file" id="acpFile" accept="image/*" multiple hidden />'
+        + '<button type="button" class="acp-attach" id="acpAttach" aria-label="Lampirkan gambar" title="Lampirkan gambar">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
+        + '</button>'
+        + '<input type="text" id="acpInput" autocomplete="off" placeholder="Tulis pesan untuk admin..." />'
+        + '<button type="submit" class="acp-send" aria-label="Kirim">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
+        + '</button>'
+      + '</form>'
+    + '</div>';
+  document.body.appendChild(wrap);
+  renderAdminChatPopupBody(username);
+  window._acpOpenUser = username;   // dipakai auto-refresh saat admin balas
+
+  const menu = wrap.querySelector("#acpMenu");
+  let acpPending = [];   // array dataURL gambar yg di-stage tapi BELUM dikirim
+  const _acpRenderPreview = () => {
+    const pv = wrap.querySelector("#acpPreview"), thumbs = wrap.querySelector("#acpPreviewThumbs"), label = wrap.querySelector("#acpPreviewLabel"), inp0 = wrap.querySelector("#acpInput");
+    if (!pv || !thumbs) return;
+    if (!acpPending.length) { pv.hidden = true; thumbs.innerHTML = ""; if (inp0) inp0.placeholder = "Tulis pesan untuk admin..."; return; }
+    thumbs.innerHTML = acpPending.map((src, i) => '<span class="acp-pv-thumb"><img src="' + src + '" alt="pratinjau"/><button type="button" class="acp-pv-x" data-acp-pvremove="' + i + '" aria-label="Hapus gambar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>').join("");
+    if (label) label.textContent = acpPending.length + " gambar siap dikirim — tulis keterangan (opsional) lalu Kirim.";
+    pv.hidden = false;
+    if (inp0) inp0.placeholder = "Tulis keterangan gambar (opsional)...";
+  };
+  const _acpClearPreview = () => { acpPending = []; _acpRenderPreview(); };
+  // Balas/Edit state + helper untuk menu per-pesan.
+  let acpReplyIdx = null, acpEditIdx = null;
+  const _acpThread = () => (state.messages || []).find(m => m.name === username);
+  const _acpSnippet = (h) => !h ? "" : (h.text ? h.text : (((Array.isArray(h.images) && h.images.length) || h.image) ? "📷 Gambar" : "[pesan]"));
+  const _acpShowCtx = (label) => { const c = wrap.querySelector("#acpCtx"), t = wrap.querySelector("#acpCtxText"); if (t) t.textContent = label; if (c) c.hidden = false; };
+  const _acpHideCtx = () => { acpReplyIdx = null; acpEditIdx = null; const c = wrap.querySelector("#acpCtx"); if (c) c.hidden = true; };
+  const _acpCloseMsgMenu = () => { wrap.querySelector("#acpMsgPop")?.remove(); };
+  const _acpOpenMsgMenu = (idx, x, y) => {
+    _acpCloseMsgMenu();
+    const th = _acpThread(); const h = th && th.history[idx]; if (!h) return;
+    const mine = h.from === "me";
+    const items = [{ act: "reply", label: "Balas" }];
+    if (h.text) items.push({ act: "copy", label: "Salin teks" });
+    if (mine && h.text) items.push({ act: "edit", label: "Edit" });
+    if (mine) items.push({ act: "delete", label: "Hapus", danger: true });
+    const pop = document.createElement("div");
+    pop.id = "acpMsgPop"; pop.className = "acp-msgpop"; pop.style.position = "fixed";
+    pop.innerHTML = items.map(it => '<button type="button" class="acp-msgpop-item' + (it.danger ? " danger" : "") + '" data-acp-msgact="' + it.act + '" data-acp-msgidx="' + idx + '">' + it.label + '</button>').join("");
+    wrap.appendChild(pop);   // di wrap (bukan panel) supaya tak ke-clip overflow
+    pop.style.left = Math.max(8, Math.min(x, window.innerWidth - 160)) + "px";
+    pop.style.top = Math.min(y + 4, window.innerHeight - 8 - pop.offsetHeight) + "px";
+  };
+  // Klik-kanan pesan apa pun (teks/gambar) -> menu yang sama dgn titik-3.
+  wrap.addEventListener("contextmenu", ev => {
+    const row = ev.target.closest("[data-acp-msg]");
+    if (!row) return;
+    ev.preventDefault();
+    _acpOpenMsgMenu(+row.dataset.acpMsg, ev.clientX, ev.clientY);
+  });
+  wrap.addEventListener("click", ev => {
+    if (ev.target.closest("[data-acp-close]")) { wrap.remove(); window._acpOpenUser = null; return; }
+    if (ev.target.closest("#acpCtxCancel")) { const wasEdit = acpEditIdx != null; _acpHideCtx(); if (wasEdit) { const i0 = wrap.querySelector("#acpInput"); if (i0) i0.value = ""; } return; }
+    const _pvx = ev.target.closest("[data-acp-pvremove]");
+    if (_pvx) { const i = +_pvx.dataset.acpPvremove; if (i >= 0) acpPending.splice(i, 1); _acpRenderPreview(); return; }
+    // Klik gambar (terkirim / pratinjau) -> buka lightbox full.
+    const _pimg = ev.target.closest(".acp-img, .acp-pv-thumb img");
+    if (_pimg && _pimg.src) { if (typeof openImageLightbox === "function") openImageLightbox({ src: _pimg.src, name: "Lampiran" }); return; }
+    const _mm = ev.target.closest("[data-acp-msgmenu]");
+    if (_mm) { ev.stopPropagation(); const br = _mm.getBoundingClientRect(); _acpOpenMsgMenu(+_mm.dataset.acpMsgmenu, br.left, br.bottom); return; }
+    const _ma = ev.target.closest("[data-acp-msgact]");
+    if (_ma) {
+      const a2 = _ma.dataset.acpMsgact, idx = +_ma.dataset.acpMsgidx; _acpCloseMsgMenu();
+      const th = _acpThread(); const h = th && th.history[idx]; if (!h) return;
+      if (a2 === "reply") { acpEditIdx = null; acpReplyIdx = idx; _acpShowCtx("Membalas: " + _acpSnippet(h)); wrap.querySelector("#acpInput")?.focus(); }
+      else if (a2 === "copy") { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(h.text || "").then(() => { if (typeof toast === "function") toast("✓ Teks disalin", "success"); }).catch(() => {}); }
+      else if (a2 === "edit") { acpReplyIdx = null; acpEditIdx = idx; const inp = wrap.querySelector("#acpInput"); if (inp) { inp.value = h.text || ""; inp.focus(); } _acpShowCtx("Mengedit pesan"); }
+      else if (a2 === "delete") {
+        const _doDel = () => { const t2 = _acpThread(); if (t2 && t2.history[idx]) { t2.history.splice(idx, 1); if (typeof saveState === "function") saveState(); renderAdminChatPopupBody(username); } };
+        if (typeof openConfirm === "function") { openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus pesan", desc: "Pesan ini akan dihapus dari obrolan kamu.", btnText: "Hapus", btnClass: "danger", onConfirm: _doDel }); try { if (typeof convertUiEmojis === "function") convertUiEmojis(document.getElementById("confirmIcon")); } catch (e) {} }
+        else _doDel();
+      }
+      return;
+    }
+    if (!ev.target.closest("#acpMsgPop")) _acpCloseMsgMenu();
+    if (ev.target.closest("#acpGear")) { if (menu) menu.hidden = !menu.hidden; return; }
+    const act = ev.target.closest("[data-acp-act]");
+    if (act) {
+      if (menu) menu.hidden = true;
+      const a = act.dataset.acpAct;
+      if (a === "help") { wrap.remove(); window._acpOpenUser = null; document.getElementById("openHelp")?.click(); return; }
+      const th = (state.messages || []).find(m => m.name === username);
+      if (a === "copy-email") {
+        const email = acc.email || "";
+        if (email && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(email)
+            .then(() => { if (typeof toast === "function") toast("✓ Email admin disalin (" + email + ")", "success"); })
+            .catch(() => { if (typeof toast === "function") toast("Email admin: " + email, "info"); });
+        } else if (typeof toast === "function") { toast(email ? ("Email admin: " + email) : "Email admin tidak tersedia", "info"); }
+      } else if (a === "copy-transcript") {
+        const hist = (th && Array.isArray(th.history)) ? th.history : [];
+        if (!hist.length) { if (typeof toast === "function") toast("Belum ada pesan untuk disalin", "warning"); return; }
+        let _imgNo = 0;
+        const _clock = (ts) => { try { const d = new Date(ts); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); } catch (e) { return ""; } };
+        const lines = hist.map(h => {
+          const who = h.from === "me" ? "Kamu" : "Admin";
+          const jam = h.ts ? _clock(h.ts) : "";
+          const imgs = Array.isArray(h.images) ? h.images : (h.image ? [h.image] : []);
+          let body = h.text || "";
+          if (imgs.length) { const names = imgs.map(() => "gambar-" + (++_imgNo) + ".png").join(", "); body = body ? (names + " — " + body) : names; }
+          if (!body) body = "[pesan]";
+          return (jam ? "[" + jam + "] " : "") + who + ": " + body;
+        });
+        const text = lines.join("\n");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => { if (typeof toast === "function") toast("✓ Transkrip obrolan disalin", "success"); }).catch(() => {});
+        }
+      } else if (a === "clear") {
+        const _doClear = () => { const t2 = (state.messages || []).find(m => m.name === username); if (t2) { t2.history = []; t2.preview = ""; if (typeof saveState === "function") saveState(); } renderAdminChatPopupBody(username); if (typeof toast === "function") toast("Obrolan dibersihkan", "success"); };
+        if (typeof openConfirm === "function") { openConfirm({ icon: "🗑️", iconClass: "danger", title: "Bersihkan obrolan", desc: "Semua pesan di obrolan ini akan dihapus.", btnText: "Bersihkan", btnClass: "danger", onConfirm: _doClear }); try { if (typeof convertUiEmojis === "function") convertUiEmojis(document.getElementById("confirmIcon")); } catch (e) {} }
+        else _doClear();
+      }
+      return;
+    }
+    // Klik di area lain dalam popup -> tutup menu kalau lagi kebuka.
+    if (menu && !menu.hidden) menu.hidden = true;
+  });
+  wrap.querySelector("#acpForm").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const inp = wrap.querySelector("#acpInput");
+    const txt = (inp.value || "").trim();
+    const th = (state.messages || []).find(m => m.name === username);
+    if (!th) return;
+    th.history = th.history || [];
+    // EDIT mode: update pesan yg sedang diedit (lokal — tampilan kamu).
+    if (acpEditIdx != null) {
+      const m = th.history[acpEditIdx];
+      if (m && txt) { m.text = txt; m.edited = true; if (typeof saveState === "function") saveState(); }
+      acpEditIdx = null; _acpHideCtx(); inp.value = ""; renderAdminChatPopupBody(username);
+      return;
+    }
+    const imgs = acpPending.slice();   // gambar yg di-stage (bisa beberapa)
+    if (!txt && !imgs.length) return;  // tak ada teks & tak ada gambar -> jangan kirim
+    // Semua gambar jadi SATU pesan (grid 2 kolom), keterangan opsional.
+    const replySnippet = (acpReplyIdx != null) ? _acpSnippet(th.history[acpReplyIdx]) : null;
+    const msg = { from: "me", text: txt, images: imgs.length ? imgs : null, time: "baru", ts: Date.now() };
+    if (replySnippet) msg.replyTo = replySnippet;
+    th.history.push(msg);
+    th.preview = imgs.length ? ("📷 " + (txt || (imgs.length + " gambar"))) : ("Kamu: " + txt);
+    th.time = "baru"; th.ts = Date.now();
+    acpReplyIdx = null; _acpHideCtx();
+    // PENTING: saveState() DULU sebelum deliver — deliverChatToRecipient memicu
+    // event cloud-applied yg me-reload state.messages; kalau belum disimpan,
+    // pesan baru ke-clobber state lama.
+    if (typeof saveState === "function") saveState();
+    inp.value = "";
+    _acpClearPreview();
+    renderAdminChatPopupBody(username);
+    // BARU kirim ke inbox admin (real) — teks + semua gambar.
+    if (username !== user?.username && typeof deliverChatToRecipient === "function") {
+      try { deliverChatToRecipient(username, txt, false, imgs.length ? imgs : undefined); } catch (e) {}
+    }
+  });
+
+  // Lampirkan gambar (kirim screenshot ke admin).
+  const fileInput = wrap.querySelector("#acpFile");
+  wrap.querySelector("#acpAttach").addEventListener("click", () => fileInput && fileInput.click());
+  fileInput.addEventListener("change", () => {
+    let files = Array.from(fileInput.files || []).filter(f => /^image\//.test(f.type));
+    fileInput.value = "";
+    if (!files.length) { if (typeof toast === "function") toast("Hanya file gambar yang didukung", "warning"); return; }
+    const MAX = 6;
+    if (acpPending.length + files.length > MAX) {
+      files = files.slice(0, Math.max(0, MAX - acpPending.length));
+      if (typeof toast === "function") toast("Maksimal " + MAX + " gambar per kirim", "warning");
+    }
+    if (!files.length) return;
+    // Stage dulu (pratinjau) — JANGAN langsung kirim. Dikirim saat klik Kirim.
+    let remaining = files.length;
+    files.forEach(file => {
+      _acpReadImageScaled(file, (dataURL) => {
+        if (dataURL) acpPending.push(dataURL);
+        if (--remaining === 0) { _acpRenderPreview(); wrap.querySelector("#acpInput")?.focus(); }
+      });
+    });
+  });
+
+  // Auto-refresh: saat admin balas (cloud-sync / cross-tab), re-render isi popup
+  // selama popup terbuka — supaya balasan admin muncul tanpa tutup-buka manual.
+  if (!window._acpCloudBound) {
+    window._acpCloudBound = true;
+    const _acpRefresh = () => {
+      if (!document.getElementById("adminChatPopup") || !window._acpOpenUser) return;
+      try {
+        const k = "playly-state-" + (user?.username || "");
+        const fresh = JSON.parse(localStorage.getItem(k) || "{}");
+        if (Array.isArray(fresh.messages)) state.messages = fresh.messages;
+      } catch (e) {}
+      renderAdminChatPopupBody(window._acpOpenUser);
+    };
+    window.addEventListener("playly:cloud-applied", _acpRefresh);
+    window.addEventListener("storage", (e) => { if (e.key && e.key.startsWith("playly-state-")) _acpRefresh(); });
+  }
+
+  // Drag: popup bisa digeser dgn tarik header (kecuali saat klik tombol).
+  (function makeDraggable() {
+    const panel = wrap.querySelector(".acp-panel"), head = wrap.querySelector(".acp-head");
+    if (!panel || !head) return;
+    let sx, sy, sl, st, dragging = false;
+    head.addEventListener("pointerdown", e => {
+      if (e.target.closest("button")) return;
+      const r = panel.getBoundingClientRect();
+      panel.style.left = r.left + "px"; panel.style.top = r.top + "px";
+      panel.style.right = "auto"; panel.style.bottom = "auto";
+      sx = e.clientX; sy = e.clientY; sl = r.left; st = r.top; dragging = true;
+      try { head.setPointerCapture(e.pointerId); } catch (_) {}
+      head.style.cursor = "grabbing";
+    });
+    head.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const r = panel.getBoundingClientRect();
+      let nl = sl + (e.clientX - sx), nt = st + (e.clientY - sy);
+      nl = Math.max(4, Math.min(nl, window.innerWidth - r.width - 4));
+      nt = Math.max(4, Math.min(nt, window.innerHeight - r.height - 4));
+      panel.style.left = nl + "px"; panel.style.top = nt + "px";
+    });
+    const end = e => { dragging = false; head.style.cursor = ""; try { head.releasePointerCapture(e.pointerId); } catch (_) {} };
+    head.addEventListener("pointerup", end);
+    head.addEventListener("pointercancel", end);
+  })();
+
+  // Resize: tarik grip pojok kiri-atas -> ubah lebar/tinggi (pojok kanan-bawah tetap).
+  (function makeResizable() {
+    const panel = wrap.querySelector(".acp-panel"), grip = wrap.querySelector("#acpResize");
+    if (!panel || !grip) return;
+    let right, bottom, resizing = false;
+    grip.addEventListener("pointerdown", e => {
+      e.preventDefault(); e.stopPropagation();
+      const r = panel.getBoundingClientRect();
+      right = r.right; bottom = r.bottom; resizing = true;
+      try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    grip.addEventListener("pointermove", e => {
+      if (!resizing) return;
+      let w = right - e.clientX, h = bottom - e.clientY;
+      w = Math.max(300, Math.min(w, window.innerWidth - 16));
+      h = Math.max(340, Math.min(h, window.innerHeight - 16));
+      panel.style.width = w + "px"; panel.style.height = h + "px";
+      // jaga pojok kanan-bawah tetap saat panel sudah dipindah (mode left/top).
+      if (panel.style.left && panel.style.left !== "auto") panel.style.left = (right - w) + "px";
+      if (panel.style.top && panel.style.top !== "auto") panel.style.top = (bottom - h) + "px";
+    });
+    const rend = e => { resizing = false; try { grip.releasePointerCapture(e.pointerId); } catch (_) {} };
+    grip.addEventListener("pointerup", rend);
+    grip.addEventListener("pointercancel", rend);
+  })();
+
+  setTimeout(() => wrap.querySelector("#acpInput")?.focus(), 80);
+}
+
+// FAB "ada balasan admin": tombol bulat melayang kanan-bawah saat ada pesan admin
+// belum dibaca DAN popup sedang tertutup. Klik -> buka popup chat admin itu.
+function _acpUnreadAdminThread() {
+  const msgs = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
+  return msgs.find(m => m && m.isAdmin && m.unread && !m.isBroadcast);
+}
+function _acpUpdateFab() {
+  const popupOpen = !!document.getElementById("adminChatPopup");
+  const th = _acpUnreadAdminThread();
+  let fab = document.getElementById("acpFab");
+  if (popupOpen || !th || typeof user === "undefined" || !user) { if (fab) fab.remove(); return; }
+  if (!fab) {
+    fab = document.createElement("button");
+    fab.id = "acpFab"; fab.type = "button"; fab.className = "acp-fab"; fab.title = "Balasan admin baru";
+    fab.setAttribute("aria-label", "Balasan admin baru");
+    fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg><span class="acp-fab-dot"></span>';
+    fab.addEventListener("click", () => { const t2 = _acpUnreadAdminThread(); fab.remove(); if (t2 && typeof openAdminChatPopup === "function") openAdminChatPopup(t2.name); });
+    document.body.appendChild(fab);
+  }
+}
+if (!window._acpFabBound) {
+  window._acpFabBound = true;
+  const refreshFab = () => setTimeout(() => { try { _acpUpdateFab(); } catch (e) {} }, 0);
+  window.addEventListener("playly:cloud-applied", refreshFab);
+  window.addEventListener("storage", e => { if (e.key && e.key.startsWith("playly-state-")) refreshFab(); });
+  setTimeout(() => { try { _acpUpdateFab(); } catch (e) {} }, 1500);
 }
 
 // ----------------------- IN-APP SUPPORT COMPOSE -----------------------
@@ -49598,9 +50399,13 @@ function openSupportCompose({ type, subjectDefault, bodyDefault, title, desc, ic
   form.querySelector('[name="type"]').value = type;
   form.querySelector('[name="subject"]').value = subjectDefault || "";
   form.querySelector('[name="body"]').value = bodyDefault || "";
+  { const _h = form.querySelector(".field-hint"); const _t = form.querySelector('[name="body"]'); const _u = () => { if (_h && _t) { const n = _t.value.length; _h.textContent = n + " dari 2.000 karakter" + (n < 10 ? " · minimal 10 karakter" : ""); } }; if (_t && !_t._cntBound) { _t.addEventListener("input", _u); _t._cntBound = true; } _u(); }
   $("#supportComposeTitle").textContent = title || "Contact Super Admin";
   $("#supportComposeDesc").textContent = desc || "Your message will go directly to the Playly admin Inbox.";
   $("#supportComposeIcon").textContent = icon || "📧";
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis($("#supportComposeIcon")); } catch (e) {} }
+  { const _tp = document.getElementById("supportTopics"); if (_tp) { _tp.hidden = (type === "bug"); _tp.querySelectorAll(".support-topic-chip").forEach(c => c.classList.remove("active")); } }
+  if (!window._supportTopicsBound) { window._supportTopicsBound = true; document.addEventListener("click", (e) => { const chip = e.target.closest(".support-topic-chip"); if (!chip) return; const t = chip.dataset.topic; const fm = document.getElementById("supportComposeForm"); if (!fm) return; const sj = fm.querySelector('[name="subject"]'); const bd = fm.querySelector('[name="body"]'); if (sj) sj.value = "Bantuan: " + t; if (bd) { bd.value = bd.value.replace(/butuh bantuan terkait[^:]*:/, "butuh bantuan terkait " + t + ":"); bd.dispatchEvent(new Event("input", { bubbles: true })); } fm.querySelectorAll(".support-topic-chip").forEach(c => c.classList.toggle("active", c === chip)); }); }
 
   // Reset proof state + UI
   _supportProofData = null;
@@ -49811,11 +50616,41 @@ $("#supportComposeForm")?.addEventListener("submit", e => {
   closeHelpPanel();
 });
 
+// Hub "Hubungi Admin" — satu pintu masuk berisi 3 kanal: Email Dukungan, Lapor
+// Bug, Live Chat. Tiap kartu pakai id lama (#emailSupport/#reportBug/#contactChat)
+// supaya handler di bawah otomatis membuka flow-nya.
+function openSupportHub() {
+  if (!user) { if (typeof toast === "function") toast("⚠️ Login dulu untuk hubungi admin", "warning"); return; }
+  document.getElementById("supportHubModal")?.remove();
+  const icMail = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+  const icBug = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M12 6V4M8.5 8 6 6M15.5 8 18 6M8 12H4M20 12h-4M8.5 16 6 18M15.5 16 18 18"/></svg>';
+  const icChat = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+  const wrap = document.createElement("div");
+  wrap.className = "modal show support-hub-modal"; wrap.id = "supportHubModal"; wrap.style.cssText = "z-index:10010";
+  wrap.innerHTML =
+    '<div class="modal-backdrop" data-hub-close></div>'
+    + '<div class="modal-panel" style="max-width:430px;padding:22px">'
+      + '<button class="modal-close" data-hub-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>'
+      + '<div class="sh-hero"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-5a9 9 0 0 1 18 0v5"/><path d="M21 19a2 2 0 0 1-2 2h-2v-5h2a2 2 0 0 1 2 2zM3 19a2 2 0 0 0 2 2h2v-5H5a2 2 0 0 0-2 2z"/></svg></div>'
+      + '<h3 class="sh-title">Hubungi Admin</h3>'
+      + '<p class="sh-desc">Pilih cara menghubungi tim admin Playly.</p>'
+      + '<div class="sh-list" translate="no">'
+        + '<a href="#" class="sh-card" id="emailSupport"><span class="sh-ic">' + icMail + '</span><span class="sh-txt"><b>Email Dukungan</b><small>Pertanyaan / bantuan umum — masuk ke tiket support</small></span></a>'
+        + '<a href="#" class="sh-card" id="reportBug"><span class="sh-ic">' + icBug + '</span><span class="sh-txt"><b>Lapor Bug</b><small>Laporan teknis terstruktur — masuk ke Bug Reports</small></span></a>'
+        + '<a href="#" class="sh-card" id="contactChat"><span class="sh-ic">' + icChat + '</span><span class="sh-txt"><b>Live Chat</b><small>Obrolan langsung dengan admin (popup)</small></span></a>'
+      + '</div>'
+    + '</div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener("click", (ev) => { if (ev.target.closest("[data-hub-close]")) wrap.remove(); });
+}
+
 document.addEventListener("click", (e) => {
+  if (e.target.closest("#contactAdmin")) { e.preventDefault(); e.stopPropagation(); openSupportHub(); return; }
   const card = e.target.closest("#emailSupport, #contactChat, #reportBug");
   if (!card) return;
   e.preventDefault();
   e.stopPropagation();
+  document.getElementById("supportHubModal")?.remove();   // tutup hub kalau dipilih dari hub
   if (!user) { toast("⚠️ Login dulu untuk hubungi admin", "warning"); return; }
   const fromName = user?.name || user?.username || "User";
   const username = user?.username || "anonymous";
@@ -49826,8 +50661,8 @@ document.addEventListener("click", (e) => {
       icon: "📧",
       title: "Hubungi Super Admin",
       desc: "Pesanmu akan langsung masuk ke Inbox admin Playly.",
-      subjectDefault: `Support request from ${fromName}`,
-      bodyDefault: `Halo Super Admin,\n\nSaya ${fromName} (@${username}) butuh bantuan terkait:\n\n[Tulis pertanyaan/keluhan di sini]\n\nTerima kasih.`
+      subjectDefault: `Permintaan bantuan dari ${fromName}`,
+      bodyDefault: `Halo Super Admin,\nSaya ${fromName} (@${username}) butuh bantuan terkait:\n\n[Tulis pertanyaan atau keluhan di sini]\n\nTerima kasih.`
     });
     return;
   }
@@ -49844,7 +50679,7 @@ document.addEventListener("click", (e) => {
       title: "Lapor Bug ke Admin",
       desc: "Laporan bug-mu masuk ke Inbox admin Playly.",
       subjectDefault: `Bug: `,
-      bodyDefault: `Halo Super Admin,\n\nSaya menemukan bug:\n\n📍 Halaman: ${location.pathname}\n🐛 Deskripsi: [Jelaskan bug-nya]\n🔁 Cara reproduksi: [Langkah-langkahnya]\n\nTerima kasih.`
+      bodyDefault: `Halo Super Admin,\nSaya menemukan bug:\n\n📍 Halaman: ${location.pathname}\n🐛 Deskripsi: [Jelaskan bug-nya]\n🔁 Cara reproduksi: [Langkah-langkahnya]\n\nTerima kasih.`
     });
     return;
   }
@@ -50282,7 +51117,7 @@ if (tryAutoBoot()) {
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views · ${num(v.likes||0)} likes</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan · ${num(v.likes||0)} likes</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div></div>`;
@@ -50320,7 +51155,7 @@ if (tryAutoBoot()) {
       cdStatValue.textContent = num(totalViews);
       cdStatLabel.textContent = "views";
       const barsHtml = `<div class="cd-bars">${buckets.map((b,i) => `
-        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} views">
+        <div class="cd-bar" title="${esc(labels[i])} · ${num(b)} tayangan">
           <div class="cd-bar-fill" style="height: ${Math.max(4, (b/maxBar)*70)}px"></div>
           <div class="cd-bar-label">${esc(labels[i])}</div>
         </div>`).join("")}</div>`;
@@ -50333,11 +51168,11 @@ if (tryAutoBoot()) {
               <strong>${esc(v.title || t("video.untitled"))}</strong>
               <small>@${esc(v.creator || "—")}</small>
             </div>
-            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>views</small></div>
+            <div class="cd-li-meta">${num(v.viewsNum||0)}<small>tayangan</small></div>
           </button>`).join("")}</div>`;
       cdBody.innerHTML = `
         <div class="cd-section">
-          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} views</span></div>
+          <div class="cd-section-head"><h4>7 Hari Terakhir</h4><span class="cd-section-meta">${num(buckets.reduce((a,b)=>a+b,0))} tayangan</span></div>
           ${barsHtml}
         </div>
         <div class="cd-section">
@@ -50414,7 +51249,7 @@ if (tryAutoBoot()) {
             <div class="cd-li-thumb">${thumbHtml(v)}</div>
             <div class="cd-li-text">
               <strong>${esc(v.title || t("video.untitled"))}</strong>
-              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} views</small>
+              <small>@${esc(v.creator || "—")} · ${num(v.viewsNum||0)} tayangan</small>
             </div>
             <div class="cd-li-meta">${esc(rel(typeof v.id === "number" ? v.id : 0))}</div>
           </button>`).join("")}</div>`;
@@ -50887,6 +51722,18 @@ document.getElementById("playerBackBtn")?.addEventListener("click", () => {
 // =====================================================================
 // STORAGE PAGE — render halaman manajemen penyimpanan (clickable storage)
 // =====================================================================
+// Ikon minimalist (line SVG monokrom, ikut currentColor) — ganti emoji warna.
+const STO_IC = {
+  trash:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  restore: '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  star:    '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.4 5.8 21 7.2 14 2 9.3 8.9 8.6 12 2"/></svg>',
+  alert:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  clock:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  check:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:       '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  ban:     '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.64" y1="5.64" x2="18.36" y2="18.36"/></svg>',
+  pencil:  '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+};
 async function renderStoragePage() {
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const tier = user?.tier || "free";
@@ -50904,35 +51751,76 @@ async function renderStoragePage() {
   }
   const totalBytes = videoBytes + thumbBytes + cacheBytes;
 
-  // Quota
-  const FREE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-  const quotaBytes = isPremium ? Infinity : FREE_QUOTA;
-  const pct = isPremium ? 0 : Math.min(100, (totalBytes / FREE_QUOTA) * 100);
+  // ===== Kuota BULANAN per tier (reset tgl 1; video lama tetap tersimpan, tidak
+  // ikut kuota bulan berikutnya). Free = 10 GB + 30 video, Premium = 100 GB +
+  // 100 video (premium dibatasi supaya biaya terkendali). =====
+  const q = playlyQuota(tier); // { bytes, videos, gbLabel }
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const mTs = monthStart.getTime();
+  const monthVideos = myVideos.filter(v => (v.createdAt || v.id || 0) >= mTs);
+  const monthBytes = monthVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+  const bytePct = Math.min(100, (monthBytes / q.bytes) * 100);
+  const videoPct = Math.min(100, (monthVideos.length / q.videos) * 100);
+  const quotaPct = Math.max(bytePct, videoPct); // faktor pembatas (mana yg lebih dulu penuh)
 
-  // Update overview ring + bar
+  const card = document.getElementById("storageOverviewCard");
+  const premiumPill = document.getElementById("storagePremiumPill");
+  const ovTitle = document.getElementById("storageOvTitle");
+  const videoLabel = document.getElementById("storageVideoLabel");
+  const bytesLabel = document.getElementById("storageBytesLabel");
+  const videoText = document.getElementById("storageVideoText");
+  const videoBar = document.getElementById("storageVideoBar");
+  const totalStrip = document.getElementById("storageTotalStrip");
+  const headUpgrade = document.getElementById("storageUpgradeBtn");
   const ring = document.getElementById("storagePageRing");
   const pctEl = document.getElementById("storagePagePct");
   const usedEl = document.getElementById("storagePageUsed");
   const statusEl = document.getElementById("storagePageStatus");
   const barEl = document.getElementById("storagePageBar");
 
-  if (ring) ring.setAttribute("stroke-dasharray", `${pct}, 100`);
-  if (pctEl) pctEl.textContent = isPremium ? "∞" : `${Math.round(pct)}%`;
-  if (usedEl) usedEl.textContent = isPremium
-    ? `${fmtBytes(totalBytes)} / Unlimited`
-    : `${fmtBytes(totalBytes)} / 1 GB`;
+  const setBar = (el, p) => {
+    if (!el) return;
+    el.style.width = p + "%";
+    el.classList.remove("is-warn", "is-full");
+    if (p >= 95) el.classList.add("is-full");
+    else if (p >= 80) el.classList.add("is-warn");
+  };
+
+  // Kedua tier kini pakai meter berkuota (premium = kuota lebih besar, bukan ∞).
+  if (card) card.classList.toggle("is-premium", isPremium);
+  if (premiumPill) { premiumPill.hidden = !isPremium; premiumPill.innerHTML = `${STO_IC.star}<span>Premium</span>`; }
+  if (headUpgrade) headUpgrade.style.display = isPremium ? "none" : "";
+
+  if (ovTitle) ovTitle.textContent = isPremium ? "Kuota Premium Bulan Ini" : "Kuota Bulan Ini";
+  if (videoLabel) videoLabel.textContent = "Video bulan ini";
+  if (bytesLabel) bytesLabel.textContent = "Penyimpanan bulan ini";
+  if (ring) ring.setAttribute("stroke-dasharray", `${quotaPct.toFixed(1)}, 100`);
+  if (pctEl) pctEl.textContent = `${quotaPct > 0 && quotaPct < 1 ? "<1" : Math.round(quotaPct)}%`;
+  if (usedEl) usedEl.textContent = `${fmtBytes(monthBytes)} / ${q.gbLabel}`;
+  if (videoText) videoText.textContent = `${monthVideos.length} / ${q.videos}`;
+  setBar(barEl, bytePct); setBar(videoBar, videoPct);
+
+  const remVideos = Math.max(0, q.videos - monthVideos.length);
+  const remBytes = Math.max(0, q.bytes - monthBytes);
+  // Hitung mundur reset kuota (tanggal 1 bulan berikutnya).
+  const _now = new Date();
+  const _nextReset = new Date(_now.getFullYear(), _now.getMonth() + 1, 1);
+  const daysToReset = Math.max(1, Math.ceil((_nextReset - _now) / 86400000));
+  const resetTxt = `kuota reset dalam <strong>${daysToReset} hari</strong>`;
   if (statusEl) {
-    if (isPremium) {
-      statusEl.textContent = "Akun Premium — tanpa batas penyimpanan & kuota bulanan.";
-    } else if (pct >= 90) {
-      statusEl.innerHTML = "⚠️ Kuota hampir penuh — hapus file lama atau <a href='#' data-jump='settings' style='color:var(--primary)'>upgrade ke Premium</a>.";
-    } else if (pct >= 60) {
-      statusEl.textContent = `${Math.round(100 - pct)}% kuota tersisa bulan ini.`;
+    if (quotaPct >= 100) {
+      statusEl.innerHTML = isPremium
+        ? `${STO_IC.alert} Kuota Premium bulan ini penuh. Video lama tetap aman — ${resetTxt}.`
+        : `${STO_IC.alert} Kuota bulan ini penuh. Video lama tetap aman — <a href='#' data-jump='settings' style='color:var(--primary);font-weight:700'>upgrade ke Premium</a> (10x lebih besar: 100 GB + 100 video).`;
+    } else if (quotaPct >= 80) {
+      statusEl.innerHTML = `${STO_IC.alert} Hampir penuh — sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> · ${resetTxt}.`;
     } else {
-      statusEl.textContent = "Penggunaan masih sehat. Lanjutkan upload!";
+      statusEl.innerHTML = `Sisa <strong>${remVideos}</strong> video & <strong>${fmtBytes(remBytes)}</strong> bulan ini · ${resetTxt}.`;
     }
   }
-  if (barEl) barEl.style.width = `${pct}%`;
+  if (totalStrip) {
+    totalStrip.innerHTML = `Total tersimpan: <strong>${fmtBytes(totalBytes)}</strong> · <strong>${myVideos.length}</strong> video <span class="storage-total-note">(disimpan selamanya, di luar kuota bulanan)</span>`;
+  }
 
   // Breakdown by category
   const catList = document.getElementById("storageCategoryList");
@@ -50940,20 +51828,52 @@ async function renderStoragePage() {
     // v585 (2026-05-27): icon emoji → SVG dengan wine gradient box
     // (.sec-icon-v582 sec-icon-sm pattern). Konsisten dgn section headers.
     const cats = [
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes, color: "var(--primary)" },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes, color: "color-mix(in srgb, var(--primary) 48%, var(--cream))" },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Pengaturan", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true, color: "color-mix(in srgb, var(--cream) 82%, var(--primary))" },
     ];
-    catList.innerHTML = cats.map(c => `
-      <div class="storage-cat-row">
+    const totForPct = Math.max(1, totalBytes);
+    const withPct = cats.map(c => {
+      const pct = Math.min(100, (c.size / totForPct) * 100);
+      const pctLabel = c.size > 0 ? `${pct < 1 ? "<1" : Math.round(pct)}%` : "0%";
+      return { ...c, pct, pctLabel };
+    });
+    // konsep: kartu statistik 3 kolom, layout horizontal compact (mengisi lebar)
+    catList.innerHTML = withPct.map(c => {
+      const clearBtn = c.clearable ? `<button type="button" class="btn ghost sm storage-cache-clear" id="storageCacheClear" title="Bersihkan data cache non-penting">Bersihkan</button>` : "";
+      return `
+      <div class="storage-stat-card" style="--cat-color:${c.color}">
         <span class="storage-cat-icon sec-icon-v582 sec-icon-sm" aria-hidden="true">${c.svg}</span>
-        <div class="storage-cat-info">
-          <strong>${c.label}</strong>
-          <small>${c.desc}</small>
+        <div class="storage-stat-info">
+          <div class="storage-stat-val">${fmtBytes(c.size)}</div>
+          <div class="storage-stat-label">${c.label} <small>${c.desc}</small></div>
         </div>
-        <span class="storage-cat-size">${fmtBytes(c.size)}</span>
-      </div>
-    `).join("");
+        <div class="storage-stat-end">${clearBtn}<span class="storage-stat-pct">${c.pctLabel}</span></div>
+      </div>`;
+    }).join("");
+    // Bersihkan cache: hanya key cache yg AMAN (snapshot/history/retry/onboarding +
+    // sessionStorage). TIDAK menyentuh akun, sesi, state, video, prefs, tema.
+    document.getElementById("storageCacheClear")?.addEventListener("click", () => {
+      const SAFE = /^playly-(daily-snapshot-|video-snapshot-|hqs-history|cloud-retry|cloud-last-sync|ad-seq-rt|mini-pip-pos|welcomed-|login-attempts-)/;
+      const before = (() => { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += (k.length + (localStorage.getItem(k) || "").length) * 2; } return n; })();
+      const doClear = () => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && SAFE.test(k)) keys.push(k); }
+        keys.forEach(k => localStorage.removeItem(k));
+        try { sessionStorage.clear(); } catch {}
+        const after = (() => { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += (k.length + (localStorage.getItem(k) || "").length) * 2; } return n; })();
+        const freed = Math.max(0, before - after);
+        toast?.(`✓ Cache dibersihkan${freed > 0 ? " — bebas " + fmtBytes(freed) : ""} (${keys.length} item)`, "success");
+        renderStoragePage(); refreshStorageUsage?.();
+      };
+      if (typeof openConfirm === "function") {
+        openConfirm({
+          icon: "🧹", iconClass: "warn", title: "Bersihkan cache?",
+          desc: "Menghapus data cache non-penting (snapshot, riwayat, onboarding). <b>Akun, video, pengaturan & sesi login tetap aman.</b>",
+          btnText: "Bersihkan", btnClass: "primary", onConfirm: doClear
+        });
+      } else { doClear(); }
+    });
   }
 
   // File list — semua video user dengan tombol hapus
@@ -50964,39 +51884,89 @@ async function renderStoragePage() {
         ? window._emptyRichV24({
             kind: "storage",
             title: "Storage kamu masih kosong",
-            copy: "Upload video pertamamu untuk mulai berbagi konten.",
-            cta: { label: "Upload sekarang", view: "upload" },
+            copy: "Unggah video pertamamu untuk mulai berbagi konten.",
+            cta: { label: "Unggah sekarang", view: "upload" },
             extra: "storage-empty",
           })
-        : `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
+        : `<div class="storage-empty">Belum ada file. Unggah video pertamamu untuk mulai!</div>`;
     } else {
-      const sorted = [...myVideos].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0));
+      const sortMode = window._storageFileSort === "newest" ? "newest" : "size";
+      const search = (window._storageFileSearch || "").trim().toLowerCase();
+      const statusFilter = window._storageFileStatus || "all";
+      const totalFileBytes = myVideos.reduce((s, v) => s + (v.fileSize || 0), 0);
+      // Filter: cari judul + status
+      let filtered = myVideos.filter(v =>
+        (!search || (v.title || "").toLowerCase().includes(search)) &&
+        (statusFilter === "all" || (v.adminStatus || "published") === statusFilter));
+      const sorted = [...filtered].sort((a, b) => sortMode === "newest"
+        ? ((b.createdAt || b.id || 0) - (a.createdAt || a.id || 0))
+        : ((b.fileSize || 0) - (a.fileSize || 0)));
+      const isFiltering = !!search || statusFilter !== "all";
+      const avgBytes = myVideos.length ? totalFileBytes / myVideos.length : 0;
+      const opt = (val, lbl) => `<option value="${val}" ${statusFilter === val ? "selected" : ""}>${lbl}</option>`;
+      const toolbar = `
+        <div class="storage-file-toolbar">
+          <span class="storage-file-summary">${isFiltering
+            ? `<strong>${sorted.length}</strong> dari ${myVideos.length} file`
+            : `<span class="sfs-label">Total</span> <strong>${myVideos.length}</strong> file · <strong>${fmtBytes(totalFileBytes)}</strong> <span class="sfs-sep">·</span> rata-rata <strong>${fmtBytes(avgBytes)}</strong> <span class="sfs-sep">·</span> kuota <strong>${q.gbLabel}/bln</strong>`}</span>
+          <div class="storage-file-controls">
+            <input type="search" class="storage-file-search" id="storageFileSearch" placeholder="Cari judul…" value="${escapeHtml(window._storageFileSearch || "")}" autocomplete="off">
+            <select class="storage-file-filter" id="storageFileFilter" aria-label="Filter status">
+              ${opt("all", "Semua status")}${opt("published", "Live")}${opt("pending", "Pending")}${opt("draft", "Draft")}${opt("rejected", "Ditolak")}
+            </select>
+            <div class="storage-sort">
+              <button type="button" class="storage-sort-btn ${sortMode === "size" ? "active" : ""}" data-sort="size">Terbesar</button>
+              <button type="button" class="storage-sort-btn ${sortMode === "newest" ? "active" : ""}" data-sort="newest">Terbaru</button>
+            </div>
+          </div>
+        </div>`;
       // Status label per admin status — biar user jelas tau video ini lagi
       // pending/published/takedown/draft (sebelumnya cuma filename mentah).
       const statusInfo = (st) => {
         const map = {
-          pending:   { lbl: "⏳ Menunggu approval admin", cls: "warn" },
-          published: { lbl: "✓ Sudah dipublish",          cls: "ok" },
-          rejected:  { lbl: "✕ Ditolak admin",            cls: "bad" },
-          takedown:  { lbl: "⛔ Di-takedown admin",       cls: "bad" },
-          draft:     { lbl: "📝 Draft",                   cls: "muted" },
+          pending:   { ic: STO_IC.clock,  lbl: "Menunggu approval", cls: "warn" },
+          published: { ic: STO_IC.check,  lbl: "Sudah dipublish",   cls: "ok" },
+          rejected:  { ic: STO_IC.x,      lbl: "Ditolak admin",     cls: "bad" },
+          takedown:  { ic: STO_IC.ban,    lbl: "Di-takedown",       cls: "bad" },
+          draft:     { ic: STO_IC.pencil, lbl: "Draft",             cls: "muted" },
         };
-        return map[st] || { lbl: "✓ Live", cls: "ok" };
+        return map[st] || { ic: STO_IC.check, lbl: "Live", cls: "ok" };
       };
-      fileList.innerHTML = sorted.map(v => {
+      fileList.innerHTML = toolbar + sorted.map(v => {
         const s = statusInfo(v.adminStatus || "published");
         const title = (v.title || "").trim() || "Video Tanpa Judul";
         return `
         <div class="storage-file-row" data-vid="${v.id}">
           <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
-          <div class="storage-file-info">
-            <strong>${escapeHtml(title)}</strong>
-            <small><span class="sf-status sf-${s.cls}">${s.lbl}</span> · ${fmtBytes(v.fileSize || 0)} · ${v.viewsNum || 0} tontonan</small>
+          <div class="storage-file-main">
+            <strong class="sf-title">${escapeHtml(title)}</strong>
+            <span class="sf-status sf-${s.cls}">${s.ic}${s.lbl}</span>
           </div>
-          <span class="storage-file-size">${fmtBytes(v.fileSize || 0)}</span>
-          <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">🗑️ Hapus</button>
+          <span class="sf-meta"><span class="sf-views-inline">${(v.viewsNum || 0).toLocaleString("id-ID")} tontonan</span> <span class="sf-dot">·</span> <b>${fmtBytes(v.fileSize || 0)}</b></span>
+          <button class="storage-file-del" data-storage-del="${v.id}" title="Hapus video ini">${STO_IC.trash}<span>Hapus</span></button>
         </div>`;
       }).join("");
+      if (isFiltering && !sorted.length) {
+        fileList.innerHTML = toolbar + `<div class="storage-empty" style="padding:22px;text-align:center;color:var(--muted)">Tidak ada file yang cocok dengan pencarian/filter.</div>`;
+      }
+      // Wire sort toggle
+      fileList.querySelectorAll("[data-sort]").forEach(btn => {
+        btn.addEventListener("click", () => { window._storageFileSort = btn.dataset.sort; renderStoragePage(); });
+      });
+      // Wire search (jaga fokus + caret setelah re-render)
+      const searchEl = document.getElementById("storageFileSearch");
+      if (searchEl) {
+        searchEl.addEventListener("input", () => {
+          window._storageFileSearch = searchEl.value;
+          renderStoragePage();
+          const ne = document.getElementById("storageFileSearch");
+          if (ne) { ne.focus(); ne.setSelectionRange(ne.value.length, ne.value.length); }
+        });
+      }
+      // Wire status filter
+      document.getElementById("storageFileFilter")?.addEventListener("change", e => {
+        window._storageFileStatus = e.target.value; renderStoragePage();
+      });
       // Wire delete buttons
       fileList.querySelectorAll("[data-storage-del]").forEach(btn => {
         btn.addEventListener("click", e => {
@@ -51023,6 +51993,81 @@ async function renderStoragePage() {
     if (typeof switchView === "function") switchView("settings");
     setTimeout(() => document.getElementById("pdUpgradeBtn")?.click(), 80);
   });
+
+  // ===== SAMPAH (trash) — kelola video terhapus langsung dari sini utk bebaskan ruang.
+  // Hapus video memindah ke state.deletedVideos; di sini bisa Pulihkan / Hapus permanen /
+  // Kosongkan. (Konsisten dgn tab Sampah di Pustaka — data & fungsi sama.) =====
+  function _storageTrashPerma(id) {
+    const v = (state.deletedVideos || []).find(x => x.id === id);
+    if (!v) return;
+    if (typeof openConfirm !== "function") return;
+    openConfirm({
+      icon: "🗑️", iconClass: "danger", title: "Hapus permanen?",
+      desc: `Video <b>${escapeHtml(v.title || "video")}</b> akan dihapus permanen dan tidak bisa dipulihkan.`,
+      btnText: "Hapus permanen", btnClass: "danger",
+      onConfirm: () => {
+        state.deletedVideos = (state.deletedVideos || []).filter(x => x.id !== id);
+        saveState?.();
+        try { openVideoDB?.().then(db => { const tx = db.transaction(VIDEO_STORE, "readwrite"); tx.objectStore(VIDEO_STORE).delete(id); }); } catch {}
+        toast?.("🗑️ Video dihapus permanen", "error");
+        renderStoragePage(); refreshStorageUsage?.();
+      }
+    });
+  }
+  function _storageTrashEmpty() {
+    const list = state.deletedVideos || [];
+    if (!list.length || typeof openConfirm !== "function") return;
+    const n = list.length, freed = fmtBytes(list.reduce((s, v) => s + (v.fileSize || 0), 0));
+    openConfirm({
+      icon: "🗑️", iconClass: "danger", title: "Kosongkan Sampah?",
+      desc: `<b>${n}</b> video di Sampah akan dihapus permanen — membebaskan <b>${freed}</b>.`,
+      btnText: "Kosongkan", btnClass: "danger",
+      onConfirm: () => {
+        const ids = list.map(v => v.id);
+        state.deletedVideos = [];
+        saveState?.();
+        try { openVideoDB?.().then(db => { const tx = db.transaction(VIDEO_STORE, "readwrite"); const os = tx.objectStore(VIDEO_STORE); ids.forEach(id => os.delete(id)); }); } catch {}
+        toast?.(`🗑️ Sampah dikosongkan (${n} video)`, "success");
+        renderStoragePage(); refreshStorageUsage?.();
+      }
+    });
+  }
+
+  const trash = Array.isArray(state.deletedVideos) ? state.deletedVideos : [];
+  const trashWrap = document.getElementById("storageTrash");
+  if (trashWrap) {
+    if (!trash.length) {
+      trashWrap.hidden = true;
+    } else {
+      trashWrap.hidden = false;
+      const trashBytes = trash.reduce((s, v) => s + (v.fileSize || 0), 0);
+      const cnt = document.getElementById("storageTrashCount");
+      if (cnt) cnt.textContent = `· ${trash.length} video · ${fmtBytes(trashBytes)}`;
+      const tList = document.getElementById("storageTrashList");
+      if (tList) {
+        tList.innerHTML = trash.map(v => {
+          const title = (v.title || "").trim() || "Video Tanpa Judul";
+          return `
+          <div class="storage-file-row" data-trash="${v.id}">
+            <div class="storage-file-thumb" style="background-image:url('${v.thumb || ''}')"></div>
+            <div class="storage-file-info">
+              <strong>${escapeHtml(title)}</strong>
+              <small>${fmtBytes(v.fileSize || 0)} · di Sampah</small>
+            </div>
+            <button class="btn ghost sm storage-file-restore" data-trash-restore="${v.id}" title="Pulihkan video ini">${STO_IC.restore}<span>Pulihkan</span></button>
+            <button class="storage-file-del" data-trash-perma="${v.id}" title="Hapus permanen">${STO_IC.trash}<span>Hapus</span></button>
+          </div>`;
+        }).join("");
+        tList.querySelectorAll("[data-trash-restore]").forEach(b => b.addEventListener("click", () => {
+          if (typeof restoreVideo === "function") restoreVideo(+b.dataset.trashRestore);
+          renderStoragePage(); refreshStorageUsage?.();
+        }));
+        tList.querySelectorAll("[data-trash-perma]").forEach(b => b.addEventListener("click", () => _storageTrashPerma(+b.dataset.trashPerma)));
+      }
+      const emptyBtn = document.getElementById("storageTrashEmpty");
+      if (emptyBtn) emptyBtn.onclick = _storageTrashEmpty;
+    }
+  }
 }
 
 // =====================================================================
@@ -52658,7 +53703,7 @@ function saveVideoEdit() {
   window.__pjUserHomeTopbarNav = true;
 
   var SECTIONS = [
-    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>' }
+    { id: "home-hero",     label: "Beranda",   selector: "section[data-view='home'] .hero", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>' }
   ];
 
   function tagSections() {
