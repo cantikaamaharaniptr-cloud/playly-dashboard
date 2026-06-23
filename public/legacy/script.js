@@ -6457,7 +6457,7 @@ const I18N = {
     "page.activity":             "Aktivitas",
     "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
-    "page.profile.edit":         "Edit Profil",
+    "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Kreator",
     "page.profile.my":           "Profil Saya",
     "page.email":                "Email",
@@ -7021,7 +7021,7 @@ const I18N = {
     "user.email.replies":            "Balasan Email",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan dari admin Playly.",
-    "profile.edit.title":        "👤 Edit Profil",
+    "profile.edit.title":        "👤 Ubah Profil",
     "profile.edit.desc":         "Atur informasi yang ditampilkan di profilmu.",
     "profile.identity":          "🪪 Identitas",
     "profile.choose.photo":      "Pilih Foto",
@@ -7125,7 +7125,7 @@ const I18N = {
     "myprofile.liked.empty.title":"Belum ada video disukai",
     "myprofile.liked.empty.desc":"Like video supaya muncul di sini.",
     "myprofile.empty.upload":    "Belum ada video — upload sekarang",
-    "profile.edit.btn":          "Edit Profil",
+    "profile.edit.btn":          "Ubah Profil",
     // My Library ID
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "Video Baru",
@@ -18677,7 +18677,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
