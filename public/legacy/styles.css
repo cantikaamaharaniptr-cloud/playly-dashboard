@@ -4,6 +4,57 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ===================================================================
+   IKLAN/PROMO — kosongkan konten iklan dummy, TETAP tampilkan slot (preview).
+   #playerTicker (.ptk) & #playerAdBanner (.pab) hardcoded di markup = BUKAN
+   dari admin Ad Manager. Per user: jangan iklan dummy, slot tetap ada.
+   (din/iklan-kosong — iklan-only, rebuild di atas main)
+   =================================================================== */
+.pab-slot {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  background-image: none !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  box-shadow: none !important; overflow: hidden !important;
+}
+.pab-slot > * { display: none !important; }
+.pab-slot::after {
+  content: "Slot Iklan" !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+}
+.ptk-text { visibility: hidden !important; }
+.ptk-runway { position: relative !important; }
+.ptk-runway::after {
+  content: "Slot promo" !important;
+  position: absolute !important; left: 14px !important; top: 50% !important; transform: translateY(-50%) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
+  font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
+}
+
+/* ===================================================================
+   IKLAN — Iklan SIDEBAR player dummy (Google Ads + mini) dikosongkan.
+   #playerSidebar .ps-ad:not(.ps-ad-hero) = hardcoded dummy (BUKAN dari admin).
+   Hero (.ps-ad-hero) DIBIARKAN — admin-driven. Slot/preview tetap ada.
+   =================================================================== */
+#playerSidebar .ps-ad:not(.ps-ad-hero) {
+  position: relative !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  min-height: 84px !important;
+  box-shadow: none !important;
+}
+#playerSidebar .ps-ad:not(.ps-ad-hero) > * { visibility: hidden !important; }
+#playerSidebar .ps-ad:not(.ps-ad-hero)::after {
+  content: "Slot Iklan" !important;
+  position: absolute !important; inset: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+  pointer-events: none !important;
+}
+
+
 /* Global fix: HTML [hidden] attribute harus selalu menang dari display:flex/inline-flex
    yang banyak dipakai di .btn, .follow-back-tag, .admin-mode-banner, dll. */
 [hidden] { display: none !important; }
