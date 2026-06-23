@@ -50902,6 +50902,32 @@ function ensureLibYTCreatorLayout(v) {
   }
 }
 
+// (Dipulihkan dari din/user-player — definisi ikut terbuang saat merge, padahal
+// pemanggilannya tetap masuk → ReferenceError saat buka inline player Pustaka.)
+function ensureLibEditBtn(v) {
+  const bar = document.getElementById("libInlineActions");
+  if (!bar || !v) return;
+  const isOwn = Array.isArray(state?.myVideos) && state.myVideos.some(x => x.id === v.id);
+  let btn = document.getElementById("libEditVideoBtn");
+  if (!isOwn) { if (btn) btn.remove(); return; }
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "libEditVideoBtn";
+    btn.type = "button";
+    btn.className = "lib-edit-video-btn";
+    btn.setAttribute("title", "Edit video");
+    btn.setAttribute("aria-label", "Edit video");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Edit Video</span>';
+    bar.appendChild(btn);
+  }
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("#libEditVideoBtn");
+  if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  if (typeof openVideoEditModal === "function" && __libInlineVid != null) openVideoEditModal(__libInlineVid);
+});
+
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -58980,6 +59006,52 @@ document.addEventListener("click", e => {
   }
   if (!e.target.closest(".vem-dd")) document.querySelectorAll(".vem-dd-menu").forEach(m => m.hidden = true);
 });
+
+// (Dipulihkan dari din/user-player — definisi ikut terbuang saat merge, padahal
+// dipanggil di openVideoEditModal → ReferenceError saat buka modal Edit Video.)
+function ensureVemLayout() {
+  const form = document.getElementById("videoEditForm");
+  if (!form || form.dataset.vemLaidOut) return;
+  form.dataset.vemLaidOut = "1";
+
+  const closestField = sel => document.getElementById(sel)?.closest(".upf-field");
+  const thumb = form.querySelector(".vem-thumb-row");
+  const judul = closestField("vemTitleInput");
+  const desc = closestField("vemDesc");
+  const sub = form.querySelector(".upf-subtitle-section");
+  const pairs = [...form.querySelectorAll(".upf-pair")];
+
+  const grid = document.createElement("div"); grid.className = "vem-grid";
+  const left = document.createElement("div"); left.className = "vem-col vem-col-media";
+  const right = document.createElement("div"); right.className = "vem-col vem-col-settings";
+  grid.append(left, right);
+
+  // KIRI = Media/konten
+  [thumb, judul, desc].forEach(el => el && left.appendChild(el));
+  // KANAN = Pengaturan (pasangan asli + field baru)
+  pairs.forEach(p => right.appendChild(p));
+  const mkField = (id, label, opts) => {
+    const f = document.createElement("div"); f.className = "upf-field";
+    f.innerHTML = `<label for="${id}">${label}</label><select id="${id}">` +
+      opts.map(o => `<option value="${o.v}">${o.t}</option>`).join("") + `</select>`;
+    return f;
+  };
+  const np1 = document.createElement("div"); np1.className = "upf-pair";
+  np1.append(
+    mkField("vemAllowDownload", "Izinkan unduh", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }]),
+    mkField("vemAllowEmbed", "Izinkan sematkan", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }])
+  );
+  const np2 = document.createElement("div"); np2.className = "upf-pair";
+  np2.append(
+    mkField("vemAgeRestrict", "Batasan usia", [{ v: "all", t: "👪 Semua umur" }, { v: "adult", t: "🔞 18+" }]),
+    mkField("vemLicense", "Lisensi", [{ v: "standard", t: "Standar Playly" }, { v: "cc", t: "Creative Commons" }])
+  );
+  right.append(np1, np2);
+
+  // Sisipkan grid sebelum subtitle (subtitle tetap full-width di bawah).
+  if (sub) form.insertBefore(grid, sub);
+  else form.appendChild(grid);
+}
 
 function openVideoEditModal(id) {
   const v = (state?.myVideos || []).find(x => x.id === id);
