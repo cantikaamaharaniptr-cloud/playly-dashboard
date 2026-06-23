@@ -18639,7 +18639,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
@@ -36888,15 +36888,15 @@ function renderPurchaseHistory() {
         <b>${approvedCount}</b>
       </div>
       <div class="rbs-cell">
-        <small>Total Charge</small>
+        <small>Total Tagihan</small>
         <b>$${totalCharged.toFixed(2)}</b>
       </div>
       <div class="rbs-cell">
-        <small>Total Refund</small>
+        <small>Total Pengembalian</small>
         <b>$${totalRefunded.toFixed(2)}</b>
       </div>
       <div class="rbs-cell rbs-cell-net">
-        <small>Net Spent</small>
+        <small>Pengeluaran Bersih</small>
         <b>$${netSpent.toFixed(2)}</b>
       </div>
     </div>`;
