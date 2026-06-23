@@ -2095,6 +2095,8 @@ window.addEventListener("playly:cloud-applied", e => {
     if (typeof renderHomeFollowingUpdates === "function") renderHomeFollowingUpdates();
     if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
+    if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   } else if (view === "discover") {
@@ -4056,6 +4058,20 @@ function syncAvatarImages() {
       if (span) span.style.opacity = "";
     }
   });
+}
+
+// Shared avatar markup helper untuk kartu-kartu Home: kembalikan <span> initial
+// (selalu ada, jadi fallback) + <img> dgn onerror yg menghapus dirinya kalau
+// gambar gagal/missing → initial otomatis kelihatan. Tak pernah render kosong.
+// Container harus punya overflow:hidden + place-items:center (mis. .cs-avatar).
+function homeAvatarMarkup(avatar, displayName) {
+  const initials = String(displayName || "?")
+    .trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const safeInit = (typeof escapeHtml === "function") ? escapeHtml(initials) : initials;
+  const initSpan = `<span class="ha-initials">${safeInit}</span>`;
+  if (!avatar) return initSpan;
+  const safeSrc = (typeof escapeHtml === "function") ? escapeHtml(avatar) : avatar;
+  return `${initSpan}<img class="ha-img" src="${safeSrc}" alt="" onerror="this.remove()"/>`;
 }
 
 // ----------------------- PROFILE EDIT FORM -----------------------
@@ -23007,10 +23023,13 @@ const ONBOARDING_STEPS = [
     position: 'center'
   },
   {
-    target: '#hpcUploadBtn',
+    // Fix 2026-06-15: dulu target #hpcUploadBtn, tapi tombol itu sudah diubah
+    // jadi "Lihat Profil" (_patchHomeProfileCard) → onboarding salah sorot.
+    // Arahkan ke nav Upload yg pasti ada & benar2 buat upload.
+    target: '.nav-item[data-view="upload"]',
     title: '📹 Upload Video Pertamamu',
-    body: 'Tombol ini buat upload video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
-    position: 'bottom'
+    body: 'Lewat menu Upload ini kamu unggah video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
+    position: 'right'
   },
   {
     target: '.nav-item[data-view="discover"]',
@@ -31400,6 +31419,16 @@ function switchView(name, { fromNav = false } = {}) {
     renderHomeWeather();
     if (typeof renderHomeSmartActions === "function") renderHomeSmartActions();
     updateHeroDmAlert();
+    if (typeof _patchHomeProfileCard === "function") _patchHomeProfileCard();
+    if (typeof _renderHomeSorotanVideo === "function") _renderHomeSorotanVideo();
+    if (typeof _renderHomeLanjutTonton === "function") _renderHomeLanjutTonton();
+    // Fix 2026-06-15: section ini sebelumnya hanya di-render di blok cloud-sync,
+    // tak di switchView → kalau navigate ke Home setelah data berubah (upload,
+    // follow, dll.) Level/Pencapaian/Peringkat bisa stale. Render juga di sini.
+    if (typeof renderHomeCreatorLevel === "function") renderHomeCreatorLevel();
+    if (typeof renderHomeAchievements === "function") renderHomeAchievements();
+    if (typeof renderHomeRanking === "function") renderHomeRanking();
+    if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -32341,7 +32370,7 @@ function tickLiveClock() {
   const adminHeroDate = $("#adminHeroDate");
   if (adminHeroDate) adminHeroDate.textContent = `${ID_DAYS_SHORT[day]}, ${date} ${ID_MONTHS_SHORT[month]} ${year}`;
   const liveTime = $("#liveTime");
-  if (liveTime) liveTime.textContent = `${hh}:${mm}:${ss}`;
+  if (liveTime) liveTime.textContent = `${hh}:${mm}`;   // tanpa detik (req user 2026-06-15: sederhanakan jam hero user)
   const adminLiveTime = $("#adminLiveTime");
   if (adminLiveTime) adminLiveTime.textContent = `${hh}:${mm}:${ss}`;
 
@@ -32389,29 +32418,9 @@ function refreshHeroGreeting() {
     var _grk = _grh < 5 ? "greet.night" : _grh < 11 ? "greet.morning"
       : _grh < 15 ? "greet.afternoon" : _grh < 19 ? "greet.evening" : "greet.night";
     greetEl.innerHTML = t(_grk) + ", " + user.name.split(" ")[0] + ' <span class="wave">' + _waveSvg + '</span>';
-    // Baris sapaan hangat (request user 2026-05-16: "saran yg seperti
-    // greeting") — kalimat motivasional pendek, ikut waktu, rotasi per
-    // HARI (stabil sehari → tak flicker walau refresh tiap menit).
-    var _wm = {
-      morning: ["Awali harimu dengan satu ide.", "Pagi yang pas buat berkarya.", "Semangat pagi — kontenmu dinanti.", "Hari baru, karya baru. Yuk mulai."],
-      afternoon: ["Tetap semangat, kreator hebat.", "Jaga momentum siang ini.", "Langkah kecil tetap kemajuan.", "Waktunya bikin sesuatu yang seru."],
-      evening: ["Sore yang pas buat rampungkan karya.", "Selesaikan satu hal sebelum senja.", "Konsistensi sore ini berbuah nanti.", "Masih ada waktu buat satu ide."],
-      night: ["Malam tenang, ide mengalir.", "Istirahat juga bagian dari berkarya.", "Tutup hari dengan satu progres kecil.", "Apresiasi dirimu — besok lanjut lagi."]
-    };
-    var _wk = _grh < 5 ? "night" : _grh < 11 ? "morning"
-      : _grh < 15 ? "afternoon" : _grh < 19 ? "evening" : "night";
-    var _warr = _wm[_wk];
-    var _wtext = _warr[Math.floor(Date.now() / 86400000) % _warr.length];
-    var _wEl = document.getElementById("heroWelcomeLine");
-    if (!_wEl) {
-      _wEl = document.createElement("p");
-      _wEl.id = "heroWelcomeLine";
-      _wEl.className = "hero-welcome";
-      _wEl.style.cssText = "margin:-3px 0 0;font-size:15.5px;line-height:1.2;" +
-        "color:var(--muted);font-weight:500;letter-spacing:.1px;opacity:.9";
-      greetEl.insertAdjacentElement("afterend", _wEl);
-    }
-    _wEl.textContent = _wtext;
+    // Baris sapaan hangat DIHAPUS (req user 2026-06-15: rapikan teks coaching →
+    // sisakan satu saja, yaitu Tip harian di bawah). Buang elemen lama kalau ada.
+    document.getElementById("heroWelcomeLine")?.remove();
   }
   // Baris subtitle stats ("Selamat pagi! N video • M kreator diikuti")
   // DIHAPUS per request user 2026-05-16 — hero cukup 2 baris: sapaan
@@ -32439,13 +32448,13 @@ function refreshHeroGreeting() {
       "Share your video link on other social media for wider reach.",
     ];
     const TIPS_ID = [
-      "Upload di jam 7–9 malam untuk engagement tertinggi.",
+      "Unggah di jam 7–9 malam untuk interaksi tertinggi.",
       "Video 60–90 detik cenderung lebih banyak ditonton sampai selesai.",
-      "Thumbnail kontras dengan teks singkat meningkatkan click-through rate.",
-      "Jadwal upload yang konsisten membantu followers mengantisipasi kontenmu.",
-      "Balas komentar di 30 menit pertama setelah upload untuk boost jangkauan.",
+      "Thumbnail kontras dengan teks singkat bikin video lebih sering diklik.",
+      "Jadwal unggah yang konsisten membantu pengikut menantikan kontenmu.",
+      "Balas komentar di 30 menit pertama setelah unggah untuk dongkrak jangkauan.",
       "Judul berbentuk pertanyaan memicu rasa penasaran dan lebih banyak klik.",
-      "Bagikan link video ke media sosial lain untuk jangkauan lebih luas.",
+      "Bagikan tautan video ke media sosial lain untuk jangkauan lebih luas.",
     ];
     const tips = isId ? TIPS_ID : TIPS_EN;
     const idx = Math.floor(Date.now() / 86400000) % tips.length;
@@ -32473,13 +32482,24 @@ function refreshHeroGreeting() {
     if (bioEl) {
       const bioTxt = (user.bio || ((typeof getPref === "function") ? getPref("bio", "") : "") || "").trim();
       if (bioTxt) {
-        bioEl.textContent = bioTxt;
+        // Bio terisi: teks MIRING dlm tanda kutip → jelas ini bio, rapi, &
+        // aman utk bio panjang (clamp 2 baris). req user 2026-06-15.
+        bioEl.textContent = "“" + bioTxt + "”";
         bioEl.classList.remove("is-placeholder");
+        bioEl.classList.add("has-bio");
         bioEl.removeAttribute("data-jump");
+        bioEl.removeAttribute("role");
+        bioEl.removeAttribute("tabindex");
       } else {
-        bioEl.textContent = "+ Tambah bio kamu";
+        // Placeholder bio sebagai chip "tambah" yg rapi (req user 2026-06-15:
+        // tulisan "+ Tambah bio kamu" diperbaiki) — ikon pensil + teks.
+        bioEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>Tambah bio kamu</span>';
         bioEl.classList.add("is-placeholder");
+        bioEl.classList.remove("has-bio");
         bioEl.setAttribute("data-jump", "profile");
+        bioEl.setAttribute("title", "Tambah bio profilmu");
+        bioEl.setAttribute("role", "button");
+        bioEl.setAttribute("tabindex", "0");
       }
     }
   } catch {}
@@ -32496,7 +32516,8 @@ function refreshHeroGreeting() {
     }
   } catch {}
   // Stats (per request v59): Video · Pengikut · Yang diikuti — dari state.
-  // Tiap stat clickable: Video→videos, Pengikut→myprofile, Yang diikuti→discover.
+  // Klik: Video→videos; Pengikut→halaman Cari User tab Followers; Yang diikuti→
+  // tab Following (req user 2026-06-15: dulu Yang diikuti salah ke Discover).
   try {
     const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
     let followers = 0, following = 0;
@@ -32507,6 +32528,13 @@ function refreshHeroGreeting() {
     const el = $("#heroStatVideos");    if (el) el.textContent = String(vids.length);
     const ef = $("#heroStatFollowers"); if (ef) ef.textContent = String(followers);
     const eg = $("#heroStatFollowing"); if (eg) eg.textContent = String(following);
+    // Arahkan Pengikut/Yang diikuti ke view "people" (Cari User) pada tab yg pas
+    // (data-people-stat di-handle handler khusus). Hapus data-jump lama biar tak
+    // dobel-nav lewat global handler.
+    const fBtn = ef && ef.closest(".hpc-stat");
+    if (fBtn) { fBtn.removeAttribute("data-jump"); fBtn.setAttribute("data-people-stat", "followers"); }
+    const gBtn = eg && eg.closest(".hpc-stat");
+    if (gBtn) { gBtn.removeAttribute("data-jump"); gBtn.setAttribute("data-people-stat", "following"); }
   } catch {}
 
   // Home sidebar (Catatan / File / Aktivitas) — per redesign user 2026-05-15 v45
@@ -32965,6 +32993,43 @@ function renderHomeActivity() {
 }
 
 
+// Kartu profil hero punya "Unggah Video" yg DOBEL dgn CTA utama di hero (req
+// user 2026-06-14: rapikan). Ganti tombol kedua kartu profil jadi "Lihat
+// Profil" (→ myprofile, profil publik) — lebih relevan di kartu profil, upload
+// tetap prominent di hero. Patch via JS (markup-nya statis/rapuh di index-markup).
+function _patchHomeProfileCard() {
+  // Pindah badge tier (Premium/Free) ke KANAN baris header biar sisi kanan tak
+  // kosong (req user 2026-06-15). Dikasih class lokasi-independen .hpc-tier-badge.
+  try {
+    const _top = document.querySelector(".hpc-top");
+    const _tier = document.getElementById("heroClockTier");
+    if (_top && _tier && _tier.parentElement !== _top) {
+      _tier.classList.add("hpc-tier-badge");
+      _top.appendChild(_tier);
+    }
+  } catch {}
+  // Pindah bio ke dalam .hpc-id (bawah @username) → hapus 1 baris terpisah shg
+  // kartu profil lebih pendek & PERSIS sejajar dgn hero, isi tetap rapi
+  // (req user 2026-06-15).
+  try {
+    const _id = document.querySelector(".hpc-id");
+    const _bio = document.getElementById("hpcBio");
+    if (_id && _bio && _bio.parentElement !== _id) {
+      _id.appendChild(_bio);
+    }
+  } catch {}
+  const btn = document.getElementById("hpcUploadBtn");
+  if (!btn || btn.dataset.repurposed === "1") return;
+  btn.dataset.repurposed = "1";
+  btn.setAttribute("data-jump", "myprofile");
+  btn.setAttribute("title", "Lihat profil publikmu");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg> Lihat Profil';
+}
+
+// (Tanda "Aktif sekarang" di kartu profil sendiri DIHAPUS 2026-06-15 — redundan:
+// user jelas aktif saat membuka dashboard. Presence yg berguna = kreator LAIN,
+// tetap ada di leaderboard renderHomeRanking pakai data real getPlatformCreators.)
+
 function renderHomeStats() {
   // Legacy stats list (kalau ada di DOM) — backward compat
   const list = $("#homeStatsList");
@@ -33170,36 +33235,14 @@ function hqsSetProgress() { /* removed: milestone replaced by adaptive empty/del
 function hqsRenderSpark(statKey, series, current) {
   const el = document.querySelector('.hqs-spark[data-spark="' + statKey + '"]');
   if (!el) return;
-  // 1 BAR PROGRES TIPIS + persen (per request user 2026-05-16). Tren =
-  // (nilai sekarang vs snapshot terlama di window history). Kalau histori
-  // belum cukup → tren kecil deterministik (stabil, positif).
-  const arr = Array.isArray(series)
-    ? series.map(Number).filter(function (n) { return isFinite(n); })
-    : [];
-  const c = Number(current);
-  const curVal = isFinite(c) ? c : (arr.length ? arr[arr.length - 1] : 0);
-  // Real data only: hitung delta dari history asli. Kalau nilai 0 / belum
-  // ada history nyata → JANGAN bikin angka palsu (sebelumnya 3..12 hardcode
-  // bikin user melihat "↑ 3%" padahal value 0 — keliatan tidak real).
-  let pct = null;
-  if (arr.length >= 2 && arr[0] > 0) {
-    pct = Math.round(((curVal - arr[0]) / arr[0]) * 100);
-    if (pct > 999) pct = 999;
-    if (pct < -99) pct = -99;
-  }
-  if (pct === null || curVal === 0) {
-    // Empty / no real delta — tampilkan bar minimum + dash, tanpa persen palsu
-    el.innerHTML =
-      '<div class="hqs-prog"><i style="width:8%"></i></div>' +
-      '<span class="hqs-delta flat">—</span>';
-    return;
-  }
-  const up = pct >= 0;
-  const barW = Math.max(8, Math.min(100, Math.abs(pct) * 6));
+  // Sisi kanan = FUNGSIONAL: petunjuk "Lihat detail" + panah (kartu bisa diklik
+  // ke halaman detail-nya). Sederhana + on-palette (krem/muted), tanpa warna di
+  // luar konsep. req user 2026-06-15.
   el.innerHTML =
-    '<div class="hqs-prog"><i style="width:' + barW + '%"></i></div>' +
-    '<span class="hqs-delta ' + (up ? "up" : "down") + '">' +
-      (up ? "↑" : "↓") + ' ' + Math.abs(pct) + '%</span>';
+    '<span class="hqs-go" aria-hidden="true">' +
+      '<span class="hqs-go-txt">Lihat detail</span>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>' +
+    '</span>';
 }
 
 function renderHomeQuickStatsCards() {
@@ -33229,13 +33272,8 @@ function renderHomeQuickStatsCards() {
     return s + views * dur * 0.6;
   }, 0);
 
-  // ===== Snapshot history & hitung trend (vs entry SEBELUMNYA, sebelum push) =====
+  // ===== Snapshot history (trend dihitung di hqsRenderSpark dari array history) =====
   const hist = hqsLoadHistory();
-  const prevViews     = hist.views[hist.views.length - 1];
-  const prevLikes     = hist.likes[hist.likes.length - 1];
-  const prevFollowers = hist.followers[hist.followers.length - 1];
-  const prevWatch     = hist.watch[hist.watch.length - 1];
-
   hqsPushSnapshot(hist, "views", totalViews);
   hqsPushSnapshot(hist, "likes", totalLikes);
   hqsPushSnapshot(hist, "followers", totalFollowers);
@@ -33262,6 +33300,46 @@ function renderHomeQuickStatsCards() {
     watchEl.textContent = hqsFormatWatchTime(totalWatchSec);
   }
 
+  // Target klik kartu (req user 2026-06-15): Tontonan/Suka/Waktu = metrik →
+  // halaman Statistik; Total Pengikut → daftar pengikut (view people, tab
+  // Followers) via handler [data-people-stat]. Dulu Followers salah ke Edit Profil.
+  try {
+    const _setCardJump = (stat, jump) => {
+      const c = wrap.querySelector('.hqs-card[data-stat="' + stat + '"]');
+      if (c) { c.removeAttribute("data-people-stat"); c.setAttribute("data-jump", jump); }
+    };
+    _setCardJump("views", "stats");
+    _setCardJump("likes", "stats");
+    _setCardJump("watch", "stats");
+    const _fc = wrap.querySelector('.hqs-card[data-stat="followers"]');
+    if (_fc) { _fc.removeAttribute("data-jump"); _fc.setAttribute("data-people-stat", "followers"); }
+  } catch {}
+
+  // 7e (2026-06-02): keterangan jujur kalau sparkline tren belum berarti — butuh
+  // ≥2 titik data (snapshot terkumpul tiap statistik berubah, bukan per hari).
+  // Tampil di bawah kartu untuk user baru supaya tidak bingung lihat garis
+  // datar/kosong; hilang otomatis begitu data cukup.
+  const _hqsMaxLen = Math.max(
+    hist.views.length, hist.likes.length, hist.followers.length, hist.watch.length
+  );
+  let _hqsNote = document.getElementById("hqsSparkNote");
+  if (_hqsMaxLen < 2) {
+    if (!_hqsNote && wrap.parentNode) {
+      _hqsNote = document.createElement("div");
+      _hqsNote.id = "hqsSparkNote";
+      _hqsNote.className = "hqs-spark-note";
+      _hqsNote.innerHTML =
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+        '<span>Grafik tren muncul setelah statistikmu berubah beberapa kali — data masih dikumpulkan.</span>';
+      wrap.insertAdjacentElement("afterend", _hqsNote);
+    }
+    if (_hqsNote) _hqsNote.hidden = false;
+  } else if (_hqsNote) {
+    _hqsNote.hidden = true;
+  }
+
   // Minimalis bersih (per request user 2026-05-15 v65): no adapt block,
   // cuma value + label. hqsSetAdapt calls dihapus (element-nya gak ada).
 }
@@ -33277,17 +33355,14 @@ function renderHomeQuickStatsCards() {
     if (cta) {
       e.stopPropagation();
       const ctaJump = cta.dataset.ctaJump;
-      if (typeof jumpTo === "function") jumpTo(ctaJump);
-      else if (typeof setActiveSection === "function") setActiveSection(ctaJump);
+      // Fix 2026-06-15: jumpTo/setActiveSection tak pernah ada → CTA mati.
+      // Pakai switchView (navigator app yg sebenarnya). data-cta-jump TIDAK
+      // ke-cover global handler [data-jump], jadi wajib ditangani di sini.
+      if (ctaJump && typeof switchView === "function") switchView(ctaJump);
       return;
     }
-    // Prio 2: card itself
-    const card = e.target.closest && e.target.closest(".hqs-card[data-jump]");
-    if (!card) return;
-    const jump = card.dataset.jump;
-    if (!jump) return;
-    if (typeof jumpTo === "function") jumpTo(jump);
-    else if (typeof setActiveSection === "function") setActiveSection(jump);
+    // Kartu .hqs-card[data-jump] sudah ditangani global handler [data-jump]
+    // (line ~31918, switchView) — tak perlu duplikasi di sini (hindari double-nav).
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -34568,6 +34643,213 @@ function _homeVidEmpty(icon, msg) {
   </div>`;
 }
 
+// ===== VIDEO (req user 2026-06-14): GABUNG Video Terbaik + Lanjut Tonton dalam
+// SATU section "VIDEO" — 2 kolom sejajar, gaya kartu sama. Kiri = Video Terbaik
+// (views tertinggi), Kanan = Lanjut Tonton (continue watching). Di-inject via JS. =====
+// Ikon SVG monokrom utk kartu VIDEO (req user 2026-06-14: beri ikon, rapikan).
+const _HS_SI = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const _hsIco = (p) => '<svg ' + _HS_SI + '>' + p + '</svg>';
+const HS_IC_TROPHY = _hsIco('<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/>');
+const HS_IC_PLAY   = _hsIco('<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>');
+const HS_IC_FILM   = _hsIco('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>');
+const HS_IC_HEART  = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
+// Eye = "paling banyak ditonton" (views), sejajar dgn HEART utk "Paling Disukai".
+// Dipakai di kartu "Video Terbaik" (req user 2026-06-16: jangan trophy — itu sama
+// dgn ikon Papan Peringkat). Trophy tetap utk leaderboard saja.
+const HS_IC_EYE    = _hsIco('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
+// Header kartu: ikon box + judul + sub-keterangan DASAR pemilihan (req user
+// 2026-06-14: "Video Terbaik berdasarkan apa" harus jelas). sub mis. "Paling
+// banyak ditonton".
+function _hsvHead(capIco, cap, sub) {
+  return '<div class="hsv-head"><span class="sec-icon-v582" aria-hidden="true">' + (capIco || "") + '</span>'
+    + '<div class="hsv-head-text"><h3>' + escapeHtml(cap) + '</h3>'
+    + (sub ? '<small class="hsv-sub">' + escapeHtml(sub) + '</small>' : '')
+    + '</div></div>';
+}
+function _homeVideoSlotHTML(v, cap, progress, capIco, headSub) {
+  const eye   = _hsIco('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
+  const heart = _hsIco('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/>');
+  const cmt   = _hsIco('<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>');
+  const fmt = (n) => (typeof fmtNum === "function") ? fmtNum(Number(n) || 0) : (Number(n) || 0);
+  const hasProg = progress != null;
+  const pct = Math.max(0, Math.min(100, Number(progress) || 0));
+  const stats = '<div class="hsv-stats"><span>' + eye + fmt(v.viewsNum) + '</span><span>' + heart + fmt(v.likes)
+      + '</span><span>' + cmt + fmt(Array.isArray(v.comments) ? v.comments.length : (Number(v.comments) || 0)) + '</span></div>';
+  const meta = hasProg
+    ? '<p class="hsv-watch">' + pct + '% selesai</p>'
+    : stats;
+  // Compact + tersusun (req user 2026-06-15): play jadi overlay di thumbnail
+  // (bukan tombol mengambang di kanan), dan baris meta (kreator + stats) dibuat
+  // space-between supaya STATS menempel ke kanan → tak ada ruang kosong.
+  const playOv = '<span class="hsv-playov" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
+  return '<div class="hsv-card" data-vid="' + v.id + '" role="button" tabindex="0">'
+    + _hsvHead(capIco, cap, headSub)
+    + '<div class="hsv-content">'
+      + '<div class="hsv-thumb' + (v.thumb ? '' : ' hsv-thumb-ph') + '">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : HS_IC_FILM)
+        + (v.duration ? '<span class="hsv-dur">' + escapeHtml(v.duration) + '</span>' : '')
+        + (hasProg ? '<div class="hsv-prog"><i style="width:' + pct + '%"></i></div>' : '') + playOv + '</div>'
+      + '<div class="hsv-info"><h4 class="hsv-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
+        + '<div class="hsv-meta"><span class="hsv-creator">@' + escapeHtml(v.creator || "—") + '</span>' + meta + '</div>'
+        + '<button type="button" class="hsv-stats-link" data-jump="stats" title="Lihat statistik video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V8M17 16v-8"/></svg>Statistik</button>'
+      + '</div>'
+    + '</div>'
+  + '</div>';
+}
+// Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon di kiri + konten kanan
+// (caption ber-ikon, judul jelas, sub, tombol). req user 2026-06-14: jangan
+// berantakan, harus ada ikon & judul jelas.
+function _homeVideoSlotEmpty(cap, title, sub, jump, btn, capIco, bigIco, headSub) {
+  return '<div class="hsv-card hsv-card-empty">'
+    + _hsvHead(capIco, cap, headSub)
+    + '<div class="hsv-content">'
+      + '<div class="hsv-thumb hsv-thumb-ph">' + (bigIco || HS_IC_FILM) + '</div>'
+      + '<div class="hsv-info">'
+        + '<h4 class="hsv-title">' + escapeHtml(title) + '</h4>'
+        + '<small class="hsv-empty-sub">' + escapeHtml(sub) + '</small>'
+        + '<button type="button" class="btn primary sm hsv-empty-btn" data-jump="' + jump + '">' + escapeHtml(btn) + '</button>'
+      + '</div>'
+    + '</div>'
+  + '</div>';
+}
+// Hilangkan CAPSLOCK pada divider section statis (teks aslinya HURUF BESAR di
+// markup) → Title Case, tanpa menghapus ikon dot di dalam span (req user
+// 2026-06-14: jangan ada teks capslock).
+function _deCapsHomeLabels() {
+  const MAP = {
+    "RINGKASAN STATISTIK": "Ringkasan Statistik",
+    "PROGRES & PENCAPAIAN": "Progres & Pencapaian",
+    "PAPAN PERINGKAT": "Papan Peringkat",
+    "VIDEO": "Video",
+  };
+  document.querySelectorAll('section.view[data-view="home"] .admin-section-divider span').forEach(span => {
+    span.childNodes.forEach(n => {
+      if (n.nodeType === 3) {
+        const key = n.textContent.trim();
+        if (MAP[key]) n.textContent = n.textContent.replace(key, MAP[key]);
+      }
+    });
+  });
+}
+function _renderHomeSorotanVideo() {
+  const homeView = document.querySelector('section.view[data-view="home"]');
+  const qs = document.getElementById("homeQuickStats");
+  if (!homeView || !qs) return;
+  let divider = document.getElementById("homeSorotanDivider");
+  if (!divider) {
+    divider = document.createElement("div");
+    divider.id = "homeSorotanDivider";
+    divider.className = "admin-section-divider home-divider-sorotan";
+    qs.insertAdjacentElement("afterend", divider);
+  }
+  divider.innerHTML = '<span data-no-i18n>Sorotan</span>';
+  let wrap = document.getElementById("homeSorotan");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "homeSorotan";
+    wrap.className = "home-sorotan";
+    divider.insertAdjacentElement("afterend", wrap);
+  }
+  // KIRI: Video Terbaik (views tertinggi)
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos.slice() : [];
+  const top = myVids.slice().sort((a, b) => (Number(b.viewsNum) || 0) - (Number(a.viewsNum) || 0))[0];
+  const left = top
+    ? _homeVideoSlotHTML(top, "Video Terbaik", null, HS_IC_EYE, "Paling banyak ditonton")
+    : _homeVideoSlotEmpty("Video Terbaik", "Belum ada video", "Unggah untuk lihat video terbaikmu.", "upload", "Unggah Video", HS_IC_EYE, HS_IC_FILM, "Paling banyak ditonton");
+  // TENGAH: Paling Disukai (likes tertinggi) — req user 2026-06-14
+  const topLike = myVids.slice().sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))[0];
+  const mid = topLike
+    ? _homeVideoSlotHTML(topLike, "Paling Disukai", null, HS_IC_HEART, "Paling banyak disukai")
+    : _homeVideoSlotEmpty("Paling Disukai", "Belum ada video", "Unggah untuk lihat video terfavoritmu.", "upload", "Unggah Video", HS_IC_HEART, HS_IC_FILM, "Paling banyak disukai");
+  // Lanjut Tonton dipindah ke section sendiri di bawah (_renderHomeLanjutTonton).
+  wrap.innerHTML = left + mid;
+}
+// Klik kartu Sorotan → buka player (handler grid lain per-grid, jd butuh sendiri).
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("#homeSorotan .hsv-card[data-vid]");
+  if (!c) return;
+  if (e.target.closest(".hsv-stats-link")) return;
+  e.preventDefault();
+  const vid = Number(c.dataset.vid);
+  if (!Number.isFinite(vid)) return;
+  if (document.body.dataset.role === "admin" && typeof openAdminPlayer === "function") openAdminPlayer(vid);
+  else if (typeof openPlayer === "function") openPlayer(vid);
+});
+
+// ===== LANJUT TONTON (req user 2026-06-14, opsi #2): dimensi PENONTON yg belum
+// ada di Beranda. Ambil video belum selesai (state.history progress<100), resume
+// ke player. Referensi YouTube/dll "Continue Watching". =====
+function _lanjutCardHTML(v, h) {
+  const pct = Math.max(0, Math.min(100, Number(h.progress) || 0));
+  return '<div class="lt-card" data-vid="' + v.id + '" role="button" tabindex="0">'
+    + '<div class="lt-thumb">' + (v.thumb ? '<img src="' + v.thumb + '" alt="" loading="lazy" onerror="this.remove()"/>' : '')
+      + (v.duration ? '<span class="lt-dur">' + escapeHtml(v.duration) + '</span>' : '')
+      + '<span class="lt-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+      + '<div class="lt-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="lt-body"><h4 class="lt-title">' + escapeHtml(v.title || "Tanpa judul") + '</h4>'
+      + '<p class="lt-meta">@' + escapeHtml(v.creator || "—") + ' · ' + pct + '% selesai</p></div>'
+  + '</div>';
+}
+function _renderHomeLanjutTonton() {
+  const homeView = document.querySelector('section.view[data-view="home"]');
+  if (!homeView) return;
+  // sisipkan setelah Sorotan (kalau ada) atau setelah quick stats.
+  const anchor = document.getElementById("homeSorotan") || document.getElementById("homeQuickStats");
+  if (!anchor) return;
+  let divider = document.getElementById("homeLanjutDivider");
+  if (!divider) {
+    divider = document.createElement("div");
+    divider.id = "homeLanjutDivider";
+    divider.className = "admin-section-divider home-divider-lanjut";
+    divider.innerHTML = '<span data-no-i18n>Lanjutkan Menonton</span>';
+    anchor.insertAdjacentElement("afterend", divider);
+  }
+  let wrap = document.getElementById("homeLanjut");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "homeLanjut";
+    wrap.className = "home-lanjut";
+    divider.insertAdjacentElement("afterend", wrap);
+  }
+  const hist = Array.isArray(state?.history) ? state.history : [];
+  // Fix 2026-06-15: hanya video yg BENAR2 sedang ditonton (0 < progress < 100;
+  // skip yg cuma dibuka tanpa diputar = progress 0) + DEDUP per videoId (history
+  // bisa punya >1 entry videoId sama lintas hari).
+  const cont = hist.filter(h => { const p = Number(h.progress) || 0; return p > 0 && p < 100; });
+  const cards = [];
+  const seen = new Set();
+  for (const h of cont) {
+    if (seen.has(h.videoId)) continue;
+    const v = (typeof findVideo === "function") ? findVideo(h.videoId) : null;
+    if (v) { seen.add(h.videoId); cards.push(_lanjutCardHTML(v, h)); }
+    if (cards.length >= 4) break;
+  }
+  const oldNote = document.getElementById("homeLanjutNote");
+  if (oldNote) oldNote.remove();
+  if (divider) divider.style.display = "";
+  if (wrap) wrap.style.display = "";
+  if (!cards.length) {
+    // Kosong: SATU bar ringkas full-width (req user 2026-06-15: 4 kartu besar
+    // terkesan kosong banget) — ikon riwayat + pesan + link Jelajahi.
+    const _ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>';
+    wrap.innerHTML = '<div class="lt-card lt-empty-bar">'
+      + _ico
+      + '<span class="lt-empty-bar-txt">Belum ada video yang ditonton</span>'
+      + '<a class="lt-empty-link" data-jump="discover" role="button" tabindex="0">Jelajahi video</a>'
+    + '</div>';
+    return;
+  }
+  wrap.innerHTML = cards.join("");
+}
+// Klik kartu Lanjut Tonton → resume player.
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("#homeLanjut .lt-card[data-vid]");
+  if (!c) return;
+  e.preventDefault();
+  const vid = Number(c.dataset.vid);
+  if (!Number.isFinite(vid)) return;
+  if (typeof openPlayer === "function") openPlayer(vid);
+});
+
 function renderHomeTrendingNow() {
   const grid = document.getElementById("homeTrendingNowGrid");
   if (!grid) return;
@@ -34664,27 +34946,44 @@ function renderHomeAchievements() {
   const IC_USERS  = '<svg ' + SI + '><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
   const IC_TROPHY = '<svg ' + SI + '><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>';
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const IC_CHECK  = '<svg ' + SI + '><polyline points="20 6 9 17 4 12"/></svg>';
   const ACH = [
-    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Unggah 1 video",        ok: myVids.length >= 1 },
-    { ico: IC_STACK,  name:"Produktif",        desc:"Unggah 10 video",       ok: myVids.length >= 10 },
-    { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    ok: totalViews >= 100 },
-    { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  ok: totalViews >= 1000 },
-    { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        ok: totalLikes >= 100 },
-    { ico: IC_STAR,   name:"Idola Baru",       desc:"Capai 1.000 suka",      ok: totalLikes >= 1000 },
-    { ico: IC_USERS,  name:"Punya Pengikut",   desc:"Capai 10 pengikut",     ok: followers >= 10 },
-    { ico: IC_TROPHY, name:"Populer",          desc:"Capai 100 pengikut",    ok: followers >= 100 },
-  ];
+    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Unggah 1 video",        cur: myVids.length, target: 1,    unit:"video" },
+    { ico: IC_STACK,  name:"Produktif",        desc:"Unggah 10 video",       cur: myVids.length, target: 10,   unit:"video" },
+    { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    cur: totalViews,    target: 100,  unit:"tontonan" },
+    { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  cur: totalViews,    target: 1000, unit:"tontonan" },
+    { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        cur: totalLikes,    target: 100,  unit:"suka" },
+    { ico: IC_STAR,   name:"Idola Baru",       desc:"Capai 1.000 suka",      cur: totalLikes,    target: 1000, unit:"suka" },
+    { ico: IC_USERS,  name:"Punya Pengikut",   desc:"Capai 10 pengikut",     cur: followers,     target: 10,   unit:"pengikut" },
+    { ico: IC_TROPHY, name:"Populer",          desc:"Capai 100 pengikut",    cur: followers,     target: 100,  unit:"pengikut" },
+  ].map(a => ({ ...a, ok: a.cur >= a.target }));
   const unlocked = ACH.filter(a => a.ok).length;
   const countEl = document.getElementById("haCount");
-  if (countEl) countEl.textContent = `${unlocked}/${ACH.length} ter-unlock`;
-  grid.innerHTML = ACH.map(a => `
-    <div class="ha-badge ${a.ok ? "unlocked" : "locked"}">
-      <div class="ha-badge-ico">${a.ok ? a.ico : IC_LOCK}</div>
-      <div class="ha-badge-text">
-        <strong>${escapeHtml(a.name)}</strong>
-        <small>${escapeHtml(a.desc)}</small>
-      </div>
-    </div>`).join("");
+  if (countEl) countEl.textContent = `${unlocked}/${ACH.length} terbuka`;
+
+  // Progres per-pencapaian terkunci (req user 2026-06-14): tiap badge yg belum
+  // terbuka menampilkan bar progres + "cur/target" → kelihatan seberapa dekat,
+  // bukan sekadar terkunci. (Nudge baris tunggal dihapus krn mirip XP Level.)
+  // Buang sisa nudge dari versi sebelumnya kalau ada.
+  document.getElementById("haNudge")?.remove();
+  grid.innerHTML = ACH.map(a => {
+    const pct = a.target > 0 ? Math.min(100, Math.round((a.cur / a.target) * 100)) : 0;
+    // Status jelas (req user 2026-06-15: kurang jelas mana yg sudah/belum):
+    //  - sudah  -> "✓ Tercapai" (krem)
+    //  - belum  -> bar progres + "cur/target" (seberapa dekat)
+    const prog = a.ok
+      ? '<div class="ha-badge-status">' + IC_CHECK + '<span>Tercapai</span></div>'
+      : '<div class="ha-badge-prog">'
+          + '<div class="ha-badge-bar"><i style="width:' + pct + '%"></i></div>'
+          + '<span class="ha-badge-frac"><b>' + a.cur.toLocaleString("id-ID") + '</b> / ' + a.target.toLocaleString("id-ID") + '</span>'
+        + '</div>';
+    return '<div class="ha-badge ' + (a.ok ? "unlocked" : "locked") + '">'
+      + '<div class="ha-badge-ico">' + (a.ok ? a.ico : IC_LOCK) + '</div>'
+      + '<div class="ha-badge-text"><strong>' + escapeHtml(a.name) + '</strong>'
+        + '<small>' + escapeHtml(a.desc) + '</small>' + prog
+      + '</div>'
+    + '</div>';
+  }).join("");
 }
 
 // Wire up category tab clicks
@@ -34881,7 +35180,7 @@ function renderHomePerfCard() {
         <small class="hpf-spark-label">Tren views 7 hari</small>
         ${sparkline}
       </div>
-    ` : `<small class="hpf-no-data">Tren 7 hari muncul setelah 2+ hari aktif.</small>`}
+    ` : `<small class="hpf-spark-note">Grafik tren muncul setelah 2+ hari aktif</small>`}
   `;
 }
 
@@ -35223,17 +35522,51 @@ function renderHomeRanking() {
   });
   const rankedAll = Object.keys(map).map(function (k) { return map[k]; })
     .sort(function (a, b) { return b.views - a.views; });
-  if (!rankedAll.length) {
-    if (empty) empty.hidden = false;
+  // Selalu tampil seperti section beranda lain (req user 2026-06-16): TIDAK
+  // di-hide lagi saat kreator sedikit. Kalau belum ada data peringkat sama
+  // sekali, tampilkan empty state #rankingEmpty (bukan sembunyikan kartu+divider).
+  const section = document.getElementById("homeRankingSection");
+  const divider = document.querySelector(".home-divider-ranking");
+  if (section) section.style.display = "";
+  if (divider) divider.style.display = "";
+  if (rankedAll.length === 0) {
+    // Empty: tampil SAMA dgn bar "Lanjutkan Menonton" (req user 2026-06-16) —
+    // satu bar dashed full-width (ikon + pesan + pill), TANPA kartu solid &
+    // TANPA header. Class rk-is-empty melucuti chrome kartu + sembunyikan header.
+    if (section) section.classList.add("rk-is-empty");
+    if (empty) {
+      empty.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/><path d="M12 14v3M9 21h6M10 21v-1.5a2 2 0 0 1 4 0V21"/></svg>' +
+        '<span class="lt-empty-bar-txt">Belum ada peringkat</span>' +
+        '<a class="lt-empty-link" data-jump="upload" role="button" tabindex="0">Unggah Video</a>';
+      empty.hidden = false;
+    }
     row.innerHTML = "";
     return;
   }
+  if (section) section.classList.remove("rk-is-empty");
   if (empty) empty.hidden = true;
 
   const me = ((user && user.username) || "").toLowerCase();
   const myIdx = rankedAll.findIndex(function (c) { return String(c.name).toLowerCase() === me; });
   const total = rankedAll.length;
   const ranked = rankedAll.slice(0, 3);   // Top 3 saja (request user 2026-05-17)
+
+  // Presence kreator (req user 2026-06-15): dot hijau utk yg sedang aktif (real,
+  // dari getPlatformCreators → online kalau aktivitas < 5 menit lalu).
+  const onlineSet = new Set();
+  // Map avatar asli per kreator (req user 2026-06-15: avatar leaderboard "tidak
+  // sesuai" — dulu cuma inisial). Foto profil dari getPlatformCreators; fallback
+  // inisial kalau belum ada.
+  const avatarMap = {};
+  try {
+    (typeof getPlatformCreators === "function" ? getPlatformCreators() : []).forEach(function (c) {
+      if (!c || !c.name) return;
+      const k = String(c.name).toLowerCase();
+      if (c.online) onlineSet.add(k);
+      if (c.avatar) avatarMap[k] = c.avatar;
+    });
+  } catch (e) {}
 
   // Kalimat ajakan utk user (request user 2026-05-17): muncul DI ATAS
   // daftar 1-2-3, mendorong user bertanding masuk Top Creators.
@@ -35266,9 +35599,17 @@ function renderHomeRanking() {
       ? '<span class="lb-medal3" data-rank="' + (i + 1) + '">' +
           '<span class="lb-medal3-disc">' + (i + 1) + '</span></span>'
       : '<span class="lb-num">' + (i + 1) + '</span>';
-    return '<div class="lb-row' + (isMe ? ' is-me' : '') + '">' +
+    const key = String(c.name).toLowerCase();
+    const isOnline = isMe || onlineSet.has(key);
+    // Avatar: foto profil asli (punyaku dari user.avatar), fallback inisial.
+    const avUrl = (isMe && user && user.avatar) ? user.avatar : (avatarMap[key] || null);
+    const avInner = avUrl
+      ? '<img class="lb-av-img" src="' + escapeHtml(avUrl) + '" alt="" loading="lazy">'
+      : escapeHtml(init);
+    return '<div class="lb-row' + (isMe ? ' is-me' : '') + '" data-rk-user="' + escapeHtml(c.name) + '" role="button" tabindex="0" style="cursor:pointer">' +
       '<div class="lb-rank">' + rankCell + '</div>' +
-      '<div class="lb-av">' + escapeHtml(init) + '</div>' +
+      '<div class="lb-av' + (isOnline ? ' is-online' : '') + (avUrl ? ' has-img' : '') + '">' + avInner +
+        (isOnline ? '<span class="lb-dot" title="Aktif"></span>' : '') + '</div>' +
       '<div class="lb-name">@' + escapeHtml(c.name) +
         (isMe ? '<span class="lb-you">kamu</span>' : '') + '</div>' +
       '<div class="lb-stats">' +
@@ -35280,6 +35621,15 @@ function renderHomeRanking() {
   }).join("");
   row.innerHTML = '<div class="lb-cta">' + cta + '</div>' +
     '<div class="lb-list">' + rows + '</div>';
+  row.querySelectorAll(".lb-row").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var u = el.getAttribute("data-rk-user");
+      if (u && typeof openUserProfile === "function") openUserProfile(u);
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+    });
+  });
 }
 
 
@@ -35323,7 +35673,7 @@ function renderHomeRankingSelf() {
     if (String(ranked[i].name).toLowerCase() === me) { pos = i + 1; break; }
   }
   if (pos > 0) el.innerHTML = "Peringkat kamu: <b>#" + pos + "</b> dari " + total + " kreator";
-  else el.textContent = "Top kreator berdasarkan total tontonan";
+  else el.textContent = "Kreator teratas berdasarkan total tontonan";
 }
 
 // ---- 📈 Level Kreator (XP) — "lawan" Pencapaian: progress kontinu, tak
@@ -35366,9 +35716,13 @@ function renderHomeCreatorLevel() {
   const ICV_HEART = '<svg ' + _si + '><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
   const ICV_VIDEO = '<svg ' + _si + '><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>';
   const ICV_USERS = '<svg ' + _si + '><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-  const chip = function (ico, label, val) {
-    return '<span class="hlv-chip">' + ico + ' ' + label +
-      ' <b>+' + fmtNum(val) + '</b></span>';
+  // Chip rincian XP: cukup tampilkan faktor + total XP-nya (req user 2026-06-15:
+  // versi "jumlah × poin" terlalu ribet → disederhanakan jadi "Faktor +XP").
+  const chip = function (ico, label, count, rate) {
+    const xpv = count * rate;
+    return '<span class="hlv-chip' + (xpv > 0 ? ' is-active' : '') + '">' + ico +
+      ' <span class="hlv-chip-lab">' + label + '</span>' +
+      ' <b>+' + fmtNum(xpv) + ' XP</b></span>';
   };
 
   wrap.innerHTML =
@@ -35377,7 +35731,7 @@ function renderHomeCreatorLevel() {
         '<span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span>' +
         '<div class="hlv-titlewrap-text">' +
           '<h3>Level Kreator</h3>' +
-          '<small class="hlv-sub">Naik level dari aktivitas channel — terus tumbuh, tanpa batas</small>' +
+          '<small class="hlv-sub">Naik level dari aktivitas kanalmu — terus tumbuh, tanpa batas</small>' +
         '</div>' +
       '</div>' +
       '<small class="hlv-note">XP: tontonan + suka + video + pengikut</small>' +
@@ -35387,21 +35741,39 @@ function renderHomeCreatorLevel() {
         '<span class="hlv-lvnum">' + level + '</span></div>' +
       '<div class="hlv-body">' +
         '<div class="hlv-title">' + titleFor(level) +
-          '<span class="hlv-xp">' + fmtNum(xp) + ' XP</span></div>' +
+          // XP progres ke level berikut (into / span). Angka SEKARANG (into) krem
+          // tebal, TARGET (span) dibedakan jadi muted "dari N" → jelas 454 dari 500
+          // (req user 2026-06-15: bedakan angka pencapaiannya).
+          '<span class="hlv-xp">' +
+            (remain > 0
+              ? '<b class="hlv-xp-cur">' + fmtNum(into) + '</b>' +
+                '<span class="hlv-xp-goal">/ ' + fmtNum(span) + ' XP</span>'
+              : '<b class="hlv-xp-cur">' + fmtNum(xp) + '</b><span class="hlv-xp-goal">XP</span>') +
+          '</span></div>' +
         '<div class="hlv-bar"><i style="width:' + pct + '%"></i></div>' +
+        // Baris bawah bar: keterangan kiri + persentase kanan (req user 2026-06-15:
+        // sisi kanan kosong) → seimbang & informatif.
         '<div class="hlv-next">' +
-          (remain > 0
-            ? fmtNum(remain) + ' XP lagi menuju <b>Lv ' + (level + 1) +
-              ' &middot; ' + titleFor(level + 1) + '</b>'
-            : 'Level maksimum tercapai 🎉') +
+          '<span class="hlv-next-txt">' +
+            (remain > 0
+              ? fmtNum(remain) + ' XP lagi menuju <b>Lv ' + (level + 1) +
+                ' &middot; ' + titleFor(level + 1) + '</b>'
+              : 'Level maksimum tercapai 🎉') +
+          '</span>' +
+          (remain > 0 ? '<span class="hlv-next-pct">' + pct + '%</span>' : '') +
         '</div>' +
       '</div>' +
     '</div>' +
     '<div class="hlv-break">' +
-      chip(ICV_EYE, 'Tontonan', xpViews) +
-      chip(ICV_HEART, 'Suka', xpLikes) +
-      chip(ICV_VIDEO, 'Video', xpVid) +
-      chip(ICV_USERS, 'Pengikut', xpFoll) +
+      '<div class="hlv-break-h">' +
+        '<span>Rincian XP</span>' +
+      '</div>' +
+      '<div class="hlv-chips">' +
+        chip(ICV_EYE, 'Tontonan', views, 1) +
+        chip(ICV_HEART, 'Suka', likes, 5) +
+        chip(ICV_VIDEO, 'Video', nVid, 50) +
+        chip(ICV_USERS, 'Pengikut', foll, 20) +
+      '</div>' +
     '</div>';
 }
 
@@ -35579,10 +35951,9 @@ function renderCreatorSpotlight() {
 
   // Slide: avatar + info + stats di atas, plus row "Top Videos" di bawah.
   track.innerHTML = creators.map(c => {
-    const initials = (c.displayName || c.name || "?").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
-    const avatarInner = c.avatar
-      ? `<img src="${c.avatar}" alt=""/>`
-      : `<span>${escapeHtml(initials)}</span>`;
+    // Avatar: pakai shared helper → initial selalu jadi fallback, img dgn
+    // onerror auto-remove kalau gagal load (anti avatar kosong). (7b)
+    const avatarInner = homeAvatarMarkup(c.avatar, c.displayName || c.name);
 
     const topVidsHtml = (c.topVideos && c.topVideos.length)
       ? `<div class="cs-top-videos">
@@ -36642,6 +37013,26 @@ document.addEventListener("click", e => {
     b.classList.toggle("active", b.dataset.peopleTab === key);
   });
   if (typeof renderPeople === "function") renderPeople();
+});
+
+// Stat Beranda (kartu profil Pengikut/Yang diikuti + kartu Ringkasan Statistik
+// Total Pengikut) → buka view "people" pada tab Followers/Following (req user
+// 2026-06-15). Selektor umum [data-people-stat] supaya berlaku utk .hpc-stat &
+// .hqs-card.
+document.addEventListener("click", e => {
+  const stat = e.target.closest && e.target.closest("[data-people-stat]");
+  if (!stat) return;
+  e.preventDefault();
+  const tab = stat.dataset.peopleStat === "following" ? "following" : "followers";
+  if (typeof switchView === "function") switchView("people");
+  const view = document.querySelector('section.view[data-view="people"]');
+  if (view) {
+    view.dataset.peopleTab = tab;
+    document.querySelectorAll("button[data-people-tab]").forEach(b => {
+      b.classList.toggle("active", b.dataset.peopleTab === tab);
+    });
+    if (typeof renderPeople === "function") renderPeople();
+  }
 });
 
 function renderPurchaseHistory() {

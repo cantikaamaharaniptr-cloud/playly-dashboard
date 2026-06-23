@@ -4406,6 +4406,22 @@ body[data-theme="light"] .trending-retry-btn:hover {
   position: relative;
   flex-wrap: wrap;
 }
+/* Hero USER (req user 2026-06-15): hero kiri TETAP setinggi kontennya (TANPA
+   void → jangan di-stretch). Kartu profil kanan dilebarkan + spacing-nya
+   dirapatkan supaya TURUN ke tinggi hero (sejajar PADA ukuran hero, bukan hero
+   yg dipanjangkan ke kartu kanan). */
+/* Hero kiri TETAP tinggi konten (flex-start) → TANPA void (preferensi kuat user).
+   Kartu profil = spacing rapi/nyaman (req user 2026-06-15: jangan sesak) + lebih
+   lebar. Konsekuensi: profil sedikit lebih tinggi dari hero (kontennya lbh banyak);
+   itu trade-off tidy vs sejajar-persis. */
+/* Hero kiri compact tanpa void (flex-start). Kartu profil DILEBARKAN ke samping
+   + isi ditata rapi/proporsional (req user 2026-06-15: jangan berantakan) —
+   spacing nyaman, stat box ukuran wajar (tidak disesakkan). */
+#home-hero .hero-content { align-items: flex-start !important; }
+#home-hero .hero-clock.user { flex: 0 1 580px; max-width: 600px; min-width: 380px; padding: 16px 24px !important; }
+#home-hero .hero-profile-card { gap: 13px; }
+/* bio dipindah ke dalam .hpc-id (bawah @username) → beri jarak kecil dari username */
+#home-hero .hpc-id .hpc-bio { margin-top: 6px; }
 
 /* LEFT CARD — greeting & actions. Per tidy-up user 2026-05-15 v44:
    "compact stack" — flex gap TUNGGAL sebagai sumber spacing (hapus semua
@@ -4587,8 +4603,10 @@ body[data-theme="light"] .trending-retry-btn:hover {
   gap: 12px;
 }
 .hpc-avatar {
-  width: 52px;
-  height: 52px;
+  /* Avatar diperbesar + responsif (req user 2026-06-15): fluid clamp 58–68px
+     mengikuti lebar layar, tak pecah di device kecil. */
+  width: clamp(58px, 6vw, 68px);
+  height: clamp(58px, 6vw, 68px);
   border-radius: 50%;
   flex-shrink: 0;
   display: grid;
@@ -4597,17 +4615,22 @@ body[data-theme="light"] .trending-retry-btn:hover {
   background: linear-gradient(135deg, var(--primary), var(--primary-deep, #561C24));
   color: var(--cream, #E8D8C4);
   font-family: 'Inter', sans-serif;
-  font-size: 20px;
+  font-size: clamp(22px, 2.3vw, 26px);
   font-weight: 800;
   border: 2px solid rgba(232, 216, 196, .25);
 }
-.hpc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hpc-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+@media (max-width: 560px) {
+  .hpc-avatar { width: 54px; height: 54px; font-size: 21px; }
+}
 .hpc-id { flex: 1; min-width: 0; }
+/* (Tanda "Aktif sekarang" di kartu profil sendiri dihapus 2026-06-15 — redundan.
+   Presence kreator lain tetap ada di leaderboard, lihat .lb-av .lb-dot.) */
 /* @username (per request v57) — di bawah nama, di atas badge tier */
 .hpc-username {
   display: block;
-  margin-top: 1px;
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
@@ -4617,35 +4640,76 @@ body[data-theme="light"] .trending-retry-btn:hover {
 .hpc-id strong {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text);
   letter-spacing: -.01em;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hpc-id small {
-  display: inline-block;
-  margin-top: 3px;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 7px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: .06em;
+  letter-spacing: .05em;
   text-transform: uppercase;
-  padding: 2px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   /* Default (Free Plan) — neutral */
   color: var(--muted);
   background: var(--surface-2);
   border: 1px solid var(--border);
 }
-/* Premium → GOLD gradient (per request user 2026-05-15 v56) — sama dengan
-   badge premium di AI Assist / Subtitle (.upf-premium-pill). */
+/* Premium → gold LEMBUT (req user 2026-06-15: emas solid kemarin terlalu
+   mencolok). Tint emas tipis + teks/border emas + bintang kecil, bukan blok
+   emas penuh. */
 .hpc-id small.hpc-tier-premium {
-  color: #2a1a02;
-  background: linear-gradient(135deg, #f0c878, #d4a64a);
-  border-color: transparent;
-  box-shadow: 0 2px 8px -2px rgba(212, 166, 74, .55);
+  color: #e3b566;
+  background: rgba(212, 166, 74, .13);
+  border: 1px solid rgba(212, 166, 74, .38);
+  box-shadow: none;
+}
+.hpc-id small.hpc-tier-premium::before {
+  content: "\2605"; /* ★ */
+  margin-right: 4px;
+  font-size: 9px;
+  line-height: 1;
+}
+/* Badge tier dipindah ke KANAN baris header (req user 2026-06-15: sisi kanan
+   kartu profil terlalu kosong). Class lokasi-independen krn elemen dipindah ke
+   .hpc-top via _patchHomeProfileCard. */
+.hpc-top > .hpc-tier-badge {
+  margin-left: auto;
+  margin-top: 0;
+  align-self: center;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.hpc-top > .hpc-tier-badge.hpc-tier-premium {
+  color: #e3b566;
+  background: rgba(212, 166, 74, .13);
+  border: 1px solid rgba(212, 166, 74, .38);
+  box-shadow: none;
+}
+.hpc-top > .hpc-tier-badge.hpc-tier-premium::before {
+  content: "\2605";
+  margin-right: 4px;
+  font-size: 9px;
+  line-height: 1;
 }
 .hpc-arrow {
   flex-shrink: 0;
@@ -4742,9 +4806,35 @@ body[data-theme="light"] .trending-retry-btn:hover {
   overflow: hidden;
 }
 .hpc-bio:empty { display: none; }
-.hpc-bio.is-placeholder {
-  color: var(--muted);
+/* Bio terisi (req user 2026-06-15: bikin jelas ini BIO + rapi utk bio panjang)
+   — teks miring dlm tanda kutip, clamp 2 baris (… kalau kepanjangan). */
+.hpc-bio.has-bio {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   font-style: italic;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+/* Placeholder bio → chip "tambah" rapi dgn ikon pensil (req user 2026-06-15:
+   tulisan + Tambah bio kamu diperbaiki). Bukan teks miring polos lagi. */
+.hpc-bio.is-placeholder {
+  display: inline-flex; align-items: center; gap: 6px;
+  width: fit-content;
+  margin-top: 1px;
+  padding: 4px 11px;
+  border: 1px dashed var(--border-strong, rgba(232, 216, 196, .28));
+  border-radius: 999px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  -webkit-line-clamp: none;
+  transition: color .18s var(--ease, ease), border-color .18s var(--ease, ease), background .18s var(--ease, ease);
+}
+.hpc-bio.is-placeholder svg { width: 13px; height: 13px; flex-shrink: 0; }
+.hpc-bio.is-placeholder:hover {
+  color: var(--text);
+  border-color: var(--cream, #E8D8C4);
+  background: var(--surface-2);
 }
 
 /* --- Action buttons: Edit Profil + Bagikan (per request v56) --- */
@@ -4776,7 +4866,7 @@ body[data-theme="light"] .trending-retry-btn:hover {
 .hpc-act-btn.ghost {
   background: var(--surface-2);
   color: var(--text);
-  border-color: var(--border);
+  border-color: var(--border-strong, var(--border));
 }
 .hpc-act-btn.ghost:hover { background: var(--surface-3); border-color: var(--border-strong); transform: translateY(-1px); }
 .hpc-act-btn:active { transform: translateY(0); }
@@ -7143,6 +7233,9 @@ body[data-role="admin"] .hrk-h-ico {
   background: var(--success);
   animation: ping 1.6s ease-out infinite;
 }
+/* Jam hero USER: hapus titik hijau "live" yg ambigu (req user 2026-06-15:
+   sederhanakan jam). Admin clock (#adminLiveTime) tak terpengaruh. */
+.hero-pill.live:has(#liveTime) .live-dot { display: none; }
 
 /* Hero clock card */
 .hero-clock {
@@ -36333,17 +36426,28 @@ body.reduced-motion .user-dashboard-bg { opacity: .55; }
   align-items: flex-start;
 }
 
-.ranking-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px;
-  color: var(--muted);
-  font-size: 13px;
-  width: 100%;
-  text-align: center;
+/* Empty state peringkat = BAR dashed full-width, SAMA persis dgn empty
+   "Lanjutkan Menonton" (req user 2026-06-16). Saat kosong, .rk-is-empty
+   melucuti chrome kartu solid + sembunyikan header → sisakan bar saja. */
+.home-ranking-section.rk-is-empty {
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
+.home-ranking-section.rk-is-empty .hrk-head { display: none !important; }
+.ranking-empty-state {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 8px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px dashed var(--border-strong, rgba(232, 216, 196, .14));
+  border-radius: 12px;
+  background: rgba(232, 216, 196, .02);
+}
+/* Hormati attr [hidden] (rule di atas pakai display:flex → override UA). */
+.ranking-empty-state[hidden] { display: none; }
+.ranking-empty-state > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
 
 .cards {
   position: relative;
@@ -61073,12 +61177,14 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   flex-direction: column;
   gap: 16px;
 }
-/* v591e (2026-05-28): kedua kartu compact tinggi sesuai konten, TAPI lebar
-   tetap fill kolom (default align-items: stretch parent). align-self: flex-start
-   sebelumnya bikin lebar nyusut ke konten — dihapus. */
+/* req user 2026-06-15 (final): Pencapaian dikecilkan (badge compact) supaya
+   tinggi alaminya ~= Level Kreator, lalu KEDUA kartu di-stretch mengisi kolom
+   (flex 1 1 auto) → bottom rata = SEJAJAR. Selisih kecil diserap: Level taruh
+   chip di bawah (margin-top:auto), Pencapaian sebar 2 baris badge (align-content
+   space-between) → tetap rapi tanpa void besar. */
 .home-2col .home-col > .home-level,
 .home-2col .home-col > .home-achievements {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 @media (max-width: 980px) {
   .home-2col { flex-direction: column; }
@@ -61182,12 +61288,20 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 /* 📈 Level Kreator (XP) — per request user 2026-05-16 ("lawan" Pencapaian) */
 .home-level {
   width: 100%;
+  /* flex column → saat kartu melar menyamai Pencapaian, chip statistik
+     (.hlv-break) ditempel ke bawah (margin-top:auto) shg ruang lebih terisi
+     rapi, bukan jadi void. req user 2026-06-14. */
+  display: flex;
+  flex-direction: column;
   background: var(--bg-elev-2, var(--surface));
   border: 1px solid var(--border-strong, var(--border));
   border-radius: var(--radius, 16px);
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
+/* chip pin ke bawah saat kartu di-stretch sejajar Pencapaian (req user 2026-06-15);
+   min 16px kalau kartu pas setinggi konten → tetap rapat, tak ada void besar. */
+.home-level .hlv-break { margin-top: auto; padding-top: 16px; }
 .hlv-head {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: 12px; margin-bottom: 16px;
@@ -61227,7 +61341,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   font-size: 17px; font-weight: 800; color: var(--text);
   font-family: 'Inter', sans-serif; margin-bottom: 10px;
 }
-.hlv-xp { font-size: 12px; font-weight: 700; color: var(--primary, #d4a64a); }   /* teks dikembalikan ke asli (per request user 2026-05-16: hanya kolom yg diganti, teks jangan) */
+/* XP progres: kontras KUAT current vs target (req user 2026-06-15: bedanya kurang
+   jelas) → angka SEKARANG besar+krem-tebal, TARGET kecil+muted "/ N XP". */
+.hlv-xp { font-size: 12px; font-weight: 700; display: inline-flex; align-items: baseline; gap: 4px; }
+.hlv-xp-cur { color: var(--cream, #E8D8C4); font-weight: 900; font-size: 17px; line-height: 1; }
+.hlv-xp-goal { color: var(--muted); font-weight: 600; font-size: 11px; }
 .hlv-bar {
   height: 12px; border-radius: 999px; background: var(--surface-2);
   overflow: hidden; margin-bottom: 8px;
@@ -61236,19 +61354,34 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   display: block; height: 100%; border-radius: 999px;
   background: var(--primary, #6D2932); transition: width .5s ease;   /* wine — per request user 2026-05-16 */
 }
-.hlv-next { font-size: 12px; color: var(--muted); }
+/* keterangan kiri + persen kanan (req user 2026-06-15: sisi kanan jangan kosong) */
+.hlv-next { font-size: 12px; color: var(--muted); display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .hlv-next b { color: var(--text); }
+.hlv-next-txt { min-width: 0; }
+.hlv-next-pct { flex-shrink: 0; color: var(--cream, #E8D8C4); font-weight: 800; font-variant-numeric: tabular-nums; }
+/* Rincian XP (req user 2026-06-15: kartu kurang informatif, sumber kenaikan XP
+   tidak jelas) → header kecil + baris chip "jumlah × poin = +XP". */
 .hlv-break {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
-  padding-top: 14px; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 9px; margin-top: 16px;
+  padding-top: 14px;   /* garis pembatas dihapus (req user 2026-06-15: garis tipis terlalu menyatu dgn badge level di atasnya) */
 }
+.hlv-break-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hlv-break-h > span { font-size: 12px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.hlv-break-h > small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.hlv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .hlv-chip {
+  display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; color: var(--text-2, var(--muted));
   background: var(--surface-2); border: 1px solid var(--border);
   padding: 5px 10px; border-radius: 999px;
 }
-.hlv-chip svg { width: 13px; height: 13px; vertical-align: -2px; color: var(--text); }
-.hlv-chip b { color: var(--primary, #d4a64a); font-weight: 800; }   /* teks dikembalikan ke asli (hanya kolom yg diganti) */
+.hlv-chip svg { width: 13px; height: 13px; color: var(--text); }
+.hlv-chip-lab { color: var(--text); font-weight: 700; }
+/* "jumlah × poin" = penjelas perhitungan (kenapa +XP segini) → muted */
+.hlv-chip-calc { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hlv-chip b { color: var(--cream, #E8D8C4); font-weight: 800; }   /* total +XP: krem (req user 2026-06-15: wine kurang cocok) */
+/* faktor yg menyumbang XP > 0 sedikit ditonjolkan (border krem tipis) */
+.hlv-chip.is-active { border-color: rgba(232, 216, 196, .28); }
 @media (max-width: 560px) {
   .hlv-main { gap: 12px; }
   .hlv-badge { width: 62px; height: 62px; }
@@ -61258,7 +61391,7 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 
 /* 🏆 Leaderboard caption */
 .hrk-head h3 { white-space: nowrap; }
-#hrkSelf b { color: var(--primary, #d4a64a); }
+#hrkSelf b { color: var(--cream, #E8D8C4); }   /* wine terlalu menyatu dgn tema → krem (req user 2026-06-15) */
 
 /* Leaderboard list rapi (per request user 2026-05-16: ganti kartu flip/animasi
    lama yg sempit & tak fleksibel → daftar vertikal memanjang). Class lama
@@ -61273,16 +61406,34 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lb-row:hover { border-color: var(--primary); }
 .lb-row.is-me {
-  background: linear-gradient(155deg, rgba(240, 200, 120, .16), rgba(212, 166, 74, .06));
-  border-color: rgba(212, 166, 74, .5);
+  /* req user 2026-06-15: baris kamu TIDAK dibedakan — sama spt kreator lain,
+     penanda cukup badge "Kamu" kecil. (Dulu di-highlight wine → user tak suka.) */
+  background: var(--surface);
+  border-color: var(--border);
 }
 .lb-rank { width: 28px; flex-shrink: 0; text-align: center; }
 .lb-medal { font-size: 18px; }
 .lb-num { font-size: 13px; font-weight: 800; color: var(--muted); }
 .lb-av {
+  position: relative;
   width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
   display: grid; place-items: center; font-size: 12px; font-weight: 800;
-  color: #2a1206; background: linear-gradient(135deg, #f0c878, #d4a64a);
+  /* on-palette: avatar wine + teks cream, konsisten dgn avatar lain (req user
+     2026-06-15: jangan emas/di luar konsep). */
+  color: var(--cream, #E8D8C4);
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
+}
+/* Foto profil asli di avatar leaderboard (req user 2026-06-15: avatar tak sesuai
+   kalau cuma inisial). Img isi penuh lingkaran; bg/inisial ketutup. */
+.lb-av.has-img { background: none !important; }
+.lb-av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+/* Dot AKTIF (online) di avatar leaderboard — req user 2026-06-15. Hijau --success
+   konsisten dgn .live-dot app. */
+.lb-av .lb-dot {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--success);
+  border: 2px solid var(--bg-elev-2, #1f1216);
 }
 .lb-name {
   flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--text);
@@ -61291,8 +61442,11 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
 }
 .lb-you {
   font-size: 10px; font-weight: 800; letter-spacing: .04em;
-  padding: 2px 6px; border-radius: 999px; color: #2a1206;
-  background: linear-gradient(135deg, #f0c878, #d4a64a); flex-shrink: 0;
+  padding: 2px 7px; border-radius: 999px; flex-shrink: 0;
+  /* on-palette: chip wine + teks cream (req user 2026-06-15: bukan emas). */
+  color: var(--cream, #E8D8C4);
+  background: var(--primary, #6D2932);
+  border: 1px solid rgba(232, 216, 196, .18);
 }
 .lb-stats {
   display: flex; gap: 12px; flex-shrink: 0;
@@ -61308,67 +61462,388 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    Pencapaian sebelumnya tanpa kotak → terlihat tidak sejajar dgn Level). */
 .home-achievements {
   width: 100%;
+  /* flex column → grid badge bisa flex:1 mengisi tinggi kartu (sejajar Level) */
+  display: flex;
+  flex-direction: column;
   background: var(--bg-elev-2, var(--surface));
   border: 1px solid var(--border-strong, var(--border));
   border-radius: var(--radius, 16px);
   padding: 18px 20px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
 }
+/* Progres per-pencapaian terkunci (req user 2026-06-14): bar + cur/target. */
+.ha-badge-prog {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.ha-badge-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 216, 196, .14);
+  overflow: hidden;
+}
+.ha-badge-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+.ha-badge-frac {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ===== SOROTAN VIDEO (req user 2026-06-14): Video Terbaik + Lanjut Tonton =====
+   PENTING: namespace `hsv-` (Home Sorotan Video) DIPAKAI KHUSUS section ini.
+   Sebelumnya pakai `hs-*` yg BENTROK dgn komponen kartu statistik 2x2 app-wide
+   (.hs-card/.hs-info/.hs-icon → align-items:center dst), bikin isi kartu
+   ke-center & berantakan. Jangan pakai prefix `hs-` di sini lagi. */
+#homeSorotanDivider, #homeSorotan { order: 2; }
+/* 2 kartu: Video Terbaik (views) · Paling Disukai (likes). Lanjut Tonton pindah
+   ke section sendiri di bawah. req user 2026-06-14. Responsif 2 -> 1. */
+.home-sorotan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: stretch; }
+@media (max-width: 760px) { .home-sorotan { grid-template-columns: 1fr; } }
+/* Kalau cuma 1 video (Terbaik = Terbaru), kartu tunggal isi lebar penuh. */
+.home-sorotan .hsv-card:only-child { grid-column: 1 / -1; }
+/* Warna/border/shadow kartu = SAMA dgn kartu lain Beranda (.home-level /
+   .home-achievements): var(--bg-elev-2) + border-strong + radius + shadow.
+   req user 2026-06-14: samakan warna kolom dgn kolom lain. */
+.hsv-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 11px;
+  padding: 16px 18px;
+  border-radius: var(--radius, 16px);
+  background: var(--bg-elev-2, var(--surface));
+  border: 1px solid var(--border-strong, var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.hsv-card:hover {
+  border-color: var(--primary, var(--border-strong));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .4);
+}
+/* Header kartu — SAMA dgn kartu lain Beranda (Level/Pencapaian/Peringkat):
+   wine icon box .sec-icon-v582 (32px) + h3 16/700 cream. req user 2026-06-14:
+   samakan kolom ikon & judul (ukuran/font/warna) dgn kolom lain. */
+.hsv-head { display: flex; align-items: center; }
+.hsv-head .sec-icon-v582 { vertical-align: 0; }
+.hsv-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hsv-head-text h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.01em; text-transform: none; }
+/* Sub-keterangan DASAR pemilihan (mis. "Paling banyak ditonton") — gaya = subtitle
+   kartu lain (.hlv-sub): krem-muted 12.5/500. req user 2026-06-14: jelaskan
+   Video Terbaik berdasarkan apa. */
+.hsv-sub { font-size: 12.5px; font-weight: 500; color: var(--muted); line-height: 1.3; }
+/* Konten kartu (di bawah header) — baris: thumbnail kiri + info kanan */
+/* VERTIKAL (req user 2026-06-15: jangan ada ruang kosong di kanan) — thumbnail
+   penuh selebar kartu di atas, info di bawah → tak ada sisi kanan kosong. */
+.hsv-content { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.hsv-info { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hsv-thumb {
+  position: relative;
+  width: 100%;
+  height: 150px;            /* compact, full-width */
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(232, 216, 196, .08);
+}
+/* Baris meta: kreator + stats jadi satu baris (kiri) — natural utk kartu video. */
+.hsv-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hsv-creator { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Play overlay di thumbnail (muncul saat hover) — pengganti tombol kanan. */
+.hsv-playov {
+  position: absolute; inset: 0; margin: auto;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  opacity: 0;
+  transition: opacity .15s var(--ease, ease);
+}
+.hsv-playov svg { width: 18px; height: 18px; margin-left: 2px; }
+.hsv-card:hover .hsv-playov { opacity: 1; }
+.hsv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hsv-dur {
+  position: absolute; bottom: 5px; right: 5px;
+  padding: 1px 6px; border-radius: 5px;
+  background: rgba(0, 0, 0, .7); color: #fff;
+  font-size: 10px; font-weight: 600;
+}
+.hsv-title {
+  margin: 0;
+  font-size: 15px; font-weight: 700; color: var(--text);
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.hsv-stats { margin-top: 0; display: flex; gap: 12px; flex-shrink: 0; }
+.hsv-stats span { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.hsv-stats svg { width: 13px; height: 13px; opacity: .85; }
+.hsv-stats-link { align-self: flex-start; margin-top: 2px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: transparent; border: 1px solid var(--border-strong, var(--border)); border-radius: 8px; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+.hsv-stats-link svg { width: 13px; height: 13px; }
+.hsv-stats-link:hover { border-color: var(--primary); color: var(--text); background: rgba(232, 216, 196, .06); }
+/* Varian "Lanjut Tonton": progress bar + baris persen. */
+.hsv-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0, 0, 0, .45); }
+.hsv-prog i { display: block; height: 100%; background: #e8d8c4; }
+.hsv-watch { margin: auto 0 0; font-size: 12px; color: var(--muted); }
+/* Slot kosong — SIMETRIS dgn kartu berisi: placeholder ikon kiri + konten kanan. */
+.hsv-card.hsv-card-empty { border-style: dashed; border-color: var(--border-strong, var(--border)); box-shadow: none; }
+.hsv-card-empty .hsv-info { justify-content: center; }
+/* Placeholder ikon (ganti thumbnail) — ukuran sama dgn thumbnail biar sejajar */
+.hsv-thumb-ph { display: grid; place-items: center; color: rgba(232, 216, 196, .5); }
+.hsv-thumb-ph svg { width: 30px; height: 30px; }
+.hsv-empty-sub { margin: 3px 0 9px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.hsv-empty-btn { align-self: flex-start; }
+
+/* ===== LANJUT TONTON (req user 2026-06-14): dimensi penonton (Continue Watching) ===== */
+#homeLanjutDivider, #homeLanjut { order: 2; }
+/* auto-FIT (bukan auto-fill) → kartu MELAR mengisi baris penuh (tak ada kolom
+   kosong di kanan); kalau lebih banyak dari muat, TURUN ke baris berikutnya.
+   req user 2026-06-15. */
+.home-lanjut { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+/* Empty state RINGKAS: satu bar full-width (req user 2026-06-15: 4 kartu besar
+   terkesan kosong). Konten DI TENGAH sbg satu grup (req user: perbaiki bentuk),
+   tidak melebar dgn celah kosong di tengah. */
+.lt-card.lt-empty-bar {
+  grid-column: 1 / -1;
+  cursor: default;
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 8px;
+  padding: 16px 20px;
+  border-style: dashed;
+  border-color: var(--border-strong, rgba(232, 216, 196, .14));
+  background: rgba(232, 216, 196, .02);
+}
+.lt-empty-bar > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+.lt-empty-bar-txt { font-size: 13.5px; font-weight: 600; color: var(--cream, #E8D8C4); }
+/* "Jelajahi video" → pill button rapi (req user 2026-06-15: ganti bentuk) */
+.lt-empty-link {
+  flex-shrink: 0;
+  font-size: 12.5px; font-weight: 700; color: var(--cream, #E8D8C4);
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(232, 216, 196, .26);
+  background: rgba(232, 216, 196, .05);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.lt-empty-link:hover { background: rgba(232, 216, 196, .12); border-color: rgba(232, 216, 196, .4); }
+.lt-card {
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(232, 216, 196, .03);
+  border: 1px solid var(--border);
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.lt-card:hover { background: rgba(232, 216, 196, .07); border-color: rgba(232, 216, 196, .2); transform: translateY(-2px); }
+.lt-thumb { position: relative; aspect-ratio: 16 / 9; background: rgba(232, 216, 196, .08); overflow: hidden; }
+.lt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lt-dur { position: absolute; bottom: 8px; right: 6px; padding: 1px 6px; border-radius: 5px; background: rgba(0,0,0,.7); color: #fff; font-size: 10px; font-weight: 600; }
+.lt-play { position: absolute; inset: 0; margin: auto; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; opacity: 0; transition: opacity .15s; }
+.lt-card:hover .lt-play { opacity: 1; }
+.lt-play svg { width: 18px; height: 18px; }
+.lt-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0,0,0,.45); }
+.lt-prog i { display: block; height: 100%; background: #e8d8c4; }
+.lt-body { padding: 9px 10px 11px; }
+.lt-title { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.lt-meta { margin: 0; font-size: 11px; color: var(--muted); }
+.lt-card-ph {
+  cursor: default;
+  pointer-events: none;
+  border-style: dashed;
+  border-color: var(--border-strong, rgba(232, 216, 196, .14));
+  background: rgba(232, 216, 196, .02);
+}
+.lt-card-ph .lt-thumb { background: rgba(232, 216, 196, .05); display: grid; place-items: center; }
+.lt-ph-play { display: grid; place-items: center; color: rgba(232, 216, 196, .16); }
+.lt-ph-play svg { width: 26px; height: 26px; }
+.lt-card-ph .lt-body { display: flex; flex-direction: column; gap: 7px; }
+.lt-ph-line { display: block; height: 9px; border-radius: 5px; background: rgba(232, 216, 196, .10); }
+.lt-ph-line.sm { width: 55%; }
+/* Empty state isi LEBAR PENUH grid (kalau tidak ke-squish dlm 1 kolom 190px).
+   Rata KIRI (bukan center) + punya WARNA kartu solid spt kartu lain (bukan
+   transparan). req user 2026-06-14. */
+.lt-empty {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--radius, 16px);
+  background: var(--bg-elev-2, var(--surface));
+  border: 1px solid var(--border-strong, var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+}
+/* Ikon wine gradient SAMA dgn .sec-icon-v582 (header kartu lain) — sebelumnya
+   krem muted, beda sendiri. req user 2026-06-14: samakan warna kolom ikon. */
+.lt-empty-ico { flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, #7d3640 0%, #561C24 100%); color: #F5E3C0; box-shadow: 0 4px 12px rgba(109,41,50,.32), 0 0 0 1px rgba(190,151,82,.18) inset, 0 1px 0 rgba(255,255,255,.06) inset; }
+.lt-empty-ico svg { width: 22px; height: 22px; }
+.lt-empty-txt { flex: 1; min-width: 0; }
+.lt-empty-txt strong { display: block; font-size: 14px; color: var(--text); }
+.lt-empty-txt small { font-size: 12px; color: var(--muted); }
+/* Tombol Jelajahi: krem solid kontras tinggi. !important utk menimpa rule global
+   `body:not([data-role=admin]) .btn.primary { background:transparent; color:wine }`
+   yg bikin tombol user jadi outline wine nyaris tak kelihatan di bg wine gelap.
+   req user 2026-06-14. */
+.lt-empty .btn { flex-shrink: 0; }
+/* Prefix #homeLanjut → spesifisitas (1,3,0) menang atas rule global
+   body:not([data-role=admin]) .btn.primary (0,3,1) yg jg !important. */
+#homeLanjut .lt-empty .btn.primary,
+#homeLanjut .lt-empty .btn.primary:focus,
+#homeLanjut .lt-empty .btn.primary:focus-visible,
+#homeLanjut .lt-empty .btn.primary:active { background: var(--primary, #6D2932) !important; color: var(--cream, #E8D8C4) !important; border: 1px solid var(--border-strong, rgba(232,216,196,.18)) !important; }
+#homeLanjut .lt-empty .btn.primary:hover { background: var(--primary-hover, #7d3640) !important; border-color: rgba(232,216,196,.3) !important; transform: translateY(-1px); }
+
+/* ============================================================
+   SKALA TIPOGRAFI SERAGAM BERANDA (req user 2026-06-14: ratakan SEMUA ukuran &
+   ketebalan font). Satu skala dipakai lintas kartu (statistik, VIDEO, level,
+   pencapaian, peringkat) supaya konsisten — override per-komponen yg tadinya
+   beda-beda (judul 16-17px campur 700/800, subtitle 11.5-12.5 campur 400/600,
+   label 11-11.5 campur 700/800, dst).
+   ============================================================ */
+/* Pakai !important: blok ini lapisan PENYERAGAM yg sengaja menimpa ukuran/weight
+   per-komponen (sebagian rule lama lebih spesifik). */
+/* Judul SECTION (divider) — CAPSLOCK (req user 2026-06-14), 11.5/800 + spasi huruf */
+section.view[data-view="home"] .admin-section-divider span { font-size: 11.5px !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
+/* Label statistik — Title Case, 12/600 */
+section.view[data-view="home"] #homeQuickStats .hqs-label { font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: .005em !important; }
+/* Angka KPI 22/800 + label 12/600 Title Case — skala harmonis (req user
+   2026-06-15: sesuaikan ukuran teks). */
+section.view[data-view="home"] #homeQuickStats .hqs-value { font-size: 22px !important; font-weight: 800 !important; line-height: 1.1 !important; }
+/* JUDUL KARTU (Level / Pencapaian / Peringkat) — 16/700 */
+section.view[data-view="home"] #homeCreatorLevel h3,
+section.view[data-view="home"] .home-achievements h3,
+section.view[data-view="home"] #homeRankingSection h3,
+section.view[data-view="home"] #homeSorotan .hsv-head h3 { font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em; text-transform: none !important; }
+/* SUBJUDUL kartu — 12.5/500 */
+section.view[data-view="home"] #homeCreatorLevel .hlv-sub,
+section.view[data-view="home"] .home-achievements .ha-sub,
+section.view[data-view="home"] #homeRankingSection small,
+section.view[data-view="home"] #homeSorotan .hsv-sub { font-size: 12.5px !important; font-weight: 500 !important; }
+/* JUDUL badge pencapaian — 14/800 (req user 2026-06-15: hirarki judul vs deskripsi
+   vs progres dibedakan; judul paling menonjol). */
+section.view[data-view="home"] .ha-badge-text strong { font-size: 14px !important; font-weight: 800 !important; }
+/* Skala font kartu Sorotan (req user 2026-06-15: rapikan ukuran teks).
+   Hirarki: header kategori 15/700 > judul video 14.5/600 > meta 12/500. */
+section.view[data-view="home"] #homeSorotan .hsv-head h3 { font-size: 15px !important; font-weight: 700 !important; }
+section.view[data-view="home"] #homeSorotan .hsv-sub { font-size: 12px !important; font-weight: 500 !important; }
+section.view[data-view="home"] #homeSorotan .hsv-title { font-size: 14.5px !important; font-weight: 600 !important; }
+/* Tombol "Unggah Video" empty Sorotan — samakan dgn pill cream .lt-empty-link
+   (req user 2026-06-16). Default .btn.primary user = outline wine pudar (rule
+   global, kontras rendah di bg wine) → ganti jadi pill cream konsisten dgn
+   empty bar Lanjutkan/Peringkat. Spesifisitas (1,3,1) > rule global (0,3,1). */
+section.view[data-view="home"] #homeSorotan .hsv-empty-btn {
+  color: var(--cream, #E8D8C4) !important;
+  background: rgba(232, 216, 196, .05) !important;
+  border: 1px solid rgba(232, 216, 196, .26) !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+}
+section.view[data-view="home"] #homeSorotan .hsv-empty-btn:hover {
+  background: rgba(232, 216, 196, .12) !important;
+  border-color: rgba(232, 216, 196, .4) !important;
+}
+/* DESKRIPSI badge pencapaian — 11.5/500 muted (tier-2, jelas di bawah judul) */
+section.view[data-view="home"] .ha-badge-text small { font-size: 11.5px !important; font-weight: 500 !important; }
+/* META video (kreator / stats / persen / empty desc) — 12/500 */
+section.view[data-view="home"] #homeSorotan .hsv-creator,
+section.view[data-view="home"] #homeSorotan .hsv-stats span,
+section.view[data-view="home"] #homeSorotan .hsv-watch,
+section.view[data-view="home"] #homeSorotan .hsv-empty-sub { font-size: 12px !important; font-weight: 500 !important; }
+section.view[data-view="home"] .ha-badge-frac { font-size: 10.5px !important; font-weight: 700 !important; }
+
 .ha-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;            /* req user 2026-06-15: kecilkan Pencapaian agar setinggi Level */
+  /* kalau kartu di-stretch setinggi Level, 2 baris badge sebar rata (no void) */
+  flex: 1;
+  align-content: space-between;
 }
-@media (max-width: 900px) { .ha-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .ha-grid { grid-template-columns: 1fr; } }
 .ha-badge {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
+  gap: 9px;
+  /* compact (req user 2026-06-14, dikecilkan lagi 2026-06-15): padding & ikon
+     diperkecil supaya kartu Pencapaian setinggi Level Kreator (sejajar). */
+  padding: 8px 10px;
+  border-radius: 12px;
   border: 1px solid rgba(232, 216, 196, .12);
   /* #251419 — per request user 2026-05-16 (badge & unlocked sama) */
   background: var(--bg-elev);
   transition: border-color .18s var(--ease, ease), transform .18s var(--ease, ease);
 }
+/* SUDAH tercapai: jelas menonjol (req user 2026-06-15) — tint krem + border krem
+   lebih tebal + ikon krem solid. */
 .ha-badge.unlocked {
-  background: var(--bg-elev);
-  border-color: rgba(232, 216, 196, .22);
+  background: rgba(232, 216, 196, .07);
+  border-color: rgba(232, 216, 196, .34);
 }
 .ha-badge.unlocked:hover { transform: translateY(-2px); }
-.ha-badge.locked { opacity: .55; }
+/* BELUM tercapai: jelas redup + ikon gembok (kontras kuat dgn yg sudah). */
+.ha-badge.locked { opacity: .58; }
+.ha-badge.locked .ha-badge-ico { color: var(--muted); }
 .ha-badge-ico {
-  width: 42px; height: 42px;
+  width: 32px; height: 32px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 10px;
   /* ikon minimalis monokrom (per request user 2026-05-16) */
   color: var(--text);
   background: rgba(232, 216, 196, .06);
   border: 1px solid rgba(232, 216, 196, .10);
 }
-.ha-badge-ico svg { width: 20px; height: 20px; }
+.ha-badge-ico svg { width: 16px; height: 16px; }
 .ha-badge.unlocked .ha-badge-ico {
-  background: rgba(232, 216, 196, .10);
-  border-color: rgba(232, 216, 196, .14);
+  /* wine solid + ikon krem = SAMA dgn ikon section (.sec-icon-v582) → on-theme,
+     tak lagi krem-putih mencolok di luar tema (req user 2026-06-15). */
+  background: var(--primary, #6D2932);
+  border-color: var(--primary, #6D2932);
+  color: var(--cream, #E8D8C4);
 }
+/* Status "✓ Tercapai" (badge yg sudah terbuka) — krem, sejajar slot progres. */
+.ha-badge-status {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 5px;
+  font-size: 11px; font-weight: 700;
+  color: var(--cream, #E8D8C4);
+}
+.ha-badge-status svg { width: 13px; height: 13px; flex-shrink: 0; }
 .ha-badge-text { min-width: 0; }
+/* Hirarki 3 tingkat (req user 2026-06-15): JUDUL (terang, tebal, rapat ke bawah)
+   > DESKRIPSI (muted, renggang) > PROGRES (bar + angka). */
 .ha-badge-text strong {
   display: block;
   font-size: 13px;
   font-weight: 800;
   color: var(--text);
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  margin-bottom: 3px;       /* pisahkan judul dari deskripsi */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ha-badge-text small {
+  display: block;
   font-size: 11px;
+  line-height: 1.3;
   color: var(--muted);
 }
 .ha-badge.unlocked .ha-badge-text small { color: var(--text-2); }
+/* PROGRES = tier-3 jelas: angka SEKARANG krem-tebal, target muted (selaras XP) */
+.ha-badge-frac b { color: var(--cream, #E8D8C4); font-weight: 800; }
 .home-foryou-tabs {
   display: flex; gap: 6px; margin-bottom: 16px;
   overflow-x: auto; scrollbar-width: thin; padding-bottom: 4px;
@@ -61799,42 +62274,51 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
 .hqs-minimal .hqs-card {
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: 13px;
   padding: 18px 22px;
 }
 .hqs-minimal .hqs-icon-box {
-  display: grid;             /* tampilkan lagi (di v35 di-hide) */
+  display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   border-radius: 11px;
   font-size: 18px;
   flex-shrink: 0;
-  color: var(--text);                /* ikon SVG minimalis monokrom (per req 2026-05-16) */
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  transition: background .2s var(--ease, ease), transform .2s var(--ease, ease);
+  /* req user 2026-06-14: samakan kotak ikon statistik dgn ikon header section
+     lain (.sec-icon-v582) → wine gradient + cream + inset shadow. */
+  color: #F5E3C0;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%);
+  border: 1px solid transparent;
+  box-shadow: 0 4px 12px rgba(109,41,50,.32), 0 0 0 1px rgba(190,151,82,.18) inset, 0 1px 0 rgba(255,255,255,.06) inset;
+  transition: transform .2s var(--ease, ease), box-shadow .2s var(--ease, ease);
 }
 .hqs-minimal .hqs-icon-box svg { width: 19px; height: 19px; }
 .hqs-minimal .hqs-card:hover .hqs-icon-box {
-  background: var(--primary-soft, rgba(109,41,50,.18));
   transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(109,41,50,.42), 0 0 0 1px rgba(190,151,82,.24) inset, 0 1px 0 rgba(255,255,255,.08) inset;
 }
 /* Chart DIKEMBALIKAN (request user 2026-05-17): bar tren + persen di
    sisi KANAN kartu. Warna disamakan dgn FONT TEXT BIASA (var(--text)
    / krem — auto-adapt light theme) menggantikan gold/merah, + efek
    GLOW bernapas (text-shadow persen + box-shadow bar + live-dot)
    supaya tetap terasa data real-time. */
+/* Rata kiri: angka+label kiri, progress menuju target di KANAN (isi sisi kanan,
+   req user 2026-06-15: jangan tengah, isi kekosongan). */
 .hqs-minimal .hqs-content {
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
     "hqsv hqsc"
     "hqsl hqsc";
   align-items: center;
-  column-gap: 14px;
-  row-gap: 3px;
+  column-gap: 12px;
+  row-gap: 2px;
 }
+.hqs-minimal .hqs-value { grid-area: hqsv; }
+.hqs-minimal .hqs-label { grid-area: hqsl; }
+.hqs-minimal .hqs-spark { grid-area: hqsc; }
 .hqs-minimal .hqs-value {
   grid-area: hqsv;
   font-size: 19px;
@@ -61855,37 +62339,41 @@ body:not([data-role="admin"]) .home-foryou-tabs button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Sisi kanan kartu = ikon metrik SAMAR (krem) sbg dekorasi — SEDERHANA &
+   on-palette (req user 2026-06-15: jangan busy, jangan warna di luar konsep). */
 .hqs-minimal .hqs-spark {
   display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
   grid-area: hqsc;
   margin-top: 0;
   align-self: center;
   justify-self: end;
   width: auto;
   min-width: 0;
+  pointer-events: none;
 }
-/* Garis tipis (bar progres) DIHAPUS per request user 2026-05-17 —
-   sisakan hanya angka/persen. */
+.hqs-minimal .hqs-value { white-space: nowrap; }
+.hqs-minimal .hqs-label { min-width: 0; }
 .hqs-minimal .hqs-spark .hqs-prog { display: none !important; }
-/* Persen "↑ N%" — warna = font text biasa + glow bernapas.
-   Bulatan/live-dot juga dihapus (request user). */
-.hqs-minimal .hqs-spark .hqs-delta {
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: .005em;
-  width: auto;
-  flex-shrink: 0;
-  color: var(--text) !important;
-  animation: hqsDeltaGlow 2.4s ease-in-out infinite;
+/* Petunjuk "Lihat detail" + panah — fungsional (kartu = link ke detail),
+   on-palette (muted → cream saat hover). req user 2026-06-15. */
+.hqs-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color .15s var(--ease, ease), transform .15s var(--ease, ease);
 }
-.hqs-minimal .hqs-spark .hqs-delta::before { content: none !important; }
-@keyframes hqsDeltaGlow {
-  0%, 100% { text-shadow: 0 0 0 rgba(232,216,196,0); }
-  50%      { text-shadow: 0 0 11px rgba(232,216,196,.6); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hqs-minimal .hqs-spark .hqs-delta { animation: none; }
-}
+.hqs-go svg { width: 16px; height: 16px; flex-shrink: 0; }
+.hqs-card:hover .hqs-go { color: var(--cream, #E8D8C4); transform: translateX(2px); }
+/* Teks "Lihat detail" disembunyikan default (biar label tak ke-potong), muncul
+   saat hover — panah selalu tampil sbg petunjuk klik. */
+.hqs-go-txt { display: none; }
+.hqs-card:hover .hqs-go-txt { display: inline; }
 
 /* === Adaptive Bottom Block — Empty CTA + Delta Arrow ===================
    Per redesign user 2026-05-15 v24: card pintar adapt ke data state.
@@ -64367,8 +64855,9 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
    jelas. Scoped ke .home-ranking-section.
    ============================================================ */
 .home-ranking-section .lb-row.is-me {
-  background: rgba(232, 216, 196, 0.08) !important;
-  border-color: rgba(232, 216, 196, 0.38) !important;
+  /* req user 2026-06-15: baris kamu = sama dgn baris kreator lain (tanpa highlight) */
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
 }
 .home-ranking-section .lb-row:hover {
   border-color: var(--border-strong) !important;   /* bukan wine */
@@ -64457,20 +64946,22 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 /* Fill SOLID metalik (gradient) biar benar2 kelihatan emas/perak/
    perunggu (request user 2026-05-17: tint transparan lama keliatan
    kusam). Angka GELAP spt ukiran utk kontras di metal terang. */
-.home-ranking-section .lb-medal3[data-rank="1"] {           /* EMAS */
-  --m-edge: #a9781f;
-  --m-fill: linear-gradient(145deg, #fbe6a8 0%, #e8bd57 48%, #c7942f 100%);
-  --m-num: #5a3c0a; --m-ribbon: #d8af4e;
+/* On-palette (req user 2026-06-15: jangan warna di luar konsep). Rank tetap
+   bisa dibedakan: #1 wine pekat, #2 wine medium, #3 netral samar. Angka cream. */
+.home-ranking-section .lb-medal3[data-rank="1"] {
+  --m-edge: rgba(232, 216, 196, .45);
+  --m-fill: linear-gradient(145deg, #7d3640 0%, #561C24 100%);
+  --m-num: #F5E3C0;
 }
-.home-ranking-section .lb-medal3[data-rank="2"] {           /* PERAK */
-  --m-edge: #8c929c;
-  --m-fill: linear-gradient(145deg, #f6f8fb 0%, #d2d8e0 48%, #aab1bd 100%);
-  --m-num: #3a3f47; --m-ribbon: #c2c8d1;
+.home-ranking-section .lb-medal3[data-rank="2"] {
+  --m-edge: rgba(232, 216, 196, .26);
+  --m-fill: linear-gradient(145deg, #5a2b32 0%, #3e1820 100%);
+  --m-num: #E8D8C4;
 }
-.home-ranking-section .lb-medal3[data-rank="3"] {           /* PERUNGGU */
-  --m-edge: #80532b;
-  --m-fill: linear-gradient(145deg, #edbe8d 0%, #cd8a4c 48%, #9c5e2c 100%);
-  --m-num: #4a2b0d; --m-ribbon: #bb854e;
+.home-ranking-section .lb-medal3[data-rank="3"] {
+  --m-edge: rgba(232, 216, 196, .16);
+  --m-fill: rgba(232, 216, 196, .06);
+  --m-num: var(--muted);
 }
 /* Pita DIHAPUS — tidak ada lagi ::before/::after */
 .home-ranking-section .lb-medal3::before,
@@ -64487,13 +64978,12 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   border-radius: 50%;
   border: 1px solid var(--m-edge, rgba(232, 216, 196, 0.7));
   background: var(--m-fill, rgba(232, 216, 196, 0.12));
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.4),
-              inset 0 -1px 2px rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08),
+              inset 0 -1px 2px rgba(0,0,0,.2);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
   color: var(--m-num, var(--text));
-  text-shadow: 0 1px 0 rgba(255,255,255,.22);
 }
 
 /* ============================================================
@@ -73720,4 +74210,111 @@ section[data-view="stats"] .tp-table tbody tr { cursor: pointer !important; }
 body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z' fill='black'/></svg>") center/contain no-repeat !important;
           mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z' fill='black'/></svg>") center/contain no-repeat !important;
+/* (7c) Empty-bio placeholder = link aksi yg jelas bisa diklik (data-jump="profile").
+   Styling HANYA di state .is-placeholder; bio asli tetap teks biasa. */
+  color: var(--primary);
+  font-style: normal;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  text-decoration: none;
+  transition: color .15s, opacity .15s;
+}
+.hpc-bio.is-placeholder:hover {
+  text-decoration: none;
+  text-underline-offset: 2px;
+  opacity: 1;
+}
+.hpc-bio.is-placeholder::after {
+  content: ""; /* ✎ dihapus 2026-06-15 — ikon pensil sudah di kiri chip (SVG) */
+  font-size: 11px;
+  opacity: .8;
+/* (7e) Caption pengganti sparkline saat snapshot < 2 hari (honest, themed).
+   .hpf-spark-note = class baru yg dipakai renderHomePerfCard; .hpf-no-data
+   dipertahankan sbg dead-rule sesuai konvensi codebase. */
+.hpf-no-data,
+.hpf-spark-note {
+  display: block;
+  padding: 9px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .03);
+
+/* =========================================================================
+   (7a) WATCH-TIME ESTIMATE TAG — honest "≈ est." badge di label kartu
+   Waktu Ditonton (hanya kartu watch). Subtle, themed, punya tooltip title.
+   ========================================================================= */
+.hqs-est-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: .02em;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  border-radius: 6px;
+  cursor: help;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+/* Fallback kalau color-mix tak didukung: pakai cream/surface-2 */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .hqs-est-tag {
+    background: var(--surface-2, var(--cream));
+    border-color: var(--border);
+  }
+}
+
+/* =========================================================================
+   (7b) SHARED HOME AVATAR FALLBACK — initial chip di belakang <img>; kalau
+   img gagal load (onerror→remove) initial otomatis tampil. Tak pernah kosong.
+   Dipakai via homeAvatarMarkup() di kartu Home (mis. .cs-avatar).
+   ========================================================================= */
+.ha-initials {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.ha-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  z-index: 1;
+}
+/* Pastikan container avatar Home jadi positioning context utk .ha-img overlay */
+.cs-avatar { position: relative; }
+
+/* 7e: keterangan sparkline "Ringkasan Statistik" (#hqsSparkNote) — muncul utk
+   user baru saat data tren belum cukup (<2 titik). Muted, dashed, subtle. */
+.hqs-spark-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 7px 11px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-2, #2a1418) 60%, transparent);
+  border: 1px dashed var(--border, rgba(231,215,196,0.18));
+  border-radius: 10px;
+}
+.hqs-spark-note svg { flex: none; opacity: 0.8; }
+.hqs-spark-note[hidden] { display: none; }
+@supports not (background: color-mix(in srgb, red, blue)) {
+  .hqs-spark-note { background: var(--surface-2, #2a1418); }
 }
