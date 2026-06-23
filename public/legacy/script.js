@@ -5027,6 +5027,26 @@ function applyPrefSideEffects(key, val) {
 // settings, page titles). Element punya [data-i18n="key"] → text di-replace.
 const I18N = {
   en: {
+    "hi.sortOldest": "Oldest",
+    "lvl.pendatang": "Newcomer",
+    "lvl.naikDaun": "Rising Creator",
+    "lvl.aktif": "Active Creator",
+    "lvl.andal": "Reliable Creator",
+    "lvl.pro": "Pro Creator",
+    "lvl.bintangLokal": "Local Star",
+    "lvl.influencer": "Influencer",
+    "lvl.ikon": "Playly Icon",
+    "lvl.legenda": "Playly Legend",
+    "lvl.chip.views": "Views",
+    "lvl.chip.likes": "Likes",
+    "lvl.chip.video": "Videos",
+    "lvl.chip.followers": "Followers",
+    "lvl.note": "XP: views + likes + videos + followers",
+    "lvl.max": "Maximum level reached 🎉",
+    "lvl.xpToNext": "{n} XP to <b>Lv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "Total",
+    "hi.filterAll": "All",
+    "hi.sortLatest": "Latest",
     "st.subtitle": "Your channel performance — summary, graph, video performance, traffic & audience.",
     "st.summary": "Summary",
     "st.graph": "Graph",
@@ -6848,6 +6868,26 @@ const I18N = {
     "admin.toast.created.suffix": "created",
   },
   id: {
+    "hi.sortOldest": "Terlama",
+    "lvl.pendatang": "Pendatang",
+    "lvl.naikDaun": "Kreator Naik Daun",
+    "lvl.aktif": "Kreator Aktif",
+    "lvl.andal": "Kreator Andal",
+    "lvl.pro": "Kreator Pro",
+    "lvl.bintangLokal": "Bintang Lokal",
+    "lvl.influencer": "Influencer",
+    "lvl.ikon": "Ikon Playly",
+    "lvl.legenda": "Legenda Playly",
+    "lvl.chip.views": "Tontonan",
+    "lvl.chip.likes": "Suka",
+    "lvl.chip.video": "Video",
+    "lvl.chip.followers": "Pengikut",
+    "lvl.note": "XP: tontonan + suka + video + pengikut",
+    "lvl.max": "Level maksimum tercapai 🎉",
+    "lvl.xpToNext": "{n} XP lagi menuju <b>Lv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "Total",
+    "hi.filterAll": "Semua",
+    "hi.sortLatest": "Terbaru",
     "st.subtitle": "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.",
     "st.summary": "Ringkasan",
     "st.graph": "Grafik",
@@ -8636,6 +8676,26 @@ const I18N = {
     "admin.toast.created.suffix": "berhasil dibuat",
   },
   ms: {
+    "hi.sortOldest": "Terlama",
+    "lvl.pendatang": "Pendatang",
+    "lvl.naikDaun": "Kreator Sedang Naik",
+    "lvl.aktif": "Kreator Aktif",
+    "lvl.andal": "Kreator Mantap",
+    "lvl.pro": "Kreator Pro",
+    "lvl.bintangLokal": "Bintang Tempatan",
+    "lvl.influencer": "Influencer",
+    "lvl.ikon": "Ikon Playly",
+    "lvl.legenda": "Lagenda Playly",
+    "lvl.chip.views": "Tontonan",
+    "lvl.chip.likes": "Suka",
+    "lvl.chip.video": "Video",
+    "lvl.chip.followers": "Pengikut",
+    "lvl.note": "XP: tontonan + suka + video + pengikut",
+    "lvl.max": "Tahap maksimum dicapai 🎉",
+    "lvl.xpToNext": "{n} XP lagi ke <b>Tahap {lv} &middot; {title}</b>",
+    "hi.chipTotal": "Jumlah",
+    "hi.filterAll": "Semua",
+    "hi.sortLatest": "Terkini",
     "upload.ai.assist": "Tajuk & Tag Automatik",
     "upload.ai.assist.desc": "Masukkan tajuk/topik — AI cadangkan tajuk, penerangan & tag sedia guna.",
     "upload.ai.gen.btn": "Jana Idea",
@@ -10173,6 +10233,26 @@ const I18N = {
     "admin.toast.created.suffix": "berjaya dicipta",
   },
   ja: {
+    "hi.sortOldest": "最も古い",
+    "lvl.pendatang": "新参者",
+    "lvl.naikDaun": "注目のクリエイター",
+    "lvl.aktif": "アクティブクリエイター",
+    "lvl.andal": "頼れるクリエイター",
+    "lvl.pro": "プロクリエイター",
+    "lvl.bintangLokal": "ローカルスター",
+    "lvl.influencer": "インフルエンサー",
+    "lvl.ikon": "Playly アイコン",
+    "lvl.legenda": "Playly レジェンド",
+    "lvl.chip.views": "視聴",
+    "lvl.chip.likes": "いいね",
+    "lvl.chip.video": "動画",
+    "lvl.chip.followers": "フォロワー",
+    "lvl.note": "XP：視聴＋いいね＋動画＋フォロワー",
+    "lvl.max": "最大レベルに到達 🎉",
+    "lvl.xpToNext": "次まで {n} XP <b>Lv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "合計",
+    "hi.filterAll": "すべて",
+    "hi.sortLatest": "最新",
     "upload.ai.assist": "タイトル＆タグ自動",
     "upload.ai.assist.desc": "タイトル/トピックを入力 — AIがタイトル・説明・タグを提案します。",
     "upload.ai.gen.btn": "アイデアを生成",
@@ -11710,6 +11790,26 @@ const I18N = {
     "admin.toast.created.suffix": "を作成しました",
   },
   ar: {
+    "hi.sortOldest": "الأقدم",
+    "lvl.pendatang": "وافد جديد",
+    "lvl.naikDaun": "مُنشئ صاعد",
+    "lvl.aktif": "مُنشئ نشط",
+    "lvl.andal": "مُنشئ موثوق",
+    "lvl.pro": "مُنشئ محترف",
+    "lvl.bintangLokal": "نجم محلي",
+    "lvl.influencer": "مؤثّر",
+    "lvl.ikon": "أيقونة Playly",
+    "lvl.legenda": "أسطورة Playly",
+    "lvl.chip.views": "مشاهدات",
+    "lvl.chip.likes": "إعجابات",
+    "lvl.chip.video": "فيديوهات",
+    "lvl.chip.followers": "متابعون",
+    "lvl.note": "XP: المشاهدات + الإعجابات + الفيديوهات + المتابعون",
+    "lvl.max": "تم بلوغ المستوى الأقصى 🎉",
+    "lvl.xpToNext": "{n} XP للوصول إلى <b>المستوى {lv} &middot; {title}</b>",
+    "hi.chipTotal": "الإجمالي",
+    "hi.filterAll": "الكل",
+    "hi.sortLatest": "الأحدث",
     "upload.ai.assist": "عنوان ووسوم تلقائية",
     "upload.ai.assist.desc": "أدخل عنوانًا/موضوعًا — يقترح الذكاء الاصطناعي عناوين ووصفًا ووسومًا جاهزة.",
     "upload.ai.gen.btn": "أنشئ أفكارًا",
@@ -13247,6 +13347,26 @@ const I18N = {
     "admin.toast.created.suffix": "تم إنشاؤه بنجاح",
   },
   zh: {
+    "hi.sortOldest": "最早",
+    "lvl.pendatang": "新秀",
+    "lvl.naikDaun": "新晋创作者",
+    "lvl.aktif": "活跃创作者",
+    "lvl.andal": "可靠创作者",
+    "lvl.pro": "专业创作者",
+    "lvl.bintangLokal": "本地明星",
+    "lvl.influencer": "网红",
+    "lvl.ikon": "Playly 偶像",
+    "lvl.legenda": "Playly 传奇",
+    "lvl.chip.views": "观看",
+    "lvl.chip.likes": "点赞",
+    "lvl.chip.video": "视频",
+    "lvl.chip.followers": "粉丝",
+    "lvl.note": "XP：观看 + 点赞 + 视频 + 粉丝",
+    "lvl.max": "已达到最高等级 🎉",
+    "lvl.xpToNext": "还差 {n} XP 升到 <b>Lv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "总计",
+    "hi.filterAll": "全部",
+    "hi.sortLatest": "最新",
     "upload.ai.assist": "自动标题和标签",
     "upload.ai.assist.desc": "输入标题/主题 — AI 提供可用的标题、描述和标签。",
     "upload.ai.gen.btn": "生成创意",
@@ -14784,6 +14904,26 @@ const I18N = {
     "admin.toast.created.suffix": "创建成功",
   },
   ko: {
+    "hi.sortOldest": "오래된순",
+    "lvl.pendatang": "새내기",
+    "lvl.naikDaun": "떠오르는 크리에이터",
+    "lvl.aktif": "활발한 크리에이터",
+    "lvl.andal": "믿음직한 크리에이터",
+    "lvl.pro": "프로 크리에이터",
+    "lvl.bintangLokal": "로컬 스타",
+    "lvl.influencer": "인플루언서",
+    "lvl.ikon": "Playly 아이콘",
+    "lvl.legenda": "Playly 레전드",
+    "lvl.chip.views": "조회",
+    "lvl.chip.likes": "좋아요",
+    "lvl.chip.video": "동영상",
+    "lvl.chip.followers": "팔로워",
+    "lvl.note": "XP: 조회 + 좋아요 + 동영상 + 팔로워",
+    "lvl.max": "최대 레벨 달성 🎉",
+    "lvl.xpToNext": "다음까지 {n} XP <b>Lv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "합계",
+    "hi.filterAll": "전체",
+    "hi.sortLatest": "최신",
     "upload.ai.assist": "제목 및 태그 자동",
     "upload.ai.assist.desc": "제목/주제를 입력하세요 — AI가 제목, 설명, 태그를 제안합니다.",
     "upload.ai.gen.btn": "아이디어 생성",
@@ -16321,6 +16461,26 @@ const I18N = {
     "admin.toast.created.suffix": "생성됨",
   },
   es: {
+    "hi.sortOldest": "Más antiguo",
+    "lvl.pendatang": "Recién llegado",
+    "lvl.naikDaun": "Creador en ascenso",
+    "lvl.aktif": "Creador activo",
+    "lvl.andal": "Creador fiable",
+    "lvl.pro": "Creador pro",
+    "lvl.bintangLokal": "Estrella local",
+    "lvl.influencer": "Influencer",
+    "lvl.ikon": "Ícono de Playly",
+    "lvl.legenda": "Leyenda de Playly",
+    "lvl.chip.views": "Vistas",
+    "lvl.chip.likes": "Me gusta",
+    "lvl.chip.video": "Videos",
+    "lvl.chip.followers": "Seguidores",
+    "lvl.note": "XP: vistas + me gusta + videos + seguidores",
+    "lvl.max": "Nivel máximo alcanzado 🎉",
+    "lvl.xpToNext": "{n} XP para <b>Nv {lv} &middot; {title}</b>",
+    "hi.chipTotal": "Total",
+    "hi.filterAll": "Todos",
+    "hi.sortLatest": "Más reciente",
     "upload.ai.assist": "Título y etiquetas automáticos",
     "upload.ai.assist.desc": "Escribe un título/tema: la IA sugiere títulos, una descripción y etiquetas.",
     "upload.ai.gen.btn": "Generar ideas",
@@ -35385,7 +35545,7 @@ function refreshHeroGreeting() {
       } else {
         // Placeholder bio sebagai chip "tambah" yg rapi (req user 2026-06-15:
         // tulisan "+ Tambah bio kamu" diperbaiki) — ikon pensil + teks.
-        bioEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>Tambah bio kamu</span>';
+        bioEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>' + ((typeof tText === "function") ? tText("Tambah bio kamu") : "Tambah bio kamu") + '</span>';
         bioEl.classList.add("is-placeholder");
         bioEl.classList.remove("has-bio");
         bioEl.setAttribute("data-jump", "profile");
@@ -37539,7 +37699,12 @@ function _deCapsHomeLabels() {
     span.childNodes.forEach(n => {
       if (n.nodeType === 3) {
         const key = n.textContent.trim();
-        if (MAP[key]) n.textContent = n.textContent.replace(key, MAP[key]);
+        if (MAP[key]) {
+          // de-caps utk id; utk bahasa lain terjemah eksak via tText (aman).
+          const base = MAP[key];
+          const out = (typeof tText === "function") ? tText(base) : base;
+          n.textContent = n.textContent.replace(key, out);
+        }
       }
     });
   });
@@ -38609,7 +38774,9 @@ function renderHomeCreatorLevel() {
     "Kreator Andal", "Kreator Pro", "Bintang Lokal", "Influencer",
     "Ikon Playly", "Legenda Playly"];
   const titleFor = function (L) {
-    return TITLES[Math.min(L, TITLES.length) - 1] || "Legenda Playly";
+    // i18n: nama level diterjemah eksak via tText (aman; balik apa adanya kalau id/tak ada).
+    const nm = TITLES[Math.min(L, TITLES.length) - 1] || "Legenda Playly";
+    return (typeof tText === "function") ? tText(nm) : nm;
   };
 
   // Ikon minimalis monokrom (per request user 2026-05-16, bukan emoji warna)
@@ -38623,7 +38790,7 @@ function renderHomeCreatorLevel() {
   const chip = function (ico, label, count, rate) {
     const xpv = count * rate;
     return '<span class="hlv-chip' + (xpv > 0 ? ' is-active' : '') + '">' + ico +
-      ' <span class="hlv-chip-lab">' + label + '</span>' +
+      ' <span class="hlv-chip-lab">' + ((typeof tText === "function") ? tText(label) : label) + '</span>' +
       ' <b>+' + fmtNum(xpv) + ' XP</b></span>';
   };
 
@@ -38636,7 +38803,7 @@ function renderHomeCreatorLevel() {
           '<small class="hlv-sub">Naik level dari aktivitas kanalmu — terus tumbuh, tanpa batas</small>' +
         '</div>' +
       '</div>' +
-      '<small class="hlv-note">XP: tontonan + suka + video + pengikut</small>' +
+      '<small class="hlv-note">' + ((typeof tText === "function") ? tText("XP: tontonan + suka + video + pengikut") : "XP: tontonan + suka + video + pengikut") + '</small>' +
     '</div>' +
     '<div class="hlv-main">' +
       '<div class="hlv-badge"><span class="hlv-lv">Lv</span>' +
@@ -38658,9 +38825,9 @@ function renderHomeCreatorLevel() {
         '<div class="hlv-next">' +
           '<span class="hlv-next-txt">' +
             (remain > 0
-              ? fmtNum(remain) + ' XP lagi menuju <b>Lv ' + (level + 1) +
-                ' &middot; ' + titleFor(level + 1) + '</b>'
-              : 'Level maksimum tercapai 🎉') +
+              ? ((typeof t === "function" ? t('lvl.xpToNext') : '{n} XP lagi menuju <b>Lv {lv} &middot; {title}</b>')
+                  .replace('{n}', fmtNum(remain)).replace('{lv}', (level + 1)).replace('{title}', titleFor(level + 1)))
+              : ((typeof tText === "function") ? tText('Level maksimum tercapai 🎉') : 'Level maksimum tercapai 🎉')) +
           '</span>' +
           (remain > 0 ? '<span class="hlv-next-pct">' + pct + '%</span>' : '') +
         '</div>' +
@@ -40910,13 +41077,13 @@ function renderHistory() {
       ? `<div class="hist-undo"><span>Item dihapus.</span><button type="button" data-hist-undo>${HIC.undo}<span>Urungkan</span></button></div>` : "";
     toolbar.innerHTML = `
       <div class="hist-summary">
-        <button type="button" class="hist-stat total${filter === "all" ? " is-active" : ""}" data-hist-filter="all"><b>${totalAll}</b> Total</button>
-        <button type="button" class="hist-stat prog${filter === "progress" ? " is-active" : ""}" data-hist-filter="progress"><b>${inProg}</b> Belum selesai</button>
-        <button type="button" class="hist-stat done${filter === "done" ? " is-active" : ""}" data-hist-filter="done"><b>${doneCnt}</b> Selesai</button>
+        <button type="button" class="hist-stat total${filter === "all" ? " is-active" : ""}" data-hist-filter="all"><b>${totalAll}</b> ${tText("Total")}</button>
+        <button type="button" class="hist-stat prog${filter === "progress" ? " is-active" : ""}" data-hist-filter="progress"><b>${inProg}</b> ${tText("Belum selesai")}</button>
+        <button type="button" class="hist-stat done${filter === "done" ? " is-active" : ""}" data-hist-filter="done"><b>${doneCnt}</b> ${tText("Selesai")}</button>
       </div>
       <div class="hist-controls">
-        ${dd("filter", filter, [["all", "Semua"], ["progress", "Belum selesai"], ["done", "Selesai"]])}
-        ${dd("sort", sortMode, [["newest", "Terbaru"], ["oldest", "Terlama"]])}
+        ${dd("filter", filter, [["all", tText("Semua")], ["progress", tText("Belum selesai")], ["done", tText("Selesai")]])}
+        ${dd("sort", sortMode, [["newest", tText("Terbaru")], ["oldest", tText("Terlama")]])}
       </div>${undo}`;
   }
 
