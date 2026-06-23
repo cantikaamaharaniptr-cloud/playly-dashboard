@@ -7174,7 +7174,7 @@ const I18N = {
     "library.status.tab.takedown":"Diturunkan",
     "library.status.tab.trash":  "Sampah",
     "library.empty.live":        "Belum ada video yang sudah live.",
-    "library.empty.upload.now":  "Upload sekarang",
+    "library.empty.upload.now":  "Unggah sekarang",
     "library.empty.status":      "Tidak ada video di status.",
     "library.empty.pending":     "Tidak ada video pending review.",
     "library.empty.takedown":    "Tidak ada video yang di-takedown.",
@@ -7227,8 +7227,8 @@ const I18N = {
     "home.perf.title":           "PERFORMA HARI INI",
     "home.suggest.title":        "SARAN KREATOR",
     "home.streak.days":          "Hari Streak",
-    "home.streak.bar.label":     "Upload 7 hari terakhir",
-    "home.streak.cta":           "Upload hari ini →",
+    "home.streak.bar.label":     "Unggah 7 hari terakhir",
+    "home.streak.cta":           "Unggah hari ini →",
     // Compact chat-time abbreviations ID
     "chat.min.short":            "mnt",
     "chat.hour.short":           "jam",
@@ -7937,8 +7937,8 @@ const I18N = {
     "people.empty.followers":     "Belum ada yang mengikuti kamu. Upload video atau ajak teman kenal Playly!",
     "people.empty.following":     "Kamu belum mengikuti siapapun. Buka tab <b>Semua</b> untuk jelajahi user lain.",
     "topperf.empty.title":        "Belum ada data performa",
-    "topperf.empty.desc":         "Upload video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.",
-    "topperf.empty.cta":          "Upload video pertama",
+    "topperf.empty.desc":         "Unggah video pertamamu untuk mulai melihat statistik views, likes, dan waktu tonton di sini.",
+    "topperf.empty.cta":          "Unggah video pertama",
     "topperf.empty.col":          "Data akan muncul saat video kamu mulai mendapat tontonan.",
     "notif.empty.rich.title":     "Belum ada notifikasi",
     "notif.empty.rich.desc":      "Notifikasi muncul ketika ada interaksi di konten kamu — like, komentar, follower baru, atau balasan pesan.",
@@ -32917,7 +32917,7 @@ function renderHomeSidebar() {
           <div class="hsb-files-empty-ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
-          <p>Belum ada video. Upload video pertama kamu.</p>
+          <p>Belum ada video. Unggah video pertama kamu.</p>
         </div>`;
     } else {
       filesBody.innerHTML = top.map(v => {
@@ -34298,7 +34298,7 @@ function renderHomeStreak() {
         </div>
       </div>
       <div class="hsc-bars">
-        <div class="hsc-bars-label">Upload 7 hari terakhir</div>
+        <div class="hsc-bars-label">Unggah 7 hari terakhir</div>
         <div class="hsc-bars-row">${barsHtml}</div>
       </div>
       <div class="hsc-right">
@@ -34933,8 +34933,8 @@ function renderHomeAchievements() {
   const IC_TROPHY = '<svg ' + SI + '><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>';
   const IC_LOCK   = '<svg ' + SI + '><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const ACH = [
-    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Upload 1 video",        ok: myVids.length >= 1 },
-    { ico: IC_STACK,  name:"Produktif",        desc:"Upload 10 video",       ok: myVids.length >= 10 },
+    { ico: IC_VIDEO,  name:"Video Pertama",   desc:"Unggah 1 video",        ok: myVids.length >= 1 },
+    { ico: IC_STACK,  name:"Produktif",        desc:"Unggah 10 video",       ok: myVids.length >= 10 },
     { ico: IC_EYE,    name:"100 Tontonan",     desc:"Capai 100 tontonan",    ok: totalViews >= 100 },
     { ico: IC_TREND,  name:"1K Tontonan",      desc:"Capai 1.000 tontonan",  ok: totalViews >= 1000 },
     { ico: IC_HEART,  name:"Disukai",          desc:"Capai 100 suka",        ok: totalLikes >= 100 },
@@ -35083,7 +35083,7 @@ function renderHomePerfCard() {
     wrap.innerHTML = `
       <div class="hra-empty">
         <div class="hra-empty-icon">📊</div>
-        <p>Upload video pertamamu untuk mulai tracking performa di sini.</p>
+        <p>Unggah video pertamamu untuk mulai tracking performa di sini.</p>
         <button class="btn primary small" data-jump="upload" style="margin-top:10px">Upload Sekarang</button>
       </div>`;
     wrap.querySelector("[data-jump]")?.addEventListener("click", () => switchView?.("upload"));
@@ -35234,7 +35234,7 @@ function renderHomeTopPerformer() {
         <div class="htp-cta-icon">🎬</div>
         <div class="htp-cta-text">
           <strong>Belum ada video</strong>
-          <span>Upload video pertamamu dan mulai tracking performanya di sini.</span>
+          <span>Unggah video pertamamu dan mulai tracking performanya di sini.</span>
         </div>
         <button class="btn primary small" data-jump="upload">Upload Sekarang</button>
       </div>`;
@@ -35378,7 +35378,7 @@ function renderLiveMetrics() {
   const otherCreators = getPlatformCreators({ activeOnly: true }).length;
   const myHasVideos = (state?.myVideos?.length || 0) > 0 ? 1 : 0;
   const totalCreators = otherCreators + myHasVideos;
-  // Upload hari ini = video dengan createdAt < 24 jam yang lalu (atau id sebagai fallback timestamp)
+  // Unggah hari ini = video dengan createdAt < 24 jam yang lalu (atau id sebagai fallback timestamp)
   const now = Date.now();
   const oneDay = 24 * 60 * 60 * 1000;
   const todayCount = videos.filter(v => {
@@ -36098,7 +36098,7 @@ function renderFeatured() {
       <div class="featured-empty">
         <div class="featured-empty-icon">🎬</div>
         <h4>Belum ada video</h4>
-        <p>Upload video pertamamu untuk muncul di sini sebagai sorotan utama.</p>
+        <p>Unggah video pertamamu untuk muncul di sini sebagai sorotan utama.</p>
         <button class="btn primary small" data-jump="upload">📤 Upload Sekarang</button>
       </div>
     `;
@@ -36168,7 +36168,7 @@ function renderVideoGrid() {
 
   if (!list.length) {
     grid.innerHTML = emptyHTML("🎬", "Belum ada video",
-      "Upload video pertamamu untuk mulai berbagi kreasi ke seluruh dunia.",
+      "Unggah video pertamamu untuk mulai berbagi kreasi ke seluruh dunia.",
       "📤 Upload Video Pertama", "upload");
   } else {
     grid.innerHTML = list.map(videoCardHTML).join("");
@@ -37890,7 +37890,7 @@ function renderFYP() {
       ? { h: `Tidak ada hasil untuk "${escapeHtml(discoverQuery)}"`, p: "Coba kata kunci lain atau kosongkan kolom pencarian." }
       : fypTagFilter
       ? { h: `Tidak ada video dengan tag #${escapeHtml(fypTagFilter)}`, p: "Coba tag lain atau hapus filter di atas." }
-      : { h: "Belum ada video di feed", p: "Upload video pertamamu atau follow kreator lain untuk mengisi feed!" };
+      : { h: "Belum ada video di feed", p: "Unggah video pertamamu atau follow kreator lain untuk mengisi feed!" };
     feed.innerHTML = `<div class="fyp-empty"><h3>${emptyMsg.h}</h3><p>${emptyMsg.p}</p></div>`;
     return;
   }
@@ -44728,12 +44728,12 @@ $("#startUpload")?.addEventListener("click", () => {
             saveState();
             toast("☁️ Video tersimpan di cloud — bisa diputar di device lain.", "success");
           } else if (result && !result.ok) {
-            // Upload ke cloud gagal — beritahu user, tapi video tetap aman di lokal
+            // Unggah ke cloud gagal — beritahu user, tapi video tetap aman di lokal
             const reason =
               result.message ||
               (result.error === "file_too_large"
                 ? "File terlalu besar untuk Supabase Storage."
-                : "Upload ke cloud gagal — video disimpan lokal saja.");
+                : "Unggah ke cloud gagal — video disimpan lokal saja.");
             toast(`⚠️ ${reason} Video kamu masih bisa diputar di browser ini.`, "warning");
           }
         }).catch(err => {
@@ -47115,7 +47115,7 @@ async function openPlayer(id) {
       : `<div class="upnext-empty">
           <div class="upnext-empty-icon">🎬</div>
           <p>Belum ada video</p>
-          <small>Upload video pertamamu untuk muncul di sini.</small>
+          <small>Unggah video pertamamu untuk muncul di sini.</small>
           <button class="btn primary small" data-jump="upload" type="button">📤 Upload Sekarang</button>
         </div>`;
   } else {
@@ -52635,11 +52635,11 @@ async function renderStoragePage() {
         ? window._emptyRichV24({
             kind: "storage",
             title: "Storage kamu masih kosong",
-            copy: "Upload video pertamamu untuk mulai berbagi konten.",
-            cta: { label: "Upload sekarang", view: "upload" },
+            copy: "Unggah video pertamamu untuk mulai berbagi konten.",
+            cta: { label: "Unggah sekarang", view: "upload" },
             extra: "storage-empty",
           })
-        : `<div class="storage-empty">Belum ada file. Upload video pertamamu untuk mulai!</div>`;
+        : `<div class="storage-empty">Belum ada file. Unggah video pertamamu untuk mulai!</div>`;
     } else {
       const sorted = [...myVideos].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0));
       // Status label per admin status — biar user jelas tau video ini lagi
