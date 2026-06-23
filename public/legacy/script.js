@@ -26045,6 +26045,37 @@ function startAdminEventSimulator() {
   // no-op — pakai data real saja
 }
 
+// Tingkat kepentingan toast notif → warna accent (req user 2026-06-14):
+// notif penting tampil menonjol, bukan semua "info" biru polos. Pakai kelas
+// toast yg sudah ada (.toast.success/.warning/.error → pill hijau/gold/merah).
+function notifToastSeverity(type) {
+  switch (type) {
+    case "premium-approved":            return "success";  // hijau
+    case "premium-rejected":
+    case "tier-downgrade":              return "warning";  // gold
+    case "video-takedown":              return "error";    // merah
+    default:                            return "info";
+  }
+}
+
+// Sinkronisasi notifikasi user dari state terbaru — dipakai oleh BOTH cross-tab
+// (`storage`) DAN cross-device (`playly:cloud-applied`). Update lonceng/panel +
+// widget home, lalu toast di atas utk notif yg benar-benar baru (id teratas
+// berubah & belum dibaca), dgn warna sesuai tingkat kepentingannya.
+function syncUserNotificationsFromState(fresh) {
+  if (!user || !fresh || !Array.isArray(fresh.notifications)) return;
+  const prevTopId = state.notifications?.[0]?.id;
+  state.notifications = fresh.notifications;
+  try { renderNotifications?.(); } catch {}
+  try { renderHomeNotifLatest?.(); } catch {}
+  try { renderHomeTierWidget?.(); } catch {}
+  const newest = fresh.notifications[0];
+  if (newest && newest.id !== prevTopId && newest.unread) {
+    const plain = String(newest.text || "").replace(/<[^>]*>/g, "");
+    toast(`🔔 ${plain}`, notifToastSeverity(newest.type));
+  }
+}
+
 // Live sync untuk USER (non-admin): kalau admin mengirim pesan dari tab lain,
 // inbox user di tab ini ikut ter-update tanpa reload.
 function setupUserMessageSync() {
@@ -26083,22 +26114,23 @@ function setupUserMessageSync() {
         toast(`📨 Pesan baru dari <b>@${escapeHtml(m.name)}</b> (${label})`, "info");
       }
     }
-    // Notifikasi dari user lain (like / comment / follow) — sync agar lonceng
-    // di topbar dan panel notifikasi langsung update.
-    if (Array.isArray(fresh.notifications)) {
-      const prevTopId = state.notifications?.[0]?.id;
-      state.notifications = fresh.notifications;
-      if (typeof renderNotifications === "function") renderNotifications();
-      // Re-render home notif widget supaya real-time (per request 2026-05-03 fix bug)
-      if (typeof renderHomeNotifLatest === "function") renderHomeNotifLatest();
-    renderHomeTierWidget();
-      // Toast cuma kalau notifikasi baru benar-benar masuk (id paling atas berubah)
-      const newest = fresh.notifications[0];
-      if (newest && newest.id !== prevTopId && newest.unread) {
-        const plain = String(newest.text || "").replace(/<[^>]*>/g, "");
-        toast(`🔔 ${plain}`, "info");
-      }
-    }
+    // Notifikasi dari user lain (like / comment / follow) — sync lonceng + panel
+    // + widget home, lalu toast utk notif baru (warna per tingkat kepentingan).
+    syncUserNotificationsFromState(fresh);
+  });
+
+  // Cross-DEVICE (via Supabase cloud-sync): saat state user ini di-apply dari
+  // cloud, `storage` TIDAK fire di tab yg sama, jadi kita dengar event
+  // `playly:cloud-applied` supaya notif dari perangkat lain tetap muncul toast
+  // di atas + lonceng update. (req user 2026-06-14: toast cross-device.)
+  window.addEventListener("playly:cloud-applied", e => {
+    if (!user) return;
+    const keys = e.detail?.keys || [];
+    if (!keys.includes(`playly-state-${user.username}`)) return;
+    let fresh;
+    try { fresh = JSON.parse(localStorage.getItem(`playly-state-${user.username}`) || "null"); }
+    catch { return; }
+    syncUserNotificationsFromState(fresh);
   });
 }
 setupUserMessageSync();
@@ -26546,33 +26578,39 @@ function renderAdminAlerts() {
 // Mirror struktur admin (Perlu Perhatian + Aktivitas Real-time) untuk user dashboard.
 // Pakai data dari state.myVideos / state.activities. Theme color via CSS vars.
 
-function renderUserNotifAlerts() {
-  const wrap = document.getElementById("userNotifAlerts");
-  if (!wrap) return;
+// Hitung baris "Perlu Perhatian" (video pending/takedown, status premium).
+// Dipakai bareng oleh side panel (dormant) & halaman notif penuh.
+function _getUserAttentionRows() {
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const pendingCount = myVids.filter(v => v.adminStatus === "pending").length;
   const takedownCount = myVids.filter(v => v.adminStatus === "takedown").length;
-  // Premium expiring dalam 7 hari
   let expiringSoon = 0;
   try {
     const acc = (typeof findAccountByEmail === "function" && user?.email)
-      ? findAccountByEmail(user.email)
-      : null;
+      ? findAccountByEmail(user.email) : null;
     if (acc?.tier === "premium" && acc.premiumExpiresAt) {
       const daysLeft = (acc.premiumExpiresAt - Date.now()) / 86400000;
       if (daysLeft > 0 && daysLeft < 7) expiringSoon = Math.ceil(daysLeft);
     }
   } catch {}
-  // Pending payment status
   const paymentPending = state?.premiumPaymentStatus === "pending" ? 1 : 0;
-
-  const rows = [
+  return [
     { cls: "amber", text: `${pendingCount} video menunggu review admin`, count: pendingCount, view: "videos" },
     { cls: "red",   text: `${takedownCount} video di-takedown admin`,    count: takedownCount, view: "videos" },
     { cls: "blue",  text: `Premium kedaluwarsa dalam ${expiringSoon} hari`, count: expiringSoon, view: "settings" },
     { cls: "gray",  text: `Pembayaran premium menunggu approval admin`,  count: paymentPending, view: "settings" },
   ].filter(r => r.count > 0);
-
+}
+function _attentionRowsHTML(rows, closeSp) {
+  const closeAttr = closeSp ? ` data-close-sp="${closeSp}"` : "";
+  return rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}"${closeAttr} role="button" tabindex="0" style="cursor:pointer">
+    <span>${r.text}</span><b>${r.count}</b>
+  </li>`).join("");
+}
+function renderUserNotifAlerts() {
+  const wrap = document.getElementById("userNotifAlerts");
+  if (!wrap) return;
+  const rows = _getUserAttentionRows();
   if (!rows.length) {
     wrap.innerHTML = `<li class="alert-empty">
       <span class="alert-empty-icon">✅</span>
@@ -26583,16 +26621,14 @@ function renderUserNotifAlerts() {
     </li>`;
     return;
   }
-  wrap.innerHTML = rows.map(r => `<li class="alert-row ${r.cls}" data-jump="${r.view}" data-close-sp="notifPanel" role="button" tabindex="0" style="cursor:pointer">
-    <span>${r.text}</span><b>${r.count}</b>
-  </li>`).join("");
+  wrap.innerHTML = _attentionRowsHTML(rows, "notifPanel");
 }
 
 function renderUserLiveFeed() {
   const list = document.getElementById("userLiveFeed");
   if (!list) return;
-  const acts = Array.isArray(state?.activities) ? state.activities.slice(0, 10) : [];
-  if (!acts.length) {
+  const raw = Array.isArray(state?.activities) ? state.activities.slice(0, 40) : [];
+  if (!raw.length) {
     list.innerHTML = `<li class="feed-empty">
       <span class="feed-empty-icon">📭</span>
       <div>
@@ -26602,11 +26638,53 @@ function renderUserLiveFeed() {
     </li>`;
     return;
   }
-  list.innerHTML = acts.map(a => `<li>
-    <span class="feed-ico">${a.icon || "🔔"}</span>
-    <span class="feed-text">${a.text || ""}</span>
-    <span class="feed-time">${a.ts ? relTime(a.ts) : (a.time || "")}</span>
-  </li>`).join("");
+  // Gabungkan aktivitas IDENTIK BERUNTUN jadi 1 baris + badge ×N — biar feed
+  // teratur, tidak acak/berulang (req user 2026-06-13). Mis. "Kamu mengunggah
+  // Unduhan" ×6 → satu baris dgn ×6.
+  const groups = [];
+  raw.forEach(a => {
+    const key = (a.text || "") + "|" + (a.icon || "");
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.count++;
+      last.lastTs = Math.max(last.lastTs || 0, a.ts || 0);
+    } else {
+      // simpan aktivitas perwakilan (act) utk routing klik (req user 2026-06-14).
+      groups.push({ key, icon: a.icon, text: a.text, lastTs: a.ts || 0, time: a.time, count: 1, act: a });
+    }
+  });
+  list.innerHTML = groups.slice(0, 10).map(g => {
+    const a = g.act || {};
+    const vid = (a.videoId != null && a.videoId !== "") ? String(a.videoId) : "";
+    const sender = (!vid && typeof extractSenderFromText === "function") ? (extractSenderFromText(a.text) || "") : "";
+    return `<li data-feed-act="1" data-vid="${vid}" data-sender="${escapeHtml(sender)}" data-type="${escapeHtml(a.type || "")}" role="button" tabindex="0" style="cursor:pointer">
+    <span class="feed-ico">${g.icon || "🔔"}</span>
+    <span class="feed-text">${g.text || ""}${g.count > 1 ? ` <span class="feed-count">×${g.count}</span>` : ""}</span>
+    <span class="feed-time">${g.lastTs ? relTime(g.lastTs) : (g.time || "")}</span>
+  </li>`;
+  }).join("");
+}
+// Routing klik item feed aktivitas user → konten terkait (req user 2026-06-14:
+// feed harus bisa dibuka). videoId → player; @pengirim → profil; upload sendiri
+// → Video Saya; fallback → halaman notif.
+function handleUserFeedClick(li) {
+  if (!li) return;
+  try { document.getElementById("notifPanel")?.classList.remove("open"); } catch {}
+  const vid = li.dataset.vid;
+  const sender = li.dataset.sender;
+  const type = li.dataset.type;
+  if (vid && typeof openPlayer === "function") { openPlayer(+vid); return; }
+  if (sender && typeof openUserProfile === "function") { openUserProfile(sender); return; }
+  if (type === "upload" && typeof switchView === "function") { switchView("videos"); return; }
+  if (typeof switchView === "function") switchView("notifications");
+}
+if (!window.__userFeedKeyBound) {
+  window.__userFeedKeyBound = true;
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const li = e.target.closest && e.target.closest("#userLiveFeed li[data-feed-act]");
+    if (li) { e.preventDefault(); handleUserFeedClick(li); }
+  });
 }
 
 // =================== ADMIN ACTION CENTER (per 2026-05-07) ===================
@@ -52133,7 +52211,11 @@ const NI_SHARE   = '<svg ' + _NSI + '><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20
 const NI_MAIL    = '<svg ' + _NSI + '><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
 const NI_CAST    = '<svg ' + _NSI + '><path d="M3 11a9 9 0 0 1 9 9M3 4a16 16 0 0 1 16 16"/><circle cx="4.5" cy="19.5" r="1.5"/></svg>';
 const NI_BELL    = '<svg ' + _NSI + '><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>';
+const NI_CARD    = '<svg ' + _NSI + '><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>';
 const NOTIF_CATEGORY_MAP = {
+  "premium-approved":  { key: "premium",    icon: NI_CARD,    title: "Premium" },
+  "premium-rejected":  { key: "premium",    icon: NI_CARD,    title: "Premium" },
+  "premium-code-sent": { key: "premium",    icon: NI_CARD,    title: "Premium" },
   follow:          { key: "followers",  icon: NI_USER,    title: "New Followers" },
   like:            { key: "likes",      icon: NI_HEART,   title: "New Likes" },
   "video-like":    { key: "likes",      icon: NI_HEART,   title: "New Likes" },
@@ -52148,9 +52230,43 @@ const NOTIF_CATEGORY_MAP = {
   "email-reply":   { key: "email",      icon: NI_MAIL,    title: "Balasan Email Admin" },
   "admin-email":   { key: "email",      icon: NI_MAIL,    title: "Balasan Email Admin" },
 };
-const NOTIF_CATEGORY_ORDER = ["followers", "likes", "comments", "share", "messages", "broadcast", "email"];
+const NOTIF_CATEGORY_ORDER = ["premium", "followers", "likes", "comments", "share", "messages", "broadcast", "email"];
+
+// Teks notif terlokalisasi dari type + sender (bukan stored text yg fixed),
+// fallback ke n.text utk notif lama. Module-scope supaya dipakai bareng oleh
+// renderNotifications (#notifList) DAN getNotifList (dropdown) — sumber teks
+// tunggal (2026-06-14, refactor D: dropdown baca state, bukan scrape DOM).
+function buildNotifText(n) {
+  if (!n) return "";
+  const sender = n.fromUsername;
+  if (!sender) return n.text || "";
+  const handle = `<b>@${escapeHtml(sender)}</b>`;
+  const verbKey = {
+    follow:        "notif.event.followed",
+    like:          "notif.event.liked",
+    comment:       "notif.event.commented",
+    "video-share": "notif.event.shared",
+    upload:        "notif.event.upload",
+  }[n.type];
+  if (!verbKey) return n.text || "";
+  return `${handle} ${t(verbKey)}`;
+}
 
 function renderNotifications() {
+  // Titik notif di bell: tampil HANYA kalau ADA notif belum dibaca — bukan
+  // dummy statis selalu-pulse yg menyesatkan (req user 2026-06-13). Dijalankan
+  // sebelum guard #notifList karena bell ada di semua view.
+  var _unread = (typeof state !== "undefined" && state && Array.isArray(state.notifications))
+    ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
+  var _dot = document.querySelector("#openNotif .dot-indicator");
+  if (_dot) {
+    _dot.style.display = _unread > 0 ? "block" : "none";
+  }
+  // Dot merah di lonceng HEADER panel notif juga (req user 2026-06-14): pakai
+  // class di body sbg single source of truth → CSS yg munculkan dot, robust
+  // walau panel baru di-mount belakangan.
+  try { document.body.classList.toggle("has-unread-notif", _unread > 0); } catch {}
+
   const list = $("#notifList");
   if (!list) return;
   if (!state.notifications.length) {
@@ -52200,23 +52316,8 @@ function renderNotifications() {
   const order = [...NOTIF_CATEGORY_ORDER];
   if (grouped.other) order.push("other");
 
-  // Helper: build localized notif text dari type + sender supaya bahasa
-  // ngikutin setting user (bukan stored text yang fixed). Kalau notif lama
-  // belum punya fromUsername (legacy), fallback ke n.text.
-  const buildText = (n) => {
-    const sender = n.fromUsername;
-    if (!sender) return n.text || "";
-    const handle = `<b>@${escapeHtml(sender)}</b>`;
-    const verbKey = {
-      follow:        "notif.event.followed",
-      like:          "notif.event.liked",
-      comment:       "notif.event.commented",
-      "video-share": "notif.event.shared",
-      upload:        "notif.event.upload",
-    }[n.type];
-    if (!verbKey) return n.text || "";
-    return `${handle} ${t(verbKey)}`;
-  };
+  // Teks notif terlokalisasi — pakai helper module-scope (dipakai bareng dropdown).
+  const buildText = buildNotifText;
 
   // Section title juga localized — pakai key yang sudah ada di dict
   const localizedCatTitle = (g) => {
@@ -52262,17 +52363,73 @@ function renderNotifications() {
   });
 }
 
-// Routing: like/comment/video-share → buka player; follow → buka profil pengirim;
-// fallback → buka profil pengirim kalau ada, kalau tidak biarkan saja.
+// Routing notif → HALAMAN FITUR terkait (req user 2026-06-14: tiap notif harus
+// terhubung langsung ke halaman-nya, jangan dead-end). Urutan: video → player;
+// jenis-spesifik (pesan/premium/video) → view-nya; sosial → profil pengirim
+// (kecuali pengirim admin yg tak punya profil publik → ke Pesan); fallback → notif.
+const NOTIF_VIEW_BY_TYPE = {
+  // Pesan / siaran / email dari admin → halaman Pesan
+  "broadcast":         "messages",
+  "admin-broadcast":   "messages",
+  "email-reply":       "messages",
+  "admin-email":       "messages",
+  "message":           "messages",
+  "system":            "messages",
+  // Status premium → halaman Wawasan Premium (hub premium). Kalau sudah premium
+  // tampil insight; kalau belum, halaman itu munculkan ajakan upgrade.
+  // (premium-rejected DITANGANI di NOTIF_ACTION_BY_TYPE karena buka modal.)
+  // req user 2026-06-14.
+  "premium-approved":  "premium-insights",
+  "premium-code-sent": "premium-insights",
+  // Tier premium dicabut admin → Wawasan Premium (di sana ada CTA upgrade lagi).
+  "tier-downgrade":    "premium-insights",
+  // Update status tiket support → halaman Pesan.
+  "ticket-status":     "messages",
+  // Video kena takedown admin → halaman Video Saya. PENTING: takedown punya
+  // videoId tapi videonya sudah dihapus/dinonaktifkan, jadi JANGAN buka player
+  // (akan kosong/error). Karena itu type-map dicek SEBELUM videoId.
+  "video-takedown":    "videos",
+};
+// Sebagian notif lebih tepat buka MODAL (bukan pindah halaman) — req user
+// 2026-06-14: pembayaran ditolak → buka modal upgrade (plan picker) utk bayar
+// ulang langsung. Dicek paling awal di handler.
+const NOTIF_ACTION_BY_TYPE = {
+  "premium-rejected": () => {
+    if (typeof openPlanPicker === "function") openPlanPicker({ context: "upgrade" });
+    else if (typeof switchView === "function") switchView("premium-insights");
+  },
+};
 function handleNotificationClick(n) {
+  if (!n) return;
   const closePanel = () => $("#notifPanel")?.classList.remove("open");
+  // 1) Jenis yg buka MODAL (pembayaran ditolak/kode) → jalankan aksinya.
+  const action = NOTIF_ACTION_BY_TYPE[n.type];
+  if (typeof action === "function") { closePanel(); action(); return; }
+  // 2) Jenis dgn halaman fitur khusus → langsung ke view-nya (dicek sebelum
+  //    videoId supaya takedown tidak nyoba buka video yg sudah hilang).
+  const targetView = NOTIF_VIEW_BY_TYPE[n.type];
+  if (targetView) { closePanel(); switchView(targetView); return; }
+  // 3) Terkait video tertentu (like/komentar/share) → buka player video itu.
   if (n.videoId) { closePanel(); openPlayer(+n.videoId); return; }
+  // 3) Notif sosial (follow/like/comment) → profil pengirim. Tapi kalau
+  //    pengirimnya admin (tak punya profil publik) → arahkan ke Pesan, bukan
+  //    dead-end "Admin tidak punya profil publik".
   const sender = n.fromUsername || extractSenderFromText(n.text);
-  if (n.type === "follow") {
-    if (sender) { closePanel(); openUserProfile(sender); }
+  if (sender) {
+    let senderIsAdmin = false;
+    try {
+      const acc = (typeof findAccountByUsername === "function") ? findAccountByUsername(sender) : null;
+      senderIsAdmin = acc?.role === "admin"
+        || (acc?.email && typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(acc.email));
+    } catch {}
+    closePanel();
+    if (senderIsAdmin) { switchView("messages"); return; }
+    openUserProfile(sender);
     return;
   }
-  if (sender) { closePanel(); openUserProfile(sender); }
+  // 4) Fallback: tak ada target spesifik → halaman notifikasi penuh.
+  closePanel();
+  switchView("notifications");
 }
 
 // Backward-compat: notif lama belum punya fromUsername, ambil dari teks.
@@ -52297,10 +52454,37 @@ function _matchNotifFilter(n, filter) {
     || n.type === "email-reply" || n.type === "admin-email" || n.type === "system";
   return true;
 }
+// Catatan: "Perlu Perhatian" TIDAK lagi di halaman penuh (req user 2026-06-14:
+// dikembalikan ke side panel saja supaya tidak dobel). _getUserAttentionRows /
+// _attentionRowsHTML tetap dipakai oleh renderUserNotifAlerts (side panel).
+// Angka hitung per filter di chip-tabs halaman notif (req user 2026-06-14:
+// rapikan + informatif). Tampil hanya kalau > 0.
+function _updateNotifFilterCounts() {
+  const all = Array.isArray(state?.notifications) ? state.notifications : [];
+  document.querySelectorAll("#notifPageFilters [data-notif-filter]").forEach(btn => {
+    const f = btn.dataset.notifFilter;
+    const count = all.filter(n => _matchNotifFilter(n, f)).length;
+    let badge = btn.querySelector(".chip-count");
+    if (count > 0) {
+      if (!badge) { badge = document.createElement("span"); badge.className = "chip-count"; btn.appendChild(badge); }
+      badge.textContent = count;
+      badge.style.display = "";
+    } else if (badge) {
+      badge.style.display = "none";
+    }
+  });
+}
 function renderNotifPage() {
+  // Safety: kalau ada sisa container attention dari sesi lama, buang.
+  document.getElementById("notifPageAttention")?.remove();
+  _updateNotifFilterCounts();
   const list = document.getElementById("notifPageList");
   if (!list) return;
   const all = Array.isArray(state?.notifications) ? state.notifications : [];
+  // "Tandai semua dibaca" hanya muncul kalau ADA notif belum dibaca (req user
+  // 2026-06-14: kalau semua sudah dibaca, tombol tak ada gunanya).
+  const _markAll = document.getElementById("notifPageMarkAllRead");
+  if (_markAll) _markAll.style.display = all.some(n => n.unread) ? "" : "none";
   const filtered = all.filter(n => _matchNotifFilter(n, notifPageState.filter));
   const slice = filtered.slice(0, notifPageState.limit);
   if (!slice.length) {
@@ -52311,12 +52495,14 @@ function renderNotifPage() {
     </div>`;
   } else {
     list.innerHTML = slice.map(n => {
-      const sender = n.fromUsername || extractSenderFromText(n.text) || "—";
-      const init = n.init || (sender.slice(0, 2).toUpperCase());
-      const text = n.text || `@${sender}`;
+      // Ikon kategori monokrom dalam chip (konsisten dropdown/panel) — bukan
+      // avatar emoji mentah. Teks pakai buildNotifText (bold @user). req user 2026-06-14.
+      const cat = (typeof NOTIF_CATEGORY_MAP !== "undefined" && NOTIF_CATEGORY_MAP[n.type]) || null;
+      const icon = (cat && cat.icon) || (typeof NI_BELL !== "undefined" ? NI_BELL : "🔔");
+      const text = (typeof buildNotifText === "function") ? buildNotifText(n) : (n.text || "");
       const time = n.ts ? (typeof relTime === "function" ? relTime(n.ts) : new Date(n.ts).toLocaleString()) : "";
       return `<div class="notif-page-item ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}">
-        <div class="avatar small"><span>${init}</span></div>
+        <span class="np-icon">${icon}</span>
         <div class="info">
           <p>${text}</p>
           <div class="time">${time}</div>
@@ -52383,6 +52569,13 @@ document.addEventListener("click", (e) => {
 // Event delegation untuk bell + close side panel — robust di mobile
 document.addEventListener("click", (e) => {
   const t = e.target;
+  // Klik item feed "Aktivitas Real-time" → buka konten terkait (req user 2026-06-14).
+  const _feedLi = t.closest("#userLiveFeed li[data-feed-act]");
+  if (_feedLi) {
+    e.preventDefault();
+    handleUserFeedClick(_feedLi);
+    return;
+  }
   // Bell icon → BOTH admin & user: dropdown popup di bawah bell.
   // Per user 2026-05-10av: user dashboard juga dapat popup notif sama dgn admin.
   // Side panel detail tetap accessible via tombol "Lihat detail" di dropdown footer.
@@ -52391,23 +52584,66 @@ document.addEventListener("click", (e) => {
     toggleNotifDropdown();
     return;
   }
-  // Tombol "Lihat detail" di dropdown → buka side panel + close dropdown
+  // Tombol "Lihat detail" footer dropdown → buka side panel detail (req user
+  // 2026-06-14: dikembalikan; user TIDAK langsung ke halaman penuh).
   if (t.closest("#notifDropdownOpenPanel")) {
     e.preventDefault();
     closeNotifDropdown();
-    // Lazy-mount notif panel content on first open (v479).
     if (typeof ensureLazyPanelMounted === "function") ensureLazyPanelMounted("notifPanel");
-    const panel = $("#notifPanel");
-    panel?.classList.add("open");
+    $("#notifPanel")?.classList.add("open");
     if (document.body.dataset.role === "admin") {
       try { renderAdminAlerts?.(); renderAdminLiveFeed?.(); } catch {}
+    } else {
+      try { renderUserNotifAlerts?.(); renderUserLiveFeed?.(); renderNotifications?.(); } catch {}
     }
+    return;
+  }
+  // "Tandai semua dibaca" di dropdown (req user 2026-06-14).
+  if (t.closest("#notifDropdownMarkAll")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications.forEach(n => { n.unread = false; });
+      try { saveState(); } catch {}
+    }
+    try { renderNotifications?.(); } catch {}        // dot + #notifList
+    try { renderNotifDropdownContent?.(); } catch {} // refresh item dropdown
+    if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
     return;
   }
   // Close dropdown via X button atau outside click
   if (t.closest("#notifDropdown .ndd-close")) {
     e.preventDefault();
     closeNotifDropdown();
+    return;
+  }
+  // Klik ITEM notif di dropdown (req user 2026-06-13/14) → tandai HANYA item itu
+  // dibaca + persist + perbarui dot/daftar + tutup dropdown + arahkan ke konten
+  // (video/profil) sesuai jenis; fallback ke halaman notif penuh.
+  const _nddItem = t.closest("#notifDropdown .ndd-item");
+  if (_nddItem) {
+    e.preventDefault();
+    // Item admin/alert dgn target halaman fitur (data-jump) → navigate ke sana
+    // (req user 2026-06-14: tiap notif terhubung ke halaman fiturnya).
+    const _jump = _nddItem.dataset.jump;
+    if (_jump) {
+      closeNotifDropdown();
+      if (typeof switchView === "function") switchView(_jump);
+      return;
+    }
+    const nid = _nddItem.dataset.notifId;
+    const n = (Array.isArray(state?.notifications))
+      ? state.notifications.find(x => String(x.id) === String(nid)) : null;
+    if (n && n.unread) {
+      n.unread = false;
+      try { saveState(); } catch {}
+    }
+    try { renderNotifications?.(); } catch {}   // perbarui dot bell + daftar penuh
+    closeNotifDropdown();
+    if (n && typeof handleNotificationClick === "function") {
+      handleNotificationClick(n);
+    } else if (typeof switchView === "function") {
+      switchView("notifications");
+    }
     return;
   }
   // Outside click closes dropdown
@@ -57132,8 +57368,29 @@ function saveVideoEdit() {
 
 // ----------------------- NOTIF DROPDOWN POPUP (admin, anchored below bell) -----------------------
 // Per user 2026-05-10: admin dashboard bell → dropdown popup di bawah icon.
-// Tombol "Lihat detail" di footer buka side panel detail (#notifPanel) yang
-// punya section Perlu Perhatian + Aktivitas Real-time + user notifs.
+// Footer dropdown: tombol "Lihat detail" (statis → side panel) dibiarkan apa
+// adanya (req user 2026-06-14: dikembalikan, BUKAN "Lihat semua"). Yang
+// ditambah cuma "Tandai semua dibaca" kalau ada notif belum dibaca.
+function _updateNotifDropdownFooter(isAdmin) {
+  const foot = document.querySelector("#notifDropdown .ndd-foot");
+  if (!foot) return;
+  let markBtn = document.getElementById("notifDropdownMarkAll");
+  const unread = Array.isArray(state?.notifications)
+    ? state.notifications.filter(function (n) { return n.unread; }).length : 0;
+  if (!isAdmin && unread > 0) {
+    if (!markBtn) {
+      markBtn = document.createElement("button");
+      markBtn.id = "notifDropdownMarkAll";
+      markBtn.type = "button";
+      markBtn.className = "btn ghost sm ndd-markall";
+      markBtn.textContent = "✓ Tandai semua dibaca";
+      foot.insertBefore(markBtn, foot.firstChild);
+    }
+    markBtn.style.display = "";
+  } else if (markBtn) {
+    markBtn.style.display = "none";
+  }
+}
 function renderNotifDropdownContent() {
   const body = document.getElementById("notifDropdownBody");
   if (!body) return;
@@ -57146,7 +57403,8 @@ function renderNotifDropdownContent() {
       alerts.forEach(a => items.push({
         icon: a.icon || "⚠️",
         text: a.text || a.title || "Alert",
-        time: a.time || ""
+        time: a.time || "",
+        jump: a.jump || ""
       }));
     } catch {}
     try {
@@ -57154,7 +57412,8 @@ function renderNotifDropdownContent() {
       feed.forEach(f => items.push({
         icon: f.icon || "🔥",
         text: f.text || f.title || "Activity",
-        time: f.time || ""
+        time: f.time || "",
+        jump: f.jump || ""
       }));
     } catch {}
   } else {
@@ -57162,21 +57421,37 @@ function renderNotifDropdownContent() {
     try {
       const list = (typeof getNotifList === "function") ? getNotifList().slice(0, 5) : [];
       list.forEach(n => items.push({
+        id: n.id || "",
+        unread: !!n.unread,
         icon: n.icon || NI_BELL,
         text: n.text || n.title || "Notification",
         time: n.time || ""
       }));
     } catch {}
   }
+  // Footer: relabel tombol utama + tombol "Tandai semua dibaca" (req user
+  // 2026-06-14). Dipanggil sebelum cek empty supaya jalan di kedua kondisi.
+  _updateNotifDropdownFooter(isAdmin);
   if (!items.length) {
-    body.innerHTML = `<div class="ndd-empty">Belum ada notifikasi baru.</div>`;
+    // Empty state lebih ramah (req user 2026-06-13): ikon + judul + 1 baris
+    // konteks, biar tidak terasa polos/seperti bug. Tetap kompak utk dropdown.
+    body.innerHTML = `<div class="ndd-empty">
+      <span class="ndd-empty-ico">${NI_BELL}</span>
+      <p class="ndd-empty-title" data-no-i18n>Belum ada notifikasi</p>
+      <p class="ndd-empty-sub" data-no-i18n>Suka, komentar, & pengikut baru bakal muncul di sini.</p>
+    </div>`;
     return;
   }
+  // Item dropdown dirombak (req user 2026-06-13): ikon dalam kotak bulat +
+  // konten (teks 2-baris + waktu DI BAWAH, bukan dempet di samping).
   body.innerHTML = items.map(it => `
-    <div class="ndd-item">
+    <div class="ndd-item${it.unread ? " unread" : ""}"${it.id ? ` data-notif-id="${it.id}"` : ""}${it.jump ? ` data-jump="${it.jump}"` : ""}>
       <span class="ndd-icon">${it.icon}</span>
-      <div class="ndd-text">${it.text}</div>
-      ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
+      <div class="ndd-main">
+        <p class="ndd-text">${it.text}</p>
+        ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
+      </div>
+      ${it.unread ? `<span class="ndd-unread-dot" aria-label="Belum dibaca"></span>` : ""}
     </div>
   `).join("");
 }
@@ -57231,7 +57506,10 @@ function getAdminAlerts() {
     return Array.from(ul.querySelectorAll("li")).map(li => ({
       icon: li.querySelector(".na-icon")?.textContent || "⚠️",
       text: li.querySelector(".na-text")?.textContent || li.textContent.trim(),
-      time: li.querySelector(".na-time")?.textContent || ""
+      time: li.querySelector(".na-time")?.textContent || "",
+      // target halaman fitur (admin-videos/admin-inbox/dll) supaya item dropdown
+      // admin bisa di-navigate (req user 2026-06-14).
+      jump: li.dataset.jump || ""
     }));
   } catch { return []; }
 }
@@ -57242,30 +57520,27 @@ function getAdminLiveFeed() {
     return Array.from(ul.querySelectorAll("li")).slice(0, 3).map(li => ({
       icon: li.querySelector(".af-icon")?.textContent || "🔥",
       text: li.querySelector(".af-text")?.textContent || li.textContent.trim(),
-      time: li.querySelector(".af-time")?.textContent || ""
+      time: li.querySelector(".af-time")?.textContent || "",
+      jump: li.dataset.jump || ""
     }));
   } catch { return []; }
 }
+// Refactor D (2026-06-14): baca LANGSUNG dari state.notifications, bukan scrape
+// DOM #notifList (yg rapuh + tergantung render & display:none). Ikon dari
+// NOTIF_CATEGORY_MAP, teks dari buildNotifText (sama persis dgn #notifList),
+// waktu dari relTime. Urutan = newest-first (state.notifications.unshift).
 function getNotifList() {
   try {
-    const ul = document.querySelector("#notifList");
-    if (!ul) return [];
-    // #notifList di-render renderNotifications() sebagai .notif-cat blocks
-    // (icon = SVG monokrom di .notif-cat-icon, item di .notif-item). Flatten
-    // jadi list per-notif supaya dropdown nampilin baris bersih + ikon SVG
-    // yang sama (bukan emoji 🔔 lagi).
-    const out = [];
-    ul.querySelectorAll(".notif-cat").forEach(cat => {
-      const icon = cat.querySelector(".notif-cat-icon")?.innerHTML?.trim() || "";
-      cat.querySelectorAll(".notif-item").forEach(it => {
-        out.push({
-          icon: icon,
-          text: (it.querySelector(".info p")?.textContent || it.textContent || "").trim().slice(0, 80),
-          time: (it.querySelector(".time")?.textContent || "").trim()
-        });
-      });
+    const arr = Array.isArray(state?.notifications) ? state.notifications : [];
+    return arr.slice(0, 5).map(n => {
+      const cat = (typeof NOTIF_CATEGORY_MAP !== "undefined" && NOTIF_CATEGORY_MAP[n.type]) || null;
+      const icon = (cat && cat.icon) || (typeof NI_BELL !== "undefined" ? NI_BELL : "🔔");
+      const text = (typeof buildNotifText === "function") ? buildNotifText(n) : (n.text || "");
+      const time = n.ts
+        ? (typeof relTime === "function" ? relTime(n.ts) : "")
+        : (n.time || "");
+      return { id: n.id || "", unread: !!n.unread, icon, text, time };
     });
-    return out.slice(0, 5);
   } catch { return []; }
 }
 
