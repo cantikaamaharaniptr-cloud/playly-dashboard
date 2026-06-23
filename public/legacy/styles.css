@@ -9541,6 +9541,52 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
 }
 .upload-progress small { font-size: 11px; color: var(--muted); }
 
+/* ===== Audit Unggah 2026-06-02 ===== */
+/* 1a/1l: progress indeterminate (saat byte progress belum tersedia / jalur tanpa
+   event progress) — sapuan animasi, JUJUR bahwa progres tak terukur (bukan %palsu). */
+#upBar.up-bar-indeterminate {
+  width: 40% !important;
+  background: var(--grad-primary);
+  border-radius: 99px;
+  animation: upBarIndet 1.1s ease-in-out infinite;
+}
+@keyframes upBarIndet {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+/* 1g: tombol Batalkan saat upload berjalan */
+.up-cancel-btn {
+  margin-top: 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2, rgba(255,255,255,.04));
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.up-cancel-btn:hover { color: var(--cream, #fff); border-color: var(--accent); background: var(--accent-soft); }
+.up-cancel-btn[hidden] { display: none; }
+/* 1p: penanda field wajib + error inline */
+.up-required { color: #e5484d; font-weight: 700; }
+.up-field-invalid { border-color: #e5484d !important; box-shadow: 0 0 0 2px rgba(229,72,77,.18) !important; }
+.up-field-err { display: block; margin-top: 5px; font-size: 11.5px; color: #e5484d; font-weight: 600; }
+.up-field-err[hidden] { display: none; }
+/* 1c: status sinkronisasi cloud di popup sukses (jujur soal lintas-device) */
+.upload-success-cloud {
+  margin: 10px 0 2px;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2, rgba(255,255,255,.04));
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.upload-success-cloud.ok   { color: #2ecc71; border-color: rgba(46,204,113,.35); background: rgba(46,204,113,.10); }
+.upload-success-cloud.warn { color: #f5a623; border-color: rgba(245,166,35,.35); background: rgba(245,166,35,.10); }
+
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 8px;
 }
@@ -15507,8 +15553,8 @@ section[data-view="upload"] .upload-form textarea {
 .upf-field input:focus,
 .upf-field textarea:focus,
 .upf-field select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  /* ring + border wine dihapus per request user 2026-06-03 — border tetap netral */
+  border-color: var(--border);
   outline: none;
 }
 
@@ -15549,8 +15595,8 @@ section[data-view="upload"] .upload-form textarea {
   box-sizing: border-box;
 }
 .upf-tags-wrap:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  /* ring + border wine dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border);
 }
 .upf-tags-list { display: contents; }
 .upf-tag {
@@ -49648,7 +49694,7 @@ body[data-role="admin"] .auth-card input:-webkit-autofill:active {
 .dz-pro[data-state="filled"] .dz-pro-filled { display: block; }
 .dz-pro-preview {
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform .35s var(--ease);
 }
@@ -52918,7 +52964,9 @@ body:not([data-role="admin"]):not(.auth-mode) #upTitle:focus,
 body:not([data-role="admin"]):not(.auth-mode) #upDesc:focus,
 body:not([data-role="admin"]):not(.auth-mode) #vemTitleInput:focus,
 body:not([data-role="admin"]):not(.auth-mode) #vemDescInput:focus {
-  border-color: rgba(184, 90, 106, .55) !important;
+  /* border pink + halo focus dihapus per request user 2026-06-03 — border tetap
+     netral (var(--border)), tak berubah saat fokus. */
+  border-color: var(--border) !important;
   box-shadow: none !important;
   outline: none !important;
   outline-offset: 0 !important;
@@ -56997,6 +57045,12 @@ body:not([data-role="admin"]) .upload-col-right .field-hint,
 body:not([data-role="admin"]) .field-hint,
 body:not([data-role="admin"]) .upf-field > small:not(.upf-counter) {
   color: var(--muted) !important;
+  /* FIX (audit Unggah 2026-06-03): placeholder tampak seperti sudah terisi karena
+     -webkit-text-fill-color: var(--text) dari aturan input di atas ikut mewarnai
+     pseudo ::placeholder (di Chrome text-fill MENANG atas color). Override di sini
+     supaya placeholder benar-benar abu-abu (--muted); teks yang DIKETIK tetap
+     --text karena bukan pseudo placeholder. */
+  -webkit-text-fill-color: var(--muted) !important;
   opacity: 1 !important;
 }
 
@@ -57297,7 +57351,13 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
 }
 /* Locked state untuk Free user (per request 2026-05-14): tombol disabled-look
    + lock icon visual cue. Click handler tetap fire untuk show premium toast. */
-.upf-sub-card-ai.locked .upf-sub-card-cta,
+/* Locked-but-clickable (Free) — sama spt kartu AUTO JUDUL: tombol tetap bisa
+   diklik supaya memunculkan toast "hanya Premium"; cuma di-dim + cursor +
+   ikon gembok. pointer-events:none HANYA untuk tombol yg benar-benar [disabled]. */
+.upf-sub-card-ai.locked .upf-sub-card-cta {
+  opacity: .55 !important;
+  cursor: not-allowed !important;
+}
 .upf-sub-card-ai .upf-sub-card-cta:disabled,
 .upf-sub-card-ai .upf-sub-card-cta[disabled] {
   opacity: .55 !important;
@@ -57324,8 +57384,8 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
    Per redesign 2026-05-15 v27: kedua card jadi visually konsisten karena keduanya
    premium feature. */
 .upf-sub-card-ai {
-  background: linear-gradient(135deg, rgba(212, 166, 74, .10), rgba(212, 166, 74, .02)) !important;
-  border-color: rgba(212, 166, 74, .28) !important;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2) !important;
+  border-color: rgba(232, 216, 196, .26) !important;
   position: relative;
   overflow: hidden;
 }
@@ -57336,7 +57396,7 @@ body:not([data-role="admin"]) #vemSubtitleModel:focus-visible {
   right: -20%;
   width: 180px;
   height: 180px;
-  background: radial-gradient(circle, rgba(240, 200, 120, .10), transparent 60%);
+  background: radial-gradient(circle, rgba(109, 41, 50, .28), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -57598,15 +57658,15 @@ body:not([data-role="admin"]) .upload-layout-bare {
 }
 
 /* Dropzone promo CTA — line ke-2 di bawah Format/Kuota info.
-   Per user 2026-05-10: ganti warna ke #FFC94D (golden yellow). */
+   Warna: emas dibuang (de-gold per user 2026-06-03) → CREAM #E8D8C4. */
 html body #dropzoneLimit .dz-promo,
 html body #dropzoneLimit span.dz-promo,
 html body .dz-pro-empty small#dropzoneLimit .dz-promo {
   display: inline-block !important;
   margin-top: 4px !important;
   font-style: italic !important;
-  color: #FFC94D !important;
-  -webkit-text-fill-color: #FFC94D !important;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
   font-weight: 600 !important;
   letter-spacing: .01em !important;
 }
@@ -65461,6 +65521,19 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
 .upf-frame-section.is-empty .upf-frame-time { display: none; }
 /* Info section empty state — values "—" muted */
 .upf-info-section.is-empty .upf-info-pill strong { color: var(--muted); }
+/* #1d (2026-06-04): jangan tampilkan deretan "—" yang membingungkan sebelum
+   user pilih video. Sembunyikan strip nilainya, ganti dengan placeholder yang
+   jelas. Saat video dipilih, .is-empty dilepas → strip kembali muncul otomatis. */
+.upf-info-section.is-empty .upf-info-strip { display: none; }
+.upf-info-section.is-empty .upf-label-row::after {
+  content: "Otomatis terisi setelah kamu pilih video — durasi, resolusi, format & ukuran.";
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .upf-frame-time {
   position: absolute;
   bottom: 8px;
@@ -65688,17 +65761,22 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
   background: #000;
 }
 .ve-time-display {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  padding: 4px 10px;
-  background: rgba(0, 0, 0, .7);
-  color: #fff;
-  font-size: 12px;
+  /* Per user 2026-06-21: di BAWAH video (bukan overlay). Reparent ke .ve-stage via JS.
+     Posisi main (current) ditonjolkan; "/ total" diredupkan supaya tak dobel dgn "Durasi". */
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 2px;
+  padding: 0;
+  color: var(--text);
+  font-size: 12.5px;
   font-weight: 700;
-  border-radius: 6px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
 }
+.ve-time-display #veTimeCurrent { color: var(--text); }
+.ve-time-display .ve-time-sep,
+.ve-time-display #veTimeTotal { color: rgba(232, 216, 196, .5); font-weight: 600; }
 .ve-time-sep { opacity: .5; margin: 0 4px; }
 
 /* v593 (2026-05-28): vignette + text overlay di atas video.
@@ -65807,6 +65885,61 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
   max-height: 50vh;
   overflow-y: auto;
 }
+
+/* ============================================================================
+   REDESIGN editor video — LAYOUT 2 KOLOM (Opsi 1, 4 Jun 2026).
+   Preview video besar & dominan di kiri, semua kontrol (Trim/Aspect/Advance) di
+   panel kanan yang bisa scroll. Header & footer full-width. CSS-only (DOM tetap).
+   Scoped ke #videoEditorModal supaya tidak mengganggu modal lain.
+   ========================================================================== */
+@media (min-width: 861px) {
+  #videoEditorModal .video-editor-panel {
+    width: min(96vw, 1140px) !important;
+    max-width: 1140px !important;
+    /* Tinggi TETAP supaya modal tidak berubah ukuran saat ganti tab (Bingkai tinggi
+       vs Audio pendek). Panel kanan scroll bila konten lebih panjang; tab pendek
+       menyisakan ruang kosong (ukuran stabil). */
+    height: min(92vh, 730px) !important;
+    max-height: 92vh !important;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(330px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head    head"
+      "stage   controls"
+      "actions actions";
+  }
+  /* panel kanan: konten dari atas + scroll bila perlu (bukan center) */
+  #videoEditorModal .ve-controls { justify-content: flex-start; overflow-y: auto; }
+  #videoEditorModal .ve-head    { grid-area: head; }
+  #videoEditorModal .ve-stage   { grid-area: stage; min-height: 0; border-right: 1px solid var(--border); flex-direction: column; gap: 12px; justify-content: center; }
+  #videoEditorModal .ve-controls{ grid-area: controls; max-height: none; min-height: 0; height: 100%; }
+  #videoEditorModal .ve-actions { grid-area: actions; }
+  /* Preview jadi besar — wrapper antara ikut melebar penuh ke kolom kiri. */
+  #videoEditorModal .ve-stage-viewport,
+  #videoEditorModal .ve-stage-scale { width: 100%; display: flex; align-items: center; justify-content: center; }
+  /* DEFAULT (Original/Bebas): video isi lebar penuh, fit contain. */
+  #videoEditorModal .ve-video-wrap { width: 100%; max-width: 640px; }
+  #videoEditorModal .ve-video-wrap > video { width: 100%; height: auto; max-height: 60vh; }
+  /* RASIO dipilih (16:9/9:16/1:1/4:5/4:3/3:4): wrap mengikuti BENTUK rasio &
+     video object-fit cover (ter-crop) — INI yg bikin preview ikut ukuran rasio.
+     (override !important supaya menang atas width:100% default di atas.) */
+  #videoEditorModal .ve-video-wrap[style*="aspect-ratio"] {
+    width: auto !important;
+    max-width: 100%;
+    height: auto;
+    max-height: 60vh;
+    margin: 0 auto;
+  }
+  #videoEditorModal .ve-video-wrap[style*="aspect-ratio"] > video {
+    width: 100%;
+    height: 100%;
+    max-height: 60vh;
+    object-fit: cover;
+  }
+  /* Putar Preview ikut lebar kolom kiri biar rapi di bawah video. */
+  #videoEditorModal .ve-stage .ve-preview-btn { width: 100%; max-width: 640px; }
+}
 .ve-ctrl-block {
   display: flex;
   flex-direction: column;
@@ -65887,6 +66020,27 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
   pointer-events: none;
   box-shadow: 0 0 4px rgba(255, 255, 255, .6);
 }
+/* Bubble waktu di ATAS playhead: muncul saat Putar Preview & bergerak bersama playhead
+   -> menunjukkan detik berjalan (pengganti badge yg dihapus). Sembunyi saat jeda.
+   Per user 2026-06-21. .ve-trim-track diberi ruang atas utk bubble. */
+.ve-trim-track { margin-top: 20px; }
+.ve-playhead-time {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  background: rgba(25, 12, 16, .97);
+  color: var(--text);
+  border: 1px solid rgba(232, 216, 196, .22);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+}
 .ve-trim-meta {
   display: flex;
   justify-content: space-between;
@@ -65960,6 +66114,24 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
 .ve-mute-label { font-size: 12.5px; font-weight: 600; color: var(--text); }
 
 .ve-preview-btn { align-self: flex-start; }
+/* Tombol Putar/Jeda Pratinjau: lebih berisi & jelas sbg kontrol play (per user 2026-06-21). */
+#videoEditorModal .ve-preview-btn {
+  padding: 12px 18px;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  /* Wine lembut (penuh) — per user 2026-06-21. Translucent wine + teks/ikon cream. */
+  background: rgba(109, 41, 50, .42) !important;
+  border: 1px solid rgba(109, 41, 50, .62) !important;
+  color: var(--text) !important;
+  transition: background .15s ease, border-color .15s ease;
+}
+#videoEditorModal .ve-preview-btn:hover {
+  background: rgba(109, 41, 50, .6) !important;
+  border-color: rgba(109, 41, 50, .82) !important;
+}
+#videoEditorModal .ve-preview-btn svg { width: 17px; height: 17px; }
 .ve-hint {
   font-size: 11px;
   color: var(--muted);
@@ -65975,6 +66147,16 @@ body:not([data-role="admin"]) [data-view="home"] .home-quick-stats { order: 2; }
 }
 .ve-actions .btn.primary { margin-left: auto; }
 .ve-actions #veReset { margin-right: auto; }
+/* 1b (2026-06-04): rapikan posisi footer editor video. Sebelumnya [Reset][Batal]
+   menempel kiri & [Export Video] jauh sendiri di kanan (gap kosong besar).
+   Sekarang: Reset sendiri di kiri, Batal + Export Video dikelompokkan rapi di
+   kanan (pola dialog standar — aksi batal bersebelahan dgn aksi utama).
+   Pakai display:contents agar Reset/Batal jadi flex-item langsung tanpa ubah DOM. */
+#videoEditorModal .ve-actions-left { display: contents; }
+#videoEditorModal .ve-actions #veReset { order: 0; margin-right: auto; }
+#videoEditorModal .ve-actions [data-close].ve-action-secondary { order: 1; margin-left: 0; }
+#videoEditorModal .ve-actions .ve-action-export,
+#videoEditorModal .ve-actions .btn.primary { order: 2; margin-left: 0; }
 
 /* === Edit Video modal — disamakan ke tema cream/#251419 (per request user
    2026-05-16): ikon monokrom (bukan kotak merah), kolom #251419, focus ring
@@ -66689,8 +66871,8 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 .upf-ai-assist {
   margin-top: 4px;
   padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(212, 166, 74, .10), rgba(212, 166, 74, .02));
-  border: 1px solid rgba(212, 166, 74, .28);
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2);
+  border: 1px solid rgba(232, 216, 196, .26);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -66705,7 +66887,7 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   right: -20%;
   width: 180px;
   height: 180px;
-  background: radial-gradient(circle, rgba(240, 200, 120, .10), transparent 60%);
+  background: radial-gradient(circle, rgba(109, 41, 50, .28), transparent 60%);
   pointer-events: none;
 }
 .upf-ai-head {
@@ -66745,9 +66927,10 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   font-weight: 800;
   letter-spacing: .08em;
   border-radius: 999px;
-  background: linear-gradient(135deg, #f0c878, #d4a64a);
-  color: #2a1a02;
-  box-shadow: 0 2px 6px -2px rgba(212, 166, 74, .5);
+  background: #6D2932;
+  color: #E8D8C4;
+  border: 1px solid rgba(232, 216, 196, .3);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .4);
 }
 .upf-ai-actions {
   display: grid;
@@ -67052,19 +67235,29 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
   border-color: var(--border-strong, var(--primary, #6D2932));
 }
 .ucs-trigger[aria-expanded="true"] {
-  border-color: var(--primary, #6D2932);
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15);
+  /* ring + border wine dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border);
 }
 .ucs-trigger:focus-visible {
   outline: 0;
-  border-color: var(--primary, #6D2932);
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15);
+  border-color: var(--border);
 }
 .ucs-trigger-label {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* Placeholder "Pilih kategori" — abu-abu muted (sama spt placeholder field
+   lain), bukan cream seperti value terpilih. Per request user 2026-06-03. */
+.ucs-trigger.is-placeholder .ucs-trigger-label { color: #8f8a84; }
+/* Opsi "Tanpa kategori" (value kosong) — sedikit muted + garis pemisah dari
+   daftar kategori asli supaya jelas ini opsi "batal pilih". Per request user. */
+.ucs-option-none {
+  color: rgba(232, 216, 196, .62);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3px;
+  padding-bottom: 10px;
 }
 .ucs-chevron {
   width: 14px;
@@ -67196,6 +67389,23 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 .upf-seg input[type="radio"]:checked ~ .upf-seg-card,
 .upf-seg input[type="radio"]:checked + .upf-seg-card {
   background: rgba(109, 41, 50, .12);
+}
+/* Opsi 18+ — penanda konten dewasa (status indicator, bukan focus ring). */
+.upf-seg input[value="18+"] + .upf-seg-card strong { color: var(--danger, #ef4444); }
+.upf-seg input[value="18+"]:checked ~ .upf-seg-card,
+.upf-seg input[value="18+"]:checked + .upf-seg-card {
+  background: rgba(239, 68, 68, .14);
+}
+/* Catatan dinamis visibilitas 18+ di bawah kontrol audiens. */
+.upf-audience-note {
+  margin: 8px 2px 0;
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--danger, #ef4444);
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .25);
+  border-radius: 8px;
+  padding: 8px 10px;
 }
 .upf-seg input[type="radio"]:focus-visible + .upf-seg-card {
   outline: 2px solid var(--primary, #6D2932);
@@ -67430,8 +67640,10 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
 #upTagsWrap.upf-tags-wrap:focus-within,
 #upCategoryTrigger.ucs-trigger[aria-expanded="true"],
 #upCategoryTrigger.ucs-trigger:focus-visible {
-  border-color: var(--primary, #6D2932) !important;
-  box-shadow: 0 0 0 3px rgba(109, 41, 50, .15) !important;
+  /* ring + border wine dihapus TOTAL per request user 2026-06-03 (rule id-!important
+     inilah yg memunculkan border wine saat fokus/buka). Border tetap netral. */
+  border-color: var(--border) !important;
+  box-shadow: none !important;
 }
 /* Ikon (picons) di section Kategori diperbesar + opsi sedikit lebih lega. */
 #upCategoryPop .ucs-option .picon,
@@ -67755,17 +67967,14 @@ button.upf-sub-btn:focus-visible { outline: 2px solid #E8D8C4; outline-offset: 2
    Hanya VISUAL — logika akses (free terkunci) tak diubah.
    Free user: aturan emas lama dibiarkan (tidak di-scope ulang).
    ============================================================ */
-body[data-tier="premium"] .upload-tier-banner,
+/* Kartu premium = SAMA dengan free (per request user 2026-06-03): wine tint +
+   border cream, identik untuk semua tier. (Dulu premium dibuat netral & free
+   emas — sekarang seragam wine, tanpa emas; penanda premium = label/pill/lock.) */
 body[data-tier="premium"] .upf-ai-assist,
 body[data-tier="premium"] .upf-sub-card-ai {
-  background: var(--bg-elev-2, var(--surface)) !important;
-  background-image: none !important;
-  border-color: var(--border, rgba(232, 216, 196, .14)) !important;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .24), rgba(109, 41, 50, .07)), var(--bg-elev-2) !important;
+  border-color: rgba(232, 216, 196, .26) !important;
   box-shadow: none !important;
-}
-/* Glow radial emas di kartu subtitle AI — matikan utk premium */
-body[data-tier="premium"] .upf-sub-card-ai::before {
-  display: none !important;
 }
 /* Premium user: SEMUA penanda teks "premium" di halaman unggah
    disembunyikan (request user 2026-05-17) — user premium tak perlu
@@ -75089,6 +75298,18 @@ h3 > .sec-icon-v582.sec-icon-sm {
 /* Modal container needs relative pos for overlay */
 .video-editor-panel { position: relative !important; }
 
+/* req user 5 Jun 2026 (opsi C): saat overlay export tampil, tombol ✕ editor tetap
+   di ATAS overlay (z-index > 100) supaya user bisa menutup KAPAN saja — tombol
+   "Selesai" tidak lagi menutup, user tetap di view hasil. */
+#videoEditorModal .video-editor-panel .modal-close { z-index: 130 !important; }
+/* tombol "Selesai" → state tersimpan */
+#veExportCloseBtn.is-saved {
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface, #2a1a1f));
+  border-color: var(--primary);
+  opacity: 1;
+  cursor: default;
+}
+
 /* =========================================================================
    v681 (2026-06-01): Video Editor UI/UX overhaul — inspect zoom, preview
    relocated below stage, Advance section, rotate/flip icons, working crop,
@@ -79890,3 +80111,1065 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-b
   color: rgba(232,216,196,.55) !important;
 }
 #videoEditModal .vem-head .modal-close { margin-left: auto; }
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — LAYOUT FINAL (dipilih user)
+   Susunan "2 kolom 50/50" + gaya bagian "panel/kartu bertema" + judul berikon
+   + field dipoles. (User membandingkan 42/58, 1-kolom, & 50/50 → pilih 50/50.)
+   Pure CSS (ikon disuntik via enhanceUploadUI di script.js). Markup utuh.
+   ============================================================ */
+
+/* Susunan opsi 3: 2 kolom 50/50 (lebar sama). Dibungkus min-width supaya
+   breakpoint 1-kolom (<=900px) bawaan tetap jalan. */
+@media (min-width: 901px) {
+  /* !important untuk melawan aturan rasio 1:1.4 (styles.css ~46063) */
+  .upload-layout-bare {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 18px 28px !important;
+  }
+}
+
+/* Gaya bagian: tiap section dibungkus panel/kartu bertema (TERMASUK section
+   VIDEO). Field di dalam pakai --bg-elev-2 (lebih terang) → "pop" di atas kartu. */
+.upload-col-right > .upf-field,
+.upload-col-right > .upf-grid-2col,
+.upload-col-left > .upf-field {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+/* grup 2-kolom: jaga jarak antar-kolom di dalam kartu */
+.upload-col-right > .upf-grid-2col { gap: 14px 18px !important; }
+
+/* Jarak judul(berikon) ke field di bawahnya jangan dempet. !important untuk
+   melawan `.upload-col-right .upf-field { gap: 3px !important }` (~46121) yang
+   bikin dempet — apalagi sekarang ada badge ikon 24px. */
+.upload-col-left .upf-field,
+.upload-col-right .upf-field { gap: 11px !important; }
+
+/* Judul section berikon (ikon = .upf-ico, disuntik via JS) */
+.upf-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  margin-right: 7px;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.upf-ico svg { width: 15px; height: 15px; display: block; }
+.upf-label-row > label,
+.upf-field > label:not(.upf-thumb-drop):not(.dz-pro) {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Bentuk field dipoles: sudut lebih lembut + focus ring jelas */
+.upload-col-left .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.upload-col-left .upf-field textarea,
+.upload-col-left .upf-field select,
+.upload-col-right .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.upload-col-right .upf-field textarea,
+.upload-col-right .upf-field select {
+  border-radius: 11px;
+}
+.upload-col-left .upf-field input:focus,
+.upload-col-left .upf-field textarea:focus,
+.upload-col-left .upf-field select:focus,
+.upload-col-right .upf-field input:focus,
+.upload-col-right .upf-field textarea:focus,
+.upload-col-right .upf-field select:focus {
+  /* ring accent + border accent dihapus per request user 2026-06-03 — border netral */
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 (revisi) — placeholder BENAR-BENAR abu-abu
+   + ikon judul jadi BADGE di tiap judul kolom.
+   ============================================================ */
+/* Placeholder masih tampak terang karena -webkit-text-fill-color: var(--text)
+   dari aturan input (spesifisitas (0,6,2)) menang atas color/text-fill di aturan
+   ::placeholder yang lebih rendah. Di sini spesifisitas ::placeholder DINAIKKAN
+   ke (0,6,3) dengan rantai :not yang sama + !important + ditaruh PALING AKHIR,
+   jadi placeholder pasti abu-abu; teks yang DIKETIK tetap --text (bukan pseudo). */
+body:not([data-role="admin"]) .upf-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])::placeholder,
+body:not([data-role="admin"]) .upf-field textarea::placeholder,
+body:not([data-role="admin"]) .upf-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])::-webkit-input-placeholder,
+body:not([data-role="admin"]) .upf-field textarea::-webkit-input-placeholder,
+body:not([data-role="admin"]) .upf-tags-wrap input#upTagsInput::placeholder {
+  color: #8f8a84 !important;
+  -webkit-text-fill-color: #8f8a84 !important;
+  opacity: 1 !important;
+}
+
+/* Ikon judul: dari ikon polos → BADGE kecil (kotak membulat ber-aksen) di setiap
+   judul kolom, supaya jelas terlihat. (.upf-ico sudah disuntik via JS di tiap judul.) */
+.upf-ico {
+  width: 24px !important;
+  height: 24px !important;
+  margin-right: 9px !important;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.upf-ico svg { width: 14px !important; height: 14px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — RAPIKAN UKURAN FONT (konsistensi peran teks)
+   Judul section (12px), input/radio-title (13px), suffix (9.6px) sudah seragam.
+   Yang TIDAK seragam & diperbaiki:
+   - Tombol kecil subtitle (.upf-sub-btn): kartu "Buat Otomatis AI" render 13px
+     tapi kartu "Unggah Manual" 12px (mewarisi font-size kartu yg beda). Paksa
+     12px supaya kedua kartu + tombol kecil lain seragam.
+   - Deskripsi kartu subtitle (.upf-sub-card-desc) 11px → 11.5px = sama dgn
+     deskripsi section AI & helper lain.
+   ============================================================ */
+/* Samakan ukuran tombol kedua kartu subtitle. Aturan lama sengaja beda:
+   kartu AI 13px (~54339), kartu Manual 12px (~54328). Override dgn spesifisitas
+   SAMA (0,4,1) + ditaruh paling akhir → keduanya 12px (sama dgn tombol kecil lain). */
+.upf-sub-2col .upf-sub-card-ai .upf-sub-act3 .upf-sub-btn,
+.upf-sub-2col .upf-sub-card-ai .upf-sub-act3 #upSubtitleAutoBtn,
+.upf-sub-2col .upf-sub-card-manual .upf-sub-act3 .upf-sub-btn {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+.upload-col-right .upf-sub-card-desc { font-size: 11.5px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — SERAGAMKAN TEKS EMPTY-STATE DROPZONE
+   User TIDAK suka huruf besar → pakai huruf NORMAL (sentence case) tapi tetap
+   SERAGAM di 3 kartu (Video, Frame, Thumbnail). text-transform:none di sini
+   menimpa uppercase yang diwarisi dari `.dz-pro` (declaration langsung menang
+   atas warisan). Judul section (label pendek) dibiarkan apa adanya.
+   ============================================================ */
+/* Catatan: di tema ini --muted == --text (#E8D8C4) jadi tidak meredupkan apa-apa.
+   Hierarki dibuat lewat KECERAHAN (alpha cream eksplisit), bukan tebal-tipis,
+   supaya tidak "tebal sebelah". Bobot action vs rest dibikin berdekatan. */
+.upload-col-left .dz-pro-empty p,
+.upload-col-right .dz-pro-empty p {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: .1px !important;
+  color: rgba(232, 216, 196, .62) !important;          /* "atau seret ke sini" → cream redup */
+  -webkit-text-fill-color: rgba(232, 216, 196, .62) !important;
+}
+.upload-col-left .dz-pro-empty p b,
+.upload-col-right .dz-pro-empty p b {
+  font-weight: 700 !important;                          /* dari 800 → 700, tidak terlalu berat */
+  text-transform: none !important;
+  color: #E8D8C4 !important;                            /* "Pilih video" → cream penuh */
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+.upload-col-left .dz-pro-empty small,
+.upload-col-left .dz-pro-empty small#dropzoneLimit,
+.upload-col-right .dz-pro-empty small {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: rgba(232, 216, 196, .5) !important;            /* format/hint → paling redup */
+  -webkit-text-fill-color: rgba(232, 216, 196, .5) !important;
+}
+.upload-col-left .dz-pro-empty small b,
+.upload-col-right .dz-pro-empty small b {
+  font-weight: 700 !important;
+  text-transform: none !important;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+/* Promo "Butuh lebih? Premium..." — emas dibuang per request user 2026-06-03
+   (samakan dgn de-gold tema): jadi CREAM (#E8D8C4), lebih terang dari baris
+   format yg redup → tetap menonjol sbg hint premium, tapi tanpa emas. */
+html body .dz-pro-empty small#dropzoneLimit .dz-promo {
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+
+/* Kartu fitur PREMIUM (AI assist & subtitle "Buat Otomatis AI") sebelumnya
+   transparan/outline sehingga tampak timpang di samping kartu solid (Unggah
+   Manual). Dibuat SOLID seperti kartu biasa — penanda premium cukup lewat
+   border emas, jadi tiap baris kartu terlihat seimbang. */
+.upload-col-right .upf-ai-assist,
+.upload-col-right .upf-sub-card-ai {
+  background-color: var(--bg-elev-2) !important;
+}
+
+/* (1) Judul ganda: di kotak AI, hanya <strong> "Auto Judul & Tag" + pill PREMIUM
+   yg mengulang judul section — sembunyikan ITU SAJA. Ikon + deskripsi
+   ("Masukkan judul/topik…") tetap tampil sebagai konteks. */
+.upload-col-right .upf-ai-assist .upf-ai-head .upf-ai-text > strong { display: none !important; }
+
+/* (2) Tombol kartu subtitle diseragamkan: AI tadinya 5px/8px translucent vs
+   Manual 9px/12px solid (#311c22 = sama dgn kartu → nyaris tak terlihat).
+   Semua jadi padding sama + fill translucent yg KONTRAS dgn kartu #311c22. */
+/* Prefix body:not(admin) section[data-view=upload] supaya menang atas aturan
+   `.btn.ghost` (~54437) yg memaksa bg #311c22 pada "Pilih File" (jadi nyatu kartu). */
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 .upf-sub-btn,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 #upSubtitleAutoBtn,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-manual .upf-sub-act3 .upf-sub-btn {
+  padding: 8px 12px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background: rgba(232, 216, 196, .08) !important;
+  border: 1px solid rgba(232, 216, 196, .2) !important;
+  color: #E8D8C4 !important;
+  border-radius: 9px !important;
+}
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 .upf-sub-btn:hover,
+body:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 #upSubtitleAutoBtn:hover {
+  background: rgba(232, 216, 196, .15) !important;
+  border-color: rgba(232, 216, 196, .34) !important;
+}
+
+/* (3) Catatan emas (AI & subtitle) punya DUA ikon di depan: <svg> polos + picon
+   bertema (sparkles/gift) → terlihat dobel/berantakan. Sembunyikan svg polos
+   terdepan, sisakan picon yg bertema saja. */
+.upload-col-right .upf-ai-note > svg,
+.upload-col-right .upf-sub-card-note > svg { display: none !important; }
+
+/* (4) Buang catatan "gratis" + samakan kartu subtitle.
+   - Sembunyikan baris catatan (kuota AI "Sisa 3…gratis" & manual) atas permintaan
+     user → kedua kartu kini struktur sama (ikon+judul / deskripsi / tombol) = rata.
+   - Kartu setinggi isinya (bukan dipaksa sama lalu menyisakan ruang kosong). */
+.upload-col-right .upf-sub-card .upf-sub-card-note,
+.upload-col-right .upf-sub-card .upf-sub-note-free { display: none !important; }
+
+/* (5)+(6) Ikon kartu subtitle diberi KOTAK/badge (kolom kiri) + teks rapi di
+   kolom kanan. Lebarkan kolom ikon jadi 32px (sebelumnya 19px ikon polos). */
+.upload-col-right .upf-sub-card {
+  grid-template-columns: 32px 1fr !important;
+  column-gap: 11px !important;
+  align-content: start !important;
+}
+.upload-col-right .upf-sub-card .upf-sub-card-emoji {
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  align-self: start;
+}
+.upload-col-right .upf-sub-card .upf-sub-card-emoji svg,
+.upload-col-right .upf-sub-card .upf-sub-card-emoji img { width: 16px !important; height: 16px !important; }
+
+/* AUTO JUDUL & TAG — ikon (kaca pembesar) juga diberi badge sama. */
+.upload-col-right .upf-ai-assist .upf-ai-ico {
+  width: 30px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  flex: 0 0 auto !important;
+}
+.upload-col-right .upf-ai-assist .upf-ai-ico svg { width: 16px !important; height: 16px !important; }
+
+/* Besarkan teks deskripsi boks AUTO JUDUL & TAG (11.5px → 13px, kekecilan). */
+.upload-col-right .upf-ai-assist .upf-ai-text small,
+.upload-col-right .upf-ai-assist .upf-ai-text > small { font-size: 13px !important; line-height: 1.4 !important; }
+
+/* (7) Warna kartu subtitle KONSISTEN. Per request user 2026-06-03 tema EMAS
+   dibuang → kartu AI pakai wine tint + border cream (lihat .upf-sub-card-ai
+   di atas); badge ikon disamakan ke accent-soft/accent (tan) seperti ikon
+   AUTO JUDUL & ikon section lain — bukan emas. Border Manual tetap cream .22. */
+.upload-col-right .upf-sub-card-ai .upf-sub-card-emoji {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+.upload-col-right .upf-sub-card-manual {
+  border-color: rgba(232, 216, 196, .22) !important;
+}
+
+/* (8) Lebar tombol kartu subtitle IDENTIK di kedua kartu. Flex sempat selisih
+   ~2px (111 vs 113) karena sub-pixel/flex-basis. Pakai grid 3 kolom sama-rata
+   → lebar tombol pasti sama persis di AI & Manual. */
+.upload-col-right .upf-sub-2col .upf-sub-act3 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+.upload-col-right .upf-sub-2col .upf-sub-act3 > button,
+.upload-col-right .upf-sub-2col .upf-sub-act3 > #upSubtitleAutoBtn {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  /* Tinggi SERAGAM: kartu AI sempat 34px (Buat Sekarang) vs 40px (Lihat/Unggah)
+     karena sisa aturan line-height/min-height/id lama. Paksa semua 36px (id
+     #upSubtitleAutoBtn ditarget eksplisit supaya tidak 34px lagi). */
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 1.2 !important;
+}
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — SKALA TEKS DESKTOP (lebih terbaca)
+   Teks form sebelumnya kekecilan di layar desktop PC. Naikkan skala secara
+   konsisten (label 13px, suffix 11px, counter 12px, input/select/textarea 14px,
+   teks deskripsi/opsi 12.5px). Murni CSS → ikut otomatis di server produksi
+   (lewat cache-bust V_MAIN/STYLES_V; lihat vercel-build-minify gotcha).
+   ============================================================ */
+/* Judul section */
+.upload-col-left .upf-label-row > label,
+.upload-col-right .upf-label-row > label,
+.upload-col-left .upf-field > label:not(.upf-thumb-drop):not(.dz-pro),
+.upload-col-right .upf-field > label:not(.upf-thumb-drop):not(.dz-pro) {
+  font-size: 13px !important;
+}
+/* Suffix "(wajib)/(opsional)/(premium)" */
+.upload-col-left .upf-field label .muted,
+.upload-col-right .upf-field label .muted,
+.upload-col-left .upf-field > label small,
+.upload-col-right .upf-field > label small { font-size: 11px !important; }
+/* Counter 0/100 */
+.upload-col-left .upf-counter,
+.upload-col-right .upf-counter { font-size: 12px !important; }
+/* Input / textarea / select + custom dropdown trigger. Prefix body:not(admin)
+   supaya menang atas aturan font-size input yg juga ber-prefix sama (kalau tidak,
+   #upTitle tetap 13px sementara #upDesc jadi 14px → tidak seragam). */
+body:not([data-role="admin"]) .upload-col-left .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body:not([data-role="admin"]) .upload-col-left .upf-field textarea,
+body:not([data-role="admin"]) .upload-col-left .upf-field select,
+body:not([data-role="admin"]) .upload-col-left .upf-field .ucs-trigger,
+body:not([data-role="admin"]) .upload-col-right .upf-field input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body:not([data-role="admin"]) .upload-col-right .upf-field textarea,
+body:not([data-role="admin"]) .upload-col-right .upf-field select,
+body:not([data-role="admin"]) .upload-col-right .upf-field .ucs-trigger { font-size: 14px !important; }
+/* Field yg ukurannya di-pin pakai id di ~45877-45895 (menang specificity) —
+   override pakai selector ber-id setara supaya ikut 14px & seragam. */
+.upload-col-right input#upTitle,
+.upload-col-right .upf-field select#upCategory,
+.upload-col-right .upf-field select#upVis,
+.upload-col-right .upf-field select#upComments,
+.upload-col-right .upf-datetime-trigger,
+.upload-col-right #upCategoryTrigger,
+.upload-col-right #upScheduleDisplay,
+.upload-col-right #upAiTopic,
+.upload-col-right .upf-tags-wrap,
+.upload-col-right .upf-tags-wrap input#upTagsInput,
+body:not([data-role="admin"]) .upf-field .upf-tags-wrap input#upTagsInput { font-size: 14px !important; }
+/* Teks deskripsi/opsi (radio cards, AI, subtitle, schedule hint) */
+.upload-col-right .upf-radio-card small,
+.upload-col-right .upf-radio-card .upf-radio-desc,
+.upload-col-right .upf-ai-section .upf-ai-note,
+.upload-col-right .upf-ai-section > label + * small,
+.upload-col-right .upf-sub-card-desc,
+.upload-col-right .field-hint,
+.upload-col-left .field-hint { font-size: 12.5px !important; }
+
+/* ============================================================
+   AUDIT UNGGAH 2026-06-03 — DROPZONE EMPTY-STATE LEBIH MENARIK
+   Hierarki warna sudah dibalik (kata aksi terang, sisanya sekunder). Di sini:
+   ritme jarak lebih lega + ikon punya glow lembut + feedback hover (border
+   menyala, ikon naik, kata aksi digarisbawahi) supaya terasa hidup & "ngajak".
+   ============================================================ */
+/* Ritme jarak ikon → judul → hint */
+.upload-col-left .dz-pro-empty-icon,
+.upload-col-right .dz-pro-empty-icon {
+  margin-bottom: 14px !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .28), 0 0 0 5px rgba(199, 183, 163, .05) !important;
+  transition: transform .16s ease, box-shadow .16s ease !important;
+}
+.upload-col-left .dz-pro-empty p,
+.upload-col-right .dz-pro-empty p { margin-bottom: 6px !important; }
+
+/* Feedback hover (Video & Thumbnail = .dz-pro): border menyala + ikon naik +
+   kata aksi digarisbawahi → terasa interaktif. */
+.upload-col-left .dz-pro:hover,
+.upload-col-right .dz-pro:hover { border-color: var(--accent) !important; }
+.upload-col-left .dz-pro:hover .dz-pro-empty-icon,
+.upload-col-right .dz-pro:hover .dz-pro-empty-icon {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .34), 0 0 0 6px rgba(199, 183, 163, .09) !important;
+}
+/* (garis bawah saat hover dihapus atas permintaan user — kurang sreg) */
+.upload-col-left .dz-pro:hover .dz-pro-empty p b,
+.upload-col-right .dz-pro:hover .dz-pro-empty p b {
+  text-decoration: none !important;
+}
+
+/* ===================================================================
+   PREMIUM LOCK OVERLAY (per request user 2026-06-03)
+   Kartu fitur premium (#upAiAssist, #upSubtitleAiCard) tampil SAMA untuk
+   semua tier — warna & bentuk identik. Bedanya HANYA saat .locked (akun
+   free): seluruh isi kartu di-blur + overlay gembok crisp "Tersedia di
+   Premium". Klik overlay → toast upgrade. (Premium = .is-unlocked, tanpa
+   blur/overlay.)
+   =================================================================== */
+
+/* Clip blur ke radius kartu */
+.upf-ai-assist.locked,
+.upf-sub-card-ai.locked { overflow: hidden; }
+
+/* Matikan interaksi semua anak kartu KECUALI overlay. Blur TIDAK lagi per-anak
+   (dulu bikin judul `.upf-sub-card-head` yg display:contents BOCOR — filter tak
+   berlaku pada elemen display:contents — + tepi tak rata). Sekarang overlay yang
+   mem-blur SELURUH isi kartu lewat backdrop-filter → rata satu lapisan, judul
+   ikut blur. */
+.upf-ai-assist.locked > *:not(.upf-lock-overlay),
+.upf-sub-card-ai.locked > *:not(.upf-lock-overlay) {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Netralkan dekorasi locked lama (ikon gembok ::after + dim per-tombol +
+   note gold) supaya konten di balik blur IDENTIK dengan tampilan premium —
+   overlay-lah yang menandai terkunci, bukan recolor per-elemen. */
+.upf-ai-assist.locked .upf-ai-btn::after,
+.upf-ai-assist.locked .upf-ai-gen-btn::after,
+.upf-sub-card-ai.locked .upf-sub-card-cta::after { content: none !important; }
+.upf-ai-assist.locked .upf-ai-btn,
+.upf-ai-assist.locked .upf-ai-gen-btn,
+.upf-ai-assist.locked .upf-ai-topic,
+.upf-sub-card-ai.locked .upf-sub-card-cta {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+/* Overlay gembok — crisp di atas konten blur */
+.upf-lock-overlay {
+  position: absolute !important;
+  /* Kartu subtitle = display:grid → containing-block overlay abspos terbatas ke
+     1 grid area (sisi kiri/kanan tak ter-cover, gap ~12px). Solusi tahan-banting:
+     over-extend inset ke segala arah, lalu `overflow:hidden` di kartu meng-clip
+     overlay TEPAT ke padding-box (border cream tetap kelihatan, sudut tetap
+     membulat). Berlaku sama utk kartu grid (subtitle) & flex (AUTO JUDUL). */
+  inset: -24px;
+  z-index: 6 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: inherit;
+  /* Frosted glass: blur SELURUH isi kartu di belakang overlay secara seragam
+     (termasuk judul/head) — bukan blur per-anak. Scrim tipis utk kontras teks. */
+  background: rgba(20, 10, 13, .42);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.upf-lock-overlay:focus-visible {
+  outline: 2px solid rgba(232, 216, 196, .8);
+  outline-offset: -3px;
+}
+/* Badge wine (warna brand #6D2932) + ikon & teks cream — pilihan user 2026-06-03
+   (sebelumnya emas, ditolak). Ring cream tipis supaya badge tegas di atas blur. */
+.upf-lock-badge {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #6D2932;
+  border: 1px solid rgba(232, 216, 196, .55);
+  color: #E8D8C4;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+}
+.upf-lock-badge svg { width: 19px; height: 19px; }
+.upf-lock-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E8D8C4;
+  letter-spacing: .01em;
+}
+.upf-lock-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(232, 216, 196, .72);
+}
+
+/* ===================================================================
+   Tombol aksi di overlay media (VIDEO / frame thumbnail / thumbnail kustom)
+   — per request user 2026-06-03. Sebelumnya 2 tombol PUTIH stark + 1 MERAH
+   terang → bentrok dgn tema gelap wine/cream. Disamakan jadi glass gelap +
+   ikon cream; tombol Hapus = ikon merah lembut → solid merah saat hover
+   (tetap jelas "danger" tapi tidak norak). Scope .dz-pro-overlay supaya
+   tombol kecil di baris subtitle (.upf-sub-filled-row) tidak terpengaruh.
+   =================================================================== */
+/* Tombol overlay = PUTIH + ikon wine; Hapus = merah (req user 2026-06-20). */
+.dz-pro-overlay .dz-pro-action {
+  background: rgba(255, 255, 255, .95) !important;
+  border: 1px solid rgba(0, 0, 0, .12) !important;
+  color: var(--primary, #6D2932) !important;
+}
+.dz-pro-overlay .dz-pro-action:hover {
+  background: #fff !important;
+  border-color: rgba(0, 0, 0, .2) !important;
+  transform: translateY(-1px);
+}
+.dz-pro-overlay .dz-pro-action.danger {
+  background: #d83a3a !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, .3) !important;
+}
+.dz-pro-overlay .dz-pro-action.danger:hover {
+  background: #b32d2d !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, .45) !important;
+}
+
+/* Tooltip custom tombol overlay media — ganti tooltip NATIVE putih (tak bisa
+   di-style) → dark wine + teks cream. Per request user 2026-06-03. Dipasang
+   fixed di <body> oleh customMediaTooltips() di script.js. */
+.upf-tip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  background: rgba(25, 12, 16, .97);
+  color: #E8D8C4;
+  border: 1px solid rgba(232, 216, 196, .22);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.upf-tip.is-show { opacity: 1; transform: translateY(0); }
+
+/* #uploadProgress dipindah ke kolom kanan tepat di atas action bar (lihat
+   relocateUploadProgress di script.js) + REDESAIN panel sesuai tema UI/UX
+   (per request user 2026-06-03): kartu wine lembut, status di atas, bar
+   gradient wine→cream, tombol Batalkan rapi di kanan-bawah. */
+.upload-col-right > #uploadProgress {
+  width: 100%;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: linear-gradient(135deg, rgba(109, 41, 50, .18), rgba(109, 41, 50, .05)), var(--bg-elev-2) !important;
+  border: 1px solid rgba(232, 216, 196, .18) !important;
+  border-radius: 12px !important;
+  padding: 13px 15px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+/* Status (teks "Mengunggah… %" / "✓ Upload selesai!") — di atas, cream tegas */
+.upload-col-right > #uploadProgress > #upStatus {
+  order: 1;
+  margin: 0;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35;
+  color: #E8D8C4 !important;
+  -webkit-text-fill-color: #E8D8C4 !important;
+}
+/* Track bar */
+.upload-col-right > #uploadProgress > .up-bar {
+  order: 2;
+  width: 100%;
+  height: 8px;
+  margin: 0;
+  background: rgba(232, 216, 196, .14);
+  border-radius: 99px;
+  overflow: hidden;
+}
+/* Fill bar — gradient wine→cream + sheen. Transition diperlambat & dihaluskan
+   (per user 2026-06-03: pergerakan terlalu cepat) — .3s → .65s ease-out. */
+.upload-col-right > #uploadProgress > .up-bar > #upBar {
+  height: 100%;
+  background: linear-gradient(90deg, #6D2932, #C7B7A3) !important;
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(199, 183, 163, .25);
+  transition: width .65s cubic-bezier(.25, .8, .25, 1) !important;
+}
+/* Indeterminate sweep — sapuan wine→cream, diperlambat 1.1s → 1.9s biar kalem */
+.upload-col-right > #uploadProgress > .up-bar > #upBar.up-bar-indeterminate {
+  background: linear-gradient(90deg, transparent, #6D2932, #C7B7A3, transparent) !important;
+  box-shadow: none;
+  animation-duration: 1.9s !important;
+  animation-timing-function: ease-in-out !important;
+}
+/* Tombol Batalkan — pill cream ghost, kanan-bawah */
+.upload-col-right > #uploadProgress > .up-cancel-btn {
+  order: 3;
+  align-self: flex-end;
+  margin: 1px 0 0 !important;
+  padding: 5px 13px !important;
+  font-size: 11.5px !important;
+  color: rgba(232, 216, 196, .85) !important;
+  background: rgba(232, 216, 196, .07) !important;
+  border: 1px solid rgba(232, 216, 196, .22) !important;
+}
+.upload-col-right > #uploadProgress > .up-cancel-btn:hover {
+  color: #E8D8C4 !important;
+  background: rgba(232, 216, 196, .14) !important;
+  border-color: rgba(232, 216, 196, .4) !important;
+}
+
+/* ============================================================================
+   REDESIGN PANEL KANAN EDITOR VIDEO (4 Jun 2026, rev2) — HANYA pakai token tema
+   dashboard (var(--...)), tanpa warna hardcode di luar tema. Ikut light/dark &
+   aksen user. Scoped #videoEditorModal. Sumber kebenaran tampilan panel kanan.
+   ========================================================================== */
+#videoEditorModal .ve-controls { padding: 20px 22px; gap: 18px; }
+#videoEditorModal .ve-controls > .ve-section { display: flex; flex-direction: column; gap: 11px; }
+#videoEditorModal .ve-controls > .ve-section + .ve-section {
+  border-top: 1px solid var(--border);
+  padding-top: 17px;
+}
+
+/* Header tiap section */
+#videoEditorModal .ve-ctrl-label {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted); margin: 0;
+}
+
+/* TRIM meta */
+#videoEditorModal .ve-trim-meta { font-size: 11.5px; color: var(--muted); }
+#videoEditorModal .ve-trim-meta b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Tabs */
+#videoEditorModal .ve-tabs { gap: 2px; border-bottom: 1px solid var(--border); margin: 0; }
+#videoEditorModal .ve-tab {
+  padding: 9px 14px; font-size: 12.5px; font-weight: 700;
+  color: var(--muted); border: 0; border-bottom: 2px solid transparent; background: transparent;
+}
+#videoEditorModal .ve-tab:hover { color: var(--text); }
+#videoEditorModal .ve-tab.active { color: var(--text); border-bottom-color: var(--primary); }
+#videoEditorModal .ve-tab-panel { border-top: 0; margin-top: 14px; padding-top: 0; }
+
+/* Aspect Ratio / Crop — grid 3 kolom seragam */
+#videoEditorModal .ve-aspect-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+#videoEditorModal .ve-aspect {
+  display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px;
+  min-height: 40px; padding: 0 8px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-size: 12px; font-weight: 700;
+  transition: background .15s, border-color .15s, color .15s;
+}
+#videoEditorModal .ve-aspect:hover { background: var(--surface-2); border-color: var(--border-strong); }
+#videoEditorModal .ve-aspect.active { background: var(--primary); border-color: var(--primary); color: var(--cream); }
+#videoEditorModal .ve-aspect.ve-aspect-free { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
+#videoEditorModal .ve-aspect.ve-aspect-free.active { background: var(--primary); border-color: var(--primary); color: var(--cream); }
+#videoEditorModal .ve-ar-shape { opacity: .8; }
+
+/* TRANSFORM rows — grid kolom seragam, semua slider sejajar */
+#videoEditorModal .ve-adv-list { display: flex; flex-direction: column; gap: 13px; }
+#videoEditorModal .ve-adv-row { display: grid; grid-template-columns: 86px 26px 1fr 26px 56px; align-items: center; gap: 9px; }
+#videoEditorModal .ve-adv-row .ve-slider-label { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; min-width: 0; }
+#videoEditorModal .ve-step {
+  width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border-radius: 7px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-size: 15px; font-weight: 700; line-height: 1;
+  transition: background .12s, border-color .12s;
+}
+#videoEditorModal .ve-step:hover { background: var(--surface-2); border-color: var(--border-strong); }
+#videoEditorModal .ve-num-wrap {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 1px; height: 26px; padding: 0 7px;
+  border-radius: 7px; background: var(--surface); border: 1px solid var(--border);
+}
+#videoEditorModal .ve-num { width: 100%; background: transparent; border: 0; color: var(--text); font-size: 12px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+#videoEditorModal .ve-num::-webkit-outer-spin-button, #videoEditorModal .ve-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#videoEditorModal .ve-num:focus { outline: none; }
+#videoEditorModal .ve-num-unit { color: var(--muted); font-size: 11px; font-style: normal; flex-shrink: 0; }
+#videoEditorModal .ve-num-wrap:focus-within { border-color: var(--primary); }
+
+/* Slider track + thumb (token tema) */
+#videoEditorModal .ve-range { height: 5px; background: var(--surface-2); border-radius: 999px; }
+#videoEditorModal .ve-range::-webkit-slider-runnable-track { height: 5px; background: transparent; }
+#videoEditorModal .ve-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; margin-top: -5px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-elev); cursor: pointer; }
+#videoEditorModal .ve-range::-moz-range-thumb { width: 15px; height: 15px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-elev); cursor: pointer; }
+
+/* Flip / Cermin */
+#videoEditorModal .ve-flip-icons { display: flex; gap: 8px; }
+#videoEditorModal .ve-icon-btn.ve-flip {
+  width: 34px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  transition: background .12s, border-color .12s;
+}
+#videoEditorModal .ve-icon-btn.ve-flip svg { width: 16px; height: 16px; }
+#videoEditorModal .ve-icon-btn.ve-flip:hover { background: var(--surface-2); border-color: var(--border-strong); }
+#videoEditorModal .ve-icon-btn.ve-flip[aria-pressed="true"],
+#videoEditorModal .ve-icon-btn.ve-flip.active { background: var(--primary); border-color: var(--primary); color: var(--cream); }
+
+/* FITUR BARU: Kecepatan (speed) + Mute — pakai token tema */
+#videoEditorModal .ve-speed-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+#videoEditorModal .ve-speed {
+  min-height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+#videoEditorModal .ve-speed:hover { background: var(--surface-2); border-color: var(--border-strong); }
+#videoEditorModal .ve-speed.active { background: var(--primary); border-color: var(--primary); color: var(--cream); }
+#videoEditorModal .ve-mute-row {
+  display: flex; align-items: center; gap: 9px; cursor: pointer; margin-top: 2px;
+  font-size: 12.5px; font-weight: 600; color: var(--text); user-select: none;
+}
+#videoEditorModal .ve-mute-cb { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+/* ============================================================================
+   TAB SEGMENTED IKON ala CapCut (4 Jun 2026) — ikon di atas + label di bawah,
+   kotak terbagi rata dalam 1 wadah; tab aktif = blok terisi (wine/token tema).
+   Override gaya tab underline sebelumnya. ========================================= */
+#videoEditorModal .ve-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+#videoEditorModal .ve-tab {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+#videoEditorModal .ve-tab .ve-tab-ico { display: inline-flex; align-items: center; justify-content: center; }
+#videoEditorModal .ve-tab .ve-tab-ico svg { width: 18px; height: 18px; }
+#videoEditorModal .ve-tab .ve-tab-label { white-space: nowrap; line-height: 1; }
+#videoEditorModal .ve-tab:hover { color: var(--text); background: var(--surface-2); }
+#videoEditorModal .ve-tab.active { background: var(--primary); color: var(--cream); border: 0; }
+
+/* Tombol "Reset Crop" (4 Jun 2026) — ghost kecil di bawah panel Crop, token tema. */
+#videoEditorModal .ve-crop-reset-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+#videoEditorModal .ve-crop-reset-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font-size: 11.5px; font-weight: 700; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
+}
+#videoEditorModal .ve-crop-reset-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+#videoEditorModal .ve-crop-reset-btn svg { width: 13px; height: 13px; }
+
+/* Aspect pills COMPACT (req user 4 Jun 2026): 4 kolom -> 8 rasio jadi 2 baris
+   (bukan 3). Sembunyikan ikon bentuk kecil + perkecil padding/font agar muat. */
+#videoEditorModal .ve-aspect-pills { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+#videoEditorModal .ve-aspect { min-height: 34px; padding: 0 4px; font-size: 11.5px; gap: 4px; }
+#videoEditorModal .ve-aspect .ve-ar-shape { display: none; }
+
+/* Hilangkan LATAR HITAM pekat di area preview (req user 4 Jun 2026). Saat rasio
+   portrait, video object-fit:cover sudah mengisi wrap-nya; yg hitam = background
+   stage di sekelilingnya. Dibuat transparan → menyatu dgn bg modal (tema wine),
+   bukan kotak hitam. */
+#videoEditorModal .ve-stage,
+#videoEditorModal .ve-stage-viewport,
+#videoEditorModal .ve-stage-scale { background: transparent; }
+#videoEditorModal .ve-video-wrap { background: transparent; }
+#videoEditorModal .ve-video-wrap > video { background: transparent; }
+
+/* TRIM dipindah ke bawah preview (kiri) — req user 4 Jun 2026. Section trim ikut
+   lebar kolom kiri (selebar video/preview-btn), rapi di bawah Putar Preview. */
+#videoEditorModal .ve-stage > .ve-section { width: 100%; max-width: 640px; }
+#videoEditorModal .ve-stage > .ve-section .ve-trim-wrap { width: 100%; }
+
+/* FILTER: 10 preset, grid genap 5x2 (komplit kolom). req user 4 Jun 2026 (+Noir). */
+#videoEditorModal .ve-preset-pills { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+#videoEditorModal .ve-preset { min-height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 11px; font-weight: 700; cursor: pointer; }
+#videoEditorModal .ve-preset.active { background: var(--primary); border-color: var(--primary); color: var(--cream); }
+
+/* FILL CERDAS slider (req user 4 Jun 2026): track menunjukkan nilai. Bipolar (-/+)
+   terisi dari TENGAH ke thumb; unipolar (0..n) dari KIRI. --lo/--hi diset oleh JS
+   (_veFillRange) sbg persen; default 0% = belum keisi. */
+#videoEditorModal .ve-range {
+  background: linear-gradient(to right,
+    var(--surface-2) 0, var(--surface-2) var(--lo, 0%),
+    var(--primary) var(--lo, 0%), var(--primary) var(--hi, 0%),
+    var(--surface-2) var(--hi, 0%), var(--surface-2) 100%) !important;
+}
+#videoEditorModal .ve-range::-webkit-slider-runnable-track { background: transparent; }
+#videoEditorModal .ve-range::-moz-range-track { background: transparent; }
+
+/* req user 4 Jun 2026: HAPUS kolom chip angka + tombol [-] & [+] dipindah
+   BERSEBELAHAN di sisi KANAN. Baris jadi: [label] [—— slider ——] [-][+].
+   Pakai :has(.ve-range) supaya baris Flip/Cermin (tanpa slider) tak terpengaruh. */
+#videoEditorModal .ve-num-wrap { display: none !important; }
+#videoEditorModal .ve-adv-row:has(.ve-range) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#videoEditorModal .ve-adv-row:has(.ve-range) .ve-slider-label { flex: 0 0 86px; order: 0; }
+#videoEditorModal .ve-adv-row:has(.ve-range) .ve-range { flex: 1 1 auto; min-width: 0; order: 1; }
+#videoEditorModal .ve-adv-row:has(.ve-range) .ve-step[data-delta^="-"] { order: 2; margin-left: 2px; } /* tombol − */
+#videoEditorModal .ve-adv-row:has(.ve-range) .ve-step:not([data-delta^="-"]) { order: 3; }              /* tombol + */
+
+/* req user 5 Jun 2026: tab AUDIO dibuat LENGKAP & RAPI.
+   (a) tampilkan kotak nilai % (di tab lain disembunyikan) agar nilai terbaca &
+       bisa diketik; (b) tombol Bisukan/Mute. */
+#videoEditorModal .ve-tab-panel[data-ve-panel="audio"] .ve-adv-row:has(.ve-range) .ve-num-wrap {
+  display: inline-flex !important;
+  order: 4;
+  flex: 0 0 66px;   /* lebar TETAP supaya semua baris sejajar (Volume/Masuk/Keluar) */
+  width: 66px;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 10px;
+  margin-left: 2px;
+  gap: 2px;
+}
+#videoEditorModal .ve-tab-panel[data-ve-panel="audio"] .ve-num { font-size: 12.5px; }
+/* tombol − / + samakan dengan tab Filter/Warna dll = 23px (kompak), bukan 38px */
+#videoEditorModal .ve-tab-panel[data-ve-panel="audio"] .ve-adv-row:has(.ve-range) .ve-step {
+  flex: 0 0 23px; width: 23px;
+}
+#videoEditorModal .ve-tab-panel[data-ve-panel="audio"] .ve-adv-row:has(.ve-range) .ve-range { min-width: 40px; }
+/* nilai detik (fade) = teks statis di kotak nilai, rata kanan seperti angka % */
+#videoEditorModal .ve-num-static {
+  width: auto; min-width: 0; background: transparent; border: 0;
+  color: var(--text); font-size: 12.5px; font-weight: 700;
+  text-align: right; font-variant-numeric: tabular-nums; line-height: 28px;
+}
+/* tombol Bisukan audio (toggle) */
+#videoEditorModal .ve-audio-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 16px;
+  padding: 9px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+#videoEditorModal .ve-audio-toggle:hover { background: var(--surface-2); border-color: var(--border-strong); }
+#videoEditorModal .ve-audio-toggle-ic { width: 17px; height: 17px; flex: 0 0 auto; }
+#videoEditorModal .ve-audio-toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--primary) 22%, var(--surface));
+  border-color: var(--primary);
+  color: var(--cream);
+}
+
+/* req user 4 Jun 2026: tombol stepper −/+ = bentuk KARTU (melebar, tidak
+   memanjang ke atas), sudut membulat, tetap ada border. */
+#videoEditorModal .ve-step {
+  width: 38px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* req user 4 Jun 2026: JUDUL FITUR dibungkus KOLOM/card (kotak ber-border + aksen
+   wine) + GARIS pemisah antar section. Berlaku semua tab (scoped #videoEditorModal). */
+#videoEditorModal .ve-ctrl-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 9px;
+  padding: 9px 12px;
+  margin: 0 0 9px;
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--border-strong));
+  border-radius: 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+#videoEditorModal .ve-ctrl-label::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  background: var(--primary);
+}
+/* GARIS pemisah antar section (termasuk section di dalam tab) */
+#videoEditorModal .ve-tab-panel .ve-section + .ve-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
+/* req user 5 Jun 2026: judul TRIM di area STAGE (bawah preview) DIHILANGKAN —
+   bagian trim sudah jelas dari handle geser + label "0:00 – 0:00" / "Durasi".
+   Sisakan hanya garis pemisah tipis agar trim terpisah rapi dari preview. */
+#videoEditorModal .ve-stage .ve-ctrl-label { display: none; }
+#videoEditorModal .ve-stage .ve-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 14px;
+}
+
+/* req user 4 Jun 2026: LABEL tiap baris (Posisi X/Y, Zoom, Rotate, Flip/Cermin,
+   Kecerahan, dll) jadi CARD/kotak ber-border — selaras dgn judul fitur. Kolom
+   label dilebarkan ke 104px supaya label panjang muat. */
+#videoEditorModal .ve-adv-row .ve-slider-label {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 6px 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  line-height: 1;
+}
+#videoEditorModal .ve-adv-row:has(.ve-range) .ve-slider-label { flex: 0 0 104px; }
+#videoEditorModal .ve-adv-row { grid-template-columns: 104px 26px 1fr 26px 56px; }
+
+/* req user 4 Jun 2026: POLES TAB TEKS menyeluruh — input teks, dropdown (select),
+   angka ukuran, color picker, layout 2-kolom — selaras sistem desain card/tema. */
+#videoEditorModal .ve-text-input {
+  width: 100%; box-sizing: border-box;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color .15s;
+}
+#videoEditorModal .ve-text-input::placeholder {
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
+  font-style: italic;
+  font-weight: 400;
+}
+#videoEditorModal .ve-text-input:focus { outline: none; border-color: var(--primary); }
+
+#videoEditorModal .ve-select {
+  width: 100%; box-sizing: border-box;
+  padding: 10px 36px 10px 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C7B7A3' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 15px;
+  transition: border-color .15s;
+}
+#videoEditorModal .ve-select:focus { outline: none; border-color: var(--primary); }
+#videoEditorModal .ve-select option { background: var(--bg-elev); color: var(--text); }
+/* req user 5 Jun 2026: highlight item terpilih/hover di daftar dropdown jangan
+   biru bawaan OS — paksa jadi wine sesuai tema (trik gradient utk override Chrome). */
+#videoEditorModal .ve-select option:hover,
+#videoEditorModal .ve-select option:focus,
+#videoEditorModal .ve-select option:checked,
+#videoEditorModal .ve-select option:checked:hover {
+  color: var(--cream);
+  background: var(--primary);
+  background-image: linear-gradient(var(--primary), var(--primary));
+  -webkit-text-fill-color: var(--cream);
+  box-shadow: 0 0 10px 100px var(--primary) inset;
+}
+
+/* req user 5 Jun 2026: Chrome baru mengabaikan styling <option>, highlight tetap
+   biru OS. Solusi: dropdown CUSTOM (div) yang 100% setema. Native <select> tetap
+   ada (tersembunyi) sebagai penyimpan nilai; panel ini di-append ke <body> jadi
+   TIDAK di-scope ke #videoEditorModal — pakai variabel tema dari :root. */
+.ve-select-pop {
+  position: fixed;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  max-height: 264px;
+  overflow-y: auto;
+  z-index: 100000;
+  animation: ve-pop-in .12s ease;
+}
+@keyframes ve-pop-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.ve-select-pop-item {
+  display: flex; align-items: center;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.ve-select-pop-item + .ve-select-pop-item { margin-top: 2px; }
+.ve-select-pop-item:hover { background: color-mix(in srgb, var(--primary) 26%, transparent); }
+.ve-select-pop-item.is-active {
+  background: var(--primary);
+  color: var(--cream);
+}
+.ve-select-pop-item.is-active::after {
+  content: "✓";
+  margin-left: auto;
+  font-size: 12px;
+  opacity: .9;
+}
+/* state terbuka pada trigger select */
+#videoEditorModal .ve-select.is-open { border-color: var(--primary); }
+.ve-select-pop::-webkit-scrollbar { width: 9px; }
+.ve-select-pop::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg-elev); }
+
+#videoEditorModal .ve-num-input {
+  box-sizing: border-box; width: 56px;
+  padding: 9px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12.5px; font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+#videoEditorModal .ve-num-input::-webkit-outer-spin-button,
+#videoEditorModal .ve-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#videoEditorModal .ve-num-input:focus { outline: none; border-color: var(--primary); }
+
+#videoEditorModal .ve-textsize-row { display: flex; align-items: center; gap: 10px; }
+#videoEditorModal .ve-textsize-row .ve-range { flex: 1 1 auto; min-width: 0; }
+#videoEditorModal .ve-textsize-preset { margin-top: 10px; }
+
+#videoEditorModal .ve-grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: stretch; }
+
+#videoEditorModal .ve-color-row { display: flex; align-items: center; gap: 9px; }
+#videoEditorModal .ve-color-swatch {
+  width: 40px; height: 40px; flex: 0 0 auto;
+  border-radius: 10px; border: 1px solid var(--border-strong); cursor: pointer;
+}
+#videoEditorModal .ve-color-hexinput {
+  flex: 1 1 auto; min-width: 0; box-sizing: border-box;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase;
+  transition: border-color .15s;
+}
+#videoEditorModal .ve-color-hexinput:focus { outline: none; border-color: var(--primary); }

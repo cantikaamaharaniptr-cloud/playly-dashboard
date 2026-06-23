@@ -889,14 +889,10 @@ function getPlatformVideos() {
       if (Array.isArray(s.myVideos)) videos.push(...s.myVideos);
     } catch {}
   }
-  // Filter: only published videos visible publicly
-  const filtered = videos.filter(v => {
-    const st = v.adminStatus;
-    // Backward-compat: kalau video lama nggak punya field adminStatus,
-    // anggap sudah published (jangan break content yang udah ada).
-    if (st == null) return true;
-    return st === "published";
-  });
+  // Filter: hanya video yang boleh tampil publik (published + visibility publik +
+  // jadwal sudah tiba). Backward-compat video lama tanpa adminStatus ditangani
+  // di dalam isPubliclyVisibleVideo().
+  const filtered = videos.filter(isPubliclyVisibleVideo);
   // Sort by views desc, fallback by id (newest)
   filtered.sort((a, b) => (b.viewsNum || 0) - (a.viewsNum || 0) || b.id - a.id);
   return filtered;
@@ -5176,7 +5172,7 @@ const I18N = {
     "upload.sub.autogen":        "Auto-generate AI",
     "upload.sub.autogen.desc":   "Auto-generate subtitles from the video's audio using Whisper Tiny.",
     "upload.sub.gen.now":        "Generate Now",
-    "upload.sub.note.locked":    "✨ Auto subtitle from video audio. Try 3 free runs this month.",
+    "upload.sub.note.locked":    "✨ Auto subtitle from your video's audio — available on Premium.",
     "upload.sub.note.quota":     "🎁 {n} of 3 free runs left this month",
     "upload.sub.note.quota.out": "🎁 Free quota used — go Premium for unlimited",
     "upload.sub.manual":         "Manual Upload",
@@ -6720,7 +6716,7 @@ const I18N = {
     "upload.cancel":             "Batal",
     "upload.now":                "🚀 Unggah Sekarang",
     // AI Assist + Subtitle auto-generate (bilingual, per request user 2026-05-16)
-    "upload.ai.assist":          "Auto Judul & Tag",
+    "upload.ai.assist":          "Judul & Tag Otomatis",
     "upload.ai.assist.desc":     "Masukkan judul/topik — AI kasih saran judul, deskripsi & tag siap pakai.",
     "upload.ai.gen.title":       "Buat Judul",
     "upload.ai.gen.desc":        "Buat Deskripsi",
@@ -6739,7 +6735,7 @@ const I18N = {
     "upload.sub.autogen":        "Buat Otomatis AI",
     "upload.sub.autogen.desc":   "Buat subtitle otomatis dari audio video pakai Whisper Tiny.",
     "upload.sub.gen.now":        "Buat Sekarang",
-    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video. Coba 3x gratis bulan ini.",
+    "upload.sub.note.locked":    "✨ Subtitle otomatis dari audio video — tersedia di Premium.",
     "upload.sub.note.quota":     "🎁 Sisa {n} dari 3 percobaan gratis bulan ini",
     "upload.sub.note.quota.out": "🎁 Kuota gratis habis bulan ini — Premium untuk akses unlimited",
     "upload.sub.manual":         "Unggah Manual",
@@ -45615,10 +45611,96 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     e.stopPropagation();
     if (typeof window._openVideoEditor === "function") {
       window._openVideoEditor();
+      // Editor menutupi tombol Edit ini -> mouseleave/blur tak terpicu & fokus bisa
+      // men-trigger ulang tooltip; .upf-tip (Edit Video ...) bisa nyangkut melayang di
+      // atas modal editor. Paksa sembunyikan pada frame berikutnya. Bug user 2026-06-20.
+      requestAnimationFrame(function () {
+        document.querySelectorAll(".upf-tip.is-show").forEach(function (t) { t.classList.remove("is-show"); });
+      });
     } else {
       if (typeof toast === "function") toast("⚠️ Video editor belum siap", "warning");
     }
   });
+
+  // Ikon tombol "Edit Video" diganti dari kamera-video → PENCIL (edit), karena
+  // ikon kamera tidak mewakili aksi EDIT. Per request user 2026-06-03. Markup
+  // tak disentuh — innerHTML svg di-set di sini (tombol overlay statis, sekali set).
+  (function () {
+    var editBtn = document.getElementById("dropzoneEditVideoBtn");
+    var svg = editBtn && editBtn.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.innerHTML = '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>';
+    }
+  })();
+})();
+
+// =====================================================================
+// CUSTOM TOOLTIP utk tombol overlay media (Edit/Ganti/Hapus pada Video,
+// Frame, Thumbnail). Tooltip NATIVE (atribut title) berwarna PUTIH & tak bisa
+// di-style. Per request user 2026-06-03 → diganti tooltip custom dark wine +
+// teks cream (.upf-tip). title dipindah ke data-tip lalu DIHAPUS supaya
+// tooltip native tidak muncul; aria-label tetap utk a11y. Markup tak disentuh.
+// =====================================================================
+(function customMediaTooltips() {
+  var btns = document.querySelectorAll(".dz-pro-overlay .dz-pro-action");
+  if (!btns.length) return;
+  var tip = document.createElement("div");
+  tip.className = "upf-tip";
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  function show(btn) {
+    var label = btn.dataset.tip || btn.getAttribute("aria-label") || "";
+    if (!label) return;
+    // Jangan tampilkan tooltip saat modal editor (video/thumbnail) terbuka: tombol
+    // Edit/Ganti/Hapus ketutup modal -> mouseleave/blur tak terpicu -> tooltip nyangkut
+    // melayang di atas modal. Cek deterministik (nol risiko bila editor tertutup). Bug user 2026-06-20.
+    var _ms = [document.getElementById("videoEditorModal"), document.getElementById("thumbEditorModal")];
+    for (var _i = 0; _i < _ms.length; _i++) {
+      var _m = _ms[_i];
+      if (_m && !_m.hidden && getComputedStyle(_m).display !== "none") return;
+    }
+    tip.textContent = label;
+    var tr = tip.getBoundingClientRect();
+    var r = btn.getBoundingClientRect();
+    var left = r.left + r.width / 2 - tr.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+    var top = r.bottom + 8;
+    if (top + tr.height > window.innerHeight - 8) top = r.top - tr.height - 8; // flip ke atas bila mepet bawah
+    tip.style.left = Math.round(left) + "px";
+    tip.style.top = Math.round(top) + "px";
+    tip.classList.add("is-show");
+  }
+  function hide() { tip.classList.remove("is-show"); }
+  btns.forEach(function (btn) {
+    if (btn.hasAttribute("title")) {
+      btn.dataset.tip = btn.getAttribute("title");
+      btn.removeAttribute("title"); // cegah tooltip native putih
+    }
+    btn.addEventListener("mouseenter", function () { show(btn); });
+    btn.addEventListener("focus", function () { show(btn); });
+    btn.addEventListener("mouseleave", hide);
+    btn.addEventListener("blur", hide);
+    btn.addEventListener("click", hide);
+  });
+  // Scroll bisa bikin tooltip melayang lepas dari tombol -> sembunyikan.
+  window.addEventListener("scroll", hide, true);
+})();
+
+// =====================================================================
+// Pindahkan blok progres/status upload (#uploadProgress) — dulu di kolom KIRI
+// (bawah preview video, jauh dari tombol), padahal tombol "Unggah Sekarang"
+// ada di action bar kolom KANAN bawah. Saat klik unggah, progres muncul jauh
+// dari tombol → membingungkan. Reparent #uploadProgress ke TEPAT DI ATAS
+// .upload-actions-bar (kolom kanan) supaya feedback muncul dekat aksinya.
+// Per request user 2026-06-03. Markup tak disentuh (reparent via JS).
+// =====================================================================
+(function relocateUploadProgress() {
+  var prog = document.getElementById("uploadProgress");
+  var bar = document.querySelector(".upload-actions-bar");
+  if (prog && bar && bar.parentElement && prog !== bar.previousElementSibling) {
+    bar.parentElement.insertBefore(prog, bar);
+  }
 })();
 
 // =====================================================================
@@ -46125,6 +46207,13 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (!previewBtn) return;
     const lbl = previewBtn.querySelector(".ve-preview-label");
     if (lbl) lbl.textContent = txt; else previewBtn.textContent = txt;
+    // Tukar ikon play <-> pause sesuai status (Jeda = sedang main -> ikon pause). User 2026-06-21.
+    const _svg = previewBtn.querySelector("svg");
+    if (_svg) {
+      _svg.innerHTML = /Jeda/i.test(txt)
+        ? '<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"></rect><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"></rect>'
+        : '<path d="M7 5v14l11-7z" fill="currentColor" stroke="none"></path>';
+    }
   }
 
   if (!modal || !video) {
@@ -46175,7 +46264,7 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     document.body.style.overflow = "";
     try { video.pause(); } catch {}
     previewMode = false;
-    if (previewBtn) setPreviewLabel("Putar Preview");
+    if (previewBtn) setPreviewLabel("Putar Pratinjau");
   }
 
   window._openVideoEditor = function () {
@@ -46225,47 +46314,55 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode && video.currentTime >= trimEnd) {
       video.pause();
       previewMode = false;
-      if (previewBtn) setPreviewLabel("Putar Preview");
+      if (previewBtn) setPreviewLabel("Putar Pratinjau");
     }
   });
 
-  // Drag handlers for trim handles
+  // Gerakan playhead HALUS: timeupdate cuma fire ~4x/detik -> patah2. Update tiap frame
+  // (requestAnimationFrame) selama video main. Per user 2026-06-21.
+  let _phRaf = null;
+  function _phTick() { updatePlayhead(); if (video && !video.paused && !video.ended) _phRaf = requestAnimationFrame(_phTick); }
+  video?.addEventListener("play", function () { cancelAnimationFrame(_phRaf); _phTick(); });
+  video?.addEventListener("pause", function () { cancelAnimationFrame(_phRaf); updatePlayhead(); });
+
+  // Drag handlers: handle trim (start/end) ATAU SCRUB di track (geser kursor ke detik mana
+  // saja utk lihat frame berbeda). Per user 2026-06-21.
   let dragHandle = null;
-  function onPointerDown(e) {
-    const handle = e.target.closest(".ve-trim-handle");
-    if (!handle) return;
-    e.preventDefault();
-    dragHandle = handle.dataset.handle;
-  }
-  function onPointerMove(e) {
-    if (!dragHandle || !duration || !trimTrack) return;
+  let scrubbing = false;
+  function _clientX(e) { return (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX)) || 0; }
+  function _seekToX(x) {
+    if (!duration || !trimTrack) return;
     const rect = trimTrack.getBoundingClientRect();
-    const x = (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0]?.clientX)) || 0;
     let pct = (x - rect.left) / rect.width;
     pct = Math.max(0, Math.min(1, pct));
-    const t = pct * duration;
-    if (dragHandle === "start") {
-      trimStart = Math.min(t, trimEnd - 0.1);
-      video.currentTime = trimStart;
-    } else {
-      trimEnd = Math.max(t, trimStart + 0.1);
-      video.currentTime = trimEnd;
-    }
-    updateTrimUI();
-  }
-  function onPointerUp() { dragHandle = null; }
-  trimTrack?.addEventListener("mousedown", onPointerDown);
-  document.addEventListener("mousemove", onPointerMove);
-  document.addEventListener("mouseup", onPointerUp);
-
-  // Click on track (not handle) = seek video
-  trimTrack?.addEventListener("click", function (e) {
-    if (e.target.closest(".ve-trim-handle")) return;
-    if (!duration) return;
-    const rect = trimTrack.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
     video.currentTime = pct * duration;
-  });
+    updatePlayhead();
+  }
+  function onPointerDown(e) {
+    const handle = e.target.closest(".ve-trim-handle");
+    if (handle) { e.preventDefault(); dragHandle = handle.dataset.handle; return; }
+    if (e.target.closest(".ve-trim-track")) { e.preventDefault(); scrubbing = true; _seekToX(_clientX(e)); }
+  }
+  function onPointerMove(e) {
+    if (dragHandle && duration && trimTrack) {
+      const rect = trimTrack.getBoundingClientRect();
+      let pct = (_clientX(e) - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const t = pct * duration;
+      if (dragHandle === "start") { trimStart = Math.min(t, trimEnd - 0.1); video.currentTime = trimStart; }
+      else { trimEnd = Math.max(t, trimStart + 0.1); video.currentTime = trimEnd; }
+      updateTrimUI();
+      return;
+    }
+    if (scrubbing) { e.preventDefault(); _seekToX(_clientX(e)); }
+  }
+  function onPointerUp() { dragHandle = null; scrubbing = false; }
+  trimTrack?.addEventListener("mousedown", onPointerDown);
+  trimTrack?.addEventListener("touchstart", onPointerDown, { passive: false });
+  document.addEventListener("mousemove", onPointerMove);
+  document.addEventListener("touchmove", onPointerMove, { passive: false });
+  document.addEventListener("mouseup", onPointerUp);
+  document.addEventListener("touchend", onPointerUp);
 
   // Speed pills
   speedPills?.forEach(p => p.addEventListener("click", function () {
@@ -46285,14 +46382,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     if (previewMode) {
       video.pause();
       previewMode = false;
-      setPreviewLabel("Putar Preview");
+      setPreviewLabel("Putar Pratinjau");
       return;
     }
     video.currentTime = trimStart;
     video.playbackRate = speed;
     video.muted = muted;
     previewMode = true;
-    setPreviewLabel("Pause Preview");
+    setPreviewLabel("Jeda Pratinjau");
     video.play().catch(err => console.warn("[VideoEditor] play failed:", err));
   });
 
@@ -46345,7 +46442,26 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   const hidden  = document.getElementById("upCategory");
   if (!wrap || !trigger || !pop || !labelEl || !hidden) return;
 
-  const defaultLabel = "— pilih kategori —";
+  // Opsi "Tanpa kategori" (value kosong) di paling ATAS — supaya user bisa BATAL
+  // memilih kategori (kategori bersifat opsional). Per request user 2026-06-03.
+  // Markup tidak disentuh: opsi di-inject via JS. Ikon = lingkaran + garis miring
+  // (no/ban) pakai class .picon (CSS: fill:none; stroke:currentColor).
+  if (!pop.querySelector('.ucs-option[data-value=""]')) {
+    const none = document.createElement("div");
+    none.className = "ucs-option ucs-option-none";
+    none.setAttribute("role", "option");
+    none.dataset.value = "";
+    none.dataset.label = "Tanpa kategori";
+    none.setAttribute("aria-selected", "false");
+    none.innerHTML =
+      '<span class="picon-w" aria-hidden="true">' +
+      '<svg class="picon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<circle cx="12" cy="12" r="9"></circle><path d="M5.64 5.64l12.72 12.72"></path>' +
+      '</svg></span> Tanpa kategori';
+    pop.insertBefore(none, pop.firstChild);
+  }
+
+  const defaultLabel = "Pilih kategori";
 
   function open() {
     pop.hidden = false;
@@ -46367,6 +46483,9 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   function selectValue(value, label, fireChange = true) {
     hidden.value = value || "";
     labelEl.textContent = label || defaultLabel;
+    // Tandai state placeholder (belum dipilih) → CSS bikin teksnya abu-abu
+    // muted, konsisten dgn placeholder field lain (bukan cream spt value asli).
+    trigger.classList.toggle("is-placeholder", !value);
     pop.querySelectorAll(".ucs-option").forEach(o => {
       o.setAttribute("aria-selected", o.dataset.value === (value || "") ? "true" : "false");
     });
@@ -46446,6 +46565,49 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     }
   });
 })();
+
+// =====================================================================
+// PREMIUM LOCK OVERLAY (per request user 2026-06-03)
+// Kartu fitur premium tampil SAMA untuk semua tier (warna/bentuk identik).
+// Bedanya HANYA saat terkunci di akun free: isi kartu di-blur + overlay
+// gembok "Tersedia di Premium" (klik → toast upgrade). Dipakai kartu AUTO
+// JUDUL (#upAiAssist) & SUBTITLE AI (#upSubtitleAiCard). Overlay = anak <div>
+// absolute (kartu sudah position:relative), CSS .upf-lock-overlay di akhir
+// styles.css mem-blur semua anak kartu kecuali overlay.
+// =====================================================================
+window._applyPremiumLock = function (card, locked, opts) {
+  if (!card) return;
+  opts = opts || {};
+  card.classList.toggle("locked", !!locked);
+  var ov = card.querySelector(":scope > .upf-lock-overlay");
+  if (locked) {
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.className = "upf-lock-overlay";
+      ov.setAttribute("role", "button");
+      ov.setAttribute("tabindex", "0");
+      ov.innerHTML =
+        '<span class="upf-lock-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' +
+        '<span class="upf-lock-title"></span>' +
+        '<span class="upf-lock-sub"></span>';
+      var fire = function () {
+        if (typeof toast === "function") toast("⭐ Fitur Premium. Upgrade dulu yuk untuk membukanya!", "warning");
+      };
+      ov.addEventListener("click", fire);
+      ov.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fire(); }
+      });
+      card.appendChild(ov);
+    }
+    var title = opts.title || "Fitur Premium";
+    var sub = opts.sub || "Tersedia di Premium";
+    ov.querySelector(".upf-lock-title").textContent = title;
+    ov.querySelector(".upf-lock-sub").textContent = sub;
+    ov.setAttribute("aria-label", title + " — " + sub + ". Upgrade ke Premium untuk membuka.");
+  } else if (ov) {
+    ov.remove();
+  }
+};
 
 // =====================================================================
 // UPLOAD — AI ASSIST (Premium-only) — generate title/desc/tags otomatis
@@ -46576,48 +46738,136 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
     return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
 
+  // ===== AI Assist diperluas (4 Jun 2026) — jangkauan judul/tag/deskripsi jauh
+  // lebih luas, variatif & relevan: multi-angle judul, deteksi niche & bahasa,
+  // ekspansi tag, deskripsi terstruktur. Tiap generate menghasilkan variasi baru
+  // (klik lagi = saran segar). Heuristik lokal, bukan AI eksternal. =====
+  function _aiRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function _aiShuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function _aiNum() { return _aiRand([3, 5, 7, 10, 5, 3]); }
+  function _aiYear() { try { return String(new Date().getFullYear()); } catch (e) { return "2026"; } }
+  function _aiIsEN(tp) {
+    const en = /\b(how|what|why|the|best|tips|review|tutorial|guide|easy|beginner|vs)\b/i;
+    const id = /\b(cara|resep|tips|terbaik|panduan|tutorial|mudah|pemula|gampang|review|bikin|membuat|belajar)\b/i;
+    return en.test(tp) && !id.test(tp);
+  }
+  // ekspansi tag per-niche: kalau topik mengandung kata kunci → tambah tag terkait
+  const AI_NICHE = [
+    { keys: ["masak", "resep", "kuliner", "makan", "dapur", "camilan", "kue", "minuman", "jajan"], tags: ["resepmudah", "masakanrumahan", "kuliner", "foodvlog", "foodie", "resepviral"] },
+    { keys: ["game", "gaming", "main", "mobile legends", "pubg", "free fire", "valorant", "genshin", "roblox"], tags: ["gaming", "gameplay", "gamer", "mobilegaming", "esports"] },
+    { keys: ["belajar", "tutorial", "edukasi", "kuliah", "sekolah", "matematika", "coding", "program", "rumus", "bahasa"], tags: ["edukasi", "belajar", "tutorial", "tipsbelajar", "ilmu"] },
+    { keys: ["vlog", "harian", "daily", "jalan", "liburan", "traveling", "wisata", "trip", "healing"], tags: ["vlog", "dailyvlog", "traveling", "wisata", "jalanjalan"] },
+    { keys: ["musik", "lagu", "cover", "nyanyi", "gitar", "piano", "band", "akustik"], tags: ["musik", "cover", "lagu", "musisi", "coversong"] },
+    { keys: ["olahraga", "gym", "workout", "fitness", "lari", "bola", "futsal", "badminton", "diet"], tags: ["olahraga", "workout", "fitness", "hidupsehat", "gym"] },
+    { keys: ["skincare", "makeup", "kecantikan", "beauty", "rambut", "fashion", "outfit", "ootd"], tags: ["beauty", "skincare", "makeup", "ootd", "tipscantik"] },
+    { keys: ["teknologi", "gadget", "laptop", "review", "unboxing", "tech", "komputer", "aplikasi", "hp"], tags: ["teknologi", "gadget", "review", "unboxing", "tech"] },
+    { keys: ["bisnis", "jualan", "usaha", "uang", "investasi", "saham", "crypto", "keuangan", "modal", "cuan"], tags: ["bisnis", "usaha", "carajualan", "keuangan", "tipsbisnis", "cuan"] },
+    { keys: ["motivasi", "inspirasi", "produktif", "mindset", "sukses", "disiplin"], tags: ["motivasi", "inspirasi", "selfimprovement", "produktif", "mindset"] },
+  ];
+  function _aiNicheTags(words, topic) {
+    const hay = (topic + " " + words.join(" ")).toLowerCase();
+    const out = [];
+    for (const n of AI_NICHE) { if (n.keys.some(k => hay.includes(k))) out.push(...n.tags); }
+    return out;
+  }
+  // subjek = topik tanpa kata kerja awalan (cara/cara bikin/tutorial...) supaya
+  // pola "Cara <subjek>" tidak jadi "Cara Cara ...".
+  function _aiSubject(topic) {
+    return titleCase(cleanTopic(topic).replace(/^(cara(\s+(membuat|bikin|buat))?|how\s+to|tutorial|tips|bikin|membuat|buat|belajar)\s+/i, "")) || titleCase(topic);
+  }
+
   function genTitles(topic) {
-    const T = titleCase(topic);
-    const cand = [
-      T,
-      "Cara " + T + " yang Wajib Kamu Tahu",
-      T + " — Tips Anti Gagal untuk Pemula",
-      "Rahasia " + T + " ala Pro",
-      "5 Hal Penting Soal " + T,
-      T + " Lengkap dari Nol sampai Bisa"
+    const T = titleCase(topic);          // judul penuh apa adanya
+    const S = _aiSubject(topic);          // subjek (tanpa verba awalan)
+    const N = _aiNum();
+    const Y = _aiYear();
+    const poolID = [
+      () => "Cara " + S + " untuk Pemula (Step by Step)",
+      () => "Tutorial " + S + " dari Nol Sampai Bisa",
+      () => "Begini Cara " + S + " yang Benar & Anti Gagal",
+      () => N + " Tips " + S + " yang Wajib Kamu Coba",
+      () => N + " Kesalahan Saat " + S + " & Cara Menghindarinya",
+      () => N + " Fakta " + S + " yang Bikin Penasaran",
+      () => "Rahasia " + S + " yang Jarang Diketahui",
+      () => S + " ala Pro — Tips yang Gak Diajarin di Mana-mana",
+      () => "Apa Itu " + S + "? Penjelasan Lengkap & Gampang Dipahami",
+      () => "Kenapa " + S + " Penting? Ini Jawabannya",
+      () => "Aku Coba " + T + " Seminggu, Hasilnya Bikin Kaget!",
+      () => T + " yang Lagi Viral " + Y,
+      () => T + " Lengkap: Panduan A–Z " + Y,
+      () => "Pemula Wajib Tahu! Dasar-dasar " + S,
+      () => S + " Biar Hasilnya Maksimal (Tips Praktis)",
+      () => "Jangan " + S + " Sebelum Nonton Video Ini!",
     ];
+    const poolEN = [
+      () => "How to " + S + " for Beginners (Step by Step)",
+      () => N + " " + S + " Tips You Need to Know",
+      () => "The Truth About " + S + " Nobody Tells You",
+      () => T + " — Complete Guide " + Y,
+      () => N + " " + S + " Mistakes to Avoid",
+      () => "I Tried " + T + " for a Week — Here's What Happened",
+      () => "Why " + S + " Matters (Explained Simply)",
+      () => S + " Like a Pro: Tips That Actually Work",
+    ];
+    const cand = [T, ..._aiShuffle(_aiIsEN(topic) ? poolEN : poolID).map(f => f())];
     const seen = {}; const out = [];
-    cand.forEach(s => {
-      const v = s.slice(0, 100).trim();
+    for (const s of cand) {
+      const v = String(s).replace(/\s+/g, " ").slice(0, 100).trim();
       const k = v.toLowerCase();
       if (v && !seen[k]) { seen[k] = 1; out.push(v); }
-    });
-    return out.slice(0, 5);
+    }
+    return out.slice(0, 6);
   }
+
   function genTags(topic) {
     const w = topicWords(topic);
-    const cat = document.getElementById("upCategory")?.value || "";
-    const base = cat ? [cat, "playly"] : ["playly", "video"];
-    return [...new Set([...base, ...w])].slice(0, 10);
+    const cat = (document.getElementById("upCategory")?.value || "").toLowerCase();
+    const how = /\b(cara|tutorial|how|bikin|membuat|buat|belajar)\b/i.test(topic);
+    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const tags = [];
+    const joined = norm(cleanTopic(topic).replace(/\s+/g, ""));
+    if (joined && joined.length >= 3 && joined.length <= 22) tags.push(joined); // topik gabung jadi 1 tag
+    tags.push(...w);                              // per kata kunci
+    if (cat) tags.push(cat);
+    tags.push(..._aiNicheTags(w, topic));         // ekspansi niche
+    if (how) tags.push("tutorial", "caramudah", "tipsdantrik");
+    tags.push("fyp", "fyptiktok", "viral", "trending", "video", "playly", _aiYear());
+    const seen = {}; const out = [];
+    for (let tg of tags) { tg = norm(tg); if (tg && tg.length >= 2 && tg.length <= 24 && !seen[tg]) { seen[tg] = 1; out.push(tg); } }
+    return out.slice(0, 14);
   }
+
   function genDesc(topic) {
-    const T = cleanTopic(topic);
+    const T = cleanTopic(topic) || "topik ini";
     const w = topicWords(topic);
-    const cat = document.getElementById("upCategory")?.value || "";
-    const tagSrc = w.length ? w : (cat ? [cat] : ["video"]);
-    const tagLine = tagSrc.slice(0, 6).map(x => "#" + x).join(" ");
+    const tags = genTags(topic);
+    const hook = _aiRand([
+      "Penasaran soal " + T + "? Video ini bahas tuntas dari awal sampai akhir!",
+      "Di video ini kita kupas " + T + " secara lengkap, simpel, dan langsung praktik.",
+      "Mau paham " + T + " tanpa ribet? Tonton sampai habis ya!",
+      "Semua yang perlu kamu tahu tentang " + T + " — dirangkum dalam satu video."
+    ]);
     const pts = w.length >= 3
-      ? w.slice(0, 5).map((x, i) => (i + 1) + ". " + cap(x)).join("\n")
-      : "1. Pengenalan " + (T || "topik") + "\n2. Langkah / pembahasan utama\n3. Tips & kesalahan umum\n4. Penutup & Q&A";
+      ? w.slice(0, 5).map(x => "• " + cap(x)).join("\n")
+      : "• Pengenalan & dasar " + T + "\n• Langkah / pembahasan utama\n• Tips & kesalahan yang sering terjadi\n• Penutup & tanya-jawab";
+    const forWho = _aiRand([
+      "Cocok buat kamu yang baru mulai maupun yang mau naik level.",
+      "Pas banget buat pemula yang pengen langsung bisa.",
+      "Berguna buat siapa aja yang tertarik sama " + T + "."
+    ]);
+    const cta = _aiRand([
+      "Kalau bermanfaat, jangan lupa LIKE, KOMENTAR & FOLLOW biar nggak ketinggalan video berikutnya! 🔔",
+      "Suka videonya? Dukung dengan like & follow ya — banyak konten seru lainnya menyusul! 🚀",
+      "Tinggalkan komentar kalau ada pertanyaan, dan follow untuk update terbaru! 💬"
+    ]);
+    const hashLine = tags.slice(0, 10).map(x => "#" + x).join(" ");
     return [
-      "Di video ini kita bahas tentang " + (T || "topik ini") + ".",
-      "",
-      "Yang dibahas di video:",
-      pts,
-      "",
-      "Jangan lupa like, komentar, dan follow biar nggak ketinggalan video berikutnya!",
-      "",
-      tagLine
+      hook, "",
+      "✨ Yang dibahas di video:",
+      pts, "",
+      forWho, "",
+      cta, "",
+      hashLine
     ].join("\n").slice(0, 2000);
   }
 
@@ -46696,16 +46946,14 @@ let pendingUpload = null; // { file, thumb (data URL), duration (string), videoU
   // sparkle icon (✨ aspirational) bukan lock icon (🔒 punitive).
   function refreshAiNote() {
     if (topicInput) topicInput.placeholder = t("upload.ai.topic.ph");
-    if (!noteEl) return;
-    if (!isPremium()) {
-      const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-      noteEl.innerHTML = ICO_SPARK + " " + t("upload.ai.note.locked");
-      noteEl.hidden = false;
-      card.classList.add("locked");
+    const locked = !isPremium();
+    // Kartu tampil SAMA untuk semua tier — note gold lama tidak dipakai lagi
+    // (overlay gembok yang memberi info). Free → blur + overlay via helper.
+    if (noteEl) { noteEl.innerHTML = ""; noteEl.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, locked, { title: "Judul & Tag Otomatis", sub: "Tersedia di Premium" });
     } else {
-      noteEl.innerHTML = "";
-      noteEl.hidden = true;
-      card.classList.remove("locked");
+      card.classList.toggle("locked", locked);
     }
   }
   refreshAiNote();
@@ -47209,7 +47457,7 @@ self.onmessage = async (e) => {
     // Get current uploaded video file
     const videoFile = window._uploadCapturedFile || window._captured?.file;
     if (!videoFile) {
-      return toast("⚠️ Upload video dulu sebelum auto-generate subtitle", "warning");
+      return toast("⚠️ Unggah video dulu sebelum buat subtitle otomatis", "warning");
     }
     // Warn untuk file besar
     const fileMB = videoFile.size / (1024 * 1024);
@@ -47417,30 +47665,19 @@ self.onmessage = async (e) => {
 
   autoBtn?.addEventListener("click", e => {
     e.preventDefault();
-    const isPremium = !!(user && (user.tier === "premium" || user.role === "admin"));
+    // Premium-only feature (per request user 2026-06-03): Free user TIDAK lagi
+    // dapat percobaan gratis — fitur ditampilkan tapi terkunci, sama persis
+    // seperti kartu AUTO JUDUL & TAG. Premium / admin → akses penuh (unlimited).
+    const _u = (typeof user !== "undefined" ? user : null) || window.user;
+    const isPremium =
+      (typeof isPremiumActive === "function" && isPremiumActive(_u)) ||
+      !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
+      document.body.dataset.tier === "premium";
     if (!isPremium) {
-      // Free user: cek quota sebelum gate ke premium prompt.
-      const remaining = getSubFreeQuotaRemaining();
-      if (remaining <= 0) {
-        if (typeof toast === "function") {
-          toast("🎁 Kuota gratis bulan ini habis. Upgrade Premium untuk akses unlimited.", "warning");
-        }
-        return;
+      if (typeof toast === "function") {
+        toast("⭐ Subtitle Otomatis AI hanya untuk Premium. Upgrade dulu yuk!", "warning");
       }
-      // Confirm sekali sebelum konsumsi quota — supaya user sadar ini "dihitung"
-      const willUse = SUB_FREE_QUOTA - remaining + 1;
-      const ok = confirm(
-        "🎁 Kamu masih punya " + remaining + " dari " + SUB_FREE_QUOTA + " percobaan gratis bulan ini.\n\n" +
-        "Lanjut generate subtitle (percobaan ke-" + willUse + ")?\n\n" +
-        "Setelah kuota habis, fitur ini perlu Premium."
-      );
-      if (!ok) return;
-      incrementSubFreeQuota();
-      // Refresh UI counter setelah quota dipakai
-      if (typeof window.refreshSubtitleAiLockedState === "function") {
-        // Tunggu sebentar supaya state localStorage ter-flush
-        setTimeout(window.refreshSubtitleAiLockedState, 50);
-      }
+      return;
     }
     autoGenerateSubtitle();
   });
@@ -47460,50 +47697,29 @@ self.onmessage = async (e) => {
       !!(_u && (_u.tier === "premium" || _u.role === "admin")) ||
       document.body.dataset.tier === "premium";
 
-    const remaining = isPremium ? Infinity : getSubFreeQuotaRemaining();
-    const hasFreeQuota = !isPremium && remaining > 0;
-    const quotaExhausted = !isPremium && remaining <= 0;
-
-    // 3-state class system:
-    //  is-unlocked  → Premium / admin (full access, no banner)
-    //  has-quota    → Free user dengan quota tersisa (soft sparkle state)
-    //  locked       → Free user, quota habis (locked, premium prompt)
+    // Premium-only feature (per request user 2026-06-03). Kartu tampil SAMA
+    // untuk semua tier — bedanya HANYA saat free: blur + overlay gembok.
+    //  is-unlocked → Premium / admin (akses penuh)
+    //  locked      → Free user (kartu di-blur + overlay "Tersedia di Premium")
     card.classList.toggle("is-unlocked", isPremium);
-    card.classList.toggle("has-quota", hasFreeQuota);
-    card.classList.toggle("locked", quotaExhausted);
-
-    if (note) {
-      if (isPremium) {
-        note.innerHTML = "";
-        note.hidden = true;
-      } else if (hasFreeQuota) {
-        // Soft sparkle state — tampilkan counter quota
-        const ICO_SPARK = '<svg class="upf-spark-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>';
-        note.innerHTML = ICO_SPARK + " " + t("upload.sub.note.quota").replace("{n}", String(remaining));
-        note.hidden = false;
-      } else {
-        // Kuota habis — soft lock state (bukan harsh)
-        const ICO_GIFT = '<svg class="upf-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8c0-3 3-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>';
-        note.innerHTML = ICO_GIFT + " " + t("upload.sub.note.quota.out");
-        note.hidden = false;
-      }
+    card.classList.remove("has-quota");
+    // Note gold lama disembunyikan utk semua tier (overlay yang kasih info).
+    if (note) { note.innerHTML = ""; note.hidden = true; }
+    if (typeof window._applyPremiumLock === "function") {
+      window._applyPremiumLock(card, !isPremium, { title: "Subtitle Otomatis AI", sub: "Tersedia di Premium" });
+    } else {
+      card.classList.toggle("locked", !isPremium);
     }
 
-    // Button enable/disable — Premium dan Free-with-quota bisa klik.
-    // Free-no-quota: disabled (tapi click handler tetap kasih friendly toast).
+    // Tombol auto-generate: enabled utk premium; saat free dia ada di bawah
+    // layer blur (pointer-events:none) & overlay yang menangani klik → toast.
     if (btn) {
-      if (isPremium || hasFreeQuota) {
-        btn.removeAttribute("disabled");
-        btn.removeAttribute("aria-disabled");
-        btn.title = isPremium ? "" : ("Sisa " + remaining + " percobaan gratis bulan ini");
-      } else {
-        btn.setAttribute("disabled", "disabled");
-        btn.setAttribute("aria-disabled", "true");
-        btn.title = t("upload.sub.note.quota.out");
-      }
+      btn.removeAttribute("disabled");
+      btn.removeAttribute("aria-disabled");
+      btn.title = isPremium ? "" : "Hanya untuk Premium";
     }
 
-    // Sync AI Assist card juga — selalu locked untuk non-premium (no quota).
+    // Sync AI Assist card juga — unlocked hanya untuk Premium.
     const aiAssistCard = document.getElementById("upAiAssist");
     if (aiAssistCard) aiAssistCard.classList.toggle("is-unlocked", isPremium);
   };
@@ -48190,6 +48406,14 @@ self.onmessage = async (e) => {
 
   // Initialize
   setDisplay();
+
+  // 1d (audit Unggah): reset penuh dipakai startUpload setelah publish supaya
+  // jadwal & tampilannya kembali bersih untuk upload berikutnya.
+  window._resetUpSchedule = function () {
+    selDate = null; selH = 12; selM = 0;
+    setDisplay();
+    if (!pop.hidden) buildPop();
+  };
 })();
 
 function fmtBytes(n) {
@@ -48207,6 +48431,25 @@ function fmtDurationSec(sec) {
 }
 
 // Bikin thumbnail dari frame video (~detik 1) + ukur durasi.
+// 1f (audit Unggah 2026-06-02): fallback thumbnail JUJUR. Sebelumnya saat capture
+// frame gagal kita pakai gambar acak picsum.photos — menyesatkan (gambar tak
+// terkait isi video). Ganti dengan placeholder bermerek Playly (SVG data-URI,
+// tema wine/cream) yang jelas "thumbnail belum dipilih" + ikon play, sehingga
+// user paham harus pilih frame / unggah cover. Deterministik, no network.
+function playlyThumbPlaceholder(label) {
+  const safe = String(label || "Playly").trim().slice(0, 28).replace(/[<>&]/g, "");
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340' viewBox='0 0 600 340'>"
+    + "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+    + "<stop offset='0' stop-color='#2a1218'/><stop offset='1' stop-color='#1a0c10'/></linearGradient></defs>"
+    + "<rect width='600' height='340' fill='url(#g)'/>"
+    + "<circle cx='300' cy='148' r='44' fill='none' stroke='#E7D7C4' stroke-width='3' opacity='0.85'/>"
+    + "<path d='M289 128 v40 l34 -20 z' fill='#E7D7C4'/>"
+    + (safe ? "<text x='300' y='244' text-anchor='middle' font-family='Inter,sans-serif' font-size='22' font-weight='700' fill='#E7D7C4' opacity='0.92'>" + safe + "</text>" : "")
+    + "<text x='300' y='276' text-anchor='middle' font-family='Inter,sans-serif' font-size='13' fill='#E7D7C4' opacity='0.55'>Thumbnail belum dipilih</text>"
+    + "</svg>";
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
 function generateVideoThumb(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -48232,9 +48475,10 @@ function generateVideoThumb(file) {
         ctx.drawImage(v, 0, 0, w, h);
         const thumb = canvas.toDataURL("image/jpeg", 0.72);
         captured = true;
-        const duration = fmtDurationSec(v.duration || 0);
+        const durationSec = Number(v.duration) || 0;
+        const duration = fmtDurationSec(durationSec);
         cleanup();
-        resolve({ thumb, duration });
+        resolve({ thumb, duration, durationSec });
       } catch (err) {
         cleanup();
         reject(err);
@@ -48264,6 +48508,75 @@ function generateVideoThumb(file) {
       }
     }, 12000);
   });
+}
+
+// 1i (audit Unggah 2026-06-02): batas platform — durasi maks 4 jam
+// (lihat help.upload.formats "durasi maks 4 jam").
+const MAX_VIDEO_DURATION_SEC = 4 * 60 * 60; // 14400 dtk
+
+// 1h (audit Unggah): cek kuota tier-free dipakai DUA kali — saat pilih file & saat
+// submit (mencegah lolos kalau kuota berubah di antara keduanya, mis. upload dari
+// device lain di akun yang sama). Return null kalau boleh upload, atau objek
+// { title, desc, isFree } untuk ditampilkan via openConfirm. Selaras model 10GB
+// (playlyQuota): Free 10GB/30, Premium 100GB/100 BOUNDED, Admin tanpa batas;
+// bulanan (reset tgl 1) — mirror handlePickedFile supaya pick & submit identik.
+function freeTierUploadBlock(fileSize) {
+  const tier = user?.tier || "free";
+  if (user?.role === "admin") return null;
+  if (tier !== "free" && tier !== "premium") return null;
+  const q = (typeof playlyQuota === "function") ? playlyQuota(tier) : null;
+  if (!q) return null;
+  const isFree = tier !== "premium";
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const thisMonth = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart);
+  const usedCount = thisMonth.length;
+  const usedBytes = thisMonth.reduce((s, v) => s + (v.fileSize || 0), 0);
+  if (usedCount >= q.videos) {
+    return {
+      isFree,
+      title: isFree ? "Kuota video Free bulan ini penuh" : "Kuota video Premium bulan ini penuh",
+      desc: isFree
+        ? `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini.<br><br>Upgrade ke <b>Premium</b> untuk kuota 10x lebih besar (100 video + 100 GB).`
+        : `Kamu sudah unggah <b>${usedCount}/${q.videos}</b> video bulan ini. Kuota reset otomatis tanggal 1 - video lama tetap aman.`,
+    };
+  }
+  if (usedBytes + (fileSize || 0) > q.bytes) {
+    return {
+      isFree,
+      title: isFree ? "Kuota penyimpanan Free bulan ini penuh" : "Kuota penyimpanan Premium bulan ini penuh",
+      desc: isFree
+        ? `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(fileSize || 0)}) tidak muat.<br><br>Upgrade ke <b>Premium</b> untuk 100 GB + 100 video/bulan.`
+        : `Kamu sudah pakai <b>${fmtBytes(usedBytes)} / ${q.gbLabel}</b> bulan ini. File ini (${fmtBytes(fileSize || 0)}) tidak muat. Kuota reset tanggal 1.`,
+    };
+  }
+  return null;
+}
+
+function showFreeTierBlock(block) {
+  const isFree = block.isFree !== false;
+  return openConfirm({
+    icon: "⭐", iconClass: "warn",
+    title: block.title, desc: block.desc,
+    btnText: isFree ? "⭐ Upgrade ke Premium" : "Mengerti", btnClass: "primary",
+    onConfirm: () => { if (isFree) document.getElementById("pdUpgradeBtn")?.click(); }
+  });
+}
+
+function freeTierQuotaWarn(fileSize) {
+  const tier = user?.tier || "free";
+  if (tier !== "free") return;
+  const q = (typeof playlyQuota === "function") ? playlyQuota(tier) : null;
+  if (!q || !q.bytes) return;
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const usedBytes = myVideos.filter(v => (v.createdAt || v.id || 0) >= monthStart).reduce((s, v) => s + (v.fileSize || 0), 0);
+  const afterPct = ((usedBytes + (fileSize || 0)) / q.bytes) * 100;
+  if (afterPct >= 80) { // 12f: heads-up lebih awal sebelum penuh
+    toast(`⚠️ Penyimpanan ${Math.round(afterPct)}% terpakai setelah upload ini — pertimbangkan hapus video lama atau upgrade.`, "warning");
+  }
 }
 
 async function handlePickedFile(file) {
@@ -48316,6 +48629,9 @@ async function handlePickedFile(file) {
   }
 
   $("#upTitle").value = file.name.replace(/\.[^.]+$/, "");
+  // Set .value programatik TIDAK memicu event "input" → counter (& auto-grow)
+  // tidak ikut update. Dispatch manual supaya #upTitleCounter sinkron.
+  $("#upTitle").dispatchEvent(new Event("input", { bubbles: true }));
 
   // Tampilkan preview placeholder dulu, generate thumbnail di background
   uploadPreview.hidden = false;
@@ -48341,20 +48657,29 @@ async function handlePickedFile(file) {
   }
 
   try {
-    const { thumb, duration } = await generateVideoThumb(file);
+    const { thumb, duration, durationSec } = await generateVideoThumb(file);
     pendingUpload.thumb = thumb;
     pendingUpload.duration = duration;
+    pendingUpload.durationSec = durationSec || 0;
+    pendingUpload.thumbIsPlaceholder = false;
     $("#uploadPreviewThumb").src = thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = thumb;
     $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • ${duration}`;
     $("#uploadPreviewDuration").textContent = duration;
+    // 1i: durasi melebihi batas platform (4 jam) → beri tahu user sejak awal.
+    // Hard-block tetap dilakukan saat submit (startUpload).
+    if (durationSec && durationSec > MAX_VIDEO_DURATION_SEC) {
+      toast(`⚠️ Durasi ${duration} melebihi batas maksimum 4 jam. Potong video sebelum upload.`, "warning");
+    }
   } catch (err) {
     console.warn("Gagal generate thumb:", err);
-    // Fallback ke gambar acak
-    pendingUpload.thumb = `https://picsum.photos/seed/u${Date.now()}/600/340`;
+    // 1f: fallback JUJUR — placeholder bermerek Playly (bukan gambar acak picsum
+    // yang menyesatkan). Tandai placeholder supaya user diarahkan pilih frame/cover.
+    pendingUpload.thumb = playlyThumbPlaceholder(file.name.replace(/\.[^.]+$/, ""));
+    pendingUpload.thumbIsPlaceholder = true;
     $("#uploadPreviewThumb").src = pendingUpload.thumb;
     const dzFill = $("#dropzonePreviewFill"); if (dzFill) dzFill.src = pendingUpload.thumb;
-    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail otomatis`;
+    $("#uploadPreviewMeta").textContent = `${fmtBytes(file.size)} • thumbnail belum tersedia — pilih frame / unggah cover`;
   }
 }
 
@@ -48421,11 +48746,49 @@ $("#dropzoneRemoveBtn")?.addEventListener("click", e => {
   clearPendingUpload();
 });
 
-// Popup konfirmasi setelah upload selesai. Menggantikan inline notice merah +
-// toast simpel sebelumnya. Popup ini menjelaskan ke user bahwa video sudah
-// terkirim ke admin dan sedang menunggu approval, plus shortcut buat lihat
-// status di My Library → Status Videos.
-function showUploadSuccessPopup(title, newVid) {
+// Popup konfirmasi setelah upload selesai.
+// 1c (audit Unggah 2026-06-02): wording dibuat JUJUR sesuai sistem auto-publish
+// (2026-05-25 video langsung LIVE tanpa approval admin). Sebelumnya popup masih
+// bilang "dikirim ke admin untuk di-review / menunggu approval" — kontradiktif.
+// Sekarang pesan menyesuaikan status sebenarnya: live / draft / terjadwal, plus
+// status sinkronisasi cloud (ok/gagal/lokal).
+function showUploadSuccessPopup(title, newVid, opts) {
+  opts = opts || {};
+  const visibility = opts.visibility || (newVid && newVid.visibility) || "public";
+  const scheduledAt = opts.scheduledAt || (newVid && newVid.scheduledAt) || null;
+  const cloud = opts.cloud || "none"; // ok | fail | local | none(url import)
+
+  // Tentukan headline + status sesuai keadaan sebenarnya.
+  let icon = "🎉", heading = "Upload Berhasil!", statusLine = "", desc = "";
+  if (visibility === "draft") {
+    icon = "📝"; heading = "Tersimpan sebagai Draft";
+    statusLine = "📝 Draft — belum tayang ke publik";
+    desc = `Video <b>${escapeHtml(title)}</b> disimpan sebagai <b>draft</b>. Hanya kamu yang bisa melihatnya sampai kamu mempublikasikannya.`;
+  } else if (scheduledAt) {
+    const dt = new Date(scheduledAt);
+    const dstr = dt.toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    icon = "⏰"; heading = "Terjadwal";
+    statusLine = `⏰ Tayang otomatis pada ${dstr}`;
+    desc = `Video <b>${escapeHtml(title)}</b> sudah tersimpan dan akan <b>tayang otomatis</b> pada jadwal di atas. Sebelum itu, video belum tampil di feed publik.`;
+  } else if (visibility === "private") {
+    icon = "🔒"; heading = "Video Tersimpan (Privat)";
+    statusLine = "🔒 Privat — hanya kamu";
+    desc = `Video <b>${escapeHtml(title)}</b> tersimpan sebagai <b>privat</b> dan tidak tampil di feed maupun profil publik.`;
+  } else if (visibility === "unlisted") {
+    icon = "🔗"; heading = "Video Live (Tak Terdaftar)";
+    statusLine = "🔗 Lewat Tautan — hanya via tautan";
+    desc = `Video <b>${escapeHtml(title)}</b> sudah <b>live</b>, tapi tidak muncul di feed/pencarian. Hanya bisa diakses lewat tautan langsung.`;
+  } else {
+    icon = "🎉"; heading = "Video Sudah Live!";
+    statusLine = "✅ Live — sudah tampil di platform";
+    desc = `Video <b>${escapeHtml(title)}</b> berhasil diunggah dan <b>langsung tayang</b> di platform. Tidak perlu menunggu approval admin.`;
+  }
+  // Tambahan status cloud (jujur soal sinkronisasi lintas-device).
+  let cloudNote = "";
+  if (cloud === "fail") cloudNote = `<div class="upload-success-cloud warn">☁️ Sinkronisasi ke cloud gagal — untuk saat ini video hanya bisa diputar di browser ini.</div>`;
+  else if (cloud === "local") cloudNote = `<div class="upload-success-cloud">💾 Tersimpan di browser ini (cloud tidak aktif).</div>`;
+  else if (cloud === "ok") cloudNote = `<div class="upload-success-cloud ok">☁️ Tersimpan di cloud — bisa diputar di device lain.</div>`;
+
   // Hapus modal lama kalau ada (defensif)
   document.getElementById("__uploadSuccessModal")?.remove();
 
@@ -48434,17 +48797,15 @@ function showUploadSuccessPopup(title, newVid) {
   modal.id = "__uploadSuccessModal";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-upload-success-close></div>
-    <div class="hs-popup-panel upload-success-panel">
+    <div class="hs-popup-panel upload-success-panel" role="dialog" aria-modal="true" aria-labelledby="uploadSuccessTitle">
       <button type="button" class="hs-popup-close" data-upload-success-close aria-label="Tutup">✕</button>
-      <div class="upload-success-icon">🎉</div>
-      <h3 class="upload-success-title">Upload Berhasil!</h3>
-      <p class="upload-success-desc">
-        Video <b>${escapeHtml(title)}</b> berhasil diupload dan sudah dikirim ke admin
-        untuk di-review. Kamu akan dapat notifikasi setelah disetujui atau di-reject.
-      </p>
+      <div class="upload-success-icon">${icon}</div>
+      <h3 class="upload-success-title" id="uploadSuccessTitle">${escapeHtml(heading)}</h3>
+      <p class="upload-success-desc">${desc}</p>
       <div class="upload-success-meta">
-        <span class="upload-success-status">⏳ Menunggu approval admin</span>
+        <span class="upload-success-status">${escapeHtml(statusLine)}</span>
       </div>
+      ${cloudNote}
       <div class="upload-success-actions">
         <button type="button" class="btn primary" id="uploadSuccessGoStatus">📋 Lihat Status Videos</button>
         <button type="button" class="btn ghost" data-upload-success-close>Tutup</button>
@@ -48473,6 +48834,170 @@ function showUploadSuccessPopup(title, newVid) {
     }, 80);
   });
 }
+
+// ===================== UPLOAD UI ENHANCEMENTS (audit Unggah 2026-06-02) =====================
+// 1g/1k/1l/1p: aksesibilitas + UX halaman Unggah, dipasang via JS (markup legacy
+// = satu string besar → lebih aman & terlokalisir di sini). Catatan: 1m (aria
+// dropdown kategori) & 1n (alt thumbnail) ternyata SUDAH ada di markup → tidak diulang.
+
+// 1g: tombol "Batalkan" di area progress (dibuat sekali, di-reuse tiap upload).
+function ensureUploadCancelBtn() {
+  const wrap = document.getElementById("uploadProgress");
+  if (!wrap) return null;
+  let btn = document.getElementById("upCancelBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "upCancelBtn";
+    btn.className = "up-cancel-btn";
+    btn.hidden = true;
+    btn.innerHTML = "✕ Batalkan";
+    wrap.appendChild(btn);
+  }
+  return btn;
+}
+
+// 1p: error inline pada field wajib (judul) — bukan cuma toast yang cepat hilang.
+function showUploadFieldError(input, msg) {
+  if (!input) return;
+  input.classList.add("up-field-invalid");
+  input.setAttribute("aria-invalid", "true");
+  let err = document.getElementById(input.id + "Err");
+  if (!err) {
+    err = document.createElement("small");
+    err.id = input.id + "Err";
+    err.className = "up-field-err";
+    err.setAttribute("role", "alert");
+    input.insertAdjacentElement("afterend", err);
+  }
+  err.textContent = msg || "Wajib diisi";
+  err.hidden = false;
+  try { input.focus(); } catch {}
+}
+function clearUploadFieldError(input) {
+  if (!input) return;
+  input.classList.remove("up-field-invalid");
+  input.removeAttribute("aria-invalid");
+  const err = document.getElementById(input.id + "Err");
+  if (err) err.hidden = true;
+}
+
+(function enhanceUploadUI() {
+  try {
+    // 1k: dropzone keyboard-accessible (sebelumnya hanya bisa diklik mouse).
+    const dz = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    if (dz && !dz.dataset.a11yReady) {
+      dz.dataset.a11yReady = "1";
+      if (!dz.hasAttribute("tabindex")) dz.setAttribute("tabindex", "0");
+      if (!dz.hasAttribute("role")) dz.setAttribute("role", "button");
+      if (!dz.hasAttribute("aria-label")) dz.setAttribute("aria-label", "Pilih video atau seret file ke sini untuk diunggah");
+      dz.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          // Hanya buka picker saat belum ada file (state empty).
+          if (dz.dataset.state !== "filled" && fileInput) fileInput.click();
+        }
+      });
+    }
+    // 1l: progress bar semantik untuk screen reader.
+    const bar = document.getElementById("upBar");
+    if (bar) {
+      bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-valuenow", "0");
+      bar.setAttribute("aria-label", "Progres unggah");
+    }
+    const st = document.getElementById("upStatus");
+    if (st) { st.setAttribute("aria-live", "polite"); st.setAttribute("role", "status"); }
+
+    // 1p: tandai field wajib (judul) — bintang + aria-required + bersih saat ngetik.
+    const title = document.getElementById("upTitle");
+    if (title) {
+      title.setAttribute("aria-required", "true"); // a11y only (tak terlihat)
+      // Penanda "*" DIHAPUS atas permintaan user — bersihkan kalau masih ada.
+      document.querySelector('label[for="upTitle"] .up-required')?.remove();
+      title.addEventListener("input", () => clearUploadFieldError(title));
+    }
+
+    // ===== LAYOUT (audit Unggah 2026-06-03): judul berikon + grup engagement =====
+    // Disuntik via JS supaya markup legacy (string besar) tidak disentuh.
+    const upView = document.querySelector('section.view[data-view="upload"]') || document;
+
+    // Matikan autocomplete browser di field teks Unggah supaya dropdown saran
+    // (nilai lama) tidak menutupi form. (Mis. saran judul yang pernah diketik.)
+    upView.querySelectorAll('input[type="text"], textarea').forEach(el => {
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocapitalize', 'off');
+      el.setAttribute('spellcheck', 'false');
+    });
+
+
+    // (a) Satukan section "Engagement": pindahkan .upf-toggle-grid KE DALAM .upf-field
+    //     berlabel Engagement supaya jadi satu kartu (bukan 2 kartu terpisah).
+    const toggleGrid = upView.querySelector('.upf-toggle-grid');
+    if (toggleGrid && !toggleGrid.dataset.merged) {
+      const prev = toggleGrid.previousElementSibling;
+      if (prev && prev.classList && prev.classList.contains('upf-field') && /engagement|komentar/i.test(prev.textContent || '')) {
+        prev.appendChild(toggleGrid);
+        toggleGrid.dataset.merged = "1";
+      }
+    }
+    // (b) Sembunyikan <select> legacy bare (mis. #upAge) yang nyangkut langsung di kolom.
+    upView.querySelectorAll('.upload-col-right > select, .upload-col-left > select').forEach(s => { s.style.display = "none"; });
+
+    // (c) Ikon di tiap judul section (Lucide-style inline SVG, mewarnai --accent).
+    const I = (p) => `<span class="upf-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg></span>`;
+    // Set ikon dinormalkan secara OPTIK: tiap glyph mengisi area ~4–20 (16 unit
+    // di tengah viewBox 24) dengan bobot sama, supaya semua badge tampak seragam
+    // (sebelumnya info/clock/tag mengisi penuh → terlihat lebih besar, hash/pencil
+    // lebih tipis → terlihat kecil → kesan "acak").
+    const ICONS = {
+      pencil: I('<path d="M5 19l1-3.6L15.6 4.8a2 2 0 0 1 3 3L8.6 18 5 19Z"/><path d="M13.8 6.6l3 3"/>'),
+      desc:   I('<path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/>'),
+      hash:   I('<path d="M5.5 9.5h14"/><path d="M4.5 14.5h14"/><path d="M10.5 4.5l-1.5 15"/><path d="M16 4.5l-1.5 15"/>'),
+      tag:    I('<path d="M4 11V5a1 1 0 0 1 1-1h6l8 8a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0Z"/><circle cx="8" cy="8" r="1.2"/>'),
+      ai:     I('<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 8V5"/><circle cx="12" cy="3.8" r="1.1"/><path d="M9.5 12.5v1.8"/><path d="M14.5 12.5v1.8"/>'),
+      cc:     I('<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 11h3"/><path d="M8 14.5h2"/><path d="M13.5 11h2.5"/><path d="M14.5 14.5h1.5"/>'),
+      eye:    I('<path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Z"/><circle cx="12" cy="12" r="2.4"/>'),
+      users:  I('<circle cx="9.5" cy="8.5" r="2.8"/><path d="M4.5 19a5 5 0 0 1 10 0"/><path d="M16 6.2a2.8 2.8 0 0 1 0 5.6"/><path d="M19.5 19a5 5 0 0 0-3-4.6"/>'),
+      heart:  I('<path d="M12 19.2l-7-7a4.1 4.1 0 0 1 5.8-5.8l1.2 1.2 1.2-1.2a4.1 4.1 0 0 1 5.8 5.8Z"/>'),
+      info:   I('<circle cx="12" cy="12" r="8"/><path d="M12 11.5v4.5"/><path d="M12 8h.01"/>'),
+      image:  I('<rect x="4" y="4" width="16" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="M19.5 15.5 15 11l-8 8.5"/>'),
+      film:   I('<rect x="4" y="6.5" width="12" height="11" rx="2"/><path d="M16 10.5l4-2.5v8l-4-2.5Z"/>'),
+      clock:  I('<circle cx="12" cy="12" r="8"/><path d="M12 8v4.2l2.8 2"/>'),
+      chat:   I('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="M8 9.5h8"/><path d="M8 13h5"/>'),
+    };
+    const pickIcon = (t) => {
+      t = (t || "").toLowerCase();
+      if (/auto judul|assist|\bai\b/.test(t)) return ICONS.ai;
+      if (t.includes("hashtag")) return ICONS.hash;
+      if (t.includes("kategori") || t.includes("category")) return ICONS.tag;
+      if (t.includes("deskripsi") || t.includes("description")) return ICONS.desc;
+      if (t.includes("subtitle")) return ICONS.cc;
+      if (t.includes("visibilit")) return ICONS.eye;
+      if (t.includes("audiens") || t.includes("audience")) return ICONS.users;
+      if (t.includes("interaksi") || t.includes("komentar") || t.includes("engagement")) return ICONS.chat;
+      if (t.includes("info")) return ICONS.info;
+      if (t.includes("frame")) return ICONS.image;
+      if (t.includes("thumbnail")) return ICONS.image;
+      if (/jadwal|schedule|publish/.test(t)) return ICONS.clock;
+      if (t.includes("judul") || t.includes("title")) return ICONS.pencil;
+      if (t.includes("video")) return ICONS.film;
+      return "";
+    };
+    upView.querySelectorAll('.upf-field').forEach(f => {
+      const lbl = f.querySelector(':scope > .upf-label-row > label') || f.querySelector(':scope > label');
+      if (!lbl || lbl.dataset.iconed) return;
+      if (lbl.classList.contains('dz-pro') || lbl.classList.contains('upf-thumb-drop') || lbl.id === 'dropzone' || lbl.querySelector('input[type=file]')) return;
+      const svg = pickIcon(lbl.textContent);
+      if (!svg) return;
+      lbl.insertAdjacentHTML('afterbegin', svg);
+      lbl.dataset.iconed = "1";
+    });
+  } catch (e) { console.warn("[upload] enhanceUploadUI:", e); }
+})();
 
 // ----------------------- URL Video Source -----------------------
 function parseVideoUrl(url) {
@@ -48558,11 +49083,27 @@ async function fetchVideoOEmbed(data) {
   } catch { return null; }
 }
 
+// Toggle catatan visibilitas 18+ pada form upload/edit saat audiens dipilih.
+(function () {
+  function syncUpAudienceNote() {
+    const note = document.getElementById("upAudienceNote");
+    if (!note) return;
+    const v = document.querySelector('input[name="upAudience"]:checked')?.value;
+    note.hidden = v !== "18+";
+  }
+  document.addEventListener("change", e => {
+    if (e.target && e.target.name === "upAudience") syncUpAudienceNote();
+  });
+  window._syncUpAudienceNote = syncUpAudienceNote; // dipanggil saat reset/populate edit
+})();
+
 // Set autofill fields with animation indicator
 function setAutofillField(id, value, isNew) {
   const el = document.getElementById(id);
   if (!el || !value) return;
   el.value = value;
+  // Sinkronkan counter/auto-grow (set .value programatik tak memicu "input").
+  el.dispatchEvent(new Event("input", { bubbles: true }));
   if (isNew) {
     el.style.transition = "box-shadow .3s";
     el.style.boxShadow = "0 0 0 3px rgba(109,41,50,.35)";
@@ -48643,178 +49184,260 @@ document.getElementById("uploadUrlDetect")?.addEventListener("click", async () =
   }
 });
 
-$("#startUpload")?.addEventListener("click", () => {
+// ===================== UPLOAD SUBMIT (audit Unggah 2026-06-02) =====================
+// Ditulis ulang untuk JUJUR (1a/1b): progress diikat ke upload cloud NYATA (XHR
+// R2) — bukan setInterval acak — dan sukses baru dideklarasikan SETELAH upload
+// cloud benar-benar selesai (bukan saat bar palsu 100%). Tambahan: 1d jadwal,
+// 1g batal, 1h cek kuota saat submit, 1i durasi maks 4 jam.
+$("#startUpload")?.addEventListener("click", async () => {
   // URL upload: pendingUpload sudah ada tapi tanpa file. File upload: dengan file.
   const isUrlUpload = pendingUpload && pendingUpload.sourceType && !pendingUpload.file;
   if (!pendingUpload || (!pendingUpload.file && !isUrlUpload)) {
     return toast("⚠️ Pilih video atau detect URL dulu", "warning");
   }
-  const title = $("#upTitle").value.trim();
-  if (!title) return toast("⚠️ Judul wajib diisi", "warning");
-  // Visibility & audience dari radio cards (default public/all kalau tidak terpilih)
+  const titleInput = $("#upTitle");
+  const title = (titleInput?.value || "").trim();
+  if (!title) {
+    if (typeof showUploadFieldError === "function") showUploadFieldError(titleInput, "Judul wajib diisi");
+    return toast("⚠️ Judul wajib diisi", "warning");
+  }
+  if (typeof clearUploadFieldError === "function") clearUploadFieldError(titleInput);
+
+  const captured = pendingUpload; // freeze
+  const fileSize = (captured.file && Number.isFinite(captured.file.size)) ? captured.file.size : null;
+
+  // 1h: cek ulang kuota tier-free SAAT submit (kuota bisa berubah sejak pilih file).
+  if (captured.file) {
+    const block = freeTierUploadBlock(captured.file.size);
+    if (block) return showFreeTierBlock(block);
+  }
+  // 1i: tolak video > 4 jam (kalau durasi terukur).
+  if (captured.durationSec && captured.durationSec > MAX_VIDEO_DURATION_SEC) {
+    return toast("⚠️ Durasi melebihi batas maksimum 4 jam. Potong video sebelum upload.", "warning");
+  }
+
   const visibility = document.querySelector('input[name="upVisibility"]:checked')?.value || "public";
   const audience   = document.querySelector('input[name="upAudience"]:checked')?.value || "all";
-  // Sync ke legacy hidden #upAge supaya code lain yang baca upAge.value tidak break
+  // 1j: #upAge field legacy — sinkron HANYA bila elemennya masih ada (sebagian
+  // code lama membaca upAge.value). Tidak wajib & tak dianggap error kalau hilang.
   const upAgeEl = $("#upAge");
   if (upAgeEl) upAgeEl.value = audience;
-  // Engagement toggles
   const allowComments  = $("#upAllowComments")?.checked  !== false;  // default true
   const allowReactions = $("#upAllowReactions")?.checked !== false;  // default true
   const allowDuet      = !!$("#upAllowDuet")?.checked;
   const allowDownload  = !!$("#upAllowDownload")?.checked;
   const category = $("#upCategory")?.value || "";
   const tags = (typeof window._getUploadTags === "function") ? window._getUploadTags() : [];
-  // Thumbnail final: prioritas _customThumb (yang aktif — bisa dari frame, upload, atau editor)
-  // Fallback ke _frameThumb atau _uploadThumb kalau salah satu valid.
   const customThumb = window._customThumb || window._uploadThumb || window._frameThumb || null;
-  const captured = pendingUpload; // freeze
   const desc = $("#upDesc").value || "Video baru saja diunggah.";
-  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
-  wrap.hidden = false;
+  // Thumbnail final — fallback JUJUR (placeholder bermerek, bukan picsum acak).
+  const finalThumb = customThumb || captured.thumb || playlyThumbPlaceholder(title);
 
-  // Tracking entry untuk tab "Sedang Upload"
-  const uploadId = "u" + Date.now();
-  const uploadEntry = {
-    id: uploadId,
-    title,
-    thumb: captured.thumb,
-    size: captured?.file?.size || 0,
-    progress: 0,
-    status: "uploading",
-    startedAt: Date.now()
-  };
+  // 1d: jadwal publish. #upSchedule = "YYYY-MM-DDTHH:MM" (waktu lokal). Kalau diisi
+  // & masih di masa depan → scheduledAt; video disembunyikan dari feed/profil publik
+  // sampai waktunya (isPubliclyVisibleVideo), muncul otomatis saat tiba (live calc).
+  let scheduledAt = null;
+  const scheduleRaw = ($("#upSchedule")?.value || "").trim();
+  if (scheduleRaw) {
+    const t = Date.parse(scheduleRaw);
+    if (Number.isFinite(t) && t > Date.now()) scheduledAt = t;
+  }
+
+  const vidId = Date.now();           // id final → blob + cloud key + newVid.id
+  const uploadId = "u" + vidId;
+  const wrap = $("#uploadProgress"), bar = $("#upBar"), status = $("#upStatus");
+  const startBtn = $("#startUpload");
+
+  // Entry tracking untuk tab "Sedang Upload"
+  const uploadEntry = { id: uploadId, title, thumb: finalThumb, size: captured?.file?.size || 0, progress: 0, status: "uploading", startedAt: vidId };
   state.uploadingVideos = state.uploadingVideos || [];
   state.uploadingVideos.unshift(uploadEntry);
   saveState();
   syncVideoTabCounts();
 
+  // 1g: abort controller untuk tombol Batal.
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
   window.__activeUploads = window.__activeUploads || {};
-  window.__activeUploads[uploadId] = true;
+  window.__activeUploads[uploadId] = { ctrl, cancelled: false, done: false };
 
-  let p = 0;
-  const tick = setInterval(() => {
-    // Cek kalau upload dibatalkan
-    if (!window.__activeUploads[uploadId]) {
-      clearInterval(tick);
-      wrap.hidden = true; bar.style.width = "0%";
-      return;
-    }
-    p += Math.random() * 12 + 4;
-    uploadEntry.progress = Math.min(100, p);
-    // Update tampilan tab "Sedang Upload" kalau sedang dilihat
+  // 1a/1l: progress JUJUR. Mulai indeterminate (belum ada byte terkirim), jadi
+  // determinate begitu onProgress NYATA pertama tiba.
+  wrap.hidden = false;
+  bar.classList.add("up-bar-indeterminate");
+  bar.style.width = "";
+  bar.setAttribute("aria-valuenow", "0");
+  status.textContent = captured.file ? "Menyiapkan upload…" : "Memproses…";
+  if (startBtn) startBtn.disabled = true;
+  const cancelBtn = (typeof ensureUploadCancelBtn === "function") ? ensureUploadCancelBtn() : null;
+  if (cancelBtn) {
+    cancelBtn.hidden = false;
+    cancelBtn.onclick = () => {
+      const a = window.__activeUploads[uploadId];
+      if (!a || a.done) return;
+      a.cancelled = true;
+      try { a.ctrl && a.ctrl.abort(); } catch {}
+    };
+  }
+
+  const isCancelled = () => !!(window.__activeUploads[uploadId]?.cancelled);
+  const setDeterminate = (frac) => {
+    bar.classList.remove("up-bar-indeterminate");
+    const pct = Math.max(0, Math.min(100, Math.round(frac * 100)));
+    bar.style.width = pct + "%";
+    bar.setAttribute("aria-valuenow", String(pct));
+    uploadEntry.progress = pct;
+    const sz = fileSize ? ` · ${fmtBytes(Math.round(fileSize * (pct / 100)))} / ${fmtBytes(fileSize)}` : "";
+    status.textContent = `Mengunggah ke cloud… ${pct}%${sz}`;
     if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+  };
+  const cleanupUploadUI = () => {
+    if (window.__activeUploads[uploadId]) window.__activeUploads[uploadId].done = true;
+    if (startBtn) startBtn.disabled = false;
+    if (cancelBtn) { cancelBtn.hidden = true; cancelBtn.onclick = null; }
+  };
+  const removeEntry = () => { state.uploadingVideos = (state.uploadingVideos || []).filter(u => u.id !== uploadId); };
+  const abortAndCleanup = () => {
+    removeEntry(); saveState(); syncVideoTabCounts();
+    if (state.filter === "uploading" && state.currentView === "videos") renderVideoGrid();
+    wrap.hidden = true; bar.style.width = "0%"; bar.classList.remove("up-bar-indeterminate");
+    cleanupUploadUI();
+    delete window.__activeUploads[uploadId];
+    toast("Upload dibatalkan.", "info");
+  };
 
-    if (p >= 100) {
-      p = 100; clearInterval(tick);
-      delete window.__activeUploads[uploadId];
-      uploadEntry.status = "done";
-      status.textContent = "✓ Upload selesai!";
-      const _now = Date.now();
-      const subtitleData = window._uploadSubtitle || null;
-      const newVid = {
-        id: _now, createdAt: _now, title, creator: user.username, category, tags, visibility,
-        // Audience & engagement (per request user 2026-05-14)
-        audience, allowComments, allowReactions, allowDuet, allowDownload,
-        views: "0", viewsNum: 0,
-        time: "just now", duration: captured.duration || "0:00", likes: 0,
-        thumb: customThumb || captured.thumb || `https://picsum.photos/seed/u${_now}/600/340`,
-        videoUrl: captured.videoUrl,
-        desc,
-        // Source tracking — file (default), url (direct video URL), embed (YouTube/Vimeo/etc)
-        sourceType: captured.sourceType || "file",
-        embedProvider: captured.embedProvider || null,
-        embedVideoId: captured.embedVideoId || null,
-        embedOriginalUrl: captured.embedOriginalUrl || null,
-        // Track file size untuk monthly quota tracking (Free tier limit 1 GB/bulan)
-        fileSize: captured.file?.size || 0,
-        // Subtitle (Opsi 1 manual upload / Opsi 2 auto-generate AI)
-        subtitleVtt: subtitleData?.vtt || null,
-        subtitleLang: subtitleData?.lang || null,
-        // Auto-publish (2026-05-25): video langsung live setelah upload, tidak
-        // perlu admin approval. Sebelumnya default "pending" → user kreator
-        // bingung kenapa video tidak muncul di "Video Saya". Admin tetap bisa
-        // takedown via Kontrol Konten kalau ada masalah (reaktif, bukan
-        // gate). Visibility "draft" tetap respect — user simpan draft sendiri.
-        adminStatus: visibility === "draft" ? "draft" : "published",
-        submittedAt: _now,
-      };
-      state.myVideos.unshift(newVid);
-      // Pindahkan dari uploadingVideos
-      state.uploadingVideos = state.uploadingVideos.filter(u => u.id !== uploadId);
-      state.activities.unshift({ type: "upload", dir: "out", text: `You uploaded <i>${title}</i>`, time: "just now", icon: "🎬", ts: Date.now() });
-      saveState();
-      // Simpan file aslinya ke IndexedDB — skip kalau URL upload (no file to save)
-      if (captured.file) {
-        saveVideoBlob(newVid.id, captured.file).then(() => refreshStorageUsage());
-      }
-      // Cloud sync: upload juga ke Supabase Storage agar bisa diputar di browser lain
-      if (captured.file && window.cloudSync?.uploadVideoBlob) {
-        window.cloudSync.uploadVideoBlob(newVid.id, captured.file).then(result => {
-          if (result && result.ok && result.url) {
-            newVid.videoUrl = result.url;
-            saveState();
-            toast("☁️ Video tersimpan di cloud — bisa diputar di device lain.", "success");
-          } else if (result && !result.ok) {
-            // Unggah ke cloud gagal — beritahu user, tapi video tetap aman di lokal
-            const reason =
-              result.message ||
-              (result.error === "file_too_large"
-                ? "File terlalu besar untuk Supabase Storage."
-                : "Unggah ke cloud gagal — video disimpan lokal saja.");
-            toast(`⚠️ ${reason} Video kamu masih bisa diputar di browser ini.`, "warning");
-          }
-        }).catch(err => {
-          console.warn("[upload] cloud sync exception:", err);
-          toast("⚠️ Sync video ke cloud gagal — video disimpan lokal saja.", "warning");
-        });
-      }
-      refreshAllVideoGrids();
-      renderUserStats();
-      renderActivityList();
-      renderHomeActivity();
-      renderHomeTrending();
-      renderHomeStats();
-      renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
-      renderTopPerforming();
-      renderDiscoverCreators();
-      refreshHeroGreeting();
-      pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid
-      setTimeout(() => {
-        wrap.hidden = true; bar.style.width = "0%";
-        $("#upTitle").value = ""; $("#upDesc").value = "";
-        // Reset kategori — pakai helper kalau ada (custom dropdown), fallback ke direct value set
-        if (typeof window._resetUpCategory === "function") {
-          window._resetUpCategory();
-        } else if ($("#upCategory")) {
-          $("#upCategory").value = "";
-        }
-        if (typeof window._clearUploadTags === "function") window._clearUploadTags();
-        if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
-        // Reset visibility & audience ke default
-        const visPub = document.querySelector('input[name="upVisibility"][value="public"]');
-        if (visPub) visPub.checked = true;
-        const audAll = document.querySelector('input[name="upAudience"][value="all"]');
-        if (audAll) audAll.checked = true;
-        // Reset engagement toggles ke default
-        if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
-        if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
-        if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
-        if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
-        uploadPreview.hidden = true;
-        dropzone.classList.remove("has-file");
-        fileInput.value = "";
-        // Tampilkan popup konfirmasi (bukan toast saja) supaya user dapat
-        // notifikasi yang jelas + tahu video lagi menunggu approval admin.
-        showUploadSuccessPopup(title, newVid);
-      }, 800);
+  try {
+    // 1) Simpan blob ke IndexedDB (lokal) — playback di device ini.
+    if (captured.file) {
+      status.textContent = "Menyimpan lokal…";
+      try { await saveVideoBlob(vidId, captured.file); } catch (e) { console.warn("[upload] saveVideoBlob:", e); }
+      refreshStorageUsage();
     }
-    bar.style.width = p + "%";
-    const _fileSize = captured?.file?.size || 0;
-    const _sizeText = _fileSize
-      ? ` · ${fmtBytes(Math.floor(_fileSize * (p / 100)))} / ${fmtBytes(_fileSize)}`
-      : "";
-    status.textContent = `Mengunggah... ${Math.floor(p)}%${_sizeText}`;
-  }, 200);
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 2) Upload ke cloud (R2/Supabase) dengan progress NYATA (1a). Sukses baru
+    //    dideklarasikan SETELAH ini selesai (1b).
+    let cloudUrl = null;
+    let cloudStatus = "none"; // none(url import) | ok | fail | local(cloud off)
+    if (captured.file && window.cloudSync?.uploadVideoBlob) {
+      status.textContent = "Mengunggah ke cloud…";
+      let result;
+      try {
+        result = await window.cloudSync.uploadVideoBlob(vidId, captured.file, {
+          onProgress: (frac) => { if (!isCancelled()) setDeterminate(frac); },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+      } catch (e) {
+        console.warn("[upload] cloud sync exception:", e);
+        result = { ok: false, error: "exception" };
+      }
+      if (isCancelled() || (result && result.error === "aborted")) { abortAndCleanup(); return; }
+      if (result && result.ok && result.url) {
+        cloudUrl = result.url; cloudStatus = "ok";
+      } else {
+        cloudStatus = "fail";
+        const reason = (result && result.message) ||
+          (result && result.error === "file_too_large"
+            ? "File terlalu besar untuk cloud storage."
+            : "Unggah ke cloud gagal — video disimpan lokal saja.");
+        toast(`⚠️ ${reason} Video kamu tetap bisa diputar di browser ini.`, "warning");
+      }
+    } else if (captured.file) {
+      cloudStatus = "local"; // cloudSync tidak aktif
+    }
+    if (isCancelled()) { abortAndCleanup(); return; }
+
+    // 3) Selesai → buat video & publish.
+    bar.classList.remove("up-bar-indeterminate");
+    bar.style.width = "100%"; bar.setAttribute("aria-valuenow", "100");
+    status.textContent = "✓ Upload selesai!";
+    uploadEntry.status = "done"; uploadEntry.progress = 100;
+
+    const subtitleData = window._uploadSubtitle || null;
+    const newVid = {
+      id: vidId, createdAt: vidId, title, creator: user.username, category, tags, visibility,
+      audience, allowComments, allowReactions, allowDuet, allowDownload,
+      views: "0", viewsNum: 0,
+      time: "just now", duration: captured.duration || "0:00", likes: 0,
+      thumb: finalThumb,
+      videoUrl: cloudUrl || captured.videoUrl,
+      desc,
+      sourceType: captured.sourceType || "file",
+      embedProvider: captured.embedProvider || null,
+      embedVideoId: captured.embedVideoId || null,
+      embedOriginalUrl: captured.embedOriginalUrl || null,
+      // 12d: fileSize null kalau import URL/embed (ukuran tak diketahui) supaya
+      // meter penyimpanan tidak menyesatkan; storage sum tetap pakai (||0).
+      fileSize,
+      subtitleVtt: subtitleData?.vtt || null,
+      subtitleLang: subtitleData?.lang || null,
+      // Auto-publish (2026-05-25): live tanpa approval admin. "draft" → simpan
+      // draft. scheduledAt (1d) → tetap published tapi disembunyikan dari publik
+      // sampai waktunya oleh isPubliclyVisibleVideo().
+      adminStatus: visibility === "draft" ? "draft" : "published",
+      scheduledAt: scheduledAt || null,
+      submittedAt: vidId,
+      // 1c (2026-06-04): bawa hasil edit video (crop "Bebas"/zoom/rotate/flip/
+      // filter) supaya ikut tersimpan & bisa diterapkan saat playback (non-
+      // destruktif — file asli tidak diubah). Sebelumnya videoEdit hilang di sini.
+      videoEdit: captured.videoEdit || null,
+    };
+    state.myVideos.unshift(newVid);
+    removeEntry();
+    state.activities.unshift({ type: "upload", text: `You uploaded <i>${escapeHtml(title)}</i>`, time: "just now", icon: "🎬", ts: vidId });
+    saveState();
+
+    refreshAllVideoGrids();
+    renderUserStats();
+    renderActivityList();
+    renderHomeActivity();
+    renderHomeTrending();
+    renderHomeStats();
+    renderFeatured(); // Update tile "⭐ Video Terbaru Saya" di Home
+    renderTopPerforming();
+    renderDiscoverCreators();
+    refreshHeroGreeting();
+
+    pendingUpload = null; // jangan revoke videoUrl — masih dipakai newVid (kalau lokal)
+    window._uploadSubtitle = null;
+
+    setTimeout(() => {
+      wrap.hidden = true; bar.style.width = "0%"; bar.setAttribute("aria-valuenow", "0");
+      cleanupUploadUI();
+      delete window.__activeUploads[uploadId];
+      // Reset VIDEO + preview + frame DULU (fix user 2026-06-03: video & thumbnail
+      // yang tadi diupload tetap nyangkut di form). Dikerjakan paling awal + tiap
+      // langkah aman, supaya preview pasti bersih walau reset field di bawah error.
+      // _resetVideoInfoAndFrame() (sebelumnya TIDAK dipanggil di sini) yang
+      // membersihkan <video> frame-picker + info pills + frame thumbnail.
+      try { uploadPreview.hidden = true; } catch {}
+      try { dropzone.classList.remove("has-file"); dropzone.dataset.state = "empty"; } catch {}
+      try { fileInput.value = ""; } catch {}
+      try { if (typeof window._resetVideoInfoAndFrame === "function") window._resetVideoInfoAndFrame(); } catch {}
+      // Reset field teks / opsi
+      if (titleInput) titleInput.value = "";
+      const descEl = $("#upDesc"); if (descEl) descEl.value = "";
+      if (typeof window._resetUpCategory === "function") window._resetUpCategory();
+      else if ($("#upCategory")) $("#upCategory").value = "";
+      if (typeof window._clearUploadTags === "function") window._clearUploadTags();
+      if (typeof window._clearCustomThumb === "function") window._clearCustomThumb();
+      const visPub = document.querySelector('input[name="upVisibility"][value="public"]'); if (visPub) visPub.checked = true;
+      const audAll = document.querySelector('input[name="upAudience"][value="all"]'); if (audAll) audAll.checked = true;
+      if (typeof window._syncUpAudienceNote === "function") window._syncUpAudienceNote();
+      if ($("#upAllowComments"))  $("#upAllowComments").checked  = true;
+      if ($("#upAllowReactions")) $("#upAllowReactions").checked = true;
+      if ($("#upAllowDuet"))      $("#upAllowDuet").checked      = false;
+      if ($("#upAllowDownload"))  $("#upAllowDownload").checked  = false;
+      // 1d: reset schedule picker (display + internal state)
+      if (typeof window._resetUpSchedule === "function") window._resetUpSchedule();
+      else { const sc = $("#upSchedule"); if (sc) sc.value = ""; }
+      // 1c: popup sukses JUJUR — sesuai status sebenarnya (live/draft/terjadwal + cloud).
+      showUploadSuccessPopup(title, newVid, { visibility, scheduledAt, cloud: cloudStatus });
+    }, 700);
+  } catch (err) {
+    console.warn("[upload] gagal:", err);
+    abortAndCleanup();
+    toast("⚠️ Upload gagal. Coba lagi.", "warning");
+  }
 });
 
 // ----------------------- PLAYER MODAL -----------------------
@@ -51247,6 +51870,53 @@ function closeLibInlinePlayer() {
   });
 })();
 
+// 1c (2026-06-04): Terapkan editan video (crop "Bebas"/zoom/posisi/rotate/flip/
+// filter) ke elemen <video> saat PLAYBACK. Sebelumnya videoEdit cuma dipakai di
+// dalam editor (clip-path di redraw editor) & tidak pernah berlaku saat video
+// diputar — jadi crop "Bebas" terlihat tidak berfungsi. Logika di sini meniru
+// applyEffects() editor supaya hasil di player == preview editor. Non-destruktif:
+// hanya CSS pada elemen, file asli tidak diubah.
+function applyVideoEditCss(el, edit) {
+  if (!el) return;
+  if (!edit) { el.style.transform = ""; el.style.filter = ""; el.style.clipPath = ""; return; }
+  const sx = edit.flipH ? -1 : 1;
+  const sy = edit.flipV ? -1 : 1;
+  const scale = Math.max(0, edit.zoom != null ? edit.zoom : 100) / 100;
+  const tx = edit.posX || 0, ty = edit.posY || 0;
+  el.style.transform = `translate(${tx}%, ${ty}%) rotate(${edit.rotate || 0}deg) scale(${scale}) scaleX(${sx}) scaleY(${sy})`;
+  const bPct = (1 + (edit.brightness || 0) / 100) * 100;
+  const cPct = (1 + (edit.contrast || 0) / 100) * 100;
+  const sPct = (1 + (edit.saturation || 0) / 100) * 100;
+  let f = `brightness(${bPct}%) contrast(${cPct}%) saturate(${sPct}%)`;
+  const t = edit.temperature || 0;
+  if (t > 0)      f += ` sepia(${Math.min(0.4, t / 75)}) saturate(${1 + t / 200})`;
+  else if (t < 0) f += ` hue-rotate(${Math.max(-25, t)}deg) saturate(${1 - Math.abs(t) / 300})`;
+  switch (edit.preset) {
+    case "vintage":   f += " sepia(.4) contrast(1.05)"; break;
+    case "bw":        f += " grayscale(1)"; break;
+    case "cool":      f += " hue-rotate(-12deg) saturate(1.1)"; break;
+    case "warm":      f += " sepia(.18) saturate(1.18)"; break;
+    case "vivid":     f += " saturate(1.3) contrast(1.1)"; break;
+    case "cinematic": f += " contrast(1.15) saturate(.85) brightness(.95) sepia(.08)"; break;
+    case "dramatic":  f += " contrast(1.3) saturate(1.2) brightness(.92)"; break;
+    case "faded":     f += " contrast(.85) saturate(.7) brightness(1.05)"; break;
+    case "noir":      f += " grayscale(1) contrast(1.4) brightness(.9)"; break;
+  }
+  // 4 Jun 2026: Rona (hue) ikut diterapkan saat playback. (Sharpen = preview-only
+  // krn pakai SVG filter di editor; tidak dibawa ke player.)
+  if (edit.hue) f += ` hue-rotate(${edit.hue}deg)`;
+  el.style.filter = f;
+  // Freeform "Bebas" crop → clip-path inset (sama persis dgn preview editor).
+  if (edit.aspect === "bebas" && edit.crop) {
+    const c = edit.crop;
+    const top = c.y, left = c.x;
+    const right = 100 - (c.x + c.w), bottom = 100 - (c.y + c.h);
+    el.style.clipPath = `inset(${top}% ${right}% ${bottom}% ${left}%)`;
+  } else {
+    el.style.clipPath = "";
+  }
+}
+
 async function openPlayer(id) {
   const v = findVideo(id);
   if (!v) {
@@ -51412,7 +52082,9 @@ async function openPlayer(id) {
   const SAMPLE_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const resolved = await resolveVideoSource(v);
   videoEl.src = resolved || SAMPLE_URL;
-  ensurePlayerEmptyState(videoEl);
+  // 1c (2026-06-04): terapkan editan video (crop "Bebas"/zoom/filter) ke player
+  // supaya hasil edit benar-benar berlaku saat ditonton, bukan cuma di editor.
+  try { applyVideoEditCss(videoEl, v.videoEdit); } catch (e) { console.warn("[applyVideoEditCss]", e); }
   // Real-time progress tracking ke state.history → Lanjutkan Tontonan
   // selalu sync dengan posisi tonton yang sebenarnya. Bind sekali saja.
   if (!videoEl.__progressBound) {
@@ -53917,11 +54589,9 @@ function getUserVideos(username, { ownView = false } = {}) {
     const s = JSON.parse(localStorage.getItem(`playly-state-${username}`));
     if (!Array.isArray(s?.myVideos)) return [];
     if (isOwn) return s.myVideos;
-    // Publik: hanya video yang sudah di-publish admin
-    return s.myVideos.filter(v => {
-      const st = v.adminStatus;
-      return st === "published" || st == null;
-    });
+    // Publik: hormati status publish + visibility (private/unlisted/draft
+    // disembunyikan) + jadwal. Lihat isPubliclyVisibleVideo().
+    return s.myVideos.filter(isPubliclyVisibleVideo);
   } catch { return []; }
 }
 
@@ -60627,6 +61297,10 @@ function getNotifList() {
   const tempVal = document.getElementById("veTemperatureVal");
   const vign = document.getElementById("veVignetteRange");
   const vignValEl = document.getElementById("veVignetteVal");
+  // 4 Jun 2026: kontrol warna baru — Ketajaman (sharpen via SVG convolve) & Rona (hue).
+  const sharpen = document.getElementById("veSharpen");
+  const hue = document.getElementById("veHue");
+  const sharpenMatrix = document.getElementById("veSharpenMatrix");
   const presetPills = modal.querySelectorAll(".ve-preset");
   const textInput = document.getElementById("veTextInput");
   const textSize = document.getElementById("veTextSize");
@@ -60659,6 +61333,7 @@ function getNotifList() {
     rotate: 0, flipH: false, flipV: false,
     brightness: 0, contrast: 0, saturation: 0,
     temperature: 0, vignette: 0, preset: "none",
+    sharpen: 0, hue: 0,
     text: "", textPos: "bottom", textSize: 24, textColor: "#ffffff",
     crop: null, // {x,y,w,h} in % when freeform "bebas" crop is set
   };
@@ -60775,6 +61450,7 @@ function getNotifList() {
     "1:1":  "1 / 1",
     "4:5":  "4 / 5",
     "4:3":  "4 / 3",
+    "3:4":  "3 / 4",
   };
 
   function applyEffects() {
@@ -60807,15 +61483,60 @@ function getNotifList() {
       case "cinematic": f += " contrast(1.15) saturate(.85) brightness(.95) sepia(.08)"; break;
       case "dramatic":  f += " contrast(1.3) saturate(1.2) brightness(.92)"; break;
       case "faded":     f += " contrast(.85) saturate(.7) brightness(1.05)"; break;
+      case "noir":      f += " grayscale(1) contrast(1.4) brightness(.9)"; break;
+    }
+    // 4 Jun 2026: Rona (hue-rotate) + Ketajaman (SVG convolve sharpen, dinamis).
+    if (state.hue) f += " hue-rotate(" + state.hue + "deg)";
+    if (state.sharpen > 0 && sharpenMatrix) {
+      const a = (Math.max(0, Math.min(100, state.sharpen)) / 100) * 0.9;
+      sharpenMatrix.setAttribute("kernelMatrix",
+        "0 " + (-a) + " 0 " + (-a) + " " + (1 + 4 * a) + " " + (-a) + " 0 " + (-a) + " 0");
+      f += " url('#veSharpenFilter')";
     }
     video.style.filter = f;
 
     if (videoWrap) {
-      const ratio = ASPECT_MAP[state.aspect] || "";
+      let ratio = ASPECT_MAP[state.aspect] || "";
+      // "Asli": bingkai = rasio ASLI video (intrinsik) -> video mengisi penuh, UTUH,
+      // TANPA bar gelap kiri-kanan & TIDAK terpotong. Box dibuat besar via sizing
+      // eksplisit di bawah. Per user 2026-06-21 (bingkai 16:9 bikin bar gelap besar
+      // -> jelek; mau video tampil utuh mengisi area).
+      if (state.aspect === "original" && video.videoWidth && video.videoHeight) {
+        ratio = video.videoWidth + " / " + video.videoHeight;
+      }
       videoWrap.style.aspectRatio = ratio;
       // v681: ratio chosen (not original/bebas) → object-fit cover crops to ratio.
-      const useCover = !!ratio && state.aspect !== "original" && state.aspect !== "bebas";
-      video.style.objectFit = useCover ? "cover" : "contain";
+      const useCover = !!ASPECT_MAP[state.aspect] && state.aspect !== "original" && state.aspect !== "bebas";
+      // object-fit !important inline supaya TAK PERNAH dikalahkan CSS cover
+      // (.ve-video-wrap[style*=aspect-ratio] video punya object-fit:cover di base 62300
+      // & media 62362). original -> contain (frame penuh, no crop). Bug user 2026-06-20.
+      video.style.setProperty("object-fit", useCover ? "cover" : "contain", "important");
+      // Sizing eksplisit (px): isi area preview (viewport) sambil jaga rasio target,
+      // supaya ukuran ~sama dgn preview form. Flex+aspect-ratio kadang bikin box
+      // kekecilan/inkonsisten antar-browser. Per user 2026-06-21.
+      (function _veFitWrap() {
+        var _ar = (ratio || "").split("/");
+        var _aw = parseFloat(_ar[0]), _ah = parseFloat(_ar[1]);
+        if (!_aw || !_ah) { videoWrap.style.removeProperty("width"); videoWrap.style.removeProperty("height"); return; }
+        var _stage = videoWrap.closest(".ve-stage");
+        var _vp = videoWrap.closest(".ve-stage-viewport") || videoWrap.parentElement;
+        var _availW = (_vp && _vp.clientWidth) || (_stage && _stage.clientWidth) || window.innerWidth;
+        var _availH = window.innerHeight * 0.6;
+        if (_stage) {
+          var _sc = getComputedStyle(_stage);
+          _availH = _stage.clientHeight - parseFloat(_sc.paddingTop || 0) - parseFloat(_sc.paddingBottom || 0);
+          var _gap = parseFloat(_sc.rowGap || _sc.gap || 0) || 0;
+          Array.prototype.forEach.call(_stage.children, function (ch) {
+            if (ch !== _vp && !ch.contains(videoWrap)) _availH -= (ch.offsetHeight + _gap);
+          });
+        }
+        _availW = Math.max(80, _availW - 4);
+        _availH = Math.max(80, _availH - 4);
+        var _bw = _availW, _bh = _bw * _ah / _aw;
+        if (_bh > _availH) { _bh = _availH; _bw = _bh * _aw / _ah; }
+        videoWrap.style.setProperty("width", Math.round(_bw) + "px", "important");
+        videoWrap.style.setProperty("height", Math.round(_bh) + "px", "important");
+      })();
       // Freeform "bebas" crop → clip the video via clip-path inset.
       if (state.aspect === "bebas" && state.crop) {
         const c = state.crop;
@@ -60860,6 +61581,13 @@ function getNotifList() {
     }
   }
 
+  // Saat metadata video termuat (videoWidth baru tersedia), re-apply supaya mode "Asli"
+  // memakai rasio INTRINSIK video. Listener sekali (modul init); tiap buka editor set
+  // video.src baru -> loadedmetadata fire lagi. Bug user 2026-06-20.
+  video.addEventListener("loadedmetadata", applyEffects);
+  // Resize window -> hitung ulang ukuran box preview (sizing eksplisit). Bug user 2026-06-21.
+  window.addEventListener("resize", function () { try { applyEffects(); } catch (e) {} });
+
   function syncUI() {
     // v681: brightness/contrast/saturation now 0-centered (no "%" suffix on label)
     if (bright)     bright.value = state.brightness;
@@ -60901,10 +61629,32 @@ function getNotifList() {
     state.rotate = 0; state.flipH = false; state.flipV = false;
     state.brightness = 0; state.contrast = 0; state.saturation = 0;
     state.temperature = 0; state.vignette = 0; state.preset = "none";
+    state.sharpen = 0; state.hue = 0;
     state.text = ""; state.textPos = "bottom"; state.textSize = 24; state.textColor = "#ffffff";
     state.crop = null;
     syncUI(); applyEffects();
   }
+
+  // 4 Jun 2026: Reset Warna — reset HANYA bagian warna/filter (kecerahan, kontras,
+  // saturasi, suhu, ketajaman, rona, vignette, preset). Crop & teks tidak ikut.
+  const resetColorBtn = document.getElementById("veResetColor");
+  if (resetColorBtn) resetColorBtn.addEventListener("click", function () {
+    state.brightness = 0; state.contrast = 0; state.saturation = 0;
+    state.temperature = 0; state.sharpen = 0; state.hue = 0;
+    state.vignette = 0; state.preset = "none";
+    syncUI(); applyEffects();
+    if (typeof toast === "function") toast("↺ Warna direset", "info");
+  });
+
+  // 4 Jun 2026: Reset Crop — reset HANYA bagian crop/transform (rasio, posisi,
+  // zoom, rotate, flip, crop bebas); warna & teks tidak ikut ter-reset.
+  const resetCropBtn = document.getElementById("veResetCrop");
+  if (resetCropBtn) resetCropBtn.addEventListener("click", function () {
+    state.aspect = "original"; state.zoom = 100; state.posX = 0; state.posY = 0;
+    state.rotate = 0; state.flipH = false; state.flipV = false; state.crop = null;
+    syncUI(); applyEffects();
+    if (typeof toast === "function") toast("↺ Crop direset", "info");
+  });
 
   function wireRange(input, valEl, key, suffix) {
     if (!input) return;
@@ -60921,6 +61671,8 @@ function getNotifList() {
   wireRange(satur, saturVal, "saturation", "");
   wireRange(zoom, zoomVal, "zoom");
   wireRange(vign, vignValEl, "vignette");
+  wireRange(sharpen, null, "sharpen", "");
+  wireRange(hue, null, "hue", "");
   // v681: rotate fine slider
   if (rotate) rotate.addEventListener("input", function () {
     state.rotate = Number(rotate.value);
@@ -60965,13 +61717,17 @@ function getNotifList() {
 
   // v689: Advance rows — slider <-> editable number <-> ±buttons (replaces pad/dial)
   function _syncAdvanceVisual() {
-    const map = { vePosXNum: state.posX, vePosYNum: state.posY, veZoomNum: state.zoom, veRotateNum: state.rotate };
+    const map = { vePosXNum: state.posX, vePosYNum: state.posY, veZoomNum: state.zoom, veRotateNum: state.rotate,
+      veBrightnessNum: state.brightness, veContrastNum: state.contrast, veSaturationNum: state.saturation,
+      veTemperatureNum: state.temperature, veSharpenNum: state.sharpen, veHueNum: state.hue, veVignetteNum: state.vignette };
     for (const id in map) {
       const el = document.getElementById(id);
       if (el && document.activeElement !== el) el.value = map[id];
     }
   }
-  [["vePosX", "vePosXNum"], ["vePosY", "vePosYNum"], ["veZoom", "veZoomNum"], ["veRotate", "veRotateNum"]].forEach(function (pair) {
+  [["vePosX", "vePosXNum"], ["vePosY", "vePosYNum"], ["veZoom", "veZoomNum"], ["veRotate", "veRotateNum"],
+   ["veBrightness", "veBrightnessNum"], ["veContrast", "veContrastNum"], ["veSaturation", "veSaturationNum"],
+   ["veTemperature", "veTemperatureNum"], ["veSharpen", "veSharpenNum"], ["veHue", "veHueNum"], ["veVignetteRange", "veVignetteNum"]].forEach(function (pair) {
     const rng = document.getElementById(pair[0]);
     const num = document.getElementById(pair[1]);
     if (!rng) return;
@@ -61017,6 +61773,22 @@ function getNotifList() {
   if (textSizeNum) textSizeNum.addEventListener("input", function () { _setTextSize(textSizeNum.value, textSizeNum); });
   if (textSizePreset) textSizePreset.addEventListener("change", function () {
     if (textSizePreset.value) { _setTextSize(textSizePreset.value, null); textSizePreset.value = ""; }
+  });
+  // req user 5 Jun 2026: tombol − / + untuk ukuran teks (pakai _setTextSize agar
+  // slider, angka & preset tetap sinkron). Tahan-klik = repeat.
+  [["veTextSizeDec", -1], ["veTextSizeInc", 1]].forEach(function (pair) {
+    var btn = document.getElementById(pair[0]);
+    if (!btn) return;
+    var step = Number(textSize && textSize.step) || 1;
+    var bump = function () { _setTextSize((Number(state.textSize) || 24) + pair[1] * step, null); };
+    var holdTimer = null, repeatTimer = null;
+    var stop = function () { clearTimeout(holdTimer); clearInterval(repeatTimer); holdTimer = repeatTimer = null; };
+    btn.addEventListener("click", bump);
+    btn.addEventListener("mousedown", function () {
+      stop();
+      holdTimer = setTimeout(function () { repeatTimer = setInterval(bump, 70); }, 380);
+    });
+    ["mouseup", "mouseleave", "blur"].forEach(function (ev) { btn.addEventListener(ev, stop); });
   });
   if (textInput) textInput.addEventListener("input", function () {
     state.text = textInput.value || "";
@@ -61197,8 +61969,11 @@ function getNotifList() {
   }
 
   function _showExportLoading() {
-    if (!exportOverlay) return;
-    exportOverlay.hidden = false;
+    // re-query defensif: pastikan overlay yg dipakai = yg ada di DOM saat ini
+    // (cegah kasus ref basi → loading tidak muncul di pop up).
+    const ov = document.getElementById("veExportOverlay") || exportOverlay;
+    if (!ov) return;
+    ov.hidden = false;
     _showExportState("loading");
     if (exportBar) {
       // restart bar animation from 0
@@ -61243,13 +62018,19 @@ function getNotifList() {
   function _showExportDone() {
     _showExportState("done");
     // Set preview src to current pendingUpload video
-    if (exportPreview) {
+    const prev = document.getElementById("veExportPreview") || exportPreview;
+    if (prev) {
       try {
         const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
         if (pu && pu.videoUrl) {
-          exportPreview.src = pu.videoUrl;
-          exportPreview.style.aspectRatio = ASPECT_MAP[state.aspect] || "";
-          exportPreview.style.objectFit = state.aspect && state.aspect !== "original" && state.aspect !== "bebas" ? "cover" : "contain";
+          prev.src = pu.videoUrl;
+          // tampilkan HASIL editan langsung (filter, warna, crop, transform, dll)
+          // supaya user lihat hasilnya, bukan video mentah. Non-destruktif (CSS).
+          if (typeof applyVideoEditCss === "function") {
+            applyVideoEditCss(prev, pu.videoEdit || null);
+          }
+          prev.style.aspectRatio = ASPECT_MAP[state.aspect] || "";
+          prev.style.objectFit = state.aspect && state.aspect !== "original" && state.aspect !== "bebas" ? "cover" : "contain";
         }
       } catch (e) { console.warn("[ve export preview]", e); }
     }
@@ -61268,12 +62049,13 @@ function getNotifList() {
     _showExportLoading();
   });
   if (exportCloseBtn) exportCloseBtn.addEventListener("click", () => {
-    _closeExportOverlay();
-    // Close modal entirely → user finalize, balik ke upload form
-    modal.classList.remove("show");
-    modal.style.display = "";
-    document.body.style.overflow = "";
-    if (typeof toast === "function") toast("✓ Video berhasil di-edit", "success");
+    // req user 5 Jun 2026 (opsi C): "Selesai" TIDAK menutup editor — user tetap
+    // di view HASIL supaya bisa terus melihat hasilnya. Cukup konfirmasi tersimpan.
+    // Menutup editor pakai tombol ✕ (kini berada di atas overlay, bisa diklik).
+    if (typeof toast === "function") toast("✓ Video berhasil disimpan", "success");
+    exportCloseBtn.textContent = "✓ Tersimpan";
+    exportCloseBtn.disabled = true;
+    exportCloseBtn.classList.add("is-saved");
   });
 
   // Expose flow so applyBtn handler bisa pakai
@@ -61325,6 +62107,8 @@ function getNotifList() {
       saturation: state.saturation,
       temperature: state.temperature,
       vignette: state.vignette,
+      sharpen: state.sharpen,
+      hue: state.hue,
       preset: state.preset,
       text: state.text,
       textPos: state.textPos,
@@ -61343,9 +62127,19 @@ function getNotifList() {
   if (typeof origOpen === "function") {
     window._openVideoEditor = function () {
       origOpen.apply(this, arguments);
+      // reset overlay export tiap kali editor dibuka (state bersih)
+      try { _closeExportOverlay(); } catch (e) {}
+      if (exportCloseBtn) {
+        exportCloseBtn.disabled = false;
+        exportCloseBtn.textContent = "✓ Selesai";
+        exportCloseBtn.classList.remove("is-saved");
+      }
       const pu = (typeof pendingUpload !== "undefined" && pendingUpload) ? pendingUpload : null;
       const prev = (pu && pu.videoEdit) || {};
-      state.aspect     = prev.aspect     || "original";
+      // SELALU buka pada "Asli" (video utuh, tak terpotong) — jangan pulihkan rasio
+      // crop terakhir. Per permintaan user 2026-06-20 ("mau lihat ukuran asli, jangan
+      // dibuat terpotong"). Rasio lain tetap bisa dipilih manual saat dibutuhkan.
+      state.aspect     = "original";
       state.zoom       = prev.zoom       != null ? prev.zoom       : 100;
       state.posX       = prev.posX       != null ? prev.posX       : 0;
       state.posY       = prev.posY       != null ? prev.posY       : 0;
@@ -61359,6 +62153,8 @@ function getNotifList() {
       state.saturation = _migColor(prev.saturation);
       state.temperature = prev.temperature != null ? prev.temperature : 0;
       state.vignette   = prev.vignette   != null ? prev.vignette   : 0;
+      state.sharpen    = prev.sharpen    != null ? prev.sharpen    : 0;
+      state.hue        = prev.hue        != null ? prev.hue        : 0;
       state.preset     = prev.preset     || "none";
       state.text       = prev.text       || "";
       state.textPos    = prev.textPos    || "bottom";
@@ -61368,6 +62164,48 @@ function getNotifList() {
       syncUI(); applyEffects();
     };
   }
+})();
+
+// Badge waktu (.ve-time-display) DIHAPUS dari editor: redundan -> bar potong sudah punya
+// playhead (posisi main) + Durasi (panjang ter-trim). Per user 2026-06-21. Idempoten.
+(function removeVeTimeBadge() {
+  function go() {
+    var t = document.querySelector("#videoEditorModal .ve-time-display");
+    if (!t) return false;
+    t.remove();
+    return true;
+  }
+  if (!go()) document.addEventListener("DOMContentLoaded", go);
+})();
+
+// Bubble waktu di atas playhead: tampil saat Putar Preview, bergerak bersama playhead,
+// menunjukkan detik berjalan (pengganti badge yg dihapus). Sembunyi saat jeda. User 2026-06-21.
+(function vePlayheadTime() {
+  function fmt(s) { s = Math.max(0, Math.floor(s || 0)); var m = Math.floor(s / 60), x = s % 60; return m + ":" + (x < 10 ? "0" : "") + x; }
+  function setup() {
+    var ph = document.getElementById("veTrimPlayhead");
+    var vid = document.getElementById("veVideo");
+    if (!ph || !vid) return false;
+    var b = ph.querySelector(".ve-playhead-time");
+    if (!b) { b = document.createElement("span"); b.className = "ve-playhead-time"; ph.appendChild(b); }
+    var hideT = null;
+    function refresh() {
+      b.textContent = fmt(vid.currentTime);
+      if (hideT) { clearTimeout(hideT); hideT = null; }
+      b.style.display = "block";
+      // saat dijeda (mis. setelah scrub/seek), sembunyikan setelah jeda singkat
+      if (vid.paused) hideT = setTimeout(function () { b.style.display = "none"; }, 1100);
+    }
+    b.style.display = "none";
+    vid.addEventListener("play", refresh);
+    vid.addEventListener("playing", refresh);
+    vid.addEventListener("timeupdate", refresh);
+    vid.addEventListener("seeking", refresh);
+    vid.addEventListener("seeked", refresh);
+    vid.addEventListener("pause", refresh);
+    return true;
+  }
+  if (!setup()) document.addEventListener("DOMContentLoaded", setup);
 })();
 
 /* ============ v575: helper empty-state ilustrasi (item 24) ============
@@ -61512,3 +62350,233 @@ document.addEventListener("click", function(e) {
   } catch {}
 }, false);
 
+// ============================================================================
+// 4 Jun 2026: Tab "Audio" editor video — Volume & Opacity. IIFE terpisah supaya
+// tidak mengganggu wireVideoEditorEffects yang kompleks. Wire slider/stepper/angka
+// ke #veVideo (preview). Non-destruktif (preview); penerapan ke video final bisa
+// ditambah belakangan via videoEdit.
+// ============================================================================
+(function wireVeAudioAdjust() {
+  const video  = document.getElementById("veVideo");
+  const vol    = document.getElementById("veVolume");
+  const volNum = document.getElementById("veVolumeNum");
+  const op     = document.getElementById("veOpacity");
+  const opNum  = document.getElementById("veOpacityNum");
+  if (!video || !vol || !op) return;
+  const clamp = (n) => Math.max(0, Math.min(100, Math.round(Number(n)) || 0));
+  const fill = (el) => { if (window._veFillRange) window._veFillRange(el); };
+  function baseVolFrac() { return clamp(vol.value) / 100; }
+  function applyVol(v) { v = clamp(v); vol.value = v; if (volNum) volNum.value = v; fill(vol); syncMute(); applyLiveVolume(); }
+  function applyOp(v)  { v = clamp(v); op.value = v;  if (opNum)  opNum.value  = v; video.style.opacity = String(v / 100); fill(op); }
+  vol.addEventListener("input", () => applyVol(vol.value));
+  op.addEventListener("input", () => applyOp(op.value));
+  if (volNum) volNum.addEventListener("input", () => applyVol(volNum.value));
+  if (opNum)  opNum.addEventListener("input", () => applyOp(opNum.value));
+  document.querySelectorAll('[data-veadj="veVolume"]').forEach(b =>
+    b.addEventListener("click", () => applyVol(Number(vol.value) + Number(b.dataset.delta || 0))));
+  document.querySelectorAll('[data-veadj="veOpacity"]').forEach(b =>
+    b.addEventListener("click", () => applyOp(Number(op.value) + Number(b.dataset.delta || 0))));
+
+  // req user 5 Jun 2026: tombol Bisukan/Mute — set volume 0 lalu pulihkan nilai
+  // sebelumnya. Reuse applyVol agar slider, angka, fill & state ikut sinkron.
+  const muteBtn = document.getElementById("veMuteBtn");
+  const muteLabel = document.getElementById("veMuteLabel");
+  let prevVol = 100;
+  function syncMute() {
+    if (!muteBtn) return;
+    const muted = Number(vol.value) === 0;
+    muteBtn.setAttribute("aria-pressed", muted ? "true" : "false");
+    if (muteLabel) muteLabel.textContent = muted ? "Bunyikan audio" : "Bisukan audio";
+  }
+  if (muteBtn) {
+    muteBtn.addEventListener("click", () => {
+      if (Number(vol.value) > 0) { prevVol = Number(vol.value); applyVol(0); }
+      else { applyVol(prevVol > 0 ? prevVol : 100); }
+    });
+    syncMute();
+  }
+
+  // req user 5 Jun 2026: FADE IN/OUT ala CapCut. Slider 0..50 = 0.0..5.0 detik.
+  // Volume di-ramp HALUS saat PREVIEW diputar (rAF): naik dari 0 selama "Masuk",
+  // turun ke 0 selama "Keluar" menjelang video berakhir. Non-destruktif (live).
+  const fadeInEl  = document.getElementById("veFadeIn");
+  const fadeOutEl = document.getElementById("veFadeOut");
+  const fadeInVal  = document.getElementById("veFadeInVal");
+  const fadeOutVal = document.getElementById("veFadeOutVal");
+  let fadeRAF = null;
+  const fadeSecs = (el) => el ? (Number(el.value) || 0) / 10 : 0;
+  function showFade() {
+    if (fadeInVal)  fadeInVal.textContent  = fadeSecs(fadeInEl).toFixed(1);
+    if (fadeOutVal) fadeOutVal.textContent = fadeSecs(fadeOutEl).toFixed(1);
+  }
+  function fadeGain() {
+    const t = video.currentTime || 0;
+    const dur = isFinite(video.duration) ? video.duration : 0;
+    const fi = fadeSecs(fadeInEl), fo = fadeSecs(fadeOutEl);
+    let g = 1;
+    if (fi > 0) g = Math.min(g, t / fi);
+    if (fo > 0 && dur > 0) g = Math.min(g, (dur - t) / fo);
+    return Math.max(0, Math.min(1, g));
+  }
+  function applyLiveVolume() {
+    const playing = !video.paused && !video.ended;
+    const v = playing ? baseVolFrac() * fadeGain() : baseVolFrac();
+    try { video.volume = v; } catch {}
+  }
+  function fadeTick() {
+    applyLiveVolume();
+    if (!video.paused && !video.ended) fadeRAF = requestAnimationFrame(fadeTick);
+    else fadeRAF = null;
+  }
+  video.addEventListener("play",  () => { if (!fadeRAF) fadeTick(); });
+  video.addEventListener("pause", applyLiveVolume);
+  video.addEventListener("ended", applyLiveVolume);
+  video.addEventListener("seeked", applyLiveVolume);
+  if (fadeInEl)  fadeInEl.addEventListener("input",  () => { showFade(); fill(fadeInEl);  applyLiveVolume(); });
+  if (fadeOutEl) fadeOutEl.addEventListener("input", () => { showFade(); fill(fadeOutEl); applyLiveVolume(); });
+  document.querySelectorAll("[data-vefade]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const el = b.dataset.vefade === "in" ? fadeInEl : fadeOutEl;
+      if (!el) return;
+      el.value = Math.max(0, Math.min(50, Number(el.value) + Number(b.dataset.delta || 0)));
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }));
+  showFade();
+})();
+
+// ============================================================================
+// 4 Jun 2026: FILL slider editor video (model "progress"): track terisi warna
+// aksen dari KIRI sampai thumb, sisanya redup — untuk SEMUA slider. Set CSS var
+// --lo/--hi (persen) yg dibaca gradient di styles.css. Standalone & aman:
+// tidak menyentuh closure editor.
+// ============================================================================
+(function veSmartFillRanges() {
+  function fill(input) {
+    if (!input || input.tagName !== "INPUT" || input.type !== "range") return;
+    const min = Number(input.min), max = Number(input.max), val = Number(input.value);
+    if (!(max > min)) return;
+    const p = ((val - min) / (max - min)) * 100;
+    const lo = 0, hi = p;   // progress: selalu terisi dari KIRI ke thumb
+    input.style.setProperty("--lo", lo.toFixed(2) + "%");
+    input.style.setProperty("--hi", hi.toFixed(2) + "%");
+  }
+  function fillAll() {
+    document.querySelectorAll("#videoEditorModal .ve-range").forEach(fill);
+  }
+  window._veFillRange = fill;
+  window._veFillAll = fillAll;
+  // Interaksi user (drag / stepper / input angka semua memicu event 'input').
+  document.addEventListener("input", function (e) {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains("ve-range") &&
+        el.closest && el.closest("#videoEditorModal")) fill(el);
+  }, true);
+  // Perubahan programatik: editor dibuka (restore) → isi ulang semua.
+  const origOpen = window._openVideoEditor;
+  if (typeof origOpen === "function") {
+    window._openVideoEditor = function () {
+      const r = origOpen.apply(this, arguments);
+      setTimeout(fillAll, 30); setTimeout(fillAll, 140);
+      return r;
+    };
+  }
+  // Tombol reset (trim/crop/warna) menyetel nilai tanpa 'input' → isi ulang.
+  document.addEventListener("click", function (e) {
+    const t = e.target;
+    if (t && t.closest && t.closest("#veReset, #veResetCrop, #veResetColor")) setTimeout(fillAll, 0);
+  }, true);
+})();
+
+
+
+/* ============================================================
+   CUSTOM DROPDOWN (req user 5 Jun 2026)
+   Ganti popup <option> native (highlight biru OS yang off-theme)
+   dengan panel <div> bertema penuh. Native <select.ve-select>
+   tetap ada (menyimpan nilai) & tetap memicu change/input agar
+   semua handler editor yang lama tidak berubah perilakunya.
+   ============================================================ */
+(function veCustomSelect(){
+  if (window.__veSelectInit) return; window.__veSelectInit = true;
+  var panel = null, current = null;
+
+  function close(){
+    if (panel){ panel.remove(); panel = null; }
+    if (current){ current.classList.remove("is-open"); current = null; }
+    document.removeEventListener("mousedown", onDocDown, true);
+    document.removeEventListener("keydown", onKey, true);
+    window.removeEventListener("resize", close);
+    window.removeEventListener("scroll", onScroll, true);
+  }
+
+  function onScroll(e){ if (panel && e.target !== panel) close(); }
+  function onDocDown(e){ if (panel && !panel.contains(e.target) && e.target !== current) close(); }
+  function onKey(e){ if (e.key === "Escape") close(); }
+
+  function build(sel){
+    var pop = document.createElement("div");
+    pop.className = "ve-select-pop";
+    pop.setAttribute("role", "listbox");
+    var active = null;
+    Array.prototype.forEach.call(sel.options, function(opt, i){
+      var item = document.createElement("div");
+      item.className = "ve-select-pop-item";
+      if (i === sel.selectedIndex){ item.classList.add("is-active"); active = item; }
+      item.textContent = opt.textContent;
+      item.setAttribute("role", "option");
+      item.addEventListener("mousedown", function(ev){
+        ev.preventDefault();
+        if (sel.selectedIndex !== i){
+          sel.selectedIndex = i;
+          sel.dispatchEvent(new Event("input", { bubbles: true }));
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        close();
+      });
+      pop.appendChild(item);
+    });
+    return { pop: pop, active: active };
+  }
+
+  function open(sel){
+    close();
+    current = sel;
+    sel.classList.add("is-open");
+    var built = build(sel);
+    panel = built.pop;
+    var r = sel.getBoundingClientRect();
+    panel.style.left = r.left + "px";
+    panel.style.width = r.width + "px";
+    panel.style.top = (r.bottom + 5) + "px";
+    document.body.appendChild(panel);
+    var pr = panel.getBoundingClientRect();
+    if (pr.bottom > window.innerHeight - 8){
+      panel.style.top = Math.max(8, r.top - pr.height - 5) + "px";
+    }
+    if (built.active && built.active.scrollIntoView){ built.active.scrollIntoView({ block: "nearest" }); }
+    setTimeout(function(){
+      document.addEventListener("mousedown", onDocDown, true);
+      document.addEventListener("keydown", onKey, true);
+      window.addEventListener("resize", close);
+      window.addEventListener("scroll", onScroll, true);
+    }, 0);
+  }
+
+  // Cegah popup native, buka panel custom (mouse)
+  document.addEventListener("mousedown", function(e){
+    var sel = e.target && e.target.closest && e.target.closest("#videoEditorModal select.ve-select");
+    if (!sel) return;
+    e.preventDefault();
+    if (current === sel) close(); else open(sel);
+  }, true);
+
+  // Cegah popup native via keyboard, buka custom
+  document.addEventListener("keydown", function(e){
+    var sel = e.target && e.target.closest && e.target.closest("#videoEditorModal select.ve-select");
+    if (!sel) return;
+    if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp"){
+      e.preventDefault();
+      if (current !== sel) open(sel);
+    }
+  }, true);
+})();
