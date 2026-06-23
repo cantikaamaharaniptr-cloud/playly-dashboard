@@ -72805,8 +72805,8 @@ section[data-view="stats"] .tp-table td:last-child { padding-right: 4px !importa
 /* Judul video boleh truncate rapi saat sempit */
 section[data-view="stats"] .tp-title { min-width: 0; }
 /* Header tabel: garis bawah lebih jelas, baris zebra halus */
-section[data-view="stats"] .tp-table thead th { border-bottom: 1.5px solid color-mix(in srgb, var(--cream, #E8D8C4) 26%, transparent) !important; }
-section[data-view="stats"] .tp-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--cream, #E8D8C4) 3%, transparent); }
+section[data-view="stats"] .tp-table thead th { border-bottom: 1.5px solid color-mix(in srgb, var(--text, #E8D8C4) 26%, transparent) !important; }
+section[data-view="stats"] .tp-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--text, #E8D8C4) 3%, transparent); }
 
 /* ===================================================================
    STATISTIK v730 — rapikan AREA ATAS (judul + tab bar) yg masih dempet
@@ -73413,17 +73413,17 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
-  color: color-mix(in srgb, var(--cream, #E8D8C4) 66%, transparent) !important;
+  color: color-mix(in srgb, var(--text, #E8D8C4) 66%, transparent) !important;
   font-weight: 700 !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) {
-  color: var(--cream, #E8D8C4) !important;
+  color: var(--text, #E8D8C4) !important;
 }
 /* sel data: warna teks seragam cream */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-num,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-title {
-  color: var(--cream, #E8D8C4) !important;
+  color: var(--text, #E8D8C4) !important;
 }
 
 /* ===================================================================
@@ -73443,22 +73443,22 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
 }
 /* HEADER row */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th {
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, transparent) !important;
-  border-bottom: 1.5px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
+  background: color-mix(in srgb, var(--text, #E8D8C4) 6%, transparent) !important;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--text, #E8D8C4) 24%, transparent) !important;
   padding: 12px 16px !important;
   font-size: 11.5px !important;
 }
 /* DATA cells: separator antar-baris */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody td {
-  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 10%, transparent) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #E8D8C4) 10%, transparent) !important;
   padding: 13px 16px !important;
 }
 /* zebra (selang-seling) + hover highlight */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 4%, transparent) !important;
+  background: color-mix(in srgb, var(--text, #E8D8C4) 4%, transparent) !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:hover td {
-  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, transparent) !important;
+  background: color-mix(in srgb, var(--text, #E8D8C4) 8%, transparent) !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:last-child td {
   border-bottom: 0 !important;
@@ -73466,7 +73466,7 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
 /* garis pemisah kolom tipis (kolom angka) supaya jelas "kolom" */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
-  border-left: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent) !important;
+  border-left: 1px solid color-mix(in srgb, var(--text, #E8D8C4) 7%, transparent) !important;
 }
 
 /* ===================================================================
@@ -73482,14 +73482,14 @@ section[data-view="stats"] .tp-table .tp-title {
 }
 section[data-view="stats"] .tp-table .tp-sub {
   font-size: 11px !important; font-weight: 500 !important;
-  color: color-mix(in srgb, var(--cream, #E8D8C4) 50%, transparent) !important;
+  color: color-mix(in srgb, var(--text, #E8D8C4) 50%, transparent) !important;
   white-space: nowrap !important;
 }
 /* (pesan baru) warna teks header lebih terbaca + seragam */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
-  color: color-mix(in srgb, var(--cream, #E8D8C4) 82%, transparent) !important;
+  color: color-mix(in srgb, var(--text, #E8D8C4) 82%, transparent) !important;
 }
 /* (pesan baru) kolom angka: header + data RATA TENGAH */
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,

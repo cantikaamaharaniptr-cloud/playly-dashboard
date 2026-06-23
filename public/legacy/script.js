@@ -7072,7 +7072,7 @@ const I18N = {
     "stat.detail.avglikes":      "Rata-rata likes/video",
     "stat.detail.avgper":        "Rata-rata/video",
     "stat.detail.totalvideos":   "Jumlah video",
-    "stat.detail.engagementrate":"Engagement rate",
+    "stat.detail.engagementrate":"Tingkat interaksi",
     "stat.detail.no.video":      "Belum ada video",
     "stat.detail.no.views":      "Belum ada view",
     "stat.detail.no.likes":      "Belum ada like",
@@ -7205,7 +7205,7 @@ const I18N = {
     "pm.upgrade.bold":            "Upgrade ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa batas",
     "pm.insights.head":           "Insight Premium",
-    "pm.insights.engagement":     "Tingkat engagement",
+    "pm.insights.engagement":     "Tingkat interaksi",
     "pm.insights.watch":          "Rata-rata waktu tonton",
     "pm.insights.region":         "Wilayah teratas",
     "pm.feature.thumb":           "Thumb kustom",
@@ -18642,7 +18642,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
@@ -32308,7 +32308,7 @@ function renderStatsRow() {
     { label: "Total Suka", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
     { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
     { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
-    { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
+    { label: "Interaksi", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
   ];
 
   // v693 (2026-06-08): kartu disederhanakan — ikon + label + nilai (tanpa
@@ -37820,7 +37820,7 @@ function renderTopPerforming() {
     ${th("views", "Tontonan")}
     ${th("likes", "Suka")}
     ${th("comments", "Komentar")}
-    ${th("eng", "Engagement")}
+    ${th("eng", "Interaksi")}
   </tr></thead>`;
   // v781: metadata kolom Video (durasi · tanggal upload) di bawah judul.
   const vidMeta = (v) => {
