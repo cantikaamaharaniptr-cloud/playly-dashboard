@@ -3195,6 +3195,7 @@ body[data-theme="dark"] .help-panel details.faq > p { padding: 11px 16px 13px 30
 .support-compose-panel textarea:focus, .support-compose-panel textarea:focus-visible { outline: none !important; box-shadow: none !important; border-color: rgba(232,216,196,.14) !important; background: rgba(232,216,196,.075) !important; }
 .support-compose-panel .field-hint { color: rgba(232,216,196,.6) !important; }
 #supportComposeModal .field-hint { color: rgba(232,216,196,.5) !important; font-size: 11px !important; text-align: right !important; }
+/* chip saran topik (klik -> isi Subjek + sesuaikan Pesan) */
 .support-compose-panel .support-topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
 .support-compose-panel .support-topics[hidden] { display: none; }
 .support-compose-panel .support-topics-label { width: 100%; font-size: 11px; color: rgba(232,216,196,.6); margin-bottom: 4px; }
