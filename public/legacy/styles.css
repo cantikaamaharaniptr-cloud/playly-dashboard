@@ -41781,6 +41781,28 @@ body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-bad { color: #B9
 .view[data-view="stats"][data-stats-tab="pencapaian"]  [data-stats-section]:not([data-stats-section="pencapaian"])  { display: none; }
 .view[data-view="stats"][data-stats-tab="top-video"]   [data-stats-section]:not([data-stats-section="top-video"])   { display: none; }
 .view[data-view="stats"][data-stats-tab="grafik"]      [data-stats-section]:not([data-stats-section="grafik"])      { display: none; }
+/* v742: filter Sumber Trafik / Audiens (traffic/geo ada di dalam .stats-extra-grid) */
+.view[data-view="stats"][data-stats-tab="traffic"]     [data-stats-section]:not([data-stats-section="traffic"])     { display: none; }
+.view[data-view="stats"][data-stats-tab="geo"]         [data-stats-section]:not([data-stats-section="geo"])         { display: none; }
+/* Saat filter ke 1 section di dalam grid → tampil full-width (1 kolom) */
+.view[data-view="stats"][data-stats-tab="traffic"] .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="geo"]     .stats-extra-grid { grid-template-columns: 1fr !important; }
+/* Saat filter ke section DI LUAR grid → sembunyikan wrapper grid (hindari gap kosong) */
+.view[data-view="stats"][data-stats-tab="ringkasan"] .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="grafik"]    .stats-extra-grid,
+.view[data-view="stats"][data-stats-tab="top-video"] .stats-extra-grid { display: none !important; }
+/* Ringkasan punya 2 elemen (head .stats-section-head + #statsRow KPI) yang
+   keduanya di-set display !important di tempat lain → override saat filter ke
+   section SELAIN Ringkasan/all. Head: pakai [data-stats-section]; #statsRow:
+   butuh selector ber-ID (kalah spesifisitas kalau cuma atribut). */
+.view[data-view="stats"][data-stats-tab="grafik"]    [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="top-video"] [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="traffic"]   [data-stats-section="ringkasan"],
+.view[data-view="stats"][data-stats-tab="geo"]       [data-stats-section="ringkasan"] { display: none !important; }
+.view[data-view="stats"][data-stats-tab="grafik"]    #statsRow,
+.view[data-view="stats"][data-stats-tab="top-video"] #statsRow,
+.view[data-view="stats"][data-stats-tab="traffic"]   #statsRow,
+.view[data-view="stats"][data-stats-tab="geo"]       #statsRow { display: none !important; }
 
 /* Mode "all" — beri jarak antar section + horizontal divider */
 .view[data-view="stats"][data-stats-tab="all"] [data-stats-section] {
@@ -41961,14 +41983,11 @@ section[data-view="stats"] .mini-chart-card .chart-wrap .chart-ring-wrap {
    legend. Hide modern .mc-headline (big number + delta) yang ditambah di
    v602, kembalikan .mini-chart-total original di header. */
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 18px !important;
-  min-height: 240px !important;
-  padding: 18px !important;
-  flex-wrap: wrap !important;
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin-top: 4px !important;
+  padding: 2px 16px 12px !important;
 }
 /* Hide modern bezier headline — pakai .mini-chart-total original di head */
 section[data-view="stats"] .mini-chart-card .mc-headline { display: none !important; }
@@ -41981,7 +42000,7 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts
 }
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts-stack > .mini-chart-card {
   align-self: stretch !important;
-  min-height: 280px !important;
+  min-height: 0 !important;
 }
 
 /* v602f (2026-05-28): GitHub Contribution Graph style — COMPACT version.
@@ -50404,12 +50423,21 @@ body:not([data-role="admin"]):not(.auth-mode) .riwayat-row::after {
    USER STATS — RING CHART v4 (dynamic arcs, 0% empty, 2-col legend)
    ========================================================= */
 
-/* Hide line chart + empty state overlay */
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap > svg.lineChart,
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-empty,
-body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-chart-empty] {
-  display: none !important;
+/* Ring chart dihapus → tampilkan kembali line chart (full width). Empty-state
+   dikontrol JS (drawMiniChart), jadi tidak di-force-hide lagi. */
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap > svg.lineChart {
+  display: block !important;
+  width: 100% !important;
+  height: 92px !important;
 }
+/* Label periode (sumbu-X) di bawah grafik biar jelas */
+section[data-view="stats"] .mini-chart-card .mc-axis {
+  display: flex; justify-content: space-between; gap: 2px;
+  margin-top: 7px; padding: 0 1px;
+  font-size: 10px; font-weight: 600; color: var(--text-2, var(--muted));
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .mini-chart-card .mc-axis span { flex: 1 1 0; text-align: center; white-space: nowrap; overflow: hidden; }
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-wrap {
   background-image: none !important;
 }
@@ -68542,12 +68570,19 @@ body[data-theme="light"][data-role="admin"] .admin-bg-particles {
    Ditaruh di akhir file + selector `header.topbar` → pasti menang cascade.
    ========================================================================= */
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar {
-  background: transparent !important;
+  /* v737: bar diberi background SOLID (bukan transparan lagi) karena topbar
+     kini STICKY/fixed — supaya konten tidak tembus saat di-scroll. */
+  /* v739: width auto — batalkan calc(100%+48px) lama yg bikin topbar lebih
+     lebar dari viewport saat fixed (tombol kanan kepotong). left+right yg
+     menentukan lebar. */
+  width: auto !important;
+  min-width: 0 !important;
+  background-color: var(--bg, #1a0c10) !important;
   background-image: none !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar .breadcrumb,
 html body:not([data-role="admin"]):not(.auth-mode) header.topbar .topbar-search,
@@ -68569,9 +68604,18 @@ html body:not([data-role="admin"]):not(.auth-mode) header.topbar .user-chip {
       Tontonan/Suka/Video/Pengikut di bawah → redundant clutter.
    ========================================================= */
 html body:not([data-role="admin"]):not(.auth-mode) .topbar {
-  position: static !important;
-  top: auto !important;
+  /* v734 (2026-06-08): user minta topbar STICKY lagi (search/akun selalu
+     kejangkau). App pakai sidebar fixed + body-scroll -> sticky-in-body
+     tidak reliable di Chrome, jadi pakai position:fixed meniru sidebar
+     (left:var(--sb-w) otomatis 0 di <=900px). Clearance via .main padding. */
+  position: fixed !important;
+  top: 0 !important;
+  left: var(--sb-w) !important;
+  right: 0 !important;
+  margin: 0 !important;
+  z-index: 55 !important;
   gap: 6px !important;
+  /* background/border/shadow di blok "header.topbar" (spesifisitas lebih tinggi) */
 }
 html body:not([data-role="admin"]):not(.auth-mode) .topbar .topbar-actions {
   gap: 6px !important;
@@ -72371,3 +72415,1309 @@ textarea#upDesc.upf-desc-textarea {
   box-shadow: none !important;
 }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
+
+/* ===== STATISTIK GRAFIK — line chart compact (override sisa ring-chart-v4) ===== */
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin-top: 4px !important;
+  padding: 2px 16px 12px !important;
+  gap: 0 !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card .chart-wrap > svg.lineChart {
+  display: block !important;
+  width: 100% !important;
+  height: 92px !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .charts-stack > .mini-chart-card {
+  min-height: 0 !important;
+}
+
+/* ===== STATISTIK TOP VIDEO — judul tampil + thumbnail placeholder ===== */
+section[data-view="stats"] .top-perf-item { gap: 10px; align-items: center; }
+section[data-view="stats"] .top-perf-item .info { flex: 1 1 auto !important; min-width: 0 !important; }
+section[data-view="stats"] .top-perf-item .info h5 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+section[data-view="stats"] .top-perf-item .info .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+section[data-view="stats"] .top-perf-item .mini-thumb {
+  flex: 0 0 auto; border-radius: 6px; overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932));
+}
+section[data-view="stats"] .top-perf-item .mini-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+section[data-view="stats"] .top-perf-item .views { flex: 0 0 auto; white-space: nowrap; }
+/* nilai Top Video pakai class .views yg bentrok dgn .views{width:100%} global → paksa auto */
+section[data-view="stats"] .top-perf-item .views { width: auto !important; max-width: 40% !important; margin-left: auto !important; flex: 0 0 auto !important; text-align: right; }
+
+/* ===== STATISTIK — refresh tampilan (simpel, compact, aksen rapi) ===== */
+/* Kartu Ringkasan: ikon + label + nilai horizontal compact (tanpa spark/trend) */
+section[data-view="stats"] #statsRow {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] .stat-card {
+  display: flex !important; align-items: center; gap: 12px;
+  padding: 12px 14px !important; border-radius: 12px;
+}
+section[data-view="stats"] .stat-card:hover { transform: none !important; box-shadow: none !important; border-color: var(--border-strong, var(--border)); }
+section[data-view="stats"] .stat-icon {
+  width: 34px !important; height: 34px !important; margin: 0 !important;
+  border-radius: 9px !important; background: var(--surface-2) !important;
+  color: var(--text-2, var(--muted)) !important; box-shadow: none !important; flex: 0 0 auto;
+}
+section[data-view="stats"] .stat-icon svg { width: 16px; height: 16px; }
+section[data-view="stats"] .stat-body { min-width: 0; }
+section[data-view="stats"] .stat-label { font-size: 9.5px; letter-spacing: .1em; margin: 0; }
+section[data-view="stats"] .stat-value { font-size: 20px !important; margin: 1px 0 0 !important; }
+/* Tab bar: lebih kecil & flat */
+section[data-view="stats"] .riwayat-tab {
+  height: 32px !important; padding: 0 13px !important; font-size: 12px !important;
+  border-radius: 8px !important; gap: 6px;
+}
+section[data-view="stats"] .riwayat-tab svg { width: 14px !important; height: 14px !important; }
+
+/* ===== STATISTIK — hierarki header halaman vs judul section ===== */
+/* Header halaman (sec-icon-lg, kotak wine) tetap menonjol; ikon judul SECTION
+   dibuat flat & netral supaya jelas level-nya di bawah judul halaman. */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
+  background: var(--surface-2) !important;
+  color: var(--text-2, var(--muted)) !important;
+  box-shadow: none !important;
+}
+/* Judul halaman sedikit lebih besar; judul section lebih kecil & subtitle muted */
+#statsPageTitle { font-size: 24px !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 { font-size: 15px !important; font-weight: 700 !important; }
+section[data-view="stats"] .stats-section-head small { color: var(--text-2, var(--muted)) !important; }
+
+/* ===== STATISTIK — bedakan STRUKTUR judul section dari header halaman ===== */
+/* Section: buang ikon kotak, ganti jadi garis aksen kiri + label uppercase
+   (gaya 'eyebrow'/penanda section) — struktur beda jelas dari header halaman. */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head {
+  border-left: 3px solid var(--primary) !important;
+  padding-left: 11px !important;
+  display: block !important;
+}
+section[data-view="stats"] [data-stats-section] > h3 {
+  border-left: 3px solid var(--primary) !important;
+  padding-left: 11px !important;
+}
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: var(--text-2, var(--muted)) !important;
+  margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head small { color: var(--muted) !important; font-size: 12px; }
+
+/* ===== STATISTIK — judul section OPSI 1: ikon bulat lembut + judul normal ===== */
+/* batalkan gaya eyebrow (uppercase + garis aksen) sebelumnya */
+section[data-view="stats"] .stats-section-head,
+section[data-view="stats"] [data-stats-section] > h3 {
+  border-left: 0 !important;
+  padding-left: 0 !important;
+}
+section[data-view="stats"] [data-stats-section] > h3 { display: flex !important; align-items: center; gap: 9px; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+/* ikon section: BULAT, wine lembut, ikon krem — jelas beda & lebih kecil dari header halaman (kotak wine besar) */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
+  display: inline-flex !important; align-items: center; justify-content: center;
+  width: 30px !important; height: 30px !important; flex: 0 0 auto;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--primary) 32%, transparent) !important;
+  color: var(--cream, #E8D8C4) !important;
+  box-shadow: none !important;
+}
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) svg { width: 15px !important; height: 15px !important; }
+section[data-view="stats"] .stats-section-head small { color: var(--text-2, var(--muted)) !important; font-size: 12px; }
+
+/* ===== STATISTIK — judul section OPSI 2: titik aksen + judul (tanpa ikon) ===== */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  display: flex !important; align-items: center; gap: 0 !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important;
+  border-left: 0 !important; padding-left: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before {
+  content: ""; flex: 0 0 auto;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--primary); margin-right: 10px;
+}
+
+/* ===== STATISTIK — judul section OPSI 3: judul + garis bawah aksen ===== */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before { content: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  display: block !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important;
+  border-left: 0 !important; padding-left: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after {
+  content: ""; display: block;
+  width: 30px; height: 3px; border-radius: 2px;
+  background: var(--primary); margin-top: 7px;
+}
+
+/* ===== STATISTIK — judul section KONSEP PILL/BADGE ===== */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head { display: block !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  display: inline-flex !important; align-items: center;
+  background: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border)) !important;
+  color: var(--cream, #E8D8C4) !important;
+  padding: 5px 13px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important; font-weight: 700 !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  margin: 0 0 6px !important;
+}
+
+/* fix: pill section harus selebar teks (bukan full width) + bg lebih jelas */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  width: fit-content !important;
+  max-width: max-content !important;
+  align-self: flex-start !important;
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+}
+
+/* ===== STATISTIK — judul section KONSEP NOMOR BESAR (editorial) ===== */
+section[data-view="stats"] { counter-reset: statsec; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3 {
+  counter-increment: statsec;
+  display: flex !important; align-items: baseline; gap: 12px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; color: var(--text) !important;
+  margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before {
+  content: counter(statsec, decimal-leading-zero) !important;
+  font-size: 28px !important; font-weight: 800 !important; line-height: 1;
+  color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after { content: none !important; }
+
+/* Grafik: heading di .grafik-head-text (bukan direct child) → ikutkan ke nomor editorial */
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: statsec;
+  display: flex !important; align-items: baseline; gap: 12px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 !important;
+}
+section[data-view="stats"] .grafik-head-text h3::before {
+  content: counter(statsec, decimal-leading-zero) !important;
+  font-size: 28px !important; font-weight: 800 !important; line-height: 1;
+  color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  font-variant-numeric: tabular-nums;
+}
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+
+/* ===== STATISTIK — judul section KONSEP GARIS PEMISAH PENUH ===== */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: flex !important; align-items: center; gap: 14px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  border-radius: 0 !important; width: auto !important; max-width: none !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before { content: none !important; }
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after {
+  content: "" !important; flex: 1 1 auto !important;
+  height: 1px !important; width: auto !important; border-radius: 0 !important; margin: 0 !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 45%, var(--border)), transparent) !important;
+}
+
+/* ===================================================================
+   STATISTIK — REDESIGN: MINIMALIS & LEGA (opsi 1)
+   =================================================================== */
+/* (1) Judul section: bersih, hairline tipis full-width, tanpa ikon/nomor/pill */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: block !important; width: 100% !important; max-width: none !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0 0 9px !important; margin: 0 0 16px !important;
+  font-size: 15px !important; font-weight: 600 !important; letter-spacing: .01em !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head small { display: block; color: var(--muted) !important; margin: -10px 0 6px !important; font-size: 12px; }
+
+/* (2) Ruang antar section lebih lega */
+section[data-view="stats"] .stats-section-head,
+section[data-view="stats"] [data-stats-section="top-video"],
+section[data-view="stats"] [data-stats-section="grafik"] { margin-top: 30px !important; }
+
+/* (3) Kartu Ringkasan: ringan (tanpa ikon), angka besar bersih, border tipis */
+section[data-view="stats"] #statsRow {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] .stat-card {
+  display: block !important; background: transparent !important;
+  border: 1px solid var(--border) !important; border-radius: 12px !important;
+  padding: 14px 16px !important;
+}
+section[data-view="stats"] .stat-card:hover { transform: none !important; box-shadow: none !important; border-color: var(--border-strong, var(--border)) !important; }
+section[data-view="stats"] .stat-icon { display: none !important; }
+section[data-view="stats"] .stat-body { min-width: 0; }
+section[data-view="stats"] .stat-label { font-size: 10px !important; letter-spacing: .12em !important; text-transform: uppercase; color: var(--muted) !important; }
+section[data-view="stats"] .stat-value { font-size: 24px !important; margin: 5px 0 0 !important; line-height: 1.1 !important; }
+
+/* (4) Kartu Top Video & Grafik: lebih ringan (border tipis, bg transparan) */
+section[data-view="stats"] .top-perf-3col,
+section[data-view="stats"] .charts-stack { gap: 12px !important; }
+
+/* ===================================================================
+   STATISTIK — REDESIGN: PREMIUM / ELEGAN (opsi 2)
+   =================================================================== */
+/* Judul section: bar aksen gradient wine->krem + judul elegan (tanpa hairline) */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: flex !important; align-items: center; gap: 12px !important;
+  background: none !important; border: 0 !important; border-bottom: 0 !important;
+  border-radius: 0 !important; padding: 0 !important; margin: 0 0 16px !important;
+  width: auto !important; max-width: none !important;
+  font-size: 16px !important; font-weight: 700 !important; letter-spacing: .01em !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before {
+  content: "" !important; flex: 0 0 auto;
+  width: 4px !important; height: 20px !important; border-radius: 3px !important;
+  background: linear-gradient(180deg, var(--accent, #C7B7A3), var(--primary)) !important;
+}
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+section[data-view="stats"] .stats-section-head small { display:block; color: var(--muted) !important; margin: -8px 0 6px 16px !important; font-size: 12px; }
+
+/* Kartu ringkasan: gradient wine lembut + shadow halus + label krem */
+section[data-view="stats"] .stat-card {
+  display: block !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 14%, var(--bg-elev)), var(--bg-elev)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border)) !important;
+  border-radius: 14px !important; padding: 15px 17px !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
+}
+section[data-view="stats"] .stat-card:hover { transform: translateY(-2px) !important; box-shadow: 0 12px 28px rgba(0,0,0,.34) !important; }
+section[data-view="stats"] .stat-icon { display: none !important; }
+section[data-view="stats"] .stat-label { font-size: 10px !important; letter-spacing: .14em !important; text-transform: uppercase; color: var(--accent, #C7B7A3) !important; }
+section[data-view="stats"] .stat-value { font-size: 25px !important; margin: 6px 0 0 !important; line-height: 1.1 !important; color: var(--text) !important; }
+
+/* Kartu Top Video & Grafik: gradient lembut + shadow agar senada premium */
+section[data-view="stats"] .top-perf-col,
+section[data-view="stats"] .mini-chart-card {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 10%, var(--bg-elev)), var(--bg-elev)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.24) !important;
+}
+
+/* ===== STATISTIK — GRAFIK: 1 chart besar + tab metrik (adaptasi YouTube Overview) ===== */
+section[data-view="stats"] .chart-metric-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+section[data-view="stats"] .chart-metric-tabs .cmt-btn {
+  height: 32px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-elev);
+  color: var(--text-2, var(--muted)); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+section[data-view="stats"] .chart-metric-tabs .cmt-btn:hover { border-color: var(--primary); color: var(--text); }
+section[data-view="stats"] .chart-metric-tabs .cmt-btn.active { background: var(--primary); border-color: var(--primary); color: var(--cream, #fff); }
+/* tampilkan hanya chart metrik aktif (besar), sembunyikan sisanya */
+section[data-view="stats"] [data-active-metric] .charts-stack { display: block !important; }
+section[data-view="stats"] [data-active-metric] .mini-chart-card { display: none !important; }
+section[data-view="stats"] [data-active-metric="views"] .mini-chart-card:has(.chart-wrap[data-chart-metric="views"]),
+section[data-view="stats"] [data-active-metric="videos"] .mini-chart-card:has(.chart-wrap[data-chart-metric="videos"]),
+section[data-view="stats"] [data-active-metric="followers"] .mini-chart-card:has(.chart-wrap[data-chart-metric="followers"]),
+section[data-view="stats"] [data-active-metric="comments"] .mini-chart-card:has(.chart-wrap[data-chart-metric="comments"]) { display: block !important; }
+/* chart aktif jadi BESAR */
+section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 200px !important; }
+
+/* ===== STATISTIK — section baru: Sumber Trafik & Audiens per Negara (gaya doodstream) ===== */
+section[data-view="stats"] .stats-extra-section {
+  margin-top: 30px !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 10%, var(--bg-elev)), var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.24);
+}
+section[data-view="stats"] .src-list { display: flex; flex-direction: column; gap: 13px; }
+section[data-view="stats"] .src-row { display: grid; grid-template-columns: 190px 1fr 120px; align-items: center; gap: 14px; }
+section[data-view="stats"] .src-label { font-size: 13px; font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+section[data-view="stats"] .src-bar { height: 8px; border-radius: 99px; background: var(--surface-2, rgba(255,255,255,.1)); overflow: hidden; }
+section[data-view="stats"] .src-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--accent, var(--primary-hover))); }
+section[data-view="stats"] .src-val { text-align: right; font-size: 12px; color: var(--text-2, var(--muted)); white-space: nowrap; }
+section[data-view="stats"] .src-val b { color: var(--text); font-weight: 800; margin-right: 7px; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  section[data-view="stats"] .src-row { grid-template-columns: 1fr auto; }
+  section[data-view="stats"] .src-bar { grid-column: 1 / -1; order: 3; }
+}
+
+/* ===== STATISTIK — empty-state jujur + hapus kolom Top Durasi (estimasi) ===== */
+section[data-view="stats"] .src-empty { text-align: center; padding: 22px 14px; }
+section[data-view="stats"] .src-empty-ic { width: 40px; height: 40px; margin: 0 auto 10px; color: var(--primary); opacity: .6; }
+section[data-view="stats"] .src-empty-ic svg { width: 100%; height: 100%; }
+section[data-view="stats"] .src-empty p { font-weight: 700; color: var(--text); margin: 0 0 4px; font-size: 14px; }
+section[data-view="stats"] .src-empty small { color: var(--muted); font-size: 12px; }
+/* Top Durasi (watch time) = estimasi, bukan data nyata → sembunyikan; sisakan 3 kolom */
+section[data-view="stats"] .top-perf-col:has(#topPerformWatch) { display: none !important; }
+section[data-view="stats"] .top-perf-4col { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+
+/* ===== STATISTIK — header & judul section LEAN (ala YouTube Studio) ===== */
+/* Hilangkan paragraf deskripsi halaman & subtitle section yg bertele (biar teks tidak menumpuk) */
+section[data-view="stats"] #statsPageDesc { display: none !important; }
+section[data-view="stats"] .stats-section-head small { display: none !important; }
+/* Judul section: teks bold bersih saja — tanpa bar aksen, ikon, nomor, hairline */
+section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) { display: none !important; }
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  counter-increment: none !important;
+  display: block !important; width: auto !important; max-width: none !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  padding: 0 !important; margin: 0 0 14px !important;
+  font-size: 16px !important; font-weight: 700 !important; letter-spacing: 0 !important;
+  text-transform: none !important; color: var(--text) !important;
+}
+section[data-view="stats"] .stats-section-head h3::before,
+section[data-view="stats"] [data-stats-section] > h3::before,
+section[data-view="stats"] .grafik-head-text h3::before,
+section[data-view="stats"] .stats-section-head h3::after,
+section[data-view="stats"] [data-stats-section] > h3::after,
+section[data-view="stats"] .grafik-head-text h3::after { content: none !important; }
+
+/* ===== STATISTIK — Top Video jadi TABEL MEDIA sortable (gaya Wistia/Vidyard) ===== */
+section[data-view="stats"] #topPerformList { display: block !important; }
+section[data-view="stats"] .tp-table { width: 100%; border-collapse: collapse; }
+section[data-view="stats"] .tp-table th { text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 0 12px 11px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; transition: color .12s; }
+section[data-view="stats"] .tp-table th.tp-th-vid { text-align: left; cursor: default; }
+section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) { color: var(--text); }
+section[data-view="stats"] .tp-table th.active { color: var(--primary); }
+section[data-view="stats"] .tp-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+section[data-view="stats"] .tp-table tbody tr { cursor: pointer; transition: background .12s; }
+section[data-view="stats"] .tp-table tbody tr:hover td { background: var(--surface-2); }
+section[data-view="stats"] .tp-table tbody tr:last-child td { border-bottom: 0; }
+section[data-view="stats"] .tp-vid { display: flex; align-items: center; gap: 12px; min-width: 0; }
+section[data-view="stats"] .tp-thumb { width: 64px; height: 36px; border-radius: 6px; flex: 0 0 auto; background: var(--surface-2) center / cover no-repeat; background-image: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932)); }
+section[data-view="stats"] .tp-title { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+section[data-view="stats"] .tp-num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+
+/* ===================================================================
+   STATISTIK — ROMBAK TOTAL: layout kohesif (kartu seragam + susunan baru)
+   Susunan: KPI -> Grafik (hero) -> Performa Video -> [Sumber Trafik | Audiens]
+   =================================================================== */
+/* Kartu section SERAGAM (flat, bersih) — grafik, performa video, trafik, audiens */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 20px 22px !important;
+  box-shadow: none !important;
+  margin-top: 24px !important;
+}
+section[data-view="stats"] #topPerfCard h3,
+section[data-view="stats"] [data-stats-section="grafik"] h3,
+section[data-view="stats"] .stats-extra-section h3 { margin: 0 0 16px !important; }
+/* KPI cards: samakan (flat bg-elev) */
+section[data-view="stats"] .stat-card { background: var(--bg-elev) !important; border: 1px solid var(--border) !important; box-shadow: none !important; }
+section[data-view="stats"] .stat-card:hover { box-shadow: none !important; transform: none !important; border-color: var(--border-strong, var(--border)) !important; }
+/* Ringkasan spacing */
+section[data-view="stats"] .stats-section-head { margin: 4px 0 14px !important; }
+/* Sumber Trafik + Audiens = SELALU full-width (1 kolom stacked), konsisten dgn section lain */
+section[data-view="stats"] .stats-extra-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 24px; }
+section[data-view="stats"] .stats-extra-grid .stats-extra-section { margin-top: 0 !important; }
+@media (max-width: 820px) { section[data-view="stats"] .stats-extra-grid { grid-template-columns: 1fr; } }
+
+/* ===== STATISTIK — judul section: ikon kotak lembut kecil + judul (beda dari header halaman) ===== */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] h3,
+section[data-view="stats"] .grafik-head-text h3 {
+  display: flex !important; align-items: center; gap: 11px !important;
+  font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important;
+  margin: 0 0 16px !important;
+}
+section[data-view="stats"] .st-ico {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+  color: var(--cream, #E8D8C4);
+}
+section[data-view="stats"] .st-ico svg { width: 16px; height: 16px; }
+section[data-view="stats"] .st-txt { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0; }
+
+/* ===== STATISTIK — rapatkan jarak + kartu menonjol (pemisah jelas) ===== */
+/* Kartu section: bg lebih terang dari halaman + border tegas + rapat */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section {
+  background: var(--bg-elev-2, #311c22) !important;
+  border: 1px solid var(--border-strong, rgba(232,216,196,.16)) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  margin-top: 14px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18) !important;
+}
+/* KPI cards juga menonjol & rapat */
+section[data-view="stats"] .stat-card {
+  background: var(--bg-elev-2, #311c22) !important;
+  border: 1px solid var(--border-strong, rgba(232,216,196,.16)) !important;
+  padding: 13px 15px !important;
+}
+section[data-view="stats"] #statsRow { gap: 10px !important; margin: 0 !important; }
+/* judul section rapat */
+section[data-view="stats"] .stats-section-head h3,
+section[data-view="stats"] [data-stats-section] h3,
+section[data-view="stats"] .grafik-head-text h3 { margin: 0 0 12px !important; }
+section[data-view="stats"] .stats-section-head { margin: 2px 0 10px !important; }
+section[data-view="stats"] .grafik-head-text + * { margin-top: 0; }
+/* hapus kartu-dalam-kartu: chart inner transparan */
+section[data-view="stats"] .mini-chart-card { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+section[data-view="stats"] .chart-metric-tabs { margin: 0 0 10px !important; }
+section[data-view="stats"] [data-active-metric] .mini-chart-card .chart-wrap > svg.lineChart { height: 150px !important; }
+/* grid trafik/audiens rapat */
+section[data-view="stats"] .stats-extra-grid { gap: 14px !important; margin-top: 14px !important; }
+
+/* ===== STATISTIK — pertegas pemisah kartu (lebih terang + border jelas) ===== */
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] .stats-extra-section,
+section[data-view="stats"] .stat-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 24%, transparent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.30) !important;
+}
+
+/* (blok lama "Ringkasan jadi 1 kartu / KPI flat" dihapus di v758 — diganti
+   .stats-ringkasan-block di blok v757 dgn sel KPI boxed + gap normal) */
+
+/* ===== STATISTIK — tab bar lengkap (ikon + label, sinkron section) ===== */
+section[data-view="stats"] .riwayat-tab-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+section[data-view="stats"] .stat-tab { display: inline-flex !important; align-items: center; gap: 7px; }
+section[data-view="stats"] .stat-tab-ico { display: inline-flex; flex: 0 0 auto; }
+section[data-view="stats"] .stat-tab-ico svg { width: 15px; height: 15px; }
+
+/* ===================================================================
+   STATISTIK v728 — rapikan ritme vertikal (tetap compact)
+   Masalah: gap KPI -> "Grafik Stats" = 0px (nempel) + jarak antar
+   section tidak konsisten (10/0/14/28). Diseragamkan ~24px.
+   =================================================================== */
+/* Jarak konsisten antar blok utama */
+section[data-view="stats"] [data-stats-section="grafik"],
+section[data-view="stats"] [data-stats-section="top-video"],
+section[data-view="stats"] #topPerfCard,
+section[data-view="stats"] .stats-extra-grid {
+  margin-top: 24px !important;
+}
+/* KPI row: beri ruang di bawah heading-nya & sebelum Grafik */
+section[data-view="stats"] #statsRow { margin-top: 10px !important; margin-bottom: 2px !important; }
+
+/* Grafik card-head: judul/subtitle/toggle align atas; subtitle & tab diberi napas */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head {
+  align-items: flex-start !important; margin-bottom: 14px !important;
+}
+section[data-view="stats"] #chartSubtitle {
+  margin: 3px 0 0 !important; font-size: 12px !important;
+  line-height: 1.35 !important; color: var(--muted) !important;
+}
+section[data-view="stats"] .chart-metric-tabs { margin: 2px 0 14px !important; }
+
+/* Jarak bawah heading section seragam (compact) */
+section[data-view="stats"] [data-stats-section] > h3,
+section[data-view="stats"] [data-stats-section] > .card-head h3 { margin-bottom: 12px !important; }
+
+/* ===================================================================
+   STATISTIK v729 — declutter header Grafik + kolom tabel rapi
+   =================================================================== */
+/* Buang baris subtitle "Belum ada data"/"Performa minggu ini" yg nyangkut
+   mepet di bawah judul Grafik (redundan: empty-state asli ada di dlm chart). */
+section[data-view="stats"] #chartSubtitle { display: none !important; }
+/* Heading Grafik & tab metrik: ritme bernapas, tidak dempet */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin-bottom: 14px !important; }
+section[data-view="stats"] .chart-metric-tabs { margin: 0 0 16px !important; }
+
+/* ---- Tabel Performa Video: kolom rapi, lebar tetap, sejajar ---- */
+section[data-view="stats"] .tp-table { table-layout: fixed; width: 100%; }
+/* v(resp 2026-06-21): tabel Performa Video punya kolom angka lebar-tetap (132px x4)
+   -> ~528px, tak muat di HP & ke-clip body(overflow-x:hidden). Bungkus scroll
+   horizontal HANYA pada wrapper yg berisi tabel (bukan grid kartu). */
+@media (max-width: 700px) {
+  section[data-view="stats"] .top-perf-4col:has(> .tp-table),
+  section[data-view="stats"] .top-perf-3col:has(> .tp-table) {
+    display: block !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+/* Kolom Video fleksibel (sisa lebar), kolom angka lebar tetap & seragam */
+section[data-view="stats"] .tp-table th.tp-num-h,
+section[data-view="stats"] .tp-table td.tp-num { width: 132px !important; }
+section[data-view="stats"] .tp-table th.tp-th-vid,
+section[data-view="stats"] .tp-table td.tp-vid { width: auto !important; }
+/* Padding sel lebih lega + sejajar kiri/kanan */
+section[data-view="stats"] .tp-table th,
+section[data-view="stats"] .tp-table td { padding: 13px 16px !important; }
+section[data-view="stats"] .tp-table th:first-child,
+section[data-view="stats"] .tp-table td:first-child { padding-left: 4px !important; }
+section[data-view="stats"] .tp-table th:last-child,
+section[data-view="stats"] .tp-table td:last-child { padding-right: 4px !important; }
+/* Judul video boleh truncate rapi saat sempit */
+section[data-view="stats"] .tp-title { min-width: 0; }
+/* Header tabel: garis bawah lebih jelas, baris zebra halus */
+section[data-view="stats"] .tp-table thead th { border-bottom: 1.5px solid color-mix(in srgb, var(--text, #E8D8C4) 26%, transparent) !important; }
+section[data-view="stats"] .tp-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--text, #E8D8C4) 3%, transparent); }
+
+/* ===================================================================
+   STATISTIK v730 — rapikan AREA ATAS (judul + tab bar) yg masih dempet
+   Masalah: judul "Statistik" -> tab bar cuma 6px (nempel), tab pill
+   padding vertikal 0 (pendek/sempit).
+   =================================================================== */
+/* Jarak judul -> tab bar -> konten lebih lega */
+section[data-view="stats"] .riwayat-tab-bar { margin: 18px 0 22px !important; gap: 10px !important; }
+/* Tab pill: lebih tinggi & lega, sudut lembut */
+section[data-view="stats"] .riwayat-tab-bar .stat-tab {
+  padding: 9px 15px !important; height: auto !important; line-height: 1.1 !important;
+  font-size: 12.5px !important; border-radius: 11px !important;
+}
+/* Heading section pertama tidak mepet ke tab bar */
+section[data-view="stats"] [data-stats-section]:first-of-type > h3,
+section[data-view="stats"] [data-stats-section]:first-of-type > .card-head h3 { margin-top: 2px !important; }
+
+/* ===================================================================
+   STATISTIK v731 — judul "Kotak + deskripsi" (per pilihan user)
+   Tampilkan kembali deskripsi di bawah judul; ikon align ke atas.
+   =================================================================== */
+section[data-view="stats"] .lib-header-flex { align-items: flex-start !important; gap: 12px !important; }
+section[data-view="stats"] .lib-header-flex .lib-header-text { padding-top: 1px; }
+/* Deskripsi tampil lagi sebagai subtitle muted */
+section[data-view="stats"] #statsPageDesc {
+  display: block !important;
+  margin: 4px 0 0 !important;
+  font-size: 13px !important; line-height: 1.4 !important;
+  color: var(--muted) !important; font-weight: 500 !important;
+  max-width: 640px;
+}
+
+/* ===================================================================
+   STATISTIK v732 — judul "KARTU HEADER" (per pilihan user)
+   Bungkus ikon + judul + deskripsi + LIVE dalam satu kartu wine lembut.
+   =================================================================== */
+section[data-view="stats"] .view-header {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-elev)), var(--bg-elev)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  border-radius: 16px !important;
+  padding: 18px 20px !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,.26) !important;
+  align-items: center !important;
+}
+/* Di dalam kartu, judul block & LIVE rapi */
+section[data-view="stats"] .view-header .lib-header-flex { align-items: center !important; }
+/* Tab bar keluar dari kartu, beri jarak dari kartu */
+section[data-view="stats"] .riwayat-tab-bar { margin: 18px 0 22px !important; }
+
+/* ===================================================================
+   STATISTIK v733 — KPI cards DIPADATKAN (per pilihan user)
+   Tampilkan ikon kecil + label + angka, layout horizontal rapat,
+   kurangi ruang kosong. Tetap kartu sejajar (bukan list).
+   =================================================================== */
+section[data-view="stats"] #statsRow {
+  grid-template-columns: repeat(auto-fit, minmax(162px, 1fr)) !important;
+  gap: 10px !important;
+}
+section[data-view="stats"] #statsRow .stat-card {
+  display: flex !important; align-items: center !important; gap: 12px !important;
+  padding: 12px 14px !important;
+}
+/* Ikon: kotak lembut wine kecil (sebelumnya disembunyikan) */
+section[data-view="stats"] #statsRow .stat-icon {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 38px !important; height: 38px !important; flex: 0 0 auto !important;
+  border-radius: 10px !important; margin: 0 !important;
+  background: color-mix(in srgb, var(--primary) 24%, transparent) !important;
+  color: var(--cream, #E8D8C4) !important;
+}
+section[data-view="stats"] #statsRow .stat-icon::before,
+section[data-view="stats"] #statsRow .stat-icon::after { display: none !important; }
+section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; height: 19px !important; }
+section[data-view="stats"] #statsRow .stat-body { min-width: 0 !important; }
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 9.5px !important; letter-spacing: .1em !important; margin: 0 0 2px !important;
+  line-height: 1.2 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 20px !important; margin: 0 !important; line-height: 1.1 !important; }
+
+/* ===================================================================
+   TOP BAR STICKY v734 — clearance konten (lihat rule .topbar di blok
+   "USER FIX 2026-05-22" yg sudah diubah jadi position:fixed).
+   Topbar keluar dari flow → beri padding-top ke .main agar konten tak
+   tertutup (tinggi topbar ~69px + jarak).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) .main { padding-top: 86px !important; }
+
+/* ===================================================================
+   STATISTIK v741 — hapus tab bar (per user). Semua section sudah tampil
+   stacked + bisa di-scroll, dan navigasi section juga ada di sidebar →
+   tab bar scroll-jump redundan. Disembunyikan khusus di view stats.
+   =================================================================== */
+section[data-view="stats"] .riwayat-tab-bar { display: none !important; }
+
+/* ===================================================================
+   STATISTIK v745 — beri napas setelah tab bar dihapus.
+   Tab bar dulu menyediakan jarak title card -> konten; setelah dihapus,
+   "Statistik" card nempel (2px) ke "Ringkasan Performa". Tambah margin.
+   =================================================================== */
+section[data-view="stats"] .view-header { margin-bottom: 22px !important; }
+/* Heading section -> isi sedikit lebih lega */
+section[data-view="stats"] #statsRow { margin-top: 14px !important; }
+
+/* ===================================================================
+   STATISTIK v746 — perbesar kartu KPI (per user: sebelumnya terlalu kecil).
+   Kartu lebih tinggi & lega, angka jadi hero, ikon lebih besar.
+   =================================================================== */
+section[data-view="stats"] #statsRow {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 12px !important;
+}
+section[data-view="stats"] #statsRow .stat-card {
+  gap: 14px !important;
+  padding: 18px 18px !important;
+  border-radius: 14px !important;
+}
+section[data-view="stats"] #statsRow .stat-icon {
+  width: 46px !important; height: 46px !important; border-radius: 12px !important;
+}
+section[data-view="stats"] #statsRow .stat-icon svg { width: 23px !important; height: 23px !important; }
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 10.5px !important; letter-spacing: .12em !important; margin: 0 0 4px !important;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 27px !important; }
+
+/* ===================================================================
+   STATISTIK v748 — hierarki ukuran ikon (per user).
+   Sebelumnya kebalik: ikon judul halaman 40px, KPI 46px, section 30px.
+   Diatur per tingkat kepentingan:
+     Judul halaman "Statistik"      = 54px (TERBESAR)
+     Judul section "Ringkasan dst"  = 40px (SEDANG)
+     Ikon KPI per-metrik            = 36px (lebih kecil dari judul)
+   =================================================================== */
+/* 1) Ikon judul halaman — paling besar */
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg {
+  width: 54px !important; height: 54px !important; border-radius: 15px !important;
+}
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 27px !important; height: 27px !important; }
+/* 2) Ikon judul section — sedang (sebelumnya 30px, terlalu kecil) */
+section[data-view="stats"] .st-ico {
+  width: 40px !important; height: 40px !important; border-radius: 11px !important;
+}
+section[data-view="stats"] .st-ico svg { width: 21px !important; height: 21px !important; }
+/* 3) Ikon KPI — lebih kecil dari judul halaman */
+section[data-view="stats"] #statsRow .stat-icon { width: 36px !important; height: 36px !important; border-radius: 10px !important; }
+section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; height: 19px !important; }
+
+/* ===================================================================
+   STATISTIK v749 — pertegas 3 tingkat WARNA kotak ikon (per user).
+   Judul = solid pekat (tetap) > Section = wine sedang > KPI = wine lembut.
+   =================================================================== */
+/* Judul halaman: tetap gradient wine solid (paling menonjol) — tak diubah. */
+/* Section: wine sedang (sebelumnya ~26%) */
+section[data-view="stats"] .st-ico {
+  background: color-mix(in srgb, var(--primary) 46%, transparent) !important;
+}
+/* KPI: wine paling lembut (sebelumnya ~24%) */
+section[data-view="stats"] #statsRow .stat-icon {
+  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+}
+
+/* ===================================================================
+   STATISTIK v750 — (1) hapus ring hover/focus (merah) di kartu KPI,
+   (2) kotak ikon KPI lebih beda dari kartunya (18% terlalu menyatu).
+   =================================================================== */
+/* (1) Kartu KPI kini CLICKABLE (v752) → cursor pointer + hover halus.
+   TANPA ring wine/merah: hover pakai aksen cream + sedikit terangkat.
+   Klik mouse tidak memunculkan outline; keyboard dapat outline cream (a11y). */
+section[data-view="stats"] #statsRow .stat-card {
+  cursor: pointer !important;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease !important;
+}
+section[data-view="stats"] #statsRow .stat-card:hover {
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 44%, transparent) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,.24) !important;
+  outline: none !important;
+}
+section[data-view="stats"] #statsRow .stat-card:active { transform: translateY(0) !important; }
+section[data-view="stats"] #statsRow .stat-card:focus,
+section[data-view="stats"] #statsRow .stat-card:focus-within { outline: none !important; box-shadow: none !important; }
+section[data-view="stats"] #statsRow .stat-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cream, #E8D8C4) 55%, transparent) !important;
+  outline-offset: 2px !important;
+}
+/* (2) Kotak ikon KPI: cukup naikkan FILL supaya tak menyatu dgn kartu —
+   TANPA border (border tipis tadi malah terbaca seperti "ring"). */
+section[data-view="stats"] #statsRow .stat-icon {
+  background: color-mix(in srgb, var(--primary) 34%, transparent) !important;
+  border: 0 !important;
+}
+
+/* ===================================================================
+   STATISTIK v753 — tombol "← Statistik" di topbar (balik dari drill-down KPI)
+   =================================================================== */
+/* Samakan PERSIS dgn pill breadcrumb (bg-elev, tinggi 40, radius 12, border
+   cream) → jadi satu kesatuan rapi; tidak rancu beda warna/ukuran. */
+.stats-back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 40px; padding: 0 14px; border-radius: 12px; margin-right: 6px;
+  background: var(--bg-elev, #251419);
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent);
+  color: var(--cream, #E8D8C4); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; flex: 0 0 auto; line-height: 1;
+  transition: background .12s ease, border-color .12s ease;
+}
+.stats-back-btn:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, var(--bg-elev, #251419));
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 40%, transparent);
+}
+.stats-back-btn svg { flex: 0 0 auto; opacity: .85; }
+
+/* ===================================================================
+   STATISTIK v755 — (1) rapatkan jarak heading Ringkasan -> kartu KPI
+   (gap 44px: h3 margin-bottom 12 + subtitle hidden + margin head/row),
+   (2) label kartu KPI JANGAN uppercase (teks aslinya sudah title-case).
+   =================================================================== */
+/* (1) gap heading -> kartu */
+section[data-view="stats"] .stats-section-head[data-stats-section="ringkasan"] { margin-bottom: 6px !important; }
+section[data-view="stats"] .stats-section-head[data-stats-section="ringkasan"] h3 { margin-bottom: 0 !important; }
+section[data-view="stats"] #statsRow { margin-top: 8px !important; }
+/* (2) label kartu KPI: title-case, bukan KAPITAL semua */
+section[data-view="stats"] #statsRow .stat-label {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+}
+
+/* ===================================================================
+   STATISTIK v756 — label KPI diperbesar agar proporsional dgn angka
+   (label 11px terlalu kecil dibanding angka 27px).
+   =================================================================== */
+section[data-view="stats"] #statsRow .stat-label {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 80%, transparent) !important;
+  margin: 0 0 3px !important;
+  line-height: 1.2 !important;
+}
+section[data-view="stats"] #statsRow .stat-value { font-size: 26px !important; }
+
+/* ===================================================================
+   STATISTIK v757 — judul "Ringkasan Performa" + KPI digabung jadi 1 kartu
+   (per user). Kartu luar lembut; kartu KPI di dalamnya tetap distinct.
+   =================================================================== */
+section[data-view="stats"] .stats-ringkasan-block {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+}
+/* judul di dalam kartu */
+section[data-view="stats"] .stats-ringkasan-block .stats-section-head { margin: 2px 2px 14px !important; }
+section[data-view="stats"] .stats-ringkasan-block #statsRow {
+  margin-top: 0 !important;
+  gap: 12px !important;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)) !important;
+}
+/* kartu KPI di dalam: sedikit lebih terang dari kartu luar supaya tetap terbaca
+   sebagai sel terpisah (bukan menyatu) tanpa terkesan berat. */
+section[data-view="stats"] .stats-ringkasan-block #statsRow .stat-card {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 9%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+}
+
+/* ===================================================================
+   STATISTIK v759 — Grafik jadi 1 kartu (sama spt Ringkasan, per user):
+   heading "Grafik Stats" + tab metrik + chart dalam satu kartu.
+   =================================================================== */
+/* Selektor spesifisitas tinggi — kalahkan rule .chart-card-bare (transparan)
+   di L50316 (0,5,2). Pakai html body ...:not(...) + .chart-card-bare → (0,5,3).
+   v761: TAMBAH :hover supaya kartu luar TIDAK hilang saat di-hover. */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"].chart-card-bare,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"].chart-card-bare:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22) !important;
+  transform: none !important;
+}
+/* v761: chart punya KOTAK sendiri (terpisah) di dalam kartu luar — bukan flat.
+   Sedikit lebih terang dari kartu luar (spt sel KPI Ringkasan). */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 9%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  box-shadow: none !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+}
+/* rapikan jarak internal */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin: 2px 2px 12px !important; }
+section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs { margin: 0 0 12px !important; }
+
+/* ===================================================================
+   STATISTIK v762 — chart FULL-WIDTH (charts-stack jangan 2 kolom →
+   chart tadinya cuma ~setengah, ada ruang kosong di kanan).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .charts-stack {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-card {
+  width: 100% !important;
+}
+
+/* ===================================================================
+   STATISTIK v763 — perbesar header DALAM kotak chart (ikon+judul kecil)
+   + perjelas angka total ("2") dgn label "TOTAL".
+   =================================================================== */
+/* ikon metrik di kotak chart */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon {
+  width: 38px !important; height: 38px !important; border-radius: 11px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon .picon,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon svg {
+  width: 20px !important; height: 20px !important;
+}
+/* judul chart */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title { gap: 10px !important; }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title h4 {
+  font-size: 16px !important; font-weight: 700 !important;
+}
+/* angka total = KOLOM/chip rapi, clickable, label "Total" (bukan KAPITAL) */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  display: inline-flex !important; flex-direction: column !important; align-items: flex-end !important;
+  padding: 8px 14px !important; border-radius: 12px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 15%, transparent) !important;
+  font-size: 24px !important; font-weight: 800 !important; line-height: 1 !important;
+  color: var(--text) !important; cursor: pointer !important;
+  transition: background .12s ease, border-color .12s ease !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total:hover {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  content: "Total"; display: block;
+  font-size: 10px !important; letter-spacing: .02em !important; font-weight: 600 !important;
+  text-transform: none !important; color: var(--muted) !important; margin-bottom: 4px !important;
+}
+
+/* ===================================================================
+   STATISTIK v765 — (1) chip Total: teks dibesarkan + rata tengah,
+   (2) judul chart "Grafik Stats Views" diberi garis pemisah header.
+   =================================================================== */
+/* (1) chip total: konten rata tengah + label "Total" lebih besar */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  align-items: center !important;
+  text-align: center !important;
+  min-width: 64px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 12px !important; font-weight: 700 !important; letter-spacing: .03em !important;
+  margin-bottom: 4px !important;
+}
+/* (2) garis pemisah di bawah header chart → jelas "Grafik Stats Views" = judul */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  border-bottom: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  padding-bottom: 14px !important;
+  margin-bottom: 10px !important;
+}
+
+/* ===================================================================
+   STATISTIK v766 — header chart terlalu tinggi (chip Total bikin row 87px →
+   ikon+judul ke-center jadi turun). Padatkan chip + ramping-kan header.
+   =================================================================== */
+/* chip lebih ringkas (tinggi turun) */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  padding: 6px 12px !important;
+  font-size: 22px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 11px !important; margin-bottom: 2px !important;
+}
+/* header ramping + konten rata atas-tengah supaya ikon+judul tidak turun */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  align-items: center !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+/* ===================================================================
+   STATISTIK v767 — compact-kan TEKS judul "Statistik" + deskripsi (teks saja,
+   kartu/kolom tidak diubah).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageTitle {
+  font-size: 20px !important; line-height: 1.15 !important; margin: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageDesc {
+  font-size: 12px !important; line-height: 1.35 !important; margin: 3px 0 0 !important;
+}
+
+/* ===================================================================
+   STATISTIK v768 — deskripsi sedikit lebih besar + teks (judul+deskripsi)
+   dirapatkan ke kotak ikon.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsPageDesc {
+  font-size: 12.5px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .view-header .lib-header-flex {
+  gap: 9px !important;
+}
+
+/* ===================================================================
+   STATISTIK v769 — dot LIVE lebih "hidup": core berdenyut + glow + ring
+   radar memancar keluar (sonar). Khusus badge LIVE di Statistik.
+   =================================================================== */
+section[data-view="stats"] #statsLiveBadge .hqs-live-dot {
+  position: relative !important;
+  width: 7px !important; height: 7px !important;
+  background: #2ecc71 !important;
+  box-shadow: 0 0 6px rgba(46,204,113,.85) !important;
+  animation: statsLiveCore 1.4s ease-in-out infinite !important;
+}
+section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  content: "" !important; position: absolute !important; inset: -2px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(46,204,113,.75) !important;
+  animation: statsLiveRing 1.4s ease-out infinite !important;
+  pointer-events: none;
+}
+@keyframes statsLiveCore {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 5px rgba(46,204,113,.65); }
+  50%      { transform: scale(1.28); box-shadow: 0 0 10px rgba(46,204,113,1); }
+}
+@keyframes statsLiveRing {
+  0%   { transform: scale(.5); opacity: .9; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
+body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  animation: none !important;
+}
+
+/* ===================================================================
+   STATISTIK v770 — tab metrik jadi SEGMENTED CONTROL (per user):
+   satu wadah membungkus, segmen aktif terisi wine.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  display: inline-flex !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 15%, transparent) !important;
+  border-radius: 12px !important;
+  flex-wrap: nowrap !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 9px !important;
+  padding: 7px 16px !important;
+  font-size: 12.5px !important; font-weight: 600 !important;
+  color: var(--muted) !important;
+  box-shadow: none !important;
+  transition: background .14s ease, color .14s ease !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn:hover {
+  color: var(--text) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn.active {
+  background: var(--primary) !important;
+  color: var(--cream, #E8D8C4) !important;
+}
+
+/* ===================================================================
+   STATISTIK v771 — (1) tab metrik dari segmented -> UNDERLINE (biar beda
+   dari period box .chip-tabs), (2) teks period aktif jadi cream (readable).
+   =================================================================== */
+/* (1) underline tabs untuk metrik */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  display: inline-flex !important; gap: 4px !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; border-radius: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  border: 0 !important; background: transparent !important; border-radius: 0 !important;
+  padding: 8px 4px !important; margin: 0 12px 0 0 !important;
+  color: var(--muted) !important; font-weight: 600 !important; font-size: 13px !important;
+  border-bottom: 2px solid transparent !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn:hover {
+  color: var(--text) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn.active {
+  background: transparent !important;
+  color: var(--cream, #E8D8C4) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+/* (2) period .chip-tabs: teks aktif cream (sebelumnya wine gelap, susah dibaca) */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs .active,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs button.active {
+  color: var(--cream, #E8D8C4) !important;
+}
+
+/* ===================================================================
+   STATISTIK v772 — tab in-page section (sinkron sidebar) DITAMPILKAN lagi
+   (override hide v741) + styling pill bersih.
+   =================================================================== */
+section[data-view="stats"] .riwayat-tab-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 0 0 18px !important;
+}
+section[data-view="stats"] .riwayat-tab-bar .stat-tab {
+  display: inline-flex !important; align-items: center !important; gap: 7px !important;
+  padding: 8px 14px !important; border-radius: 11px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  color: var(--muted) !important; font-size: 12.5px !important; font-weight: 600 !important;
+  cursor: pointer !important; white-space: nowrap !important;
+  transition: background .12s ease, border-color .12s ease, color .12s ease !important;
+}
+section[data-view="stats"] .riwayat-tab-bar .stat-tab:hover {
+  color: var(--text) !important;
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 30%, transparent) !important;
+}
+section[data-view="stats"] .riwayat-tab-bar .stat-tab.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--cream, #E8D8C4) !important;
+}
+section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico { display: inline-flex !important; flex: 0 0 auto; }
+section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico svg { width: 15px !important; height: 15px !important; }
+
+/* ===================================================================
+   STATISTIK v773 — rapatkan heading "Grafik Stats" -> tab metrik
+   (sebelumnya terasa terlalu berjarak).
+   =================================================================== */
+section[data-view="stats"] [data-stats-section="grafik"] > .card-head { margin: 2px 2px 4px !important; }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs {
+  margin: 0 0 10px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
+  padding: 5px 4px !important;
+}
+
+/* ===================================================================
+   STATISTIK v774 — (1) isi header chart tidak terlalu ke bawah (chip
+   dipadatkan + head ramping), (2) animasi garis grafik (draw-in + fade).
+   =================================================================== */
+/* (1) header ramping */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  padding-bottom: 8px !important; margin-bottom: 8px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total {
+  padding: 4px 11px !important; font-size: 20px !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-total::before {
+  font-size: 10px !important; margin-bottom: 1px !important;
+}
+/* (2) animasi grafik: garis tergambar (draw-in) + area memudar masuk */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-line-anim {
+  animation: statsChartDraw 1.3s cubic-bezier(.4,0,.2,1) forwards !important;
+}
+@keyframes statsChartDraw { to { stroke-dashoffset: 0 !important; } }
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-area-anim {
+  animation: statsChartFade .9s ease-out .25s both !important;
+}
+@keyframes statsChartFade { from { opacity: 0; } to { opacity: 1; } }
+body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .chart-line-anim,
+body.reduced-motion section[data-view="stats"] [data-stats-section="grafik"] .chart-area-anim {
+  animation: none !important; stroke-dashoffset: 0 !important; opacity: 1 !important;
+}
+
+/* ===================================================================
+   STATISTIK v775 — (1) isi header chart rata ATAS (jangan turun ke tengah),
+   (2) tooltip chart hidden by default (tidak nyangkut).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  align-items: flex-start !important;
+  padding-top: 0 !important;
+}
+/* tooltip chart: kalau tanpa .show -> benar2 tersembunyi */
+#chartTip:not(.show) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ===================================================================
+   STATISTIK v776 — ikon+judul header chart terlalu menjorok ke dalam
+   (.mini-chart-head padding-left 20px). Tarik ke kiri rata tepi kartu.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-head {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mini-chart-title {
+  padding-left: 0 !important;
+}
+
+/* ===================================================================
+   STATISTIK v778 — tabel Performa Video: samaratakan warna font header
+   (kolom sort aktif tadinya wine → seragam) + rapikan.
+   =================================================================== */
+/* semua header warna SAMA (muted-cream seragam), termasuk kolom sort aktif */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
+  color: color-mix(in srgb, var(--text, #E8D8C4) 66%, transparent) !important;
+  font-weight: 700 !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) {
+  color: var(--text, #E8D8C4) !important;
+}
+/* sel data: warna teks seragam cream */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-num,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-title {
+  color: var(--text, #E8D8C4) !important;
+}
+
+/* ===================================================================
+   STATISTIK v779 — header tabel Performa Video: jangan KAPITAL (title-case).
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+}
+
+/* ===================================================================
+   STATISTIK v780 — Performa Video = TABLE LIST yang jelas (baris & kolom
+   tegas): header beraksen, tiap baris ber-separator + zebra + hover.
+   =================================================================== */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table {
+  width: 100% !important; border-collapse: collapse !important;
+}
+/* HEADER row */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th {
+  background: color-mix(in srgb, var(--text, #E8D8C4) 6%, transparent) !important;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--text, #E8D8C4) 24%, transparent) !important;
+  padding: 12px 16px !important;
+  font-size: 11.5px !important;
+}
+/* DATA cells: separator antar-baris */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody td {
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #E8D8C4) 10%, transparent) !important;
+  padding: 13px 16px !important;
+}
+/* zebra (selang-seling) + hover highlight */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--text, #E8D8C4) 4%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--text, #E8D8C4) 8%, transparent) !important;
+}
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+/* garis pemisah kolom tipis (kolom angka) supaya jelas "kolom" */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
+  border-left: 1px solid color-mix(in srgb, var(--text, #E8D8C4) 7%, transparent) !important;
+}
+
+/* ===================================================================
+   STATISTIK v781 — Performa Video: (opsi1) metadata Video, (pesan baru)
+   warna header diperbaiki + kolom angka rata tengah + baris clickable.
+   =================================================================== */
+/* (opsi 1) kolom Video: judul + sub (durasi · tanggal) */
+section[data-view="stats"] .tp-table .tp-vid-text {
+  display: flex !important; flex-direction: column !important; gap: 2px !important; min-width: 0 !important;
+}
+section[data-view="stats"] .tp-table .tp-title {
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+}
+section[data-view="stats"] .tp-table .tp-sub {
+  font-size: 11px !important; font-weight: 500 !important;
+  color: color-mix(in srgb, var(--text, #E8D8C4) 50%, transparent) !important;
+  white-space: nowrap !important;
+}
+/* (pesan baru) warna teks header lebih terbaca + seragam */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
+  color: color-mix(in srgb, var(--text, #E8D8C4) 82%, transparent) !important;
+}
+/* (pesan baru) kolom angka: header + data RATA TENGAH */
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
+html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
+  text-align: center !important;
+}
+/* (opsi 2) baris bisa diklik */
+section[data-view="stats"] .tp-table tbody tr { cursor: pointer !important; }
+
+/* STATISTIK — Sumber Trafik + Audiens full-width diatur langsung di rule sumber
+   (.stats-extra-grid grid-template-columns: 1fr), tak perlu override terpisah. */
+
+/* ===================================================================
+   v784 — Breadcrumb drill-down dari Statistik: ikon depan jadi CHART (bukan
+   rumah) supaya cocok dgn label "Statistik" & tombol back "‹ Statistik".
+   root link diberi data-stats-origin oleh applyStatsOriginCrumb().
+   =================================================================== */
+body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z' fill='black'/></svg>") center/contain no-repeat !important;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z' fill='black'/></svg>") center/contain no-repeat !important;
+}

@@ -5677,6 +5677,7 @@ const I18N = {
     "stats.chart.videos":        "Videos Chart",
     "stats.chart.views":         "Views Chart",
     "stats.chart.followers":     "Followers Chart",
+    "stats.chart.comments":      "Comments Chart",
     "stats.empty.video":         "No video data yet.",
     "stats.empty.views":         "No views data yet.",
     "stats.empty.followers":     "No followers data yet.",
@@ -6246,9 +6247,9 @@ const I18N = {
     "stats.achievements":        "Pencapaian",
     "stats.achievements.sub":    "Buka pencapaian dengan beraktivitas di Playly.",
     "stats.topperforming":       "Performa Terbaik",
-    "stats.topviews":            "Top Tontonan",
+    "stats.topviews":            "Top Dilihat",
     "stats.toplikes":            "Top Suka",
-    "stats.topwatch":            "Top Tonton",
+    "stats.topwatch":            "Top Durasi",
     "stats.grafik":              "📈 Grafik Statistik",
     "stats.grafik.video":        "Grafik Statistik Video",
     "stats.grafik.views":        "Grafik Statistik Tontonan",
@@ -6899,7 +6900,7 @@ const I18N = {
     "pm.upgrade.bold":            "Upgrade ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa batas",
     "pm.insights.head":           "Insight Premium",
-    "pm.insights.engagement":     "Tingkat engagement",
+    "pm.insights.engagement":     "Tingkat interaksi",
     "pm.insights.watch":          "Rata-rata waktu tonton",
     "pm.insights.region":         "Wilayah teratas",
     "pm.feature.thumb":           "Thumb kustom",
@@ -7286,13 +7287,15 @@ const I18N = {
     "pay.method":                 "Metode Pembayaran",
     "pay.waiting.verif":          "Menunggu verifikasi admin…",
     "pay.waiting.appr":           "Menunggu persetujuan admin…",
-    "stats.chart.title":         "Grafik Stats",
-    "stats.chart.videos":        "Grafik Stats Video",
-    "stats.chart.views":         "Grafik Statistik Tontonan",
-    "stats.chart.followers":     "Grafik Statistik Pengikut",
+    "stats.chart.title":         "Grafik Statistik",
+    "stats.chart.videos":        "Grafik Video",
+    "stats.chart.views":         "Grafik Tontonan",
+    "stats.chart.followers":     "Grafik Pengikut",
+    "stats.chart.comments":      "Grafik Komentar",
     "stats.empty.video":         "Belum ada data video.",
-    "stats.empty.views":         "Belum ada data views.",
-    "stats.empty.followers":     "Belum ada data followers.",
+    "stats.empty.views":         "Belum ada data tontonan.",
+    "stats.empty.comments":      "Belum ada data komentar.",
+    "stats.empty.followers":     "Belum ada data pengikut.",
     "trending.empty.title":      "Belum ada trending hari ini.",
     "trending.empty.desc":       "Konten akan muncul setelah ada aktivitas baru.",
     "activity.desc":             "Semua aktivitas yang berkaitan dengan akun kamu.",
@@ -31230,6 +31233,10 @@ function renderAdminBugs() {
 // ----------------------- VIEW SWITCHING -----------------------
 function switchView(name, { fromNav = false } = {}) {
   const homeView = user?.role === "admin" ? "admin-dashboard" : "home";
+  // v753: sembunyikan tombol "← Statistik" tiap pindah view (kpiNavigate akan
+  // memunculkannya lagi setelah drill-down, jadi tombol hanya tampil di
+  // halaman tujuan KPI — tidak nyangkut di halaman lain).
+  { const _bb = document.getElementById("statsBackBtn"); if (_bb) _bb.style.display = "none"; }
 
   // Access guard — admin-revenue HANYA boleh diakses super admin (per user
   // 2026-05-06). Admin biasa yang nyoba (lewat URL/deep-link/sidebar leak)
@@ -31399,8 +31406,16 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderNotifPage === "function") renderNotifPage();
   }
   if (name === "storage") renderStoragePage();
-  if (name === "stats") setStatsTab("all"); // default tampil semua section
-  if (name === "stats") setTimeout(drawChart, 50);
+  if (name === "stats") {
+    setStatsTab("all"); // default tampil semua section
+    // v740: render KPI ringkasan + tabel Performa Video saat MASUK view.
+    // Sebelumnya hanya dipanggil saat event data → markup statis lama
+    // ("Top Video/TOP DILIHAT" + KPI kosong) sempat tampil. Panggil di sini
+    // supaya section selalu ter-render bersih (termasuk empty-state).
+    if (typeof renderUserStats === "function") renderUserStats();
+    if (typeof renderTopPerforming === "function") renderTopPerforming();
+    setTimeout(drawChart, 50);
+  }
   if (name === "admin-premium-queue") {
     if (typeof renderAdminPremiumQueue === "function") setTimeout(renderAdminPremiumQueue, 30);
   }
@@ -31596,6 +31611,14 @@ document.addEventListener("click", e => {
   // Mark active sub-item dalam group-nya
   const group = sub.closest(".nav-group");
   if (group) {
+    // v753: sidebar harus mencerminkan HALAMAN AKTIF saja. Bersihkan highlight
+    // & tutup grup LAIN supaya tidak ada sub-item nyangkut aktif/terbuka
+    // (mis. "Ringkasan" tetap nyala padahal sudah pindah ke Video Saya).
+    document.querySelectorAll('.sidebar .nav-group').forEach(g => {
+      if (g === group) return;
+      g.querySelectorAll('.nav-subitem.active').forEach(x => x.classList.remove('active'));
+      if (g.classList.contains('expanded') && typeof toggleNavGroup === 'function') toggleNavGroup(g, false);
+    });
     group.querySelectorAll(".nav-subitem").forEach(x => x.classList.toggle("active", x === sub));
     if (!group.classList.contains("expanded")) toggleNavGroup(group, true);
   }
@@ -31716,7 +31739,10 @@ function runSubAction(action) {
     return;
   }
   if (kind === "stats-tab") {
-    // Sidebar sub-item Statistik → set tab spesifik
+    // Sidebar sub-item Statistik → FILTER: tampilkan HANYA section yang dipilih
+    // (Ringkasan/Grafik/Performa Video/Sumber Trafik/Audiens). View "stats"
+    // sudah dibuka oleh handler nav (switchView dipanggil sebelum runSubAction),
+    // jadi JANGAN switchView lagi di sini (itu me-reset tab ke "all").
     if (typeof setStatsTab === "function") setStatsTab(value);
     return;
   }
@@ -31951,14 +31977,17 @@ function fmtNum(n) {
 function renderStatsRow() {
   const row = $("#statsRow");
   if (!row) return;
-  const myUploads = state.myVideos.length;
-  const myViews = state.myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const myLikes = state.myVideos.reduce((s, v) => s + (v.likes || 0), 0);
+  // v740: guard data — fungsi ini kini dipanggil saat masuk view (sebelum
+  // data ter-hydrate), jadi state.myVideos bisa undefined. Default ke [].
+  const mv = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const myUploads = mv.length;
+  const myViews = mv.reduce((s, v) => s + (v.viewsNum || 0), 0);
+  const myLikes = mv.reduce((s, v) => s + (v.likes || 0), 0);
   // v595 (2026-05-28): Following → Followers (channel kamu yang di-follow),
   // tambah Total Komentar + Engagement Rate. Following = metric viewer, bukan
   // creator — diganti Followers per cleanup user.
-  const myComments = state.myVideos.reduce((s, v) =>
-    s + ((state.comments?.[v.id]?.length) || 0), 0);
+  const myComments = mv.reduce((s, v) =>
+    s + ((state?.comments?.[v.id]?.length) || 0), 0);
   let myFollowers = 0;
   try {
     myFollowers = (typeof getUserFollowers === "function" && user?.username)
@@ -31969,23 +31998,123 @@ function renderStatsRow() {
   const engagementText = engagementPct > 0 ? engagementPct.toFixed(1) + "%" : "—";
 
   const cards = [
-    { label: "Total Videos", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
-    { label: "Total Views", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
-    { label: "Total Likes", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
+    { label: "Total Video", value: myUploads, raw: myUploads, icon: `<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: myUploads > 0 ? "up" : null, trendText: myUploads > 0 ? "videos published" : "—", spark: "#BE9752" },
+    { label: "Total Tontonan", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
+    { label: "Total Suka", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
     { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
-    { label: "Followers", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
-    { label: "Engagement", value: engagementText, raw: engagementPct, icon: `<path d="M12 20.5l-1.45-1.32C5.4 14.36 2 11.28 2 7.5 2 4.42 4.42 2 7.5 2 9.24 2 10.91 2.81 12 4.09 13.09 2.81 14.76 2 16.5 2 19.58 2 22 4.42 22 7.5c0 3.78-3.4 6.86-8.55 11.69L12 20.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="11" r="1.5" fill="currentColor"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
+    { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
+    { label: "Interaksi", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
   ];
 
-  row.innerHTML = cards.map(c => `
-    <div class="stat-card">
-      <div class="stat-icon" style="--c1:${c.c1};--c2:${c.c2}"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
-      <p class="stat-label">${c.label}</p>
-      <h3 class="stat-value">${c.value}</h3>
-      ${c.trend ? `<div class="stat-trend ${c.trend}"><svg viewBox="0 0 24 24" fill="none"><path d="m6 14 6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>${c.trendText}</div>` : `<div class="stat-trend neutral">${c.trendText}</div>`}
-      ${c.raw > 0 ? `<div class="spark"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline fill="none" stroke="${c.spark}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="0,22 14,18 28,20 42,12 56,16 70,8 84,10 100,6"/></svg></div>` : ""}
+  // v693 (2026-06-08): kartu disederhanakan — ikon + label + nilai (tanpa
+  // sparkline & trend pill yg ramai), layout horizontal compact.
+  // v752: kartu KPI clickable → tiap kartu mengarah ke halaman/section detail.
+  const KPI_KEYS = ["videos", "views", "likes", "comments", "followers", "engagement"];
+  row.innerHTML = cards.map((c, i) => `
+    <div class="stat-card" data-kpi="${KPI_KEYS[i] || ""}" role="button" tabindex="0" title="Lihat detail">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
+      <div class="stat-body">
+        <p class="stat-label">${c.label}</p>
+        <h3 class="stat-value">${c.value}</h3>
+      </div>
     </div>
   `).join("");
+  row.querySelectorAll(".stat-card[data-kpi]").forEach(card => {
+    const go = () => kpiNavigate(card.dataset.kpi);
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+  // v757: bungkus judul "Ringkasan Performa" + kartu KPI jadi SATU kartu.
+  wrapRingkasanCard();
+}
+
+// v757: gabung judul section Ringkasan + #statsRow ke dalam satu kartu
+// (.stats-ringkasan-block). data-stats-section="ringkasan" supaya ikut logika
+// filter (tampil saat tab ringkasan/all, sembunyi saat tab lain).
+function wrapRingkasanCard() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const head = view.querySelector('.stats-section-head[data-stats-section="ringkasan"]');
+  const row = document.getElementById("statsRow");
+  if (!head || !row) return;
+  let card = view.querySelector(".stats-ringkasan-block");
+  if (!card) {
+    card = document.createElement("div");
+    card.className = "stats-ringkasan-block";
+    card.setAttribute("data-stats-section", "ringkasan");
+    head.parentNode.insertBefore(card, head);
+  }
+  if (head.parentNode !== card) card.appendChild(head);
+  if (row.parentNode !== card) card.appendChild(row);
+}
+
+// v752: navigasi saat kartu KPI diklik → reuse sub-item sidebar yg sudah ada
+// (switchView + filter sudah ter-wire di sana). Tontonan & Engagement → Grafik.
+function kpiNavigate(key) {
+  const map = {
+    videos:     'focus:my-video',   // Video Saya
+    views:      'stats-tab:grafik',  // tren tontonan
+    likes:      'act-filter:like',   // Suka
+    comments:   'act-filter:comment',// Komentar
+    followers:  'act-filter:follow', // Pengikut
+    engagement: 'stats-tab:grafik',  // tren (engagement turunan)
+  };
+  const action = map[key];
+  if (!action) return;
+  // Tontonan & Engagement tetap di dalam Statistik (filter Grafik) → tak perlu
+  // tombol back. Sisanya pindah view lain → simpan tab asal & munculkan back.
+  const leavesStats = !action.startsWith("stats-tab:");
+  if (leavesStats) {
+    const sv = document.querySelector('section.view[data-view="stats"]');
+    window._statsReturnTab = (sv && sv.dataset.statsTab) || "ringkasan";
+  }
+  const link = document.querySelector(`.sidebar .nav-subitem[data-sub-action="${action}"]`);
+  if (link) link.click();
+  if (leavesStats) {
+    const btn = ensureStatsBackBtn();
+    if (btn) setTimeout(() => { btn.style.display = ""; applyStatsOriginCrumb(); }, 130);
+  }
+}
+
+// Saat drill-down dari Statistik (tombol "‹ Statistik" tampil), root breadcrumb
+// ikut jadi "Statistik" — supaya KONSISTEN dgn tombol back (bukan "Beranda").
+// Hanya menyentuh segment pertama; segment terakhir (halaman aktif) dibiarkan.
+// switchView akan rebuild breadcrumb (root "Beranda") lagi saat navigasi normal.
+function applyStatsOriginCrumb() {
+  const crumb = document.getElementById("breadcrumb");
+  if (!crumb) return;
+  const root = crumb.querySelector("a");
+  if (!root) return;
+  root.textContent = t("page.stats") || "Statistik";
+  root.dataset.view = "stats";
+  root.dataset.statsOrigin = "1";
+}
+
+// v753: tombol "← Statistik" di topbar — balik 1 klik ke Statistik (tab asal)
+// setelah drill-down dari kartu KPI. Disuntik sekali, di-toggle visibilitasnya.
+function ensureStatsBackBtn() {
+  let btn = document.getElementById("statsBackBtn");
+  if (btn) return btn;
+  const topbar = document.querySelector("header.topbar");
+  if (!topbar) return null;
+  btn = document.createElement("button");
+  btn.id = "statsBackBtn";
+  btn.type = "button";
+  btn.className = "stats-back-btn";
+  btn.setAttribute("title", "Kembali ke Statistik");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span>Statistik</span>';
+  btn.style.display = "none";
+  btn.addEventListener("click", () => {
+    const tab = window._statsReturnTab || "ringkasan";
+    const subLink = document.querySelector(`.sidebar .nav-subitem[data-sub-action="stats-tab:${tab}"]`);
+    if (subLink) subLink.click();
+    else if (typeof switchView === "function") switchView("stats");
+    btn.style.display = "none";
+  });
+  topbar.insertBefore(btn, topbar.firstChild);
+  return btn;
 }
 
 function renderAchievements() {
@@ -36942,6 +37071,9 @@ function drawMiniChart(metric) {
   const svg = document.querySelector(`[data-chart-svg="${metric}"]`);
   const empty = document.querySelector(`[data-chart-empty="${metric}"]`);
   if (!svg) return;
+  // v775: sembunyikan tooltip yg mungkin nyangkut dari hover chart sebelumnya
+  // (re-render mengganti hit-area sebelum mouseleave sempat firing).
+  document.getElementById("chartTip")?.classList.remove("show");
   const wrap = svg.parentElement;
   const card = wrap?.closest(".mini-chart-card");
   const data = generateChartData(metric, state.chartRange);
@@ -37015,40 +37147,40 @@ function drawMiniChart(metric) {
     H - PAD_Y - ((v - min) / range) * (H - PAD_Y * 2),
   ]);
 
+  // v762: palet HANGAT yang selaras tema wine/cream (bukan gold/teal "asal").
+  // Tiap metrik tetap punya warna sendiri (sesuai fungsi) tapi 1 keluarga warna
+  // hangat: tontonan = wine (metrik utama), lainnya turunan hangatnya.
   const colors = {
-    videos:    "#BE9752",
-    views:     "#7d3640",
-    followers: "#f59e0b",
-    comments:  "#10b981",
+    views:     "#B14A60", // Tontonan — wine (primary)
+    videos:    "#C27A4E", // Video — terracotta
+    followers: "#C9926A", // Pengikut — warm sand
+    comments:  "#B06A86", // Komentar — rose
   };
-  const c = colors[metric] || colors.videos;
+  const c = colors[metric] || colors.views;
   const fillId = `chartFill-${metric}`;
 
-  // Build stair-step path:
-  // M startX,startY → H (next segment edge) → V (newY) → H (next segment edge) → V (newY) ...
-  let stepPath = "";
+  // v762: garis HALUS (smooth) — bukan lagi tangga (step). Catmull-Rom→bezier.
+  // Titik direntang ke tepi kiri/kanan supaya garis penuh selebar chart.
+  let stepPath = "";   // nama dipertahankan; kini berisi path halus
   let areaPath = "";
   if (n > 0) {
-    // Start at left edge of first segment, height = first value
-    const firstY = points[0][1];
-    const startX = PAD_X;
-    stepPath = `M ${startX} ${firstY.toFixed(2)} `;
-    let prevY = firstY;
-    for (let i = 0; i < n; i++) {
-      // Segment runs from i*stepX to (i+1)*stepX, height = points[i][1]
-      const segLeft = PAD_X + i * stepX;
-      const segRight = PAD_X + (i + 1) * stepX;
-      const y = points[i][1];
-      if (i > 0 && y !== prevY) {
-        // Vertical step at boundary
-        stepPath += `L ${segLeft.toFixed(2)} ${y.toFixed(2)} `;
-      }
-      // Horizontal across segment
-      stepPath += `L ${segRight.toFixed(2)} ${y.toFixed(2)} `;
-      prevY = y;
+    const pts = [[PAD_X, points[0][1]], ...points, [W - PAD_X, points[n - 1][1]]];
+    // v775: clamp Y control-point ke batas chart [PAD_Y, H-PAD_Y] supaya kurva
+    // smooth tidak "overshoot" keluar area (garis terlihat crash/terpotong).
+    const clampY = y => Math.max(PAD_Y, Math.min(H - PAD_Y, y));
+    stepPath = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+      const cp1y = clampY(p1[1] + (p2[1] - p0[1]) / 6);
+      const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+      const cp2y = clampY(p2[1] - (p3[1] - p1[1]) / 6);
+      stepPath += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
     }
-    // Area = step + close to bottom
-    areaPath = stepPath + `L ${(PAD_X + n * stepX).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;
+    areaPath = stepPath + ` L ${(W - PAD_X).toFixed(2)} ${H} L ${PAD_X} ${H} Z`;
   }
 
   // Markers at each step's right edge (data point indicator)
@@ -37072,14 +37204,20 @@ function drawMiniChart(metric) {
   svg.innerHTML = `
     <defs>
       <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${c}" stop-opacity=".35"/>
+        <stop offset="0%" stop-color="${c}" stop-opacity=".2"/>
         <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
       </linearGradient>
     </defs>
     <path class="chart-area-anim" d="${areaPath}" fill="url(#${fillId})"/>
-    <path class="chart-line-anim" d="${stepPath}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="miter" stroke-linecap="square" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
+    <path class="chart-line-anim" d="${stepPath}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:${pathLen.toFixed(0)};stroke-dashoffset:${pathLen.toFixed(0)};--chart-len:${pathLen.toFixed(0)}"/>
     ${markers}
   `;
+
+  // Label periode (sumbu-X) di bawah grafik — biar jelas tiap titik mewakili apa.
+  let axis = wrap.querySelector(".mc-axis");
+  if (!axis) { axis = document.createElement("div"); axis.className = "mc-axis"; }
+  axis.innerHTML = (data.labels || []).map(l => `<span>${escapeHtml(String(l))}</span>`).join("");
+  wrap.appendChild(axis);
 
   const tip = $("#chartTip");
   const unitLabel = metric === "videos" ? "video"
@@ -37110,9 +37248,146 @@ function drawMiniChart(metric) {
   });
 }
 
+// v713 (2026-06-08): adaptasi pola YouTube Studio Overview — SATU grafik besar
+// + tab metrik (Tontonan/Video/Followers/Komentar) ganti 4 grafik kecil sejajar.
+// Reuse 4 mini-chart yg sudah ada: tampilkan yg aktif (besar), sembunyikan sisanya.
+function buildChartMetricTabs() {
+  const sec = document.querySelector('section.view[data-view="stats"] [data-stats-section="grafik"]');
+  if (!sec) return;
+  const stack = sec.querySelector(".charts-stack");
+  if (!stack) return;
+  if (!state.chartMetric) state.chartMetric = "views";
+  const active = state.chartMetric;
+  sec.dataset.activeMetric = active;
+  let bar = sec.querySelector(".chart-metric-tabs");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.className = "chart-metric-tabs";
+    const metrics = [["views", "Tontonan"], ["videos", "Video"], ["followers", "Pengikut"], ["comments", "Komentar"]];
+    bar.innerHTML = metrics.map(([m, l]) => `<button type="button" class="cmt-btn" data-chart-metric-tab="${m}">${l}</button>`).join("");
+    stack.parentElement.insertBefore(bar, stack);
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-chart-metric-tab]"); if (!b) return;
+      state.chartMetric = b.dataset.chartMetricTab;
+      sec.dataset.activeMetric = state.chartMetric;
+      bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === state.chartMetric));
+      if (typeof drawMiniChart === "function") drawMiniChart(state.chartMetric); // redraw saat baru terlihat (dapat lebar benar)
+    });
+  }
+  bar.querySelectorAll(".cmt-btn").forEach(x => x.classList.toggle("active", x.dataset.chartMetricTab === active));
+}
+
+// v764: chip "Total" tiap metrik di kotak chart bisa diklik → fitur terkait.
+function wireChartTotals() {
+  const map = {
+    chartTotalViews: "views",
+    chartTotalVideos: "videos",
+    chartTotalFollowers: "followers",
+    chartTotalComments: "comments",
+  };
+  Object.entries(map).forEach(([id, metric]) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.navWired) return;
+    el.dataset.navWired = "1";
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("title", "Lihat detail");
+    const go = () => chartTotalNavigate(metric);
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+}
+function chartTotalNavigate(metric) {
+  // Tontonan → Performa Video (tontonan per video, tetap di Statistik).
+  if (metric === "views") {
+    const link = document.querySelector('.sidebar .nav-subitem[data-sub-action="stats-tab:top-video"]');
+    if (link) link.click();
+    return;
+  }
+  // Video/Pengikut/Komentar → halaman terkait (reuse kpiNavigate + tombol back).
+  if (typeof kpiNavigate === "function") kpiNavigate(metric);
+}
+
+// v714 (2026-06-08): adaptasi doodstream — section "Sumber Trafik" & "Audiens
+// per Negara" (daftar bar %). Data representatif diturunkan dari total tontonan
+// (proporsi tetap) supaya konsisten dgn angka dashboard.
+function renderStatsExtras() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const grafik = view.querySelector('[data-stats-section="grafik"]');
+  if (!grafik || !grafik.parentElement) return;
+  // JUJUR: app belum melacak sumber trafik & lokasi penonton → tampilkan
+  // empty-state "Belum ada data" (bukan angka karangan).
+  const emptyHtml = (msg, hint) => `
+    <div class="src-empty">
+      <div class="src-empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg></div>
+      <p>${escapeHtml(msg)}</p>
+      <small>${escapeHtml(hint)}</small>
+    </div>`;
+  const ensure = (key, title) => {
+    let sec = view.querySelector(`.stats-extra-section[data-stats-section="${key}"]`);
+    if (!sec) {
+      sec = document.createElement("div");
+      sec.className = "stats-extra-section";
+      sec.dataset.statsSection = key;
+      sec.innerHTML = `<h3></h3><div class="src-list"></div>`;
+      grafik.parentElement.appendChild(sec);
+    }
+    sec.querySelector("h3").textContent = title;
+    return sec;
+  };
+  ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML =
+    emptyHtml("Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
+  ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
+    emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
+
+  // ROMBAK SUSUNAN: Grafik (chart) naik jadi hero — sebelum Performa Video.
+  const topCard = view.querySelector("#topPerfCard");
+  if (grafik && topCard && topCard.previousElementSibling !== grafik) {
+    view.insertBefore(grafik, topCard);
+  }
+  // Sumber Trafik + Audiens per Negara → 2 kolom berdampingan.
+  let grid = view.querySelector(".stats-extra-grid");
+  if (!grid) { grid = document.createElement("div"); grid.className = "stats-extra-grid"; view.appendChild(grid); }
+  const tEl = view.querySelector('.stats-extra-section[data-stats-section="traffic"]');
+  const gEl = view.querySelector('.stats-extra-section[data-stats-section="geo"]');
+  if (tEl) grid.appendChild(tEl);
+  if (gEl) grid.appendChild(gEl);
+  decorateStatsHeadings();
+}
+
+// v719 (2026-06-08): kasih ikon (kotak lembut kecil) ke tiap judul section,
+// beda jelas dari ikon kotak wine besar di header halaman. Idempotent.
+function decorateStatsHeadings() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  if (!view) return;
+  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const ICO = {
+    ringkasan: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>`,
+    "top-video": `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>`,
+    grafik: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>`,
+    traffic: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>`,
+    geo: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>`,
+  };
+  const setIco = (h3, key) => {
+    if (!h3 || !ICO[key]) return;
+    const text = h3.querySelector(".st-txt")?.textContent || h3.textContent.trim();
+    h3.innerHTML = `<span class="st-ico">${ICO[key]}</span><span class="st-txt">${escapeHtml(text)}</span>`;
+  };
+  setIco(view.querySelector('.stats-section-head h3'), "ringkasan");
+  setIco(view.querySelector('[data-stats-section="grafik"] .grafik-head-text h3, [data-stats-section="grafik"] h3'), "grafik");
+  setIco(view.querySelector('#topPerfCard h3'), "top-video");
+  setIco(view.querySelector('[data-stats-section="traffic"] h3'), "traffic");
+  setIco(view.querySelector('[data-stats-section="geo"] h3'), "geo");
+}
+
 function drawChart() {
   // Render 4 chart sekaligus + update total angka di header.
   // v595 (2026-05-28): + Comments chart.
+  buildChartMetricTabs(); // set metrik aktif & tab dulu (biar chart aktif punya lebar saat digambar)
+  renderStatsExtras();
   const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
@@ -37125,6 +37400,7 @@ function drawChart() {
   setT("chartTotalViews", totalViews);
   setT("chartTotalFollowers", followerCount);
   setT("chartTotalComments", totalComments);
+  wireChartTotals(); // v764: chip total bisa diklik → fitur terkait
 
   const subtitle = $("#chartSubtitle");
   if (subtitle) {
@@ -37140,6 +37416,30 @@ function drawChart() {
   drawMiniChart("views");
   drawMiniChart("followers");
   drawMiniChart("comments");
+  buildStatsTabs();
+}
+
+// v724 (2026-06-08): tab bar Statistik dibangun ulang biar LENGKAP, URUT &
+// SINKRON dgn semua section (Ringkasan/Grafik/Performa Video/Sumber Trafik/
+// Audiens) + ikon. Klik = scroll ke section, scroll-spy auto-highlight.
+function buildStatsTabs() {
+  const view = document.querySelector('section.view[data-view="stats"]');
+  const bar = view && view.querySelector(".riwayat-tab-bar");
+  if (!bar || bar.dataset.statsBuilt) return;
+  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  // v772: tab in-page = FILTER (data-stats-tab), sinkron sidebar. Klik ditangani
+  // handler global button[data-stats-tab] -> setStatsTab(); active di-toggle oleh
+  // setStatsTab. Ikon ringkasan = pie (samakan dgn heading).
+  const TABS = [
+    { k: "ringkasan", l: "Ringkasan", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>` },
+    { k: "grafik", l: "Grafik", i: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>` },
+    { k: "top-video", l: "Performa Video", i: `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>` },
+    { k: "traffic", l: "Sumber Trafik", i: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>` },
+    { k: "geo", l: "Audiens", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>` },
+  ];
+  const cur = view.dataset.statsTab || "all";
+  bar.innerHTML = TABS.map(t => `<button type="button" class="riwayat-tab stat-tab${t.k === cur ? " active" : ""}" data-stats-tab="${t.k}"><span class="stat-tab-ico">${t.i}</span>${t.l}</button>`).join("");
+  bar.dataset.statsBuilt = "1";
 }
 
 $$("#chartTabs button").forEach(b => {
@@ -37173,82 +37473,87 @@ $("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.ta
 })();
 
 function renderTopPerforming() {
+  // v717 (2026-06-08): gaya tabel media Wistia/Vidyard — SATU tabel performa
+  // video yang bisa di-sort per kolom (Tontonan/Suka/Komentar/Engagement).
   const card = $("#topPerfCard");
-  const colViews    = $("#topPerformViews");
-  const colLikes    = $("#topPerformLikes");
-  const colWatch    = $("#topPerformWatch");
-  const colComments = $("#topPerformComments"); // v595 (2026-05-28): kolom ke-4
-  if (!card || !colViews || !colLikes || !colWatch) return;
-  if (!state.myVideos.length) {
-    card.style.display = "";
-    const empty = `<div class="top-perf-empty-rich">
+  const list = $("#topPerformList");
+  if (!card || !list) return;
+  card.style.display = "";
+  const sec = list.closest("[data-stats-section]");
+  const secHead = sec && sec.querySelector("h3");
+  if (secHead) secHead.textContent = "Performa Video";
+
+  const vids = Array.isArray(state.myVideos) ? state.myVideos : [];
+  if (!vids.length) {
+    list.innerHTML = `<div class="top-perf-empty-rich">
       <div class="tpe-icon">📊</div>
       <h4>${escapeHtml(t("topperf.empty.title"))}</h4>
       <p>${escapeHtml(t("topperf.empty.desc"))}</p>
       <button type="button" class="btn primary sm tpe-cta" data-jump-view="upload">${escapeHtml(t("topperf.empty.cta"))}</button>
     </div>`;
-    colViews.innerHTML = empty;
-    colLikes.innerHTML = "";
-    colWatch.innerHTML = "";
-    if (colComments) colComments.innerHTML = "";
-    card.querySelector("[data-jump-view]")?.addEventListener("click", () => {
-      const link = document.querySelector('.nav-item[data-view="upload"]');
-      if (link) link.click();
+    list.querySelector("[data-jump-view]")?.addEventListener("click", () => {
+      const link = document.querySelector('.nav-item[data-view="upload"]'); if (link) link.click();
     });
     return;
   }
-  card.style.display = "";
 
-  const parseDur = (d) => {
-    if (!d) return 0;
-    const p = String(d).split(":").map(Number);
-    if (p.some(isNaN)) return 0;
-    if (p.length === 2) return p[0] * 60 + p[1];
-    if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
-    return 0;
-  };
-  const fmtWatch = (sec) => {
-    if (sec < 60) return Math.floor(sec) + "s";
-    if (sec < 3600) return Math.floor(sec / 60) + "m";
-    if (sec < 86400) return (sec / 3600).toFixed(1) + "h";
-    return (sec / 86400).toFixed(1) + "d";
-  };
+  const fmt = n => (typeof fmtNum === "function" ? fmtNum(n) : String(n));
+  const rows = vids.map(v => {
+    const views = v.viewsNum || 0;
+    const likes = v.likes || 0;
+    const comments = (state.comments?.[v.id]?.length) || 0;
+    const eng = views > 0 ? ((likes + comments) / views * 100) : 0;
+    return { v, views, likes, comments, eng };
+  });
+  const sort = state.topSort || (state.topSort = { key: "views", dir: "desc" });
+  const dir = sort.dir === "asc" ? 1 : -1;
+  rows.sort((a, b) => (a[sort.key] - b[sort.key]) * dir);
 
-  const enriched = state.myVideos.map(v => ({
-    ...v,
-    _views: v.viewsNum || 0,
-    _likes: v.likes || 0,
-    _watch: (v.viewsNum || 0) * parseDur(v.duration) * 0.6,
-    _comments: (state.comments?.[v.id]?.length) || 0,
+  const arrow = k => sort.key === k ? (sort.dir === "asc" ? " ↑" : " ↓") : "";
+  const th = (k, label) => `<th class="tp-th tp-num-h${sort.key === k ? " active" : ""}" data-sort="${k}">${label}${arrow(k)}</th>`;
+  const thead = `<thead><tr>
+    <th class="tp-th-vid">Video</th>
+    ${th("views", "Tontonan")}
+    ${th("likes", "Suka")}
+    ${th("comments", "Komentar")}
+    ${th("eng", "Interaksi")}
+  </tr></thead>`;
+  // v781: metadata kolom Video (durasi · tanggal upload) di bawah judul.
+  const vidMeta = (v) => {
+    const parts = [];
+    if (v.duration) parts.push(escapeHtml(String(v.duration)));
+    const ts = v.createdAt || v.uploadedAt || v.date || v.createdat;
+    if (ts) {
+      let d = null;
+      try { d = (typeof ts === "number") ? new Date(ts) : new Date(ts); } catch (e) {}
+      if (d && !isNaN(d.getTime())) {
+        parts.push(d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }));
+      }
+    }
+    return parts.join(" · ");
+  };
+  const body = rows.slice(0, 20).map(r => `<tr class="tp-row" data-vid="${r.v.id}" role="button" tabindex="0" title="Buka video">
+    <td class="tp-vid"><div class="tp-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div><div class="tp-vid-text"><span class="tp-title">${escapeHtml(r.v.title || "")}</span>${vidMeta(r.v) ? `<span class="tp-sub">${vidMeta(r.v)}</span>` : ""}</div></td>
+    <td class="tp-num">${fmt(r.views)}</td>
+    <td class="tp-num">${fmt(r.likes)}</td>
+    <td class="tp-num">${fmt(r.comments)}</td>
+    <td class="tp-num">${r.eng > 0 ? r.eng.toFixed(1) + "%" : "—"}</td>
+  </tr>`).join("");
+  list.innerHTML = `<table class="tp-table">${thead}<tbody>${body}</tbody></table>`;
+
+  list.querySelectorAll("th[data-sort]").forEach(thEl => thEl.addEventListener("click", () => {
+    const k = thEl.dataset.sort;
+    if (sort.key === k) sort.dir = sort.dir === "asc" ? "desc" : "asc";
+    else { sort.key = k; sort.dir = "desc"; }
+    renderTopPerforming();
   }));
-
-  const renderRow = (v, i, valFmt, valSrc) => `
-    <div class="top-perf-item" data-vid="${v.id}">
-      <div class="top-perf-rank ${i === 0 ? 'first' : ''}">#${i + 1}</div>
-      <div class="mini-thumb"><img src="${v.thumb}" alt=""/></div>
-      <div class="info"><h5>${escapeHtml(v.title || "")}</h5><div class="meta">${escapeHtml(v.duration || "0:00")}</div></div>
-      <div class="views">${valFmt(v[valSrc])}</div>
-    </div>
-  `;
-
-  const topViews    = [...enriched].sort((a, b) => b._views    - a._views).slice(0, 5);
-  const topLikes    = [...enriched].sort((a, b) => b._likes    - a._likes).slice(0, 5);
-  const topWatch    = [...enriched].sort((a, b) => b._watch    - a._watch).slice(0, 5);
-  const topComments = [...enriched].sort((a, b) => b._comments - a._comments).slice(0, 5);
-
-  const empty = `<div class="top-perf-empty">${escapeHtml(t("topperf.empty.col"))}</div>`;
-  colViews.innerHTML = topViews.length && topViews.some(v => v._views > 0)
-    ? topViews.map((v, i) => renderRow(v, i, fmtNum, "_views")).join("") : empty;
-  colLikes.innerHTML = topLikes.length && topLikes.some(v => v._likes > 0)
-    ? topLikes.map((v, i) => renderRow(v, i, fmtNum, "_likes")).join("") : empty;
-  colWatch.innerHTML = topWatch.length && topWatch.some(v => v._watch > 0)
-    ? topWatch.map((v, i) => renderRow(v, i, fmtWatch, "_watch")).join("") : empty;
-  if (colComments) {
-    colComments.innerHTML = topComments.length && topComments.some(v => v._comments > 0)
-      ? topComments.map((v, i) => renderRow(v, i, fmtNum, "_comments")).join("") : empty;
-  }
-
-  $$(".top-perf-item", card).forEach(c => c.addEventListener("click", () => openPlayer(+c.dataset.vid)));
+  // v781: baris clickable → buka video (id bisa string/number → kirim apa adanya)
+  const openVid = (id) => { if (typeof openPlayer === "function") openPlayer(/^\d+$/.test(id) ? +id : id); };
+  list.querySelectorAll(".tp-row").forEach(row => {
+    row.addEventListener("click", () => openVid(row.dataset.vid));
+    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openVid(row.dataset.vid); } });
+  });
+  if (typeof decorateStatsHeadings === "function") decorateStatsHeadings();
 }
 
 // ----------------------- ACTIVITY VIEW -----------------------
@@ -52077,7 +52382,9 @@ function setStatsTab(tab) {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
   // v595 (2026-05-28): drop "pencapaian" tab — section dihapus dari Statistik.
-  const valid = ["all", "ringkasan", "top-video", "grafik"];
+  // v742: tambah "traffic" & "geo" supaya sub-item sidebar bisa filter ke
+  // Sumber Trafik / Audiens juga.
+  const valid = ["all", "ringkasan", "top-video", "grafik", "traffic", "geo"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.statsTab = key;
   if (typeof state === "object" && state) state.statsTab = key;
@@ -52089,10 +52396,12 @@ function setStatsTab(tab) {
   });
   // Update title + breadcrumb sesuai tab.
   const meta = {
-    "all":        { title: "Statistik",            desc: "Performa channel kamu — Ringkasan, Top Video, dan Grafik dalam satu halaman.", crumb: "Statistik" },
-    "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, followers, dan engagement.",            crumb: "Ringkasan" },
-    "top-video":  { title: "Top Video",            desc: "Video kamu yang paling banyak ditonton, di-like, ditonton lama, dan dikomentari.", crumb: "Top Video" },
-    "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, followers, dan komentar per minggu/bulan/tahun.",        crumb: "Grafik" },
+    "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.", crumb: "Statistik" },
+    "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, pengikut, dan engagement.",             crumb: "Ringkasan" },
+    "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, pengikut, dan komentar per minggu/bulan/tahun.",         crumb: "Grafik" },
+    "top-video":  { title: "Performa Video",       desc: "Tabel performa tiap video — tontonan, suka, komentar, dan engagement.",       crumb: "Performa Video" },
+    "traffic":    { title: "Sumber Trafik",        desc: "Dari mana penonton menemukan video kamu.",                                    crumb: "Sumber Trafik" },
+    "geo":        { title: "Audiens per Negara",   desc: "Sebaran lokasi penonton berdasarkan negara.",                                 crumb: "Audiens" },
   }[key];
   const titleEl = document.getElementById("statsPageTitle");
   const descEl  = document.getElementById("statsPageDesc");
@@ -52101,6 +52410,12 @@ function setStatsTab(tab) {
   const crumb = document.getElementById("breadcrumb");
   const activeBcLast = crumb?.querySelector("a.active");
   if (activeBcLast && meta) activeBcLast.textContent = meta.crumb;
+  // v772: sinkronkan SIDEBAR sub-item dgn tab aktif (tab in-page sudah otomatis
+  // via toggle [data-stats-tab] di atas). key "all" → tak ada sub-item aktif.
+  document.querySelectorAll('.sidebar .nav-subitem[data-sub-action^="stats-tab:"]').forEach(a => {
+    const ak = (a.dataset.subAction || "").split(":")[1];
+    a.classList.toggle("active", ak === key);
+  });
   // Re-draw chart kalau pindah ke tab grafik (chart kadang perlu refresh saat re-visible)
   if (key === "grafik" || key === "all") {
     if (typeof drawChart === "function") setTimeout(drawChart, 60);
@@ -53348,9 +53663,9 @@ function saveVideoEdit() {
   }
 
   function buildAll() {
-    if (document.body && document.body.dataset.role === "admin") return;
-    var wraps = document.querySelectorAll('section.view[data-view="stats"] .chart-wrap[data-chart-metric]');
-    wraps.forEach(function (w) { buildRing(w, w.dataset.chartMetric); });
+    // Ring/donut chart DIHAPUS — redundan dgn grafik garis (metrik & periode
+    // sama) + datanya buggy (kosong). Bersihkan sisa ring kalau masih ada.
+    document.querySelectorAll('section.view[data-view="stats"] .chart-wrap svg.ring-chart-svg, section.view[data-view="stats"] .chart-wrap .ring-chart-legend').forEach(function (el) { el.remove(); });
   }
 
   function watch() {
