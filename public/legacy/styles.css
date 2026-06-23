@@ -35977,11 +35977,14 @@ body.sidebar-open .sidebar-backdrop {
   pointer-events: auto;
 }
 @media (min-width: 901px) {
-  /* Sidebar permanent di ≥769px — backdrop tidak diperlukan */
+  /* v112: Sidebar permanent di ≥901px (drawer di ≤900px) — backdrop hanya utk drawer */
   .sidebar-backdrop { display: none !important; }
 }
 
 /* === HAMBURGER BUTTON visibility === */
+/* v112: tampil ≤900px (cocok dgn breakpoint sidebar-drawer di max-width:900px)
+   supaya tablet/iPad 769-900px tak jadi zona-mati navigasi (drawer ada tapi dulu
+   tombolnya tersembunyi). */
 .icon-btn.mobile-only { display: none; }
 @media (max-width: 900px) {
   .icon-btn.mobile-only {

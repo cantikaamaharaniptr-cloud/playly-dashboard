@@ -49735,6 +49735,7 @@ function setLibraryTab(tabKey) {
       all:      "Pustaka Saya",
       my:       "Video Saya",
       status:   "Status Video",
+      new:      "Video Baru",
       download: "Unduhan",
     };
     activeBcLast.textContent = labelMap[key] || "Pustaka Saya";
