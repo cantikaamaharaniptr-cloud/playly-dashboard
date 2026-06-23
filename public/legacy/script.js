@@ -8636,6 +8636,16 @@ const I18N = {
     "admin.toast.created.suffix": "berhasil dibuat",
   },
   ms: {
+    "upload.ai.assist": "Tajuk & Tag Automatik",
+    "upload.ai.assist.desc": "Masukkan tajuk/topik — AI cadangkan tajuk, penerangan & tag sedia guna.",
+    "upload.ai.gen.btn": "Jana Idea",
+    "upload.sub.autogen": "Jana Auto AI",
+    "upload.sub.autogen.desc": "Jana sari kata automatik daripada audio video menggunakan Whisper Tiny.",
+    "upload.sub.gen.now": "Jana Sekarang",
+    "subprev.see": "Lihat",
+    "subprev.apply": "Guna",
+    "upload.sub.manual": "Muat Naik Manual",
+    "subprev.pick": "Pilih Fail",
     "st.subtitle": "Prestasi saluran anda — ringkasan, graf, prestasi video, trafik & audiens.",
     "st.summary": "Ringkasan",
     "st.graph": "Graf",
@@ -10163,6 +10173,16 @@ const I18N = {
     "admin.toast.created.suffix": "berjaya dicipta",
   },
   ja: {
+    "upload.ai.assist": "タイトル＆タグ自動",
+    "upload.ai.assist.desc": "タイトル/トピックを入力 — AIがタイトル・説明・タグを提案します。",
+    "upload.ai.gen.btn": "アイデアを生成",
+    "upload.sub.autogen": "AIで自動生成",
+    "upload.sub.autogen.desc": "Whisper Tiny を使って動画の音声から字幕を自動生成します。",
+    "upload.sub.gen.now": "今すぐ生成",
+    "subprev.see": "表示",
+    "subprev.apply": "適用",
+    "upload.sub.manual": "手動アップロード",
+    "subprev.pick": "ファイルを選択",
     "st.subtitle": "チャンネルのパフォーマンス — 概要、グラフ、動画パフォーマンス、トラフィック、視聴者。",
     "st.summary": "概要",
     "st.graph": "グラフ",
@@ -11690,6 +11710,16 @@ const I18N = {
     "admin.toast.created.suffix": "を作成しました",
   },
   ar: {
+    "upload.ai.assist": "عنوان ووسوم تلقائية",
+    "upload.ai.assist.desc": "أدخل عنوانًا/موضوعًا — يقترح الذكاء الاصطناعي عناوين ووصفًا ووسومًا جاهزة.",
+    "upload.ai.gen.btn": "أنشئ أفكارًا",
+    "upload.sub.autogen": "إنشاء تلقائي بالذكاء الاصطناعي",
+    "upload.sub.autogen.desc": "أنشئ الترجمة تلقائيًا من صوت الفيديو باستخدام Whisper Tiny.",
+    "upload.sub.gen.now": "أنشئ الآن",
+    "subprev.see": "عرض",
+    "subprev.apply": "تطبيق",
+    "upload.sub.manual": "رفع يدوي",
+    "subprev.pick": "اختر ملفًا",
     "st.subtitle": "أداء قناتك — ملخص، رسم بياني، أداء الفيديو، الزيارات والجمهور.",
     "st.summary": "ملخص",
     "st.graph": "رسم بياني",
@@ -13217,6 +13247,16 @@ const I18N = {
     "admin.toast.created.suffix": "تم إنشاؤه بنجاح",
   },
   zh: {
+    "upload.ai.assist": "自动标题和标签",
+    "upload.ai.assist.desc": "输入标题/主题 — AI 提供可用的标题、描述和标签。",
+    "upload.ai.gen.btn": "生成创意",
+    "upload.sub.autogen": "AI 自动生成",
+    "upload.sub.autogen.desc": "使用 Whisper Tiny 从视频音频自动生成字幕。",
+    "upload.sub.gen.now": "立即生成",
+    "subprev.see": "查看",
+    "subprev.apply": "应用",
+    "upload.sub.manual": "手动上传",
+    "subprev.pick": "选择文件",
     "st.subtitle": "你的频道表现 — 概览、图表、视频表现、流量和受众。",
     "st.summary": "概览",
     "st.graph": "图表",
@@ -14744,6 +14784,16 @@ const I18N = {
     "admin.toast.created.suffix": "创建成功",
   },
   ko: {
+    "upload.ai.assist": "제목 및 태그 자동",
+    "upload.ai.assist.desc": "제목/주제를 입력하세요 — AI가 제목, 설명, 태그를 제안합니다.",
+    "upload.ai.gen.btn": "아이디어 생성",
+    "upload.sub.autogen": "AI 자동 생성",
+    "upload.sub.autogen.desc": "Whisper Tiny로 동영상 오디오에서 자막을 자동 생성합니다.",
+    "upload.sub.gen.now": "지금 생성",
+    "subprev.see": "보기",
+    "subprev.apply": "적용",
+    "upload.sub.manual": "수동 업로드",
+    "subprev.pick": "파일 선택",
     "st.subtitle": "채널 성과 — 요약, 그래프, 동영상 성과, 트래픽 및 시청자.",
     "st.summary": "요약",
     "st.graph": "그래프",
@@ -16271,6 +16321,16 @@ const I18N = {
     "admin.toast.created.suffix": "생성됨",
   },
   es: {
+    "upload.ai.assist": "Título y etiquetas automáticos",
+    "upload.ai.assist.desc": "Escribe un título/tema: la IA sugiere títulos, una descripción y etiquetas.",
+    "upload.ai.gen.btn": "Generar ideas",
+    "upload.sub.autogen": "Generar automáticamente con IA",
+    "upload.sub.autogen.desc": "Genera subtítulos automáticamente del audio del video con Whisper Tiny.",
+    "upload.sub.gen.now": "Generar ahora",
+    "subprev.see": "Ver",
+    "subprev.apply": "Aplicar",
+    "upload.sub.manual": "Subida manual",
+    "subprev.pick": "Elegir archivo",
     "st.subtitle": "Rendimiento de tu canal: resumen, gráfico, rendimiento de videos, tráfico y audiencia.",
     "st.summary": "Resumen",
     "st.graph": "Gráfico",
@@ -34243,6 +34303,19 @@ function switchView(name, { fromNav = false } = {}) {
           const root = document.querySelector(".view.active") || document.body;
           if (typeof deepTranslateTextNodes === "function") deepTranslateTextNodes(root);
           if (typeof translatePlaceholders === "function") translatePlaceholders();
+          // Tombol animasi (.unggah-btn-anim/.batal-btn-anim) ber-data-no-i18n & teksnya
+          // dipecah utk animasi → deepTranslate melewatinya. Terjemah text-node langsung
+          // via tText (exact match kamus, aman — tak menyentuh data dinamis).
+          if (typeof tText === "function") {
+            root.querySelectorAll(".unggah-btn-anim, .batal-btn-anim").forEach(btn => {
+              btn.childNodes.forEach(nd => {
+                if (nd.nodeType === 3) {
+                  const cur = nd.textContent.trim();
+                  if (cur) { const tr = tText(cur); if (tr && tr !== cur) nd.textContent = nd.textContent.replace(cur, tr); }
+                }
+              });
+            });
+          }
         } catch (e) {}
       };
       _retr();
