@@ -352,10 +352,24 @@ console.info("%c[playly] script.js v583 (skeleton loading system + pricing modal
       // Special: watch/:videoId → openPlayer(id)
       if ((section === "watch" || section === "player") && param) {
         const vid = /^\d+$/.test(param) ? parseInt(param, 10) : param;
-        if (typeof window.openPlayer === "function") {
-          window.openPlayer(vid);
-        } else if (typeof openPlayer === "function") {
-          openPlayer(vid);
+        const openFn = (typeof window.openPlayer === "function") ? window.openPlayer
+                     : (typeof openPlayer === "function") ? openPlayer : null;
+        if (openFn) {
+          // Deep-link: data video (konten demo / state cloud) bisa BELUM siap saat
+          // hash di-route → openPlayer gagal temukan video (judul placeholder).
+          // Retry singkat sampai video findable, baru buka, supaya metadata kebaca.
+          // Buka HANYA saat video sudah findable. Deep-link sering jalan sebelum
+          // data siap (konten demo di-seed / state cloud sync ~3-4s) → kalau buka
+          // prematur, openPlayer early-return & player jadi cangkang kosong (judul
+          // "Judul Video", src kosong). Poll sabar sampai findVideo sukses (cap ~6s),
+          // baru buka. (req user 2026-06-11)
+          const tryOpen = (n) => {
+            let ready = false;
+            try { ready = (typeof findVideo === "function") && !!findVideo(vid); } catch (_) {}
+            if (ready || n >= 40) { openFn(vid); return; }
+            setTimeout(() => tryOpen(n + 1), 150);
+          };
+          tryOpen(0);
         }
         return;
       }
@@ -684,13 +698,33 @@ function toast(msg, type = "") {
   t.innerHTML = emojiToIcon(msg);
   const host = $("#toastHost");
   host.append(t);
-  // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke
-  // top-right kalau bell ga ada di viewport.
-  const bell = document.getElementById("openNotif");
-  if (bell) {
-    const r = bell.getBoundingClientRect();
-    host.style.top = `${Math.round(r.bottom + 10)}px`;
-    host.style.right = `${Math.max(12, Math.round(window.innerWidth - r.right))}px`;
+  // Posisi toast (req user 2026-06-11 — biar dekat fiturnya, bukan nyangkut topbar):
+  //  - PLAYER view: tampil DI ATAS player (top-center frame video) supaya feedback
+  //    aksi player (subtitle/kecepatan/kualitas/suara) muncul dekat konteksnya.
+  //    Bagian bawah video sudah dipakai ticker + control bar, jadi atas paling bersih.
+  //  - Halaman lain: anchor di bawah ikon lonceng topbar (default).
+  const pScreen = document.body.classList.contains("player-view-active")
+    ? document.querySelector(".player-screen") : null;
+  if (pScreen) {
+    const r = pScreen.getBoundingClientRect();
+    host.style.top = `${Math.round(r.top + 14)}px`;
+    host.style.left = `${Math.round(r.left + r.width / 2)}px`;
+    host.style.right = "auto";
+    host.style.transform = "translateX(-50%)";
+    host.style.alignItems = "center";
+  } else {
+    host.style.transform = "none";
+    host.style.left = "auto";
+    host.style.alignItems = "stretch";
+    host.style.top = "76px";
+    host.style.right = "22px";
+    // Anchor below bell icon (#openNotif) dgn margin 10px. Fallback ke top-right.
+    const bell = document.getElementById("openNotif");
+    if (bell) {
+      const r = bell.getBoundingClientRect();
+      host.style.top = `${Math.round(r.bottom + 10)}px`;
+      host.style.right = `${Math.max(12, Math.round(window.innerWidth - r.right))}px`;
+    }
   }
   setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(-12px)"; }, 2800);
   setTimeout(() => t.remove(), 3200);
@@ -756,6 +790,32 @@ function chatRelTime(ts) {
 // Tidak ada data hardcoded — Discover akan kosong sampai user upload.
 // Konten platform = agregasi dari semua user yang sudah upload video.
 
+// Pembersih data DEMO lama (req user 2026-06-11: demo/dummy DICABUT total — tak
+// boleh ada di dashboard/DB/repo). Konten & mode demo sudah dihapus; fungsi ini
+// HANYA membersihkan SISA data demo yg sempat tersimpan/ter-sync ke cloud: flag
+// playly-demo + ad-config yg SEMUA itemnya ber-id "demo-" (config iklan admin
+// ASLI tak tersentuh). removeItem di-hijack cloud-sync → ikut hapus di cloud.
+function _purgeStoredDemo() {
+  try {
+    if (localStorage.getItem("playly-demo") != null) localStorage.removeItem("playly-demo");
+    const raw = localStorage.getItem("playly-ad-config");
+    if (raw) {
+      const c = JSON.parse(raw);
+      const items = ["runningText", "banner", "preroll", "sideBanner"].flatMap(k => (c && c[k] && c[k].items) || []);
+      if (items.length && items.every(it => it && it.id && String(it.id).startsWith("demo-"))) {
+        localStorage.removeItem("playly-ad-config");
+      }
+    }
+  } catch (_) {}
+}
+_purgeStoredDemo();
+// Cloud bisa push balik config demo lama saat sync awal → purge lagi tiap apply.
+try {
+  window.addEventListener("playly:cloud-applied", (e) => {
+    const keys = (e && e.detail && e.detail.keys) || [];
+    if (!keys.length || keys.indexOf("playly-ad-config") >= 0 || keys.indexOf("playly-demo") >= 0) _purgeStoredDemo();
+  });
+} catch (_) {}
 function getPlatformVideos() {
   // Agregasi semua videos dari semua user yang punya state di localStorage.
   // Skip state milik akun demo/mock supaya video mereka tidak muncul di feed.
@@ -2713,6 +2773,8 @@ function initPlySpeedPopups() {
       e.stopPropagation();
       const willOpen = pop.hidden;
       document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+      // Tutup menu ⋮ (dots) supaya dua popup tak menumpuk.
+      const _dm = document.getElementById("cplDotsMenu"); if (_dm) _dm.hidden = true;
       pop.hidden = !willOpen;
     });
   });
@@ -3045,6 +3107,20 @@ document.addEventListener("click", (e) => {
     const id = Number(psItem.dataset.psOpen);
     if (id && typeof openPlayer === "function") openPlayer(id);
   }
+});
+
+// Toggle "Selanjutnya · Autoplay" — sebelumnya tombol ini tak punya handler
+// (mati). Sekarang: toggle on/off, simpan preferensi, video berikutnya diputar
+// otomatis saat video selesai (lihat handler "ended" di openPlayer). (req user)
+document.addEventListener("click", (e) => {
+  const ap = e.target.closest(".ps-autoplay-toggle");
+  if (!ap) return;
+  e.preventDefault();
+  const on = !ap.classList.contains("on");
+  ap.classList.toggle("on", on);
+  ap.setAttribute("aria-pressed", on ? "true" : "false");
+  try { if (typeof setPref === "function") setPref("player.autoplayNext", on); } catch (_) {}
+  if (typeof toast === "function") toast(on ? "✓ Autoplay aktif — video berikutnya otomatis diputar" : "Autoplay dimatikan", "success");
 });
 
 // Wire side item clicks + back button + action buttons
@@ -25975,7 +26051,20 @@ function injectRunningText(screen, c) {
   // baru insert relatif ke situ. insertBefore(node, null) = append (aman).
   let ref = anchor;
   while (ref && ref.parentNode && ref.parentNode !== outer) ref = ref.parentNode;
-  if (!ref || ref.parentNode !== outer) {
+  // FULL PLAYER: running text = overlay lower-third ala ticker TV (Hulu/Pluto).
+  // Taruh DI DALAM frame video (.player-screen), strip tepi DI ATAS control bar
+  // (z-index di atas cpl-overlay) → selalu kelihatan saat nonton tanpa mendorong
+  // judul/komentar ke bawah. Di-cleanup oleh sweep ".ad-overlay" di applyAdOverlays.
+  const inFullPlayer = screen.classList.contains("player-screen") && screen.closest(".player-page");
+  if (inFullPlayer) {
+    // Sesuai pengaturan admin (Ad Manager): running text TIDAK punya opsi
+    // auto-hide / tombol tutup / durasi tampil — hint admin menyatakan teks
+    // "berjalan terus-menerus sampai video selesai". Jadi tampilkan kontinu,
+    // hormati hanya yang admin atur (posisi/kecepatan/tinggi bar/warna/opasitas).
+    // Posisi lower-third (bottom, di atas garis seek) = interpretasi posisi "bottom".
+    overlay.classList.add("ad-runtext-lower3");
+    screen.appendChild(overlay);
+  } else if (!ref || ref.parentNode !== outer) {
     outer.appendChild(overlay);
   } else if (pos === "top") {
     outer.insertBefore(overlay, ref);
@@ -26027,10 +26116,12 @@ function injectBanner(screen, c) {
   const linkOpen = c.linkUrl ? `<a href="${c.linkUrl}" target="_blank" rel="noopener">` : "";
   const linkClose = c.linkUrl ? `</a>` : "";
   overlay.innerHTML = `${linkOpen}<img src="${c.imageUrl}" alt="banner"/>${linkClose}${closeBtn}`;
-  // Attach OUTSIDE the video — naik ke .player-page (sibling area di sekitar
-  // video) supaya banner tidak menutupi video player. Fallback ke screen kalau
-  // page parent tidak ditemukan (mis. inline lib player).
-  const target = screen.closest(".player-page") || screen;
+  // Anchor DI FRAME VIDEO (.player-screen) supaya banner muncul di pojok video
+  // (dekat konten). Sebelumnya di-anchor ke .player-page yang tinggi → banner
+  // nyasar ~400px di bawah video, dekat komentar. Posisi pojok diatur via CSS
+  // (.player-screen > .ad-banner.*) agar tak bentrok ticker/kontrol. (review
+  // iklan 2026-06-11)
+  const target = screen;
   target.appendChild(overlay);
   if (c.closable) {
     // Behavior klik X (per request 2026-05-10):
@@ -26076,6 +26167,7 @@ function playPrerollAd(videoEl, url, c) {
     screen.appendChild(overlay);
 
     // Mainkan iklan
+    videoEl._prerollActive = true;   // guard: jgn picu autoplay-next saat preroll selesai
     videoEl.src = url;
     videoEl.poster = "";
     videoEl.controls = false;
@@ -26094,6 +26186,7 @@ function playPrerollAd(videoEl, url, c) {
     const watchdog = setTimeout(() => { if (!started) finish(); }, 6000);
 
     const cleanup = () => {
+      videoEl._prerollActive = false;
       if (countdownTimer) clearInterval(countdownTimer);
       clearTimeout(watchdog);
       videoEl.removeEventListener("playing", onPlaying);
@@ -49291,6 +49384,33 @@ window.addEventListener("playly:view-changed", e => {
 //   description
 let __libInlineVid = null;
 
+// Tombol "Edit Video" di player library (#libInlinePlayer) — fitur khusus
+// pemilik video untuk menyunting video yang sudah diupload. Hanya tampil untuk
+// video milik user (ada di state.myVideos). Wired ke openVideoEditModal.
+function ensureLibEditBtn(v) {
+  const bar = document.getElementById("libInlineActions");
+  if (!bar || !v) return;
+  const isOwn = Array.isArray(state?.myVideos) && state.myVideos.some(x => x.id === v.id);
+  let btn = document.getElementById("libEditVideoBtn");
+  if (!isOwn) { if (btn) btn.remove(); return; }
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "libEditVideoBtn";
+    btn.type = "button";
+    btn.className = "lib-edit-video-btn";
+    btn.setAttribute("title", "Edit video");
+    btn.setAttribute("aria-label", "Edit video");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Edit Video</span>';
+    bar.appendChild(btn);
+  }
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("#libEditVideoBtn");
+  if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  if (typeof openVideoEditModal === "function" && __libInlineVid != null) openVideoEditModal(__libInlineVid);
+});
+
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
   if (!v) return;
@@ -49311,6 +49431,7 @@ async function openLibInlinePlayer(id) {
 
   // Title + upload date
   document.getElementById("libInlineTitle").textContent = v.title || "Video";
+  ensureLibEditBtn(v);
   const dateEl = document.getElementById("libInlineDate");
   if (dateEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
@@ -50301,28 +50422,71 @@ async function openPlayer(id) {
     }
     const sideEl = document.getElementById("playerRelatedList");
     if (sideEl && document.body.dataset.role !== "admin") {
-      const all = (typeof videos !== "undefined" && Array.isArray(videos)) ? videos : [];
-      const others = all.filter(x => x && x.id !== id).slice(0, 10);
-      sideEl.innerHTML = others.length ? others.map(x => {
-        const xThumb = x.thumb || `https://picsum.photos/seed/playly-${x.id || Math.random()}/240/135`;
+      // Up-next dari seluruh platform (termasuk konten demo) — bukan hanya
+      // global `videos` yg sering kosong. Supaya "Selanjutnya" selalu berisi
+      // rekomendasi (mirip platform video profesional).
+      let all = [];
+      try { all = (typeof allVideos === "function") ? allVideos() : ((typeof videos !== "undefined" && Array.isArray(videos)) ? videos : []); } catch { all = []; }
+      const others = all.filter(x => x && x.id !== id && x.thumb).slice(0, 12);
+      // Video "berikutnya" untuk autoplay = rekomendasi teratas.
+      state._upNextFirstId = others.length ? others[0].id : null;
+      // Sinkronkan visual toggle Autoplay dengan preferensi tersimpan.
+      const _apT = document.querySelector(".ps-autoplay-toggle");
+      if (_apT) {
+        const _apOn = (typeof getPref === "function") ? getPref("player.autoplayNext", true) : true;
+        _apT.classList.toggle("on", _apOn);
+        _apT.setAttribute("aria-pressed", _apOn ? "true" : "false");
+      }
+      // Kartu satuan up-next.
+      const psCardHTML = (x) => {
+        const xThumb = x.thumb || "";
         const xUploaded = (() => {
           const ts = Number(x.uploadedAt || x.createdAt || (typeof x.id === "number" && x.id > 1e12 ? x.id : 0));
-          return ts && typeof relTime === "function" ? relTime(ts) : (x.time || "—");
+          const t = ts && typeof relTime === "function" ? relTime(ts) : (x.time || "");
+          return (t && t !== "—") ? t : "";
         })();
+        // Thumbnail: kalau gambar gagal/kosong, jangan tampilkan ikon broken —
+        // sembunyikan img, sisakan gradien + glyph play bertema (req user
+        // 2026-06-11: perbaiki thumbnail pecah, jangan terlalu meniru YouTube).
+        const xViews = (x.viewsNum || 0).toLocaleString("id-ID");
         return `
           <div class="ps-related-item" data-ps-open="${x.id}">
             <div class="ps-related-thumb">
-              <img src="${xThumb}" alt="" loading="lazy"/>
+              <span class="ps-related-thumb-ph" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              ${xThumb ? `<img src="${escapeHtml(xThumb)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : ""}
               <span class="ps-related-thumb-time">${escapeHtml(x.duration || "0:00")}</span>
             </div>
             <div class="ps-related-meta">
               <strong>${escapeHtml(x.title || "(no title)")}</strong>
               <small>@${escapeHtml(x.creator || "—")}</small>
-              <span class="ps-related-stats">${(x.viewsNum || 0).toLocaleString("en-US")} tayangan · ${xUploaded}</span>
+              <span class="ps-related-stats">${xViews} tontonan${xUploaded ? " · " + escapeHtml(xUploaded) : ""}</span>
             </div>
           </div>
         `;
-      }).join("") : `<div style="font-size:12px;color:var(--muted);padding:14px;text-align:center">Tidak ada video lain.</div>`;
+      };
+      // Batasi tampilan awal (5) supaya sidebar tak memanjang ke bawah saat video
+      // banyak; sisanya dibuka lewat tombol "Muat lebih banyak" (req user
+      // 2026-06-11). Tetap scroll halaman biasa, bukan clip.
+      const PS_INITIAL = 5;
+      const paintRelated = (limit) => {
+        if (!others.length) {
+          sideEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:14px;text-align:center">Tidak ada video lain.</div>`;
+          return;
+        }
+        const shown = others.slice(0, limit);
+        const moreCount = others.length - shown.length;
+        let foot = "";
+        if (moreCount > 0) foot = `<button class="ps-related-more" type="button" data-ps-more>Muat ${moreCount} lainnya</button>`;
+        else if (others.length > PS_INITIAL) foot = `<button class="ps-related-more" type="button" data-ps-less>Tampilkan lebih sedikit</button>`;
+        sideEl.innerHTML = shown.map(psCardHTML).join("") + foot;
+      };
+      paintRelated(PS_INITIAL);
+      // Toggle muat-lebih / lebih-sedikit. preventDefault+stopPropagation hanya
+      // untuk tombol; klik kartu tetap menggelembung ke handler [data-ps-open].
+      sideEl.onclick = (e) => {
+        if (e.target.closest("[data-ps-more]")) { e.preventDefault(); e.stopPropagation(); paintRelated(others.length); }
+        else if (e.target.closest("[data-ps-less]")) { e.preventDefault(); e.stopPropagation(); paintRelated(PS_INITIAL); sideEl.scrollIntoView({ block: "start", behavior: "smooth" }); }
+      };
     }
   } catch (_) {}
 
@@ -50330,11 +50494,21 @@ async function openPlayer(id) {
   $("#playerTitle").textContent = v.title;
   $("#playerCreator").textContent = "@" + v.creator;
   $("#playerCreatorInit").textContent = v.creator.slice(0, 2).toUpperCase();
+  // Sub-label creator: DATA ASLI (jumlah video + pengikut), bukan "2 video" statis.
+  {
+    const _cv = (typeof getUserVideos === "function" ? getUserVideos(v.creator) : []).length;
+    const _cf = (typeof getUserFollowers === "function" ? getUserFollowers(v.creator) : []).length;
+    const _sub = document.querySelector(".pv-creator-row .pv-sub-label");
+    if (_sub) _sub.textContent = `${_cv} video · ${fmtNum(_cf)} pengikut`;
+  }
   $("#playerViewCount").textContent = v.views || fmtNum(v.viewsNum || 0);
   const descEl = $("#playerDesc");
   const descBox = $("#pvDescBox");
   const descToggle = $("#pvDescToggle");
   if (descEl) descEl.textContent = v.desc || "";
+  // Sembunyikan box deskripsi kalau video tak punya deskripsi — jangan tampilkan
+  // bar kosong/abu-abu di bawah channel (req user 2026-06-11).
+  if (descBox) descBox.hidden = !(v.desc && v.desc.trim());
   // Reset desc box to collapsed state for each new video
   if (descBox) descBox.classList.remove("expanded");
   if (descToggle) {
@@ -50357,6 +50531,11 @@ async function openPlayer(id) {
   const saved = state.saved.includes(id);
   $("#likeCount").textContent = (v.likes || 0).toLocaleString("id-ID");
   $("#likeBtn").classList.toggle("active", liked);
+  ensureDislikeBtn();
+  if (!Array.isArray(state.disliked)) state.disliked = [];
+  $("#dislikeBtn")?.classList.toggle("active", state.disliked.includes(id));
+  ensurePlayerExtraActions();
+  setPlayerUploadDate(v);
   $("#saveBtn").classList.toggle("active", saved);
   const isOwnVideo = !!user?.username && v.creator === user.username;
   $("#followBtn").hidden = isOwnVideo;
@@ -50368,6 +50547,7 @@ async function openPlayer(id) {
   const SAMPLE_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const resolved = await resolveVideoSource(v);
   videoEl.src = resolved || SAMPLE_URL;
+  ensurePlayerEmptyState(videoEl);
   // Real-time progress tracking ke state.history → Lanjutkan Tontonan
   // selalu sync dengan posisi tonton yang sebenarnya. Bind sekali saja.
   if (!videoEl.__progressBound) {
@@ -50389,11 +50569,19 @@ async function openPlayer(id) {
       }
     });
     videoEl.addEventListener("ended", () => {
+      // Jangan proses saat pre-roll selesai (src sementara = video iklan).
+      if (videoEl._prerollActive) return;
       if (!state?.currentVideo) return;
       const idx = state.history.findIndex(h => h.videoId === state.currentVideo);
       if (idx >= 0) {
         state.history[idx].progress = 100;
         saveState();
+      }
+      // Autoplay: putar video berikutnya kalau toggle "Selanjutnya · Autoplay" aktif.
+      const apOn = (typeof getPref === "function") ? getPref("player.autoplayNext", true) : true;
+      const nextId = state._upNextFirstId;
+      if (apOn && nextId && nextId !== state.currentVideo && typeof openPlayer === "function") {
+        openPlayer(nextId);
       }
     });
   }
@@ -50494,6 +50682,28 @@ async function openPlayer(id) {
 }
 
 // =================== PLAYER TOOLBAR (speed/quality/CC/PiP/FS) ===================
+
+// Empty-state layar video: overlay placeholder saat sumber video GAGAL dimuat
+// (video dihapus / link rusak / jaringan). Disuntik sekali per .player-screen,
+// di-reset (hidden) tiap video baru; di-toggle lewat event <video>.
+function ensurePlayerEmptyState(videoEl) {
+  const screen = videoEl?.closest(".player-screen");
+  if (!screen) return;
+  let es = screen.querySelector(".player-empty");
+  if (!es) {
+    es = document.createElement("div");
+    es.className = "player-empty";
+    es.innerHTML = '<div class="pe-box"><svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/></svg><p>Video tidak tersedia</p><small>Sumber video gagal dimuat atau sudah dihapus.</small></div>';
+    screen.appendChild(es);
+  }
+  es.hidden = true; // reset untuk video baru
+  if (!videoEl.__emptyStateBound) {
+    videoEl.__emptyStateBound = true;
+    videoEl.addEventListener("error", () => { es.hidden = false; });
+    videoEl.addEventListener("loadeddata", () => { es.hidden = true; });
+    videoEl.addEventListener("playing", () => { es.hidden = true; });
+  }
+}
 
 function resetPlayerToolbar(videoEl, vid) {
   // Speed back to 1×
@@ -50874,7 +51084,7 @@ function setupCustomPlayer() {
     switchView(state?.prevView || "home");
   });
 
-  // Expand → open video in public watch tab
+  // Expand → buka video di halaman publik /watch (tab baru).
   expandBtn?.addEventListener("click", () => {
     const vid = state?.currentVideo;
     if (vid) window.open(`/watch?v=${vid}`, "_blank", "noopener");
@@ -50901,7 +51111,12 @@ function setupCustomPlayer() {
   const dotsMenu = $("#cplDotsMenu");
 
   function closeDots() { if (dotsMenu) dotsMenu.hidden = true; }
-  dotsBtn?.addEventListener("click", e => { e.stopPropagation(); dotsMenu && (dotsMenu.hidden = !dotsMenu.hidden); });
+  dotsBtn?.addEventListener("click", e => {
+    e.stopPropagation();
+    // Tutup popup kecepatan bottom-bar dulu supaya tak menumpuk dgn menu ⋮.
+    document.querySelectorAll(".ply-spd-pop").forEach(p => { p.hidden = true; });
+    dotsMenu && (dotsMenu.hidden = !dotsMenu.hidden);
+  });
   document.addEventListener("click", e => { if (!e.target.closest(".cpl-dots-wrap")) closeDots(); });
 
   // ── Isi dots menu: Pop-up (PiP) ──
@@ -51004,11 +51219,15 @@ function renderComments(id) {
     if (!repliesByParent[r.parentId]) repliesByParent[r.parentId] = [];
     repliesByParent[r.parentId].push(r);
   });
-  topLevel.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  // Sort: Terbaru (ts desc, default) atau Teratas (likes desc → ts desc).
+  const _csort = state.commentSort === "top" ? "top" : "new";
+  if (_csort === "top") topLevel.sort((a, b) => (b.likes.length - a.likes.length) || ((b.ts || 0) - (a.ts || 0)));
+  else topLevel.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   Object.values(repliesByParent).forEach(arr => arr.sort((a, b) => (a.ts || 0) - (b.ts || 0)));
 
   const total = raw.length;
   $("#commentCount").textContent = `${total} Komentar`;
+  ensureCommentSort(total);
 
   if (!topLevel.length) {
     $("#commentList").innerHTML = `<div class="comment-empty">Belum ada komentar. Jadilah yang pertama!</div>`;
@@ -52371,7 +52590,13 @@ $("#likeBtn")?.addEventListener("click", () => {
   const id = state.currentVideo;
   const wasLiked = state.liked.includes(id);
   if (wasLiked) state.liked = state.liked.filter(x => x !== id);
-  else state.liked.push(id);
+  else {
+    state.liked.push(id);
+    // Mutual-exclusive: nge-like membatalkan dislike (kalau ada).
+    if (Array.isArray(state.disliked) && state.disliked.includes(id)) {
+      state.disliked = state.disliked.filter(x => x !== id);
+    }
+  }
   // Update real likes count pada video creator's state — cloud-sync akan mirror.
   updateVideoStat(id, "likes", wasLiked ? -1 : 1);
   saveState();
@@ -52392,6 +52617,301 @@ $("#likeBtn")?.addEventListener("click", () => {
   refreshAllVideoGrids();
   renderUserStats();
 });
+
+// ---- DISLIKE (cermin Like) ----------------------------------------------
+// Tombol di-INJECT via JS (markup index-markup.ts single-line & fragile, jangan
+// disisipi). Idempotent: dipanggil tiap render player. Mutual-exclusive dgn Like.
+function ensureDislikeBtn() {
+  if (document.getElementById("dislikeBtn")) return;
+  const likeBtn = document.getElementById("likeBtn");
+  if (!likeBtn) return;
+  const btn = document.createElement("button");
+  btn.id = "dislikeBtn";
+  btn.type = "button";
+  btn.className = "pv-pill pv-pill-dislike";
+  btn.setAttribute("title", "Tidak suka");
+  btn.setAttribute("aria-label", "Tidak suka");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>';
+  likeBtn.insertAdjacentElement("afterend", btn);
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#dislikeBtn");
+  if (!btn) return;
+  const id = state.currentVideo;
+  if (id == null) return;
+  if (!Array.isArray(state.disliked)) state.disliked = [];
+  const wasDisliked = state.disliked.includes(id);
+  if (wasDisliked) {
+    state.disliked = state.disliked.filter(x => x !== id);
+  } else {
+    state.disliked.push(id);
+    // Mutual-exclusive: dislike membatalkan like (kalau ada) + koreksi hitungan.
+    if (state.liked.includes(id)) {
+      state.liked = state.liked.filter(x => x !== id);
+      updateVideoStat(id, "likes", -1);
+    }
+    if (typeof toast === "function") toast("👎 Masukan terkirim");
+  }
+  saveState();
+  // Update UI langsung (tanpa reload video).
+  btn.classList.toggle("active", state.disliked.includes(id));
+  const likeBtn = document.getElementById("likeBtn");
+  if (likeBtn) likeBtn.classList.toggle("active", state.liked.includes(id));
+  const likeCountEl = document.getElementById("likeCount");
+  const v = findVideo(id);
+  if (likeCountEl && v) likeCountEl.textContent = (v.likes || 0).toLocaleString("id-ID");
+  if (typeof refreshAllVideoGrids === "function") refreshAllVideoGrids();
+});
+
+// ---- AKSI EKSTRA PLAYER: Unduh + Laporkan (khas platform video hosting) -----
+// Tombol di-inject ke .pv-pills (markup fragile). Pakai data video ASLI.
+function ensurePlayerExtraActions() {
+  const pills = document.querySelector(".pv-pills");
+  if (!pills) return;
+  if (!document.getElementById("dlBtn")) {
+    const b = document.createElement("button");
+    b.id = "dlBtn"; b.type = "button"; b.className = "pv-pill pv-pill-dl";
+    b.setAttribute("title", "Unduh video"); b.setAttribute("aria-label", "Unduh");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh</span>';
+    pills.appendChild(b);
+  }
+  if (!document.getElementById("embedBtn")) {
+    const b = document.createElement("button");
+    b.id = "embedBtn"; b.type = "button"; b.className = "pv-pill pv-pill-embed";
+    b.setAttribute("title", "Sematkan video"); b.setAttribute("aria-label", "Sematkan");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Sematkan</span>';
+    pills.appendChild(b);
+  }
+  if (!document.getElementById("reportBtn")) {
+    const b = document.createElement("button");
+    b.id = "reportBtn"; b.type = "button"; b.className = "pv-pill pv-pill-report";
+    b.setAttribute("title", "Laporkan video"); b.setAttribute("aria-label", "Laporkan");
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span>Laporkan</span>';
+    pills.appendChild(b);
+  }
+}
+
+// Tanggal upload di samping views (standar "views · tanggal"). Data asli.
+function setPlayerUploadDate(v) {
+  const chip = document.getElementById("playerStats");
+  if (!chip) return;
+  const ts = v && (v.uploadedAt || v.createdAt);
+  let label = "";
+  if (ts) {
+    let d = null;
+    try { d = (typeof ts === "number") ? new Date(ts) : new Date(ts); } catch (e) {}
+    if (d && !isNaN(d.getTime())) label = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+  let dateEl = chip.querySelector(".pv-date-inline");
+  if (!label) { if (dateEl) dateEl.remove(); return; }
+  if (!dateEl) { dateEl = document.createElement("span"); dateEl.className = "pv-date-inline"; chip.appendChild(dateEl); }
+  dateEl.textContent = " · " + label;
+}
+
+// Laporkan video → antrian moderasi admin (playly-admin-mod), dgn dedup.
+// Skema sama dgn flow report yang sudah ada (renderAdminModeration membacanya).
+function reportVideoToAdmin(v) {
+  if (!v || typeof openConfirm !== "function") return;
+  const id = v.id;
+  openConfirm({
+    icon: "🚩", iconClass: "warn",
+    title: "Laporkan Video?",
+    desc: `Video "<b>${escapeHtml(v.title || "")}</b>" akan dilaporkan ke admin untuk ditinjau.`,
+    btnText: "Laporkan", btnClass: "danger",
+    onConfirm: () => {
+      try {
+        const KEY = "playly-admin-mod";
+        const list = JSON.parse(localStorage.getItem(KEY) || "[]");
+        const dup = list.find(r => r && r.videoId === id && r.reportedBy === user.username && r.status === "pending");
+        if (dup) { toast("⚠ Kamu sudah melaporkan video ini. Admin sedang menangani.", "warning"); return; }
+        list.unshift({
+          id: Date.now(), videoId: id, title: v.title, creator: v.creator,
+          reportedBy: user.username, reason: "Dilaporkan dari player",
+          at: new Date().toISOString(), status: "pending",
+          reportedAt: Date.now(), updatedAt: Date.now(),
+          flag: "🚩", thumb: v.thumb || v.poster || "🎬"
+        });
+        if (list.length > 200) { const i = list.findIndex(r => r.status !== "pending"); if (i >= 0) list.splice(i, 1); }
+        localStorage.setItem(KEY, JSON.stringify(list));
+        toast("🚩 Video dilaporkan ke admin. Terima kasih.", "success");
+      } catch (e) { console.warn(e); toast("❌ Gagal mengirim laporan", "error"); }
+    }
+  });
+}
+
+// Modal Sematkan: kode <iframe> ke /id/{id}/embed (route embed yang sudah ada).
+function openEmbedModal(v) {
+  if (!v) return;
+  const id = v.id;
+  const code = `<iframe src="${location.origin}/id/${id}/embed" width="560" height="315" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+  document.getElementById("__embedModal")?.remove();
+  const wrap = document.createElement("div");
+  wrap.id = "__embedModal";
+  wrap.className = "embed-modal-backdrop";
+  wrap.innerHTML =
+    '<div class="embed-modal" role="dialog" aria-label="Sematkan video">' +
+      '<div class="embed-modal-head"><h3>Sematkan Video</h3>' +
+      '<button type="button" class="embed-modal-close" aria-label="Tutup">✕</button></div>' +
+      '<p class="embed-modal-desc">Salin kode ini untuk menyematkan video di situs lain.</p>' +
+      '<textarea class="embed-code" readonly rows="3"></textarea>' +
+      '<div class="embed-modal-foot"><button type="button" class="embed-copy">Salin kode</button></div>' +
+    '</div>';
+  wrap.querySelector(".embed-code").value = code;
+  document.body.appendChild(wrap);
+  const close = () => wrap.remove();
+  wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+  wrap.querySelector(".embed-modal-close").addEventListener("click", close);
+  wrap.querySelector(".embed-copy").addEventListener("click", async () => {
+    const ta = wrap.querySelector(".embed-code");
+    ta.select();
+    try { await navigator.clipboard.writeText(ta.value); }
+    catch (e) { try { document.execCommand("copy"); } catch (_) {} }
+    if (typeof toast === "function") toast("🔗 Kode embed disalin", "success");
+    close();
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const dl = e.target.closest("#dlBtn");
+  if (dl) {
+    const v = findVideo(state.currentVideo);
+    if (v && typeof openDownloadOptionsModal === "function") openDownloadOptionsModal(v);
+    return;
+  }
+  const emb = e.target.closest("#embedBtn");
+  if (emb) {
+    const v = findVideo(state.currentVideo);
+    if (v) openEmbedModal(v);
+    return;
+  }
+  const rep = e.target.closest("#reportBtn");
+  if (rep) {
+    const v = findVideo(state.currentVideo);
+    if (v) reportVideoToAdmin(v);
+  }
+});
+
+// ---- SORT KOMENTAR (Terbaru / Teratas) — toggle di-inject dekat #commentCount.
+function ensureCommentSort(total) {
+  const countEl = document.getElementById("commentCount");
+  if (!countEl) return;
+  let sortEl = document.getElementById("commentSortToggle");
+  if (!sortEl) {
+    sortEl = document.createElement("div");
+    sortEl.id = "commentSortToggle";
+    sortEl.className = "comment-sort";
+    sortEl.innerHTML = '<button type="button" data-csort="new">Terbaru</button><button type="button" data-csort="top">Teratas</button>';
+    countEl.insertAdjacentElement("afterend", sortEl);
+  }
+  const mode = state.commentSort === "top" ? "top" : "new";
+  sortEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.csort === mode));
+  sortEl.hidden = !(total >= 2);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("#commentSortToggle button[data-csort]");
+  if (!b) return;
+  state.commentSort = b.dataset.csort;
+  if (typeof renderComments === "function") renderComments(state.currentVideo);
+});
+
+// ---- TAG/HASHTAG di deskripsi player ---------------------------------------
+// v.tags (eksplisit dari upload) → chip clickable. #hashtag di teks deskripsi
+// sudah di-linkify via linkifyHashtags saat render. Data ASLI video.
+function ensurePlayerTags(v) {
+  const box = document.getElementById("pvDescBox");
+  if (!box) return;
+  let tags = v && v.tags;
+  if (typeof tags === "string") tags = tags.split(/[,\s]+/);
+  tags = Array.isArray(tags) ? tags.map(t => String(t).replace(/^#/, "").trim().toLowerCase()).filter(Boolean) : [];
+  tags = [...new Set(tags)].slice(0, 12);
+  let row = document.getElementById("playerTags");
+  if (!tags.length) { if (row) row.remove(); return; }
+  if (!row) {
+    row = document.createElement("div");
+    row.id = "playerTags";
+    row.className = "pv-tags";
+    box.insertAdjacentElement("afterend", row);
+  }
+  row.innerHTML = tags.map(t => `<button type="button" class="fyp-tag-pill" data-fyp-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`).join("");
+}
+// Klik tag/hashtag dari player → buka Jelajahi (discover) terfilter tag.
+document.addEventListener("click", (e) => {
+  const tagBtn = e.target.closest("#pvDescBox [data-fyp-tag], #playerTags [data-fyp-tag]");
+  if (!tagBtn) return;
+  e.preventDefault(); e.stopPropagation();
+  fypTagFilter = tagBtn.dataset.fypTag;
+  if (typeof switchView === "function") switchView("discover");
+  setTimeout(() => { if (typeof renderFYP === "function") renderFYP(); }, 80);
+});
+
+// ---- CHAPTERS (bab) dari timestamp di deskripsi -----------------------------
+// Parse baris "0:00 Judul" / "1:30 - Judul" → bab (min 2). Data ASLI dari
+// deskripsi video. Tampil: daftar bab (klik=seek) + marker di progress bar.
+function _fmtChapterTime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const pad = n => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+}
+function parsePlayerChapters(desc) {
+  if (!desc) return [];
+  const out = [];
+  String(desc).split(/\r?\n/).forEach(line => {
+    const m = line.match(/^\s*[\(\[]?(\d{1,2}:\d{2}(?::\d{2})?)[\)\]]?\s*[-–—:]?\s*(.+?)\s*$/);
+    if (!m) return;
+    const p = m[1].split(":").map(Number);
+    const sec = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+    const label = (m[2] || "").trim();
+    if (label) out.push({ t: sec, label });
+  });
+  return out.length >= 2 ? out : [];
+}
+function ensurePlayerChapters(v) {
+  const chapters = parsePlayerChapters(v && v.desc);
+  window._playerChapters = chapters;
+  const existing = document.getElementById("playerChapters");
+  if (!chapters.length) { if (existing) existing.remove(); renderChapterMarkers([]); return; }
+  let list = existing;
+  if (!list) {
+    list = document.createElement("div");
+    list.id = "playerChapters";
+    list.className = "pv-chapters";
+    const anchor = document.getElementById("playerTags") || document.getElementById("pvDescBox");
+    if (anchor) anchor.insertAdjacentElement("afterend", list);
+  }
+  list.innerHTML = `<div class="pv-chapters-head">Bab (${chapters.length})</div>` + chapters.map(c =>
+    `<button type="button" class="pv-chapter" data-seek="${c.t}"><span class="pv-chapter-t">${_fmtChapterTime(c.t)}</span><span class="pv-chapter-l">${escapeHtml(c.label)}</span></button>`
+  ).join("");
+  renderChapterMarkers(chapters);
+}
+function renderChapterMarkers(chapters) {
+  const track = document.getElementById("cplProgress");
+  if (!track) return;
+  const videoEl = document.getElementById("videoEl");
+  if (videoEl && !videoEl.__chapterBound) {
+    videoEl.__chapterBound = true;
+    videoEl.addEventListener("loadedmetadata", () => renderChapterMarkers(window._playerChapters || []));
+  }
+  track.querySelectorAll(".cpl-chapter-marker").forEach(m => m.remove());
+  const dur = videoEl && videoEl.duration;
+  if (!dur || !isFinite(dur) || !chapters || !chapters.length) return;
+  chapters.forEach(c => {
+    if (c.t > dur) return;
+    const mk = document.createElement("span");
+    mk.className = "cpl-chapter-marker";
+    mk.style.left = (c.t / dur * 100) + "%";
+    mk.title = c.label;
+    track.appendChild(mk);
+  });
+}
+document.addEventListener("click", (e) => {
+  const ch = e.target.closest(".pv-chapter[data-seek]");
+  if (!ch) return;
+  const t = parseFloat(ch.dataset.seek);
+  const videoEl = document.getElementById("videoEl");
+  if (videoEl && isFinite(t)) { try { videoEl.currentTime = t; videoEl.play && videoEl.play(); } catch (e) {} }
+});
+
 $("#saveBtn")?.addEventListener("click", () => {
   const id = state.currentVideo;
   if (state.saved.includes(id)) state.saved = state.saved.filter(x => x !== id);
@@ -55734,6 +56254,24 @@ document.getElementById("playerBackBtn")?.addEventListener("click", () => {
   document.getElementById("cplCloseBtn")?.click();
 });
 
+// Tombol "←" ringkas di topbar (sebelah breadcrumb) — tampil HANYA di player view
+// (CSS body.player-view-active). Menggantikan baris .player-back-row yang makan
+// satu baris di atas video, jadi video bisa naik. Proxy ke #playerBackBtn.
+(function injectTopbarBackBtn() {
+  const topbar = document.querySelector(".topbar");
+  const crumb = document.getElementById("breadcrumb");
+  if (!topbar || !crumb || document.getElementById("topbarBackBtn")) return;
+  const btn = document.createElement("button");
+  btn.id = "topbarBackBtn";
+  btn.type = "button";
+  btn.className = "topbar-back-btn";
+  btn.title = "Kembali";
+  btn.setAttribute("aria-label", "Kembali");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+  btn.addEventListener("click", () => document.getElementById("playerBackBtn")?.click());
+  topbar.insertBefore(btn, crumb);
+})();
+
 
 // =====================================================================
 // STORAGE PAGE — render halaman manajemen penyimpanan (clickable storage)
@@ -56623,6 +57161,53 @@ function maybeOfferSaveCard() {
   });
 })();
 
+// Restructure modal Edit Video jadi 2 kolom (Media | Pengaturan) supaya TIDAK
+// perlu scroll panjang, + inject 4 field baru (unduh/sematkan/usia/lisensi).
+// Idempotent: dijalankan sekali (guard form.dataset.vemLaidOut).
+function ensureVemLayout() {
+  const form = document.getElementById("videoEditForm");
+  if (!form || form.dataset.vemLaidOut) return;
+  form.dataset.vemLaidOut = "1";
+
+  const closestField = sel => document.getElementById(sel)?.closest(".upf-field");
+  const thumb = form.querySelector(".vem-thumb-row");
+  const judul = closestField("vemTitleInput");
+  const desc = closestField("vemDesc");
+  const sub = form.querySelector(".upf-subtitle-section");
+  const pairs = [...form.querySelectorAll(".upf-pair")];
+
+  const grid = document.createElement("div"); grid.className = "vem-grid";
+  const left = document.createElement("div"); left.className = "vem-col vem-col-media";
+  const right = document.createElement("div"); right.className = "vem-col vem-col-settings";
+  grid.append(left, right);
+
+  // KIRI = Media/konten
+  [thumb, judul, desc].forEach(el => el && left.appendChild(el));
+  // KANAN = Pengaturan (pasangan asli + field baru)
+  pairs.forEach(p => right.appendChild(p));
+  const mkField = (id, label, opts) => {
+    const f = document.createElement("div"); f.className = "upf-field";
+    f.innerHTML = `<label for="${id}">${label}</label><select id="${id}">` +
+      opts.map(o => `<option value="${o.v}">${o.t}</option>`).join("") + `</select>`;
+    return f;
+  };
+  const np1 = document.createElement("div"); np1.className = "upf-pair";
+  np1.append(
+    mkField("vemAllowDownload", "Izinkan unduh", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }]),
+    mkField("vemAllowEmbed", "Izinkan sematkan", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }])
+  );
+  const np2 = document.createElement("div"); np2.className = "upf-pair";
+  np2.append(
+    mkField("vemAgeRestrict", "Batasan usia", [{ v: "all", t: "👪 Semua umur" }, { v: "adult", t: "🔞 18+" }]),
+    mkField("vemLicense", "Lisensi", [{ v: "standard", t: "Standar Playly" }, { v: "cc", t: "Creative Commons" }])
+  );
+  right.append(np1, np2);
+
+  // Sisipkan grid sebelum subtitle (subtitle tetap full-width di bawah).
+  if (sub) form.insertBefore(grid, sub);
+  else form.appendChild(grid);
+}
+
 function openVideoEditModal(id) {
   const v = (state?.myVideos || []).find(x => x.id === id);
   if (!v) {
@@ -56631,6 +57216,7 @@ function openVideoEditModal(id) {
   }
   const modal = document.getElementById("videoEditModal");
   if (!modal) return;
+  ensureVemLayout();
 
   const setVal = (sel, val) => { const el = document.getElementById(sel); if (el) el.value = val ?? ""; };
   setVal("vemId", v.id);
@@ -56640,6 +57226,10 @@ function openVideoEditModal(id) {
   setVal("vemTags", Array.isArray(v.tags) ? v.tags.join(", ") : (v.tags || ""));
   setVal("vemVis", v.visibility || "public");
   setVal("vemComments", v.comments || v.commentMode || "all");
+  setVal("vemAllowDownload", v.allowDownload || "yes");
+  setVal("vemAllowEmbed", v.allowEmbed || "yes");
+  setVal("vemAgeRestrict", v.ageRestriction || "all");
+  setVal("vemLicense", v.license || "standard");
 
   const thumbPreview = document.getElementById("vemThumbPreview");
   if (thumbPreview) thumbPreview.src = v.thumb || "";
@@ -56691,6 +57281,10 @@ function saveVideoEdit() {
   v.tags = get("vemTags").split(",").map(s => s.trim()).filter(Boolean);
   v.visibility = get("vemVis");
   v.comments = get("vemComments");
+  v.allowDownload = get("vemAllowDownload") || "yes";
+  v.allowEmbed = get("vemAllowEmbed") || "yes";
+  v.ageRestriction = get("vemAgeRestrict") || "all";
+  v.license = get("vemLicense") || "standard";
   if (window._vemNewThumb) {
     v.thumb = window._vemNewThumb;
     window._vemNewThumb = null;

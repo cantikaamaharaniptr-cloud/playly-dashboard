@@ -8334,14 +8334,14 @@ body[data-role="admin"] .featured-badge {
   flex-direction: column;
 }
 .player-side {
-  position: sticky;
-  top: 16px;
+  /* Tumbuh penuh mengikuti halaman — JANGAN sticky + max-height + overflow:
+     dulu sidebar di-clip pada calc(100vh-80px) dgn scrollbar disembunyikan,
+     jadi kartu "Selanjutnya" terakhir kepotong & tak ada petunjuk bisa di-scroll.
+     Sekarang seluruh daftar terjangkau lewat scroll halaman biasa. */
+  position: static;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  scrollbar-width: none;
   padding-bottom: 20px;
 }
 .player-side::-webkit-scrollbar { display: none; }
@@ -8557,9 +8557,11 @@ body[data-role="admin"] #playerSidebar { display: none; }
   background: #fff;
   border-radius: 50%;
   top: 2px;
-  right: 2px;
+  left: 2px;
+  transition: transform .15s ease;
 }
 .ps-autoplay-toggle.on .ps-autoplay-pill { background: var(--primary, #6D2932); }
+.ps-autoplay-toggle.on .ps-autoplay-pill i { transform: translateX(12px); }
 .ps-related-list { display: flex; flex-direction: column; gap: 8px; }
 .ps-related-item {
   display: grid;
@@ -8578,7 +8580,15 @@ body[data-role="admin"] #playerSidebar { display: none; }
   overflow: hidden;
   background: linear-gradient(135deg, #561C24, #1a0c10);
 }
-.ps-related-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ps-related-thumb img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Placeholder bertema di balik img — muncul kalau thumbnail kosong/gagal load
+   (img di-set display:none lewat onerror). Glyph play cream samar di atas
+   gradien wine — bukan ikon broken. */
+.ps-related-thumb-ph {
+  position: absolute; inset: 0; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(232,216,196,.30);
+}
 .ps-related-thumb-time {
   position: absolute;
   bottom: 4px;
@@ -8610,6 +8620,23 @@ body[data-role="admin"] #playerSidebar { display: none; }
   color: var(--muted);
   margin-top: auto;
 }
+/* Tombol "Muat lebih banyak / Tampilkan lebih sedikit" up-next — bertema cream,
+   jaga sidebar tetap ringkas saat video banyak (bukan memanjang ke bawah). */
+.ps-related-more {
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.ps-related-more:hover { background: rgba(232,216,196,.08); border-color: rgba(232,216,196,.28); }
+.ps-related-more:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 1px; }
 .player-side-head {
   display: flex;
   align-items: center;
@@ -8825,6 +8852,16 @@ body[data-theme="light"].player-view-active .main {
   white-space: nowrap;
   padding: 0 6px;
 }
+/* v112 (responsif): padatkan control bar player di HP supaya 9 kontrol muat
+   (sebelumnya grup kanan tumpah ~17px keluar layar di <=480px). */
+@media (max-width: 480px) {
+  .cpl-controls { padding: 6px 4px 8px; }
+  .cpl-ctrl-btn { width: 30px; height: 30px; border-radius: 6px; }
+  .cpl-ctrl-btn svg { width: 16px; height: 16px; }
+  .cpl-ctrl-left { gap: 1px; }
+  .cpl-ctrl-right { gap: 0; }
+  .cpl-time { font-size: 11px; padding: 0 3px; letter-spacing: 0; }
+}
 
 /* ── 3-dots popup menu (muncul ke ATAS) ── */
 .cpl-dots-wrap { position: relative; display: flex; }
@@ -8834,7 +8871,10 @@ body[data-theme="light"].player-view-active .main {
   right: 0;
   z-index: 50;
   min-width: 230px;
-  background: rgba(14, 6, 6, 0.93);
+  /* Opak penuh: baris terbawah menu (Subtitle) duduk di atas ticker running-text
+     wine; bg semi-transparan + backdrop-blur dulu membuat ticker menembus &
+     bikin baris itu tampak redup/ber-band wine. (req user 2026-06-11) */
+  background: rgb(18, 9, 10);
   border: 1px solid rgba(255,255,255,.13);
   border-radius: 10px;
   padding: 4px;
@@ -30046,6 +30086,208 @@ section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
    tak ada yang bisa dilihat "lainnya"-nya + redundan dgn "Cari Kreator" (req user
    2026-06-16). Muncul lagi otomatis saat sudah ada kreator disarankan. */
 .suggest-card:has(.sidebar-empty-note) .suggest-foot { display: none; }
+
+/* ===================================================================
+   IKLAN — kosongkan SEMUA iklan dummy hardcoded jadi slot kosong. Iklan asli
+   nanti datang dari Ad Manager admin (in-player), BUKAN dummy. (Reuse dari
+   din/iklan-kosong.) Hero admin-driven (.ps-ad-hero) DIBIARKAN.
+   =================================================================== */
+/* Sidebar player: kartu Google Ads + mini dummy → slot kosong */
+/* Companion ad — kartu iklan bersih & disengaja (bukan kotak dashed setengah
+   jadi). Label "IKLAN" + placeholder; diisi admin Ad Manager. */
+#playerSidebar .ps-ad:not(.ps-ad-hero) {
+  position: relative !important;
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  min-height: 180px !important;
+  box-shadow: none !important;
+  margin-top: 12px;
+  overflow: hidden !important;
+}
+#playerSidebar .ps-ad:not(.ps-ad-hero) > * { visibility: hidden !important; }
+#playerSidebar .ps-ad:not(.ps-ad-hero)::before {
+  content: "Iklan" !important;
+  position: absolute !important; top: 10px !important; left: 13px !important;
+  font-size: 10px !important; font-weight: 700 !important; letter-spacing: .12em !important; text-transform: uppercase !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 44%, transparent) !important;
+  visibility: visible !important; pointer-events: none !important; z-index: 1 !important;
+}
+#playerSidebar .ps-ad:not(.ps-ad-hero)::after {
+  content: "Slot Iklan" !important;
+  position: absolute !important; inset: 24px 0 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+  pointer-events: none !important;
+}
+/* Banner iklan bawah (.pab-slot) → slot kosong ber-frame (teks & gambar) */
+.pab-slot {
+  position: relative !important;
+  background: var(--bg-elev) !important;
+  background-image: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  box-shadow: none !important; overflow: hidden !important;
+}
+.pab-slot > * { display: none !important; }
+/* Label "IKLAN" pojok kiri-atas — slot terlihat disengaja, bukan kotak kosong */
+.pab-slot::before {
+  content: "Iklan" !important;
+  position: absolute !important; top: 6px !important; left: 11px !important;
+  font-size: 9px !important; font-weight: 700 !important; letter-spacing: .12em !important; text-transform: uppercase !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 40%, transparent) !important;
+}
+.pab-slot::after {
+  content: "Slot Iklan" !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 32%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+}
+/* Ticker promo atas (.ptk) → kosongkan teks dummy (slot tetap = preview) */
+.ptk-text { visibility: hidden !important; }
+.ptk-runway { position: relative !important; }
+.ptk-runway::after {
+  content: "Slot promo" !important;
+  position: absolute !important; left: 14px !important; top: 50% !important; transform: translateY(-50%) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
+  font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
+}
+/* ===== IKLAN — pakai HANYA Ad Manager admin (applyAdOverlays → pre-roll,
+   running-text, banner, side-banner, dibaca dari getAdConfig). Slot DUMMY lama
+   (ticker promo + strip banner bawah + companion sidebar non-hero) DISEMBUNYIKAN
+   supaya 100% sesuai pengaturan admin — bukan placeholder hardcoded. Side banner
+   admin (.ps-ad-hero) tetap ada (memang admin-driven). ===== */
+body.player-view-active #playerTicker,
+body.player-view-active #playerAdBanner,
+#playerSidebar .ps-ad:not(.ps-ad-hero) { display: none !important; }
+/* Tanpa ticker dummy, topbar tak perlu offset. */
+body.player-view-active main.main { padding-top: 16px; }
+
+/* ===== WATCH PAGE — poles agar lebih profesional (mirip platform video besar) ===== */
+/* Hapus kartu branding "Tentang Playly · Watch & Connect" yang menempel di video. */
+.player-floating-banner { display: none !important; }
+/* Tombol pojok video yang REDUNDAN — bikin video ramai:
+   - #cplCloseBtn "Tutup player" = duplikat tombol "Kembali"
+   - #cplSettingsBtn "Pengaturan" = duplikat Settings/Kecepatan/CC di kontrol bawah
+   Disembunyikan di full player (fungsi tetap ada). "Buka di tab baru" dibiarkan. */
+body.player-view-active #cplCloseBtn,
+body.player-view-active #cplSettingsBtn { display: none !important; }
+
+/* Box deskripsi: jangan tampil sebagai bar kosong saat video tak punya desc. */
+.player-info .pv-desc-box[hidden] { display: none !important; }
+
+/* Running text full player = overlay lower-third ala ticker TV (Hulu/Pluto):
+   strip DI DALAM frame video, di tepi (bawah default) DI ATAS control bar 50px,
+   z-index di atas cpl-overlay (z-index 4) → selalu kelihatan saat nonton tanpa
+   mendorong judul/komentar. pointer-events:none agar tak blokir klik video. */
+.player-screen > .ad-runtext-lower3 {
+  position: absolute !important;   /* lawan .ad-runtext-outside { position: static } */
+  left: 0 !important; right: 0 !important;
+  /* z-index 3 = DI BAWAH .cpl-overlay (z-index 4) supaya kontrol & menu (PiP/
+     Kualitas/Subtitle) selalu di ATAS ticker. Dulu z-5 (di atas overlay) bikin
+     ticker menutupi baris bawah menu. Tetap di atas <video>, jadi terlihat saat
+     nonton (overlay transparan); tertutup hanya saat kontrol/menu tampil. */
+  z-index: 3;
+  margin: 0 !important;
+  border-radius: 0;
+  pointer-events: none;
+  box-shadow: 0 -1px 0 rgba(0,0,0,.25);
+}
+/* 62px = di atas control bar (50px) + garis seek .cpl-progress & thumb (~57px),
+   supaya ticker tak menutupi garis durasi saat kontrol tampil. */
+.player-screen > .ad-runtext-lower3.ad-pos-bottom { bottom: 62px !important; top: auto !important; }
+.player-screen > .ad-runtext-lower3.ad-pos-top { top: 0 !important; bottom: auto !important; }
+/* Banner in-player di FRAME video — pojok video, di atas ticker(62px)+kontrol(50px)
+   untuk posisi bawah, supaya tak menutupi garis durasi/tombol. (review iklan) */
+.player-screen > .ad-banner.ad-banner-outside {
+  position: absolute !important; z-index: 5;
+  /* Responsif: lebar banner mengikuti lebar video (38%) tapi tetap dibatasi
+     ukuran admin (max-width size class). Di laptop video menyusut → banner ikut
+     mengecil, tak lagi menutupi ~separuh video. (req user 2026-06-11) */
+  width: 38% !important;
+}
+.player-screen > .ad-banner.ad-banner-outside img { width: 100% !important; height: auto !important; }
+.player-screen > .ad-banner.ad-pos-top-right    { top: 12px !important; right: 12px !important; bottom: auto !important; left: auto !important; }
+.player-screen > .ad-banner.ad-pos-top-left     { top: 12px !important; left: 12px !important; bottom: auto !important; right: auto !important; }
+.player-screen > .ad-banner.ad-pos-bottom-right { bottom: 104px !important; right: 12px !important; top: auto !important; left: auto !important; }
+.player-screen > .ad-banner.ad-pos-bottom-left  { bottom: 104px !important; left: 12px !important; top: auto !important; right: auto !important; }
+
+/* "Ikuti" (#followBtn) & "Kirim" (#commentSend / inline) — JANGAN outline wine.
+   Ada rule global `body:not([data-role=admin]) .btn.primary` yg memaksa border+
+   teks wine (!important). Override jadi NETRAL CREAM sesuai aturan border/fokus
+   cream, biar konsisten dgn tombol aksi (Suka/Bagikan/Simpan). (req user) */
+body:not([data-role="admin"]) #followBtn,
+body:not([data-role="admin"]) #followBtn:focus,
+body:not([data-role="admin"]) #followBtn:focus-visible,
+body:not([data-role="admin"]) #followBtn:active,
+body:not([data-role="admin"]) #commentSend,
+body:not([data-role="admin"]) #commentSend:focus,
+body:not([data-role="admin"]) #commentSend:focus-visible,
+body:not([data-role="admin"]) #commentSend:active,
+body:not([data-role="admin"]) #libInlineCommentSend,
+body:not([data-role="admin"]) #libInlineCommentSend:focus,
+body:not([data-role="admin"]) #libInlineCommentSend:active {
+  background: rgba(232, 216, 196, .08) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(232, 216, 196, .40) !important;
+}
+body:not([data-role="admin"]) #followBtn:hover,
+body:not([data-role="admin"]) #commentSend:hover,
+body:not([data-role="admin"]) #libInlineCommentSend:hover {
+  background: rgba(232, 216, 196, .16) !important;
+  border-color: rgba(232, 216, 196, .60) !important;
+  color: var(--text) !important;
+}
+
+/* Tombol "←" ringkas di topbar — menggantikan baris .player-back-row di atas
+   video. Muncul hanya di player view; tema cream netral, fokus ring cream. */
+.topbar-back-btn {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.topbar-back-btn:hover { background: rgba(232,216,196,.08); border-color: rgba(232,216,196,.28); }
+.topbar-back-btn:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 1px; }
+body.player-view-active .topbar-back-btn { display: inline-flex; }
+/* Baris Kembali lama disembunyikan di full player (digantikan tombol topbar). */
+body.player-view-active .player-back-row { display: none !important; }
+
+/* Iklan admin harus KELIHATAN saat nonton (user free):
+   - Side banner (hero) di ATAS sidebar, sebelah video — bukan di bawah up-next. */
+.player-side .ps-ad-hero { order: -2; }
+/* - Running text admin tepat di bawah video (dalam player-main) → rapikan jarak. */
+.player-main > .ad-runtext-outside { margin: 12px 0 0; border-radius: 10px; overflow: hidden; }
+
+/* ===== GAYA DAILYMOTION — konten watch page tersusun kartu bersih & rapi ===== */
+.player-main .player-info,
+.player-main .pv-comments,
+.player-side .ps-section {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+}
+.player-main .player-info { padding: 18px 20px 16px !important; margin-top: 14px; }
+.player-main .pv-comments { padding: 18px 20px 20px !important; margin-top: 14px; }
+.player-side .ps-section { padding: 14px 16px 16px !important; }
+.pv-title { font-size: 20px; line-height: 1.3; }
+/* Deskripsi di dalam kartu info: bg lebih halus supaya tak terasa kartu-dalam-kartu */
+.player-main .player-info .pv-desc-box { background: var(--surface-2, rgba(255, 255, 255, .035)); }
+/* Header "Selanjutnya" lebih rapi di dalam kartu */
+.player-side .ps-section .ps-section-head,
+.player-side .ps-section h3 { margin-top: 0; }
+/* Sidebar: dahulukan "Selanjutnya" (rekomendasi) di atas, slot iklan menyusul. */
+.player-side { display: flex; flex-direction: column; }
+.player-side .ps-section { order: -1; }
 
 @keyframes spin {
   from { transform: rotate(0); }
@@ -75774,6 +76016,55 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 #chartTip:not(.show) {
   opacity: 0 !important;
   visibility: hidden !important;
+/* ===================================================================
+   PLAYER — tombol Dislike (di-inject via JS, cermin Like). Pill konsisten;
+   state aktif NETRAL (beda dari Like yang wine/--primary) supaya jelas terbedakan.
+   =================================================================== */
+.pv-pill-dislike.active { background: var(--surface-3) !important; color: var(--text) !important; }
+.pv-pill-dislike.active svg { fill: currentColor !important; }
+
+/* ===================================================================
+   IKLAN — pengosongan iklan dummy DIBAWA dari branch din/iklan-kosong
+   (ticker/banner + sidebar player) supaya branch ini juga bebas iklan dummy.
+   =================================================================== */
+/* Bar iklan bawah (.pab-slot) → slot kosong ber-frame (teks & gambar). */
+.pab-slot {
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 6%, var(--bg, #1a0c10)) !important;
+  background-image: none !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  box-shadow: none !important; overflow: hidden !important;
+}
+.pab-slot > * { display: none !important; }
+.pab-slot::after {
+  content: "Slot Iklan" !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
+}
+/* Ticker promo atas (.ptk-text) → kosongkan teks promo dummy. */
+.ptk-text { visibility: hidden !important; }
+.ptk-runway { position: relative !important; }
+.ptk-runway::after {
+  content: "Slot promo" !important;
+  position: absolute !important; left: 14px !important; top: 50% !important; transform: translateY(-50%) !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 38%, transparent) !important;
+  font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
+}
+/* Iklan SIDEBAR player dummy (Google Ads + mini); hero admin DIBIARKAN. */
+#playerSidebar .ps-ad:not(.ps-ad-hero) {
+  position: relative !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg, #1a0c10)) !important;
+  border: 1px dashed color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
+  min-height: 84px !important;
+  box-shadow: none !important;
+}
+#playerSidebar .ps-ad:not(.ps-ad-hero) > * { visibility: hidden !important; }
+#playerSidebar .ps-ad:not(.ps-ad-hero)::after {
+  content: "Slot Iklan" !important;
+  position: absolute !important; inset: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  color: color-mix(in srgb, var(--cream, #E8D8C4) 42%, transparent) !important;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: .04em !important;
   pointer-events: none !important;
 }
 
@@ -76874,3 +77165,121 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-b
   color: #fff;
   border-color: var(--primary);
 }
+   PLAYER v695 — empty-state layar video + rapikan frame slot iklan.
+   =================================================================== */
+/* Empty-state: video gagal dimuat → placeholder di atas layar. */
+.player-empty {
+  position: absolute !important; inset: 0 !important; z-index: 5 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  background: #0b0608 !important; color: var(--cream, #E8D8C4) !important;
+  text-align: center !important; padding: 20px !important;
+}
+.player-empty[hidden] { display: none !important; }
+.player-empty .pe-box svg { opacity: .5; margin-bottom: 10px; }
+.player-empty .pe-box p { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+.player-empty .pe-box small { color: var(--muted, #9a8a7a); font-size: 12px; line-height: 1.4; display: block; max-width: 280px; }
+
+/* Rapikan frame "Slot Iklan": sudut rounded konsisten + teks placeholder lebih halus. */
+.pab-slot, #playerSidebar .ps-ad:not(.ps-ad-hero) { border-radius: 10px !important; }
+.pab-slot::after, #playerSidebar .ps-ad:not(.ps-ad-hero)::after, .ptk-runway::after {
+  font-weight: 500 !important; opacity: .8 !important;
+}
+
+/* ===================================================================
+   PLAYER v696 — rapikan rhythm player-info: baris creator & kotak deskripsi
+   tadinya dempet (creator-row margin-bottom:0) → beri napas.
+   =================================================================== */
+.player-info .pv-creator-row { margin-bottom: 14px !important; }
+
+/* ===================================================================
+   PLAYER v697 — aksi ekstra: Unduh + Laporkan + tanggal upload (tema dashboard).
+   =================================================================== */
+/* Tanggal upload di samping views — muted, menyatu dgn chip. */
+.pv-views-chip .pv-date-inline { color: var(--muted) !important; font-weight: 500 !important; }
+/* Tombol Laporkan = sekunder (muted), Unduh = pill normal (warisi .pv-pill). */
+.pv-pill-report { color: var(--muted) !important; }
+.pv-pill-report:hover { color: var(--text) !important; }
+
+/* ===================================================================
+   PLAYER v698 — sort komentar + modal Sematkan (tema dashboard user).
+   =================================================================== */
+.comment-sort { display: inline-flex; gap: 4px; margin: -2px 0 12px; }
+.comment-sort[hidden] { display: none !important; }
+.comment-sort button {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.comment-sort button:hover { color: var(--text); }
+.comment-sort button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.embed-modal-backdrop {
+  position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.embed-modal {
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px; width: min(480px, 100%); color: var(--text);
+}
+.embed-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.embed-modal-head h3 { margin: 0; font-size: 16px; }
+.embed-modal-close { background: transparent; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; line-height: 1; }
+.embed-modal-close:hover { color: var(--text); }
+.embed-modal-desc { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.embed-code {
+  width: 100%; background: var(--bg, #1a0c10); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--cream, #E8D8C4); font-family: ui-monospace, monospace; font-size: 12px; padding: 10px; resize: vertical; box-sizing: border-box;
+}
+.embed-modal-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+.embed-copy {
+  background: var(--primary); color: #fff; border: 0; border-radius: 999px;
+  padding: 9px 18px; font-weight: 700; cursor: pointer;
+}
+.embed-copy:hover { filter: brightness(1.08); }
+
+/* ===================================================================
+   PLAYER v699 — tag/hashtag deskripsi + chapters (bab) dari timestamp.
+   Tema dashboard user (wine/cream).
+   =================================================================== */
+.pv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+
+.pv-chapters { margin: 14px 0 0; display: flex; flex-direction: column; gap: 2px; }
+.pv-chapters-head { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.pv-chapter {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: 8px; padding: 7px 8px;
+  color: var(--text); cursor: pointer; font-size: 13px;
+}
+.pv-chapter:hover { background: color-mix(in srgb, var(--cream, #E8D8C4) 7%, transparent); }
+.pv-chapter-t { color: var(--primary); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 44px; }
+
+.cpl-progress { position: relative; }
+.cpl-chapter-marker {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 3px; height: 11px; border-radius: 2px;
+  background: var(--cream, #E8D8C4); opacity: .85; pointer-events: none; z-index: 3;
+}
+
+/* ===================================================================
+   LIBRARY PLAYER v700 — tombol Edit Video (fitur pemilik video) tema dashboard.
+   =================================================================== */
+.lib-edit-video-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: #fff; border: 0; border-radius: 999px;
+  padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lib-edit-video-btn svg { width: 15px; height: 15px; }
+.lib-edit-video-btn:hover { filter: brightness(1.08); }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v701 — layout 2 kolom (Media | Pengaturan) supaya TIDAK
+   perlu scroll panjang. Subtitle full-width di bawah. Tema dashboard.
+   =================================================================== */
+.video-edit-panel { max-width: 840px !important; width: min(840px, 94vw) !important; max-height: 92vh !important; }
+.vem-grid {
+  display: grid; grid-template-columns: minmax(300px, 340px) 1fr;
+  gap: 22px; align-items: start; margin-bottom: 12px;
+}
+.vem-grid .vem-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.vem-grid .vem-col .upf-field,
+.vem-grid .vem-col .upf-pair { margin: 0 !important; }
+@media (max-width: 780px) { .vem-grid { grid-template-columns: 1fr; } }
