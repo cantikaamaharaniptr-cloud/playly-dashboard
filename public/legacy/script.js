@@ -34209,6 +34209,26 @@ function switchView(name, { fromNav = false } = {}) {
 
   // Beritahu observer scroll-reveal supaya re-scan element baru di view ini
   window.dispatchEvent(new CustomEvent("playly:view-changed", { detail: { view: name } }));
+
+  // i18n re-translate (2026-06-23): konten view di-render oleh fungsi render di
+  // atas SETELAH applyI18n terakhir jalan, jadi teks yang baru di-render masih
+  // bahasa sumber (Indonesia). Kalau bahasa aktif BUKAN default (id), terjemahkan
+  // ulang view yang baru di-render. Default id → skip (sumber = id). Dijalankan
+  // sinkron (tangkap render sinkron) + via timeout kecil (tangkap render yang
+  // pakai setTimeout: stats/videos/settings). Idempoten + hormati skip-zone data.
+  try {
+    if (typeof currentLang === "function" && currentLang() !== "id") {
+      const _retr = () => {
+        try {
+          const root = document.querySelector(".view.active") || document.body;
+          if (typeof deepTranslateTextNodes === "function") deepTranslateTextNodes(root);
+          if (typeof translatePlaceholders === "function") translatePlaceholders();
+        } catch (e) {}
+      };
+      _retr();
+      setTimeout(_retr, 90);
+    }
+  } catch (e) {}
 }
 
 $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(n => {
