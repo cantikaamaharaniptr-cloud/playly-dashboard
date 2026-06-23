@@ -6183,7 +6183,7 @@ const I18N = {
     // Home activity
     "home.activity.empty":       "No activity yet — share your first video to start!",
     // User Email
-    "user.email.desc":               "Email inbox — send questions to admin, replies arrive in your Inbox folder.",
+    "user.email.desc":               "Send questions to admin or email other users — replies arrive in your Inbox folder.",
     "user.email.compose":            "Compose",
     "user.email.inbox":              "Inbox",
     "user.email.sent":               "Sent",
@@ -7135,7 +7135,7 @@ const I18N = {
     "dm.choose":                 "Pilih percakapan",
     "dm.choose.desc":            "Klik salah satu chat di sebelah kiri untuk mulai. Atau klik + Pesan Baru untuk DM user lain.",
     "home.activity.empty":       "Belum ada aktivitas — bagikan video pertamamu untuk mulai!",
-    "user.email.desc":               "Inbox email — kirim pertanyaan ke admin, balasan masuk ke folder Email Masuk.",
+    "user.email.desc":               "Kirim pertanyaan ke admin atau email ke pengguna lain — balasan masuk ke folder Email Masuk.",
     "user.email.compose":            "Tulis Email",
     "user.email.inbox":              "Email Masuk",
     "user.email.sent":               "Email Terkirim",
@@ -48365,6 +48365,9 @@ function normalizeEmailEntries() {
       fromLabel: "Kamu",
       toLabel: `@${m.to || "user"}`,
       peerUsername: m.to,
+      attachments: m.attachments || [],
+      fromEmail: m.fromEmail || "",
+      toEmail: m.toEmail || "",
     }));
   });
 
@@ -48382,6 +48385,9 @@ function normalizeEmailEntries() {
       fromLabel: `@${m.from || "user"}`,
       toLabel: "Kamu",
       peerUsername: m.from,
+      attachments: m.attachments || [],
+      fromEmail: m.fromEmail || "",
+      toEmail: m.toEmail || "",
     }));
   });
 
@@ -48393,12 +48399,12 @@ function getUserEmails() { return normalizeEmailEntries(); }
 
 // Folder metadata — dipakai untuk filter, judul, hint, dan empty state.
 const USER_EMAIL_FOLDERS = {
-  all:     { title: "📂 Semua Email",      hint: "Gabungan semua email dari Inbox, Terkirim, Balasan, dan Menunggu.", empty: { icon: "📂", title: "Belum ada email",       desc: "Tulis email pertamamu lewat tombol Compose di atas." } },
-  inbox:   { title: "📥 Inbox",            hint: "Replies from admin & incoming email from other users.", empty: { icon: "📭", title: "No incoming email yet",  desc: "Replies from admin & email from other users will appear here." } },
-  sent:    { title: "📤 Sent",             hint: "All emails you've sent (admin & users).",                empty: { icon: "✉️", title: "No sent email yet",       desc: 'Click "Compose" to send to admin or another user.' } },
-  replied: { title: "💬 Replies",          hint: "Emails that have received a reply.",                    empty: { icon: "💬", title: "No replies yet",          desc: "Emails replied to by admin or other users will appear here." } },
-  waiting: { title: "⏳ Awaiting Reply",   hint: "Your emails that haven't been replied to.",             empty: { icon: "⏳", title: "Nothing is waiting",      desc: "All of your emails have been replied to." } },
-  trash:   { title: "🗑️ Sampah",          hint: "Email yang kamu hapus. Bisa di-restore atau dihapus permanen.", empty: { icon: "🗑️", title: "Sampah kosong",       desc: "Email yang kamu hapus akan muncul di sini." } },
+  all:     { title: "Semua Email",      hint: "Gabungan semua email dari Email Masuk, Terkirim, Balasan, dan Menunggu.", empty: { icon: "📂", title: "Belum ada email",          desc: "Tulis email pertamamu lewat tombol Tulis Email di atas." } },
+  inbox:   { title: "Email Masuk",      hint: "Balasan dari admin & email masuk dari pengguna lain.",                    empty: { icon: "📥", title: "Belum ada email masuk",     desc: "Balasan admin & email dari pengguna lain akan muncul di sini." } },
+  sent:    { title: "Email Terkirim",   hint: "Semua email yang sudah kamu kirim (ke admin & pengguna).",                empty: { icon: "✉️", title: "Belum ada email terkirim",  desc: "Klik \"Tulis Email\" untuk mengirim ke admin atau pengguna lain." } },
+  replied: { title: "Balasan Email",    hint: "Email yang sudah mendapat balasan.",                                      empty: { icon: "💬", title: "Belum ada balasan",         desc: "Email yang dibalas admin atau pengguna lain akan muncul di sini." } },
+  waiting: { title: "Menunggu Balasan", hint: "Email kamu yang belum dibalas.",                                          empty: { icon: "⏳", title: "Tidak ada yang menunggu",   desc: "Semua email kamu sudah dibalas." } },
+  trash:   { title: "Sampah",           hint: "Email yang kamu hapus. Bisa dipulihkan atau dihapus permanen.",           empty: { icon: "🗑️", title: "Sampah kosong",            desc: "Email yang kamu hapus akan muncul di sini." } },
 };
 
 function filterUserEmailsByFolder(all, folder) {
@@ -48425,6 +48431,9 @@ function filterUserEmailsByFolder(all, folder) {
 function renderUserEmail() {
   const list = document.getElementById("userEmailList");
   if (!list) return;
+  // Ikon pakai set Iconsax kita (.ui-ico via emojiToIcon), BUKAN picons / emoji mentah.
+  list.setAttribute("data-no-picon", "");
+  const ic = (x) => typeof emojiToIcon === "function" ? emojiToIcon(x) : x;
   const all = normalizeEmailEntries();
 
   // Counts per folder
@@ -48434,7 +48443,8 @@ function renderUserEmail() {
   const waitingItems = filterUserEmailsByFolder(all, "waiting");
   const inboxUnread = inboxItems.filter(e => !e._readByUser).length;
 
-  const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+  // Sembunyikan badge saat 0 (pola webmail) — biar rail bersih, tak ada "0" di mana-mana.
+  const setCount = (id, n) => { const el = document.getElementById(id); if (el) { el.textContent = n; el.style.display = n ? "inline-block" : "none"; } };
   const trashItems = all.filter(e => e._trashed);
   setCount("userEmailCountAll", all.filter(e => !e._trashed).length);
   setCount("userEmailCountInbox", inboxUnread || inboxItems.length);
@@ -48452,16 +48462,26 @@ function renderUserEmail() {
   const meta = USER_EMAIL_FOLDERS[userEmailState.filter] || USER_EMAIL_FOLDERS.inbox;
   const titleEl = document.getElementById("userEmailFolderTitle");
   const hintEl = document.getElementById("userEmailFolderHint");
-  if (titleEl) titleEl.textContent = meta.title;
-  if (hintEl) hintEl.textContent = meta.hint;
+  // Hapus data-i18n biar applyI18n tidak menimpa hint/judul dinamis per-folder.
+  if (titleEl) { titleEl.textContent = meta.title; titleEl.removeAttribute("data-i18n"); }
+  if (hintEl) { hintEl.textContent = meta.hint; hintEl.removeAttribute("data-i18n"); }
 
-  const filtered = filterUserEmailsByFolder(all, userEmailState.filter);
+  let filtered = filterUserEmailsByFolder(all, userEmailState.filter);
+  // Pencarian: filter subjek/isi/pengirim/penerima.
+  const q = (document.getElementById("userEmailSearch")?.value || "").trim().toLowerCase();
+  if (q) filtered = filtered.filter(e =>
+    String(e.title || "").toLowerCase().includes(q) ||
+    String(e.body || "").toLowerCase().includes(q) ||
+    String(e.fromLabel || "").toLowerCase().includes(q) ||
+    String(e.toLabel || "").toLowerCase().includes(q) ||
+    String(e.peerUsername || "").toLowerCase().includes(q));
 
   if (!filtered.length) {
+    const e0 = q ? { icon: "🔍", title: "Tidak ada email yang cocok", desc: "Coba kata kunci lain." } : meta.empty;
     list.innerHTML = `<div class="user-email-empty">
-      <div class="user-email-empty-icon">${meta.empty.icon}</div>
-      <h4>${meta.empty.title}</h4>
-      <p>${meta.empty.desc}</p>
+      <div class="user-email-empty-icon">${ic(e0.icon)}</div>
+      <h4>${escapeHtml(e0.title)}</h4>
+      <p>${escapeHtml(e0.desc)}</p>
     </div>`;
     return;
   }
@@ -48477,43 +48497,49 @@ function renderUserEmail() {
     // Badge status — beda style per kind
     let statusBadge = "";
     if (e.kind === "user-in") {
-      statusBadge = `<span class="user-email-badge info">📥 From ${escapeHtml(e.fromLabel)}</span>`;
+      statusBadge = `<span class="user-email-badge info">${ic("📥")} Dari ${escapeHtml(e.fromLabel)}</span>`;
     } else if (replyCount) {
-      statusBadge = `<span class="user-email-badge ok">✓ ${replyCount} ${replyCount === 1 ? "reply" : "replies"}${isUnread ? ' • new' : ''}</span>`;
+      statusBadge = `<span class="user-email-badge ok">${ic("✓")} ${replyCount} balasan${isUnread ? ' • baru' : ''}</span>`;
     } else {
-      const target = e.kind === "admin-out" ? "admin" : "user";
-      statusBadge = `<span class="user-email-badge warn">⏳ Awaiting ${target} reply</span>`;
+      const target = e.kind === "admin-out" ? "admin" : "pengguna";
+      statusBadge = `<span class="user-email-badge warn">${ic("⏳")} Menunggu balasan ${target}</span>`;
     }
 
     // Icon — admin = shield, user-out = sent, user-in = inbox
     const icon = e.kind === "admin-out" ? "🛡️" : (e.kind === "user-in" ? "📥" : "📤");
+    const peerInit = (String(e.peerUsername || "?").trim().charAt(0) || "?").toUpperCase();
 
     // Preview body — kalau inbox dan punya reply, pakai body reply terakhir
     const previewSrc = (userEmailState.filter === "inbox" && lastReply?.body) ? lastReply.body : (e.body || "");
 
     // Meta line — siapa to / from
-    const metaLine = e.kind === "user-in"
-      ? `From ${escapeHtml(e.fromLabel)}`
-      : `To ${escapeHtml(e.toLabel)}`;
+    const attN = Array.isArray(e.attachments) ? e.attachments.length : 0;
+    const metaLine = (e.kind === "user-in"
+      ? `Dari ${escapeHtml(e.fromLabel)}`
+      : `Ke ${escapeHtml(e.toLabel)}`) + (attN ? ` · <span class="uemail-clip">${ic("📎")} ${attN}</span>` : "");
 
     const isTrash = userEmailState.filter === "trash";
     const trashAction = isTrash
-      ? `<button type="button" class="uef-row-action" data-uemail-restore="${e.id}" title="Pulihkan">↺</button>
-         <button type="button" class="uef-row-action" data-uemail-delete-permanent="${e.id}" title="Hapus permanen">🗑️</button>`
-      : `<button type="button" class="uef-row-action" data-uemail-trash="${e.id}" title="Pindahkan ke Sampah">🗑️</button>`;
+      ? `<button type="button" class="uef-row-action" data-uemail-restore="${e.id}" title="Pulihkan">${ic("↺")}</button>
+         <button type="button" class="uef-row-action" data-uemail-delete-permanent="${e.id}" title="Hapus permanen">${ic("🗑️")}</button>`
+      : `<button type="button" class="uef-row-action" data-uemail-trash="${e.id}" title="Pindahkan ke Sampah">${ic("🗑️")}</button>`;
     return `
-      <div class="user-email-item ${isUnread ? 'unread' : ''}" data-uemail-id="${e.id}" data-uemail-kind="${e.kind}">
-        <div class="user-email-icon">${icon}</div>
+      <div class="user-email-item ${isUnread ? 'unread' : ''}${(String(e.id) === String(userEmailState.openId) && e.kind === userEmailState.openKind) ? ' selected' : ''}" data-uemail-id="${e.id}" data-uemail-kind="${e.kind}">
+        <div class="user-email-avatar">
+          <span class="uemail-av-ini" translate="no" data-no-i18n>${escapeHtml(peerInit)}</span>
+          <span class="uemail-badge ${e.kind}">${ic(icon)}</span>
+        </div>
         <div class="user-email-body">
           <div class="user-email-row">
-            <strong class="user-email-subject">${escapeHtml(e.title || "(no subject)")}</strong>
+            <strong class="user-email-subject">${escapeHtml(e.title || "(tanpa subjek)")}</strong>
             <span class="user-email-time">${escapeHtml(ts)}</span>
           </div>
           <small class="user-email-meta-line">${metaLine}</small>
           <p class="user-email-preview">${escapeHtml(String(previewSrc).slice(0, 120))}${previewSrc.length > 120 ? "…" : ""}</p>
           ${statusBadge}
         </div>
-        <div class="user-email-row-actions" style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+        <div class="user-email-row-actions" style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+          ${isUnread ? '<span class="uemail-dot" aria-hidden="true"></span>' : ''}
           ${trashAction}
         </div>
       </div>`;
@@ -48542,10 +48568,15 @@ function renderUserEmail() {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const id = btn.dataset.uemailDeletePermanent;
-      if (!window.confirm("Hapus email ini permanen? Tidak bisa di-restore.")) return;
-      deleteEmailPermanent(id);
-      toast?.("🗑️ Email dihapus permanen", "success");
-      renderUserEmail();
+      const _doDel = () => {
+        deleteEmailPermanent(id);
+        toast?.("🗑️ Email dihapus permanen", "success");
+        renderUserEmail();
+      };
+      if (typeof openConfirm === "function") {
+        openConfirm({ icon: "🗑️", iconClass: "danger", title: "Hapus permanen?", desc: "Email ini akan dihapus permanen dan tidak bisa dipulihkan.", btnText: "Hapus", btnClass: "danger", onConfirm: _doDel });
+        try { if (typeof convertUiEmojis === "function") convertUiEmojis(document.getElementById("confirmIcon")); } catch (e2) {}
+      } else { _doDel(); }
     });
   });
 
@@ -48561,6 +48592,12 @@ function renderUserEmail() {
       } else {
         openUserEmailDetailUser(entry);
       }
+      // Tandai baris terpilih — simpan id+kind di state supaya bertahan saat list re-render.
+      userEmailState.openId = id;
+      userEmailState.openKind = kind;
+      list.querySelectorAll(".user-email-item").forEach(x => {
+        x.classList.toggle("selected", x.dataset.uemailId === String(id) && x.dataset.uemailKind === kind);
+      });
     });
   });
 }
@@ -48587,15 +48624,23 @@ function openUserEmailDetailUser(entry) {
   const ts = entry.createdAt ? (typeof relTime === "function" ? relTime(entry.createdAt) : "") : "";
   const isIncoming = entry.kind === "user-in";
   const peer = entry.peerUsername || "user";
-  const headerSenderName = isIncoming ? entry.fromLabel : "You";
+  const headerSenderName = isIncoming ? entry.fromLabel : "Kamu";
   const subjectIcon = isIncoming ? "📥" : "📤";
+  // Header alamat email Dari -> Ke (seperti email biasa)
+  const myMail = user?.email || "";
+  const fromAddr = isIncoming
+    ? `${escapeHtml(entry.fromLabel)}${entry.fromEmail ? ` &lt;${escapeHtml(entry.fromEmail)}&gt;` : ""}`
+    : `Kamu${myMail ? ` &lt;${escapeHtml(myMail)}&gt;` : ""}`;
+  const toAddr = isIncoming
+    ? `Kamu${(entry.toEmail || myMail) ? ` &lt;${escapeHtml(entry.toEmail || myMail)}&gt;` : ""}`
+    : `@${escapeHtml(peer)}${entry.toEmail ? ` &lt;${escapeHtml(entry.toEmail)}&gt;` : ""}`;
 
   const replies = (entry.replies || []).map(r => {
     const fromMe = r.from === user?.username || r.fromMe;
     return `
     <div class="user-email-thread-msg ${fromMe ? 'me' : 'admin'}">
       <div class="user-email-thread-head">
-        <strong>${escapeHtml(fromMe ? "You" : (r.fromName || `@${r.from || peer}`))}</strong>
+        <strong>${escapeHtml(fromMe ? "Kamu" : (r.fromName || `@${r.from || peer}`))}</strong>
         <small>${escapeHtml(typeof relTime === "function" && r.ts ? relTime(r.ts) : "")}</small>
       </div>
       <p class="user-email-thread-body">${escapeHtml(r.body || "")}</p>
@@ -48603,12 +48648,24 @@ function openUserEmailDetailUser(entry) {
   `;
   }).join("");
 
+  // Lampiran: gambar -> thumbnail (klik buka lightbox), file -> chip unduh.
+  const atts = Array.isArray(entry.attachments) ? entry.attachments : [];
+  const attHtml = atts.length ? `<div class="uemail-att">${atts.map((a, i) =>
+    a.kind === "image"
+      ? `<img class="uemail-att-img" src="${a.dataURL}" data-uemail-img="${i}" alt="${escapeHtml(a.name || "")}"/>`
+      : `<a class="uemail-att-file" href="${a.dataURL}" download="${escapeHtml(a.name || "file")}"><span class="uemail-att-fico">${typeof emojiToIcon === "function" ? emojiToIcon("📄") : "📄"}</span><span class="uemail-att-fname">${escapeHtml(a.name || "file")}</span></a>`
+  ).join("")}</div>` : "";
+
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-uemail-close></div>
     <div class="hs-popup-panel user-email-panel">
       <button type="button" class="hs-popup-close" data-uemail-close aria-label="Tutup">✕</button>
-      <div class="user-email-thread-subject">${subjectIcon} ${escapeHtml(entry.title || "(no subject)")}</div>
-      <small class="user-email-thread-meta">${isIncoming ? `From ${escapeHtml(entry.fromLabel)}` : `To @${escapeHtml(peer)}`} • ${escapeHtml(ts)}</small>
+      <div class="user-email-thread-subject">${subjectIcon} ${escapeHtml(entry.title || "(tanpa subjek)")}</div>
+      <div class="user-email-thread-addr">
+        <div class="ueta-row"><span class="ea-l">Dari</span><span class="ea-v">${fromAddr}</span></div>
+        <div class="ueta-row"><span class="ea-l">Ke</span><span class="ea-v">${toAddr}</span></div>
+        <div class="ueta-time">${escapeHtml(ts)}</div>
+      </div>
       <div class="user-email-thread-body-wrap">
         <div class="user-email-thread-msg ${isIncoming ? 'admin' : 'me'}">
           <div class="user-email-thread-head">
@@ -48616,6 +48673,7 @@ function openUserEmailDetailUser(entry) {
             <small>${escapeHtml(ts)}</small>
           </div>
           <p class="user-email-thread-body">${escapeHtml(entry.body || "")}</p>
+          ${attHtml}
         </div>
         ${replies}
       </div>
@@ -48625,8 +48683,12 @@ function openUserEmailDetailUser(entry) {
       </form>
     </div>
   `;
-  document.body.appendChild(modal);
-  requestAnimationFrame(() => modal.classList.add("show"));
+  _mountEmailDetail(modal);
+
+  // Klik thumbnail lampiran gambar → lightbox
+  modal.querySelectorAll("[data-uemail-img]").forEach(img => img.addEventListener("click", () => {
+    if (typeof openImageLightbox === "function") openImageLightbox({ src: img.getAttribute("src"), name: img.getAttribute("alt") });
+  }));
 
   modal.querySelector("#userEmailReplyForm")?.addEventListener("submit", e => {
     e.preventDefault();
@@ -48722,7 +48784,7 @@ function openUserEmailDetail(t) {
     <div class="hs-popup-backdrop" data-uemail-close></div>
     <div class="hs-popup-panel user-email-panel">
       <button type="button" class="hs-popup-close" data-uemail-close aria-label="Tutup">✕</button>
-      <div class="user-email-thread-subject">📧 ${escapeHtml(t.title || "(no subject)")}</div>
+      <div class="user-email-thread-subject">📧 ${escapeHtml(t.title || "(tanpa subjek)")}</div>
       <small class="user-email-thread-meta">Dikirim ${escapeHtml(ts)} ke admin Playly</small>
       <div class="user-email-thread-body-wrap">
         <div class="user-email-thread-msg me">
@@ -48736,14 +48798,34 @@ function openUserEmailDetail(t) {
       </div>
     </div>
   `;
-  document.body.appendChild(modal);
-  requestAnimationFrame(() => modal.classList.add("show"));
+  _mountEmailDetail(modal);
   renderUserEmail();
   syncPdEmailBadge();
 }
 
+// Empty-state panel baca (saat belum ada email dipilih / setelah ditutup).
+const EMAIL_PANE_EMPTY = '<div class="user-email-read-empty"><span class="uerd-ico" data-no-picon><svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" style="vertical-align:-0.14em" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><h4>Pilih email untuk dibaca</h4><p>Klik salah satu email di daftar untuk membukanya di sini.</p></div>';
+
+// Mount detail email: kalau ada panel baca (layout 3 kolom, layar lebar) → render INLINE
+// ke dalam pane; kalau tidak (layar sempit) → modal overlay seperti biasa.
+function _mountEmailDetail(modal) {
+  const pane = document.getElementById("userEmailReadPane");
+  if (pane && window.innerWidth >= 980) {
+    modal.classList.add("in-pane", "show");
+    pane.innerHTML = "";
+    pane.appendChild(modal);
+  } else {
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add("show"));
+  }
+}
+
 function closeUserEmailDetail() {
   document.getElementById("__userEmailModal")?.remove();
+  const pane = document.getElementById("userEmailReadPane");
+  if (pane && !pane.querySelector(".hs-popup-panel")) pane.innerHTML = EMAIL_PANE_EMPTY;
+  if (typeof userEmailState === "object" && userEmailState) { userEmailState.openId = null; userEmailState.openKind = null; }
+  document.querySelectorAll(".user-email-item.selected").forEach(el => el.classList.remove("selected"));
 }
 
 document.addEventListener("click", e => {
@@ -48762,6 +48844,14 @@ document.addEventListener("click", e => {
   if (e.target.closest("#userEmailComposeBtn")) {
     openEmailRecipientPicker();
   }
+  // Pintasan "Hubungi Admin" di bawah rail folder → langsung compose ke admin
+  if (e.target.closest("#userEmailContactAdmin")) {
+    openEmailToAdminCompose();
+  }
+});
+// Pencarian email — re-render list saat user ngetik (input sibling list, fokus tetap).
+document.addEventListener("input", (e) => {
+  if (e.target && e.target.id === "userEmailSearch" && typeof renderUserEmail === "function") renderUserEmail();
 });
 
 // Picker untuk pilih recipient: Admin (tim Playly) atau User (kreator lain).
@@ -48774,23 +48864,23 @@ function openEmailRecipientPicker() {
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-erp-close></div>
     <div class="hs-popup-panel email-recipient-panel">
-      <button type="button" class="hs-popup-close" data-erp-close aria-label="Close">✕</button>
-      <h3 class="email-recipient-title">✉️ Compose New Email</h3>
-      <p class="email-recipient-desc">Who do you want to send to?</p>
+      <button type="button" class="hs-popup-close" data-erp-close aria-label="Tutup">✕</button>
+      <h3 class="email-recipient-title">✉️ Tulis Email Baru</h3>
+      <p class="email-recipient-desc">Mau kirim ke siapa?</p>
       <div class="email-recipient-options">
         <button type="button" class="email-recipient-option" data-erp-target="admin">
           <span class="ero-icon">🛡️</span>
           <div class="ero-info">
-            <strong>Email to Admin</strong>
-            <small>Contact Playly team for help, questions, or reports.</small>
+            <strong>Email ke Admin</strong>
+            <small>Hubungi tim Playly untuk bantuan, pertanyaan, atau laporan.</small>
           </div>
           <svg class="ero-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </button>
         <button type="button" class="email-recipient-option" data-erp-target="user">
           <span class="ero-icon">👤</span>
           <div class="ero-info">
-            <strong>Email to User</strong>
-            <small>Send a direct message to other creators on Playly.</small>
+            <strong>Email ke Pengguna</strong>
+            <small>Kirim pesan langsung ke kreator lain di Playly.</small>
           </div>
           <svg class="ero-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </button>
@@ -48824,15 +48914,17 @@ function openEmailToAdminCompose() {
   openSupportCompose({
     type: "email",
     icon: "📧",
-    title: "Email to Admin",
-    desc: "Your message will go directly to the Playly admin Inbox.",
+    title: "Email ke Admin",
+    desc: "Pesanmu langsung masuk ke Inbox admin Playly.",
     subjectDefault: `Permintaan bantuan dari ${fromName}`,
-    bodyDefault: `Hi Super Admin,\n\nI'm ${fromName} (@${username}) and I need help with:\n\n[Write your question/issue here]\n\nThanks.`
+    bodyDefault: `Halo Super Admin,\n\nSaya ${fromName} (@${username}) dan butuh bantuan soal:\n\n[Tulis pertanyaan/masalahmu di sini]\n\nTerima kasih.`
   });
 }
 
 // Picker untuk pilih user recipient. Tampilkan list kreator + search input.
-function openEmailUserPicker() {
+// onPick(uname) opsional: kalau diberikan, dipanggil saat pilih (mis. ganti penerima
+// di compose tanpa buka ulang); kalau tidak, default buka compose baru.
+function openEmailUserPicker(onPick) {
   closeEmailUserPicker();
   const modal = document.createElement("div");
   modal.className = "hs-popup-modal";
@@ -48841,11 +48933,11 @@ function openEmailUserPicker() {
     <div class="hs-popup-backdrop" data-eup-close></div>
     <div class="hs-popup-panel email-user-picker-panel">
       <button type="button" class="hs-popup-close" data-eup-close aria-label="Close">✕</button>
-      <h3 class="email-recipient-title">👤 Choose Recipient</h3>
-      <p class="email-recipient-desc">Search for the user you want to email.</p>
+      <h3 class="email-recipient-title">👤 Pilih Penerima</h3>
+      <p class="email-recipient-desc">Cari pengguna yang mau kamu kirimi email.</p>
       <div class="email-user-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="text" id="emailUserSearchInput" placeholder="Search name or username..." autocomplete="off"/>
+        <input type="text" id="emailUserSearchInput" placeholder="Cari nama atau username..." autocomplete="off"/>
       </div>
       <div class="email-user-list" id="emailUserPickerList"></div>
     </div>
@@ -48886,7 +48978,8 @@ function openEmailUserPicker() {
       b.addEventListener("click", () => {
         const uname = b.dataset.eupPick;
         closeEmailUserPicker();
-        openEmailToUserCompose(uname);
+        if (typeof onPick === "function") onPick(uname);
+        else openEmailToUserCompose(uname);
       });
     });
   };
@@ -48907,24 +49000,36 @@ function openEmailToUserCompose(recipientUsername) {
   modal.className = "hs-popup-modal";
   modal.id = "__emailToUserCompose";
   const fromName = user?.name || user?.username || "User";
+  const senderEmail = user?.email || "";
+  let recipientEmail = (typeof findAccountByUsername === "function" ? (findAccountByUsername(recipientUsername) || {}).email : "") || "";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-eutc-close></div>
     <div class="hs-popup-panel email-user-compose-panel">
-      <button type="button" class="hs-popup-close" data-eutc-close aria-label="Close">✕</button>
-      <h3 class="email-recipient-title">✉️ Email to @${escapeHtml(recipientUsername)}</h3>
-      <p class="email-recipient-desc">Message will go to @${escapeHtml(recipientUsername)}'s Inbox folder.</p>
+      <button type="button" class="hs-popup-close" data-eutc-close aria-label="Tutup">✕</button>
+      <h3 class="email-recipient-title">✉️ Email ke @${escapeHtml(recipientUsername)}</h3>
+      <p class="email-recipient-desc">Pesan akan masuk ke folder Email Masuk @${escapeHtml(recipientUsername)}.</p>
+      <div class="email-addr">
+        <div class="email-addr-row"><span class="ea-l">Dari</span><span class="ea-v">${escapeHtml(fromName)}${senderEmail ? ` &lt;${escapeHtml(senderEmail)}&gt;` : ""}</span></div>
+        <div class="email-addr-row"><span class="ea-l">Ke</span><span class="ea-v" id="eutcToVal">@${escapeHtml(recipientUsername)}${recipientEmail ? ` &lt;${escapeHtml(recipientEmail)}&gt;` : ""}</span><button type="button" class="ea-change" id="eutcChangeTo">Ganti</button></div>
+      </div>
       <form id="emailToUserForm" novalidate>
         <label class="email-utf-field">
-          <span>Subject</span>
-          <input type="text" name="subject" placeholder="Hi, I have something interesting..." required maxlength="120"/>
+          <span>Subjek</span>
+          <input type="text" name="subject" placeholder="Hai, ada sesuatu yang menarik..." required maxlength="120"/>
         </label>
         <label class="email-utf-field">
-          <span>Message</span>
-          <textarea name="body" rows="6" placeholder="Write your message here..." required minlength="10"></textarea>
+          <span>Pesan</span>
+          <textarea name="body" rows="6" placeholder="Tulis pesanmu di sini..." required minlength="10"></textarea>
         </label>
+        <div class="eutc-att">
+          <button type="button" class="btn ghost sm" id="eutcAttach">📎 Lampiran</button>
+          <span class="eutc-att-hint">Foto/file · maks 6 · ≤2MB/file</span>
+          <input type="file" id="eutcFile" multiple style="display:none"/>
+        </div>
+        <div class="eutc-att-strip" id="eutcAttStrip"></div>
         <div class="email-utf-actions">
-          <button type="button" class="btn ghost" data-eutc-close>Cancel</button>
-          <button type="submit" class="btn primary">📤 Send Email</button>
+          <button type="button" class="btn ghost" data-eutc-close>Batal</button>
+          <button type="submit" class="btn primary">📤 Kirim Email</button>
         </div>
       </form>
     </div>
@@ -48933,18 +49038,66 @@ function openEmailToUserCompose(recipientUsername) {
   requestAnimationFrame(() => modal.classList.add("show"));
 
   modal.querySelectorAll("[data-eutc-close]").forEach(b => b.addEventListener("click", closeEmailToUserCompose));
+
+  // Ganti penerima tanpa kehilangan draft (subjek/isi/lampiran tetap).
+  const updateRecipient = (uname) => {
+    if (!uname) return;
+    recipientUsername = uname;
+    recipientEmail = (typeof findAccountByUsername === "function" ? (findAccountByUsername(uname) || {}).email : "") || "";
+    const t = modal.querySelector(".email-recipient-title"); if (t) t.innerHTML = `✉️ Email ke @${escapeHtml(uname)}`;
+    const d = modal.querySelector(".email-recipient-desc"); if (d) d.textContent = `Pesan akan masuk ke folder Email Masuk @${uname}.`;
+    const v = modal.querySelector("#eutcToVal"); if (v) v.innerHTML = `@${escapeHtml(uname)}${recipientEmail ? ` &lt;${escapeHtml(recipientEmail)}&gt;` : ""}`;
+    try { if (typeof convertUiEmojis === "function") convertUiEmojis(modal); } catch (e) {}
+  };
+  modal.querySelector("#eutcChangeTo")?.addEventListener("click", () => openEmailUserPicker(updateRecipient));
+
+  // Lampiran (foto + file) — staging sebelum kirim, maks 4, file non-gambar ≤2MB.
+  const pending = [];
+  const renderStrip = () => {
+    const el = modal.querySelector("#eutcAttStrip");
+    if (!el) return;
+    el.innerHTML = pending.map((a, i) => a.kind === "image"
+      ? `<div class="eutc-att-thumb"><img src="${a.dataURL}" alt=""/><button type="button" class="eutc-att-x" data-eutc-rm="${i}" aria-label="Hapus">×</button></div>`
+      : `<div class="eutc-att-chip"><span class="eutc-att-ico">${typeof emojiToIcon === "function" ? emojiToIcon("📄") : "📄"}</span><span class="eutc-att-name">${escapeHtml(a.name)}</span><button type="button" class="eutc-att-x" data-eutc-rm="${i}" aria-label="Hapus">×</button></div>`
+    ).join("");
+  };
+  const ATT_CAP = 6;
+  modal.querySelector("#eutcAttach")?.addEventListener("click", () => modal.querySelector("#eutcFile")?.click());
+  modal.querySelector("#eutcFile")?.addEventListener("change", (ev) => {
+    let files = [...(ev.target.files || [])];
+    ev.target.value = "";
+    // Hitung slot SEBELUM baca (read async) — supaya pilih banyak file sekaligus tetap kena cap.
+    const room = ATT_CAP - pending.length;
+    if (room <= 0) { toast(`⚠️ Maksimal ${ATT_CAP} lampiran`, "warning"); return; }
+    if (files.length > room) { toast(`⚠️ Maksimal ${ATT_CAP} lampiran — sebagian dilewati`, "warning"); files = files.slice(0, room); }
+    files.forEach((f) => {
+      if (f.type && f.type.startsWith("image/")) {
+        _acpReadImageScaled(f, (dataURL) => { pending.push({ kind: "image", name: f.name, type: f.type, dataURL }); renderStrip(); });
+      } else {
+        if (f.size > 2 * 1024 * 1024) { toast(`⚠️ "${f.name}" lebih dari 2MB, dilewati`, "warning"); return; }
+        const r = new FileReader();
+        r.onload = () => { pending.push({ kind: "file", name: f.name, type: f.type, size: f.size, dataURL: r.result }); renderStrip(); };
+        r.readAsDataURL(f);
+      }
+    });
+  });
+  modal.addEventListener("click", (ev) => {
+    const rm = ev.target.closest("[data-eutc-rm]");
+    if (rm) { pending.splice(+rm.dataset.eutcRm, 1); renderStrip(); }
+  });
+
   modal.querySelector("#emailToUserForm")?.addEventListener("submit", e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const subject = String(fd.get("subject") || "").trim();
     const body = String(fd.get("body") || "").trim();
     if (!subject || body.length < 10) {
-      toast("⚠️ Subject is required and message must be at least 10 characters", "warning");
+      toast("⚠️ Subjek wajib diisi dan pesan minimal 10 karakter", "warning");
       return;
     }
-    sendUserEmail(recipientUsername, subject, body);
+    sendUserEmail(recipientUsername, subject, body, pending);
     closeEmailToUserCompose();
-    toast(`📤 Email sent to @${recipientUsername}`, "success");
+    toast(`📤 Email terkirim ke @${recipientUsername}`, "success");
     if (typeof renderUserEmail === "function") renderUserEmail();
   });
   setTimeout(() => modal.querySelector('[name="subject"]')?.focus(), 100);
@@ -48956,11 +49109,13 @@ function closeEmailToUserCompose() {
 // Send email user-to-user. Tulis ke playly-state-{recipient}.userMailbox
 // supaya recipient bisa lihat di folder Email Masuk-nya. Juga simpan copy
 // di state.userMailbox.sent supaya sender bisa lihat di Email Terkirim.
-function sendUserEmail(recipientUsername, subject, body) {
+function sendUserEmail(recipientUsername, subject, body, attachments) {
   if (!user?.username) return;
+  const att = Array.isArray(attachments) ? attachments : [];
   const senderUsername = user.username;
   const senderName = user.name || senderUsername;
   const senderEmail = user.email || "";
+  const recipientEmail = (typeof findAccountByUsername === "function" ? (findAccountByUsername(recipientUsername) || {}).email : "") || "";
   const id = Date.now() + Math.random();
   const ts = Date.now();
 
@@ -48973,6 +49128,8 @@ function sendUserEmail(recipientUsername, subject, body) {
     from: senderUsername,
     fromName: senderName,
     fromEmail: senderEmail,
+    toEmail: recipientEmail,
+    attachments: att,
     replies: [],
   });
   saveState();
@@ -48990,6 +49147,8 @@ function sendUserEmail(recipientUsername, subject, body) {
     from: senderUsername,
     fromName: senderName,
     fromEmail: senderEmail,
+    toEmail: recipientEmail,
+    attachments: att,
     replies: [],
     _unread: true,
   });
