@@ -6862,6 +6862,8 @@ body[data-role="admin"] .session-row.session-current .session-icon {
   font-weight: 700;
   letter-spacing: .04em;
 }
+/* Light: badge "Perangkat ini" teks cream tak terbaca di bg terang -> wine. */
+body[data-theme="light"]:not([data-role="admin"]) .session-badge-current { color: var(--primary); background: rgba(109,41,50,.10); border-color: rgba(109,41,50,.30); }
 body[data-role="admin"] .session-badge-current {
   background: rgba(154, 170, 196, .14);
   border-color: rgba(154, 170, 196, .42);
@@ -33296,23 +33298,23 @@ body:not([data-role="admin"]) .auth-screen .auth-card:hover,
 body:not([data-role="admin"]) .auth-screen .auth-card:focus-within {
   box-shadow: none !important;
 }
-/* Tombol primary di user role — GHOST/OUTLINE pure (per request 2026-05-03 revisi).
+/* Tombol primary di user role — SOLID wine + teks krem (per request user 2026-06-23, balik outline 2026-05-03 yg tak terbaca di dark).
    ZERO wine bg di state apapun — rest, hover, focus, active semua transparent.
    Hanya border + text wine. Hover feedback via border-thicken / text-bolder. */
 body:not([data-role="admin"]) .btn.primary,
-body:not([data-role="admin"]) .btn.primary:hover,
 body:not([data-role="admin"]) .btn.primary:focus,
 body:not([data-role="admin"]) .btn.primary:focus-visible,
 body:not([data-role="admin"]) .btn.primary:active {
-  background: transparent !important;
-  color: var(--primary) !important;
+  background: var(--primary) !important;
+  color: #E8D8C4 !important;
   border: 1px solid var(--primary) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 body:not([data-role="admin"]) .btn.primary:hover {
+  background: var(--primary-hover) !important;
   border-color: var(--primary-hover) !important;
-  color: var(--primary-hover) !important;
+  color: #E8D8C4 !important;
 }
 /* Auth submit (Sign In Now / Create Account) — keep filled wine sebagai
    primary CTA login screen, tapi flat (no glow). User belum minta ghost
@@ -72509,6 +72511,8 @@ body.a11y-bold-text *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(strong
   box-shadow: 0 0 0 3px rgba(232, 216, 196, .15);
 }
 .cdrop.open .cdrop-trigger { border-color: rgba(232, 216, 196, .45); }
+/* Light: trigger dropdown jangan bg gelap hardcoded #311c22 (teks wine tak terbaca). */
+body[data-theme="light"] .cdrop-trigger { background: var(--surface-2); border-color: var(--border); }
 .cdrop-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cdrop-chevron { width: 16px; height: 16px; flex-shrink: 0; opacity: .65; transition: transform .15s; }
 .cdrop.open .cdrop-chevron { transform: rotate(180deg); }
