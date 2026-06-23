@@ -2600,7 +2600,7 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
   "premium-insights": "Insight Premium",
@@ -6427,7 +6427,7 @@ const I18N = {
     "page.activity":             "Aktivitas",
     "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
-    "page.profile.edit":         "Edit Profil",
+    "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Kreator",
     "page.profile.my":           "Profil Saya",
     "page.email":                "Email",
@@ -6991,7 +6991,7 @@ const I18N = {
     "user.email.replies":            "Balasan Email",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan dari admin Playly.",
-    "profile.edit.title":        "👤 Edit Profil",
+    "profile.edit.title":        "👤 Ubah Profil",
     "profile.edit.desc":         "Atur informasi yang ditampilkan di profilmu.",
     "profile.identity":          "🪪 Identitas",
     "profile.choose.photo":      "Pilih Foto",
@@ -7095,7 +7095,7 @@ const I18N = {
     "myprofile.liked.empty.title":"Belum ada video disukai",
     "myprofile.liked.empty.desc":"Like video supaya muncul di sini.",
     "myprofile.empty.upload":    "Belum ada video — upload sekarang",
-    "profile.edit.btn":          "Edit Profil",
+    "profile.edit.btn":          "Ubah Profil",
     // My Library ID
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "Video Baru",
@@ -7133,10 +7133,10 @@ const I18N = {
     "uemail.awaiting.admin":     "Menunggu balasan admin",
     "uemail.awaiting.user":      "Menunggu balasan user",
     // Logout / overlay ID
-    "logout.title":              "Logout dari Playly?",
+    "logout.title":              "Keluar dari Playly?",
     "logout.desc.pre":           "Kamu akan keluar dari akun",
     "logout.desc.post":          ". Data tersimpan dan bisa diakses kembali setelah login.",
-    "logout.btn":                "Logout",
+    "logout.btn":                "Keluar",
     "logout.bye":                "Sampai jumpa",
     "logout.loggingout":         "Logging out...",
     "logout.toast.success":      "Berhasil logout.",
@@ -18647,7 +18647,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
@@ -48521,7 +48521,7 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Keluar dari device ini? Device tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
     if (typeof toast === "function") toast("✓ Device di-logout", "success");
@@ -48535,7 +48535,7 @@ document.addEventListener("click", e => {
       if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Keluar dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
     if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
@@ -49271,7 +49271,7 @@ $("#upShareBtn")?.addEventListener("click", () => {
   toast("🔗 Link profil disalin", "success");
 });
 
-// Tombol "Edit Profil" di own channel → langsung ke editor profil
+// Tombol "Ubah Profil" di own channel → langsung ke editor profil
 $("#upEditBtn")?.addEventListener("click", () => switchView("profile"));
 
 $("#upMessageBtn")?.addEventListener("click", () => {
@@ -52143,7 +52143,7 @@ async function renderStoragePage() {
     const cats = [
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><polygon points="10 9 15 13 10 17 10 9" fill="currentColor"/></svg>', label: "Video", desc: `${myVideos.length} file video`, size: videoBytes, color: "var(--primary)" },
       { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: "Thumbnail", desc: "Custom thumbnail video", size: thumbBytes, color: "color-mix(in srgb, var(--primary) 48%, var(--cream))" },
-      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Settings", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true, color: "color-mix(in srgb, var(--cream) 82%, var(--primary))" },
+      { svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>', label: "Cache & Pengaturan", desc: "Data dashboard & preferensi", size: cacheBytes, clearable: true, color: "color-mix(in srgb, var(--cream) 82%, var(--primary))" },
     ];
     const totForPct = Math.max(1, totalBytes);
     const withPct = cats.map(c => {
