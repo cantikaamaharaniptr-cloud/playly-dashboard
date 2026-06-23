@@ -2883,6 +2883,11 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 18px;
 }
+/* Seragamkan stroke ikon GARIS di Pustaka Saya -> 1.8 (per user 2026-06-21).
+   Kecuali picon/ui-ico (sistem ikon sendiri) & ikon fill (kebab dot, fill != none). */
+.view[data-view="videos"] svg[fill="none"]:not(.picon):not(.ui-ico) {
+  stroke-width: 1.8px;
+}
 .lib-item {
   border-radius: 12px;
   overflow: hidden;
@@ -2902,7 +2907,27 @@ body[data-theme="light"]:not([data-role="admin"]) .lkr-value {
   background: var(--bg-elev-2) center/cover no-repeat;
   display: grid; place-items: center;
 }
-.lib-thumb-fallback { font-size: 32px; opacity: .55; }
+/* Placeholder thumbnail kosong (video tanpa thumbnail) — lebih rapi, tak melompong.
+   Gradient halus + ikon + label. Per user 2026-06-21. */
+.lib-thumb:has(> .lib-thumb-fallback) {
+  background-image: linear-gradient(135deg, var(--bg-elev-2), var(--bg-elev));
+}
+.lib-thumb-fallback {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 28px;
+  line-height: 1;
+  opacity: .42;
+}
+.lib-thumb-fallback::after {
+  content: "Tanpa thumbnail";
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  opacity: .9;
+}
 .lib-thumb-dur {
   position: absolute;
   bottom: 6px; right: 6px;
@@ -9822,6 +9847,8 @@ body:not([data-role="admin"]) [data-pd-admin-only] { display: none !important; }
   z-index: 200;
   pointer-events: none;
 }
+/* v793: toast = kartu notifikasi bertema dashboard (wine/cream), TANPA warna
+   non-tema (hijau success / amber warning dibuang). Badge ikon + body. */
 .toast {
   pointer-events: auto;
   display: flex; align-items: center; gap: 10px;
@@ -47212,6 +47239,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 }
 
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
+/* v795: badge Premium diselaraskan ke tema (cream/wine), bukan emas/kuning. */
 .dashboard-tier-pill[data-tier="premium"] {
   /* 2026-06-16: premium kini nuansa WINE + teks cream (bukan emas). Bersih & on-palette. */
   border-color: rgba(109, 41, 50, .5);
@@ -47305,8 +47333,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   animation-play-state: paused;
 }
 @keyframes tierPillGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220,169,109,0); }
-  50%      { box-shadow: 0 0 14px 2px rgba(220,169,109,.35); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,216,196,0); }
+  50%      { box-shadow: 0 0 14px 2px rgba(232,216,196,.28); }
 }
 @keyframes tierPillShine {
   0%   { left: -75%; }
@@ -51344,6 +51372,18 @@ body:not([data-role="admin"]):not(.auth-mode) [role="button"]:focus-visible {
   outline: 2px solid rgba(232, 216, 196, .5);
   outline-offset: 2px;
   border-radius: 6px;
+}
+/* v818: GLOBAL GUARD — fokus ring/border SAAT FOKUS tidak pernah wine/merah/aksen
+   di mana pun (user dashboard). Dipaksa NETRAL cream, override aturan spesifik
+   apa pun (mis. input:focus border-color var(--primary)). */
+body:not([data-role="admin"]):not(.auth-mode) *:focus-visible {
+  outline-color: rgba(232, 216, 196, .4) !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) input:focus,
+body:not([data-role="admin"]):not(.auth-mode) textarea:focus,
+body:not([data-role="admin"]):not(.auth-mode) select:focus {
+  border-color: rgba(232, 216, 196, .4) !important;
+  outline-color: rgba(232, 216, 196, .4) !important;
 }
 
 /* (6) Sidebar nav-item polish + active accent bar */
@@ -77138,6 +77178,879 @@ section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
 }
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+/* ===================================================================
+   PUSTAKA SAYA — header POLOS (per user 2026-06-21): kartu wine besar
+   dibuang; jadi judul + deskripsi biasa supaya bagian atas ringan.
+   =================================================================== */
+section[data-view="videos"] .view-header {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 2px 2px !important;
+  box-shadow: none !important;
+  align-items: center !important;
+  margin-bottom: 12px !important;
+}
+section[data-view="videos"] .view-header .lib-header-flex { align-items: center !important; }
+/* v819: ikon DIBESARKAN (user: kekecilan) — kotak aksen ~40px. */
+section[data-view="videos"] .view-header .sec-icon-lg { width: 40px !important; height: 40px !important; border-radius: 11px !important; }
+section[data-view="videos"] .view-header .sec-icon-lg svg { width: 22px !important; height: 22px !important; }
+section[data-view="videos"] .view-header .lib-header-flex h1,
+section[data-view="videos"] .view-header .lib-header-flex h2,
+section[data-view="videos"] .view-header .lib-header-flex h3 { font-size: 20px !important; }
+/* v822: "9 Video" pindah ke samping judul (baris 1); deskripsi tetap baris 2. */
+section[data-view="videos"] .view-header .lib-header-text { display: flex !important; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+section[data-view="videos"] .view-header .lib-header-text > p { flex-basis: 100%; margin: 0 !important; }
+section[data-view="videos"] .view-header .lib-header-text > #libVideoCount::before { content: "·"; margin-right: 8px; opacity: .5; }
+
+/* ===================================================================
+   PUSTAKA SAYA — kartu: badge visibilitas + meta lebih kaya + sort bar.
+   =================================================================== */
+.lib-thumb { position: relative; }
+.lib-thumb-vis {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 10.5px; font-weight: 600;
+  padding: 3px 8px; border-radius: 999px; backdrop-filter: blur(4px); letter-spacing: .02em;
+}
+.lib-thumb-vis.prv { background: color-mix(in srgb, var(--primary) 85%, #000); }
+.lib-thumb-vis.unl { background: rgba(120,90,60,.88); }
+.lib-meta .lib-meta-date { color: var(--muted); opacity: .85; }
+/* v795: pemisah "·" antara statistik & tanggal (dulu nempel "0 komentar 10 Jun"). */
+.lib-meta .lib-meta-stats + .lib-meta-date::before { content: "·"; margin: 0 5px 0 4px; opacity: .5; }
+.lib-sort-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+
+/* ===================================================================
+   v798: toggle Grid/List + tampilan LIST (ala dashboard video-host,
+   tetap tema wine/cream). Kartu grid di-reflow jadi baris.
+   =================================================================== */
+.lib-bar-right { display: flex; align-items: center; gap: 10px; }
+.lib-view-toggle {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px;
+}
+.lib-vt-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 26px; border: 0; border-radius: 7px; background: transparent;
+  color: rgba(232,216,196,.55); cursor: pointer; transition: background .12s, color .12s;
+}
+.lib-vt-btn:hover { color: var(--cream); }
+.lib-vt-btn.active { background: var(--primary); color: #fff; }
+/* v803: tab Status/Unduhan → toolbar hanya toggle Grid/List (kontrol lain
+   tak relevan, disembunyikan). */
+/* v806: satu baris toolbar — grup kiri (jumlah+chip) & kanan (cari/Pilih/toggle/sort) */
+#libSortBar .lib-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+/* v808: jumlah = teks polos (label), bukan kotak/pill spt chip → tidak terlihat
+   seperti tombol filter. (v818: view-scoped agar tetap berlaku saat count dipindah
+   ke baris tab.) */
+.view[data-view="videos"] #libVideoCount.dl-head-count {
+  flex: none; background: transparent !important; border: 0 !important;
+  padding: 0 !important; box-shadow: none !important;
+  color: rgba(232,216,196,.6) !important; font-weight: 600 !important; font-size: 13px !important;
+}
+#libSortBar .lib-search.collapsible { margin-left: 0 !important; }
+/* Status/Unduhan: hanya toggle Grid/List (kontrol lain disembunyikan).
+   v818: scope di-level VIEW karena alat kini hidup di baris tab, bukan #libSortBar. */
+.view[data-view="videos"] #libSortBar.scope-other { justify-content: flex-end !important; }
+#libSortBar.scope-other .lib-bar-left,
+#libSortBar.scope-other .lib-search,
+#libSortBar.scope-other #libPickBtn,
+#libSortBar.scope-other .lib-sort-dd,
+.view[data-view="videos"][data-libscope="other"] #libVideoCount,
+.view[data-view="videos"][data-libscope="other"] .lib-vis-dd,
+.view[data-view="videos"][data-libscope="other"] .lib-search,
+.view[data-view="videos"][data-libscope="other"] #libPickBtn,
+.view[data-view="videos"][data-libscope="other"] .lib-sort-dd { display: none !important; }
+/* v818: GABUNG alat ke baris tab — tab kiri, alat kanan, satu baris.
+   Tab & alat dibungkus grup; baris tab jadi space-between. */
+.view[data-view="videos"] .riwayat-tab-bar {
+  justify-content: space-between !important;
+  align-items: center !important;
+  row-gap: 10px !important;
+}
+.view[data-view="videos"] .lib-tabs-group,
+.view[data-view="videos"] .lib-tools-group {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0;
+}
+/* v820: SAMAKAN tinggi semua kontrol di baris tab (tab tadinya 35, alat 27-34 →
+   ragged). Semua jadi 34px + radius 10px + box-sizing border-box biar rata. */
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab,
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-search.collapsible input,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn {
+  height: 34px !important;
+  box-sizing: border-box !important;
+  border-radius: 10px !important;
+}
+/* trigger dropdown & tombol pakai flex center supaya konten center vertikal */
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle { display: inline-flex; align-items: center; }
+/* v821: ALAT kanan jadi RINGAN/ghost supaya baris tak rame — transparan tanpa
+   bingkai; hover baru muncul isian. Status aktif (toggle grid/list) tetap wine.
+   Tab kiri tetap kotak. Ini perubahan yg jelas terlihat. */
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.view[data-view="videos"] .lib-tools-group .lib-sort-trigger:hover,
+.view[data-view="videos"] .lib-tools-group .lib-pick-btn:hover,
+.view[data-view="videos"] .lib-tools-group .lib-search-toggle:hover,
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle:hover {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+/* toggle grid/list: tombol AKTIF tetap wine (penanda mode aktif) */
+.view[data-view="videos"] .lib-tools-group .lib-view-toggle .lib-vt-btn.active {
+  background: var(--primary) !important; color: #fff !important;
+}
+/* v822: TAB tak aktif juga diringankan (per user) — transparan tanpa kotak;
+   hanya tab AKTIF yang wine. Hover munculkan isian samar. */
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab:not(.active) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.view[data-view="videos"] .lib-tabs-group .riwayat-tab:not(.active):hover {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+.view[data-view="videos"] #libSortBar.lib-merged-empty { display: none !important; }
+/* v799b: tombol Pilih + checkbox kartu + bar aksi massal */
+.lib-pick-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 9px; font-size: 12.5px; font-weight: 600;
+  background: var(--bg-elev); border: 1px solid var(--border); color: var(--cream);
+  cursor: pointer; transition: background .12s, border-color .12s;
+}
+.lib-pick-btn:hover { border-color: rgba(232,216,196,.5); }
+.lib-pick-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.lib-select { display: none; }
+.view[data-view="videos"][data-libselect="on"] .lib-item { position: relative; }
+.view[data-view="videos"][data-libselect="on"] .lib-select {
+  display: inline-flex; position: absolute; top: 8px; left: 8px; z-index: 5;
+  background: transparent; padding: 0;
+}
+/* v813/815: checkbox kustom rounded + animasi pop saat dicentang */
+.lib-select input {
+  appearance: none; -webkit-appearance: none;
+  width: 20px; height: 20px; margin: 0; border-radius: 6px;
+  border: 1.5px solid rgba(232,216,196,.6); background: rgba(0,0,0,.5);
+  cursor: pointer; position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  transition: background-color .16s ease, border-color .16s ease, transform .12s ease;
+}
+.lib-select input:hover { border-color: var(--cream); }
+.lib-select input:active { transform: scale(.85); }
+/* centang via ::after → bisa di-animasikan (pop overshoot) */
+.lib-select input::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 11px; height: 11px; background-color: #fff;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: scale(0) rotate(-15deg); opacity: 0;
+  transition: transform .22s cubic-bezier(.34, 1.7, .5, 1), opacity .12s ease;
+}
+.lib-select input:checked {
+  background-color: var(--primary); border-color: var(--primary);
+  animation: libCbPop .26s ease;
+}
+.lib-select input:checked::after { transform: scale(1) rotate(0); opacity: 1; }
+@keyframes libCbPop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .lib-select input, .lib-select input::after { transition: none !important; animation: none !important; }
+}
+/* v812: di mode pilih → seluruh kartu bisa diklik utk pilih + sorot yg terpilih */
+.view[data-view="videos"][data-libselect="on"] .lib-item { cursor: pointer; }
+/* v813: sorot baris terpilih → NETRAL (cream tipis), bukan wine */
+.view[data-view="videos"][data-libselect="on"] .lib-item:has(input[data-lib-check]:checked) {
+  border-color: rgba(232,216,196,.32) !important;
+  background: rgba(232,216,196,.05);
+}
+.lib-bulk-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 8px 12px;
+  /* v814: border NETRAL (bukan wine) per request user */
+  background: var(--bg-elev); border: 1px solid rgba(232,216,196,.18); border-radius: 11px;
+}
+.lib-bulk-count { font-size: 12.5px; font-weight: 700; color: var(--cream); }
+.lib-bulk-link { background: none; border: 0; color: rgba(232,216,196,.7); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.lib-bulk-link:hover { color: var(--cream); }
+.lib-bulk-spacer { flex: 1; }
+.lib-bulk-act {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  background: var(--bg-elev-2); border: 1px solid var(--border); color: var(--cream); cursor: pointer;
+}
+.lib-bulk-act svg { width: 14px; height: 14px; flex: none; }
+.lib-bulk-act:hover:not(:disabled) { border-color: rgba(232,216,196,.5); }
+/* v817: tombol Hapus jelas MERAH (destruktif) */
+.lib-bulk-act.danger { color: var(--danger); border-color: rgba(239,68,68,.5); }
+.lib-bulk-act.danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+.lib-bulk-act:disabled { opacity: .45; cursor: not-allowed; }
+.lib-bulk-x { background: none; border: 0; color: var(--cream); font-size: 15px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+/* v801: bar Cari + chip filter visibilitas */
+.lib-filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.lib-search {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; max-width: 360px;
+  padding: 7px 12px; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; color: rgba(232,216,196,.6);
+}
+.lib-search input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: none;
+  color: var(--cream); font-size: 13px;
+}
+.lib-search input::placeholder { color: rgba(232,216,196,.45); }
+/* v805: search collapsible — default ikon, expand saat .open (anti "2 search") */
+.lib-filter-bar { justify-content: flex-start; }
+.lib-search.collapsible {
+  flex: 0 0 auto; min-width: 0; max-width: none; margin-left: auto;
+  padding: 0; gap: 0; background: transparent; border: 0; overflow: hidden;
+}
+.lib-search-toggle {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+  background: var(--bg-elev); border: 1px solid var(--border); color: rgba(232,216,196,.7);
+  transition: border-color .12s, color .12s;
+}
+.lib-search-toggle:hover { border-color: rgba(232,216,196,.5); color: var(--cream); }
+.lib-search.collapsible input {
+  width: 0; opacity: 0; padding: 0; margin: 0; pointer-events: none;
+  transition: width .2s ease, opacity .15s ease, margin .2s ease;
+}
+.lib-search.collapsible.open {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0 12px 0 8px;
+}
+.lib-search.collapsible.open .lib-search-toggle {
+  background: transparent; border: 0; width: 20px; height: 20px; color: rgba(232,216,196,.6);
+}
+.lib-search.collapsible.open input { width: 210px; opacity: 1; margin-left: 8px; pointer-events: auto; }
+.lib-vis-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+/* v818: chip filter dibuat SEKUNDER (flat/transparan) supaya tak terlihat seperti
+   baris tab kedua — hierarki: tab = kotak solid, chip = filter tipis. */
+.lib-vis-chips button {
+  padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: transparent; border: 1px solid rgba(232,216,196,.14); color: rgba(232,216,196,.6);
+  cursor: pointer; transition: background .12s, border-color .12s, color .12s;
+}
+.lib-vis-chips button:hover { background: var(--bg-elev); border-color: rgba(232,216,196,.4); color: var(--cream); }
+.lib-vis-chips button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* v801b: pesan saat cari tak ada hasil */
+.lib-nomatch {
+  grid-column: 1 / -1; width: 100%; text-align: center;
+  padding: 36px 20px; border: 1px dashed var(--border); border-radius: 12px;
+}
+.lib-nomatch .lib-empty-icon { color: rgba(232,216,196,.5); margin-bottom: 8px; }
+.lib-nomatch .lib-empty-icon svg { width: 32px; height: 32px; }
+.lib-nomatch p { font-size: 13px; color: rgba(232,216,196,.6); margin: 0; }
+.lib-nomatch p b { color: var(--cream); }
+/* LIST: grid → daftar vertikal */
+.view[data-view="videos"][data-libview="list"] #myVideoGrid,
+.view[data-view="videos"][data-libview="list"] #draftVideoGrid,
+.view[data-view="videos"][data-libview="list"] #statusVideoGrid,
+.view[data-view="videos"][data-libview="list"] #downloadDashboardGrid,
+.view[data-view="videos"][data-libview="list"] #downloadFileGrid {
+  display: flex !important; flex-direction: column !important; gap: 8px !important;
+}
+/* kartu → baris (v809: kebab di UJUNG KANAN baris, bukan di pojok thumb) */
+.view[data-view="videos"][data-libview="list"] .lib-item {
+  position: relative;
+  display: flex !important; align-items: center; gap: 14px;
+  padding: 8px 46px 8px 8px; background: var(--bg-elev);
+  border: 1px solid var(--border); border-radius: 12px;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb {
+  position: static; /* kebab anchor ke .lib-item, bukan thumb */
+  width: 132px; min-width: 132px; aspect-ratio: 16 / 9; height: auto;
+  border-radius: 8px; flex: none;
+}
+/* di list: sembunyikan overlay vis/status + durasi (baris bersih; kebab di kanan) */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-vis,
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-status,
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-thumb-dur { display: none; }
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-meta {
+  flex: 1; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 3px;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-meta strong {
+  -webkit-line-clamp: 1; margin-bottom: 0; font-size: 14px;
+}
+/* kebab → tengah-kanan baris */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions {
+  position: absolute; top: 50%; right: 10px; bottom: auto; left: auto;
+  transform: translateY(-50%); margin: 0;
+}
+/* v810: di LIST → kebab SELALU tampil + tanpa kotak (titik-3 bersih). Di grid
+   tetap pakai kotak (kontras di atas thumbnail). */
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-actions { opacity: 1 !important; }
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab {
+  background: transparent !important; color: rgba(232,216,196,.65) !important;
+  width: 30px !important; height: 30px !important;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab:hover {
+  background: rgba(232,216,196,.1) !important; color: var(--cream) !important; transform: none !important;
+}
+.view[data-view="videos"][data-libview="list"] .lib-item .lib-card-kebab[aria-expanded="true"] {
+  background: rgba(232,216,196,.12) !important; color: var(--cream) !important;
+}
+.lib-sort-bar label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.lib-sort-bar select {
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v695 — header section jadi kartu "ikon | judul+desc rapat"
+   + tab jadi segmented bar (scoped videos view, tema dashboard).
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head.dl-head-flex {
+  display: flex !important; align-items: center !important; gap: 12px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 4%, var(--bg-elev, #251419)) !important;
+  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 14%, transparent) !important;
+  border-radius: 14px !important; padding: 12px 16px !important; margin-bottom: 14px !important;
+}
+.view[data-view="videos"] .dl-section-head.dl-head-flex .dl-head-text {
+  display: flex !important; flex-direction: column !important; gap: 2px !important; min-width: 0;
+}
+.view[data-view="videos"] .dl-section-head.dl-head-flex h3 { margin: 0 !important; line-height: 1.2 !important; }
+.view[data-view="videos"] .dl-section-head.dl-head-flex small { margin: 0 !important; color: var(--muted) !important; line-height: 1.3 !important; }
+
+.view[data-view="videos"] .riwayat-tab-bar {
+  display: inline-flex !important; gap: 4px !important;
+  background: color-mix(in srgb, var(--cream, #E8D8C4) 5%, var(--bg-elev, #251419)) !important;
+  border: 1px solid var(--border) !important; border-radius: 12px !important; padding: 4px !important;
+}
+.view[data-view="videos"] .riwayat-tab {
+  border-radius: 9px !important; padding: 7px 14px !important; border: 0 !important; background: transparent !important;
+}
+.view[data-view="videos"] .riwayat-tab.active,
+.view[data-view="videos"] .riwayat-tab[aria-selected="true"] { background: var(--primary) !important; color: #fff !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v696 — tab jadi KOLOM TERPISAH (bukan segmented menyatu).
+   Tiap tab kotak sendiri (bg-elev + border), aktif wine.
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab-bar {
+  background: transparent !important; border: 0 !important; padding: 0 !important; gap: 10px !important;
+}
+.view[data-view="videos"] .riwayat-tab {
+  background: var(--bg-elev, #251419) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important; padding: 8px 16px !important;
+}
+.view[data-view="videos"] .riwayat-tab.active,
+.view[data-view="videos"] .riwayat-tab[aria-selected="true"] {
+  background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v697 — header section diperbesar biar pas (sebelumnya kekecilan):
+   ikon 40, judul 17, deskripsi 13, padding lebih lega.
+   =================================================================== */
+.view[data-view="videos"] .dl-head-flex { padding: 15px 18px !important; gap: 13px !important; }
+.view[data-view="videos"] .dl-head-flex .sec-icon-v582 {
+  width: 40px !important; height: 40px !important; border-radius: 11px !important; flex: 0 0 auto !important;
+}
+.view[data-view="videos"] .dl-head-flex .sec-icon-v582 svg { width: 21px !important; height: 21px !important; }
+.view[data-view="videos"] .dl-head-flex h3 { font-size: 17px !important; font-weight: 700 !important; }
+.view[data-view="videos"] .dl-head-flex small { font-size: 13px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v698 — area kanan header Video Saya: jumlah video + Urutkan.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head.dl-head-has-right { justify-content: space-between !important; }
+.view[data-view="videos"] .dl-head-right {
+  display: flex !important; align-items: center !important; gap: 12px !important; flex: 0 0 auto !important;
+}
+.view[data-view="videos"] .dl-head-count {
+  font-size: 12.5px !important; color: var(--muted) !important; font-weight: 600 !important; white-space: nowrap;
+}
+.view[data-view="videos"] .dl-head-right .lib-sort-bar { margin: 0 !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v699 — judul+deskripsi TETAP di kiri (dekat ikon); area kanan
+   (jumlah video + Urutkan) didorong ke kanan via margin-left:auto.
+   Sebelumnya space-between mendorong teks ke kanan — diperbaiki.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head.dl-head-has-right { justify-content: flex-start !important; }
+.view[data-view="videos"] .dl-head-right { margin-left: auto !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v700 — dropdown Urutkan KUSTOM (bukan select native) ber-tema
+   dashboard (wine/cream). Trigger ber-frame + menu popup, item aktif wine.
+   =================================================================== */
+.view[data-view="videos"] .lib-sort-bar { display: flex !important; align-items: center !important; gap: 8px !important; }
+.view[data-view="videos"] .lib-sort-label { font-size: 12px !important; color: var(--muted) !important; font-weight: 600 !important; }
+.lib-sort-dd { position: relative; }
+.lib-vis-dd { position: relative; }
+/* v818: menu filter visibilitas buka rata-KIRI (dropdown ada di sisi kiri bar). */
+#libVisMenu { right: auto; left: 0; }
+.lib-sort-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); color: var(--text);
+  border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lib-sort-trigger:hover { border-color: color-mix(in srgb, var(--cream, #E8D8C4) 30%, transparent); }
+.lib-sort-trigger svg { opacity: .7; }
+.lib-sort-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 100; min-width: 156px;
+  background: var(--bg-elev, #251419); border: 1px solid var(--border); border-radius: 12px;
+  padding: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.42); display: flex; flex-direction: column; gap: 2px;
+}
+.lib-sort-menu[hidden] { display: none; }
+.lib-sort-menu button {
+  text-align: left; background: transparent; border: 0; color: var(--text);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer;
+}
+.lib-sort-menu button:hover { background: color-mix(in srgb, var(--cream, #E8D8C4) 8%, transparent); }
+.lib-sort-menu button.active { background: var(--primary); color: #fff; }
+
+/* ===================================================================
+   PUSTAKA SAYA v701 — label "Urutkan" dihapus + count "X video" jadi kolom/box
+   (senada dgn trigger dropdown).
+   =================================================================== */
+.view[data-view="videos"] .dl-head-count {
+  background: var(--bg-elev, #251419) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 7px 12px !important;
+  font-size: 12.5px !important; color: var(--text) !important; font-weight: 600 !important;
+  white-space: nowrap;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v702 — toolbar (jumlah video + Urutkan) DI BAWAH kartu header
+   (di atas grid), rata kanan. Bukan di dalam kartu.
+   =================================================================== */
+.view[data-view="videos"] #libSortBar {
+  display: flex !important; align-items: center !important; justify-content: flex-end !important;
+  gap: 10px !important; margin: 2px 0 14px !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v704 — hapus kartu section header (Video Saya/Status/Unduhan)
+   yang redundan dgn tab aktif. Susunan: header halaman → tab → toolbar → grid.
+   =================================================================== */
+.view[data-view="videos"] .dl-section-head { display: none !important; }
+
+/* v705 — pastikan section header tersembunyi (menang atas .dl-head-flex display:flex) */
+.view[data-view="videos"] .dl-section-head.dl-head-flex,
+.view[data-view="videos"] .dl-section-head { display: none !important; }
+
+/* v795 — KECUALI tab Unduhan: tampilkan judul section (Dashboard vs Perangkat)
+   karena ada 2 sub-section, biar tidak ambigu (termasuk saat kosong). :has(#id)
+   memberi spesifisitas id → menang atas rule sembunyi di atas. */
+.view[data-view="videos"] .dl-section:has(#downloadDashboardGrid) > .dl-section-head,
+.view[data-view="videos"] .dl-section:has(#downloadFileGrid) > .dl-section-head {
+  display: flex !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v706 — toolbar: jumlah video di KIRI (sejajar grid) + dropdown
+   Urutkan di KANAN (space-between). Count tak lagi terpisah jauh dari grid.
+   =================================================================== */
+.view[data-view="videos"] #libSortBar { justify-content: space-between !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v707 — bedakan count (info) vs dropdown (aksi): count jadi chip
+   OUTLINE halus (bg transparan, teks muted), dropdown tetap box solid.
+   =================================================================== */
+.view[data-view="videos"] .dl-head-count {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--cream, #E8D8C4) 16%, transparent) !important;
+  color: var(--muted) !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v708 — samakan count & dropdown PERSIS (bentuk/warna/ukuran teks):
+   keduanya box solid bg-elev + border, teks 13px. (batalkan outline v707).
+   =================================================================== */
+.view[data-view="videos"] .dl-head-count {
+  background: var(--bg-elev, #251419) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 7px 12px !important;
+  border-radius: 10px !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v710 — kartu video DIPERBESAR (min 250px, dari ~189) + judul
+   lebih besar (15px). Meta kini: views · suka · komentar + tanggal.
+   =================================================================== */
+.view[data-view="videos"] #myVideoGrid,
+.view[data-view="videos"] #statusVideoGrid,
+.view[data-view="videos"] #downloadDashboardGrid,
+.view[data-view="videos"] #downloadFileGrid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+  gap: 16px !important;
+}
+.view[data-view="videos"] .lib-item .lib-meta strong { font-size: 15px !important; }
+.view[data-view="videos"] .lib-item .lib-meta-stats,
+.view[data-view="videos"] .lib-item .lib-meta-date { font-size: 12.5px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v711 — tab (Video Saya/Status/Unduhan) DIPERBESAR:
+   teks 11.9->14px, padding 8/16->11/20, ikon 15->18px.
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 14px !important;
+  padding: 11px 20px !important;
+  gap: 8px !important;
+  font-weight: 600 !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v712 — tab dikecilkan sedikit (dari v711 yg kebesaran):
+   teks 14->13px, padding 11/20->9/17. Ikon SEDIKIT lebih besar dari teks (16px).
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 13px !important;
+  padding: 9px 17px !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 16px !important; height: 16px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v713 — tab: teks/judul dibuat COMPACT (font 12.5, padding & gap
+   lebih rapat) + ikon diperbesar lagi (18px) supaya menonjol dari teks.
+   =================================================================== */
+.view[data-view="videos"] .riwayat-tab {
+  font-size: 12.5px !important;
+  padding: 8px 14px !important;
+  gap: 6px !important;
+  letter-spacing: 0 !important;
+}
+.view[data-view="videos"] .riwayat-tab svg { width: 18px !important; height: 18px !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v714 — kartu video diperbesar lagi (min 250->275px).
+   Grid auto-fill: banyak video → otomatis isi baris & turun ke baris baru.
+   =================================================================== */
+.view[data-view="videos"] #myVideoGrid,
+.view[data-view="videos"] #statusVideoGrid,
+.view[data-view="videos"] #downloadDashboardGrid,
+.view[data-view="videos"] #downloadFileGrid {
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)) !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v715 — DRAF jadi TAB UTAMA sendiri (sebelumnya sub-tab
+   tersembunyi di bawah Status Video → user tak menemukan draftnya).
+   - Draf sub-tab lama (di dalam Status Video) disembunyikan.
+   - Badge hitung di tab Draf (mis. "Draf 2") untuk discoverability.
+   - #draftVideoGrid pakai layout grid kartu yang sama.
+   =================================================================== */
+.view[data-view="videos"] .status-sub-tab[data-status-tab="draft"] { display: none !important; }
+
+.view[data-view="videos"] #draftVideoGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)) !important;
+  gap: 16px !important;
+}
+.view[data-view="videos"] .riwayat-tab .ptb-count {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px !important;
+  font-weight: 700;
+  line-height: 1;
+}
+.view[data-view="videos"] .riwayat-tab .ptb-count[hidden] { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v717 — MODE MENONTON (.lib-watch-mode pada view videos).
+   Saat inline player terbuka, view jadi layar player BERSIH: semua chrome
+   pustaka (header, tab bar, toolbar urut, dan SEMUA section grid) di-hide,
+   hanya #libInlinePlayer yang tampil. Tutup via tombol X player / klik
+   breadcrumb → exitLibWatchMode() melepas class ini.
+   Memperbaiki: (1) ganti tab/back tetap menampilkan player, (2) judul top bar
+   tidak berubah, (3) toolbar "X Video / Urutkan" tetap muncul di bawah player.
+   =================================================================== */
+.view[data-view="videos"].lib-watch-mode .view-header,
+.view[data-view="videos"].lib-watch-mode .riwayat-tab-bar,
+.view[data-view="videos"].lib-watch-mode #libSortBar,
+.view[data-view="videos"].lib-watch-mode [data-focus-target] {
+  display: none !important;
+}
+.view[data-view="videos"].lib-watch-mode #libInlinePlayer { margin-top: 4px; }
+
+/* v741: ROBUST — sembunyikan chrome pustaka (header, tab, toolbar urut, semua
+   grid section) KAPAN PUN inline player tampil, tak bergantung pd class
+   .lib-watch-mode (jaga-jaga class lepas akibat re-render/race). Pakai :has().
+   Memperbaiki: grid "1 Video / Terbaru" + kartu masih muncul di bawah player. */
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) .view-header,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) .riwayat-tab-bar,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) #libSortBar,
+.view[data-view="videos"]:has(#libInlinePlayer:not([hidden])) [data-focus-target] {
+  display: none !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v723 — REVERT pembatasan lebar panel info (v718-v722).
+   Per user: kembalikan ke tampilan ASLI sebelum diubah — panel info di bawah
+   player kembali full-width (tanpa max-width). Tidak ada rule pembatas lagi.
+   =================================================================== */
+
+/* ===================================================================
+   PUSTAKA SAYA v724 — rapikan DESAIN panel info player (warna/bentuk/kolom).
+   Masalah: semua teks krem penuh (tak ada hierarki), pill aksi nyaris tak
+   terbaca sbg tombol, pill "Komentar" redundan dgn section Komentar di bawah,
+   kotak deskripsi terlalu berat (fill) untuk isi sedikit.
+   =================================================================== */
+/* 1. Hierarki warna — meta (tontonan + tanggal) dibuat REDUP, judul menonjol.
+   Teks "tontonan" ada di <span> dgn rule .lib-inline-action span{color:var(--text)}
+   → harus sasar span + svg juga, pakai #libInlineActions utk menang spesifisitas. */
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip span,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip svg { color: rgba(232, 216, 196, 0.55) !important; }
+.view[data-view="videos"] .lib-ytp-desc-meta,
+.view[data-view="videos"] .lib-ytp-desc-meta .lib-inline-date,
+.view[data-view="videos"] .lib-ytp-desc-meta .lib-inline-date svg { color: rgba(232, 216, 196, 0.55) !important; font-size: 12.5px !important; }
+
+/* 2. Pill aksi (Suka/Bagikan) — beri border + bg solid biar terbaca sbg tombol */
+.view[data-view="videos"] .lib-ytp-pill {
+  background: var(--bg-elev) !important;
+  border: 1px solid var(--border) !important;
+  transition: border-color .15s, background .15s;
+}
+.view[data-view="videos"] .lib-ytp-pill:hover { border-color: var(--primary) !important; }
+
+/* 3. Hapus pill "Komentar" — sudah ada section Komentar lengkap di bawah */
+.view[data-view="videos"] .lib-ytp-pill[data-act="comment"] { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v728 — buang KOTAK (kolom) + hilangkan fitur dobel, deskripsi
+   diberi tempat jelas. Per user: tidak suka kartu statistik berkotak.
+   - Strip kartu statistik (v727) DIHAPUS total (JS + CSS).
+   - Susunan: baris meta polos "X tontonan · tanggal" (kiri) + tombol Suka/
+     Bagikan (kanan). Lalu DESKRIPSI sbg teks polos (tanpa kotak). Komentar
+     hanya di section bawah (bukan pill) → tak ada angka dobel.
+   =================================================================== */
+/* Baris meta polos: views + tanggal (tanggal dipindah JS ke views-chip) */
+.view[data-view="videos"] .lib-ytp-views-chip .lib-meta-sep {
+  margin: 0 7px; opacity: .5;
+}
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip .lib-inline-date {
+  font-size: 13.5px !important; font-weight: 600 !important;
+}
+
+/* Deskripsi TANPA kotak — teks polos langsung di bawah meta */
+.view[data-view="videos"] .lib-ytp-desc-box {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 2px 0 0 !important;
+}
+/* desc-meta (bekas tempat tanggal) kini kosong → sembunyikan */
+.view[data-view="videos"] .lib-ytp-desc-meta { display: none !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v729 — rapikan keterbacaan & jarak panel info. Per user:
+   (1) teks meta terlalu KECIL & BURAM, (2) tombol terlalu BESAR (kolom besar),
+   (3) deskripsi terasa TERPISAH jauh (ada garis + jarak lebar).
+   =================================================================== */
+/* 1. Meta (tontonan · tanggal) lebih TERANG + sedikit lebih besar (tak buram) */
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip span,
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip svg {
+  color: rgba(232, 216, 196, 0.82) !important;
+  font-size: 14px !important;
+}
+.view[data-view="videos"] #libInlineActions .lib-ytp-views-chip .lib-inline-date {
+  font-size: 14px !important; font-weight: 600 !important;
+}
+
+/* 2. Tombol Suka/Bagikan lebih COMPACT (bukan kolom besar) */
+.view[data-view="videos"] .lib-ytp-pill {
+  padding: 7px 14px !important;
+  font-size: 13px !important;
+}
+.view[data-view="videos"] .lib-ytp-pill svg { width: 16px !important; height: 16px !important; }
+
+/* 3. Buang garis pemisah + rapatkan deskripsi ke baris meta (tak terpisah) */
+.view[data-view="videos"] .lib-ytp-action-bar {
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 8px !important;
+}
+.view[data-view="videos"] .lib-inline-title { margin-bottom: 7px !important; }
+.view[data-view="videos"] #libInlineDesc {
+  font-size: 14px !important;
+  color: rgba(232, 216, 196, 0.9) !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v730 — gaya PLAY VIDEO gabungan YouTube + X (Twitter):
+   baris KREATOR (avatar bulat + nama + @handle) + tombol aksi, lalu meta
+   (tontonan · tanggal) + deskripsi. Plus: SAMAKAN font (semua Inter).
+   =================================================================== */
+/* Samakan font seluruh panel info (hindari kesan font berbeda) */
+.view[data-view="videos"] .lib-ytp-panel,
+.view[data-view="videos"] .lib-ytp-panel * {
+  font-family: Inter, system-ui, -apple-system, sans-serif !important;
+}
+
+/* Baris aksi = baris kreator (kiri) + tombol (kanan), sejajar tengah */
+.view[data-view="videos"] #libInlineActions { align-items: center !important; }
+.view[data-view="videos"] .lib-creator { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.view[data-view="videos"] .lib-cr-avatar {
+  width: 42px; height: 42px; flex: none; border-radius: 50%;
+  background: var(--primary); background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 17px;
+}
+.view[data-view="videos"] .lib-cr-meta { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.view[data-view="videos"] .lib-cr-name {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.view[data-view="videos"] .lib-cr-handle { font-size: 13px; color: rgba(232, 216, 196, 0.55); }
+
+/* Baris meta (tontonan · tanggal) — baris sendiri di bawah kreator */
+.view[data-view="videos"] .lib-ytp-views-chip {
+  display: flex !important; align-items: center;
+  margin: 12px 0 3px !important;
+  padding: 0 !important;
+  background: transparent !important; border: 0 !important;
+  font-size: 14px !important; font-weight: 600 !important;
+  color: rgba(232, 216, 196, 0.82) !important;
+}
+.view[data-view="videos"] .lib-ytp-views-chip span,
+.view[data-view="videos"] .lib-ytp-views-chip svg {
+  color: rgba(232, 216, 196, 0.82) !important; font-size: 14px !important;
+}
+/* v740: serasikan ikon & teks meta — teks dibuat semibold (bukan 800 yg terlalu
+   tebal) + ikon ditebalkan (stroke 2.4) & sedikit diperbesar (16px). */
+.view[data-view="videos"] .lib-ytp-views-chip,
+.view[data-view="videos"] .lib-ytp-views-chip span { font-weight: 600 !important; }
+.view[data-view="videos"] .lib-ytp-views-chip svg {
+  stroke-width: 2.4 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* v743: hapus badge angka "0" di nav "Pustaka Saya". Aslinya indikator "upload
+   baru 24 jam" (setBadgeMode), tapi default markup-nya "0" → terlihat clutter.
+   Per user: dihapus. */
+#videoCount { display: none !important; }
+
+/* v744: dropdown "Urutkan" (Terbaru/Terlama/Terpopuler) ketutup grid video.
+   Section grid pakai isolation:isolate; di dalamnya #libSortBar & #myVideoGrid
+   sama-sama z:1 → grid (DOM belakangan) menutupi menu yg terkurung di toolbar.
+   Naikkan z-index toolbar di atas grid supaya menu tampil penuh di atas kartu. */
+.view[data-view="videos"] #libSortBar { z-index: 30 !important; }
+
+/* v745: sub-tab Status (Bermasalah/Sampah/Takedown) — HILANGKAN kesan ring.
+   Border wine pd .active terlihat seperti focus ring; dibuat subtle konstan di
+   semua state. Active cukup ditandai bg soft + badge angka wine. Outline/shadow
+   fokus juga dimatikan (tak ada ring setipis apapun). */
+.view[data-view="videos"] .status-sub-tab,
+.view[data-view="videos"] .status-sub-tab:hover,
+.view[data-view="videos"] .status-sub-tab:focus,
+.view[data-view="videos"] .status-sub-tab:focus-visible,
+.view[data-view="videos"] .status-sub-tab:active,
+.view[data-view="videos"] .status-sub-tab.active {
+  border-color: var(--border) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* v746: warna sub-tab Status SESUAI FITUR — ikon selalu berwarna; saat aktif
+   bg soft + badge angka berwarna sesuai makna:
+   Bermasalah=gold(peringatan), Sampah=taupe(netral/recoverable), Takedown=merah(danger). */
+/* v751: warna fitur dibuat LEBIH HALUS (active oranye dulu terlalu mencolok).
+   Identitas warna kini dominan di IKON + BADGE angka; background aktif cuma tint
+   tipis (subtle), seragam intensitasnya. Hue sedikit dilembutkan. Gradien tetap:
+   Menunggu(amber) → Sampah(terracotta) → Takedown(merah). */
+/* v754: warna fitur MENYALA hanya saat ADA item (.has-items, count>0) → narik
+   perhatian ke yg perlu aksi. Kalau 0 item → tab REDUP/tenang. Vivid:
+   Menunggu #F5B82E (gold, krusial) · Sampah #EE7C3A (oranye) · Takedown #E84855 (merah). */
+/* default 0 item → ikon redup, tab tenang */
+.view[data-view="videos"] .status-sub-tab .sst-ico { color: rgba(232,216,196,.42) !important; }
+/* ADA item → ikon vivid sesuai fitur (menyala) */
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="all"] .sst-ico      { color: #F5B82E !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="trash"] .sst-ico    { color: #EE7C3A !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="takedown"] .sst-ico { color: #E84855 !important; }
+/* ADA item → badge angka vivid (pop walau tab tidak aktif, biar kelihatan ada yg menunggu) */
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="all"] .ssc-count      { background: #F5B82E !important; color: #1a0c10 !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="trash"] .ssc-count    { background: #EE7C3A !important; color: #1a0c10 !important; }
+.view[data-view="videos"] .status-sub-tab.has-items[data-status-tab="takedown"] .ssc-count { background: #E84855 !important; color: #fff !important; }
+/* fill aktif berwarna HANYA jika ada item; aktif tapi kosong → netral tipis */
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="all"]      { background: rgba(245,184,46,.14) !important; }
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="trash"]    { background: rgba(238,124,58,.12) !important; }
+.view[data-view="videos"] .status-sub-tab.has-items.active[data-status-tab="takedown"] { background: rgba(232,72,85,.12) !important; }
+.view[data-view="videos"] .status-sub-tab.active:not(.has-items)                        { background: rgba(232,216,196,.07) !important; }
+/* aktif tapi KOSONG → badge "0" juga netral (jangan kena warna wine .active dasar) */
+.view[data-view="videos"] .status-sub-tab.active:not(.has-items) .ssc-count { background: var(--bg-elev) !important; color: rgba(232,216,196,.5) !important; }
+
+/* v751: rapatkan jarak tab utama ↔ sub-tab/konten. Gap-nya dari flex-gap view
+   (20px) + margin → ~38px (mengambang). Kecilkan flex-gap jadi 14px & nol-kan
+   margin tab-bar/section supaya jarak bersih & konsisten. */
+.view[data-view="videos"] { gap: 16px !important; }
+.view[data-view="videos"] .riwayat-tab-bar { margin-bottom: 0 !important; }
+.view[data-view="videos"] .lib-card.lib-card-bare { margin-top: 0 !important; }
+
+/* ===================================================================
+   PUSTAKA SAYA v731/v732 — kolom komentar: HILANGKAN total focus ring + tombol
+   "Kirim" jelas & SAMA TINGGI dgn input. Border input dibuat KONSTAN di semua
+   state (fokus tak mengubah apa pun → tak ada efek ring).
+   =================================================================== */
+/* Input: tak ada ring/glow/outline sama sekali, border tetap di semua state */
+.view[data-view="videos"] #libInlineCommentField,
+.view[data-view="videos"] #libInlineCommentField:hover,
+.view[data-view="videos"] #libInlineCommentField:focus,
+.view[data-view="videos"] #libInlineCommentField:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+}
+/* Wrapper baris input: jaga-jaga tak ada ring :focus-within */
+.view[data-view="videos"] .lib-ytp-comment-input-row:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* v736 — Tombol Kirim: SOLID warna tema dashboard (wine), FLAT total — tanpa
+   animasi (transition/transform), tanpa focus ring (outline/box-shadow), tanpa
+   glass shine (::before/::after). Konsisten di SEMUA state. */
+.view[data-view="videos"] #libInlineCommentSend,
+.view[data-view="videos"] #libInlineCommentSend:hover,
+.view[data-view="videos"] #libInlineCommentSend:focus,
+.view[data-view="videos"] #libInlineCommentSend:focus-visible,
+.view[data-view="videos"] #libInlineCommentSend:active {
+  color: var(--cream) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  background: var(--primary) !important;      /* warna tema dashboard (wine) */
+  border: 1px solid var(--primary) !important;
+  border-radius: 10px !important;             /* = radius input */
+  align-self: stretch !important;             /* tinggi = input (38px) */
+  padding: 0 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;                /* tanpa animasi */
+  filter: none !important;
+}
+.view[data-view="videos"] #libInlineCommentSend::before,
+.view[data-view="videos"] #libInlineCommentSend::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
   animation: none !important;
 }
 
@@ -78551,3 +79464,429 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-b
 .vem-grid .vem-col .upf-field,
 .vem-grid .vem-col .upf-pair { margin: 0 !important; }
 @media (max-width: 780px) { .vem-grid { grid-template-columns: 1fr; } }
+   PUSTAKA SAYA v737 — tombol Suka/Bagikan: ganti BENTUK (pill → kotak rounded
+   radius 10px, serasi dgn input/Kirim) + WARNA tema dashboard (wine-tinted).
+   Flat: tanpa animasi/transisi, tanpa focus ring, tanpa glass.
+   =================================================================== */
+.view[data-view="videos"] .lib-ytp-pill,
+.view[data-view="videos"] .lib-ytp-pill:hover,
+.view[data-view="videos"] .lib-ytp-pill:focus,
+.view[data-view="videos"] .lib-ytp-pill:focus-visible,
+.view[data-view="videos"] .lib-ytp-pill:active {
+  border-radius: 10px !important;
+  background: var(--bg-elev) !important;            /* v738: surface netral dashboard */
+  border: 1px solid var(--border) !important;
+  color: var(--cream) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+/* v739: hover hanya ubah bg tipis — TANPA border wine (tak ada kesan ring) */
+.view[data-view="videos"] .lib-ytp-pill:hover {
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-elev)) !important;
+  border-color: var(--border) !important;
+}
+/* state aktif (Suka/Simpan ditekan) → solid wine penuh */
+.view[data-view="videos"] .lib-ytp-pill.is-active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.view[data-view="videos"] .lib-ytp-pill::before,
+.view[data-view="videos"] .lib-ytp-pill::after {
+  content: none !important; display: none !important; animation: none !important;
+}
+
+/* ===================================================================
+   PUSTAKA SAYA v738 — tambah fitur: tombol IKUTI (follow kreator, ala YouTube/X)
+   di baris kreator + tombol SIMPAN (bookmark) di deretan aksi. Plus ganti warna
+   tombol aksi jadi surface netral (di atas).
+   =================================================================== */
+.view[data-view="videos"] .lib-cr-follow {
+  margin-left: 4px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  white-space: nowrap;
+}
+.view[data-view="videos"] .lib-cr-follow.following {
+  background: transparent;
+  border-color: var(--border);
+  color: rgba(232, 216, 196, 0.7);
+}
+.view[data-view="videos"] .lib-cr-follow::before,
+.view[data-view="videos"] .lib-cr-follow::after { content: none !important; display: none !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v756 — penyempurnaan: ikon label, placeholder redup (tak
+   ambigu), spacing anti-dempet, dropdown kategori kustom (tanpa biru native,
+   tema dashboard), tombol footer (Batal/Reset/Simpan) bersih & flat.
+   =================================================================== */
+/* 1. Ikon pada label field — v761: tiap ikon dalam KOTAK sendiri + label TANPA
+   CAPSLOCK (sentence case via JS). */
+#videoEditModal .upf-field > label,
+#videoEditModal .upf-label-row > label {
+  display: inline-flex; align-items: center; gap: 9px;
+  text-transform: none !important; letter-spacing: 0 !important;
+  font-size: 13px !important; font-weight: 700 !important; color: var(--cream) !important;
+}
+#videoEditModal .vem-lbl-ico {
+  width: 26px; height: 26px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--cream);
+}
+#videoEditModal .vem-lbl-ico svg { width: 15px; height: 15px; }
+/* Sentence case via CSS (immune i18n): semua kecil, huruf depan saja besar. */
+#videoEditModal .vem-lbl-text { display: inline-block; text-transform: lowercase; line-height: 1.15; }
+#videoEditModal .vem-lbl-text::first-letter { text-transform: uppercase; }
+/* "(opsional)" pada label subtitle — sejajar tengah, kecil, muted (tak naik). */
+#videoEditModal .upf-subtitle-section label small,
+#videoEditModal .upf-subtitle-section label .muted {
+  align-self: center !important;
+  font-size: 11.5px !important; font-weight: 600 !important; line-height: 1 !important;
+  color: rgba(232,216,196,.5) !important; text-transform: none !important;
+  letter-spacing: 0 !important; margin: 0 0 0 -4px !important;
+  position: static !important; top: auto !important; vertical-align: baseline !important;
+}
+/* Hilangkan CAPSLOCK pada teks kecil lain di modal (meta thumbnail, dropzone). */
+#videoEditModal .vem-thumb-info small, #videoEditModal .vem-thumb-info strong,
+#videoEditModal .vem-thumb-info span,
+#videoEditModal .upf-subtitle-section .dz-pro strong,
+#videoEditModal .upf-subtitle-section .dz-pro small,
+#videoEditModal .upf-subtitle-section .dz-pro b,
+#videoEditModal .modal-header h3, #videoEditModal .modal-header h2 { text-transform: none !important; letter-spacing: 0 !important; }
+
+/* 2. Placeholder ABU-ABU (netral) supaya jelas itu contoh, bukan isian.
+   Krem-transparan dulu masih kelihatan hangat/pink → pakai gray netral. */
+#videoEditModal input::placeholder,
+#videoEditModal textarea::placeholder { color: #9a9a9a !important; opacity: 1 !important; }
+#videoEditModal .vem-dd-label.placeholder { color: #9a9a9a !important; }
+
+/* 3. Spacing antar field (jangan dempet) */
+#videoEditModal .upf-field { margin-bottom: 14px; }
+#videoEditModal .upf-field > label,
+#videoEditModal .upf-label-row { margin-bottom: 8px !important; }
+
+/* 4. Dropdown kategori KUSTOM — tema dashboard, tanpa highlight biru OS */
+#videoEditModal .vem-dd { position: relative; }
+#videoEditModal .vem-dd-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; color: var(--cream);
+  font-size: 14px; cursor: pointer; outline: none;
+}
+#videoEditModal .vem-dd-trigger:hover { border-color: var(--primary); }
+#videoEditModal .vem-dd-trigger svg { color: rgba(232,216,196,.6); flex: none; }
+/* v780: dropdown menu lebih ringkas + bisa flip ke atas biar tidak kepotong.
+   v781: lebar menu mengikuti konten (tidak full-width), rata kiri. */
+#videoEditModal .vem-dd-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: auto; z-index: 60;
+  width: max-content; min-width: 200px; max-width: 100%;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
+  padding: 5px; box-shadow: 0 14px 36px rgba(0,0,0,.45);
+  max-height: 196px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+}
+#videoEditModal .vem-dd-menu button {
+  text-align: left; background: transparent; border: 0; border-radius: 8px;
+  padding: 7px 11px; color: var(--cream); font-size: 13px; cursor: pointer;
+  transition: background .12s;
+}
+#videoEditModal .vem-dd-menu button:hover { background: rgba(232,216,196,.08); }
+#videoEditModal .vem-dd-menu button.active { background: var(--primary); color: #fff; }
+/* flip ke atas saat ruang bawah tak cukup */
+#videoEditModal .vem-dd.flip-up .vem-dd-menu { top: auto; bottom: calc(100% + 6px); }
+/* v784: opsi "Tanpa kategori" — pembatas bawah + teks muted (opsi keluar) */
+#videoEditModal .vem-dd-menu button.vem-dd-none {
+  border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0;
+  margin-bottom: 2px; color: rgba(232,216,196,.6);
+}
+#videoEditModal .vem-dd-menu button.vem-dd-none.active { color: #fff; }
+
+/* ===================================================================
+   v786: modal Edit Video — COMPACT. Rapatkan seluruh spacing supaya
+   muat tanpa scroll meski toggle bertambah.
+   =================================================================== */
+#videoEditModal .video-edit-panel { padding: 18px 22px !important; }
+#videoEditModal .vem-head { margin-bottom: 12px !important; }
+#videoEditModal .vem-head-ico { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+#videoEditModal .vem-head-ico svg, #videoEditModal .vem-head-ico .picon { width: 17px !important; height: 17px !important; }
+#videoEditModal .vem-head-text h3 { font-size: 17px !important; }
+#videoEditModal .vem-head-desc { font-size: 11.5px !important; }
+/* jarak antar kolom & antar field lebih rapat */
+#videoEditModal .vem-2col { gap: 16px !important; }
+#videoEditModal .vem-col { gap: 9px !important; }
+#videoEditModal .upf-field { gap: 4px !important; }
+#videoEditModal .upf-field > label { margin-bottom: 2px !important; }
+#videoEditModal .upf-field .vem-lbl-ico { width: 22px !important; height: 22px !important; }
+/* input & dropdown lebih pendek */
+#videoEditModal #vemTitleInput,
+#videoEditModal #vemTags,
+#videoEditModal .vem-dd-trigger { padding-top: 7px !important; padding-bottom: 7px !important; }
+#videoEditModal #vemDesc { min-height: 60px !important; }
+/* thumbnail row & gambar lebih ringkas */
+#videoEditModal .vem-thumb-row { padding: 10px !important; }
+/* v787: thumbnail DILEBARKAN jadi full-width (preview 16:9 di atas, info di
+   bawah) supaya kolom kiri tidak kosong di bawahnya. */
+#videoEditModal .vem-thumb-row {
+  grid-template-columns: 1fr !important; gap: 10px !important;
+}
+#videoEditModal .vem-thumb-wrap {
+  width: 100% !important; aspect-ratio: 16 / 9 !important; height: auto !important;
+}
+#videoEditModal .vem-thumb-wrap img {
+  width: 100% !important; height: 100% !important; object-fit: cover !important;
+}
+#videoEditModal .vem-thumb-info {
+  display: flex !important; flex-direction: row !important; align-items: baseline !important;
+  flex-wrap: wrap !important; gap: 4px 8px !important; justify-content: center !important;
+  text-align: center !important;
+}
+/* pengaturan lanjutan: toggle lebih rapat */
+#videoEditModal #vemAdvanced { padding: 9px 12px !important; }
+#videoEditModal #vemAdvanced .vem-toggle { padding: 6px 0 !important; }
+/* footer lebih rapat */
+#videoEditModal .vem-actions { padding-top: 10px !important; }
+
+/* ===================================================================
+   v788: (1) subtitle isi sisa tinggi kolom kanan biar sejajar kiri,
+   (2) footer sticky supaya tidak kepotong di viewport pendek,
+   (3) spinner tombol Simpan.
+   =================================================================== */
+/* (1) dropzone subtitle tumbuh mengisi sisa ruang kolom kanan */
+#videoEditModal .vem-2col { align-items: stretch !important; } /* dulu start → kanan tak penuh */
+#videoEditModal .vem-col-right { display: flex !important; flex-direction: column !important; }
+#videoEditModal .upf-subtitle-section { flex: 1 1 auto !important; display: flex !important; flex-direction: column !important; }
+/* .dz-pro = <label>, jadi kena rule label field (margin-bottom 6px). Naikkan
+   spesifisitas (1,3,0 > 1,2,1) supaya margin-bottom 0 menang → mentok ke bawah. */
+#videoEditModal .vem-2col .upf-subtitle-section .dz-pro { flex: 1 1 auto !important; margin-bottom: 0 !important; }
+/* (2) panel bisa scroll + footer menempel di bawah, selalu terlihat */
+#videoEditModal .video-edit-panel { max-height: calc(100vh - 32px) !important; overflow-y: auto !important; }
+#videoEditModal .vem-actions {
+  position: sticky !important; bottom: 0 !important; z-index: 5 !important;
+  background: #251419 !important; margin-top: 8px !important;
+}
+/* (3) spinner loading di tombol Simpan */
+#videoEditModal .vem-spin {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+  animation: vemSpin .6s linear infinite; vertical-align: -2px; margin-right: 4px;
+}
+@keyframes vemSpin { to { transform: rotate(360deg); } }
+#videoEditModal .vem-actions .btn.primary.is-loading { opacity: .85 !important; cursor: progress !important; }
+
+/* 5. Tombol footer (Batal/Reset = ghost bersih, Simpan = wine solid), FLAT */
+#videoEditModal .vem-actions .btn.ghost {
+  background: var(--bg-elev) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important; box-shadow: none !important; transition: border-color .15s, background .15s !important;
+}
+#videoEditModal .vem-actions .btn.ghost:hover { border-color: var(--primary) !important; }
+#videoEditModal .vem-actions .btn.primary {
+  background: var(--primary) !important; border: 1px solid var(--primary) !important;
+  color: var(--cream) !important; box-shadow: none !important; transition: none !important;
+}
+#videoEditModal .vem-actions .btn.ghost::before, #videoEditModal .vem-actions .btn.ghost::after,
+#videoEditModal .vem-actions .btn.primary::before, #videoEditModal .vem-actions .btn.primary::after { content: none !important; display: none !important; }
+#videoEditModal .vem-actions .btn:focus, #videoEditModal .vem-actions .btn:focus-visible { outline: none !important; box-shadow: none !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v759 — layout 2 KOLOM (compact, tanpa scroll panjang).
+   Kiri: thumbnail + judul + deskripsi. Kanan: kategori + tag + visibilitas +
+   komentar. Subtitle full-width di bawah. Panel dilebarkan.
+   =================================================================== */
+#videoEditModal .video-edit-panel { max-width: 880px !important; width: 94vw !important; }
+#videoEditModal .vem-2col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start;
+}
+#videoEditModal .vem-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* compact: jarak antar field cukup dari gap kolom (hindari dobel margin) */
+#videoEditModal .vem-2col .upf-field { margin-bottom: 0 !important; }
+#videoEditModal .vem-2col .upf-field > label,
+#videoEditModal .vem-2col .upf-label-row { margin-bottom: 6px !important; }
+/* deskripsi mengisi tinggi kolom kiri biar seimbang dgn 4 field kanan */
+#videoEditModal .vem-col-left { gap: 12px; }
+#videoEditModal #vemDesc { min-height: 150px; }
+/* thumbnail row sedikit dipadatkan */
+#videoEditModal .vem-thumb-row { margin-bottom: 0 !important; }
+/* v760: subtitle PINDAH ke kolom kanan + dropzone DIPADATKAN (dulu full-width
+   besar makan banyak ruang). Jadi ringkas di bawah Komentar. */
+#videoEditModal .upf-subtitle-section { margin-top: 0 !important; }
+#videoEditModal .upf-subtitle-section .dz-pro,
+#videoEditModal .upf-subtitle-section [class*="dropzone"],
+#videoEditModal .upf-subtitle-section [class*="dz-"] {
+  min-height: 0 !important;
+  padding: 14px !important;
+}
+/* ikon dropzone subtitle dikecilkan */
+#videoEditModal .upf-subtitle-section .dz-pro svg,
+#videoEditModal .upf-subtitle-section .dz-pro [class*="icon"] { width: 26px !important; height: 26px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro > *:first-child { margin-bottom: 6px !important; }
+/* Responsif: layar sempit → kembali 1 kolom */
+@media (max-width: 720px) {
+  #videoEditModal .vem-2col { grid-template-columns: 1fr; gap: 14px; }
+}
+
+/* ===================================================================
+   MODAL EDIT VIDEO v765 — fitur Pengaturan lanjutan (toggle switch tema).
+   =================================================================== */
+#videoEditModal #vemAdvanced .vem-toggles { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+#videoEditModal .vem-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; cursor: pointer;
+}
+#videoEditModal .vem-toggle-lbl { font-size: 13px; color: var(--cream); }
+#videoEditModal .vem-switch { position: relative; width: 38px; height: 22px; flex: none; }
+#videoEditModal .vem-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+#videoEditModal .vem-switch-track {
+  position: absolute; inset: 0; background: var(--bg-elev);
+  border: 1px solid var(--border); border-radius: 999px;
+  transition: background .15s, border-color .15s; pointer-events: none;
+}
+#videoEditModal .vem-switch-track::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(232,216,196,.55); transition: transform .15s, background .15s;
+}
+#videoEditModal .vem-switch input:checked + .vem-switch-track { background: var(--primary); border-color: var(--primary); }
+#videoEditModal .vem-switch input:checked + .vem-switch-track::after { transform: translateX(16px); background: #fff; }
+#videoEditModal .vem-switch input:focus-visible + .vem-switch-track { outline: none; }
+
+/* v766: Pengaturan lanjutan dalam KOTAK/kolom sendiri + kolom diseimbangkan. */
+#videoEditModal #vemAdvanced {
+  background: rgba(232,216,196,.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+#videoEditModal #vemAdvanced > label { margin-bottom: 4px !important; }
+#videoEditModal #vemAdvanced .vem-toggle { padding: 7px 0; }
+/* kompak: deskripsi & dropzone subtitle dikecilkan supaya kiri≈kanan, no scroll */
+#videoEditModal #vemDesc { min-height: 92px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro,
+#videoEditModal .upf-subtitle-section .dz-pro-empty { min-height: 0 !important; }
+/* KUNCI: dropzone punya aspect-ratio 16/9 → tinggi ikut lebar (226px). Matikan
+   supaya tinggi mengikuti isi → kompak. */
+#videoEditModal .upf-subtitle-section .dz-pro { aspect-ratio: auto !important; padding: 16px 12px !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty { height: auto !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty { gap: 6px !important; }
+/* ===================================================================
+   MODAL EDIT VIDEO v769 — rapikan section SUBTITLE (dropzone + ikon + tombol).
+   =================================================================== */
+/* baris label: "Subtitle (opsional)" kiri, tombol Auto-generate kanan, sejajar */
+#videoEditModal .upf-subtitle-section .upf-label-row { display: flex; align-items: center; justify-content: space-between; }
+/* tombol Auto-generate (AI) — ghost themed, flat */
+#videoEditModal .upf-auto-group .btn,
+#videoEditModal .upf-subtitle-section .btn.ghost {
+  background: var(--bg-elev) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important; box-shadow: none !important; border-radius: 9px !important;
+}
+#videoEditModal .upf-auto-group .btn:hover { border-color: var(--primary) !important; }
+#videoEditModal .upf-auto-group .btn::before, #videoEditModal .upf-auto-group .btn::after { content: none !important; display: none !important; }
+/* dropzone bersih: dashed tipis, bg sangat subtle */
+#videoEditModal .upf-subtitle-section .dz-pro {
+  border: 1.5px dashed var(--border) !important; border-radius: 12px !important;
+  background: rgba(232,216,196,.03) !important;
+  /* v783: rata tengah konten (dulu justify normal → blok menempel kiri) */
+  justify-content: center !important; align-items: center !important;
+}
+#videoEditModal .upf-subtitle-section .dz-pro-empty {
+  align-items: center !important; text-align: center !important; width: 100% !important;
+}
+/* ikon dropzone: lingkaran THEMED subtle (bukan gradient wine mencolok) */
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon {
+  width: 40px !important; height: 40px !important;
+  background: rgba(232,216,196,.07) !important; border: 1px solid var(--border) !important;
+  color: var(--cream) !important;
+}
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg { width: 18px !important; height: 18px !important; }
+/* teks dropzone berjenjang: judul jelas, hint muted */
+#videoEditModal .upf-subtitle-section .dz-pro-empty p { font-size: 13px !important; font-weight: 700 !important; color: var(--cream) !important; margin: 0 !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty small { font-size: 11.5px !important; color: rgba(232,216,196,.5) !important; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v770 — fix ikon dropzone (svg width 0), teks field rata
+   tengah, warna placeholder dropdown (bukan bluish).
+   =================================================================== */
+/* fix: svg ikon dropzone tadi width 0 → paksa ukuran + jangan menyusut */
+#videoEditModal .upf-subtitle-section .dz-pro-empty-icon svg {
+  width: 18px !important; height: 18px !important; min-width: 18px !important; flex: none !important;
+}
+/* v782: FIX kotak ikon subtitle — selector lebar [class*="dz-"] & [class*="icon"]
+   tanpa sengaja menambah padding 14px + paksa 26px → ikon meluber jadi lingkaran
+   terpotong. Override spesifisitas tinggi: kotak rapi, ikon center, tanpa padding. */
+#videoEditModal .upf-subtitle-section .dz-pro .dz-pro-empty .dz-pro-empty-icon {
+  width: 44px !important; height: 44px !important; padding: 0 !important;
+  border-radius: 12px !important; overflow: hidden !important;
+  display: grid !important; place-items: center !important;
+  background: rgba(232,216,196,.07) !important; border: 1px solid var(--border) !important;
+  box-shadow: none !important; color: var(--cream) !important;
+}
+#videoEditModal .upf-subtitle-section .dz-pro .dz-pro-empty .dz-pro-empty-icon svg {
+  width: 20px !important; height: 20px !important; min-width: 20px !important; flex: none !important;
+}
+/* v771: REVERT rata tengah (kelewat — dipasang ke semua field). Kembali rata kiri. */
+#videoEditModal #vemTitleInput,
+#videoEditModal #vemTags { text-align: left !important; }
+#videoEditModal .vem-dd-trigger .vem-dd-label { flex: 1 1 auto; text-align: left; }
+/* warna placeholder ("Pilih kategori", "Beri judul…", dll) → ABU-ABU NETRAL
+   MURNI #9a9a9a (R=G=B) + ITALIC supaya jelas itu contoh/placeholder, beda tegas
+   dari teks isian (krem, tegak). Spesifisitas tinggi (ID) supaya pasti menang. */
+#videoEditModal #vemTitleInput::placeholder,
+#videoEditModal #vemDesc::placeholder,
+#videoEditModal #vemTags::placeholder,
+#videoEditModal .vem-dd-label.placeholder,
+#videoEditModal input::placeholder,
+#videoEditModal textarea::placeholder {
+  color: #9a9a9a !important;
+  /* KUNCI: input punya -webkit-text-fill-color krem yg menimpa `color` saat
+     dicat. Tanpa override ini, placeholder tetap krem walau color=abu. */
+  -webkit-text-fill-color: #9a9a9a !important;
+  font-style: italic !important;
+}
+
+/* ===================================================================
+   MODAL EDIT VIDEO v772 — garis pembatas antar toggle Pengaturan lanjutan +
+   teks dropzone subtitle rata tengah & rapi.
+   =================================================================== */
+/* garis pembatas antar item pengaturan */
+#videoEditModal #vemAdvanced .vem-toggles { gap: 0 !important; }
+#videoEditModal #vemAdvanced .vem-toggle { border-bottom: 1px solid var(--border); padding: 10px 0 !important; }
+#videoEditModal #vemAdvanced .vem-toggle:last-child { border-bottom: 0; padding-bottom: 2px !important; }
+#videoEditModal #vemAdvanced .vem-toggle:first-of-type { padding-top: 2px !important; }
+/* dropzone subtitle: seluruh teks rata tengah & rapi */
+#videoEditModal .upf-subtitle-section .dz-pro-empty { text-align: center !important; align-items: center !important; }
+#videoEditModal .upf-subtitle-section .dz-pro-empty p,
+#videoEditModal .upf-subtitle-section .dz-pro-empty small { text-align: center !important; width: 100%; }
+
+/* ===================================================================
+   MODAL EDIT VIDEO v777 — header: ikon pensil dalam KOTAK + deskripsi di bawah
+   judul "Edit Video".
+   =================================================================== */
+#videoEditModal .vem-head { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 12px !important; }
+/* v779: kotak ikon header — warna aksen wine + ikon dikembalikan ke OUTLINE. */
+#videoEditModal .vem-head-ico {
+  width: 40px; height: 40px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary); border: 1px solid rgba(232,216,196,.18);
+  border-radius: 11px; color: var(--cream);
+}
+#videoEditModal .vem-head-ico svg, #videoEditModal .vem-head-ico .picon {
+  width: 20px !important; height: 20px !important;
+  fill: none !important; stroke: currentColor !important; stroke-width: 2px !important;
+}
+#videoEditModal .vem-head-ico .picon-w { display: inline-flex; }
+#videoEditModal .vem-head-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+#videoEditModal .vem-head-text h3 { margin: 0 !important; }
+#videoEditModal .vem-head-desc {
+  margin: 0 !important; font-size: 12.5px !important; font-weight: 500 !important;
+  color: rgba(232,216,196,.55) !important;
+}
+#videoEditModal .vem-head .modal-close { margin-left: auto; }

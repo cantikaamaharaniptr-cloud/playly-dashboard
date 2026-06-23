@@ -692,10 +692,21 @@ function initUiEmojiConvert() {
 }
 window.initUiEmojiConvert = initUiEmojiConvert;
 
-function toast(msg, type = "") {
+function toast(msg, type = "", icon = null) {
   const t = document.createElement("div");
   t.className = `toast ${type}`;
-  t.innerHTML = emojiToIcon(msg);
+  // v793: bentuk kartu notifikasi — badge ikon + body. v794: badge bisa diisi
+  //       ikon SVG bertema eksplisit (arg icon); kalau tidak, ambil emoji depan.
+  let ico = "", body = String(msg);
+  if (icon) {
+    ico = icon;
+  } else {
+    const m = body.match(/^\s*([^\w<\s][^\w<]*?)\s+([\s\S]+)$/u);
+    if (m) { ico = m[1]; body = m[2]; }
+  }
+  t.innerHTML =
+    `<span class="toast-ico" aria-hidden="true">${emojiToIcon(ico || "🔔")}</span>` +
+    `<span class="toast-body">${emojiToIcon(body)}</span>`;
   const host = $("#toastHost");
   host.append(t);
   // Posisi toast (req user 2026-06-11 — biar dekat fiturnya, bukan nyangkut topbar):
@@ -730,6 +741,38 @@ function toast(msg, type = "") {
   setTimeout(() => t.remove(), 3200);
 }
 window.toast = toast;
+// v794: ikon SVG bertema untuk notifikasi status video (ganti emoji 📝/🚀).
+const TOAST_ICONS = {
+  // disimpan ke draf — dokumen berlipat (file draft)
+  draft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>',
+  // dipublikasikan — centang dalam lingkaran (berhasil & live)
+  published: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  // tautan disalin — ikon rantai
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  // kode embed disalin — ikon code
+  embed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+};
+window.TOAST_ICONS = TOAST_ICONS;
+
+// v798: salin teks ke clipboard (dgn fallback) + toast konfirmasi bertema.
+function _libCopyFallback(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.pointerEvents = "none";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand("copy"); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+function _libCopyToClipboard(text, title, sub, icon) {
+  const ok = () => { if (typeof toast === "function") toast(`<b>${title}</b><span class="toast-sub">${sub}</span>`, "success", icon); };
+  const no = () => { if (typeof toast === "function") toast(`Gagal menyalin — coba salin manual.`, "warning"); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(() => { _libCopyFallback(text) ? ok() : no(); });
+    } else { _libCopyFallback(text) ? ok() : no(); }
+  } catch (e) { _libCopyFallback(text) ? ok() : no(); }
+}
+window._libCopyToClipboard = _libCopyToClipboard;
 
 // Popup notif yang anchor di bawah bell icon di topbar (id="openNotif").
 // Variant ke-2 dari toast — per request user 2026-05-10aj. Auto-dismiss 4.5s.
@@ -3777,11 +3820,18 @@ async function refreshStorageUsage() {
       if (textEl) textEl.textContent = `${monthlyTxt} / ${q.gbLabel}`;
       if (pctEl) pctEl.textContent = `${pct < 1 && monthlyBytes > 0 ? "<1" : Math.round(pct)}%`;
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
-    } else {
-      // Admin: lihat total bucket cloud, tanpa kuota.
+    } else if (user?.role === "admin") {
+      // Admin: tanpa batas penyimpanan.
       if (textEl) textEl.textContent = `${usedTxt} / Unlimited`;
       if (pctEl) pctEl.textContent = "∞";
       if (ringEl) ringEl.setAttribute("stroke-dasharray", `0, 100`);
+    } else {
+      // v795: Premium BOUNDED 100 GB (bukan Unlimited) — konsisten dgn model kuota.
+      const PREMIUM_QUOTA = 100 * 1024 * 1024 * 1024; // 100 GB
+      const pct = Math.min(100, Math.max(0, (used / PREMIUM_QUOTA) * 100));
+      if (textEl) textEl.textContent = `${usedTxt} / 100 GB`;
+      if (pctEl) pctEl.textContent = `${pct < 1 && used > 0 ? "<1" : Math.round(pct)}%`;
+      if (ringEl) ringEl.setAttribute("stroke-dasharray", `${pct.toFixed(2)}, 100`);
     }
   } catch (err) {
     console.warn("storage refresh failed:", err);
@@ -31979,6 +32029,8 @@ function switchView(name, { fromNav = false } = {}) {
     // Parent ("all") → "My Library", sub-tab → label sub-tab dalam Bahasa Indonesia.
     let crumbLabel = trCrumb(name);
     if (name === "videos") {
+      // Breadcrumb: Beranda / Pustaka Saya / [sub-tab]. Sebelumnya level
+      // "Pustaka Saya" hilang (langsung Beranda / Video Saya).
       const labelMap = {
         all:      "Pustaka Saya",
         my:       "Video Saya",
@@ -32048,6 +32100,11 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderAdminPremiumQueue === "function") setTimeout(renderAdminPremiumQueue, 30);
   }
   if (name === "videos") {
+    // v717: masuk/kembali ke Pustaka (termasuk klik breadcrumb "Pustaka Saya"/
+    // "Video Saya" saat sedang menonton) → pastikan inline player tertutup &
+    // chrome pustaka kembali tampil. switchView("videos") tidak memicu
+    // playly:view-changed cleanup (view sama), jadi tutup eksplisit di sini.
+    try { closeLibInlinePlayer(); } catch {}
     renderVideoGrid();
     renderMyLibrary();
     // Restore last active library tab (default "my")
@@ -32187,11 +32244,12 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
       group.querySelectorAll(".nav-subitem").forEach(x => x.classList.remove("active"));
       // Navigate ke parent view (idempotent)
       switchView(n.dataset.view, { fromNav: true });
-      // Khusus My Library: reset library tab ke "all" supaya tampil gabungan.
-      // Dipanggil setelah switchView selesai (yang restore libTab terakhir).
+      // v807: My Library → buka tab "Video Saya" (bukan gabungan "all"). Dulu
+      // "all" bikin breadcrumb "My Library" (dobel "Pustaka Saya") + chip toolbar
+      // hilang saat interaksi (scope-other karena focus≠my-video). Klik tab pill
+      // menjalankan alur lengkap (focus + breadcrumb "Video Saya" + sync toolbar).
       if (n.dataset.view === "videos") {
         setTimeout(() => {
-          if (typeof setLibraryTab === "function") setLibraryTab("all");
           const view = document.querySelector('section.view[data-view="videos"]');
           if (view) {
             const h = view.querySelector(".page-head h2, .view-header h2");
@@ -32199,7 +32257,9 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
               h.textContent = h.dataset.originalTitle;
               delete h.dataset.originalTitle;
             }
-            if (typeof applyFocus === "function") applyFocus(view, "all");
+            const tabBtn = view.querySelector('button[data-focus-tab="my-video"]');
+            if (tabBtn) tabBtn.click();
+            else if (typeof applyFocus === "function") applyFocus(view, "my-video");
           }
         }, 50);
       }
@@ -32285,6 +32345,43 @@ document.addEventListener("click", e => {
   if (window.innerWidth <= 768) $("#sidebar")?.classList.remove("open");
 });
 
+// v746: lengkapi sub-item sidebar "Pustaka Saya" agar match dgn tab di halaman:
+// tambah "Draf" (sebelumnya tak ada) + rename "Video Status" → "Status Video".
+function ensureSidebarVideosSubitems() {
+  const myVid = document.querySelector('.nav-subitem[data-view="videos"][data-sub-action="focus:my-video"]');
+  if (!myVid) return;
+  // Rename "Video Status" → "Status Video" (konsisten dgn tab + breadcrumb).
+  const st = document.querySelector('.nav-subitem[data-sub-action="focus:status-videos"]');
+  if (st && /video\s*status/i.test(st.textContent)) {
+    st.textContent = "Status Video";
+    st.setAttribute("data-orig-text", "Status Video");
+  }
+  // Sisipkan "Draf" tepat setelah "Video Saya" (urutan = tab: Video Saya, Draf,
+  // Status Video, Unduhan). Klik → switchView videos + focus:draft (section draf).
+  if (!document.querySelector('.nav-subitem[data-sub-action="focus:draft"]')) {
+    const li = myVid.closest("li");
+    const a = document.createElement("a");
+    a.href = "#";
+    a.className = "nav-subitem";
+    a.dataset.view = "videos";
+    a.dataset.subAction = "focus:draft";
+    a.setAttribute("data-orig-text", "Draf");
+    a.textContent = "Draf";
+    if (li && li.parentNode) {
+      const newLi = document.createElement("li");
+      newLi.appendChild(a);
+      li.parentNode.insertBefore(newLi, li.nextSibling);
+    } else {
+      myVid.parentNode.insertBefore(a, myVid.nextSibling);
+    }
+  }
+}
+(function initSidebarVideosSubitems() {
+  const run = () => { try { ensureSidebarVideosSubitems(); } catch (e) {} };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
+  else run();
+})();
+
 // Update h2 view dengan judul sub-item — simpan judul asli sekali supaya bisa
 // di-restore saat user reset/keluar dari focus mode.
 function updateViewTitle(view, title) {
@@ -32335,11 +32432,14 @@ function resetGroupFocus(group) {
   const targetView = group.querySelector(".nav-parent")?.dataset.view;
   if (!targetView) return;
   const view = document.querySelector(`section.view[data-view="${targetView}"]`);
-  if (view) applyFocus(view, "all");
-  // Khusus My Library: reset ke "all" supaya semua section (My Videos + Status + Unduhan) tampil gabungan
-  if (targetView === "videos" && typeof setLibraryTab === "function") {
-    setLibraryTab("all");
+  // v807: My Library → buka tab "Video Saya" (bukan gabungan "all").
+  if (targetView === "videos" && view) {
+    const tabBtn = view.querySelector('button[data-focus-tab="my-video"]');
+    if (tabBtn) { tabBtn.click(); return; }
+    if (typeof applyFocus === "function") applyFocus(view, "my-video");
+    return;
   }
+  if (view) applyFocus(view, "all");
 }
 
 function runSubAction(action) {
@@ -33328,7 +33428,7 @@ function renderHomeSidebar() {
         </div>`;
     } else {
       filesBody.innerHTML = top.map(v => {
-        const views = (v.viewsNum != null && typeof fmtNum === "function") ? fmtNum(v.viewsNum) + " views" : "Draft";
+        const views = (v.viewsNum != null && typeof fmtNum === "function") ? fmtNum(v.viewsNum) + " tayangan" : "Draf";
         return `
         <div class="hsb-file-row" data-vid="${v.id}" data-jump="videos" role="button" tabindex="0">
           <img class="hsb-file-thumb" src="${v.thumb || ""}" alt="" loading="lazy"/>
@@ -37154,24 +37254,512 @@ $$("#filterTabs button").forEach(b => {
 // ----------------------- MY LIBRARY VIEW (videos) -----------------------
 // Render 3 koleksi: My Video (upload sendiri), New Videos (terbaru dari kreator
 // lain), Download (yang sudah ditandai diunduh). Click → buka player video.
+// Dropdown "Urutkan" untuk Pustaka Saya (Terbaru/Terlama/Terpopuler) — di-inject
+// sekali di atas grid Video Saya. state.libSort menyimpan pilihan.
+function ensureLibSort() {
+  const grid = document.getElementById("myVideoGrid");
+  if (!grid || !grid.parentNode) return;
+  // Toolbar (jumlah video + dropdown Urutkan kustom) ditaruh DI BAWAH kartu
+  // header (tepat sebelum grid), bukan di dalam kartu.
+  const LABELS = { new: "Terbaru", old: "Terlama", popular: "Terpopuler" };
+  let bar = document.getElementById("libSortBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "libSortBar";
+    bar.className = "lib-sort-bar";
+    // v806: SATU baris toolbar — grup KIRI (jumlah + chip filter) & KANAN
+    // (cari, Pilih, toggle, urutkan). Sebelumnya tersebar di 2 baris (rame).
+    bar.innerHTML =
+      '<div class="lib-bar-left">' +
+        '<span class="dl-head-count" id="libVideoCount"></span>' +
+        // v818: chip 4-tombol diganti SATU dropdown "Filter" (visibilitas) supaya
+        // toolbar tak sesak. Pola sama dgn dropdown Urutkan.
+        '<div class="lib-vis-dd">' +
+          '<button type="button" class="lib-sort-trigger" id="libVisTrigger" aria-haspopup="listbox" aria-expanded="false" title="Filter visibilitas">' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>' +
+            '<span id="libVisCurrent">Semua</span>' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</button>' +
+          '<div class="lib-sort-menu" id="libVisMenu" role="listbox" hidden>' +
+            '<button type="button" role="option" data-visf="all">Semua</button>' +
+            '<button type="button" role="option" data-visf="public">Publik</button>' +
+            '<button type="button" role="option" data-visf="unlisted">Tidak terdaftar</button>' +
+            '<button type="button" role="option" data-visf="private">Privat</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="lib-bar-right">' +
+        // cari (collapsible: ikon → expand)
+        '<div class="lib-search collapsible">' +
+          '<button type="button" class="lib-search-toggle" aria-label="Cari di pustaka">' +
+            '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+          '</button>' +
+          '<input id="libSearchInput" type="search" placeholder="Cari di pustaka…" autocomplete="off">' +
+        '</div>' +
+        // tombol Pilih (mode pilih-banyak)
+        '<button type="button" class="lib-pick-btn" id="libPickBtn" title="Pilih banyak video">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
+          '<span>Pilih</span>' +
+        '</button>' +
+        // toggle tampilan Grid / List
+        '<div class="lib-view-toggle" role="group" aria-label="Tampilan">' +
+          '<button type="button" class="lib-vt-btn" data-libview-set="grid" title="Tampilan grid" aria-label="Tampilan grid">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' +
+          '</button>' +
+          '<button type="button" class="lib-vt-btn" data-libview-set="list" title="Tampilan list" aria-label="Tampilan list">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3.5" y1="6" x2="3.51" y2="6"/><line x1="3.5" y1="12" x2="3.51" y2="12"/><line x1="3.5" y1="18" x2="3.51" y2="18"/></svg>' +
+          '</button>' +
+        '</div>' +
+        // urutkan
+        '<div class="lib-sort-dd">' +
+          '<button type="button" class="lib-sort-trigger" id="libSortTrigger" aria-haspopup="listbox" aria-expanded="false">' +
+            '<span id="libSortCurrent">Terbaru</span>' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</button>' +
+          '<div class="lib-sort-menu" id="libSortMenu" role="listbox" hidden>' +
+            '<button type="button" role="option" data-sort="new">Terbaru</button>' +
+            '<button type="button" role="option" data-sort="old">Terlama</button>' +
+            '<button type="button" role="option" data-sort="popular">Terpopuler</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  // v799b: bar aksi massal (dibuat di sini, disisipkan bersama toolbar).
+  let bulk = document.getElementById("libBulkBar");
+  if (!bulk) {
+    bulk = document.createElement("div");
+    bulk.id = "libBulkBar"; bulk.className = "lib-bulk-bar"; bulk.hidden = true;
+    bulk.innerHTML =
+      '<span class="lib-bulk-count" id="libBulkCount">0 dipilih</span>' +
+      '<button type="button" class="lib-bulk-link" data-bulk="all">Pilih semua</button>' +
+      '<span class="lib-bulk-spacer"></span>' +
+      // v811: ikon + casing konsisten ("Ke Draf"), Hapus jelas destruktif.
+      '<button type="button" class="lib-bulk-act" data-bulk="publish">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<span>Publikasikan</span></button>' +
+      '<button type="button" class="lib-bulk-act" data-bulk="draft">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+        '<span>Ke Draf</span></button>' +
+      '<button type="button" class="lib-bulk-act danger" data-bulk="delete">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>' +
+        '<span>Hapus</span></button>' +
+      '<button type="button" class="lib-bulk-x" data-bulk="cancel" title="Batal" aria-label="Batal pilih">✕</button>';
+  }
+  // v803/806: toolbar DI ATAS semua tab (selalu tampil) — urutan bar, bulk tepat
+  // sebelum section pertama. Guard posisi agar tidak re-insert (anti blur input).
+  const _lview = document.querySelector('section.view[data-view="videos"]');
+  const _firstSec = _lview && _lview.querySelector('[data-focus-target]');
+  if (_lview && _firstSec) {
+    const _ins = (el, ref) => { if (el.parentNode !== _lview || el.nextElementSibling !== ref) _lview.insertBefore(el, ref); };
+    _ins(bulk, _firstSec); _ins(bar, bulk);
+  }
+  { // sinkron dropdown filter visibilitas (label + opsi aktif)
+    const VISL = { all: "Semua", public: "Publik", unlisted: "Tidak terdaftar", private: "Privat" };
+    const vf = state.libVisFilter || "all";
+    const vcur = document.getElementById("libVisCurrent");
+    if (vcur) vcur.textContent = VISL[vf] || "Semua";
+    bar.querySelectorAll("#libVisMenu button[data-visf]").forEach(b => b.classList.toggle("active", b.dataset.visf === vf));
+  }
+  // v798: terapkan mode tampilan (grid/list) ke section + sinkron tombol aktif.
+  {
+    const vmode = state.libViewMode === "list" ? "list" : "grid";
+    const sec = document.querySelector('section.view[data-view="videos"]');
+    if (sec) sec.dataset.libview = vmode;
+    bar.querySelectorAll(".lib-vt-btn").forEach(b => b.classList.toggle("active", b.dataset.libviewSet === vmode));
+  }
+  // v799b: pertahankan state mode-pilih lintas re-render (reset seleksi).
+  if (typeof _libApplySelectMode === "function") _libApplySelectMode(!!window._libSelectMode, true);
+  const cur = state.libSort || "new";
+  const curEl = document.getElementById("libSortCurrent");
+  if (curEl) curEl.textContent = LABELS[cur] || "Terbaru";
+  bar.querySelectorAll(".lib-sort-menu button").forEach(b => b.classList.toggle("active", b.dataset.sort === cur));
+  // v803: scoping toolbar per tab aktif (count + sembunyikan kontrol tak relevan).
+  if (typeof _libSyncToolbar === "function") _libSyncToolbar();
+  // v818: gabung alat ke baris tab (satu baris: tab kiri, alat kanan).
+  if (typeof ensureLibMergedBar === "function") ensureLibMergedBar();
+}
+// v818: GABUNG alat ke baris tab — tab di kiri (.lib-tabs-group), alat di kanan
+// (.lib-tools-group: jumlah, filter, cari, toggle, urutkan, Pilih). Idempotent +
+// self-healing (tab/alat yg nyasar dikumpulkan ulang tiap render). Bar lama
+// (#libSortBar) dikosongkan & disembunyikan.
+function ensureLibMergedBar() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const tabBar = view.querySelector('.riwayat-tab-bar');
+  const sortBar = document.getElementById('libSortBar');
+  if (!tabBar || !sortBar) return;
+  // grup tab (kiri)
+  let tabsG = tabBar.querySelector(':scope > .lib-tabs-group');
+  if (!tabsG) { tabsG = document.createElement('div'); tabsG.className = 'lib-tabs-group'; tabBar.insertBefore(tabsG, tabBar.firstChild); }
+  // kumpulkan semua tombol tab (di mana pun di tabBar) ke grup, jaga urutan DOM
+  tabBar.querySelectorAll('.riwayat-tab').forEach(t => { if (t.parentNode !== tabsG) tabsG.appendChild(t); });
+  // grup alat (kanan)
+  let toolsG = tabBar.querySelector(':scope > .lib-tools-group');
+  if (!toolsG) { toolsG = document.createElement('div'); toolsG.className = 'lib-tools-group'; tabBar.appendChild(toolsG); }
+  // v822: jumlah video ("9 Video") dipindah ke HEADER (samping judul), keluar dari
+  // baris alat supaya tak rame. Disisipkan setelah h2 judul (deskripsi tetap baris bawah).
+  const headerText = view.querySelector('.view-header .lib-header-text');
+  const count = document.getElementById('libVideoCount');
+  if (headerText && count && count.parentNode !== headerText) {
+    const h2 = headerText.querySelector('h1, h2, h3');
+    if (h2) headerText.insertBefore(count, h2.nextSibling);
+    else headerText.appendChild(count);
+  }
+  // pindahkan kontrol ke grup alat dengan URUTAN tetap (skip kalau sudah di sana)
+  const order = [
+    sortBar.querySelector('.lib-vis-dd') || toolsG.querySelector('.lib-vis-dd'),
+    sortBar.querySelector('.lib-search') || toolsG.querySelector('.lib-search'),
+    sortBar.querySelector('.lib-view-toggle') || toolsG.querySelector('.lib-view-toggle'),
+    sortBar.querySelector('.lib-sort-dd') || toolsG.querySelector('.lib-sort-dd'),
+    document.getElementById('libPickBtn'),
+  ];
+  order.forEach(el => { if (el && el.parentNode !== toolsG) toolsG.appendChild(el); });
+  // bar lama kosong → sembunyikan (tetap di DOM agar tak di-rebuild & duplikat id)
+  sortBar.classList.add('lib-merged-empty');
+}
+// v803: sesuaikan toolbar dengan tab aktif. Video Saya/Draf = toolbar penuh
+// (cari, filter, Pilih, sort). Status/Unduhan = hanya toggle Grid/List (kontrol
+// lain tak relevan: Unduhan = video kreator lain, Status punya sub-tab sendiri).
+function _libSyncToolbar() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const focus = view.dataset.focus || "my-video";
+  // v807: "all" (gabungan) ikut diperlakukan sbg own → toolbar penuh, chip TIDAK
+  // hilang saat interaksi (cegah bug "klik Semua kolom hilang").
+  const own = (focus === "my-video" || focus === "draft" || focus === "all");
+  const bar = document.getElementById("libSortBar");
+  // own = toolbar penuh; lainnya = scope-other (hanya toggle Grid/List).
+  if (bar) bar.classList.toggle("scope-other", !own);
+  // v818: scope juga di-level VIEW (alat kini di baris tab, bukan dlm #libSortBar).
+  view.dataset.libscope = own ? "own" : "other";
+  if (!own && window._libSelectMode && typeof _libApplySelectMode === "function") _libApplySelectMode(false);
+  if (own) {
+    const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+    const base = focus === "draft"
+      ? vids.filter(v => v.adminStatus === "draft")
+      : vids.filter(v => !v.adminStatus || v.adminStatus === "published");
+    // v808: ikut filter visibilitas aktif (mis. "Publik" → hanya hitung publik).
+    const list = (typeof _libFilterList === "function") ? _libFilterList(base) : base;
+    const cnt = document.getElementById("libVideoCount");
+    if (cnt) cnt.textContent = `${list.length} Video`;
+  }
+}
+window._libSyncToolbar = _libSyncToolbar;
+// v799b: ===== MODE PILIH-BANYAK (bulk select) Pustaka Saya =====
+window._libSelected = window._libSelected || new Set();
+function _libUpdateBulkCount() {
+  const n = window._libSelected.size;
+  const cEl = document.getElementById("libBulkCount");
+  if (cEl) cEl.textContent = `${n} dipilih`;
+  document.querySelectorAll('#libBulkBar .lib-bulk-act').forEach(b => b.disabled = n === 0);
+  // v816: label "Pilih semua" ↔ "Batalkan semua" sesuai status.
+  const link = document.querySelector('#libBulkBar [data-bulk="all"]');
+  if (link) {
+    const cbs = [...document.querySelectorAll('input[data-lib-check]')].filter(cb => cb.offsetParent !== null);
+    const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+    link.textContent = allChecked ? "Batalkan semua" : "Pilih semua";
+  }
+}
+function _libApplySelectMode(on, fromRender) {
+  window._libSelectMode = !!on;
+  const sec = document.querySelector('section.view[data-view="videos"]');
+  if (sec) sec.dataset.libselect = on ? "on" : "off";
+  const bulk = document.getElementById("libBulkBar");
+  if (bulk) bulk.hidden = !on;
+  const pick = document.getElementById("libPickBtn");
+  if (pick) pick.classList.toggle("active", !!on);
+  // toggle mode SELALU reset seleksi (juga saat re-render)
+  window._libSelected.clear();
+  document.querySelectorAll('input[data-lib-check]').forEach(cb => { cb.checked = false; });
+  _libUpdateBulkCount();
+}
+window._libApplySelectMode = _libApplySelectMode;
+function _libHandleBulk(action) {
+  if (action === "cancel") { _libApplySelectMode(false); return; }
+  if (action === "all") {
+    // v816: toggle — kalau semua sudah terpilih → batalkan; kalau belum → pilih semua.
+    const cbs = [...document.querySelectorAll('input[data-lib-check]')].filter(cb => cb.offsetParent !== null);
+    const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+    cbs.forEach(cb => {
+      cb.checked = !allChecked;
+      if (allChecked) window._libSelected.delete(+cb.dataset.libCheck);
+      else window._libSelected.add(+cb.dataset.libCheck);
+    });
+    _libUpdateBulkCount();
+    return;
+  }
+  const ids = [...window._libSelected];
+  if (!ids.length) return;
+  const vids = (typeof state === "object" && state ? (state.myVideos || []) : []);
+  if (action === "publish" || action === "draft") {
+    const status = action === "publish" ? "published" : "draft";
+    ids.forEach(id => { const v = vids.find(x => x.id === id); if (v) v.adminStatus = status; });
+    if (typeof saveState === "function") saveState();
+    _libApplySelectMode(false);
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    const label = action === "publish" ? "dipublikasikan" : "dipindahkan ke Draf";
+    if (typeof toast === "function") toast(`<b>${ids.length} video</b> ${label}`, "success", action === "publish" ? TOAST_ICONS.published : TOAST_ICONS.draft);
+    return;
+  }
+  if (action === "delete") {
+    const doDelete = () => {
+      ids.forEach(id => { if (typeof moveVideoToTrash === "function") moveVideoToTrash(id); });
+      _libApplySelectMode(false);
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+      if (typeof toast === "function") toast(`<b>${ids.length} video</b> dipindahkan ke Sampah`, "success");
+    };
+    if (typeof openConfirm === "function") {
+      openConfirm({
+        icon: "🗑️", iconClass: "danger", title: "Hapus video terpilih?",
+        desc: `<b>${ids.length} video</b> akan dipindahkan ke Sampah. Bisa dipulihkan dari Status Video → Sampah.`,
+        btnText: "Hapus", btnClass: "danger", onConfirm: doDelete
+      });
+    } else doDelete();
+    return;
+  }
+}
+window._libHandleBulk = _libHandleBulk;
+// v801: filter daftar by VISIBILITAS (dipakai di tiap section saat render).
+// Cari (judul) TIDAK di sini — dilakukan via hide/show DOM biar fokus input aman.
+function _libFilterList(list) {
+  if (!Array.isArray(list)) return list;
+  const vf = state.libVisFilter || "all";
+  if (vf === "all") return list;
+  return list.filter(v => (v.visibility || "public") === vf);
+}
+window._libFilterList = _libFilterList;
+// Cari: sembunyikan/ tampilkan kartu by judul, TANPA re-render (fokus tetap).
+// + tampilkan pesan "tidak ada hasil" per grid kalau semua tersaring (v801b).
+function _libApplySearchFilter() {
+  const raw = (typeof state !== "undefined" && state.libSearch) || "";
+  const q = raw.trim().toLowerCase();
+  const grids = document.querySelectorAll(
+    'section.view[data-view="videos"] #myVideoGrid,' +
+    'section.view[data-view="videos"] #draftVideoGrid,' +
+    'section.view[data-view="videos"] #statusVideoGrid,' +
+    'section.view[data-view="videos"] #downloadDashboardGrid,' +
+    'section.view[data-view="videos"] #downloadFileGrid'
+  );
+  grids.forEach(grid => {
+    const items = [...grid.querySelectorAll('.lib-item')];
+    let anyVisible = false;
+    items.forEach(item => {
+      const t = (item.querySelector('.lib-meta strong')?.textContent || "").toLowerCase();
+      const show = !q || t.includes(q);
+      item.style.display = show ? "" : "none";
+      if (show) anyVisible = true;
+    });
+    let nm = grid.querySelector(':scope > .lib-nomatch');
+    if (q && items.length && !anyVisible) {
+      if (!nm) { nm = document.createElement("div"); nm.className = "lib-nomatch"; grid.appendChild(nm); }
+      nm.innerHTML = `<div class="lib-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><p>Tidak ada video cocok dengan "<b>${escapeHtml(raw.trim())}</b>".</p>`;
+    } else if (nm) { nm.remove(); }
+  });
+}
+window._libApplySearchFilter = _libApplySearchFilter;
+document.addEventListener("input", (e) => {
+  const inp = e.target.closest("#libSearchInput");
+  if (!inp) return;
+  if (typeof state !== "undefined") state.libSearch = inp.value;
+  _libApplySearchFilter(); // hanya hide/show, tidak render → fokus aman
+});
+// v805: tutup kembali search kalau ditinggal dalam keadaan kosong.
+document.addEventListener("focusout", (e) => {
+  const inp = e.target.closest("#libSearchInput");
+  if (!inp) return;
+  setTimeout(() => {
+    if (!(inp.value || "").trim() && document.activeElement !== inp) {
+      inp.closest(".lib-search")?.classList.remove("open");
+    }
+  }, 120);
+});
+// checkbox kartu → update seleksi
+document.addEventListener("change", (e) => {
+  const cb = e.target.closest('input[data-lib-check]');
+  if (!cb) return;
+  const id = +cb.dataset.libCheck;
+  if (cb.checked) window._libSelected.add(id); else window._libSelected.delete(id);
+  _libUpdateBulkCount();
+});
+// Dropdown urutkan kustom: toggle / pilih / tutup saat klik di luar.
+document.addEventListener("click", (e) => {
+  // v805: toggle search pustaka (ikon ↔ input)
+  const stg = e.target.closest(".lib-search-toggle");
+  if (stg) {
+    const wrap = stg.closest(".lib-search");
+    const open = wrap.classList.toggle("open");
+    const inp = wrap.querySelector("#libSearchInput");
+    if (open) { if (inp) inp.focus(); }
+    else if (inp && (inp.value || "").trim()) { inp.value = ""; if (typeof state !== "undefined") state.libSearch = ""; if (typeof _libApplySearchFilter === "function") _libApplySearchFilter(); }
+    return;
+  }
+  // v818: dropdown filter visibilitas (trigger toggle + pilih opsi + tutup luar)
+  const visMenu = document.getElementById("libVisMenu");
+  const visTrig = e.target.closest("#libVisTrigger");
+  if (visTrig) {
+    if (visMenu) { const willOpen = visMenu.hidden; visMenu.hidden = !willOpen; visTrig.setAttribute("aria-expanded", String(willOpen)); }
+    return;
+  }
+  const visOpt = e.target.closest("#libVisMenu button[data-visf]");
+  if (visOpt) {
+    if (typeof state !== "undefined") state.libVisFilter = visOpt.dataset.visf;
+    if (visMenu) visMenu.hidden = true;
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    return;
+  }
+  if (visMenu && !visMenu.hidden && !e.target.closest(".lib-vis-dd")) visMenu.hidden = true;
+  // v799b: tombol "Pilih" → toggle mode pilih-banyak
+  const pickBtn = e.target.closest("#libPickBtn");
+  if (pickBtn) { _libApplySelectMode(!window._libSelectMode); return; }
+  // v799b: aksi bar massal
+  const bulkBtn = e.target.closest("#libBulkBar [data-bulk]");
+  if (bulkBtn) { _libHandleBulk(bulkBtn.dataset.bulk); return; }
+  // v798: toggle tampilan Grid / List
+  const vtBtn = e.target.closest(".lib-vt-btn[data-libview-set]");
+  if (vtBtn) {
+    const mode = vtBtn.dataset.libviewSet === "list" ? "list" : "grid";
+    if (typeof state !== "undefined") state.libViewMode = mode;
+    const sec = document.querySelector('section.view[data-view="videos"]');
+    if (sec) sec.dataset.libview = mode;
+    document.querySelectorAll(".lib-vt-btn").forEach(b => b.classList.toggle("active", b.dataset.libviewSet === mode));
+    if (typeof saveState === "function") saveState();
+    return;
+  }
+  const menu = document.getElementById("libSortMenu");
+  const trigger = e.target.closest("#libSortTrigger");
+  if (trigger) {
+    if (menu) { const willOpen = menu.hidden; menu.hidden = !willOpen; trigger.setAttribute("aria-expanded", String(willOpen)); }
+    return;
+  }
+  const opt = e.target.closest("#libSortMenu button[data-sort]");
+  if (opt) {
+    if (typeof state !== "undefined") state.libSort = opt.dataset.sort;
+    if (menu) menu.hidden = true;
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    return;
+  }
+  if (menu && !menu.hidden && !e.target.closest(".lib-sort-dd")) menu.hidden = true;
+});
+
+// Rapikan header tiap section (.dl-section-head): pindah ikon keluar dari <h3>
+// jadi pola "ikon | (judul + deskripsi rapat)" seperti header halaman + kartu.
+// Idempotent (guard dataset.restructured).
+function ensureLibSectionHeads() {
+  document.querySelectorAll('.view[data-view="videos"] .dl-section-head').forEach(head => {
+    if (head.dataset.restructured) return;
+    const h3 = head.querySelector("h3");
+    if (!h3) return;
+    head.dataset.restructured = "1";
+    const icon = h3.querySelector(".sec-icon-v582, [class*='sec-icon']");
+    const small = head.querySelector("small");
+    const textWrap = document.createElement("div");
+    textWrap.className = "dl-head-text";
+    if (icon) head.insertBefore(icon, head.firstChild);
+    textWrap.appendChild(h3);
+    if (small) textWrap.appendChild(small);
+    head.appendChild(textWrap);
+    head.classList.add("dl-head-flex");
+  });
+}
+
+// v715 (2026-06-09): "Draf" dipromosikan jadi TAB UTAMA Pustaka Saya (sejajar
+// Video Saya / Status Video / Unduhan), bukan lagi sub-tab tersembunyi di bawah
+// Status Video. User bingung "simpan ke draft tapi lihat draftnya di mana?" —
+// sekarang ada destinasi yang jelas. Tab + section di-inject via JS (pola sama
+// dgn ensureLibSort) supaya tidak menyentuh index-markup.ts yang rapuh.
+const DRAFT_TAB_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"/><polyline points="14 2 14 8 20 8"/><path d="M18.4 12.6a2 2 0 0 1 3 3L17 20l-3 1 1-3Z"/></svg>';
+function ensureDraftTab() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  const bar = view.querySelector(".riwayat-tab-bar");
+  if (!bar || document.getElementById("libDraftTab")) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "libDraftTab";
+  btn.className = "riwayat-tab";
+  btn.setAttribute("role", "tab");
+  btn.dataset.focusTab = "draft";
+  btn.innerHTML = `<span class="ptb-ico">${DRAFT_TAB_ICO}</span> Draf <span class="ptb-count" id="libDraftTabCount" hidden></span>`;
+  // Sisipkan tepat setelah tab "Video Saya" (draf = lanjutan dari video saya).
+  // v818: pakai parent AKTUAL myTab (tab bisa pindah ke .lib-tabs-group saat alat
+  // digabung ke baris tab) supaya insertBefore tak error.
+  const myTab = [...bar.querySelectorAll(".riwayat-tab")].find(t => t.dataset.focusTab === "my-video");
+  if (myTab) myTab.parentNode.insertBefore(btn, myTab.nextSibling);
+  else bar.insertBefore(btn, bar.firstChild);
+}
+// v750: tab status "all" diberi makna PENDING saja → relabel "Bermasalah" jadi
+// "Menunggu" + ikon JAM (waiting). Idempotent. Hindari edit index-markup.
+function ensureStatusSubtabLabels() {
+  const allTab = document.querySelector('.status-sub-tab[data-status-tab="all"]');
+  if (!allTab) return;
+  const spans = [...allTab.querySelectorAll("span")];
+  const labelSpan = spans.find(s => !s.classList.contains("sst-ico") && !s.classList.contains("ssc-count"));
+  if (labelSpan && /bermasalah/i.test(labelSpan.textContent)) {
+    labelSpan.textContent = "Menunggu";
+    labelSpan.removeAttribute("data-i18n");
+  }
+  const ico = allTab.querySelector(".sst-ico");
+  if (ico && ico.dataset.relabeled !== "menunggu") {
+    ico.dataset.relabeled = "menunggu";
+    ico.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  }
+}
+
+function ensureDraftSection() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view || document.getElementById("draftVideoGrid")) return;
+  const statusGrid = document.getElementById("statusVideoGrid");
+  let statusSec = statusGrid;
+  while (statusSec && !statusSec.hasAttribute("data-focus-target")) statusSec = statusSec.parentElement;
+  const sec = document.createElement("div");
+  sec.className = "lib-card lib-card-bare";
+  sec.dataset.focusTarget = "draft";
+  // CATATAN: sengaja TANPA data-lib. Sistem legacy data-lib-active (styles.css
+  // ~36539) menyembunyikan .lib-card[data-lib] yang tak cocok dgn tab aktif —
+  // section draf cukup dikontrol applyFocus (data-focus-hidden, !important).
+  sec.innerHTML =
+    '<div class="dl-section-head dl-head-flex" data-restructured="1"><div class="dl-head-text">' +
+    '<h3><span class="lib-h-ico">' + DRAFT_TAB_ICO + '</span> Draf</h3>' +
+    '<small>Video yang kamu simpan untuk dilanjutkan nanti — belum dipublikasikan. Klik “Edit” untuk lanjut, atau “Publikasikan” bila sudah siap.</small>' +
+    '</div></div><div id="draftVideoGrid"></div>';
+  if (statusSec && statusSec.parentNode) statusSec.parentNode.insertBefore(sec, statusSec.nextSibling);
+  else view.appendChild(sec);
+  if (statusGrid) sec.querySelector("#draftVideoGrid").className = statusGrid.className;
+  // Hormati focus aktif saat ini — kalau bukan tab draf, sembunyikan.
+  const curFocus = view.dataset.focus || "all";
+  if (curFocus !== "all" && curFocus !== "draft") sec.setAttribute("data-focus-hidden", "1");
+}
+
 function renderMyLibrary() {
   const renderCard = (v, opts = {}) => {
     const id = v.id;
     const title = escapeHtml(v.title || "Video");
-    const thumb = v.thumb || v.thumbnail || "";
+    let thumb = v.thumb || v.thumbnail || "";
+    // Abaikan placeholder SVG kosong (data:image/svg+xml...<svg/>) -> anggap TANPA thumbnail
+    // supaya tampil placeholder rapi (.lib-thumb-fallback), bukan kotak blank. User 2026-06-21.
+    if (thumb && (thumb.indexOf("%3Csvg%2F%3E") !== -1 || thumb.indexOf("<svg/>") !== -1)) thumb = "";
     const creator = escapeHtml(v.creator || v.uploader || "—");
     const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
     const duration = v.duration || "";
     const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
+    // Info tambahan kartu: jumlah suka, badge visibilitas, tanggal upload (data asli).
+    const likes = v.likesNum != null ? fmtNum(v.likesNum) : fmtNum(v.likes || 0);
+    const cmts = (typeof state !== "undefined" && state.comments && Array.isArray(state.comments[id])) ? state.comments[id].length : 0;
+    const _visMap = { public: { t: "🌐 Publik", c: "pub" }, unlisted: { t: "🔗 Tidak terdaftar", c: "unl" }, private: { t: "🔒 Privat", c: "prv" } };
+    const _vis = _visMap[v.visibility] || _visMap.public;
+    // Badge hanya untuk non-publik (unlisted/private) — publik = default, tak perlu.
+    const visBadge = (v.visibility && v.visibility !== "public") ? `<span class="lib-thumb-vis ${_vis.c}">${_vis.t}</span>` : "";
+    let dateStr = "";
+    { const ts = v.uploadedAt || v.createdAt; if (ts) { try { const d = new Date(ts); if (!isNaN(d.getTime())) dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }); } catch (e) {} } }
     // Status badge — hanya ditampilkan untuk video user sendiri (My Video)
     let statusBadge = "";
     if (opts.showStatus) {
       const st = v.adminStatus || "published";
       const map = {
-        pending:   { label: "⏳ Pending Review", cls: "warn" },
-        published: { label: "✓ Published",       cls: "ok" },
-        rejected:  { label: "✕ Rejected",        cls: "bad" },
-        takedown:  { label: "⛔ Takedown",        cls: "bad" },
+        pending:   { label: "⏳ Menunggu Tinjauan", cls: "warn" },
+        published: { label: "✓ Terbit",       cls: "ok" },
+        rejected:  { label: "✕ Ditolak",        cls: "bad" },
+        takedown:  { label: "⛔ Diturunkan",        cls: "bad" },
       };
       const m = map[st];
       if (m && st !== "published") {
@@ -37194,10 +37782,23 @@ function renderMyLibrary() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
           <span>Edit</span>
         </button>
-        <button type="button" class="lcm-item" data-lib-draft="${id}" role="menuitem">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>Simpan ke Draft</span>
+        <button type="button" class="lcm-item" data-lib-copylink="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Salin tautan</span>
         </button>
+        <button type="button" class="lcm-item" data-lib-embed="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Sematkan</span>
+        </button>
+        ${v.adminStatus === "draft"
+          ? `<button type="button" class="lcm-item" data-lib-publish="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+          <span>Publikasikan</span>
+        </button>`
+          : `<button type="button" class="lcm-item" data-lib-draft="${id}" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Simpan ke Draf</span>
+        </button>`}
         <button type="button" class="lcm-item lcm-danger" data-lib-delete="${id}" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           <span>Hapus</span>
@@ -37210,17 +37811,23 @@ function renderMyLibrary() {
       ];
       actionsHtml = `<div class="lib-card-actions">${restoreActions.join("")}</div>`;
     }
+    const selectBox = opts.canDelete
+      ? `<label class="lib-select" title="Pilih video"><input type="checkbox" data-lib-check="${id}" aria-label="Pilih video"></label>`
+      : "";
     return `<div class="lib-item" data-vid="${id}">
+      ${selectBox}
       <div class="lib-thumb" ${thumbBg}>
         ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
         ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
         ${statusBadge}
+        ${visBadge}
         ${actionsHtml}
       </div>
       ${menuHtml}
       <div class="lib-meta">
         <strong title="${title}">${title}</strong>
-        <small>@${creator} · ${views} tayangan</small>
+        <small class="lib-meta-stats">${views} tayangan · ${likes} suka · ${cmts} komentar</small>
+        ${dateStr ? `<small class="lib-meta-date">${dateStr}</small>` : ""}
       </div>
     </div>`;
   };
@@ -37244,7 +37851,16 @@ function renderMyLibrary() {
   //   - My Videos = sudah published (live di platform) — bisa di-delete
   //   - Status Videos = pending / takedown (belum live) + sampah (state.deletedVideos)
   const allMyVideos = Array.isArray(state?.myVideos) ? [...state.myVideos] : [];
-  allMyVideos.sort((a, b) => (b.id || 0) - (a.id || 0));
+  ensureLibSectionHeads();
+  ensureLibSort();
+  ensureDraftTab();
+  ensureDraftSection();
+  const _libSort = state.libSort || "new";
+  const _libTs = vv => (vv.uploadedAt || vv.createdAt || vv.id || 0);
+  allMyVideos.sort((a, b) =>
+    _libSort === "popular" ? (b.viewsNum || 0) - (a.viewsNum || 0) :
+    _libSort === "old" ? _libTs(a) - _libTs(b) :
+    _libTs(b) - _libTs(a));
   const isPublished = v => !v.adminStatus || v.adminStatus === "published";
   const myVideos = allMyVideos.filter(isPublished);
   const pendingVideos = allMyVideos.filter(v => v.adminStatus === "pending");
@@ -37265,8 +37881,8 @@ function renderMyLibrary() {
   const LIB_SAVE  = '<svg ' + _LS + '><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
 
   // 1. My Videos — hanya yang sudah disetujui admin (+ delete button)
-  renderLibSection(myVideos, "myVideoGrid", "myVideoCount", LIB_FILM,
-    "No videos are live yet. <a href='#' data-jump='upload' style='color:var(--primary)'>Upload now</a>",
+  renderLibSection(_libFilterList(myVideos), "myVideoGrid", "myVideoCount", LIB_FILM,
+    "Belum ada video yang tayang. <a href='#' data-jump='upload' style='color:var(--primary)'>Unggah sekarang</a>",
     { showStatus: true, canDelete: true });
 
   // 2. Status Videos — render section sesuai sub-tab aktif.
@@ -37280,20 +37896,23 @@ function renderMyLibrary() {
   // BUG fix 2026-05-10: dulu sub-tab "all" merge trashVideos juga → user delete
   // video, video tetap muncul di tab Diterbitkan karena trashVideos masih dihitung.
   // Sekarang trashVideos cuma muncul di tab Sampah; "all" = pending + takedown.
+  // v750: "all" (label "Menunggu") = HANYA pendingVideos. Dulu pending+takedown,
+  // tumpang tindih dgn tab "Takedown" (video takedown terhitung 2x). Kini tiap
+  // status berdiri sendiri: Menunggu (pending) | Takedown (admin) | Sampah (user).
   const subTabMap = {
-    all:      { list: [...pendingVideos, ...takedownVideos],
-                empty: "No videos in status." },
+    all:      { list: pendingVideos,
+                empty: "Tidak ada video yang menunggu review admin." },
     draft:    { list: draftVideos,
                 empty: "Belum ada draft. Simpan video ke Draft via menu titik tiga di setiap card." },
     trash:    { list: trashVideos,
-                empty: "Trash kosong — video yang kamu hapus sendiri akan muncul di sini." },
+                empty: "Sampah kosong — video yang kamu hapus sendiri akan muncul di sini." },
     takedown: { list: takedownVideos,
                 empty: "Belum ada video yang di-takedown admin." },
   };
   const cur = subTabMap[subTab] || subTabMap.all;
   // Draft items: show kebab menu (Edit/Delete) supaya user bisa lanjut edit / hapus draft
   const allowKebab = subTab === "draft" || subTab === "all";
-  renderLibSection(cur.list, "statusVideoGrid", "statusVideoCount",
+  renderLibSection(_libFilterList(cur.list), "statusVideoGrid", "statusVideoCount",
     subTab === "takedown" ? LIB_BAN : subTab === "draft" ? LIB_DRAFT : LIB_CLIP,
     cur.empty,
     { showStatus: true, canRestore: subTab === "trash", canDelete: allowKebab });
@@ -37303,10 +37922,28 @@ function renderMyLibrary() {
   setT("statusCntDraft",    draftVideos.length);
   setT("statusCntTrash",    trashVideos.length);
   setT("statusCntTakedown", takedownVideos.length);
+  // v754: warna sub-tab "menyala" HANYA saat ada item (>0) → menarik perhatian
+  // ke yg perlu aksi. Kalau 0 → tab redup/tenang. Toggle class .has-items.
+  const setHot = (key, n) => { const b = document.querySelector(`.status-sub-tab[data-status-tab="${key}"]`); if (b) b.classList.toggle("has-items", n > 0); };
+  setHot("all",      subTabMap.all.list.length);
+  setHot("trash",    trashVideos.length);
+  setHot("takedown", takedownVideos.length);
   // Sync active state pada sub-tab buttons
   document.querySelectorAll(".status-sub-tab").forEach(b => {
     b.classList.toggle("active", b.dataset.statusTab === subTab);
   });
+  ensureStatusSubtabLabels();
+
+  // 2b. Draf — kini tab utama sendiri (#draftVideoGrid, di-inject ensureDraftSection).
+  // Kebab aktif supaya user bisa Edit / Terbitkan / Hapus draf.
+  renderLibSection(_libFilterList(draftVideos), "draftVideoGrid", "draftVideoCount", LIB_DRAFT,
+    "Belum ada draf. Simpan video ke draf lewat menu titik-tiga (⋮) di kartu video — video tersimpan di sini untuk dilanjutkan nanti.",
+    { showStatus: true, canDelete: true });
+  const _dtc = document.getElementById("libDraftTabCount");
+  if (_dtc) {
+    _dtc.textContent = draftVideos.length;
+    _dtc.hidden = draftVideos.length === 0;
+  }
 
   // New Videos dipindah ke Discover — lihat renderDiscoverNewVideos()
   const myIds = new Set(allMyVideos.map(v => v.id));
@@ -37339,6 +37976,9 @@ function renderMyLibrary() {
   // Total counter = gabungan dua section
   const totalDlEl = document.getElementById("downloadVideoCount");
   if (totalDlEl) totalDlEl.textContent = (dashList.length + fileList.length);
+
+  // v801: terapkan filter cari (hide/show) setelah semua kartu ter-render.
+  if (typeof _libApplySearchFilter === "function") _libApplySearchFilter();
 
   // Click handler — klik tile → play video INLINE di atas halaman (tidak
   // navigate ke /watch view, tetap di My Library). Delegasi sekali per view.
@@ -37429,8 +38069,25 @@ function renderMyLibrary() {
         if (!v) return;
         v.adminStatus = "draft";
         if (typeof saveState === "function") saveState();
-        if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draft`, "success");
         renderMyLibrary();
+        // Arahkan langsung ke tab "Draf" supaya user TAHU di mana draftnya tersimpan.
+        if (typeof applyFocus === "function") applyFocus(view, "draft");
+        if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success draft", TOAST_ICONS.draft);
+        return;
+      }
+      // Publish menu item (dari draf) → kembalikan adminStatus="published" + persist
+      const publishBtn = e.target.closest("[data-lib-publish]");
+      if (publishBtn) {
+        e.stopPropagation();
+        const id = +publishBtn.dataset.libPublish;
+        view.querySelectorAll(".lib-card-menu").forEach(m => { m.hidden = true; });
+        view.querySelectorAll(".lib-card-kebab").forEach(b => b.setAttribute("aria-expanded", "false"));
+        const v = (state.myVideos || []).find(x => x.id === id);
+        if (!v) return;
+        v.adminStatus = "published";
+        if (typeof saveState === "function") saveState();
+        renderMyLibrary();
+        if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> berhasil dipublikasikan<span class="toast-sub">Kini tampil publik di tab Video Saya.</span>`, "success published", TOAST_ICONS.published);
         return;
       }
       // Delete button — konfirmasi → moveVideoToTrash
@@ -37476,6 +38133,16 @@ function renderMyLibrary() {
       }
       const item = e.target.closest(".lib-item");
       if (!item) return;
+      // v812: di MODE PILIH → klik baris = toggle checkbox (JANGAN play video).
+      if (view.dataset.libselect === "on") {
+        const cb = item.querySelector('input[data-lib-check]');
+        // Kalau klik tepat di checkbox, biarkan native toggle (jangan dobel).
+        if (cb && !e.target.closest('input[data-lib-check]')) {
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        return;
+      }
       const id = Number(item.dataset.vid);
       if (Number.isFinite(id)) {
         // Video harus exist di section yang lagi visible — kalau dipanggil di
@@ -37717,6 +38384,36 @@ document.addEventListener("click", e => {
   });
   // Apply focus mode (hide non-matching sections)
   if (typeof applyFocus === "function") applyFocus(view, key);
+  // v803: sesuaikan toolbar + filter cari dgn tab baru (tanpa full re-render).
+  if (typeof _libSyncToolbar === "function") _libSyncToolbar();
+  if (typeof _libApplySearchFilter === "function") _libApplySearchFilter();
+  // v795: buka tab Status Video selalu mulai dari sub-tab pertama (Menunggu),
+  // bukan sub-tab terakhir (mis. Sampah) yang persist → bikin user bingung lihat
+  // "Sampah kosong" padahal baru masuk. Re-render + re-apply focus.
+  if (key === "status-videos" && state.statusSubTab && state.statusSubTab !== "all") {
+    state.statusSubTab = "all";
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    if (typeof applyFocus === "function") applyFocus(view, "status-videos");
+  }
+  // v717: ganti tab Pustaka → tutup inline player yang mungkin terbuka, dan
+  // sinkronkan judul breadcrumb (segmen aktif) dgn tab — dulu judul top bar
+  // tidak ikut berubah saat pindah tab (tab pakai data-focus-tab, bukan
+  // setLibraryTab yang meng-update breadcrumb).
+  if (view.dataset.view === "videos") {
+    try { closeLibInlinePlayer(); } catch {}
+    // Sinkron sistem LAMA data-lib-active (CSS visibility section ber-data-lib di styles.css
+    // ~36607) supaya tab Status Video & Unduhan IKUT TAMPIL. Dulu klik tab halaman cuma
+    // applyFocus (data-focus-hidden); data-lib-active stale -> section status/download blank.
+    // Bug user 2026-06-21. Draft tak ber-data-lib jadi tak perlu (dikontrol focus saja).
+    const _f2l = { "my-video": "my", "status-videos": "status", "download": "download" };
+    if (_f2l[key] && typeof setLibraryTab === "function") setLibraryTab(_f2l[key]);
+    const TAB_LABEL = { "my-video": "Video Saya", "draft": "Draf", "status-videos": "Status Video", "download": "Unduhan" };
+    const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+    if (last && TAB_LABEL[key]) {
+      last.textContent = TAB_LABEL[key];
+      delete last.dataset.libOrigLabel;
+    }
+  }
 });
 
 // On page load, apply default focus untuk views yang punya data-focus attribute.
@@ -49450,32 +50147,115 @@ window.addEventListener("playly:view-changed", e => {
 //   description
 let __libInlineVid = null;
 
-// Tombol "Edit Video" di player library (#libInlinePlayer) — fitur khusus
-// pemilik video untuk menyunting video yang sudah diupload. Hanya tampil untuk
-// video milik user (ada di state.myVideos). Wired ke openVideoEditModal.
-function ensureLibEditBtn(v) {
-  const bar = document.getElementById("libInlineActions");
-  if (!bar || !v) return;
-  const isOwn = Array.isArray(state?.myVideos) && state.myVideos.some(x => x.id === v.id);
-  let btn = document.getElementById("libEditVideoBtn");
-  if (!isOwn) { if (btn) btn.remove(); return; }
-  if (!btn) {
-    btn = document.createElement("button");
-    btn.id = "libEditVideoBtn";
-    btn.type = "button";
-    btn.className = "lib-edit-video-btn";
-    btn.setAttribute("title", "Edit video");
-    btn.setAttribute("aria-label", "Edit video");
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Edit Video</span>';
-    bar.appendChild(btn);
+// v717: "Mode menonton" — saat inline player terbuka, view Pustaka jadi layar
+// player bersih: chrome pustaka (tab, toolbar urut, semua grid, header) di-hide
+// via CSS .lib-watch-mode, dan judul breadcrumb (segmen aktif) diganti judul
+// video. Sebelumnya player muncul DI ATAS grid → user lihat "kolom"/toolbar +
+// daftar video di bawah player, dan ganti tab tidak menutup player.
+function enterLibWatchMode(v) {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  view.classList.add("lib-watch-mode");
+  const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+  if (last) {
+    if (last.dataset.libOrigLabel == null) last.dataset.libOrigLabel = last.textContent;
+    // v739: breadcrumb saat menonton = "Putar Video" (label generik), bukan judul
+    // video (dulu judul "Download" terlihat seperti tombol/aksi).
+    last.textContent = "Putar Video";
   }
 }
-document.addEventListener("click", (e) => {
-  const b = e.target.closest("#libEditVideoBtn");
-  if (!b) return;
-  e.preventDefault(); e.stopPropagation();
-  if (typeof openVideoEditModal === "function" && __libInlineVid != null) openVideoEditModal(__libInlineVid);
-});
+function exitLibWatchMode() {
+  const view = document.querySelector('section.view[data-view="videos"]');
+  if (!view) return;
+  view.classList.remove("lib-watch-mode");
+  const last = document.getElementById("breadcrumb")?.querySelector("a.active");
+  if (last && last.dataset.libOrigLabel != null) {
+    last.textContent = last.dataset.libOrigLabel;
+    delete last.dataset.libOrigLabel;
+  }
+}
+
+// v730: tata letak gaya YouTube + X (Twitter) untuk panel info player.
+// Tambah BARIS KREATOR (avatar bulat + nama + @handle) di kiri baris aksi —
+// identitas ala X + channel-row ala YouTube. Baris "X tontonan · tanggal"
+// dipindah jadi baris meta sendiri (di bawah kreator, di atas deskripsi).
+function ensureLibYTCreatorLayout(v) {
+  const bar = document.getElementById("libInlineActions");
+  if (!bar) return;
+  const panel = bar.closest(".lib-ytp-panel");
+  const descBox = document.getElementById("libYtpDescBox");
+  let cr = document.getElementById("libCreatorBlock");
+  if (!cr) {
+    cr = document.createElement("div");
+    cr.id = "libCreatorBlock";
+    cr.className = "lib-creator";
+    cr.innerHTML =
+      '<div class="lib-cr-avatar" id="libCrAvatar"></div>' +
+      '<div class="lib-cr-meta"><span class="lib-cr-name" id="libCrName"></span>' +
+      '<span class="lib-cr-handle" id="libCrHandle"></span></div>' +
+      '<button type="button" class="lib-cr-follow" id="libCrFollow"></button>';
+    bar.insertBefore(cr, bar.firstChild);
+  }
+  // Pindahkan meta (tontonan · tanggal) ke baris sendiri, di bawah baris kreator.
+  const viewsChip = document.querySelector(".lib-ytp-views-chip");
+  if (viewsChip && panel && descBox && viewsChip.nextElementSibling !== descBox) {
+    panel.insertBefore(viewsChip, descBox);
+  }
+  // v738: tombol SIMPAN (bookmark) di deretan aksi — di samping Suka/Bagikan.
+  const pills = document.querySelector(".lib-ytp-pills");
+  if (pills && !document.getElementById("libInlineSaveBtn")) {
+    const sb = document.createElement("button");
+    sb.type = "button";
+    sb.id = "libInlineSaveBtn";
+    sb.className = "lib-inline-action lib-ytp-pill";
+    sb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>Simpan</span>';
+    pills.appendChild(sb);
+  }
+  const name = String(v.creator || v.uploader || "Pengguna");
+  const nm = document.getElementById("libCrName");
+  const hd = document.getElementById("libCrHandle");
+  const av = document.getElementById("libCrAvatar");
+  if (nm) nm.textContent = name;
+  if (hd) hd.textContent = "@" + name.toLowerCase().replace(/[^a-z0-9_.]/g, "");
+  if (av) {
+    const img = v.creatorAvatar || v.avatar || v.uploaderAvatar || "";
+    if (img) { av.style.backgroundImage = `url('${img}')`; av.textContent = ""; av.classList.add("has-img"); }
+    else { av.style.backgroundImage = ""; av.textContent = (name[0] || "U").toUpperCase(); av.classList.remove("has-img"); }
+  }
+  // v738: tombol IKUTI (follow kreator) — pakai toggleFollow + state.followingCreators.
+  const fb = document.getElementById("libCrFollow");
+  if (fb) {
+    const me = (typeof user === "object" && user) ? String(user.username || user.name || "") : "";
+    // v739: Pustaka Saya = video milik sendiri → tombol Ikuti tidak relevan.
+    // Sembunyikan kalau kreator = user ATAU video ada di myVideos (upload sendiri).
+    const ownVideo = (me && name.toLowerCase() === me.toLowerCase()) ||
+      (Array.isArray(state?.myVideos) && state.myVideos.some(mv => mv && mv.id === v.id));
+    if (ownVideo) {
+      fb.style.display = "none"; // video sendiri — tak bisa/ perlu mengikuti
+    } else {
+      fb.style.display = "";
+      const following = Array.isArray(state?.followingCreators) && state.followingCreators.includes(name);
+      fb.textContent = following ? "Mengikuti" : "Ikuti";
+      fb.classList.toggle("following", following);
+      fb.onclick = () => { try { if (typeof toggleFollow === "function") toggleFollow(name); } catch (e) {} ensureLibYTCreatorLayout(v); };
+    }
+  }
+  // v738: tombol SIMPAN — toggle state.saved (bookmark).
+  const sb = document.getElementById("libInlineSaveBtn");
+  if (sb) {
+    if (!Array.isArray(state.saved)) state.saved = [];
+    const saved = state.saved.includes(v.id);
+    sb.classList.toggle("is-active", saved);
+    const lbl = sb.querySelector("span"); if (lbl) lbl.textContent = saved ? "Tersimpan" : "Simpan";
+    sb.onclick = () => {
+      if (!Array.isArray(state.saved)) state.saved = [];
+      if (state.saved.includes(v.id)) { state.saved = state.saved.filter(x => x !== v.id); if (typeof toast === "function") toast("Dihapus dari simpanan"); }
+      else { state.saved.push(v.id); if (typeof toast === "function") toast("🔖 Disimpan", "success"); }
+      if (typeof saveState === "function") saveState();
+      ensureLibYTCreatorLayout(v);
+    };
+  }
+}
 
 async function openLibInlinePlayer(id) {
   const v = findVideo(id);
@@ -49484,6 +50264,7 @@ async function openLibInlinePlayer(id) {
   const wrap = document.getElementById("libInlinePlayer");
   const videoEl = document.getElementById("libInlineVideo");
   if (!wrap || !videoEl) return;
+  enterLibWatchMode(v);
 
   // Track view
   {
@@ -49502,16 +50283,31 @@ async function openLibInlinePlayer(id) {
   if (dateEl) {
     const ts = Number(v.uploadedAt || v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0));
     if (ts) {
-      // Format DD MMM YYYY (e.g., "04 Mei 2026")
+      // Format DD MMM YYYY (e.g., "04 Mei 2026") — tanpa emoji, masuk baris meta.
       const d = new Date(ts);
       const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-      dateEl.textContent = `📅 ${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      dateEl.textContent = `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
       dateEl.hidden = false;
     } else {
       dateEl.textContent = "";
       dateEl.hidden = true;
     }
   }
+  // v728: gabung tanggal ke baris meta (samping "X tontonan"), keluar dari kotak
+  // deskripsi → deskripsi berdiri sendiri sbg teks polos. Pindah sekali saja.
+  {
+    const viewsChip = document.querySelector('#libInlineActions .lib-ytp-views-chip');
+    if (viewsChip && dateEl && dateEl.parentElement !== viewsChip && !dateEl.hidden) {
+      const sep = document.createElement("span");
+      sep.className = "lib-meta-sep";
+      sep.setAttribute("aria-hidden", "true");
+      sep.textContent = "·";
+      viewsChip.appendChild(sep);
+      viewsChip.appendChild(dateEl);
+    }
+  }
+  // v730: bangun baris kreator (avatar + @handle) + pindah meta ke baris sendiri.
+  try { ensureLibYTCreatorLayout(v); } catch (e) {}
   // Description + expandable desc box
   const descEl = document.getElementById("libInlineDesc");
   const descBox = document.getElementById("libYtpDescBox");
@@ -49713,6 +50509,13 @@ function refreshLibInlineComments(id) {
 function setLibraryTab(tabKey) {
   const view = document.querySelector('section.view[data-view="videos"]');
   if (!view) return;
+  // v741: kalau inline player sedang dibuka/terbuka, jangan ganggu — setLibraryTab
+  // dipanggil via setTimeout 30ms dari switchView; bila user buka video dalam
+  // jendela itu, ia akan menutup player / melepas watch-mode (grid muncul lagi).
+  // Cek class lib-watch-mode (ditambah di AWAL openLibInlinePlayer, sebelum await
+  // → player bisa masih hidden saat openLibInlinePlayer async berjalan).
+  const _ip = document.getElementById("libInlinePlayer");
+  if (view.classList.contains("lib-watch-mode") || (_ip && !_ip.hidden) || __libInlineVid != null) return;
   // "all" = parent "My Library" diklik → tampilkan semua section (gabungan).
   // Sub-tab spesifik (my/status/download) → tampilkan hanya itu.
   const valid = ["all", "my", "status", "new", "download"];
@@ -49805,6 +50608,8 @@ function closeLibInlinePlayer() {
   }
   document.querySelectorAll(".lib-tool-menu").forEach(m => m.hidden = true);
   __libInlineVid = null;
+  // v717: keluar mode menonton → munculkan lagi chrome pustaka + restore judul.
+  try { exitLibWatchMode(); } catch {}
 }
 
 // Wire up engagement actions + comment input — once
@@ -57127,6 +57932,27 @@ function maybeOfferSaveCard() {
       if (typeof openVideoEditModal === "function") openVideoEditModal(id);
       return;
     }
+    // v798: Salin tautan — copy URL tonton ke clipboard
+    const copyBtn = e.target.closest("[data-lib-copylink]");
+    if (copyBtn) {
+      e.stopPropagation();
+      const id = +copyBtn.dataset.libCopylink;
+      _libCloseAllCardMenus();
+      const url = `${location.origin}/#/watch/${id}`;
+      _libCopyToClipboard(url, `Tautan disalin`, `Tautan tonton video disalin ke clipboard.`, TOAST_ICONS.link);
+      return;
+    }
+    // v798: Sematkan — copy kode embed iframe
+    const embedBtn = e.target.closest("[data-lib-embed]");
+    if (embedBtn) {
+      e.stopPropagation();
+      const id = +embedBtn.dataset.libEmbed;
+      _libCloseAllCardMenus();
+      const src = `${location.origin}/#/watch/${id}?embed=1`;
+      const code = `<iframe src="${src}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+      _libCopyToClipboard(code, `Kode embed disalin`, `Tempel di situsmu untuk menyematkan video.`, TOAST_ICONS.embed);
+      return;
+    }
     // Draft
     const draftBtn = e.target.closest("[data-lib-draft]");
     if (draftBtn) {
@@ -57137,8 +57963,26 @@ function maybeOfferSaveCard() {
       if (!v) return;
       v.adminStatus = "draft";
       if (typeof saveState === "function") saveState();
-      if (typeof toast === "function") toast(`📝 <b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draft`, "success");
+      if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> disimpan ke Draf<span class="toast-sub">Belum dipublikasikan — lanjutkan kapan saja dari tab Draf lewat menu ⋮ → Edit.</span>`, "success draft", TOAST_ICONS.draft);
       if (typeof renderMyLibrary === "function") renderMyLibrary();
+      return;
+    }
+    // Publikasikan (dari draf) → adminStatus published + arahkan ke "Video Saya".
+    // v792: dulu branch ini cuma ada di handler view-level, tapi menu dipindah ke
+    // document.body saat open → handler view tak terpicu → "Terbitkan" mati total.
+    const publishBtn = e.target.closest("[data-lib-publish]");
+    if (publishBtn) {
+      e.stopPropagation();
+      const id = +publishBtn.dataset.libPublish;
+      _libCloseAllCardMenus();
+      const v = (typeof state === "object" && state ? (state.myVideos || []) : []).find(x => x.id === id);
+      if (!v) return;
+      v.adminStatus = "published";
+      if (typeof saveState === "function") saveState();
+      if (typeof renderMyLibrary === "function") renderMyLibrary();
+      const _vw = document.querySelector('section.view[data-view="videos"]');
+      if (_vw && typeof applyFocus === "function") applyFocus(_vw, "my-video");
+      if (typeof toast === "function") toast(`<b>${escapeHtml(v.title || "Video")}</b> berhasil dipublikasikan<span class="toast-sub">Kini tampil publik di tab Video Saya.</span>`, "success published", TOAST_ICONS.published);
       return;
     }
     // Delete (handled via openConfirm)
@@ -57219,52 +58063,231 @@ function maybeOfferSaveCard() {
   });
 })();
 
-// Restructure modal Edit Video jadi 2 kolom (Media | Pengaturan) supaya TIDAK
-// perlu scroll panjang, + inject 4 field baru (unduh/sematkan/usia/lisensi).
-// Idempotent: dijalankan sekali (guard form.dataset.vemLaidOut).
-function ensureVemLayout() {
-  const form = document.getElementById("videoEditForm");
-  if (!form || form.dataset.vemLaidOut) return;
-  form.dataset.vemLaidOut = "1";
-
-  const closestField = sel => document.getElementById(sel)?.closest(".upf-field");
-  const thumb = form.querySelector(".vem-thumb-row");
-  const judul = closestField("vemTitleInput");
-  const desc = closestField("vemDesc");
-  const sub = form.querySelector(".upf-subtitle-section");
-  const pairs = [...form.querySelectorAll(".upf-pair")];
-
-  const grid = document.createElement("div"); grid.className = "vem-grid";
-  const left = document.createElement("div"); left.className = "vem-col vem-col-media";
-  const right = document.createElement("div"); right.className = "vem-col vem-col-settings";
-  grid.append(left, right);
-
-  // KIRI = Media/konten
-  [thumb, judul, desc].forEach(el => el && left.appendChild(el));
-  // KANAN = Pengaturan (pasangan asli + field baru)
-  pairs.forEach(p => right.appendChild(p));
-  const mkField = (id, label, opts) => {
-    const f = document.createElement("div"); f.className = "upf-field";
-    f.innerHTML = `<label for="${id}">${label}</label><select id="${id}">` +
-      opts.map(o => `<option value="${o.v}">${o.t}</option>`).join("") + `</select>`;
-    return f;
+// v756: penyempurnaan modal Edit Video — ikon pada label field, dropdown
+// kategori KUSTOM (tema dashboard, tanpa biru native), + tombol Reset.
+function enhanceVemModal() {
+  const modal = document.getElementById("videoEditModal");
+  if (!modal) return;
+  // v788: reset tombol Simpan kalau modal sebelumnya ditutup saat loading.
+  {
+    const sb = modal.querySelector(".vem-actions .btn.primary");
+    if (sb && sb.dataset.loading === "1") {
+      if (sb.dataset.orig != null) sb.innerHTML = sb.dataset.orig;
+      sb.disabled = false; sb.classList.remove("is-loading");
+      delete sb.dataset.loading; delete sb.dataset.orig;
+    }
+  }
+  // v777: header — ikon pensil dibungkus KOTAK + deskripsi di bawah judul.
+  {
+    const head = modal.querySelector(".vem-head");
+    const heading = modal.querySelector("#vemHeading");
+    if (head && heading && !head.dataset.vemHeadDone) {
+      head.dataset.vemHeadDone = "1";
+      const picon = heading.querySelector(".picon-w, svg");
+      const icoBox = document.createElement("div");
+      icoBox.className = "vem-head-ico";
+      if (picon) icoBox.appendChild(picon);
+      const textCol = document.createElement("div");
+      textCol.className = "vem-head-text";
+      heading.textContent = "Edit Video";
+      textCol.appendChild(heading);
+      const desc = document.createElement("p");
+      desc.className = "vem-head-desc";
+      desc.textContent = "Ubah detail & pengaturan videomu";
+      textCol.appendChild(desc);
+      const closeBtn = head.querySelector(".modal-close");
+      head.insertBefore(icoBox, closeBtn || null);
+      head.insertBefore(textCol, closeBtn || null);
+    }
+  }
+  // 1. Ikon pada label tiap field
+  const VIC = {
+    "judul video": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>',
+    "deskripsi":   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+    "kategori":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+    "tag":         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>',
+    "visibilitas": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    "komentar":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>',
+    "subtitle":    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 11h3M7 15h6M14 11h3"/></svg>'
   };
-  const np1 = document.createElement("div"); np1.className = "upf-pair";
-  np1.append(
-    mkField("vemAllowDownload", "Izinkan unduh", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }]),
-    mkField("vemAllowEmbed", "Izinkan sematkan", [{ v: "yes", t: "✅ Ya" }, { v: "no", t: "🚫 Tidak" }])
-  );
-  const np2 = document.createElement("div"); np2.className = "upf-pair";
-  np2.append(
-    mkField("vemAgeRestrict", "Batasan usia", [{ v: "all", t: "👪 Semua umur" }, { v: "adult", t: "🔞 18+" }]),
-    mkField("vemLicense", "Lisensi", [{ v: "standard", t: "Standar Playly" }, { v: "cc", t: "Creative Commons" }])
-  );
-  right.append(np1, np2);
-
-  // Sisipkan grid sebelum subtitle (subtitle tetap full-width di bawah).
-  if (sub) form.insertBefore(grid, sub);
-  else form.appendChild(grid);
+  modal.querySelectorAll("label").forEach(lbl => {
+    if (lbl.dataset.vemDone) return;
+    lbl.dataset.vemDone = "1";
+    const key = lbl.textContent.trim().toLowerCase();
+    const m = Object.keys(VIC).find(k => key.startsWith(k));
+    if (m) lbl.insertAdjacentHTML("afterbegin", `<span class="vem-lbl-ico" aria-hidden="true">${VIC[m]}</span>`);
+    // v761: teks label JANGAN CAPSLOCK — sentence case. Dibungkus span supaya
+    // sentence-case dilakukan via CSS (lowercase + ::first-letter uppercase),
+    // immune terhadap sistem i18n yg suka me-reset teks node.
+    lbl.childNodes.forEach(n => {
+      if (n.nodeType === 3 && n.textContent.trim()) {
+        const span = document.createElement("span");
+        span.className = "vem-lbl-text";
+        span.textContent = n.textContent.replace(/\s+/g, " ").trim();
+        n.replaceWith(span);
+      }
+    });
+  });
+  // v772: ganti label "Tag" → "Hashtag" + placeholder contoh #playly #video.
+  {
+    const tagsInput = document.getElementById("vemTags");
+    const tagsField = tagsInput ? tagsInput.closest(".upf-field") : null;
+    const tagsLblText = tagsField ? tagsField.querySelector("label .vem-lbl-text") : null;
+    if (tagsLblText) tagsLblText.textContent = "Hashtag";
+    if (tagsInput) tagsInput.setAttribute("placeholder", "#playly #video");
+  }
+  // 2. Dropdown KUSTOM (ganti select native → tanpa highlight biru OS) untuk
+  //    Kategori, Visibilitas, dan Komentar.
+  ["vemCategory", "vemVis", "vemComments"].forEach(id => {
+    try { makeVemDropdown(document.getElementById(id)); } catch (e) {}
+  });
+  // 2b. Kategori: beri opsi keluar yang jelas. Opsi value="" di MENU diberi
+  //     label "Tanpa kategori" (trigger tetap placeholder "Pilih kategori"),
+  //     supaya user paham boleh tidak memilih kategori.
+  try {
+    const catDd = modal.querySelector('.vem-dd[data-for="vemCategory"]');
+    const emptyBtn = catDd && catDd.querySelector('.vem-dd-menu button[data-val=""]');
+    if (emptyBtn) { emptyBtn.textContent = "Tanpa kategori"; emptyBtn.classList.add("vem-dd-none"); }
+  } catch (e) {}
+  // 3. Tombol Reset (kembalikan ke nilai tersimpan) di footer
+  const footer = modal.querySelector(".vem-actions");
+  if (footer && !document.getElementById("vemResetBtn")) {
+    const batal = footer.querySelector("[data-vem-close]");
+    const reset = document.createElement("button");
+    reset.type = "button"; reset.id = "vemResetBtn"; reset.className = "btn ghost";
+    reset.textContent = "Reset";
+    reset.addEventListener("click", () => {
+      const rid = +(document.getElementById("vemId")?.value || 0);
+      if (rid) openVideoEditModal(rid);
+      if (typeof toast === "function") toast("Perubahan di-reset");
+    });
+    if (batal && batal.nextSibling) footer.insertBefore(reset, batal.nextSibling);
+    else footer.appendChild(reset);
+  }
+  // 4. Tata ulang jadi 2 kolom (kiri: media+judul+deskripsi, kanan: pengaturan)
+  try { ensureVemTwoCol(); } catch (e) {}
+  // 5. Pengaturan lanjutan (toggle): izinkan unduh / sematkan / batasan usia
+  try { ensureVemAdvanced(); } catch (e) {}
 }
+// v765: fitur tambahan — toggle Pengaturan lanjutan di kolom kanan modal.
+function ensureVemAdvanced() {
+  const right = document.querySelector("#videoEditModal .vem-col-right");
+  if (!right || document.getElementById("vemAdvanced")) return;
+  const grp = document.createElement("div");
+  grp.id = "vemAdvanced"; grp.className = "upf-field vem-adv";
+  const tog = (id, label) =>
+    `<label class="vem-toggle"><span class="vem-toggle-lbl">${label}</span>` +
+    `<span class="vem-switch"><input type="checkbox" id="${id}"><span class="vem-switch-track"></span></span></label>`;
+  grp.innerHTML =
+    '<label><span class="vem-lbl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/><path d="M2 12.88V11.12C2 10.08 2.85 9.22 3.9 9.22C5.71 9.22 6.45 7.94 5.54 6.37C5.02 5.47 5.33 4.3 6.24 3.78L7.97 2.79C8.76 2.32 9.78 2.6 10.25 3.39L10.36 3.58C11.26 5.15 12.74 5.15 13.65 3.58L13.76 3.39C14.23 2.6 15.25 2.32 16.04 2.79L17.77 3.78C18.68 4.3 18.99 5.47 18.47 6.37C17.56 7.94 18.3 9.22 20.11 9.22C21.15 9.22 22.01 10.07 22.01 11.12V12.88C22.01 13.92 21.16 14.78 20.11 14.78C18.3 14.78 17.56 16.06 18.47 17.63C18.99 18.54 18.68 19.7 17.77 20.22L16.04 21.21C15.25 21.68 14.23 21.4 13.76 20.61L13.65 20.42C12.75 18.85 11.27 18.85 10.36 20.42L10.25 20.61C9.78 21.4 8.76 21.68 7.97 21.21L6.24 20.22C5.33 19.7 5.02 18.53 5.54 17.63C6.45 16.06 5.71 14.78 3.9 14.78C2.85 14.78 2 13.92 2 12.88Z"/></svg></span><span class="vem-lbl-text">Pengaturan lanjutan</span></label>' +
+    '<div class="vem-toggles">' +
+    tog("vemAllowDownload", "Izinkan unduh") +
+    tog("vemAllowEmbed", "Izinkan sematkan") +
+    tog("vemShowViews", "Tampilkan jumlah penonton") +
+    tog("vemHideSearch", "Sembunyikan dari pencarian") +
+    tog("vemAgeRestrict", "Batasan usia (18+)") +
+    '</div>';
+  const sub = right.querySelector(".upf-subtitle-section");
+  if (sub) right.insertBefore(grp, sub); else right.appendChild(grp);
+}
+// v759: layout 2 KOLOM modal Edit Video — kiri (thumbnail/judul/deskripsi),
+// kanan (kategori/tag/visibilitas/komentar), subtitle full-width di bawah.
+// Compact & tak perlu scroll. Idempotent (guard #vem2col).
+function ensureVemTwoCol() {
+  const form = document.getElementById("videoEditForm");
+  if (!form || document.getElementById("vem2col")) return;
+  // Pecah .upf-pair → field individual jadi anak langsung form
+  form.querySelectorAll(".upf-pair").forEach(pair => {
+    while (pair.firstElementChild) pair.parentNode.insertBefore(pair.firstElementChild, pair);
+    pair.remove();
+  });
+  const fields = [...form.querySelectorAll(":scope > .upf-field")];
+  const find = re => fields.find(f => re.test(f.textContent.trim().toLowerCase()));
+  const thumb = form.querySelector(".vem-thumb-row");
+  const byInput = id => fields.find(f => f.querySelector("#" + id));
+  const fJudul = find(/^judul/), fDesc = find(/^deskripsi/), fKat = find(/^kategori/),
+        // tag dicari via input (label sudah di-rename "Hashtag" → regex /tag/ gagal)
+        fTag = byInput("vemTags") || find(/^(tag|hashtag)/), fVis = find(/^visibilitas/), fKom = find(/^komentar/);
+  const fSub = form.querySelector(".upf-subtitle-section");
+  const actions = form.querySelector(".vem-actions");
+  const grid = document.createElement("div"); grid.id = "vem2col"; grid.className = "vem-2col";
+  const left = document.createElement("div"); left.className = "vem-col vem-col-left";
+  const right = document.createElement("div"); right.className = "vem-col vem-col-right";
+  grid.appendChild(left); grid.appendChild(right);
+  if (actions) form.insertBefore(grid, actions); else form.appendChild(grid);
+  if (thumb) left.appendChild(thumb);
+  // v766: distribusi diseimbangkan supaya tinggi kiri≈kanan (tanpa scroll).
+  // Kiri: media + judul + deskripsi + kategori + tag (deskripsi konten video).
+  // Kanan: visibilitas + komentar + (pengaturan lanjutan) + subtitle (distribusi).
+  [fJudul, fDesc, fKat, fTag].forEach(f => { if (f) left.appendChild(f); });
+  [fVis, fKom, fSub].forEach(f => { if (f) right.appendChild(f); });
+}
+// v764: dropdown KUSTOM generik untuk select mana pun di modal (vemCategory,
+// vemVis, vemComments) → tema dashboard, tanpa highlight biru native OS.
+// v772: STRIP emoji/ikon di awal teks opsi — ikon cukup di label field, jangan
+// di dalam kotak nilai.
+function _vemCleanOpt(s) {
+  return String(s).replace(/^[^\p{L}\p{N}#]+/u, "").trim();
+}
+function makeVemDropdown(sel) {
+  if (!sel) return;
+  if (!sel.dataset.ddDone) {
+    sel.dataset.ddDone = "1";
+    const dd = document.createElement("div");
+    dd.className = "vem-dd";
+    dd.dataset.for = sel.id;
+    dd.innerHTML =
+      '<button type="button" class="vem-dd-trigger" aria-haspopup="listbox" aria-expanded="false">' +
+      '<span class="vem-dd-label"></span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
+      '<div class="vem-dd-menu" role="listbox" hidden>' +
+      [...sel.options].map(o => `<button type="button" role="option" data-val="${escapeHtml(o.value)}">${escapeHtml(_vemCleanOpt(o.textContent))}</button>`).join("") +
+      '</div>';
+    sel.style.display = "none";
+    sel.parentNode.insertBefore(dd, sel.nextSibling);
+  }
+  syncVemDropdown(sel);
+}
+function syncVemDropdown(sel) {
+  if (!sel) return;
+  const dd = document.querySelector(`.vem-dd[data-for="${sel.id}"]`);
+  if (!dd) return;
+  const label = dd.querySelector(".vem-dd-label");
+  const opt = sel.options[sel.selectedIndex] || sel.options[0];
+  if (label) {
+    label.textContent = opt ? _vemCleanOpt(opt.textContent) : "";
+    label.classList.toggle("placeholder", !sel.value);
+  }
+  dd.querySelectorAll(".vem-dd-menu button[data-val]").forEach(b => b.classList.toggle("active", b.dataset.val === sel.value));
+}
+// Handler GENERIK semua dropdown kustom modal (toggle / pilih / tutup klik-luar)
+document.addEventListener("click", e => {
+  const trig = e.target.closest(".vem-dd-trigger");
+  if (trig) {
+    const dd = trig.closest(".vem-dd");
+    const menu = dd.querySelector(".vem-dd-menu");
+    document.querySelectorAll(".vem-dd-menu").forEach(m => { if (m !== menu) m.hidden = true; });
+    document.querySelectorAll(".vem-dd.flip-up").forEach(d => { if (d !== dd) d.classList.remove("flip-up"); });
+    const open = menu.hidden; menu.hidden = !open; trig.setAttribute("aria-expanded", String(open));
+    // v780: flip ke atas kalau ruang di bawah kurang dari tinggi menu (anti kepotong)
+    if (open) {
+      const r = trig.getBoundingClientRect();
+      const menuH = Math.min(menu.scrollHeight + 12, 196);
+      dd.classList.toggle("flip-up", (window.innerHeight - r.bottom) < (menuH + 12) && r.top > (menuH + 12));
+    } else dd.classList.remove("flip-up");
+    return;
+  }
+  const opt = e.target.closest(".vem-dd-menu button[data-val]");
+  if (opt) {
+    const dd = opt.closest(".vem-dd");
+    const sel = document.getElementById(dd.dataset.for);
+    if (sel) { sel.value = opt.dataset.val; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+    dd.querySelector(".vem-dd-menu").hidden = true;
+    syncVemDropdown(sel);
+    return;
+  }
+  if (!e.target.closest(".vem-dd")) document.querySelectorAll(".vem-dd-menu").forEach(m => m.hidden = true);
+});
 
 function openVideoEditModal(id) {
   const v = (state?.myVideos || []).find(x => x.id === id);
@@ -57281,7 +58304,11 @@ function openVideoEditModal(id) {
   setVal("vemTitleInput", v.title || "");
   setVal("vemDesc", v.description || v.desc || "");
   setVal("vemCategory", v.category || "");
-  setVal("vemTags", Array.isArray(v.tags) ? v.tags.join(", ") : (v.tags || ""));
+  // v772: tampilkan tags sebagai hashtag (mis. "#playly #video"), dipisah spasi.
+  {
+    const _tArr = Array.isArray(v.tags) ? v.tags : String(v.tags || "").split(/[\s,]+/);
+    setVal("vemTags", _tArr.map(s => String(s).trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s).join(" "));
+  }
   setVal("vemVis", v.visibility || "public");
   setVal("vemComments", v.comments || v.commentMode || "all");
   setVal("vemAllowDownload", v.allowDownload || "yes");
@@ -57308,6 +58335,16 @@ function openVideoEditModal(id) {
     window._vemSubtitleSetFilled(v.subtitleVtt, filename, v.subtitleLang || "auto");
   }
 
+  try { enhanceVemModal(); } catch (e) {}
+  // v765: populate toggle Pengaturan lanjutan (default: unduh & sematkan ON).
+  {
+    const setChk = (cid, val) => { const el = document.getElementById(cid); if (el) el.checked = val; };
+    setChk("vemAllowDownload", v.allowDownload !== false);
+    setChk("vemAllowEmbed", v.allowEmbed !== false);
+    setChk("vemShowViews", v.showViews !== false);
+    setChk("vemHideSearch", !!v.hideFromSearch);
+    setChk("vemAgeRestrict", !!v.ageRestriction);
+  }
   modal.hidden = false;
   // Trigger CSS .show transition di next frame
   requestAnimationFrame(() => modal.classList.add("show"));
@@ -57333,33 +58370,60 @@ function saveVideoEdit() {
     if (typeof toast === "function") toast("⚠️ Judul tidak boleh kosong", "warning");
     return;
   }
-  v.title = newTitle;
-  v.description = get("vemDesc");
-  v.category = get("vemCategory");
-  v.tags = get("vemTags").split(",").map(s => s.trim()).filter(Boolean);
-  v.visibility = get("vemVis");
-  v.comments = get("vemComments");
-  v.allowDownload = get("vemAllowDownload") || "yes";
-  v.allowEmbed = get("vemAllowEmbed") || "yes";
-  v.ageRestriction = get("vemAgeRestrict") || "all";
-  v.license = get("vemLicense") || "standard";
-  if (window._vemNewThumb) {
-    v.thumb = window._vemNewThumb;
-    window._vemNewThumb = null;
+  // v788: tampilkan loading di tombol Simpan, lalu setelah jeda singkat simpan
+  //       perubahan & langsung buka player video agar user lihat hasilnya.
+  const saveBtn = document.querySelector("#videoEditModal .vem-actions .btn.primary");
+  if (saveBtn) {
+    if (saveBtn.dataset.loading === "1") return; // cegah double submit
+    saveBtn.dataset.loading = "1";
+    saveBtn.dataset.orig = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.classList.add("is-loading");
+    saveBtn.innerHTML = '<span class="vem-spin" aria-hidden="true"></span> Menyimpan…';
   }
-  // Persist subtitle: kalau user upload/auto-generate baru → simpan; kalau hapus → null
-  // _editSubtitle = null artinya user explicit clear; undefined artinya tidak diubah.
-  if (window._editSubtitle === null) {
-    v.subtitleVtt = null;
-    v.subtitleLang = null;
-  } else if (window._editSubtitle && window._editSubtitle.vtt) {
-    v.subtitleVtt = window._editSubtitle.vtt;
-    v.subtitleLang = window._editSubtitle.lang || "auto";
-  }
-  if (typeof saveState === "function") saveState();
-  if (typeof toast === "function") toast(`✓ Perubahan disimpan untuk <b>${escapeHtml(v.title)}</b>`, "success");
-  closeVideoEditModal();
-  if (typeof renderMyLibrary === "function") renderMyLibrary();
+  const restoreBtn = () => {
+    if (!saveBtn) return;
+    if (saveBtn.dataset.orig != null) saveBtn.innerHTML = saveBtn.dataset.orig;
+    saveBtn.disabled = false;
+    saveBtn.classList.remove("is-loading");
+    delete saveBtn.dataset.loading; delete saveBtn.dataset.orig;
+  };
+  setTimeout(() => {
+    v.title = newTitle;
+    v.description = get("vemDesc");
+    v.category = get("vemCategory");
+    // v772: tags sebagai HASHTAG — pisah spasi/koma, pastikan prefix #.
+    v.tags = get("vemTags").split(/[\s,]+/).map(s => s.trim().replace(/^#+/, "")).filter(Boolean).map(s => "#" + s);
+    v.visibility = get("vemVis");
+    v.comments = get("vemComments");
+    // v765: pengaturan lanjutan (toggle)
+    const chk = cid => !!document.getElementById(cid)?.checked;
+    v.allowDownload = chk("vemAllowDownload");
+    v.allowEmbed = chk("vemAllowEmbed");
+    v.showViews = chk("vemShowViews");
+    v.hideFromSearch = chk("vemHideSearch");
+    v.ageRestriction = chk("vemAgeRestrict");
+    if (window._vemNewThumb) {
+      v.thumb = window._vemNewThumb;
+      window._vemNewThumb = null;
+    }
+    // Persist subtitle: kalau user upload/auto-generate baru → simpan; kalau hapus → null
+    // _editSubtitle = null artinya user explicit clear; undefined artinya tidak diubah.
+    if (window._editSubtitle === null) {
+      v.subtitleVtt = null;
+      v.subtitleLang = null;
+    } else if (window._editSubtitle && window._editSubtitle.vtt) {
+      v.subtitleVtt = window._editSubtitle.vtt;
+      v.subtitleLang = window._editSubtitle.lang || "auto";
+    }
+    if (typeof saveState === "function") saveState();
+    restoreBtn();
+    closeVideoEditModal();
+    if (typeof renderMyLibrary === "function") renderMyLibrary();
+    if (typeof toast === "function") toast(`✓ Perubahan disimpan untuk <b>${escapeHtml(v.title)}</b>`, "success");
+    // v788: langsung lihat perubahan di player video
+    if (typeof openPlayer === "function") { try { openPlayer(id); } catch (e) {} }
+  }, 700);
 }
 
 /* =========================================================
