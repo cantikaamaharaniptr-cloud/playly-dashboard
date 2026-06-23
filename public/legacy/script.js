@@ -2600,7 +2600,7 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
   "premium-insights": "Insight Premium",
@@ -7163,10 +7163,10 @@ const I18N = {
     "uemail.awaiting.admin":     "Menunggu balasan admin",
     "uemail.awaiting.user":      "Menunggu balasan user",
     // Logout / overlay ID
-    "logout.title":              "Logout dari Playly?",
+    "logout.title":              "Keluar dari Playly?",
     "logout.desc.pre":           "Kamu akan keluar dari akun",
     "logout.desc.post":          ". Data tersimpan dan bisa diakses kembali setelah login.",
-    "logout.btn":                "Logout",
+    "logout.btn":                "Keluar",
     "logout.bye":                "Sampai jumpa",
     "logout.loggingout":         "Logging out...",
     "logout.toast.success":      "Berhasil logout.",
@@ -48617,7 +48617,7 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Keluar dari device ini? Device tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
     if (typeof toast === "function") toast("✓ Device di-logout", "success");
@@ -48631,7 +48631,7 @@ document.addEventListener("click", e => {
       if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Keluar dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
     if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
@@ -49367,7 +49367,7 @@ $("#upShareBtn")?.addEventListener("click", () => {
   toast("🔗 Link profil disalin", "success");
 });
 
-// Tombol "Edit Profil" di own channel → langsung ke editor profil
+// Tombol "Ubah Profil" di own channel → langsung ke editor profil
 $("#upEditBtn")?.addEventListener("click", () => switchView("profile"));
 
 $("#upMessageBtn")?.addEventListener("click", () => {
