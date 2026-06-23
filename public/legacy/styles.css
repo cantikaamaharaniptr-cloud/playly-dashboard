@@ -2908,8 +2908,12 @@ section.view.focus-mode .view-actions { display: flex !important; }
    WAJIB pakai !important utk override rule global di line ~42088
    (`body .topbar > * { margin: 0 !important }`) yang otherwise nge-cancel
    negative margin di sini. */
-body:not([data-role="admin"]) .topbar > .topbar-search {
-  margin-right: -34px !important;
+/* 2026-06-16: hack margin negatif ini cuma aman di layar lebar. Di layar
+   sempit ia menarik tombol kanan menimpa teks search → dibatasi ke >=900px. */
+@media (min-width: 900px) {
+  body:not([data-role="admin"]) .topbar > .topbar-search {
+    margin-right: -34px !important;
+  }
 }
 body:not([data-role="admin"]) .topbar > .topbar-actions {
   gap: 6px !important;
@@ -2942,6 +2946,14 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .dot-indicator.pulse { animation: pulse 2s infinite; }
 #openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
 
+/* 2026-06-16 (topbar): ikon pill tarif/pembayaran kini SVG monokrom — beri ukuran
+   konsisten dgn ikon topbar lain (lonceng/tema 17px). */
+.dashboard-payment-pill .atpp-icon svg { width: 16px; height: 16px; display: block; }
+.dashboard-tier-pill .dtp-icon svg { width: 17px; height: 17px; display: block; }
+/* Titik notifikasi di lonceng: dari merah → wine palet (lebih kalem, menyatu tema).
+   Khusus lonceng topbar (id), tidak mengubah .dot-indicator global lain. */
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+
 .mobile-only { display: none; }
 
 .topbar-search {
@@ -2958,9 +2970,11 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   transition: all .15s var(--ease);
 }
 .topbar-search:focus-within {
-  border-color: var(--primary);
-  background: var(--bg-elev);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  /* 2026-06-16: HAPUS fokus ring berwarna (aturan tetap: kolom user tanpa ring
+     berwarna wine/gold). Netral — border tetap, tanpa box-shadow & warna primary. */
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: none;
 }
 .topbar-search svg { width: 16px; height: 16px; color: var(--muted); }
 .topbar-search input {
@@ -7979,6 +7993,7 @@ body[data-theme="light"] .chip-tabs button.active { background: white; }
 .act-icon.follow { background: var(--primary-soft); color: var(--primary); }
 .act-icon.comment { background: rgba(232, 216, 196, .12); color: var(--accent); }
 .act-icon.upload { background: rgba(16, 185, 129, .12); color: var(--success); }
+.act-icon.share { background: rgba(232, 216, 196, .12); color: var(--accent); }
 .act-text { flex: 1; font-size: 12.5px; line-height: 1.45; }
 .act-text b { font-weight: 600; }
 .act-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -11409,6 +11424,46 @@ section.view.focus-mode .messages-3col {
 .activity-list.large .activity-item:hover { background: var(--surface-2); border-color: var(--border-strong); }
 .activity-list.large .act-icon { width: 40px; height: 40px; font-size: 16px; }
 .activity-list.large .act-text { font-size: 13.5px; }
+/* Halaman Aktivitas: teks utama + waktu ditumpuk (hirarki jelas, tak ada gap
+   kanan melompong). act-body = kolom; waktu sbg baris kecil redup di bawah. */
+.activity-list.large .activity-item { align-items: flex-start; }
+.activity-list.large .act-body { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; }
+.activity-list.large .act-body .act-text { flex: none; color: var(--text); }
+.activity-list.large .act-body .act-time { font-size: 11.5px; opacity: .6; }
+/* Aktivitas v2: header kelompok waktu + avatar pelaku + badge tipe + belum-dibaca */
+.act-group-head {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  opacity: .5; margin: 16px 2px 7px; padding-left: 2px;
+}
+.act-group-head:first-child { margin-top: 2px; }
+/* Latar SOLID (tidak transparan) — ganti var(--surface*) yg rgba cream tembus pandang */
+.activity-list.large .activity-item { background: var(--bg-elev); }
+.activity-list.large .activity-item:hover { background: var(--bg-elev-2); }
+.activity-list.large .activity-item.act-unread { background: var(--bg-elev-2); }
+.activity-list.large .act-avatar {
+  position: relative; width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%; background: var(--bg-elev-2); border: 1px solid var(--border);
+  display: grid; place-items: center; color: var(--text);
+}
+.activity-list.large .act-av-ini { font-size: 15px; font-weight: 700; }
+/* Badge tipe SERAGAM selaras tema: wine solid + ikon cream (bukan merah/hijau/rainbow) */
+.activity-list.large .act-badge {
+  position: absolute; right: -3px; bottom: -3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2px solid var(--bg-elev);
+  background: var(--primary); color: var(--text);
+}
+.activity-list.large .act-badge svg { width: 11px; height: 11px; }
+/* Badge seragam wine (var(--primary)) — HANYA warna token dashboard, beda jenis via bentuk ikon */
+/* avatar polos (pelaku tak diketahui) = ikon tipe cream di lingkaran solid */
+.activity-list.large .act-avatar-plain { background: var(--bg-elev-2); }
+.activity-list.large .act-av-ico { display: grid; place-items: center; font-size: 16px; color: var(--text); }
+.act-dot { align-self: center; flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+/* baris clickable + tombol "Tandai semua dibaca" */
+.activity-list.large .activity-item.act-click { cursor: pointer; }
+.act-markall { display: block; margin: 0 2px 8px auto; background: none; border: 0; padding: 2px 4px; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; }
+.act-markall:hover { color: var(--text); text-decoration: underline; }
 /* Bare variant — outer card wrapper dilepas, list-nya menyatu dengan halaman.
    Per item tetap punya bg/border supaya tetap kebaca sebagai row tersendiri. */
 .activity-list.large.activity-list-bare {
@@ -35195,7 +35250,7 @@ body[data-role="admin"] .gv-thumb-play {
   padding: 0 12px 0 10px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 11px; /* 2026-06-16: samakan sudut dgn tombol kanan lain */
   color: var(--text);
   cursor: pointer;
   transition: all .2s var(--ease);
@@ -45311,7 +45366,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   padding: 0 12px 0 7px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 11px; /* 2026-06-16: samakan sudut dgn tombol kanan lain (rect ~11px) */
   color: var(--text);
   cursor: pointer;
   transition: all .2s var(--ease);
@@ -45392,6 +45447,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
 .dashboard-tier-pill[data-tier="premium"] {
+  /* 2026-06-16: premium kini nuansa WINE + teks cream (bukan emas). Bersih & on-palette. */
   border-color: rgba(109, 41, 50, .5);
   background: linear-gradient(135deg, rgba(109,41,50,.22), rgba(109,41,50,.08));
   box-shadow: none;

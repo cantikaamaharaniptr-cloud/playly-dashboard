@@ -4966,6 +4966,15 @@ const I18N = {
     "activity.you.liked":        "You liked",
     "activity.you.commented":    "You commented on",
     "activity.you.uploaded":     "You uploaded",
+    "activity.you.shared":       "You shared",
+    "activity.you.watched":      "You watched",
+    "activity.you.messaged":     "You messaged",
+    "activity.others":           "others",
+    "activity.markread":         "Mark all as read",
+    "activity.group.today":      "Today",
+    "activity.group.yesterday":  "Yesterday",
+    "activity.group.week":       "This week",
+    "activity.group.older":      "Earlier",
     // DM page extras
     "dm.start.conversation":     "Start a conversation...",
     "dm.empty.with":             "No messages with",
@@ -6513,6 +6522,15 @@ const I18N = {
     "activity.you.liked":        "Kamu menyukai",
     "activity.you.commented":    "Kamu berkomentar di",
     "activity.you.uploaded":     "Kamu mengunggah",
+    "activity.you.shared":       "Kamu membagikan",
+    "activity.you.watched":      "Kamu menonton",
+    "activity.you.messaged":     "Kamu mengirim pesan ke",
+    "activity.others":           "lainnya",
+    "activity.markread":         "Tandai semua dibaca",
+    "activity.group.today":      "Hari ini",
+    "activity.group.yesterday":  "Kemarin",
+    "activity.group.week":       "Minggu ini",
+    "activity.group.older":      "Lebih lama",
     "dm.start.conversation":     "Mulai percakapan...",
     "dm.empty.with":             "Belum ada pesan dengan",
     "dm.empty.greet":            "Sapa duluan!",
@@ -18288,8 +18306,14 @@ function renderDashboardPaymentPill() {
     return;
   }
   const isID = (typeof currentLang === "function") ? (currentLang() === "id") : true;
-  // Removed checkmark (✅) from approved per request — use star (⭐) instead.
-  const iconMap  = { pending: "⏳", approved: "⭐", rejected: "✕" };
+  // 2026-06-16: ikon emoji (⏳/⭐/✕) diganti SVG monokrom cream (currentColor) —
+  // selaras ikon lonceng/tema/search & tetap on-palette (tanpa emas/kuning emoji).
+  const _atppSvg = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+  const iconMap  = {
+    pending:  _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    approved: _atppSvg('<path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/>'),
+    rejected: _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>'),
+  };
   const labelMap = isID
     ? { pending: "Pembayaran",  approved: "Premium aktif!",   rejected: "Pembayaran" }
     : { pending: "Payment",     approved: "Premium active!",  rejected: "Payment"    };
@@ -18300,7 +18324,7 @@ function renderDashboardPaymentPill() {
   pill.dataset.status = p.status;
   pill.dataset.code = p.code;
   pill.innerHTML =
-    '<span class="atpp-icon">' + (iconMap[p.status] || "⏳") + '</span>' +
+    '<span class="atpp-icon">' + (iconMap[p.status] || iconMap.pending) + '</span>' +
     '<span class="atpp-text">' +
       '<span class="atpp-label">' + (labelMap[p.status] || labelMap.pending) + '</span>' +
       '<span class="atpp-status">' + (statusMap[p.status] || statusMap.pending) + '</span>' +
@@ -18344,7 +18368,7 @@ function renderDashboardTierPill() {
   pill.dataset.tier = tier;
   if (tier === "premium") {
     pill.innerHTML =
-      '<span class="dtp-icon">⭐</span>' +
+      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/></svg></span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">Premium</span>' +
         '<span class="dtp-status">' + (isID ? "Aktif" : "Active") + '</span>' +
@@ -31487,6 +31511,16 @@ function switchView(name, { fromNav = false } = {}) {
   else pauseAllFypVideos?.(); // jeda video FYP saat pindah view
   if (name === "profile") populateProfileForm();
   if (name === "user-profile") renderUserProfile();
+  if (name === "activity") {
+    // Tanda belum-dibaca: simpan "terakhir dilihat" sbg snapshot (utk perbandingan
+    // di renderActivityList), lalu majukan penanda ke sekarang → kunjungan berikut
+    // entri ini sudah "dibaca". Snapshot stabil selama sesi view (ganti filter aman).
+    try {
+      state._actSeenSnapshot = +(localStorage.getItem("playly-activity-seen") || 0);
+      localStorage.setItem("playly-activity-seen", String(Date.now()));
+    } catch (e) { state._actSeenSnapshot = 0; }
+    renderActivityList();
+  }
   if (name === "settings") {
     populateSettingsPrefs();
     refreshTwoFASettings();
@@ -32938,7 +32972,8 @@ function bindVideoCards(scope = document) {
     const id = +b.dataset.like;
     const wasLiked = state.liked.includes(id);
     if (wasLiked) { state.liked = state.liked.filter(x => x !== id); toast("👎 Like dibatalkan"); }
-    else { state.liked.push(id); toast("❤️ Video disukai", "success"); }
+    else { state.liked.push(id); toast("❤️ Video disukai", "success");
+      try { const _v = (typeof findVideo === "function") ? findVideo(id) : null; recordOutAct("like", { videoId: id, title: _v && _v.title, icon: "❤️" }); } catch (e) {} }
     // Update real likes count pada video creator's state — cloud-sync akan mirror.
     updateVideoStat(id, "likes", wasLiked ? -1 : 1);
     saveState();
@@ -36211,7 +36246,7 @@ function toggleFollow(name) {
   } else {
     state.followingCreators.push(name);
     toast(`✓ Mengikuti <b>@${name}</b>`, "success");
-    state.activities.unshift({ type: "follow", text: `You started following <b>@${name}</b>`, time: "just now", icon: "👤", ts: Date.now() });
+    state.activities.unshift({ type: "follow", dir: "out", text: `You started following <b>@${name}</b>`, time: "just now", icon: "👤", ts: Date.now() });
   }
   saveState();
   // Untuk akun real (terdaftar di platform): mirror relasi ke followers user lain.
@@ -38252,48 +38287,157 @@ function renderTopPerforming() {
   if (typeof decorateStatsHeadings === "function") decorateStatsHeadings();
 }
 
+// Catat AKSI KELUAR user untuk halaman Aktivitas. type: upload|like|watch|message|follow|comment.
+// o: { videoId, title, target(@user), icon }. Watch di-dedup (kalau teratas video sama → majukan ts).
+function recordOutAct(type, o) {
+  o = o || {};
+  if (typeof state === "undefined" || !state) return;
+  if (!Array.isArray(state.activities)) state.activities = [];
+  // De-dup aksi beruntun yang sama (tonton video sama / pesan ke orang sama) → majukan ts saja.
+  const top = state.activities[0];
+  if (top && top.dir === "out" && top.type === type &&
+      ((type === "watch" && o.videoId != null && top.videoId === o.videoId) ||
+       (type === "message" && o.target && top.target === o.target))) {
+    top.ts = Date.now(); top.time = "just now";
+    try { saveState && saveState(); } catch (e) {}
+    if (state.currentView === "activity") { try { renderActivityList(); } catch (e) {} }
+    return;
+  }
+  let text = "";
+  if (o.target) text = `<b>@${o.target}</b>`;
+  else if (o.title) text = `<i>${o.title}</i>`;
+  state.activities.unshift({ type, dir: "out", text, icon: o.icon || "", videoId: o.videoId != null ? o.videoId : null, target: o.target || null, ts: Date.now(), time: "just now" });
+  state.activities = state.activities.slice(0, 200);
+  try { saveState && saveState(); } catch (e) {}
+  if (state.currentView === "activity") { try { renderActivityList(); } catch (e) {} }
+}
+window.recordOutAct = recordOutAct;
+
 // ----------------------- ACTIVITY VIEW -----------------------
 function renderActivityList() {
   const list = $("#activityList");
   if (!list) return;
-  const filtered = state.actFilter === "all" ? state.activities : state.activities.filter(a => a.type === state.actFilter);
+  // Ikon baris pakai set Iconsax kita (.ui-ico via emojiToIcon), BUKAN picons.
+  // data-no-picon menahan picons.js menyentuh subtree ini.
+  list.setAttribute("data-no-picon", "");
+  // Aktivitas = LOG AKSI KAMU SENDIRI (dir "out": unggah, suka, tonton, pesan, mengikuti).
+  // Yang DITERIMA (orang lain like/komentar/follow kontenmu) ada di Notifikasi, bukan di sini.
+  const mine = (Array.isArray(state.activities) ? state.activities : []).filter(a => a.dir === "out");
+  const filtered = state.actFilter === "all" ? mine : mine.filter(a => a.type === state.actFilter);
   if (!filtered.length) {
-    list.innerHTML = emptyHTML("📡", state.activities.length === 0 ? "Belum ada aktivitas" : "Tidak ada aktivitas di kategori ini",
-      state.activities.length === 0 ? "Aktivitas akun seperti suka, follow, dan komentar akan muncul di sini." : "Coba ubah filter atau lihat semua.",
-      state.activities.length === 0 ? "Jelajah" : null, "discover");
+    list.innerHTML = emptyHTML("📡", mine.length === 0 ? "Belum ada aktivitas" : "Tidak ada aktivitas di kategori ini",
+      mine.length === 0 ? "Aksimu seperti mengunggah, menyukai, menonton, dan mengirim pesan akan muncul di sini." : "Coba ubah filter atau lihat semua.",
+      mine.length === 0 ? "Jelajah" : null, "discover");
     return;
   }
   // Build localized text dari type+target supaya bahasa ngikutin pref user.
   // Fallback ke a.text untuk activity legacy yang belum punya target field.
   const buildActText = (a) => {
-    // Coba parse target dari text (mis. "@username" atau "<i>title</i>")
-    const handleMatch = a.text && a.text.match(/<b>?@([A-Za-z0-9_.-]+)<?/);
-    const titleMatch = a.text && a.text.match(/<i>([^<]+)<\/i>/);
-    const handle = handleMatch ? handleMatch[1] : a.target;
-    const title = titleMatch ? titleMatch[1] : null;
-    const verbMap = {
-      follow:  "activity.you.followed",
-      like:    "activity.you.liked",
-      comment: "activity.you.commented",
-      upload:  "activity.you.uploaded",
-      share:   "activity.you.shared",
-    };
-    const verbKey = verbMap[a.type];
-    if (!verbKey) return a.text || "";
-    if (handle) return `${t(verbKey)} <b>@${escapeHtml(handle)}</b>`;
-    if (title)  return `${t(verbKey)} <i>${escapeHtml(title)}</i>`;
-    return a.text || "";
+    const raw = (a.text || "").trim();
+    // Arah aktivitas: "out" = aksi kamu sendiri (follow/upload) → pakai template
+    // i18n "Kamu …"; "in" = diterima (orang lain like/follow/komentar kontenmu)
+    // yang teksnya SUDAH kalimat lengkap — jangan dilabel ulang sbg "Kamu …".
+    // Entri lama tanpa field dir: tebak dari awalan "You …" (entri buatan kita).
+    const isOut = a.dir === "out" || (a.dir == null && /^You\b/i.test(raw));
+    if (isOut) {
+      const handleMatch = raw.match(/@([A-Za-z0-9_.-]+)/);
+      const titleMatch = raw.match(/<i>([^<]+)<\/i>/);
+      const handle = handleMatch ? handleMatch[1] : a.target;
+      const title = titleMatch ? titleMatch[1] : null;
+      const verbKey = {
+        follow:  "activity.you.followed",
+        like:    "activity.you.liked",
+        comment: "activity.you.commented",
+        upload:  "activity.you.uploaded",
+        share:   "activity.you.shared",
+        watch:   "activity.you.watched",
+        message: "activity.you.messaged",
+      }[a.type];
+      if (verbKey && handle) return `${t(verbKey)} <b>@${escapeHtml(handle)}</b>`;
+      if (verbKey && title)  return `${t(verbKey)} <i>${escapeHtml(title)}</i>`;
+      if (verbKey) return t(verbKey);
+    }
+    // Masuk / legacy: teks sudah kalimat utuh — cukup kapitalkan huruf awal
+    // supaya seragam (hindari fragmen huruf kecil seperti "menyukai video").
+    if (!raw) return "";
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
   };
 
-  // relTime(a.ts) hitung "just now / 5 min ago / 2 hr ago / 3 days ago" dari
-  // ts. Fallback ke a.time string lama kalau ts belum ada (legacy entries).
-  list.innerHTML = filtered.map(a => `
-    <div class="activity-item">
-      <div class="act-icon ${a.type}">${a.icon}</div>
-      <div class="act-text">${buildActText(a)}</div>
-      <div class="act-time">${a.ts ? relTime(a.ts) : t("common.justnow")}</div>
-    </div>
-  `).join("");
+  // Urut terbaru dulu, lalu: (1) kelompokkan per waktu (Hari ini/Kemarin/Minggu
+  // ini/Lebih lama), (2) gabungkan aktivitas MASUK serupa beruntun, (3) tandai
+  // belum dibaca (ts > snapshot saat view dibuka), (4) avatar pelaku + badge tipe.
+  const items = filtered.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const seen = state._actSeenSnapshot || 0;
+  const now = Date.now();
+  const day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  const startToday = day0.getTime();
+  const startYest = startToday - 86400000;
+  const startWeek = startToday - 6 * 86400000;
+  const bucketOf = (ts) => ts >= startToday ? t("activity.group.today")
+    : ts >= startYest ? t("activity.group.yesterday")
+    : ts >= startWeek ? t("activity.group.week") : t("activity.group.older");
+  const myInit = (((user && (user.name || user.username)) || "U") + "").trim().charAt(0).toUpperCase();
+  const iconHtml = (a) => typeof emojiToIcon === "function" ? emojiToIcon(a.icon) : (a.icon || "");
+  // Pelaku (avatar) + sisa kalimat (kunci agregasi) dari entri masuk "@x <verb> ...".
+  const parseIn = (a) => {
+    const m = (a.text || "").match(/@([A-Za-z0-9_.-]+)\s*<\/b>\s*(.*)$/) || (a.text || "").match(/@([A-Za-z0-9_.-]+)\s*(.*)$/);
+    return m ? { handle: m[1], rest: m[2].replace(/<\/?b>/g, "").trim() } : null;
+  };
+  const row = (a, textHtml, initial, unread) => {
+    const avInner = initial
+      ? `<span class="act-av-ini" translate="no" data-no-i18n>${escapeHtml(initial)}</span><span class="act-badge ${a.type}">${iconHtml(a)}</span>`
+      : `<span class="act-av-ico ${a.type}">${iconHtml(a)}</span>`;
+    // Baris bisa diklik → buka videonya (videoId) atau profil pelakunya (@handle).
+    const vid = a.videoId || "";
+    const hm = (a.text || "").match(/@([A-Za-z0-9_.-]+)/);
+    const usr = hm ? hm[1] : "";
+    const clickable = !!(vid || usr);
+    return `<div class="activity-item${unread ? " act-unread" : ""}${clickable ? " act-click" : ""}"${vid ? ` data-act-vid="${escapeHtml(vid)}"` : ""}${usr ? ` data-act-user="${escapeHtml(usr)}"` : ""}>
+      <div class="act-avatar${initial ? "" : " act-avatar-plain"}">${avInner}</div>
+      <div class="act-body">
+        <div class="act-text">${textHtml}</div>
+        <div class="act-time">${a.ts ? relTime(a.ts) : t("common.justnow")}</div>
+      </div>
+      ${unread ? '<span class="act-dot" aria-hidden="true"></span>' : ""}
+    </div>`;
+  };
+
+  const hasUnread = items.some(a => (a.ts || 0) > seen);
+  let html = hasUnread ? `<button type="button" class="act-markall" id="actMarkAll">${t("activity.markread")}</button>` : "";
+  let lastBucket = null;
+  let i = 0;
+  while (i < items.length) {
+    const a = items[i];
+    const ts = a.ts || now;
+    const bucket = bucketOf(ts);
+    if (bucket !== lastBucket) { html += `<div class="act-group-head">${escapeHtml(bucket)}</div>`; lastBucket = bucket; }
+
+    const pa = a.dir === "in" ? parseIn(a) : null;
+    if (pa) {
+      // Kumpulkan pelaku entri masuk serupa beruntun (tipe + sisa-kalimat + bucket sama)
+      const handles = [pa.handle];
+      let j = i + 1;
+      while (j < items.length && items[j].dir === "in" && items[j].type === a.type && bucketOf(items[j].ts || now) === bucket) {
+        const pj = parseIn(items[j]);
+        if (!pj || pj.rest !== pa.rest) break;
+        if (!handles.includes(pj.handle)) handles.push(pj.handle);
+        j++;
+      }
+      const unread = ts > seen;
+      const textHtml = handles.length > 1
+        ? `<b>@${escapeHtml(handles[0])}</b> & ${handles.length - 1} ${t("activity.others")} ${escapeHtml(pa.rest)}`
+        : buildActText(a);
+      html += row(a, textHtml, handles[0].charAt(0).toUpperCase(), unread);
+      i = j;
+      continue;
+    }
+
+    // Keluar (avatar = kamu) atau legacy tanpa pelaku (avatar polos = ikon tipe)
+    const initial = a.dir === "out" ? myInit : (parseIn(a) ? parseIn(a).handle.charAt(0).toUpperCase() : "");
+    html += row(a, buildActText(a), initial, ts > seen);
+    i++;
+  }
+  list.innerHTML = html;
 }
 $$("#activityFilters button").forEach(b => {
   b.addEventListener("click", () => {
@@ -38302,6 +38446,21 @@ $$("#activityFilters button").forEach(b => {
     state.actFilter = b.dataset.actFilter;
     renderActivityList();
   });
+});
+// Delegasi klik halaman Aktivitas: "Tandai semua dibaca" + baris clickable → konten.
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#actMarkAll")) {
+    try { localStorage.setItem("playly-activity-seen", String(Date.now())); } catch (err) {}
+    state._actSeenSnapshot = Date.now();
+    if (typeof renderActivityList === "function") renderActivityList();
+    return;
+  }
+  const it = e.target.closest("#activityList .activity-item.act-click");
+  if (!it) return;
+  const vid = it.getAttribute("data-act-vid");
+  const usr = it.getAttribute("data-act-user");
+  if (vid && typeof openPlayer === "function") { try { openPlayer(vid); } catch (err) {} return; }
+  if (usr && typeof openUserProfile === "function") { try { openUserProfile(usr); } catch (err) {} return; }
 });
 
 // ----------------------- DISCOVER VIEW -----------------------
@@ -41402,6 +41561,8 @@ function sendChat() {
   m.archived = false; // sender unarchive otomatis kalau lagi kirim
   input.value = "";
   saveState();
+  // Catat "kamu mengirim pesan" ke feed Aktivitas (hanya user, bukan admin/broadcast).
+  if (!senderIsAdmin && m.name && !m.isBroadcast) { try { recordOutAct("message", { target: m.name, icon: "💬" }); } catch (e) {} }
   renderDmChatBody();
   renderDmList();
 
@@ -46180,7 +46341,7 @@ $("#startUpload")?.addEventListener("click", () => {
       state.myVideos.unshift(newVid);
       // Pindahkan dari uploadingVideos
       state.uploadingVideos = state.uploadingVideos.filter(u => u.id !== uploadId);
-      state.activities.unshift({ type: "upload", text: `You uploaded <i>${title}</i>`, time: "just now", icon: "🎬", ts: Date.now() });
+      state.activities.unshift({ type: "upload", dir: "out", text: `You uploaded <i>${title}</i>`, time: "just now", icon: "🎬", ts: Date.now() });
       saveState();
       // Simpan file aslinya ke IndexedDB — skip kalau URL upload (no file to save)
       if (captured.file) {
@@ -48323,6 +48484,8 @@ async function openPlayer(id) {
     console.warn("[openPlayer] video tidak ditemukan untuk id:", id);
     return;
   }
+  // Catat "kamu menonton" ke feed Aktivitas (dir out). De-dup di recordOutAct.
+  try { recordOutAct("watch", { videoId: id, title: v.title, icon: "▶️" }); } catch (e) {}
 
   // Switch view DULU di awal (sync) — supaya user langsung lihat halaman player
   // walaupun resolveVideoSource (async) butuh waktu. Sebelumnya switchView
@@ -50495,6 +50658,7 @@ function deliverNotification(username, notif) {
     s.activities.unshift({
       id: Date.now() + Math.random(),
       type: actType,
+      dir: "in",
       text: actText,
       icon: ICON[actType] || "🔔",
       videoId: notif.videoId || null,
@@ -51294,10 +51458,18 @@ searchInput.addEventListener("input", e => {
     return;
   }
 
-  // User context: search videos (existing behavior)
-  const matches = allVideos().filter(v =>
-    v.title.toLowerCase().includes(q) || v.creator.toLowerCase().includes(q) || (v.category || "").includes(q)
-  ).slice(0, 6);
+  // User context: cari video — pencocokan "nyambung" (universal): tetap cocok walau
+  // beda tanda/spasi/angka (normalisasi huruf+angka) + substring biasa. Field di-guard
+  // supaya tidak crash kalau title/creator/category kosong.
+  const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nq = norm(q);
+  const matches = allVideos().filter(v => {
+    const t = String(v.title || "").toLowerCase();
+    const c = String(v.creator || "").toLowerCase();
+    const cat = String(v.category || "").toLowerCase();
+    return t.includes(q) || c.includes(q) || cat.includes(q) ||
+      (nq && (norm(t).includes(nq) || norm(c).includes(nq) || norm(cat).includes(nq)));
+  }).slice(0, 6);
   sugg.innerHTML = matches.length
     ? matches.map(v => `<div class="suggestion" data-vid="${v.id}"><img src="${v.thumb}"/><div><strong>${v.title}</strong><small>@${v.creator} • ${v.views} tayangan</small></div></div>`).join("")
     : `<div class="suggestion"><div><strong>Tidak ditemukan</strong><small>Coba kata kunci lain</small></div></div>`;
@@ -55589,41 +55761,11 @@ function saveVideoEdit() {
   }
 
   function buildNav() {
-    if (document.body && document.body.dataset.role === "admin") return;
-    var topbar = document.querySelector(".topbar");
-    if (!topbar) return;
-    if (topbar.querySelector(".topbar-home-nav")) return;
-
-    var nav = document.createElement("nav");
-    nav.className = "topbar-home-nav";
-    SECTIONS.forEach(function (s) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "thn-link";
-      btn.innerHTML = (s.icon ? s.icon : "") + '<span>' + s.label + '</span>';
-      btn.dataset.thnTarget = s.id;
-      btn.setAttribute("data-no-i18n", "");
-      btn.addEventListener("click", function () {
-        var target = document.querySelector("[data-home-section='" + s.id + "']") || document.getElementById(s.id);
-        if (!target) return;
-        // Make sure home view is active first
-        var homeNavBtn = document.querySelector('[data-view="home"]');
-        if (homeNavBtn && typeof switchView === "function") {
-          try { switchView("home"); } catch (e) {}
-        }
-        setTimeout(function () {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      });
-      nav.appendChild(btn);
-    });
-
-    var breadcrumb = topbar.querySelector(".breadcrumb");
-    if (breadcrumb && breadcrumb.parentNode === topbar) {
-      breadcrumb.parentNode.insertBefore(nav, breadcrumb.nextSibling);
-    } else {
-      topbar.insertBefore(nav, topbar.firstChild);
-    }
+    // 2026-06-16: nav home di topbar DIHAPUS. Isinya cuma 1 pill "Beranda" yang
+    // dobel dengan breadcrumb. Breadcrumb kini jadi penanda halaman tunggal yang
+    // konsisten — tidak ada lagi label "Beranda" ganda di topbar.
+    var existing = document.querySelector(".topbar-home-nav");
+    if (existing) existing.remove();
   }
 
   function setupActiveTracker() {
