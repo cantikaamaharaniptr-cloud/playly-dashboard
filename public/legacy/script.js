@@ -2600,7 +2600,7 @@ $$("[data-theme-set]").forEach(x => x?.classList.toggle("active", x.dataset.them
 
 const VIEW_TITLES = {
   home: "Beranda", videos: "Pustaka Saya", upload: "Unggah", history: "Riwayat",
-  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Edit Profil", settings: "Pengaturan",
+  stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
   "premium-insights": "Insight Premium",
@@ -6419,7 +6419,7 @@ const I18N = {
     "page.activity":             "Aktivitas",
     "page.messages":             "Pesan",
     "page.settings":             "Pengaturan",
-    "page.profile.edit":         "Edit Profil",
+    "page.profile.edit":         "Ubah Profil",
     "page.profile.creator":      "Profil Kreator",
     "page.profile.my":           "Profil Saya",
     "page.email":                "Email",
@@ -6983,7 +6983,7 @@ const I18N = {
     "user.email.replies":            "Balasan Email",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan dari admin Playly.",
-    "profile.edit.title":        "👤 Edit Profil",
+    "profile.edit.title":        "👤 Ubah Profil",
     "profile.edit.desc":         "Atur informasi yang ditampilkan di profilmu.",
     "profile.identity":          "🪪 Identitas",
     "profile.choose.photo":      "Pilih Foto",
@@ -7087,7 +7087,7 @@ const I18N = {
     "myprofile.liked.empty.title":"Belum ada video disukai",
     "myprofile.liked.empty.desc":"Like video supaya muncul di sini.",
     "myprofile.empty.upload":    "Belum ada video — upload sekarang",
-    "profile.edit.btn":          "Edit Profil",
+    "profile.edit.btn":          "Ubah Profil",
     // My Library ID
     "library.statusvideos.head": "Published",
     "library.newvideos.head":    "Video Baru",
@@ -7125,10 +7125,10 @@ const I18N = {
     "uemail.awaiting.admin":     "Menunggu balasan admin",
     "uemail.awaiting.user":      "Menunggu balasan user",
     // Logout / overlay ID
-    "logout.title":              "Logout dari Playly?",
+    "logout.title":              "Keluar dari Playly?",
     "logout.desc.pre":           "Kamu akan keluar dari akun",
     "logout.desc.post":          ". Data tersimpan dan bisa diakses kembali setelah login.",
-    "logout.btn":                "Logout",
+    "logout.btn":                "Keluar",
     "logout.bye":                "Sampai jumpa",
     "logout.loggingout":         "Logging out...",
     "logout.toast.success":      "Berhasil logout.",
@@ -18639,7 +18639,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">○</span>' +
+      '<span class="dtp-icon">🌱</span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
@@ -48406,7 +48406,7 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Logout dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Keluar dari device ini? Device tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
     if (typeof toast === "function") toast("✓ Device di-logout", "success");
@@ -48420,7 +48420,7 @@ document.addEventListener("click", e => {
       if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Logout dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Keluar dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
     if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
@@ -49156,7 +49156,7 @@ $("#upShareBtn")?.addEventListener("click", () => {
   toast("🔗 Link profil disalin", "success");
 });
 
-// Tombol "Edit Profil" di own channel → langsung ke editor profil
+// Tombol "Ubah Profil" di own channel → langsung ke editor profil
 $("#upEditBtn")?.addEventListener("click", () => switchView("profile"));
 
 $("#upMessageBtn")?.addEventListener("click", () => {
