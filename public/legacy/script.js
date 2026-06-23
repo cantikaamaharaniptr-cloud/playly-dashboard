@@ -33153,7 +33153,7 @@ function refreshHeroGreeting() {
   const clockTier = $("#heroClockTier");
   if (clockTier) {
     const isPrem = user.tier === "premium" || user.role === "admin";
-    clockTier.textContent = isPrem ? "Premium" : "Free Plan";
+    clockTier.textContent = isPrem ? "Premium" : "Gratis";
     clockTier.classList.toggle("hpc-tier-premium", isPrem);
   }
   // Bio singkat (per request v56) — user.bio / prefs; empty → placeholder clickable
