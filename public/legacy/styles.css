@@ -18536,6 +18536,755 @@ body[data-tier="free"] .nav-item[data-tier-gate="premium"]:hover {
   border-radius: 10px;
 }
 
+/* =================================================================
+   v636 (2026-05-30) — Insight Premium overhaul (actionable)
+   Sections: Smart Alert, Goal Ring, Predict Sparkline, AI Assistant,
+   Benchmark Gauge, Best Time Vertical Bars, Hashtag Rec, Perks,
+   Segera Hadir cards. Tiap card umumnya ditutup .pi-rec-box.
+   ================================================================= */
+.pi-grid-v636 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 880px) { .pi-grid-v636 { grid-template-columns: 1fr; } .pi-card.pi-card-big { grid-column: span 1; } }
+
+/* Rekomendasi action box — dipakai di akhir tiap card */
+.pi-rec-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(190,151,82,.10), rgba(125,54,64,.05));
+  border-left: 3px solid #BE9752;
+  border-radius: 0 10px 10px 0;
+}
+.pi-rec-box.pi-rec-compact { padding: 10px 12px; margin-top: 12px; }
+.pi-rec-label {
+  display: block; font-size: 10px; font-weight: 800;
+  letter-spacing: .08em; color: #BE9752; margin-bottom: 4px;
+}
+.pi-rec-box p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text); }
+.pi-rec-box b { color: var(--text); font-weight: 700; }
+.pi-rec-steps {
+  margin: 0; padding: 0 0 0 18px; list-style: none;
+  font-size: 12.5px; line-height: 1.7; color: var(--text);
+}
+.pi-rec-steps li {
+  position: relative; padding-left: 4px;
+}
+.pi-rec-steps li::before {
+  content: "▸"; position: absolute; left: -16px; color: #BE9752; font-weight: 700;
+}
+
+/* 1. SMART ALERTS */
+.pi-alerts-card .pi-alert-feed {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
+}
+.pi-alert-row {
+  display: grid; grid-template-columns: 36px 1fr auto; gap: 12px;
+  align-items: center; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pi-alert-rising { background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.02)); border-color: rgba(16,185,129,.3); }
+.pi-alert-warn   { background: linear-gradient(135deg, rgba(245,158,11,.10), rgba(245,158,11,.02)); border-color: rgba(245,158,11,.3); }
+.pi-alert-info   { background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(99,102,241,.02)); border-color: rgba(99,102,241,.3); }
+.pi-alert-ok     { background: var(--surface); border-style: dashed; }
+.pi-alert-ico {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; background: var(--surface-2);
+}
+.pi-alert-rising .pi-alert-ico { background: rgba(16,185,129,.18); }
+.pi-alert-warn   .pi-alert-ico { background: rgba(245,158,11,.18); }
+.pi-alert-info   .pi-alert-ico { background: rgba(99,102,241,.18); }
+.pi-alert-body { min-width: 0; }
+.pi-alert-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.pi-alert-msg { font-size: 12px; line-height: 1.55; color: var(--text-2); }
+.pi-alert-cta { white-space: nowrap; font-size: 12px; padding: 7px 12px; }
+@media (max-width: 640px) {
+  .pi-alert-row { grid-template-columns: 32px 1fr; }
+  .pi-alert-cta { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
+  .pi-alert-ico { width: 32px; height: 32px; font-size: 16px; }
+}
+
+/* 2. GOAL & GROWTH PLAN */
+.pi-goal-progress-v636 {
+  display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center;
+  padding: 8px 0;
+}
+.pi-goal-ring {
+  --p: 0;
+  width: 96px; height: 96px; border-radius: 50%;
+  background: conic-gradient(#BE9752 calc(var(--p) * 1%), var(--surface-2) 0);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.pi-goal-ring::before {
+  content: ""; position: absolute; inset: 8px; border-radius: 50%;
+  background: var(--surface);
+}
+.pi-goal-ring-pct {
+  position: relative; z-index: 1; font-weight: 800; font-size: 20px;
+  color: var(--text); font-variant-numeric: tabular-nums;
+}
+.pi-goal-meta strong {
+  display: block; font-size: 24px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.pi-goal-meta small { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+.pi-goal-eta { margin-top: 8px; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.pi-goal-eta b { color: #BE9752; font-weight: 700; }
+
+/* 3. PERFORMANCE PREDICTION */
+.pi-trend-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
+  letter-spacing: .04em; white-space: nowrap;
+}
+.pi-trend-up    { background: rgba(16,185,129,.14); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+.pi-trend-down  { background: rgba(239,68,68,.14); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+.pi-trend-flat  { background: rgba(140,150,170,.14); color: var(--muted); border: 1px solid var(--border); }
+.pi-predict-num {
+  padding: 14px 0 6px;
+  text-align: center;
+}
+.pi-predict-num small {
+  display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+  color: var(--muted); text-transform: uppercase;
+}
+.pi-predict-range {
+  display: flex; align-items: baseline; justify-content: center; gap: 8px;
+  margin: 6px 0 2px;
+  font-family: 'Inter', sans-serif; font-weight: 800; font-size: 22px;
+  color: var(--text); font-variant-numeric: tabular-nums;
+}
+.pi-predict-range .pn-sep { color: var(--muted); font-weight: 500; }
+.pi-predict-conf { color: var(--muted); font-size: 11px; }
+.pi-predict-spark {
+  width: 100%; height: 50px; margin: 4px 0;
+  display: block;
+}
+.pi-spark-legend {
+  display: flex; gap: 14px; font-size: 11px; color: var(--muted);
+  align-items: center; justify-content: center; margin-bottom: 6px;
+}
+.pi-spark-legend i {
+  display: inline-block; width: 14px; height: 2.5px;
+  border-radius: 2px; margin-right: 5px; vertical-align: middle;
+}
+.pn-up { color: #10b981; }
+.pn-down { color: #ef4444; }
+
+/* 4. AI CONTENT ASSISTANT */
+.pi-tag-ai {
+  background: linear-gradient(135deg, #BE9752, #6D2932);
+  color: #fff; border: 0;
+}
+.pi-ai-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+  margin-top: 4px;
+}
+@media (max-width: 720px) { .pi-ai-grid { grid-template-columns: 1fr; } }
+.pi-ai-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.pi-ai-sub {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  letter-spacing: .04em; margin-bottom: 8px; text-transform: uppercase;
+}
+.pi-ai-topic-list {
+  margin: 0; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.pi-ai-topic-list li {
+  font-size: 12.5px; color: var(--text); line-height: 1.5;
+  padding: 6px 10px; background: var(--surface-2); border-radius: 7px;
+}
+.pi-ai-title-text { font-weight: 500; }
+.pi-ai-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.pi-ai-tag {
+  display: inline-block; padding: 5px 10px; border-radius: 99px;
+  background: rgba(190,151,82,.12); color: #BE9752; font-size: 12px;
+  font-weight: 600; border: 1px solid rgba(190,151,82,.3);
+}
+.pi-ai-cta { margin-top: 14px; width: 100%; justify-content: center; }
+
+/* 5. BENCHMARK GAUGE */
+.pi-bench-gauge-wrap {
+  display: grid; grid-template-columns: 140px 1fr; gap: 18px;
+  align-items: center; margin: 8px 0;
+}
+.pi-bench-gauge {
+  --p: 50;
+  width: 140px; height: 70px; position: relative; overflow: hidden;
+  margin: 0 auto;
+}
+.pi-bench-gauge::before {
+  content: ""; position: absolute; inset: 0;
+  background: conic-gradient(from -90deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, transparent 50%);
+  -webkit-mask: radial-gradient(circle at 50% 100%, transparent 56px, #000 57px, #000 70px, transparent 71px);
+          mask: radial-gradient(circle at 50% 100%, transparent 56px, #000 57px, #000 70px, transparent 71px);
+}
+.pi-bench-gauge::after {
+  content: ""; position: absolute; bottom: 0; left: 50%;
+  width: 3px; height: 64px; background: var(--text);
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(calc((var(--p) - 50) * 1.8deg));
+  border-radius: 2px;
+}
+.pi-bench-gauge-inner {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  text-align: center; z-index: 1;
+}
+.pi-bench-gauge-inner strong {
+  display: block; font-size: 18px; font-weight: 800; color: var(--text); line-height: 1;
+}
+.pi-bench-gauge-inner small { font-size: 10px; color: var(--muted); }
+.pi-bench-stats { display: flex; flex-direction: column; gap: 6px; }
+.pi-bench-stat-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.pi-bench-stat-row:last-child { border-bottom: 0; }
+.pi-bench-stat-row small {
+  font-size: 10.5px; font-weight: 700; color: var(--muted); letter-spacing: .04em;
+}
+.pi-bench-stat-row strong {
+  font-size: 16px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+  .pi-bench-gauge-wrap { grid-template-columns: 1fr; }
+}
+
+/* 6. BEST UPLOAD TIME — vertical bars + recommend block */
+.pi-bt-recommend {
+  display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+  padding: 14px; margin: 8px 0;
+  background: linear-gradient(135deg, rgba(190,151,82,.10), rgba(125,54,64,.04));
+  border-radius: 12px;
+}
+.pi-bt-when { display: flex; align-items: center; gap: 10px; }
+.pi-bt-day-pill {
+  display: inline-block; padding: 5px 12px; border-radius: 99px;
+  background: #6D2932; color: #fff; font-weight: 700; font-size: 12.5px;
+}
+.pi-bt-time {
+  font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 800;
+  color: var(--text); font-variant-numeric: tabular-nums;
+}
+.pi-bt-uplift {
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+.pi-bt-uplift b { font-size: 22px; font-weight: 800; color: #10b981; line-height: 1; }
+.pi-bt-uplift small { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pi-bt-reason {
+  font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin: 6px 0 12px;
+}
+.pi-bt-reason b { color: var(--text); font-weight: 700; }
+.pi-bt-bars-vert {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-top: 8px; height: 120px;
+  align-items: end;
+}
+.pi-btv-col {
+  display: flex; flex-direction: column; align-items: center; height: 100%;
+  justify-content: end; gap: 6px;
+}
+.pi-btv-bar {
+  width: 100%; max-width: 50px; height: 92px; position: relative;
+  background: var(--surface-2); border-radius: 6px 6px 0 0; overflow: hidden;
+  display: flex; align-items: end;
+}
+.pi-btv-bar i {
+  display: block; width: 100%;
+  background: linear-gradient(180deg, rgba(190,151,82,.35), rgba(190,151,82,.18));
+  border-radius: 6px 6px 0 0;
+  transition: height .35s ease;
+}
+.pi-btv-col.peak .pi-btv-bar i {
+  background: linear-gradient(180deg, #BE9752, #6D2932);
+}
+.pi-btv-col.peak small { color: #BE9752; font-weight: 700; }
+.pi-btv-col small { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+/* 7. HASHTAG RECOMMENDATIONS */
+.pi-hashrec-cols {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+  margin-top: 4px;
+}
+@media (max-width: 720px) { .pi-hashrec-cols { grid-template-columns: 1fr; } }
+.pi-hashrec-col {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.pi-hashrec-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pi-hashrec-pill {
+  display: inline-block; padding: 5px 12px; border-radius: 99px;
+  background: var(--surface-2); color: var(--text);
+  font-size: 12.5px; font-weight: 600; border: 1px solid var(--border);
+}
+.pi-hashrec-pill.hot {
+  background: linear-gradient(135deg, rgba(239,68,68,.14), rgba(245,158,11,.10));
+  color: #ef4444; border-color: rgba(239,68,68,.3);
+}
+
+/* 8. PREMIUM PERKS */
+.pi-perks-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+  margin-top: 4px;
+}
+@media (max-width: 840px) { .pi-perks-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .pi-perks-grid { grid-template-columns: 1fr; } }
+.pi-perk-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 14px; text-align: left;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; cursor: pointer; color: var(--text);
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  font-family: inherit;
+}
+button.pi-perk-card { width: 100%; }
+.pi-perk-card:hover, .pi-perk-card:focus {
+  transform: translateY(-2px); border-color: #BE9752;
+  box-shadow: 0 6px 18px rgba(190,151,82,.18);
+  outline: none;
+}
+.pi-perk-info { cursor: default; }
+.pi-perk-info:hover { transform: none; box-shadow: none; border-color: var(--border); }
+.pi-perk-ico {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; background: linear-gradient(135deg, rgba(190,151,82,.18), rgba(125,54,64,.12));
+  margin-bottom: 4px;
+}
+.pi-perk-card strong { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.pi-perk-card small { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+.pi-perk-cta {
+  margin-top: auto; padding-top: 8px;
+  font-size: 11.5px; font-weight: 700; color: #BE9752; letter-spacing: .04em;
+}
+.pi-perk-info .pi-perk-cta { color: #10b981; }
+
+/* SEGERA HADIR cards */
+.pi-soon-card {
+  text-align: center; padding: 24px 20px;
+  background: repeating-linear-gradient(
+    -45deg, var(--surface), var(--surface) 12px,
+    var(--surface-2) 12px, var(--surface-2) 24px
+  );
+  border: 1px dashed var(--border);
+  opacity: .88;
+}
+.pi-soon-ico {
+  font-size: 32px; margin-bottom: 8px; opacity: .7;
+  filter: grayscale(.5);
+}
+.pi-soon-card h4 {
+  display: block !important; margin: 0 0 6px !important;
+  font-size: 14px !important; color: var(--text) !important;
+}
+.pi-soon-card p {
+  margin: 0 0 10px; font-size: 12.5px; color: var(--text-2); line-height: 1.55;
+}
+.pi-soon-badge {
+  display: inline-block; padding: 5px 12px; border-radius: 99px;
+  background: rgba(190,151,82,.14); color: #BE9752;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  border: 1px solid rgba(190,151,82,.3);
+}
+
+/* Admin scope auto-override sec-icon-v582 sudah jalan dari v624 — tidak perlu duplikat */
+
+/* =================================================================
+   v637 (2026-05-30) — Insight Premium = Perks Page (rombak).
+   Simple, scannable. 5 section: Hero, Perks Tiles, Hemat, Coin,
+   Eksklusif, Status Langganan. Tidak menyentuh dark/light: pakai
+   var() yang sudah ada (mirror otomatis).
+   ================================================================= */
+.pi-grid-v637 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 880px) { .pi-grid-v637 { grid-template-columns: 1fr; } .pi-grid-v637 .pi-card.pi-card-big { grid-column: span 1; } }
+
+/* --- HERO MEMBERSHIP v661 (compact, avatar besar, 3 box seragam, bar jelas, dot pulse) --- */
+.pi-hero5 {
+  display: flex; align-items: center; gap: 18px;
+  padding: 16px 18px;   /* compact: lebih kecil dari default .pi-card 18/20 */
+}
+.pi-hero5-left { display: flex; align-items: center; gap: 16px; flex: 0 0 auto; min-width: 0; }
+
+/* Avatar — diperbesar, no ring */
+.pi-hero5-avatar-wrap { position: relative; flex-shrink: 0; }
+.pi-hero5-avatar {
+  width: 78px; height: 78px; border-radius: 50%;
+  overflow: hidden; background: var(--surface-2);
+}
+.pi-hero5-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pi-hero5-avatar-fb {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: var(--accent);
+}
+.pi-hero5-star {
+  position: absolute; right: 0; bottom: 0;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: var(--accent);
+  border: 2px solid var(--bg-elev);
+}
+.pi-hero5-star svg { width: 13px; height: 13px; display: block; }
+
+/* Identity */
+.pi-hero5-id { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pi-hero5-name { margin: 0; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; }
+.pi-hero5-sub { font-size: 12.5px; color: var(--text-2); line-height: 1.3; }
+/* v662: badge premium gold (warna premium pada umumnya), match .apc-badge-premium */
+.pi-hero5-badge {
+  display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+  margin-top: 3px;
+  padding: 5px 13px 5px 9px; border-radius: 99px;
+  background: linear-gradient(135deg, #d4a64a, #6D2932);
+  color: #fff;
+  font-size: 11.5px; font-weight: 800; letter-spacing: .02em;
+  box-shadow: 0 3px 10px -3px rgba(212,166,74,.5);
+}
+.pi-hero5-badge-ico { display: inline-flex; color: #f3d27e; }
+.pi-hero5-badge-ico svg { width: 14px; height: 14px; display: block; }
+
+/* Right boxes — 3 petak SERAGAM, isi penuh vertikal (v663) */
+.pi-hero5-boxes { display: flex; gap: 10px; flex: 1; min-width: 0; }
+.pi-hero5-box {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between;
+  flex: 1; min-width: 0; height: 86px;
+  padding: 12px 15px; border-radius: 11px;
+  background: var(--surface-2);
+}
+.pi-hero5-box-label {
+  font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+  color: var(--text-2); text-transform: uppercase;
+}
+/* VALUE krusial — seragam, fit kolom (boleh shrink kalau sempit) */
+.pi-hero5-box-val {
+  font-size: 19px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+  white-space: nowrap;
+  display: flex; align-items: baseline; gap: 5px;
+  min-width: 0;
+}
+.pi-hero5-box-val > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.pi-hero5-box-unit { font-size: 11.5px; font-weight: 600; color: var(--text-2); flex-shrink: 0; }
+/* foot — baris bawah */
+.pi-hero5-box-foot {
+  font-size: 12.5px; color: var(--text-2); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* dot LIVE status aktif — pojok kanan-atas box "Aktif hingga".
+   Core hijau breathing + ripple ring keluar (efek "live"). */
+.pi-hero5-dot {
+  position: absolute; top: 12px; right: 14px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--success);
+  animation: ph5-breathe 1.6s ease-in-out infinite;
+}
+/* ripple ring di belakang core */
+.pi-hero5-dot::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--success);
+  animation: ph5-ripple 1.8s ease-out infinite;
+}
+@keyframes ph5-breathe {
+  0%, 100% { box-shadow: 0 0 4px 0 rgba(16,185,129,.5); transform: scale(1); }
+  50%      { box-shadow: 0 0 7px 1px rgba(16,185,129,.85); transform: scale(1.12); }
+}
+@keyframes ph5-ripple {
+  0%   { transform: scale(1); opacity: .55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pi-hero5-dot { animation: none; }
+  .pi-hero5-dot::after { animation: none; opacity: 0; }
+}
+/* progress — RING gauge (v665): box jadi row [info | ring], warna tema + animasi */
+.pi-hero5-box-ring {
+  flex-direction: row; align-items: center; justify-content: space-between; gap: 10px;
+}
+.pi-hero5-ring-info {
+  display: flex; flex-direction: column; justify-content: space-between;
+  height: 100%; min-width: 0;
+}
+.pi-hero5-ring {
+  --p: 0;
+  width: 56px; height: 56px; border-radius: 50%;
+  /* donut bersih: arc wine terisi (--p%), sisanya track gelap halus */
+  background:
+    conic-gradient(from -90deg,
+      var(--primary-hover) calc(var(--p) * 1%),
+      rgba(0,0,0,.22) calc(var(--p) * 1%));
+  -webkit-mask: radial-gradient(closest-side, transparent 68%, #000 69%);
+          mask: radial-gradient(closest-side, transparent 68%, #000 69%);
+  animation: ph5-ring-fill 1.1s ease-out both;
+}
+/* pct ditaruh di wrapper terpisah biar tidak kena mask */
+.pi-hero5-ring-wrap { position: relative; flex-shrink: 0; width: 56px; height: 56px; }
+.pi-hero5-ring-wrap .pi-hero5-ring { position: absolute; inset: 0; }
+.pi-hero5-ring-pct {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+@property --p {
+  syntax: "<number>"; inherits: false; initial-value: 0;
+}
+@keyframes ph5-ring-fill {
+  from { --p: 0; }
+  to   { --p: var(--target, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pi-hero5-ring { animation: none; --p: var(--target, 0); }
+}
+@media (max-width: 1000px) {
+  .pi-hero5 { flex-direction: column; align-items: stretch; }
+  .pi-hero5-boxes { width: 100%; }
+  .pi-hero5-box { flex: 1; width: auto; min-width: 0; }
+}
+@media (max-width: 560px) {
+  .pi-hero5-boxes { flex-wrap: wrap; }
+  .pi-hero5-box { flex-basis: calc(50% - 5px); }
+}
+
+/* v642 (2026-05-30): card head dengan ikon di kolom sendiri, sehingga
+   small text TIDAK menjorok di bawah ikon — sejajar di bawah judul. */
+.pi-card-head.pi-head-stack {
+  display: flex; align-items: flex-start; gap: 10px;
+  justify-content: flex-start;
+}
+.pi-card-head.pi-head-stack > .sec-icon-v582 {
+  flex-shrink: 0; margin-top: 1px;
+}
+.pi-card-head.pi-head-stack .pi-head-text {
+  flex: 1; min-width: 0;
+}
+.pi-card-head.pi-head-stack .pi-head-text h4 {
+  display: block; margin: 0 0 3px;
+}
+.pi-card-head.pi-head-stack .pi-head-text small {
+  display: block; margin: 0;
+}
+
+/* --- PERK TILES — v638 compact / v641 unified status (no green) --- */
+.pi-perk-tile-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  margin-top: 4px;
+}
+.pi-perk-tile-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* v669: combined grid — auto-fit biar 5 tile rata tanpa kolom kosong */
+.pi-perks-combined-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+  margin-top: 4px;
+}
+@media (max-width: 880px) {
+  .pi-perks-combined-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 440px) {
+  .pi-perks-combined-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) { .pi-perk-tile-grid, .pi-perk-tile-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 440px) { .pi-perk-tile-grid, .pi-perk-tile-grid-4 { grid-template-columns: 1fr; } }
+.pi-perk-tile {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.pi-perk-tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+/* v672: ikon mono — kotak surface TANPA border ring */
+.ppt-ico {
+  width: 34px; height: 34px; border-radius: 9px; margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 0;
+  color: var(--accent);
+}
+.ppt-ico svg { width: 17px; height: 17px; display: block; }
+.pi-perk-tile-clickable:hover .ppt-ico,
+.pi-perk-tile-clickable:focus .ppt-ico { color: var(--text); }
+/* v671: hierarki teks — judul lebih besar/tebal, deskripsi lebih kecil/redup */
+.pi-perk-tile b { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.pi-perk-tile small { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+
+/* v673: CTA full-width seragam, selalu nempel bawah (margin-top:auto) —
+   semua tombol sama ukuran & sejajar di baseline bawah, no gap mid-card. */
+.ppt-cta {
+  margin-top: auto; display: block; width: 100%; text-align: center;
+  padding: 8px 12px; border-radius: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); font-size: 11.5px; font-weight: 700;
+  transition: background .15s ease, border-color .15s ease;
+}
+button.pi-perk-tile {
+  width: 100%; text-align: left; font-family: inherit; color: var(--text);
+  cursor: pointer;
+}
+.pi-perk-tile-clickable:hover, .pi-perk-tile-clickable:focus {
+  border-color: var(--border-strong);
+  outline: none;
+}
+.pi-perk-tile-clickable:hover .ppt-cta,
+.pi-perk-tile-clickable:focus .ppt-cta {
+  background: var(--primary); border-color: var(--primary);
+  color: var(--cream);
+}
+
+/* --- HEMAT (saving list) — v638 compact --- */
+.pi-saving-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.pi-saving-row {
+  display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center;
+  padding: 9px 11px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 9px;
+}
+.pi-saving-ico {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.pi-saving-ico svg { width: 17px; height: 17px; display: block; }
+.pi-saving-text strong {
+  display: block; font-size: 16px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.pi-saving-text small { font-size: 11.5px; color: var(--text-2); display: block; margin-top: 2px; line-height: 1.4; }
+
+/* --- AKSES CEPAT (v643) — shortcut nav 2x2 grid --- */
+.pi-quick-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  margin-top: 4px;
+}
+.pi-quick-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 10px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-family: inherit;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.pi-quick-btn:hover, .pi-quick-btn:focus {
+  border-color: rgba(190,151,82,.5);
+  box-shadow: 0 4px 12px rgba(190,151,82,.10);
+  transform: translateY(-1px);
+  outline: none;
+}
+.pq-ico {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.pq-ico svg { width: 18px; height: 18px; display: block; }
+.pq-label { font-size: 12.5px; font-weight: 600; color: var(--text); }
+
+/* v650: Streak Nonton (.pi-streak-*) + Ringkasan Mingguan (.pi-week-*) dihapus per request user. */
+
+/* --- COIN CARD — v638 mono (deprecated v643, kept for safety) --- */
+.pi-coin-card { display: flex; flex-direction: column; }
+.pi-coin-balance {
+  display: flex; align-items: center; gap: 14px; padding: 14px; margin-top: 6px;
+  background: var(--surface);
+  border-radius: 10px; border: 1px solid var(--border);
+}
+.pi-coin-ico {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  flex-shrink: 0;
+}
+.pi-coin-ico svg { width: 24px; height: 24px; display: block; }
+.pi-coin-balance strong {
+  display: block; font-size: 24px; font-weight: 800; color: var(--text);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.pi-coin-balance small { font-size: 11.5px; color: var(--text-2); display: block; margin-top: 3px; }
+.pi-coin-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+}
+.pi-coin-hint {
+  display: block; margin-top: 8px; font-size: 10.5px;
+  color: var(--muted); text-align: center;
+}
+
+/* --- EKSKLUSIF GRID — v638 compact mono / v639 6-item refinement --- */
+.pi-exc-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  margin-top: 4px;
+}
+@media (max-width: 760px) { .pi-exc-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 440px) { .pi-exc-grid { grid-template-columns: 1fr; } }
+/* v640: 4-col layout (1 row), match Manfaat Pemutaran. Compact mode */
+.pi-exc-grid-v640 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 880px) { .pi-exc-grid-v640 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 440px) { .pi-exc-grid-v640 { grid-template-columns: 1fr; } }
+.pi-exc-grid-v640 .pi-exc-item { padding: 11px; gap: 3px; }
+.pi-exc-grid-v640 .pi-exc-item .pe-ico { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 3px; }
+.pi-exc-grid-v640 .pi-exc-item .pe-ico svg { width: 16px; height: 16px; }
+.pi-exc-grid-v640 .pi-exc-item b { font-size: 12.5px; }
+.pi-exc-grid-v640 .pi-exc-item small { font-size: 11px; line-height: 1.4; }
+.pi-exc-grid-v640 .pe-status { margin-top: 5px; font-size: 10.5px; }
+.pi-exc-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  text-align: left; font-family: inherit; color: var(--text);
+}
+button.pi-exc-item { cursor: pointer; width: 100%; }
+.pi-exc-clickable:hover, .pi-exc-clickable:focus {
+  border-color: #BE9752;
+  box-shadow: 0 4px 14px rgba(190,151,82,.12);
+  transform: translateY(-1px);
+  outline: none;
+  transition: all .15s ease;
+}
+.pi-exc-item .pe-ico {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+.pi-exc-item .pe-ico svg { width: 17px; height: 17px; display: block; }
+.pi-exc-item b { font-size: 13px; font-weight: 700; color: var(--text); }
+.pi-exc-item small { font-size: 11.5px; color: var(--text-2); line-height: 1.45; flex: 1; }
+.pe-status {
+  margin-top: 6px; font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  color: #BE9752;
+}
+.pe-status.active { color: #10b981; }
+
+/* --- STATUS LANGGANAN --- */
+.pi-sub-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  margin-top: 4px;
+}
+@media (max-width: 520px) { .pi-sub-grid { grid-template-columns: 1fr; } }
+.pi-sub-cell {
+  padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+.pi-sub-cell small {
+  display: block; font-size: 10.5px; font-weight: 700;
+  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.pi-sub-cell strong {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.pi-sub-tag {
+  display: inline-block; padding: 1px 8px; border-radius: 99px;
+  background: rgba(190,151,82,.14); color: #BE9752;
+  font-size: 10.5px; font-weight: 700; margin-left: 4px;
+}
+.pi-sub-actions {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+}
+
 .auth-switch {
   text-align: center;
   font-size: 13px;
@@ -73607,6 +74356,320 @@ body[data-role="admin"] .sec-icon-v582 {
     0 4px 12px rgba(27,60,83,0.32),
     0 0 0 1px rgba(140,160,195,0.18) inset,
     0 1px 0 rgba(255,255,255,0.06) inset;
+}
+
+/* v625: Inline SVG di section header (.hdr-ico, .ars-head-ico) tanpa wrapper
+   span — paksa jadi box (sec-icon-v582 style) di admin scope. */
+body[data-role="admin"] h2 > svg.hdr-ico,
+body[data-role="admin"] h3 > svg.hdr-ico,
+body[data-role="admin"] h4 > svg.hdr-ico,
+body[data-role="admin"] h2 > svg.ars-head-ico,
+body[data-role="admin"] h3 > svg.ars-head-ico,
+body[data-role="admin"] h4 > svg.ars-head-ico {
+  display: inline-flex !important;
+  vertical-align: middle !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 7px !important;
+  margin-right: 10px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  color: #E8EEF5 !important;
+  stroke: #E8EEF5 !important;
+  box-sizing: border-box !important;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset !important;
+}
+
+/* v625 (2026-05-29): icon box admin LEBIH BULAT (radius 12→14px) + size
+   consistency override per request user "bukan petak ya". */
+body[data-role="admin"] .sec-icon-v582 {
+  border-radius: 14px !important;
+}
+body[data-role="admin"] .sec-icon-v582.sec-icon-sm {
+  border-radius: 10px !important;
+  width: 30px !important;
+  height: 30px !important;
+}
+body[data-role="admin"] .sec-icon-v582.sec-icon-sm svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+body[data-role="admin"] .sec-icon-v582.sec-icon-lg {
+  border-radius: 16px !important;
+}
+/* Default sec-icon (di section h3) — pastikan SVG proporsional 18px */
+body[data-role="admin"] .sec-icon-v582:not(.sec-icon-sm):not(.sec-icon-lg) svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+/* admin-kpi-icon, aac-icon, ahf-head-ico, dll — radius 14px */
+body[data-role="admin"] .admin-kpi-icon,
+body[data-role="admin"] .aac-icon,
+body[data-role="admin"] .ahf-head-ico,
+body[data-role="admin"] .ars-head-ico,
+body[data-role="admin"] .apc-icon,
+body[data-role="admin"] .audit-stat-icon,
+body[data-role="admin"] .comms-kpi-icon,
+body[data-role="admin"] .pq-stat-icon {
+  border-radius: 14px !important;
+}
+
+/* v625: empty-state HUGE emoji icons (Stream Pendapatan + Aktivitas Pendapatan
+   empty state) — kecilkan + warna muted, no more giant grey envelope/$ glyph */
+body[data-role="admin"] .an-empty-icon,
+body[data-role="admin"] .an-chart-empty .an-empty-icon,
+body[data-role="admin"] .empty-rich-v24 .er-illust {
+  font-size: 32px !important;
+  width: 48px !important;
+  height: 48px !important;
+  opacity: .35 !important;
+  color: var(--text-2, var(--muted)) !important;
+}
+
+/* v624 (2026-05-29): UNIVERSAL admin icon box override — attribute selector
+   `[class*="-icon"]` dan `[class*="-ico"]` di admin scope, dengan exclusion
+   list buat icon yang JANGAN dipaksa (sidebar nav, emoji-only spans,
+   empty-state illustrations, status pills, dll yang punya konteks beda).
+
+   Catatan: pakai inline-flex display + width/height detection via
+   :where(...) buat avoid match span wrapper biasa (mis. button SVG icon
+   yang gak ada bg color). */
+
+/* Universal admin icon box - slate-blue + flat */
+body[data-role="admin"] [class*="-icon"]:not(.nav-item):not(.nav-item *):not(.empty *):not(.up-empty-icon):not(.ce-icon):not(.an-empty-icon):not(.dz-pro-empty-icon):not(.cd-empty-icon):not(.gv-empty-icon):not(.dm-chat-empty-icon):not(.dm-ov-empty-ico):not(.confirm-icon):not(.live-dot):not(.pulse-dot):not(.apc-pulse-dot):not([class*="emoji"]):not([class*="flag"]),
+body[data-role="admin"] [class*="-ico"]:not(.nav-item):not(.nav-item *):not(.empty *):not([class*="emoji"]) {
+  /* (filter SKIP: empty-state illustrations, dots, emoji wrappers, nav) */
+}
+
+/* Whitelist explicit untuk SEMUA icon BOX (square w/ bg) di admin pages */
+body[data-role="admin"] .admin-kpi-icon,
+body[data-role="admin"] .admin-kpi-icon.users,
+body[data-role="admin"] .admin-kpi-icon.videos,
+body[data-role="admin"] .admin-kpi-icon.views,
+body[data-role="admin"] .admin-kpi-icon.revenue,
+body[data-role="admin"] .aac-icon,
+body[data-role="admin"] .ahf-head-ico,
+body[data-role="admin"] .ars-head-ico,
+body[data-role="admin"] .amc-icon,
+body[data-role="admin"] .amb-icon,
+body[data-role="admin"] .apc-icon,
+body[data-role="admin"] .apc-icon-live,
+body[data-role="admin"] .apc-icon-storage,
+body[data-role="admin"] .apc-icon-signup,
+body[data-role="admin"] .apc-icon-moderation,
+body[data-role="admin"] .apb-icon,
+body[data-role="admin"] .aps-stat-icon,
+body[data-role="admin"] .audit-stat-icon,
+body[data-role="admin"] .comms-kpi-icon,
+body[data-role="admin"] .pq-stat-icon,
+body[data-role="admin"] .pm-tile-icon,
+body[data-role="admin"] .pm-ub-ico,
+body[data-role="admin"] .nh-ico,
+body[data-role="admin"] .pf-ico,
+body[data-role="admin"] .pm-ico,
+body[data-role="admin"] .dmt-ico,
+body[data-role="admin"] .aw-ico,
+body[data-role="admin"] .hdr-ico,
+body[data-role="admin"] .ph-icon,
+body[data-role="admin"] .kpi-detail-icon,
+body[data-role="admin"] .inbox-col-icon,
+body[data-role="admin"] .inbox-refresh-icon,
+body[data-role="admin"] .payment-head-icon,
+body[data-role="admin"] .premium-celeb-icon,
+body[data-role="admin"] .ps-ad-icon,
+body[data-role="admin"] .psm-icon,
+body[data-role="admin"] .pac-plan-icon,
+body[data-role="admin"] .pd-upgrade-icon,
+body[data-role="admin"] .plpm-icon,
+body[data-role="admin"] .psc-sent-icon,
+body[data-role="admin"] .cd-icon,
+body[data-role="admin"] .cu-header-icon,
+body[data-role="admin"] .cu-tier-icon,
+body[data-role="admin"] .auth-tier-icon,
+body[data-role="admin"] .auth-lock-icon,
+body[data-role="admin"] .forgot-pw-icon,
+body[data-role="admin"] .fo-icon,
+body[data-role="admin"] .howit-icon,
+body[data-role="admin"] .cap-press-icon,
+body[data-role="admin"] .bba-icon,
+body[data-role="admin"] .atpp-icon,
+body[data-role="admin"] .afc-icon,
+body[data-role="admin"] .afs-info-icon,
+body[data-role="admin"] .admin-reset-icon {
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  background-image: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  color: #E8EEF5 !important;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* SVG inside semua icon box → cream warna konsisten */
+body[data-role="admin"] .admin-kpi-icon svg,
+body[data-role="admin"] .aac-icon svg,
+body[data-role="admin"] .ahf-head-ico svg,
+body[data-role="admin"] .ars-head-ico svg,
+body[data-role="admin"] .amc-icon svg,
+body[data-role="admin"] .apc-icon svg,
+body[data-role="admin"] .audit-stat-icon svg,
+body[data-role="admin"] .comms-kpi-icon svg,
+body[data-role="admin"] .pq-stat-icon svg,
+body[data-role="admin"] .hdr-ico svg,
+body[data-role="admin"] .ph-icon svg,
+body[data-role="admin"] .kpi-detail-icon svg,
+body[data-role="admin"] .pf-ico svg,
+body[data-role="admin"] .pm-ico svg {
+  color: #E8EEF5 !important;
+  stroke: #E8EEF5 !important;
+  fill: none !important;
+}
+
+/* Glass shine ::after pseudo dihilangkan di SEMUA icon box admin */
+body[data-role="admin"] .admin-kpi-icon::after,
+body[data-role="admin"] .aac-icon::after,
+body[data-role="admin"] .ahf-head-ico::after,
+body[data-role="admin"] .ars-head-ico::after,
+body[data-role="admin"] .amc-icon::after,
+body[data-role="admin"] .apc-icon::after,
+body[data-role="admin"] .audit-stat-icon::after,
+body[data-role="admin"] .comms-kpi-icon::after,
+body[data-role="admin"] .pq-stat-icon::after,
+body[data-role="admin"] .hdr-ico::after,
+body[data-role="admin"] .ph-icon::after {
+  display: none !important;
+}
+
+/* Active state PUSAT AKSI — tetap slate-blue, lebih terang */
+body[data-role="admin"] .admin-action-card.aac-active .aac-icon {
+  background: linear-gradient(135deg, #3a5778 0%, #2B4C63 100%) !important;
+  background-image: linear-gradient(135deg, #3a5778 0%, #2B4C63 100%) !important;
+  color: #FFFFFF !important;
+}
+/* DANGER tetap merah (semantic warning — JANGAN ke-override slate-blue) */
+body[data-role="admin"] .admin-action-card.aac-danger.aac-active .aac-icon {
+  background: linear-gradient(135deg, #c25656 0%, #8b3030 100%) !important;
+  background-image: linear-gradient(135deg, #c25656 0%, #8b3030 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* Live dot pulse animation di admin scope — DISABLE */
+body[data-role="admin"] .live-dot,
+body[data-role="admin"] .hero-pill .live-dot,
+body[data-role="admin"] .hs-live .live-dot,
+body[data-role="admin"] .ahf-live i,
+body[data-role="admin"] .pulse-dot,
+body[data-role="admin"] .apc-pulse-dot {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+/* Hero badges + pills — flat (no glass blur) */
+body[data-role="admin"] .admin-hero-badge,
+body[data-role="admin"] .admin-hero .hero-pill {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* v623 (2026-05-28): EXTEND coverage — semua icon box di admin dashboard
+   (KPI tiles, PUSAT AKSI, NOTIF header, hero badges) ke slate-blue gradient
+   uniform + remove glass effects. Per request user yang protest masih banyak
+   icon belum ke-cover di v622. */
+body[data-role="admin"] .admin-kpi-icon,
+body[data-role="admin"] .admin-kpi-icon.users,
+body[data-role="admin"] .admin-kpi-icon.videos,
+body[data-role="admin"] .admin-kpi-icon.views,
+body[data-role="admin"] .admin-kpi-icon.revenue,
+body[data-role="admin"] .aac-icon,
+body[data-role="admin"] .ahf-head-ico {
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  color: #E8EEF5 !important;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Active state PUSAT AKSI — tetap slate-blue, tidak fade ke abu */
+body[data-role="admin"] .admin-action-card.aac-active .aac-icon {
+  background: linear-gradient(135deg, #3a5778 0%, #2B4C63 100%) !important;
+  color: #FFFFFF !important;
+}
+body[data-role="admin"] .admin-action-card.aac-danger.aac-active .aac-icon {
+  background: linear-gradient(135deg, #c25656 0%, #8b3030 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* Live dot pulse animation di admin scope — DISABLE (no glass-y pulse) */
+body[data-role="admin"] .live-dot,
+body[data-role="admin"] .hero-pill .live-dot,
+body[data-role="admin"] .hs-live .live-dot,
+body[data-role="admin"] .ahf-live i {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+/* Hero badge "Panel Kontrol Admin" + hero pills — paksa flat (no glass blur) */
+body[data-role="admin"] .admin-hero-badge,
+body[data-role="admin"] .admin-hero .hero-pill {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* v622 (2026-05-28): UNIFY semua icon box di ADMIN scope ke slate-blue +
+   remove glass shine ::after + remove pulse animation per request user.
+   Sidebar icons (nav-item) EXCLUDED — masih pakai default sidebar styling. */
+
+/* Remove glass shine overlay di admin scope (flat look, no glossy) */
+body[data-role="admin"] .sec-icon-v582::after,
+body[data-role="admin"] .lib-h-ico::after,
+body[data-role="admin"] .hrk-h-ico::after,
+body[data-role="admin"] .vh-people-icon::after,
+body[data-role="admin"] .mc-icon::after,
+body[data-role="admin"] .stat-icon::after {
+  display: none !important;
+}
+
+/* Force all wine-box variant icons di admin → slate-blue */
+body[data-role="admin"] .lib-h-ico,
+body[data-role="admin"] .hrk-h-ico,
+body[data-role="admin"] .vh-people-icon,
+body[data-role="admin"] .stat-icon {
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  color: #E8EEF5 !important;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset,
+    0 1px 0 rgba(255,255,255,0.06) inset !important;
+}
+
+/* Pulse banner (.apc-icon-*) di admin analytics → slate-blue uniform.
+   Sebelumnya tiap KPI punya warna sendiri (green/blue/orange/purple). */
+body[data-role="admin"] .apc-icon-live,
+body[data-role="admin"] .apc-icon-storage,
+body[data-role="admin"] .apc-icon-signup,
+body[data-role="admin"] .apc-icon-moderation {
+  background: linear-gradient(135deg, #2a4768 0%, #1B3C53 100%) !important;
+  color: #E8EEF5 !important;
+  box-shadow:
+    0 4px 12px rgba(27,60,83,0.32),
+    0 0 0 1px rgba(140,160,195,0.18) inset !important;
+}
+
+/* Remove pulse dot animation (glass-y effect) di admin scope */
+body[data-role="admin"] .apc-pulse-dot {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+/* Disable animasi growth chart bar (kalau ada) di admin */
+body[data-role="admin"] .apc-icon-live .apc-pulse-dot::before,
+body[data-role="admin"] .apc-icon-live .apc-pulse-dot::after {
+  display: none !important;
 }
 
 /* Light theme — sedikit lebih subtle shadow */
