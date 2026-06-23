@@ -34231,6 +34231,43 @@ function switchView(name, { fromNav = false } = {}) {
   } catch (e) {}
 }
 
+// i18n observer (2026-06-23): konten yang di-render ASYNC (kartu Statistik/Riwayat/
+// Insight Premium, section Home, hasil cloud-resync) sering muncul SETELAH hook
+// switchView + applyI18n jalan, jadi teks barunya masih bahasa sumber (Indonesia).
+// Observer ini menerjemahkan ulang view aktif begitu ada node baru ditambahkan,
+// HANYA bila bahasa aktif != id (default). deepTranslate mengubah textContent
+// (characterData), bukan childList → tidak memicu observer ini lagi (tak ada loop).
+(function initI18nMutationTranslate() {
+  function setup() {
+    if (!document.body || window.__i18nMoSet) return;
+    window.__i18nMoSet = true;
+    let pending = false;
+    const flush = () => {
+      pending = false;
+      try {
+        if (typeof currentLang === "function" && currentLang() !== "id") {
+          const root = document.querySelector(".view.active") || document.body;
+          if (typeof deepTranslateTextNodes === "function") deepTranslateTextNodes(root);
+          if (typeof translatePlaceholders === "function") translatePlaceholders();
+        }
+      } catch (e) {}
+    };
+    const mo = new MutationObserver(muts => {
+      if (pending) return;
+      // Default (id): tak perlu kerja apa pun — keluar cepat (overhead minimal).
+      if (typeof currentLang !== "function" || currentLang() === "id") return;
+      let added = false;
+      for (const m of muts) { if (m.addedNodes && m.addedNodes.length) { added = true; break; } }
+      if (!added) return;
+      pending = true;
+      setTimeout(flush, 120); // debounce: gabungkan burst render jadi satu pass
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", setup);
+  else setup();
+})();
+
 $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(n => {
   n.addEventListener("click", e => {
     e.preventDefault();
