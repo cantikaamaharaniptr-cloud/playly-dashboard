@@ -1766,160 +1766,7 @@ window.hydrateProfileFromCloud = hydrateProfileFromCloud;
 
 // (QA video seeder __playlySeedQA + auto-seed dev dihapus 2026-06-11 — aturan no-demo/dummy: tidak ada scaffolding demo di repo.)
 
-// QA helper — seed dummy DM threads supaya bisa test live preview + search
-// di halaman Obrolan langsung (v523+). Run di console: window.__playlySeedDmDemo()
-// → seed 5 thread mixed (DM/Broadcast/Permintaan/Arsip), reload page → live
-// preview di card overview muncul. Cleanup: window.__playlyClearDmDemo().
-// Aman dipanggil multiple kali — clear dulu, lalu seed baru.
-// === DEV: Auto-show "🧪 Seed demo" button + wire click handler ONLY di localhost ===
-// Production user tidak lihat tombol ini (hidden default). Sengaja inline biar
-// jelas + minimal — kalau pindah ke utility module, gampang lupa cleanup.
-document.addEventListener("DOMContentLoaded", function () {
-  var isLocal = location.hostname === "localhost"
-             || location.hostname === "127.0.0.1"
-             || location.hostname === "::1";
-  if (!isLocal) return;
-  var setupBtn = function () {
-    var btn = document.getElementById("dmDevSeedBtn");
-    if (!btn) return false;
-    btn.hidden = false;
-    if (btn.dataset.bound) return true;
-    btn.dataset.bound = "1";
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      if (typeof window.__playlySeedDmDemo === "function") {
-        var n = window.__playlySeedDmDemo();
-        if (typeof toast === "function") {
-          toast("🧪 " + n + " thread demo di-seed. Cek 4 card di Semua untuk lihat live preview.", "success");
-        }
-      } else {
-        console.warn("[dev] seedDmDemo not ready");
-      }
-    });
-    return true;
-  };
-  // Coba bind langsung; kalau button belum render (dashboard belum boot),
-  // retry tiap 500ms sampai 10s.
-  if (setupBtn()) return;
-  var tries = 0;
-  var iv = setInterval(function () {
-    if (setupBtn() || ++tries > 20) clearInterval(iv);
-  }, 500);
-});
-
-window.__playlySeedDmDemo = function seedDmDemo() {
-  if (!user || !state) {
-    console.warn("[seedDmDemo] no user/state — login dulu");
-    return;
-  }
-  const NOW = Date.now();
-  const minsAgo = m => NOW - m * 60 * 1000;
-  const hoursAgo = h => NOW - h * 3600 * 1000;
-  const daysAgo = d => NOW - d * 86400 * 1000;
-
-  const demoThreads = [
-    // 1. DM regular (mutual follow) — unread
-    {
-      id: "qa-dm-1",
-      name: "aldoramadhan",
-      init: "AR",
-      with: "aldoramadhan",
-      isFollowing: true, // mutual = bukan request
-      unread: 2,
-      ts: minsAgo(15),
-      online: true,
-      history: [
-        { from: "aldoramadhan", text: "Halo cantika!", ts: minsAgo(20) },
-        { from: "me", text: "Hai Aldo!", ts: minsAgo(18) },
-        { from: "aldoramadhan", text: "Mau collab di video berikutnya gak?", ts: minsAgo(15) },
-      ],
-    },
-    // 2. DM regular — read
-    {
-      id: "qa-dm-2",
-      name: "sasitirta",
-      init: "ST",
-      with: "sasitirta",
-      isFollowing: true,
-      unread: 0,
-      ts: hoursAgo(3),
-      history: [
-        { from: "sasitirta", text: "Suka banget sama konten kamu yg terakhir!", ts: hoursAgo(3) },
-      ],
-    },
-    // 3. Broadcast dari admin — unread
-    {
-      id: "qa-bc-1",
-      name: "admin.playly",
-      init: "AP",
-      isAdmin: true,
-      isBroadcast: true,
-      unread: 1,
-      ts: hoursAgo(8),
-      history: [
-        {
-          from: "admin.playly",
-          text: "🎉 Update Playly v523: dashboard Obrolan langsung sekarang punya live preview + search global!",
-          ts: hoursAgo(8),
-        },
-      ],
-    },
-    // 4. Permintaan — user yg belum follow
-    {
-      id: "qa-req-1",
-      name: "kreatorbaru",
-      init: "KB",
-      with: "kreatorbaru",
-      isFollowing: false, // request flag biasanya derive dari isFollowing=false + bukan admin
-      unread: 1,
-      ts: hoursAgo(6),
-      history: [
-        { from: "kreatorbaru", text: "Hai! Boleh tanya soal setup channel kamu?", ts: hoursAgo(6) },
-      ],
-    },
-    // 5. Arsip
-    {
-      id: "qa-arc-1",
-      name: "rianpranata",
-      init: "RP",
-      with: "rianpranata",
-      isFollowing: true,
-      archived: true,
-      unread: 0,
-      ts: daysAgo(7),
-      history: [
-        { from: "rianpranata", text: "Thanks reply-nya kemarin!", ts: daysAgo(7) },
-      ],
-    },
-  ];
-
-  // Tag isDummy supaya bisa di-clear nanti, lalu unshift ke state.messages
-  state.messages = (state.messages || []).filter(m => !m.isDummy); // clear prev seed
-  demoThreads.forEach(t => { t.isDummy = true; });
-  state.messages = [...demoThreads, ...state.messages];
-  saveState();
-  console.info("[seedDmDemo] seeded " + demoThreads.length + " threads. Reload page atau klik tab Obrolan langsung untuk lihat live preview.");
-  if (state.currentView === "messages" && typeof renderDmOverview === "function") {
-    renderDmOverview();
-    if (typeof renderMsgList === "function") renderMsgList();
-  }
-  return demoThreads.length;
-};
-
-// Cleanup helper — hapus semua thread yg di-tag isDummy dari seed.
-window.__playlyClearDmDemo = function clearDmDemo() {
-  if (!user || !state) return 0;
-  var before = (state.messages || []).length;
-  state.messages = (state.messages || []).filter(m => !m.isDummy);
-  var after = state.messages.length;
-  saveState();
-  console.info("[clearDmDemo] removed " + (before - after) + " dummy threads.");
-  if (state.currentView === "messages" && typeof renderDmOverview === "function") {
-    renderDmOverview();
-    if (typeof renderMsgList === "function") renderMsgList();
-  }
-  return before - after;
-};
+// (DM demo seeder dihapus 2026-06-11 — aturan no-demo/dummy: tidak ada scaffolding demo di repo.)
 
 // Heartbeat — update lastActivityAt setiap 60s saat tab visible & user
 // belum logout. Bikin online dot di creator card / DM list akurat.
@@ -27761,7 +27608,9 @@ function updateAsmCharCount() {
 }
 
 // Tulis 1 pesan ke inbox `username`. Idempoten per-thread (cari thread by name = admin's username).
-function deliverAdminMessage(username, text) {
+// 5j: param `isBroadcast` menandai thread sebagai broadcast READ-ONLY di sisi
+// user (no reply box). Default false (admin 1:1 message tetap bisa dibalas).
+function deliverAdminMessage(username, text, isBroadcast) {
   const key = `playly-state-${username}`;
   let s;
   try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
@@ -27777,17 +27626,18 @@ function deliverAdminMessage(username, text) {
   let thread = s.messages.find(m => m.name === senderName);
   if (!thread) {
     thread = {
-      name: senderName, init: senderInit, isAdmin: true,
+      name: senderName, init: senderInit, isAdmin: true, isBroadcast: !!isBroadcast,
       preview: "", time: "baru", ts: Date.now(), unread: false, online: true, history: []
     };
     s.messages.unshift(thread);
   } else {
     // Pastikan thread ditandai sebagai admin & pindahkan ke atas
     thread.isAdmin = true;
+    if (isBroadcast) thread.isBroadcast = true;
     s.messages = [thread, ...s.messages.filter(m => m !== thread)];
   }
   const now = Date.now();
-  thread.history.push({ from: "them", text, time: "baru", ts: now, isAdmin: true });
+  thread.history.push({ from: "them", text, time: "baru", ts: now, isAdmin: true, isBroadcast: !!isBroadcast });
   thread.preview = text.length > 60 ? text.slice(0, 57) + "..." : text;
   thread.time = "baru";
   thread.ts = now;
@@ -27837,7 +27687,7 @@ $("#asmSendBtn")?.addEventListener("click", () => {
   if (!text) return toast("⚠️ Pesan kosong", "warning");
   if (!__asmTargets.length) return;
 
-  __asmTargets.forEach(u => deliverAdminMessage(u, text));
+  __asmTargets.forEach(u => deliverAdminMessage(u, text, __asmIsBroadcast));
   logAdminMessageSent(__asmTargets, text);
 
   const n = __asmTargets.length;
@@ -31349,6 +31199,11 @@ function switchView(name, { fromNav = false } = {}) {
   state.currentView = name;
   saveState();
 
+  // Tandai view aktif di body supaya CSS bisa target elemen di luar .view —
+  // mis. sembunyikan search global topbar di halaman Pesan (req user 2026-06-12:
+  // search global tak relevan di inbox; biar tak ada 2 kotak cari).
+  document.body.dataset.activeView = name;
+
   $$(".view").forEach(v => v.classList.toggle("active", v.dataset.view === name));
   $$(".nav-item, .footer-link[data-view]").forEach(n => n.classList.toggle("active", n.dataset.view === name));
 
@@ -31617,17 +31472,13 @@ $$(".nav-item, .footer-link[data-view], .storage-clickable[data-view]").forEach(
           }
         }, 50);
       }
-      // Khusus Messages: reset DM filter ke "all" + re-render. Plus reset
-      // ke landing (per request user 2026-05-16): layout/list muncul hanya
-      // setelah klik tab atau "+ Pesan Baru".
+      // Khusus Messages (req user 2026-06-12): landing = LANGSUNG daftar DM
+      // (overview 4-kartu dipensiunkan). _dmOpenCategory render list + atur
+      // active-class tab.
       if (n.dataset.view === "messages") {
         setTimeout(() => {
-          if (typeof dmState !== "undefined") dmState.filter = "all";
-          if (typeof renderDmList === "function") renderDmList();
-          if (typeof _dmApplyView === "function") _dmApplyView();
-          document.querySelectorAll(".dm-section-tab").forEach(function (t) {
-            t.classList.toggle("active", t.dataset.dmFilter === "all");
-          });
+          if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm");
+          else if (typeof dmState !== "undefined") { dmState.filter = "dm"; if (typeof _dmApplyView === "function") _dmApplyView(); }
         }, 50);
       }
       // Khusus User Email: reset filter ke "all" + re-render
@@ -32327,10 +32178,15 @@ function renderUserStats() {
     updEl.dataset.ts = String(Date.now());
   }
 
+  // v604 (2026-06-02): START RECORDING real snapshots now — capture daily +
+  // per-video snapshot idempotently setiap kali stats di-render (4a/4f).
+  try { if (typeof _capturePerfSnapshotIfNew === "function") _capturePerfSnapshotIfNew(); } catch {}
+
   renderStatsRow();
   renderAchievements();
   renderUserCommunityStack();
   renderHomeWeather();
+  if (typeof renderStatMilestones === "function") renderStatMilestones();
 
   // Quick stats (Videos view)
   $("#qsTotal") && ($("#qsTotal").textContent = myUploads);
@@ -32345,7 +32201,25 @@ function renderUserStats() {
   setBadgeMode($("#videoCount"), newUploads24h, myUploads > 0);
 
   // Messages badge: angka kalau ada unread, dot kalau ada thread, hidden kalau kosong
-  const unread = messages.filter(m => m.unread).length;
+  updateDmBadges();
+}
+
+// 5g: hitung & set badge unread DM secara terpusat supaya konsisten dipanggil
+// dari renderUserStats, openDmChat (saat thread dibaca), renderDmList, dan
+// playly:cloud-applied (pesan masuk). Hitung dari localStorage state terbaru
+// supaya akurat lintas-tab. Unread thread = thread BELUM diarsipkan dgn unread.
+function updateDmBadges() {
+  if (typeof setBadgeMode !== "function") return;
+  let messages = Array.isArray(state?.messages) ? state.messages : [];
+  // Re-baca dari localStorage supaya count akurat kalau state in-memory belum
+  // ikut merge pesan baru cross-tab.
+  if (user?.username) {
+    try {
+      const fresh = JSON.parse(localStorage.getItem(`playly-state-${user.username}`) || "{}");
+      if (Array.isArray(fresh.messages)) messages = fresh.messages;
+    } catch {}
+  }
+  const unread = messages.filter(m => m && m.unread && !m.archived).length;
   setBadgeMode($("#msgBadge"), unread, messages.length > 0);
 }
 
@@ -35068,6 +34942,12 @@ window.addEventListener("playly:cloud-applied", () => {
 // Daily snapshot disimpan di localStorage `playly-daily-snapshot-${username}` —
 // rolling 7 hari terakhir ({date: "YYYY-MM-DD", views, likes, followers}).
 const __PERF_SNAPSHOT_KEY = (username) => `playly-daily-snapshot-${username}`;
+// v604 (2026-06-02): per-video daily snapshot store untuk drill-down (4c).
+// {date:'YYYY-MM-DD', v:{[videoId]:{views,likes,comments}}}
+const __VIDEO_SNAPSHOT_KEY = (username) => `playly-video-snapshot-${username}`;
+// Retensi panjang supaya bucket bulanan/tahunan terisi (≈400 hari).
+const __SNAPSHOT_MAX = 400;
+const __VIDEO_SNAPSHOT_MAX = 180;
 
 function _todayDateStr() {
   const d = new Date();
@@ -35092,13 +34972,59 @@ function _writePerfSnapshots(snaps) {
   if (!user?.username) return;
   try { localStorage.setItem(__PERF_SNAPSHOT_KEY(user.username), JSON.stringify(snaps)); } catch {}
 }
+// v604 (2026-06-02): REAL watch-time helpers (4g). Sum durasi tonton nyata
+// dari state.history. Entry real playback simpan `progress` (0–100 %), seed
+// lama simpan `watchedSec`. Kita derive detik dari watchedSec kalau ada, atau
+// progress × durasi video. Kalau state.history kosong → 0 (honest empty-state).
+function _historyParseDur(d) {
+  if (typeof anParseDuration === "function") return anParseDuration(d) || 0;
+  if (!d) return 0;
+  const p = String(d).split(":").map(Number);
+  if (p.some(isNaN)) return 0;
+  if (p.length === 2) return p[0] * 60 + p[1];
+  if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
+  return Number(d) || 0;
+}
+function _historyWatchedSec(h, vid) {
+  if (!h) return 0;
+  if (Number.isFinite(h.watchedSec) && h.watchedSec > 0) return Number(h.watchedSec);
+  const total = vid ? _historyParseDur(vid.duration) : 0;
+  if (total > 0 && Number.isFinite(h.progress) && h.progress > 0) {
+    // progress disimpan sebagai persen (0–100) di player; clamp & convert.
+    const pct = h.progress > 1 ? h.progress / 100 : h.progress;
+    return total * Math.min(1, Math.max(0, pct));
+  }
+  return 0;
+}
+function realWatchSecByVideo() {
+  const out = {};
+  const hist = Array.isArray(state?.history) ? state.history : [];
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  if (!hist.length || !vids.length) return out;
+  const byId = new Map(vids.map(v => [v.id, v]));
+  hist.forEach(h => {
+    const id = h?.videoId;
+    if (id == null || !byId.has(id)) return;
+    const sec = _historyWatchedSec(h, byId.get(id));
+    if (sec > 0) out[id] = (out[id] || 0) + sec;
+  });
+  return out;
+}
+function realWatchSecTotal() {
+  const by = realWatchSecByVideo();
+  return Object.values(by).reduce((s, n) => s + n, 0);
+}
+
 function _capturePerfSnapshotIfNew() {
   if (!user?.username) return _readPerfSnapshots();
   const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
   const totals = {
     views:     myVids.reduce((s, v) => s + (Number(v.viewsNum) || 0), 0),
     likes:     myVids.reduce((s, v) => s + (Number(v.likes)    || 0), 0),
-    followers: Array.isArray(state?.followers) ? state.followers.length : 0
+    followers: Array.isArray(state?.followers) ? state.followers.length : 0,
+    // v604 (2026-06-02): + comments + real watch-time per daily snapshot (4a/4f).
+    comments:  myVids.reduce((s, v) => s + ((state?.comments?.[v.id]?.length) || 0), 0),
+    watch:     Math.round(realWatchSecTotal()),
   };
   const today = _todayDateStr();
   let snaps = _readPerfSnapshots();
@@ -35109,10 +35035,46 @@ function _capturePerfSnapshotIfNew() {
   } else {
     snaps.push({ date: today, ...totals });
   }
-  // Rolling 7 hari (urut by date asc, keep last 7)
+  // Rolling retensi panjang (urut by date asc) supaya bucket bulanan/tahunan terisi.
   snaps.sort((a, b) => (a.date > b.date ? 1 : -1));
-  if (snaps.length > 7) snaps = snaps.slice(-7);
+  if (snaps.length > __SNAPSHOT_MAX) snaps = snaps.slice(-__SNAPSHOT_MAX);
   _writePerfSnapshots(snaps);
+  // Sekalian capture per-video snapshot (idempoten per hari).
+  _captureVideoSnapshotIfNew();
+  return snaps;
+}
+
+// v604 (2026-06-02): per-video daily snapshot (4c drill-down). REAL only.
+function _readVideoSnapshots() {
+  if (!user?.username) return [];
+  try {
+    const raw = localStorage.getItem(__VIDEO_SNAPSHOT_KEY(user.username));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function _writeVideoSnapshots(snaps) {
+  if (!user?.username) return;
+  try { localStorage.setItem(__VIDEO_SNAPSHOT_KEY(user.username), JSON.stringify(snaps)); } catch {}
+}
+function _captureVideoSnapshotIfNew() {
+  if (!user?.username) return _readVideoSnapshots();
+  const myVids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const v = {};
+  myVids.forEach(vid => {
+    v[vid.id] = {
+      views:    Number(vid.viewsNum) || 0,
+      likes:    Number(vid.likes)    || 0,
+      comments: (state?.comments?.[vid.id]?.length) || 0,
+    };
+  });
+  const today = _todayDateStr();
+  let snaps = _readVideoSnapshots();
+  const idx = snaps.findIndex(s => s.date === today);
+  if (idx >= 0) snaps[idx] = { date: today, v };
+  else snaps.push({ date: today, v });
+  snaps.sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (snaps.length > __VIDEO_SNAPSHOT_MAX) snaps = snaps.slice(-__VIDEO_SNAPSHOT_MAX);
+  _writeVideoSnapshots(snaps);
   return snaps;
 }
 
@@ -37721,77 +37683,166 @@ function _chartLabels(range) {
     : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 }
 
-const CHART_DATA_DEMO = {
-  get weekly() { return { labels: _chartLabels("weekly"), values: [120,180,150,240,220,320,280] }; },
-  get monthly() { return { labels: _chartLabels("monthly"), values: [820,1240,980,1680] }; },
-  get yearly() { return { labels: _chartLabels("yearly"), values: [3200,2800,4100,3600,5200,4800,6100,5800,7200,6900,8400,9200] }; },
-};
-
 function emptyChartData(range) {
   const counts = { weekly: 7, monthly: 4, yearly: 12 };
-  return { labels: _chartLabels(range), values: new Array(counts[range] || 7).fill(0) };
+  return { labels: _chartLabels(range), values: new Array(counts[range] || 7).fill(0), total: 0, empty: true };
 }
 
-// Generate data per metric berdasarkan range. Untuk metric Video → jumlah
-// upload per period. Untuk Views → akumulasi viewsNum. Untuk Followers →
-// growth simulasi (real data limited, jadi pakai pattern). Semua berbasis
-// state.myVideos real-time supaya angka match dashboard.
+// v604 (2026-06-02): build daftar bucket {start,end,label} untuk range tertentu.
+// weekly = 7 hari terakhir (per hari), monthly = 4 minggu terakhir (per minggu),
+// yearly = 12 bulan terakhir (per bulan). end exclusive.
+function _statBuckets(range) {
+  const labels = _chartLabels(range);
+  const out = [];
+  const now = new Date();
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (range === "monthly") {
+    // 4 minggu terakhir, paling lama dulu. Minggu = 7 hari.
+    const today = startOfDay(now);
+    for (let i = 3; i >= 0; i--) {
+      const start = new Date(today); start.setDate(start.getDate() - (i + 1) * 7 + 1);
+      const end = new Date(today);   end.setDate(end.getDate() - i * 7 + 1);
+      out.push({ start, end });
+    }
+  } else if (range === "yearly") {
+    // 12 bulan terakhir.
+    for (let i = 11; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      out.push({ start, end });
+    }
+  } else {
+    // weekly: 7 hari terakhir.
+    const today = startOfDay(now);
+    for (let i = 6; i >= 0; i--) {
+      const start = new Date(today); start.setDate(start.getDate() - i);
+      const end = new Date(start);   end.setDate(end.getDate() + 1);
+      out.push({ start, end });
+    }
+  }
+  return out.map((b, i) => ({ ...b, label: labels[i] || "" }));
+}
+
+// Cari snapshot harian dengan tanggal <= ref (paling dekat sebelum/sama).
+// Untuk metric kumulatif (views/likes/followers/comments/watch) nilai per
+// bucket = nilai kumulatif di akhir bucket (snapshot terdekat sebelum bucket.end).
+function _snapValueAt(snaps, beforeDate, field) {
+  let val = null;
+  for (const s of snaps) {
+    const d = new Date(s.date + "T00:00:00");
+    if (isNaN(d)) continue;
+    if (d < beforeDate) {
+      const v = Number(s[field]);
+      if (Number.isFinite(v)) val = v;
+    } else break;
+  }
+  return val; // null kalau belum ada snapshot sebelum tanggal ini
+}
+
+// 4a/4f/4h/4i: REAL series dari snapshot harian, bucketed per range.
+// videos metric = jumlah upload per bucket dari publishedAt (real, tanpa snapshot).
+// Lainnya kumulatif dari snapshot. Kalau seri all-zero/empty → empty:true.
 function generateChartData(metric, range) {
-  const labels = (CHART_DATA_DEMO[range] || CHART_DATA_DEMO.weekly).labels;
+  const buckets = _statBuckets(range);
+  const labels = buckets.map(b => b.label);
   const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
-  const totalVideos = myVideos.length;
-  const totalViews = myVideos.reduce((s, v) => s + (v.viewsNum || 0), 0);
-  const followerCount = (typeof getUserFollowers === "function" && user?.username)
-    ? getUserFollowers(user.username).length : 0;
-  // v595 (2026-05-28): comments series — total komentar di semua video user.
-  const totalComments = myVideos.reduce((s, v) =>
-    s + ((state.comments?.[v.id]?.length) || 0), 0);
 
-  const total = metric === "videos"   ? totalVideos
-    : metric === "views"              ? totalViews
-    : metric === "comments"           ? totalComments
-    : followerCount;
-  const n = labels.length;
-  const values = [];
-
-  // v602d (2026-05-28): DUMMY DATA preview mode — kalau total 0, inject
-  // realistic varying values per metric biar chart bentuknya kelihatan.
-  // HAPUS block ini kalau data real sudah masuk. Variasi per metric beda
-  // pattern (videos = ascending discrete, views = exponential, followers =
-  // steady growth, comments = spiky).
-  if (total === 0) {
-    const DUMMY = {
-      weekly: {
-        videos:    [2, 1, 3, 2, 4, 5, 3],
-        views:     [120, 280, 180, 420, 380, 680, 520],
-        followers: [45, 52, 58, 67, 78, 84, 92],
-        comments:  [8, 24, 12, 18, 32, 28, 41],
-      },
-      monthly: {
-        videos:    [8, 12, 9, 16],
-        views:     [1200, 2400, 1800, 4200],
-        followers: [120, 180, 230, 310],
-        comments:  [45, 82, 67, 124],
-      },
-      yearly: {
-        videos:    [3, 5, 4, 8, 6, 10, 12, 9, 15, 18, 14, 22],
-        views:     [800, 1200, 980, 2400, 1800, 3600, 5200, 4100, 7800, 9200, 8400, 12400],
-        followers: [50, 80, 120, 180, 240, 320, 410, 520, 680, 820, 980, 1240],
-        comments:  [12, 28, 18, 64, 42, 92, 138, 84, 220, 280, 240, 380],
-      },
-    };
-    const demo = (DUMMY[range] && DUMMY[range][metric]) || new Array(n).fill(0);
-    for (let i = 0; i < n; i++) values.push(demo[i] || 0);
-    const demoTotal = values.reduce((s, v) => s + v, 0);
-    return { labels, values, total: demoTotal, isDummy: true };
+  // --- videos: real count per bucket dari publishedAt ---
+  if (metric === "videos") {
+    const values = buckets.map(b => {
+      let c = 0;
+      myVideos.forEach(v => {
+        const raw = v.publishedAt || v.uploadedAt || v.ts;
+        if (!raw) return;
+        const d = new Date(raw);
+        if (isNaN(d)) return;
+        if (d >= b.start && d < b.end) c++;
+      });
+      return c;
+    });
+    const total = values.reduce((s, v) => s + v, 0);
+    return { labels, values, total, empty: total === 0 };
   }
 
-  // Smooth growth curve, ending at `total`
-  for (let i = 0; i < n; i++) {
-    const ratio = (i + 1) / n;
-    values.push(Math.round(total * (0.4 + 0.6 * ratio)));
+  // --- metrik kumulatif dari snapshot harian ---
+  const fieldMap = { views: "views", followers: "followers", comments: "comments", watch: "watch", likes: "likes" };
+  const field = fieldMap[metric] || "views";
+  const snaps = (typeof _readPerfSnapshots === "function") ? _readPerfSnapshots() : [];
+  // Nilai kumulatif "sekarang" sebagai fallback untuk bucket terakhir kalau
+  // snapshot hari ini belum ke-flush ke storage saat render.
+  const liveNow = (() => {
+    if (metric === "views")     return myVideos.reduce((s, v) => s + (Number(v.viewsNum) || 0), 0);
+    if (metric === "followers") return (typeof getUserFollowers === "function" && user?.username) ? getUserFollowers(user.username).length : (Array.isArray(state?.followers) ? state.followers.length : 0);
+    if (metric === "comments")  return myVideos.reduce((s, v) => s + ((state?.comments?.[v.id]?.length) || 0), 0);
+    if (metric === "watch")     return Math.round((typeof realWatchSecTotal === "function" ? realWatchSecTotal() : 0));
+    return 0;
+  })();
+
+  const values = buckets.map((b, i) => {
+    let v = _snapValueAt(snaps, b.end, field);
+    if (v == null && i === buckets.length - 1) v = liveNow; // bucket terakhir → live
+    return Number.isFinite(v) ? v : 0;
+  });
+  // Total ditampilkan = nilai kumulatif terakhir (atau live).
+  const total = values.length ? (values[values.length - 1] || liveNow || 0) : 0;
+  const allZero = values.every(v => !v);
+  return { labels, values, total, empty: allZero };
+}
+
+// 4b: period comparison — current-period total vs previous-period.
+// Untuk metrik kumulatif: growth = (akhir periode) − (awal periode).
+// videos: jumlah upload di periode. Return {curr, prev, deltaPct, hasPrev}.
+function statPeriodComparison(metric, range) {
+  const myVideos = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const now = new Date();
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let curStart, curEnd, prevStart, prevEnd;
+  if (range === "monthly") {
+    curEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    curStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    prevEnd = curStart;
+    prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  } else if (range === "yearly") {
+    curEnd = new Date(now.getFullYear() + 1, 0, 1);
+    curStart = new Date(now.getFullYear(), 0, 1);
+    prevEnd = curStart;
+    prevStart = new Date(now.getFullYear() - 1, 0, 1);
+  } else {
+    const today = startOfDay(now);
+    curEnd = new Date(today); curEnd.setDate(curEnd.getDate() + 1);
+    curStart = new Date(today); curStart.setDate(curStart.getDate() - 6);
+    prevEnd = curStart;
+    prevStart = new Date(curStart); prevStart.setDate(prevStart.getDate() - 7);
   }
-  return { labels, values, total };
+
+  if (metric === "videos") {
+    const inRange = (a, b) => myVideos.filter(v => {
+      const raw = v.publishedAt || v.uploadedAt || v.ts;
+      if (!raw) return false;
+      const d = new Date(raw);
+      return !isNaN(d) && d >= a && d < b;
+    }).length;
+    const curr = inRange(curStart, curEnd);
+    const prev = inRange(prevStart, prevEnd);
+    // publishedAt itu real → prev valid kalau ada upload di salah satu periode.
+    const hasPrev = prev > 0 || curr > 0;
+    const deltaPct = prev > 0 ? ((curr - prev) / prev) * 100 : (curr > 0 ? 100 : 0);
+    return { curr, prev, deltaPct, hasPrev };
+  }
+
+  const fieldMap = { views: "views", followers: "followers", comments: "comments", watch: "watch", likes: "likes" };
+  const field = fieldMap[metric] || "views";
+  const snaps = (typeof _readPerfSnapshots === "function") ? _readPerfSnapshots() : [];
+  const valCurEnd  = _snapValueAt(snaps, curEnd, field);
+  const valCurStart = _snapValueAt(snaps, curStart, field);
+  const valPrevStart = _snapValueAt(snaps, prevStart, field);
+  // growth periode = endValue − startValue (butuh dua titik snapshot).
+  const curr = (valCurEnd != null && valCurStart != null) ? Math.max(0, valCurEnd - valCurStart) : null;
+  const prev = (valCurStart != null && valPrevStart != null) ? Math.max(0, valCurStart - valPrevStart) : null;
+  if (curr == null) return { curr: 0, prev: 0, deltaPct: 0, hasPrev: false };
+  if (prev == null) return { curr, prev: 0, deltaPct: 0, hasPrev: false };
+  const deltaPct = prev > 0 ? ((curr - prev) / prev) * 100 : (curr > 0 ? 100 : 0);
+  return { curr, prev, deltaPct, hasPrev: true };
 }
 
 // v602 (2026-05-28): Modern UI/UX redesign — Vercel/Linear/Stripe analytics
@@ -37808,7 +37859,8 @@ function drawMiniChart(metric) {
   const wrap = svg.parentElement;
   const card = wrap?.closest(".mini-chart-card");
   const data = generateChartData(metric, state.chartRange);
-  const hasData = data.total > 0;
+  // 4h/4i: REAL only — empty signal drives the existing empty-state, no fake.
+  const hasData = !data.empty && data.values.some(v => v > 0);
 
   // Modern card layout — find/create headline + delta elements
   const head = card?.querySelector(".mini-chart-head");
@@ -37832,21 +37884,28 @@ function drawMiniChart(metric) {
   }
   if (empty) empty.hidden = true;
 
-  // Compute delta: current period total vs previous period (last half vs first half)
-  const half = Math.floor(data.values.length / 2);
-  const prevSum = data.values.slice(0, half).reduce((s, v) => s + v, 0);
-  const currSum = data.values.slice(half).reduce((s, v) => s + v, 0);
-  let deltaPct = 0;
-  if (prevSum > 0) deltaPct = ((currSum - prevSum) / prevSum) * 100;
-  else if (currSum > 0) deltaPct = 100;
-  const deltaTrend = deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
+  // 4b: REAL period comparison (this period vs previous) dari snapshot. Kalau
+  // belum cukup history untuk "previous" → neutral "—" (honest, bukan fake).
+  const cmp = (typeof statPeriodComparison === "function")
+    ? statPeriodComparison(metric, state.chartRange)
+    : { deltaPct: 0, hasPrev: false };
+  const deltaPct = cmp.deltaPct || 0;
+  const deltaTrend = !cmp.hasPrev ? "flat" : deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
   const deltaSign = deltaPct > 0 ? "+" : "";
   const deltaArrow = deltaTrend === "up" ? "↑" : deltaTrend === "down" ? "↓" : "·";
 
-  if (bigEl) bigEl.textContent = (typeof fmtNum === "function" ? fmtNum(data.total) : String(data.total));
+  const bigText = metric === "watch"
+    ? (typeof hqsFormatWatchTime === "function" ? hqsFormatWatchTime(data.total) : String(data.total))
+    : (typeof fmtNum === "function" ? fmtNum(data.total) : String(data.total));
+  if (bigEl) bigEl.textContent = bigText;
   if (deltaEl) {
-    deltaEl.className = `mc-delta mc-delta-${deltaTrend}`;
-    deltaEl.innerHTML = `<i>${deltaArrow}</i> ${deltaSign}${deltaPct.toFixed(1)}% <small>vs sebelumnya</small>`;
+    if (!cmp.hasPrev) {
+      deltaEl.className = "mc-delta mc-delta-flat";
+      deltaEl.innerHTML = `<i>·</i> — <small>belum cukup data</small>`;
+    } else {
+      deltaEl.className = `mc-delta mc-delta-${deltaTrend}`;
+      deltaEl.innerHTML = `<i>${deltaArrow}</i> ${deltaSign}${deltaPct.toFixed(1)}% <small>vs periode lalu</small>`;
+    }
   }
 
   // === v603 (2026-05-28): Step Chart (stair-step path) ===
@@ -38143,6 +38202,7 @@ function drawChart() {
     }
   }
 
+  if (typeof _syncChartTabsActive === "function") _syncChartTabsActive();
   drawMiniChart("videos");
   drawMiniChart("views");
   drawMiniChart("followers");
@@ -38173,15 +38233,25 @@ function buildStatsTabs() {
   bar.dataset.statsBuilt = "1";
 }
 
-$$("#chartTabs button").forEach(b => {
-  b.addEventListener("click", () => {
-    $$("#chartTabs button").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    state.chartRange = b.dataset.range;
-    drawChart();
-  });
+// 4e/4j: UNIFIED period selector — satu segmented control Mingguan/Bulanan/
+// Tahunan (id="chartTabs", data-range=weekly|monthly|yearly). Broken #statsRange
+// dropdown + toast handler dihapus dari markup. Delegated supaya tahan re-render.
+// Persist pilihan di state.chartRange. Sinkronkan active class lalu redraw chart
+// + comparisons (drawChart memanggil drawMiniChart yang sudah hitung comparison).
+function _syncChartTabsActive() {
+  const r = state?.chartRange || "weekly";
+  document.querySelectorAll("#chartTabs button[data-range]").forEach(x =>
+    x.classList.toggle("active", x.dataset.range === r));
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("#chartTabs button[data-range]");
+  if (!b) return;
+  e.preventDefault();
+  if (typeof state === "object" && state) state.chartRange = b.dataset.range;
+  _syncChartTabsActive();
+  try { if (typeof saveState === "function") saveState(); } catch {}
+  if (typeof drawChart === "function") drawChart();
 });
-$("#statsRange")?.addEventListener("change", e => toast(`📊 Periode: <b>${e.target.options[e.target.selectedIndex].text}</b>`));
 
 // Auto-redraw chart saat lebar container berubah (window resize, sidebar
 // collapse, dll) — viewBox dihitung dari container width jadi tanpa
@@ -40923,6 +40993,12 @@ function renderPeople() {
 function startChatWithUser(username) {
   const acc = getAllAccounts().find(a => a.username === username);
   if (!acc) return toast("❌ User tidak ditemukan", "error");
+  // User TIDAK boleh kirim pesan ke admin/super-admin (req user 2026-06-12) —
+  // enforcement utama (semua jalur start-DM lewat sini). Admin sendiri tetap
+  // boleh (mis. admin balas user).
+  if (typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(acc) && user?.role !== "admin") {
+    return toast("🔒 Tidak bisa mengirim pesan ke admin", "warning");
+  }
   // Privasi: hormati setting "Izinkan DM dari semua orang" milik target. Admin selalu boleh.
   if (acc.role !== "admin" && user?.role !== "admin") {
     const allowDM = getOtherUserPrefByUsername(username, "privacy.allowDM", true);
@@ -41132,20 +41208,21 @@ document.addEventListener("click", e => {
 // Render messages 3-kolom (All / Broadcast / Unread). Setiap kolom punya
 // list element-nya sendiri. Klik baris → buka chat overlay.
 // === DM (Instagram-style messages) ===
-// State: filter tab (all/dm/broadcast/requests/archived) + currently open thread idx.
-// Default "all" per user 2026-05-06 — combined view, klik tab spesifik untuk filter.
-const dmState = { filter: "all", openIdx: null };
+// State: filter tab (dm/broadcast/requests/archived) + currently open thread idx.
+// Default "dm" (req user 2026-06-12): landing Inbox = LANGSUNG daftar DM (pola
+// Instagram/WhatsApp). Overview 4-kartu lama dipensiunkan — Permintaan & Arsip
+// kini entri di dalam DM, Broadcast jadi tab. Tab bar tinggal DM | Broadcast.
+const dmState = { filter: "dm", openIdx: null, searchOpen: false };
 
-// Section tab click handler — section tabs di atas dm-layout
+// Section tab click handler — section tabs di atas dm-layout. Klik tab → buka
+// kategori itu. (Tak ada lagi toggle-balik-ke-overview karena overview sudah
+// dipensiunkan.) _dmApplyView yang mengatur active-class + show/hide.
 document.addEventListener("click", e => {
   const tab = e.target.closest(".dm-section-tab[data-dm-filter]");
   if (!tab) return;
   e.preventDefault();
-  document.querySelectorAll(".dm-section-tab").forEach(t => t.classList.toggle("active", t === tab));
   dmState.filter = tab.dataset.dmFilter;
-  // "Semua" → overview kartu; kategori spesifik → layout kolom DM.
   if (typeof _dmApplyView === "function") _dmApplyView();
-  if (typeof renderDmList === "function") renderDmList();
 });
 
 // Helper: cek apakah thread `m` adalah "permintaan" — yaitu DM dari user lain
@@ -41169,6 +41246,8 @@ function renderMsgList() {
 }
 
 function renderDmList() {
+  // Refresh kartu overview (hitungan + sembunyikan badge 0) tiap kali list di-render.
+  if (typeof renderDmOverview === "function") renderDmOverview();
   const list = document.getElementById("dmThreadList");
   if (!list) return;
 
@@ -41184,8 +41263,17 @@ function renderDmList() {
 
   const allMsgs = state.messages || [];
   const q = ($("#msgSearch")?.value || "").toLowerCase().trim();
+  // 5b: cocokkan query ke name, preview, DAN isi tiap pesan di m.history[*].text.
+  // Tandai thread yang hanya cocok lewat body (bukan name/preview) supaya bisa
+  // tampil hint "cocok di pesan". Cek body lewat helper supaya tetap efisien
+  // (short-circuit some()).
+  const matchBody = m => Array.isArray(m.history) &&
+    m.history.some(h => h && typeof h.text === "string" && h.text.toLowerCase().includes(q));
   const filterByQ = arr => q
-    ? arr.filter(m => (m.name || "").toLowerCase().includes(q) || (m.preview || "").toLowerCase().includes(q))
+    ? arr.filter(m =>
+        (m.name || "").toLowerCase().includes(q) ||
+        (m.preview || "").toLowerCase().includes(q) ||
+        matchBody(m))
     : arr;
 
   // Sync filter tab visual
@@ -41237,22 +41325,30 @@ function renderDmList() {
   var iconSvg = {
     all:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></svg>',
     dm:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
-    broadcast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg>',
+    broadcast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
     requests:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     archived:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
   };
+  // Header inbox STABIL (2026-06-12): judul tetap "Pesan" + ikon inbox tetap;
+  // tab pill yang menunjukkan filter aktif (pola Gmail/Outlook — nama inbox
+  // konstan, tabs sebagai filter). Tab "Semua" sudah dihapus, jadi tak lagi
+  // ganti judul per-filter (dulu init nyangkut "Semua Pesan" karena i18n
+  // dm.all.title menimpa). removeAttribute("data-i18n") supaya i18n tidak
+  // revert. (titleKeys/meta/stripEmojiPrefix di atas kini tak terpakai —
+  // dibiarkan, harmless.)
   if (iconEl) {
+    // Ikon judul = AMPLOP TERBUKA (ref user, tanpa panah) — beda dari Email (amplop tertutup) & DM (gelembung).
     iconEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>';
   }
   if (titleEl) {
-    // v590d (2026-05-27): icon sekarang di LUAR h2 (sibling), jadi
-    // textContent update titleEl aman — gak ada child element yg perlu
-    // di-preserve.
-    titleEl.textContent = stripEmojiPrefix(t(meta.t));
+    titleEl.textContent = "Pesan";
+    titleEl.removeAttribute("data-i18n");
     titleEl.dataset.origText = "";
   }
   if (descEl) {
-    descEl.textContent = t(meta.d);
+    // Dipendekkan (2026-06-12): teks lama hanya mengulang isi tab di bawah.
+    descEl.textContent = "Semua percakapanmu di satu tempat.";
+    descEl.removeAttribute("data-i18n");
     descEl.dataset.origText = "";
   }
   // Filter berdasarkan tab aktif
@@ -41276,7 +41372,50 @@ function renderDmList() {
 
   filtered.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-  if (!filtered.length) {
+  // DM tab (req user 2026-06-12): tampilkan KONTAK (nama user) yang belum punya
+  // thread, di bawah chat yang sudah ada — supaya user bisa langsung pilih nama
+  // → mulai DM (tanpa harus buka picker). Hanya untuk filter "dm".
+  // Daftar kontak HANYA muncul saat user MENGETIK di kotak cari (req user
+  // 2026-06-12): "untuk apa kotak cari kalau user sudah dipajang". Tanpa query,
+  // DM cuma menampilkan chat yang sudah ada + entri Permintaan/Arsip.
+  let contactsHTML = "";
+  if (dmState.filter === "dm" && q) {
+    const existingLower = new Set();
+    state.messages.forEach(m => {
+      if (m && !m.isAdmin && !m.isBroadcast && m.name) existingLower.add(String(m.name).toLowerCase());
+    });
+    contactsHTML = (typeof _dmContactRowsHTML === "function") ? _dmContactRowsHTML(existingLower, q) : "";
+  }
+
+  // Permintaan & Arsip DIKELUARKAN dari tab bar (req user 2026-06-12) → jadi
+  // ENTRI di atas daftar DM (pola Instagram "Requests" / WhatsApp "Archived").
+  // Hanya muncul kalau ada isinya & tidak sedang mencari.
+  let entriesHTML = "";
+  if (dmState.filter === "dm" && !q) {
+    const arcCountAll = allMsgs.filter(m => m.archived).length;
+    const _sIco = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+    const _chev = _sIco('<path d="m9 18 6-6-6-6"/>');
+    const mkEntry = (sec, ico, label, count) => count > 0
+      ? `<button type="button" class="dm-section-entry" data-dm-open-section="${sec}">`
+        + `<span class="dm-section-entry-ico">${ico}</span>`
+        + `<span class="dm-section-entry-label">${label}</span>`
+        + `<span class="dm-section-entry-count">${count}</span>`
+        + `<span class="dm-section-entry-arrow">${_chev}</span>`
+        + `</button>`
+      : "";
+    entriesHTML =
+      mkEntry("requests", _sIco('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'), "Permintaan pesan", reqCountAll)
+      + mkEntry("archived", _sIco('<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>'), "Arsip", arcCountAll);
+  }
+  // Di view Permintaan/Arsip (bukan tab lagi) → tombol kembali ke daftar DM.
+  let backHTML = "";
+  if (dmState.filter === "requests" || dmState.filter === "archived") {
+    backHTML = `<button type="button" class="dm-subnav-back" data-dm-back>`
+      + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`
+      + `<span>Kembali ke Pesan</span></button>`;
+  }
+
+  if (!filtered.length && !contactsHTML && !entriesHTML) {
     // v530 (2026-05-25): full i18n via inbox.list.empty.* keys.
     const emptyMap = {
       all:       q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.all"),
@@ -41285,11 +41424,12 @@ function renderDmList() {
       requests:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.req"),
       archived:  q ? t("inbox.list.empty.noresults") : t("inbox.list.empty.arc"),
     };
-    list.innerHTML = `<div class="dm-list-empty">${emptyMap[dmState.filter] || ""}</div>`;
+    list.innerHTML = backHTML + `<div class="dm-list-empty"><span class="dm-list-empty-ico">${iconSvg[dmState.filter] || iconSvg.dm}</span><p class="dm-list-empty-txt">${emptyMap[dmState.filter] || ""}</p></div>`;
+    list.querySelectorAll("[data-dm-back]").forEach(el => el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm"); }));
     return;
   }
 
-  list.innerHTML = filtered.map(m => {
+  const threadsHTML = filtered.map(m => {
     const idx = state.messages.indexOf(m);
     const isActive = dmState.openIdx === idx;
     const adminBadge = m.isAdmin ? `<span class="msg-admin-badge">ADMIN</span>` : "";
@@ -41298,20 +41438,44 @@ function renderDmList() {
     const preview = lastMsg
       ? (lastMsg.from === "me" ? "Kamu: " : "") + (lastMsg.text || "[pesan]")
       : (m.preview || "Start a conversation...");
-    return `
-      <div class="dm-thread ${isActive ? 'is-active' : ''} ${m.unread ? 'is-unread' : ''} ${m.isAdmin ? 'is-admin' : ''}" data-dm-thread="${idx}">
-        <div class="avatar"><span>${escapeHtml(m.init || "U")}</span>${m.online ? '<i class="status"></i>' : ''}</div>
-        <div class="dm-thread-info">
-          <div class="dm-thread-top">
-            <strong>@${escapeHtml(m.name)}</strong>${adminBadge}
-            <span class="dm-thread-time">${timeLabel}</span>
-          </div>
-          <div class="dm-thread-preview">${escapeHtml(String(preview).slice(0, 80))}${String(preview).length > 80 ? '…' : ''}</div>
-        </div>
-        ${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}
-      </div>
-    `;
+    // 5b: hint kalau query cuma cocok di isi pesan (bukan name/preview)
+    const nameOrPrevMatch = q && ((m.name || "").toLowerCase().includes(q) || (m.preview || "").toLowerCase().includes(q));
+    const bodyOnlyMatch = q && !nameOrPrevMatch && matchBody(m);
+    const matchHint = bodyOnlyMatch ? '<span class="dm-thread-bodymatch">🔎 cocok di pesan</span>' : '';
+    const escPrev = `${escapeHtml(String(preview).slice(0, 80))}${String(preview).length > 80 ? '…' : ''}`;
+    const rowCls = `dm-thread ${isActive ? 'is-active' : ''} ${m.unread ? 'is-unread' : ''} ${m.isAdmin ? 'is-admin' : ''}`;
+    const avatarHTML = `<div class="avatar"><span>${escapeHtml(m.init || "U")}</span>${m.online ? '<i class="status"></i>' : ''}</div>`;
+    const infoHTML = `<div class="dm-thread-info"><div class="dm-thread-top"><strong>@${escapeHtml(m.name)}</strong>${adminBadge}<span class="dm-thread-time">${timeLabel}</span></div><div class="dm-thread-preview">${escPrev}</div>${matchHint}</div>`;
+    // Permintaan = KARTU + Terima/Tolak; Arsip = baris + Pulihkan (req user
+    // 2026-06-12). Klik baris tetap buka chat; tombol di-stopPropagation.
+    if (dmState.filter === "requests") {
+      return `<div class="${rowCls} dm-req-card" data-dm-thread="${idx}">`
+        + `<div class="dm-req-head">${avatarHTML}${infoHTML}</div>`
+        + `<div class="dm-thread-actions">`
+        +   `<button type="button" class="dm-act dm-act-accept" data-dm-accept="${idx}">Terima</button>`
+        +   `<button type="button" class="dm-act dm-act-decline" data-dm-decline="${idx}">Tolak</button>`
+        + `</div></div>`;
+    }
+    if (dmState.filter === "archived") {
+      // Arsip = daftar muted/compact + ikon restore (penyimpanan, sekunder).
+      return `<div class="${rowCls} dm-arc-row" data-dm-thread="${idx}">${avatarHTML}${infoHTML}`
+        + `<button type="button" class="dm-arc-restore" data-dm-unarchive="${idx}" title="Pulihkan ke DM" aria-label="Pulihkan ke DM">`
+        +   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2"/><path d="M20 8v11a2 2 0 0 1-2 2h-2"/><path d="m9 15 3-3 3 3"/><path d="M12 12v9"/></svg>`
+        + `</button></div>`;
+    }
+    return `<div class="${rowCls}" data-dm-thread="${idx}">${avatarHTML}${infoHTML}${m.unread ? '<i class="dm-unread-dot" aria-hidden="true"></i>' : ''}</div>`;
   }).join("");
+
+  list.innerHTML = backHTML + entriesHTML + threadsHTML + contactsHTML;
+
+  // Entri Permintaan/Arsip (di atas daftar DM) → buka kategorinya.
+  list.querySelectorAll("[data-dm-open-section]").forEach(el => {
+    el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory(el.dataset.dmOpenSection); });
+  });
+  // Tombol kembali (dari Permintaan/Arsip) → daftar DM.
+  list.querySelectorAll("[data-dm-back]").forEach(el => {
+    el.addEventListener("click", () => { if (typeof _dmOpenCategory === "function") _dmOpenCategory("dm"); });
+  });
 
   list.querySelectorAll("[data-dm-thread]").forEach(el => {
     el.addEventListener("click", () => {
@@ -41319,6 +41483,125 @@ function renderDmList() {
       openDmChat(idx);
     });
   });
+  // Baris kontak (nama user belum ada thread) → mulai DM dengannya.
+  list.querySelectorAll("[data-dm-contact]").forEach(el => {
+    const start = () => {
+      const un = el.dataset.dmContact;
+      if (un && typeof startChatWithUser === "function") startChatWithUser(un);
+    };
+    el.addEventListener("click", start);
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } });
+  });
+  // Aksi inline (req user 2026-06-12): Terima/Tolak (Permintaan) + Pulihkan
+  // (Arsip). stopPropagation supaya tidak ikut buka chat (klik baris).
+  list.querySelectorAll("[data-dm-accept]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmAcceptRequest === "function") _dmAcceptRequest(+b.dataset.dmAccept); }));
+  list.querySelectorAll("[data-dm-decline]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmDeclineRequest === "function") _dmDeclineRequest(+b.dataset.dmDecline); }));
+  list.querySelectorAll("[data-dm-unarchive]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); if (typeof _dmUnarchive === "function") _dmUnarchive(+b.dataset.dmUnarchive); }));
+
+  // 5g: jaga badge unread sidebar selalu sinkron dgn list yang baru di-render.
+  if (typeof updateDmBadges === "function") updateDmBadges();
+  // 5k: refleksikan status sync terakhir saat list di-render.
+  if (typeof dmRenderSyncStatus === "function") dmRenderSyncStatus();
+}
+
+// User TIDAK boleh kirim pesan ke admin/super-admin (req user 2026-06-12).
+// Deteksi akun admin: role "admin", username reserved "admin", atau email
+// masuk allowlist admin. Dipakai di contact list, picker, & startChatWithUser.
+function _dmIsAdminAccount(a) {
+  if (!a) return false;
+  if (a.role === "admin") return true;
+  if (typeof isReservedUsername === "function" && isReservedUsername(a.username)) return true;
+  if (a.email && typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(a.email)) return true;
+  return false;
+}
+
+// Baris KONTAK untuk tab DM (req user 2026-06-12): nama user yang bisa di-DM
+// tapi belum punya thread. HANYA muncul saat user mengetik di kotak cari
+// (renderDmList: contactsHTML cuma dibangun kalau ada query) — daftar tak lagi
+// di-prepopulate, supaya kotak cari ada gunanya. Sumber = getAllAccounts,
+// exclude diri sendiri + demo/dummy + ADMIN/super-admin + yang sudah ada thread.
+function _dmContactRowsHTML(existingLower, q) {
+  if (typeof getAllAccounts !== "function") return "";
+  var me = (user && user.username ? user.username : "").toLowerCase();
+  var follow = new Set((state && Array.isArray(state.followingCreators) ? state.followingCreators : []).map(function (x) { return String(x).toLowerCase(); }));
+  var accts = [];
+  try { accts = getAllAccounts() || []; } catch (e) { return ""; }
+  accts = accts.filter(function (a) {
+    if (!a || !a.username) return false;
+    var un = String(a.username).toLowerCase();
+    if (un === me) return false;
+    if (existingLower && existingLower.has(un)) return false;
+    if (typeof isDemoAccount === "function" && isDemoAccount(a)) return false;
+    if (_dmIsAdminAccount(a)) return false; // user tak boleh DM admin
+    if (q) {
+      var hit = (String(a.name || "").toLowerCase().indexOf(q) >= 0) || (un.indexOf(q) >= 0);
+      if (!hit) return false;
+    }
+    return true;
+  });
+  accts.sort(function (a, b) {
+    var fa = follow.has(String(a.username).toLowerCase()) ? 0 : 1;
+    var fb = follow.has(String(b.username).toLowerCase()) ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return String(a.name || a.username).localeCompare(String(b.name || b.username));
+  });
+  accts = accts.slice(0, 50);
+  if (!accts.length) return "";
+  var esc = (typeof escapeHtml === "function") ? escapeHtml : function (s) { return String(s); };
+  var rows = accts.map(function (a) {
+    var label = a.name || a.username || "U";
+    var init = String(label).split(/\s+/).map(function (s) { return s[0]; }).slice(0, 2).join("").toUpperCase() || "U";
+    var av = a.avatar
+      ? '<div class="avatar"><img src="' + esc(a.avatar) + '" alt=""></div>'
+      : '<div class="avatar"><span>' + esc(init) + '</span></div>';
+    var foll = follow.has(String(a.username).toLowerCase());
+    return ''
+      + '<div class="dm-thread dm-contact-row" data-dm-contact="' + esc(a.username) + '" role="button" tabindex="0">'
+      +   av
+      +   '<div class="dm-thread-info"><div class="dm-thread-top">'
+      +     '<strong>' + esc(label) + '</strong>'
+      +   '</div><div class="dm-thread-preview dm-contact-hint">@' + esc(a.username) + (foll ? ' · diikuti' : '') + '</div></div>'
+      +   '<span class="dm-contact-start" aria-hidden="true">Mulai chat</span>'
+      + '</div>';
+  }).join("");
+  return '<div class="dm-contacts-head">Mulai chat baru</div>' + rows;
+}
+
+// Aksi inline Permintaan/Arsip (req user 2026-06-12) — operasi pada thread idx
+// (bukan openIdx), dipakai tombol Terima/Tolak/Pulihkan di daftar.
+function _dmAcceptRequest(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  if (!Array.isArray(state.followingCreators)) state.followingCreators = [];
+  if (!state.followingCreators.includes(m.name)) {
+    if (typeof toggleFollow === "function") toggleFollow(m.name);
+    else { state.followingCreators.push(m.name); if (typeof saveState === "function") saveState(); }
+  }
+  if (typeof toast === "function") toast("✓ Permintaan @" + m.name + " diterima — sekarang ada di DM", "success");
+  if (typeof renderDmList === "function") renderDmList();
+}
+function _dmDeclineRequest(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  var nm = m.name;
+  var doDel = function () {
+    var i = state.messages.indexOf(m);
+    if (i >= 0) state.messages.splice(i, 1);
+    if (typeof saveState === "function") saveState();
+    if (typeof renderDmList === "function") renderDmList();
+    if (typeof toast === "function") toast("Permintaan @" + nm + " ditolak", "success");
+  };
+  if (typeof openConfirm === "function") {
+    openConfirm({ icon: "🚫", iconClass: "danger", title: "Tolak Permintaan?", desc: "Permintaan pesan dari <b>@" + (typeof escapeHtml === "function" ? escapeHtml(nm) : nm) + "</b> akan dihapus dari daftar.", btnText: "Tolak", btnClass: "danger", onConfirm: doDel });
+  } else doDel();
+}
+function _dmUnarchive(idx) {
+  var m = state.messages && state.messages[idx];
+  if (!m) return;
+  m.archived = false;
+  if (typeof saveState === "function") saveState();
+  if (typeof toast === "function") toast("📥 Chat @" + m.name + " dikeluarkan dari arsip", "success");
+  if (typeof renderDmList === "function") renderDmList();
 }
 
 // Buka chat thread di panel kanan
@@ -41328,10 +41611,11 @@ function openDmChat(idx) {
   dmState.openIdx = idx;
   state.chatOpen = idx;          // backward-compat dengan sendChat()
 
-  // Mark as read
+  // Mark as read — HANYA saat thread benar-benar dibuka (5g).
   if (m.unread) {
     m.unread = false;
     saveState();
+    if (typeof updateDmBadges === "function") updateDmBadges();
   }
 
   const empty = document.getElementById("dmChatEmpty");
@@ -41357,6 +41641,26 @@ function openDmChat(idx) {
   // Tombol "Terima" muncul HANYA kalau thread ini = Permintaan
   const acceptBtn = document.getElementById("dmChatAccept");
   if (acceptBtn) acceptBtn.hidden = !dmIsRequest(m);
+
+  // 5j: broadcast READ-ONLY di sisi user — sembunyikan reply box + tampilkan
+  // catatan. User tidak bisa membalas pengumuman broadcast admin.
+  const inputWrap = active ? active.querySelector(".dm-chat-input") : null;
+  const isBroadcastThread = !!m.isBroadcast;
+  if (inputWrap) {
+    inputWrap.style.display = isBroadcastThread ? "none" : "";
+  }
+  let roNote = active ? active.querySelector(".dm-chat-readonly-note") : null;
+  if (isBroadcastThread) {
+    if (!roNote && active) {
+      roNote = document.createElement("div");
+      roNote.className = "dm-chat-readonly-note";
+      roNote.innerHTML = '📢 Ini pengumuman broadcast dari admin — kamu tidak bisa membalas.';
+      if (inputWrap) inputWrap.insertAdjacentElement("afterend", roNote);
+      else active.appendChild(roNote);
+    }
+  } else if (roNote) {
+    roNote.remove();
+  }
 
   // Render history
   renderDmChatBody();
@@ -41398,6 +41702,11 @@ function renderDmChatBody() {
       const ts = h.ts ? chatRelTime(h.ts) : (h.time || "");
       const fromMe = h.from === "me";
       const adminTag = h.isAdmin ? '<span class="bubble-admin-tag">ADMIN</span>' : '';
+      const editedTag = h.edited ? '<span class="dm-bubble-edited" title="Pesan ini sudah diedit">diedit</span>' : '';
+      const reactions = renderBubbleReactions(h, hIdx);
+      const reactBtn = `<button type="button" class="dm-bubble-react-btn" data-dm-react-btn="${hIdx}" title="Beri reaksi" aria-label="Beri reaksi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </button>`;
       if (h.videoId) {
         return `
           <div class="dm-bubble ${fromMe ? 'me' : 'them'}" data-dm-msg-idx="${hIdx}">
@@ -41413,7 +41722,8 @@ function renderDmChatBody() {
               </div>
             </button>
             ${h.text ? `<p class="bubble-video-note">${escapeHtml(h.text)}</p>` : ''}
-            <small class="dm-bubble-time">${escapeHtml(ts)}</small>
+            <small class="dm-bubble-time">${escapeHtml(ts)}${editedTag}</small>
+            ${reactBtn}${reactions}
           </div>
         `;
       }
@@ -41422,11 +41732,14 @@ function renderDmChatBody() {
           ${adminTag}
           ${(Array.isArray(h.images) ? h.images : (h.image ? [h.image] : [])).map(s => `<img class="dm-bubble-img" src="${escapeHtml(s)}" alt="lampiran"/>`).join("")}
           ${h.text ? `<div class="dm-bubble-text">${escapeHtml(h.text)}</div>` : ''}
-          <small class="dm-bubble-time">${escapeHtml(ts)}</small>
+          <small class="dm-bubble-time">${escapeHtml(ts)}${editedTag}</small>
           ${fromMe ? `<button type="button" class="dm-bubble-del" data-dm-bubble-del="${hIdx}" title="Hapus pesan" aria-label="Delete">×</button>` : ''}
+          ${reactBtn}${reactions}
         </div>
       `;
     }).join("");
+    // Typing indicator placeholder (5c) — diisi/dikosongkan oleh dmRefreshTyping()
+    body.insertAdjacentHTML("beforeend", '<div class="dm-typing" id="dmTypingIndicator" hidden><span class="dm-typing-dots"><i></i><i></i><i></i></span></div>');
     body.scrollTop = body.scrollHeight;
   }
 
@@ -41444,12 +41757,134 @@ function renderDmChatBody() {
       const hIdx = +b.dataset.dmBubbleDel;
       const cm = state.messages?.[dmState.openIdx];
       if (!cm || !Array.isArray(cm.history)) return;
-      cm.history.splice(hIdx, 1);
-      saveState();
-      renderDmChatBody();
-      renderDmList();
+      confirmDeleteMessageForMe(dmState.openIdx, hIdx);
     });
   });
+  // Bind reaction picker button (5d)
+  body.querySelectorAll("[data-dm-react-btn]").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      showReactionPicker(b, +b.dataset.dmReactBtn);
+    });
+  });
+  // Bind toggle existing reaction chip (5d)
+  body.querySelectorAll("[data-dm-react-toggle]").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      const chip = e.currentTarget;
+      toggleBubbleReaction(+chip.dataset.dmMsg, chip.dataset.dmReactToggle);
+    });
+  });
+  // Wire per-bubble context menu (5d/5e): right-click (desktop) + long-press (mobile)
+  body.querySelectorAll("[data-dm-msg-idx]").forEach(bub => {
+    const hIdx = +bub.dataset.dmMsgIdx;
+    bub.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      showMessageContextMenu(bub, dmState.openIdx, hIdx);
+    });
+    let lpTimer = null;
+    bub.addEventListener("touchstart", () => {
+      lpTimer = setTimeout(() => showMessageContextMenu(bub, dmState.openIdx, hIdx), 500);
+    }, { passive: true });
+    const clearLp = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+    bub.addEventListener("touchend", clearLp);
+    bub.addEventListener("touchmove", clearLp);
+    bub.addEventListener("touchcancel", clearLp);
+  });
+
+  // Refresh typing indicator state on each render (5c)
+  if (typeof dmRefreshTyping === "function") dmRefreshTyping();
+}
+
+// ===== 5d: Emoji reactions =================================================
+// Reaksi disimpan di message object: h.reactions = { "👍": ["alice","bob"], ... }
+// Render chip per emoji + count, highlight kalau current user sudah react.
+var DM_REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢"];
+
+function renderBubbleReactions(h, hIdx) {
+  if (!h || !h.reactions || typeof h.reactions !== "object") return "";
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  const chips = [];
+  Object.keys(h.reactions).forEach(emo => {
+    const users = Array.isArray(h.reactions[emo]) ? h.reactions[emo] : [];
+    if (!users.length) return;
+    const mine = users.includes(me) ? " is-mine" : "";
+    const who = users.map(u => "@" + u).join(", ");
+    chips.push(`<button type="button" class="dm-react-chip${mine}" data-dm-react-toggle="${escapeHtml(emo)}" data-dm-msg="${hIdx}" title="${escapeHtml(who)}">${emo}<span>${users.length}</span></button>`);
+  });
+  return chips.length ? `<div class="dm-react-row">${chips.join("")}</div>` : "";
+}
+
+// Small floating emoji palette anchored to a bubble's react button.
+function showReactionPicker(anchorBtn, msgIdx) {
+  document.getElementById("__dmReactPalette")?.remove();
+  const pal = document.createElement("div");
+  pal.id = "__dmReactPalette";
+  pal.className = "dm-react-palette";
+  pal.innerHTML = DM_REACTION_EMOJIS.map(e =>
+    `<button type="button" data-emo="${e}">${e}</button>`).join("");
+  document.body.appendChild(pal);
+  const r = anchorBtn.getBoundingClientRect();
+  const pw = pal.offsetWidth, ph = pal.offsetHeight;
+  let top = r.top - ph - 6;
+  if (top < 8) top = r.bottom + 6;
+  let left = r.left + r.width / 2 - pw / 2;
+  if (left < 8) left = 8;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  pal.style.top = top + "px";
+  pal.style.left = left + "px";
+  pal.querySelectorAll("[data-emo]").forEach(b => {
+    b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      toggleBubbleReaction(msgIdx, b.dataset.emo);
+      pal.remove();
+    });
+  });
+  const onDoc = ev => {
+    if (ev.target.closest("#__dmReactPalette")) return;
+    pal.remove();
+    document.removeEventListener("click", onDoc, true);
+  };
+  setTimeout(() => document.addEventListener("click", onDoc, true), 0);
+}
+
+// Toggle a reaction by current user on a message; null-safe; sync ke partner.
+function toggleBubbleReaction(msgIdx, emoji) {
+  const tIdx = dmState.openIdx;
+  const m = state.messages?.[tIdx];
+  const h = m?.history?.[msgIdx];
+  if (!h || !emoji) return;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!me) return;
+  if (!h.reactions || typeof h.reactions !== "object") h.reactions = {};
+  let arr = Array.isArray(h.reactions[emoji]) ? h.reactions[emoji] : [];
+  const i = arr.indexOf(me);
+  if (i >= 0) { arr.splice(i, 1); } else { arr.push(me); }
+  if (arr.length) h.reactions[emoji] = arr; else delete h.reactions[emoji];
+  saveState();
+  renderDmChatBody();
+  // Sync ke salinan partner (cross-device via playly-state-{partner})
+  syncReactionToPartner(m, h);
+}
+
+// Update reaksi pada salinan thread di sisi partner (match by ts).
+function syncReactionToPartner(m, h) {
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me || !h?.ts) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || !Array.isArray(ps.messages)) return;
+  const pt = ps.messages.find(t => t.name === me);
+  if (!pt || !Array.isArray(pt.history)) return;
+  const ph = pt.history.find(x => x.ts === h.ts);
+  if (!ph) return;
+  ph.reactions = h.reactions ? JSON.parse(JSON.stringify(h.reactions)) : {};
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch (e) { console.warn("[dm] sync reaction gagal:", e); }
 }
 
 function closeDmChat() {
@@ -41463,26 +41898,16 @@ function closeDmChat() {
   document.body.classList.remove("dm-show-chat");
   renderDmList();
 }
-// Mobile: klik header chat (back arrow ::before) → tutup chat & balik ke list
-document.addEventListener("click", e => {
-  const header = e.target.closest(".dm-chat-header");
-  if (!header) return;
-  if (window.innerWidth > 768) return;
-  // Klik tepat di area kiri (back arrow ::before) — di-detect via offsetX
-  const rect = header.getBoundingClientRect();
-  if (e.clientX - rect.left < 40) {
-    closeDmChat();
-  }
-});
+// 5f: back ke list mobile pakai tombol #dmChatBack yang jelas (di-handle oleh
+// listener #dmChatBack di bawah). Hack lama "klik 40px kiri header" dihapus —
+// itu janky & tidak ada afordansi visual.
 
 // Tab handlers
 document.addEventListener("click", e => {
-  const tab = e.target.closest("[data-dm-filter]");
-  if (tab) {
-    dmState.filter = tab.dataset.dmFilter;
-    renderDmList();
-    return;
-  }
+  // Klik tab section sudah di-handle "Section tab click handler" di atas
+  // (toggle overview + _dmApplyView). Konsumsi di sini supaya tidak override
+  // filter / jatuh ke handler chat-action di bawah.
+  if (e.target.closest(".dm-section-tab[data-dm-filter]")) return;
   // Accept request → followback user → thread otomatis pindah dari Permintaan ke DM
   if (e.target.closest("#dmChatAccept")) {
     const m = state.messages?.[dmState.openIdx];
@@ -41560,6 +41985,9 @@ function sendChat() {
   m.ts = sentTs;
   m.archived = false; // sender unarchive otomatis kalau lagi kirim
   input.value = "";
+  // 5c: berhenti mengetik begitu pesan terkirim
+  if (typeof _dmTypingClearTimer !== "undefined" && _dmTypingClearTimer) { clearTimeout(_dmTypingClearTimer); _dmTypingClearTimer = null; }
+  if (typeof dmSetTypingToPartner === "function") dmSetTypingToPartner(false);
   saveState();
   // Catat "kamu mengirim pesan" ke feed Aktivitas (hanya user, bukan admin/broadcast).
   if (!senderIsAdmin && m.name && !m.isBroadcast) { try { recordOutAct("message", { target: m.name, icon: "💬" }); } catch (e) {} }
@@ -41571,6 +41999,308 @@ function sendChat() {
     deliverChatToRecipient(m.name, txt, senderIsAdmin);
   }
 }
+
+// ===== 5a: Lampirkan / kirim video di DM ===================================
+// Buka picker video milik user sendiri (state.myVideos), pilih satu → kirim
+// lewat sendChat path yang sama supaya bubble video render di kedua sisi.
+function openDmVideoPicker() {
+  if (dmState.openIdx == null) {
+    toast("⚠️ Buka percakapan dulu sebelum kirim video", "warning");
+    return;
+  }
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  let modal = document.getElementById("dmVideoPickerModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "dmVideoPickerModal";
+    modal.className = "modal dm-vidpick-modal";
+    modal.innerHTML = `
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-panel dm-vidpick-panel">
+        <button class="modal-close" data-close aria-label="Tutup">✕</button>
+        <h3>🎬 Kirim Video</h3>
+        <p class="confirm-desc">Pilih salah satu video kamu untuk dikirim di chat ini.</p>
+        <input type="search" id="dmVidPickSearch" class="dm-vidpick-search" placeholder="Cari video..." autocomplete="off"/>
+        <div class="dm-vidpick-list" id="dmVidPickList"></div>
+        <label class="dm-vidpick-caption">
+          <span>Caption (opsional)</span>
+          <input type="text" id="dmVidPickCaption" maxlength="200" placeholder="Tulis caption..."/>
+        </label>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => {
+      if (e.target.closest("[data-close]")) closeDmVideoPicker();
+      const row = e.target.closest("[data-dm-pick-vid]");
+      if (row) {
+        const id = row.dataset.dmPickVid;
+        const v = (Array.isArray(state?.myVideos) ? state.myVideos : [])
+          .find(x => String(x.id) === String(id));
+        if (v) {
+          const cap = document.getElementById("dmVidPickCaption")?.value.trim() || "";
+          sendVideoInDm(v, cap);
+          closeDmVideoPicker();
+        }
+      }
+    });
+    modal.addEventListener("input", e => {
+      if (e.target?.id === "dmVidPickSearch") renderDmVideoPickerList(e.target.value);
+    });
+  }
+  const cap = document.getElementById("dmVidPickCaption");
+  if (cap) cap.value = "";
+  const srch = document.getElementById("dmVidPickSearch");
+  if (srch) srch.value = "";
+  renderDmVideoPickerList("");
+  modal.classList.add("show");
+  setTimeout(() => document.getElementById("dmVidPickSearch")?.focus(), 80);
+}
+
+function closeDmVideoPicker() {
+  document.getElementById("dmVideoPickerModal")?.classList.remove("show");
+}
+
+function renderDmVideoPickerList(query) {
+  const listEl = document.getElementById("dmVidPickList");
+  if (!listEl) return;
+  const vids = Array.isArray(state?.myVideos) ? state.myVideos : [];
+  const q = (query || "").trim().toLowerCase();
+  const filtered = q ? vids.filter(v => (v.title || "").toLowerCase().includes(q)) : vids;
+  if (!vids.length) {
+    listEl.innerHTML = `<div class="dm-vidpick-empty">Kamu belum punya video untuk dikirim.</div>`;
+    return;
+  }
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="dm-vidpick-empty">Tidak ada video cocok "${escapeHtml(query)}".</div>`;
+    return;
+  }
+  listEl.innerHTML = filtered.map(v => `
+    <button type="button" class="dm-vidpick-row" data-dm-pick-vid="${escapeHtml(String(v.id))}">
+      <span class="dm-vidpick-thumb">
+        ${v.thumb ? `<img src="${escapeHtml(v.thumb)}" alt=""/>` : '<span class="dm-vidpick-noimg">🎬</span>'}
+        ${v.duration ? `<span class="dm-vidpick-dur">${escapeHtml(v.duration)}</span>` : ''}
+      </span>
+      <span class="dm-vidpick-meta">
+        <strong>${escapeHtml(v.title || "Video")}</strong>
+        <small>@${escapeHtml(v.creator || user?.username || "")}</small>
+      </span>
+    </button>`).join("");
+}
+
+// Kirim video lewat path yang sama dgn sendChat (push history + deliver).
+function sendVideoInDm(video, caption) {
+  const idx = dmState.openIdx;
+  const m = state.messages?.[idx];
+  if (!m || !video) return;
+  const senderIsAdmin = user?.role === "admin";
+  const sentTs = Date.now();
+  m.history = m.history || [];
+  m.history.push({
+    from: "me", text: caption || "", time: "baru", ts: sentTs, isAdmin: senderIsAdmin,
+    videoId: video.id,
+    videoThumb: video.thumb || "",
+    videoDuration: video.duration || "",
+    videoTitle: video.title || "Video",
+    videoCreator: video.creator || user?.username || ""
+  });
+  m.preview = "Kamu: 🎬 " + (video.title || "Video");
+  m.time = "baru";
+  m.ts = sentTs;
+  m.archived = false;
+  if (typeof dmSetTypingToPartner === "function") dmSetTypingToPartner(false);
+  saveState();
+  renderDmChatBody();
+  renderDmList();
+  // Antar ke inbox penerima — bawa metadata video lewat thread copy
+  if (m.name && m.name !== user?.username) {
+    deliverVideoToRecipient(m.name, video, caption || "", senderIsAdmin);
+  }
+}
+
+// Antar bubble video ke inbox penerima (tulis ke playly-state-{recipient}).
+function deliverVideoToRecipient(recipientUsername, video, caption, fromAdmin) {
+  if (!fromAdmin && user?.role !== "admin") {
+    const allowDM = getOtherUserPrefByUsername(recipientUsername, "privacy.allowDM", true);
+    if (!allowDM) {
+      const recFollowing = getUserFollowing(recipientUsername);
+      const senderName = user?.username || "";
+      if (!recFollowing.includes(senderName)) {
+        toast(`⚠️ @${recipientUsername} membatasi DM`, "warning");
+        return;
+      }
+    }
+  }
+  const key = `playly-state-${recipientUsername}`;
+  let s;
+  try { s = JSON.parse(localStorage.getItem(key)); } catch { s = null; }
+  if (!s) s = { messages: [] };
+  if (!Array.isArray(s.messages)) s.messages = [];
+  const senderName = user?.username || "user";
+  const senderInit = (user?.name || senderName).slice(0, 2).toUpperCase();
+  const deliverTs = Date.now();
+  let thread = s.messages.find(m => m.name === senderName);
+  if (!thread) {
+    thread = { name: senderName, init: senderInit, isAdmin: !!fromAdmin, preview: "", time: "baru", ts: deliverTs, unread: false, online: true, history: [] };
+    s.messages.unshift(thread);
+  } else {
+    thread.isAdmin = !!fromAdmin;
+    s.messages = [thread, ...s.messages.filter(t => t !== thread)];
+  }
+  thread.history.push({
+    from: "them", text: caption || "", time: "baru", ts: deliverTs, isAdmin: !!fromAdmin,
+    videoId: video.id,
+    videoThumb: video.thumb || "",
+    videoDuration: video.duration || "",
+    videoTitle: video.title || "Video",
+    videoCreator: video.creator || senderName
+  });
+  thread.preview = "🎬 " + (video.title || "Video");
+  thread.time = "baru";
+  thread.ts = deliverTs;
+  thread.unread = true;
+  localStorage.setItem(key, JSON.stringify(s));
+  try {
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch {}
+}
+
+// Klik tombol attach video (delegasi)
+document.addEventListener("click", e => {
+  if (e.target.closest("#dmChatAttachVideo")) {
+    e.preventDefault();
+    openDmVideoPicker();
+  }
+  // 5j: tombol "Tulis Broadcast" di tab Broadcast (admin-only)
+  if (e.target.closest("#dmComposeBroadcastBtn")) {
+    e.preventDefault();
+    if (user?.role === "admin" && typeof openAdminSendMsg === "function") {
+      openAdminSendMsg({ broadcast: true });
+    }
+  }
+});
+
+// ===== 5c: Indikator "sedang mengetik" (cross-tab/device, REAL only) =======
+// Mekanisme: saat user mengetik di #dmChatField, kita tulis flag {by,ts} ke
+// playly-state-{partner}._typing. Partner yg sedang buka chat dgn kita akan
+// membaca flag itu (fresh < 6s) lewat storage / playly:cloud-applied event &
+// menampilkan dots. Kalau tidak ada sinyal nyata → tidak menampilkan apa-apa
+// (TIDAK pernah disimulasikan).
+var DM_TYPING_FRESH_MS = 6000;
+var _dmTypingClearTimer = null;
+
+function dmSetTypingToPartner(active) {
+  const m = state.messages?.[dmState.openIdx];
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me) return;
+  // Jangan tulis flag mengetik ke thread admin/broadcast (read-only).
+  if (m.isAdmin || m.isBroadcast) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || typeof ps !== "object") return; // hanya kalau partner punya state nyata
+  if (active) {
+    ps._typing = { by: me, ts: Date.now() };
+  } else if (ps._typing && ps._typing.by === me) {
+    delete ps._typing;
+  } else {
+    return;
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch {}
+}
+
+// Baca flag mengetik dari state SAYA (partner menulis ke sini) → tampilkan.
+function dmRefreshTyping() {
+  const ind = document.getElementById("dmTypingIndicator");
+  if (!ind) return;
+  const m = state.messages?.[dmState.openIdx];
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  let show = false;
+  if (m && me) {
+    // Re-baca state SAYA dari localStorage supaya flag terbaru dari partner kebaca.
+    let mine;
+    try { mine = JSON.parse(localStorage.getItem(`playly-state-${me}`) || "{}"); } catch { mine = {}; }
+    const tp = mine && mine._typing;
+    if (tp && tp.by === m.name && (Date.now() - (tp.ts || 0)) < DM_TYPING_FRESH_MS) {
+      show = true;
+    }
+  }
+  ind.hidden = !show;
+  if (show) {
+    const body = document.getElementById("dmChatBody");
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+}
+
+// Input handler: tandai mengetik (debounced clear), kirim flag ke partner.
+document.addEventListener("input", e => {
+  if (e.target?.id !== "dmChatField") return;
+  dmSetTypingToPartner(true);
+  if (_dmTypingClearTimer) clearTimeout(_dmTypingClearTimer);
+  _dmTypingClearTimer = setTimeout(() => dmSetTypingToPartner(false), 3000);
+});
+// Blur → langsung clear flag mengetik.
+document.addEventListener("blur", e => {
+  if (e.target?.id !== "dmChatField") return;
+  if (_dmTypingClearTimer) { clearTimeout(_dmTypingClearTimer); _dmTypingClearTimer = null; }
+  dmSetTypingToPartner(false);
+}, true);
+
+// Saat state partner berubah (cross-tab/device), refresh indikator + body.
+window.addEventListener("playly:cloud-applied", () => {
+  if (dmState.openIdx != null) dmRefreshTyping();
+  // 5g: pesan baru bisa masuk lewat cloud-applied → segarkan badge unread.
+  if (typeof updateDmBadges === "function") updateDmBadges();
+});
+window.addEventListener("storage", e => {
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (me && e.key === `playly-state-${me}` && dmState.openIdx != null) dmRefreshTyping();
+});
+// Auto-expire indikator (kalau partner berhenti tanpa kirim clear).
+setInterval(() => { if (dmState.openIdx != null) dmRefreshTyping(); }, 2000);
+
+// ===== 5k: Indikator status sync yang JUJUR =================================
+// Cerminkan hasil NYATA push state ke Supabase bridge:
+//   "synced"  → push terakhir sukses (200 ok)        → "Tersinkron ✓"
+//   "local"   → push 401/gagal, fallback localStorage → "Tersimpan lokal"
+//   "pending" → belum ada push (belum ada perubahan)  → "Menunggu sinkronisasi…"
+// TIDAK pernah menampilkan "synced" tanpa sinyal sukses nyata dari bridge.
+// Tidak memperbaiki auth backend — hanya menyuarakan kebenarannya.
+function dmRenderSyncStatus(detail) {
+  const el = document.getElementById("dmSyncStatus");
+  if (!el) return;
+  let st = detail;
+  if (!st) {
+    try { st = window.supabaseAuthBridge?.getSyncStatus?.(); } catch {}
+  }
+  // Kalau bridge tidak ada sama sekali → memang tidak ada cloud sync.
+  if (!window.supabaseAuthBridge) {
+    el.className = "dm-sync-status is-local";
+    el.querySelector(".dm-sync-label").textContent = "Tersimpan lokal";
+    el.title = "Bridge cloud tidak tersedia — data hanya di perangkat ini.";
+    return;
+  }
+  const state2 = (st && st.state) || "pending";
+  const label = el.querySelector(".dm-sync-label");
+  el.classList.remove("is-synced", "is-local", "is-pending");
+  if (state2 === "synced") {
+    el.classList.add("is-synced");
+    if (label) label.textContent = "Tersinkron ✓";
+    el.title = "Perubahan terakhir berhasil dikirim ke cloud.";
+  } else if (state2 === "local") {
+    el.classList.add("is-local");
+    if (label) label.textContent = "Tersimpan lokal";
+    el.title = "Cloud sync gagal (mis. sesi belum terautentikasi / 401) — "
+      + "data tersimpan di perangkat ini saja" + (st && st.reason ? " (" + st.reason + ")" : "") + ".";
+  } else {
+    el.classList.add("is-pending");
+    if (label) label.textContent = "Menunggu sinkronisasi…";
+    el.title = "Belum ada perubahan yang dikirim ke cloud sejak halaman dibuka.";
+  }
+}
+window.addEventListener("playly:sync-status", e => dmRenderSyncStatus(e.detail));
 
 // Search input → re-render thread list
 document.addEventListener("input", e => {
@@ -41614,8 +42344,15 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
   menu.className = "msg-ctx-menu";
 
   const items = [];
+  // Reaksi cepat (5d) — baris emoji di atas menu.
+  items.push(`<div class="msg-ctx-reactions">${DM_REACTION_EMOJIS.map(e =>
+    `<button type="button" class="msg-ctx-react" data-react="${e}">${e}</button>`).join("")}</div>`);
   if (h.text) {
     items.push(`<button type="button" data-act="copy">📋 Salin teks</button>`);
+  }
+  // Edit (5e) — hanya pesan teks milik sendiri (bukan video bubble).
+  if (isOwn && h.text && !h.videoId) {
+    items.push(`<button type="button" data-act="edit">✏️ Edit pesan</button>`);
   }
   items.push(`<button type="button" data-act="del-me">🗑️ Hapus pesan untuk saya</button>`);
   if (isOwn) {
@@ -41646,6 +42383,10 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
     } catch { toast("❌ Gagal salin", "error"); }
     closeMessageContextMenu();
   });
+  menu.querySelector("[data-act='edit']")?.addEventListener("click", () => {
+    closeMessageContextMenu();
+    startEditMessage(threadIdx, msgIdx);
+  });
   menu.querySelector("[data-act='del-me']")?.addEventListener("click", () => {
     closeMessageContextMenu();
     confirmDeleteMessageForMe(threadIdx, msgIdx);
@@ -41653,6 +42394,15 @@ function showMessageContextMenu(bubbleEl, threadIdx, msgIdx) {
   menu.querySelector("[data-act='del-all']")?.addEventListener("click", () => {
     closeMessageContextMenu();
     confirmDeleteMessageForEveryone(threadIdx, msgIdx);
+  });
+  // Quick reactions row (5d)
+  menu.querySelectorAll(".msg-ctx-react").forEach(b => {
+    b.addEventListener("click", () => {
+      closeMessageContextMenu();
+      if (threadIdx === dmState.openIdx) {
+        toggleBubbleReaction(msgIdx, b.dataset.react);
+      }
+    });
   });
 
   // Tutup saat klik di luar / tekan Esc
@@ -41686,6 +42436,79 @@ function confirmDeleteMessageForEveryone(threadIdx, msgIdx) {
     btnText: "Hapus untuk semuanya", btnClass: "danger",
     onConfirm: () => deleteMessageForEveryone(threadIdx, msgIdx)
   });
+}
+
+// ===== 5e: Edit pesan sendiri =============================================
+// Inline edit: ganti bubble text dgn textarea + Simpan/Batal. Update h.text,
+// set h.edited=true, render label "diedit", sync ke salinan partner.
+function startEditMessage(threadIdx, msgIdx) {
+  const m = state.messages?.[threadIdx];
+  const h = m?.history?.[msgIdx];
+  if (!h || h.from !== "me" || !h.text || h.videoId) return;
+  const body = document.getElementById("dmChatBody");
+  const bubble = body?.querySelector(`.dm-bubble[data-dm-msg-idx="${msgIdx}"]`);
+  const textEl = bubble?.querySelector(".dm-bubble-text");
+  if (!textEl) return;
+  if (bubble.querySelector(".dm-edit-box")) return; // sudah dalam mode edit
+  const original = h.text;
+  const editor = document.createElement("div");
+  editor.className = "dm-edit-box";
+  editor.innerHTML = `
+    <textarea class="dm-edit-field" rows="2"></textarea>
+    <div class="dm-edit-actions">
+      <button type="button" class="dm-edit-cancel">Batal</button>
+      <button type="button" class="dm-edit-save">Simpan</button>
+    </div>`;
+  textEl.style.display = "none";
+  textEl.insertAdjacentElement("afterend", editor);
+  const field = editor.querySelector(".dm-edit-field");
+  field.value = original;
+  field.focus();
+  field.setSelectionRange(original.length, original.length);
+  const cancel = () => { editor.remove(); textEl.style.display = ""; };
+  const save = () => {
+    const next = field.value.trim();
+    if (!next) { cancel(); return; }
+    if (next !== original) {
+      h.text = next;
+      h.edited = true;
+      const last = m.history[m.history.length - 1];
+      if (last === h) m.preview = (h.from === "me" ? "Kamu: " : "") + next;
+      saveState();
+      syncEditToPartner(m, h, next);
+      renderDmList();
+    }
+    renderDmChatBody();
+  };
+  editor.querySelector(".dm-edit-cancel").addEventListener("click", cancel);
+  editor.querySelector(".dm-edit-save").addEventListener("click", save);
+  field.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save(); }
+    if (e.key === "Escape") { e.preventDefault(); cancel(); }
+  });
+}
+
+// Sinkron hasil edit ke salinan thread di sisi partner (match by ts).
+function syncEditToPartner(m, h, newText) {
+  const partner = m?.name;
+  const me = (typeof user !== "undefined" && user?.username) || "";
+  if (!partner || !me || partner === me || !h?.ts) return;
+  const key = `playly-state-${partner}`;
+  let ps;
+  try { ps = JSON.parse(localStorage.getItem(key)); } catch { ps = null; }
+  if (!ps || !Array.isArray(ps.messages)) return;
+  const pt = ps.messages.find(t => t.name === me);
+  if (!pt || !Array.isArray(pt.history)) return;
+  const ph = pt.history.find(x => x.ts === h.ts);
+  if (!ph) return;
+  ph.text = newText;
+  ph.edited = true;
+  const plast = pt.history[pt.history.length - 1];
+  if (plast === ph) pt.preview = newText;
+  try {
+    localStorage.setItem(key, JSON.stringify(ps));
+    window.dispatchEvent(new CustomEvent("playly:cloud-applied", { detail: { keys: [key] } }));
+  } catch (e) { console.warn("[dm] sync edit gagal:", e); }
 }
 
 function deleteMessageForMe(threadIdx, msgIdx) {
@@ -41935,49 +42758,229 @@ function _dmApplyView() {
   var ov = document.getElementById("dmOverview");
   var lay = document.getElementById("dmLayout");
   var bc = document.getElementById("dmBroadcastView");
-  var f = (typeof dmState === "undefined") ? "all" : dmState.filter;
-  var isAll = f === "all";
-  var isBc = f === "broadcast";
+  var f = (typeof dmState === "undefined") ? "overview" : dmState.filter;
+  var isOverview = (f === "overview" || f == null);
   var isDm = f === "dm";
-  // Hide "+ Pesan Baru" button saat tab non-DM (Broadcast/Permintaan/Arsip).
-  // User can only INITIATE chat from DM context — broadcast read-only, request
-  // = incoming (bukan outgoing), arsip = historical (juga bukan outgoing).
-  var newChatBtn = document.getElementById("newChat");
-  if (newChatBtn) newChatBtn.hidden = !(isAll || isDm);
-  if (ov) ov.hidden = !isAll;
-  if (bc) bc.hidden = !isBc;
+  var isBroadcast = (f === "broadcast");
+  // OPSI 1 (2026-06-12): LANDING = kartu ringkasan kategori (#dmOverview).
+  // Klik tab/kartu → messenger. BROADCAST khusus (req user 2026-06-12): halaman
+  // seperti NOTIFIKASI — feed pengumuman read-only (#dmBroadcastView), bukan
+  // messenger/chat. DM/Permintaan/Arsip → messenger single-column.
+  // Toolbar aksi (Pesan Baru + Cari) hanya di messenger DM.
+  var newChatBtn = (typeof _dmEnsureComposeBtn === "function") ? _dmEnsureComposeBtn() : document.getElementById("newChat");
+  if (newChatBtn) newChatBtn.hidden = !isDm;
+  // Kotak cari: di DM default TERSEMBUNYI sampai tombol "Cari" dipilih; di
+  // Permintaan/Arsip selalu tampil (dipakai filter). req user 2026-06-12.
+  var dmSearchRow = document.querySelector('section.view[data-view="messages"] .dm-side .dm-side-search');
+  if (dmSearchRow) dmSearchRow.hidden = isDm ? !dmState.searchOpen : false;
+  var dmSearchToggle = document.getElementById("dmSearchToggle");
+  if (dmSearchToggle) {
+    dmSearchToggle.classList.toggle("is-active", isDm && !!dmState.searchOpen);
+    dmSearchToggle.setAttribute("aria-pressed", (isDm && dmState.searchOpen) ? "true" : "false");
+  }
+  // Pill status sync ke kanan header (sejajar pill "LIVE" Statistik).
+  if (typeof _dmRelocateSyncPill === "function") _dmRelocateSyncPill();
+  if (bc) bc.hidden = !isBroadcast;
+  if (ov) ov.hidden = !isOverview;
+  if (lay) lay.hidden = isOverview || isBroadcast;
+  // Active state tab: tak ada tab aktif saat overview landing.
+  document.querySelectorAll(".dm-section-tab").forEach(function (t) {
+    t.classList.toggle("active", !isOverview && t.dataset.dmFilter === f);
+  });
+  document.body.classList.remove("dm-show-chat");
+  if (typeof dmState !== "undefined") dmState.openIdx = null;
+
+  if (isOverview) {
+    // Landing: render kartu ringkasan kategori.
+    if (typeof renderDmOverview === "function") renderDmOverview();
+    return;
+  }
+
+  if (isBroadcast) {
+    // Halaman Broadcast = feed notifikasi pengumuman read-only.
+    if (typeof renderDmBroadcast === "function") renderDmBroadcast();
+    return;
+  }
+
+  // Messenger SINGLE-COLUMN (req user 2026-06-12: JANGAN dua-panel/Instagram).
+  // Landing kategori = DAFTAR nama (kontak + thread) full-width SAJA — panel
+  // chat TIDAK tampil sebagai kolom. Chat baru muncul full (gantikan daftar)
+  // saat nama diklik (openDmChat → body.dm-show-chat); back → daftar.
   if (lay) {
-    lay.hidden = isAll || isBc;   // Broadcast & Semua bukan layout chat
-    // Req user 2026-05-25: saat switch ke tab DM/Permintaan/Arsip, default
-    // ke list-only mode (chat panel hidden). User klik thread → openDmChat
-    // remove class ini → chat panel reveal. Reset openIdx supaya state
-    // konsisten.
-    if (!lay.hidden) {
-      lay.classList.add("dm-list-only");
-      if (typeof dmState !== "undefined") dmState.openIdx = null;
-      // Pastikan chat panel empty placeholder hidden + active panel hidden
-      var emptyP = document.getElementById("dmChatEmpty");
-      var activeP = document.getElementById("dmChatActive");
-      if (emptyP) emptyP.hidden = true;
-      if (activeP) activeP.hidden = true;
+    lay.classList.remove("dm-list-only");
+    var emptyP = document.getElementById("dmChatEmpty");
+    var activeP = document.getElementById("dmChatActive");
+    if (emptyP) emptyP.hidden = true;   // TANPA reading pane/placeholder kolom
+    if (activeP) activeP.hidden = true;
+  }
+  // BEDAKAN tiap halaman kategori (2026-06-12): banner konteks + placeholder
+  // search sesuai isi kategori. Compose "+ Pesan Baru" sudah hanya di DM
+  // (newChatBtn di atas), empty-state sudah per-filter (renderDmList).
+  //   DM        → chat personal: compose + list, tanpa banner (default).
+  //   Broadcast → pengumuman read-only.
+  //   Permintaan→ pesan dari non-followed: buka lalu Terima.
+  //   Arsip     → chat diarsipkan: buka untuk baca, bisa dipulihkan.
+  // icon + text dipisah supaya saat teks wrap, semua baris rata (tidak masuk
+  // ke bawah ikon) — req user 2026-06-12.
+  // Ikon banner = SVG MONOKROM (inherit currentColor tema, BUKAN emoji berwarna)
+  // — req user 2026-06-12 "jangan pakai ikon warna".
+  var _ban = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+  var CAT_META = {
+    dm:        { icon: "", text: "", ph: "Cari pesan atau user…" },
+    broadcast: { icon: _ban('<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'), text: "Pengumuman resmi dari tim Playly — read-only, tidak bisa dibalas.", ph: "Cari broadcast…" },
+    requests:  { icon: _ban('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'), text: "Pesan dari orang yang belum kamu ikuti. Klik Terima untuk lanjut chat di DM, atau Tolak untuk menghapus.", ph: "Cari permintaan…" },
+    archived:  { icon: _ban('<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>'), text: "Chat yang sudah kamu arsipkan. Klik Pulihkan untuk mengembalikannya ke DM.", ph: "Cari di arsip…" },
+  };
+  var cm = CAT_META[f] || CAT_META.dm;
+  var searchInput = document.getElementById("msgSearch");
+  if (searchInput) {
+    searchInput.setAttribute("placeholder", cm.ph);
+    // data-orig-ph dipakai mekanisme restore placeholder → set juga biar sticky.
+    searchInput.setAttribute("data-orig-ph", cm.ph);
+  }
+  if (typeof _dmEnsureCatBanner === "function") {
+    var catBanner = _dmEnsureCatBanner();
+    if (catBanner) {
+      // Modifier per-kategori → banner Permintaan (aksi) vs Arsip (penyimpanan)
+      // bisa diwarnai beda di CSS.
+      catBanner.className = "dm-cat-banner dm-cat-banner--" + f;
+      if (cm.text) {
+        catBanner.innerHTML = '<span class="dm-cat-banner-ico" aria-hidden="true"></span><span class="dm-cat-banner-txt"></span>';
+        catBanner.querySelector(".dm-cat-banner-ico").innerHTML = cm.icon; // SVG monokrom
+        catBanner.querySelector(".dm-cat-banner-txt").textContent = cm.text;
+        catBanner.hidden = false;
+      } else catBanner.hidden = true;
     }
   }
-  if (isAll && typeof renderDmOverview === "function") renderDmOverview();
-  if (isBc && typeof renderDmBroadcast === "function") renderDmBroadcast();
+  if (typeof renderDmList === "function") renderDmList();
 }
 
-// Wire back button (req user 2026-05-25): klik back di chat header →
-// kembali ke list-only mode (chat panel hidden, list full-width).
+// Inject banner konteks kategori (#dmCatBanner) di atas daftar — menjelaskan
+// isi tiap halaman (Broadcast/Permintaan/Arsip). Idempotent; teks + visibilitas
+// di-set _dmApplyView per filter (kosong/hidden untuk DM).
+function _dmEnsureCatBanner() {
+  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
+  if (!side) return document.getElementById("dmCatBanner");
+  var b = document.getElementById("dmCatBanner");
+  if (!b) {
+    b = document.createElement("div");
+    b.id = "dmCatBanner";
+    b.className = "dm-cat-banner";
+    var listEl = document.getElementById("dmThreadList");
+    if (listEl) side.insertBefore(b, listEl);
+    else side.appendChild(b);
+  }
+  return b;
+}
+
+// Inject tombol "+ Pesan Baru" di atas panel daftar (.dm-side). Idempotent —
+// hanya buat sekali; _dmApplyView tinggal toggle .hidden per filter. Perlu
+// karena unified split (2026-06-12) me-retire kartu overview yang dulu jadi
+// satu-satunya entry compose (#dmOvNew). Klik → buka picker user (sama dgn
+// flow lama #newChat/#dmOvNew).
+// Toolbar aksi DM (req user 2026-06-12): 2 tombol segment di KANAN ATAS —
+// "Pesan Baru" (buka picker) + "Cari" (toggle kotak cari yang default
+// tersembunyi). Menggantikan tombol full-width lama. Idempotent; _dmApplyView
+// toggle .hidden seluruh bar per filter (cuma DM). Return bar.
+function _dmEnsureComposeBtn() {
+  var side = document.querySelector('section.view[data-view="messages"] .dm-side');
+  if (!side) return document.getElementById("dmActionsBar");
+  var bar = document.getElementById("dmActionsBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "dmActionsBar";
+    bar.className = "dm-actions-bar";
+
+    var btnNew = document.createElement("button");
+    btnNew.type = "button";
+    btnNew.id = "dmNewChatBtn";
+    btnNew.className = "dm-act-seg dm-act-seg-primary";
+    btnNew.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Pesan Baru</span>';
+    btnNew.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (typeof openChatUserPicker === "function") openChatUserPicker();
+    });
+
+    var btnSearch = document.createElement("button");
+    btnSearch.type = "button";
+    btnSearch.id = "dmSearchToggle";
+    btnSearch.className = "dm-act-seg";
+    btnSearch.setAttribute("aria-pressed", "false");
+    btnSearch.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cari</span>';
+    btnSearch.addEventListener("click", function (e) {
+      e.preventDefault();
+      dmState.searchOpen = !dmState.searchOpen;
+      var sr = side.querySelector(".dm-side-search");
+      var inp = document.getElementById("msgSearch");
+      if (sr) sr.hidden = !dmState.searchOpen;
+      btnSearch.classList.toggle("is-active", !!dmState.searchOpen);
+      btnSearch.setAttribute("aria-pressed", dmState.searchOpen ? "true" : "false");
+      if (dmState.searchOpen) {
+        if (inp) setTimeout(function () { inp.focus(); }, 30);
+      } else if (inp) {
+        inp.value = "";
+        if (typeof renderDmList === "function") renderDmList();
+      }
+    });
+
+    bar.appendChild(btnNew);
+    bar.appendChild(btnSearch);
+    // DI HEADER kanan, sejajar judul "Pesan" (req user 2026-06-12: aksi ke
+    // header). Masuk .view-actions (tempat pill "Tersimpan lokal"); bar di kiri
+    // pill. Fallback: baris tab → .dm-side.
+    var sec = document.querySelector('section.view[data-view="messages"]');
+    var header = sec && sec.querySelector(".view-header");
+    var headerActions = header && header.querySelector(".view-actions");
+    if (header && !headerActions) {
+      headerActions = document.createElement("div");
+      headerActions.className = "view-actions dm-header-actions";
+      header.appendChild(headerActions);
+    }
+    if (headerActions) {
+      headerActions.insertBefore(bar, headerActions.firstChild);
+    } else {
+      var tabsRow = sec && sec.querySelector(".dm-tabs-search-row-v579");
+      if (tabsRow) tabsRow.appendChild(bar);
+      else { var searchRow = side.querySelector(".dm-side-search"); side.insertBefore(bar, searchRow || side.firstChild); }
+    }
+  }
+  return bar;
+}
+
+// Pindahkan pill status sync (#dmSyncStatus) dari dalam .lib-header-text ke
+// .view-actions di kanan .view-header — biar sejajar gaya header halaman lain
+// (mis. pill "LIVE" di Statistik). Idempotent.
+function _dmRelocateSyncPill() {
+  var sec = document.querySelector('section.view[data-view="messages"]');
+  if (!sec) return;
+  var header = sec.querySelector(".view-header");
+  var pill = document.getElementById("dmSyncStatus");
+  if (!header || !pill) return;
+  var actions = header.querySelector(".view-actions");
+  if (!actions) {
+    actions = document.createElement("div");
+    actions.className = "view-actions dm-header-actions";
+    header.appendChild(actions);
+  }
+  if (pill.parentElement !== actions) actions.appendChild(pill);
+}
+
+// Wire back button (#dmChatBack) — tombol back di chat header. Dua-panel
+// persisten (2026-06-12): deselect thread → kembalikan reading pane ke
+// placeholder "Pilih percakapan" (BUKAN collapse ke list-only). Di mobile,
+// remove .dm-show-chat memicu slide kembali ke daftar full-screen. Tombol ini
+// disembunyikan di desktop via CSS (afordansi mobile-only).
 document.addEventListener("click", function (e) {
   var btn = e.target.closest && e.target.closest("#dmChatBack");
   if (!btn) return;
   e.preventDefault();
-  var lay = document.getElementById("dmLayout");
-  if (lay) lay.classList.add("dm-list-only");
+  // Single-column (2026-06-12): back → kembali ke DAFTAR full-width. Cukup
+  // lepas body.dm-show-chat (CSS swap daftar↔chat); tak ada reading pane.
   if (typeof dmState !== "undefined") dmState.openIdx = null;
   var activeP = document.getElementById("dmChatActive");
+  var emptyP = document.getElementById("dmChatEmpty");
   if (activeP) activeP.hidden = true;
-  // Mobile: keluar dari chat view mode
+  if (emptyP) emptyP.hidden = true;
   document.body.classList.remove("dm-show-chat");
   // Re-render list supaya tidak ada thread yg ke-mark active highlighted
   if (typeof renderDmList === "function") renderDmList();
@@ -41987,6 +42990,38 @@ document.addEventListener("click", function (e) {
 function renderDmBroadcast() {
   var wrap = document.getElementById("dmBroadcastList");
   if (!wrap) return;
+  // 5j: entri "Compose Broadcast" admin-only di atas feed broadcast.
+  var bar = document.getElementById("dmAdminBroadcastBar");
+  var isAdmin = (typeof user !== "undefined" && user && user.role === "admin");
+  if (isAdmin) {
+    var recCount = 0;
+    try {
+      recCount = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
+        .filter(function (a) { return a && a.email && !(typeof isAllowedAdminEmail === "function" && isAllowedAdminEmail(a.email)); }).length;
+    } catch (e) {}
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "dm-admin-bc-bar";
+      bar.id = "dmAdminBroadcastBar";
+      wrap.parentNode.insertBefore(bar, wrap);
+    }
+    bar.innerHTML =
+      '<div class="dm-admin-bc-text"><strong>📢 Compose Broadcast</strong>' +
+      '<small>Kirim pengumuman ke semua user terdaftar (' + recCount + ' penerima). Read-only di sisi user.</small></div>' +
+      '<button type="button" class="btn primary small" id="dmComposeBroadcastBtn">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> Tulis Broadcast</button>';
+  } else {
+    // Non-admin: catatan read-only di atas feed pengumuman (gaya notifikasi).
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "dmAdminBroadcastBar";
+      wrap.parentNode.insertBefore(bar, wrap);
+    }
+    bar.className = "dm-bc-note";
+    bar.innerHTML =
+      '<span class="dm-bc-note-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>' +
+      '<span>Pengumuman resmi dari tim Playly. <b>Read-only</b> — tidak bisa dibalas.</span>';
+  }
   var all = (typeof state !== "undefined" && Array.isArray(state.messages)) ? state.messages : [];
   var bc = all.filter(function (m) { return m.isBroadcast; });
   var items = [];
@@ -41995,31 +43030,37 @@ function renderDmBroadcast() {
     var fromAdmin = hist.filter(function (h) { return h && h.from !== "me"; });
     if (fromAdmin.length) {
       fromAdmin.forEach(function (h) {
-        items.push({ name: m.name, ts: h.ts || m.ts, text: h.text || "[pesan]" });
+        items.push({ name: m.name, ts: h.ts || m.ts, text: h.text || "[pesan]", unread: !!m.unread });
       });
     } else {
-      items.push({ name: m.name, ts: m.ts, text: m.preview || "[broadcast]" });
+      items.push({ name: m.name, ts: m.ts, text: m.preview || "[broadcast]", unread: !!m.unread });
     }
   });
   items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-  if (!items.length) {
-    wrap.innerHTML = '<div class="dm-bc-empty">Belum ada broadcast dari admin.</div>';
-    return;
-  }
-  var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M10 6l9-3v18l-9-3"/><path d="M14 9a4 4 0 0 1 0 6"/></svg>';
   function esc(s) {
     return (typeof escapeHtml === "function")
       ? escapeHtml(String(s))
       : String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]); });
   }
+  if (!items.length) {
+    wrap.innerHTML =
+      '<div class="dm-bc-empty"><div class="dm-bc-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>' +
+      '<p><b>Belum ada pengumuman</b></p><span>Pengumuman resmi dari tim Playly akan muncul di sini.</span></div>';
+    return;
+  }
+  var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
+  // Render gaya NOTIFIKASI (req user 2026-06-12): ikon bulat + teks pengumuman
+  // + waktu, read-only (tak bisa diklik jadi chat).
   wrap.innerHTML = items.map(function (it) {
     var tlabel = (typeof chatRelTime === "function") ? chatRelTime(it.ts) : "";
-    return '<article class="dm-bc-card">' +
-      '<div class="dm-bc-head"><span class="dm-bc-ico" aria-hidden="true">' + ico + '</span>' +
-      '<div class="dm-bc-meta"><strong>' + esc(it.name || "Admin Playly") + '</strong>' +
-      '<span class="dm-bc-badge">ADMIN</span></div>' +
-      '<span class="dm-bc-time">' + esc(tlabel) + '</span></div>' +
-      '<div class="dm-bc-body">' + esc(it.text).replace(/\n/g, "<br>") + '</div></article>';
+    return '<div class="dm-bc-item' + (it.unread ? ' is-unread' : '') + '">' +
+      '<span class="dm-bc-item-ico" aria-hidden="true">' + ico + '</span>' +
+      '<div class="dm-bc-item-main">' +
+        '<div class="dm-bc-item-top"><strong>' + esc(it.name || "Admin Playly") + '</strong>' +
+        '<span class="dm-bc-badge">ADMIN</span>' +
+        '<span class="dm-bc-item-time">' + esc(tlabel) + '</span></div>' +
+        '<p class="dm-bc-item-text">' + esc(it.text).replace(/\n/g, "<br>") + '</p>' +
+      '</div></div>';
   }).join("");
 }
 
@@ -42038,7 +43079,15 @@ function renderDmOverview() {
   var sortByTs = function (a, b) { return (b.ts || 0) - (a.ts || 0); };
   dmList.sort(sortByTs); bcList.sort(sortByTs); reqList.sort(sortByTs); arcList.sort(sortByTs);
 
-  var set = function (id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
+  // Sembunyikan badge saat 0 (pola webmail). CSS .inbox-col-count pakai display !important,
+  // jadi hide harus inline !important; saat ada isi, hapus inline supaya balik ke CSS.
+  var set = function (id, n) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n;
+    if (n) el.style.removeProperty("display");
+    else el.style.setProperty("display", "none", "important");
+  };
   set("dmOvCountDm",  dmList.length);
   set("dmOvCountBc",  bcList.length);
   set("dmOvCountReq", reqList.length);
@@ -42278,36 +43327,60 @@ function openChatUserPicker() {
   modal.id = "__chatUserPicker";
   modal.innerHTML = `
     <div class="hs-popup-backdrop" data-cup-close></div>
-    <div class="hs-popup-panel email-user-picker-panel">
-      <button type="button" class="hs-popup-close" data-cup-close aria-label="Close">✕</button>
-      <h3 class="email-recipient-title">💬 New Message</h3>
-      <p class="email-recipient-desc">Choose a user to chat with.</p>
+    <div class="hs-popup-panel email-user-picker-panel" role="dialog" aria-modal="true" aria-label="Pesan Baru">
+      <button type="button" class="hs-popup-close" data-cup-close aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h3 class="email-recipient-title cup-title">
+        <span class="cup-title-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <span>Pesan Baru</span>
+      </h3>
+      <p class="email-recipient-desc">Cari nama lalu pilih orang yang ingin kamu kirimi pesan.</p>
       <div class="email-user-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="text" id="chatUserSearchInput" placeholder="Search name or username..." autocomplete="off"/>
+        <input type="text" id="chatUserSearchInput" placeholder="Cari nama atau username…" autocomplete="off"/>
       </div>
       <div class="email-user-list" id="chatUserPickerList"></div>
     </div>
   `;
   document.body.appendChild(modal);
   requestAnimationFrame(() => modal.classList.add("show"));
-  modal.querySelectorAll("[data-cup-close]").forEach(b => b.addEventListener("click", () => modal.remove()));
+  // Tutup: tombol/backdrop + tombol Escape (req perbaikan popup 2026-06-12).
+  const closePicker = () => { modal.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") closePicker(); };
+  document.addEventListener("keydown", onKey);
+  modal.querySelectorAll("[data-cup-close]").forEach(b => b.addEventListener("click", closePicker));
   const input = modal.querySelector("#chatUserSearchInput");
   const list = modal.querySelector("#chatUserPickerList");
+  const me = (user && user.username ? user.username : "").toLowerCase();
+  const follow = new Set((state && Array.isArray(state.followingCreators) ? state.followingCreators : []).map(x => String(x).toLowerCase()));
   const renderList = () => {
     const q = (input.value || "").toLowerCase().trim();
-    const accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
-      .filter(a => a.username !== user?.username)
-      .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q))
-      .slice(0, 30);
+    // Exclude: diri sendiri, admin/super-admin (tak boleh di-DM), akun
+    // demo/dummy (konsisten dgn daftar kontak DM) — req perbaikan 2026-06-12.
+    let accounts = (typeof getAllAccounts === "function" ? getAllAccounts() : [])
+      .filter(a => a && a.username && String(a.username).toLowerCase() !== me)
+      .filter(a => !(typeof _dmIsAdminAccount === "function" && _dmIsAdminAccount(a)))
+      .filter(a => !(typeof isDemoAccount === "function" && isDemoAccount(a)))
+      .filter(a => !q || (a.name || "").toLowerCase().includes(q) || (a.username || "").toLowerCase().includes(q));
+    // Yang di-follow diprioritaskan di atas, lalu alfabetis (konsisten kontak DM).
+    accounts.sort((a, b) => {
+      const fa = follow.has(String(a.username).toLowerCase()) ? 0 : 1;
+      const fb = follow.has(String(b.username).toLowerCase()) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return String(a.name || a.username).localeCompare(String(b.name || b.username));
+    });
+    accounts = accounts.slice(0, 30);
     if (!accounts.length) {
-      list.innerHTML = `<div class="email-user-empty">${q ? "Tidak ada user yang cocok." : "Belum ada user lain."}</div>`;
+      list.innerHTML = `<div class="email-user-empty">${q ? "Tidak ada user yang cocok." : "Belum ada user lain untuk diajak chat."}</div>`;
       return;
     }
     list.innerHTML = accounts.map(a => {
       const label = a.name || a.username || "U";
       const init = String(label).split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "U";
       const handle = escapeHtml(a.username || "");
+      const isFollow = follow.has(String(a.username).toLowerCase());
+      const followTag = isFollow ? `<span class="cup-follow-tag">Mengikuti</span>` : "";
       const avatar = a.avatar
         ? `<div class="avatar"><img src="${escapeHtml(a.avatar)}" alt=""/></div>`
         : `<div class="avatar"><span>${escapeHtml(init)}</span></div>`;
@@ -42315,7 +43388,7 @@ function openChatUserPicker() {
         <button type="button" class="email-user-item" data-cup-pick="${handle}">
           ${avatar}
           <div class="info">
-            <strong>${escapeHtml(label)}</strong>
+            <strong>${escapeHtml(label)}${followTag}</strong>
             <small>@${handle}</small>
           </div>
         </button>
@@ -42324,7 +43397,7 @@ function openChatUserPicker() {
     list.querySelectorAll("[data-cup-pick]").forEach(b => {
       b.addEventListener("click", () => {
         const uname = b.dataset.cupPick;
-        modal.remove();
+        closePicker();
         if (typeof startChatWithUser === "function") startChatWithUser(uname);
       });
     });
@@ -54108,10 +55181,8 @@ async function renderStoragePage() {
 function setStatsTab(tab) {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
-  // v595 (2026-05-28): drop "pencapaian" tab — section dihapus dari Statistik.
-  // v742: tambah "traffic" & "geo" supaya sub-item sidebar bisa filter ke
-  // Sumber Trafik / Audiens juga.
-  const valid = ["all", "ringkasan", "top-video", "grafik", "traffic", "geo"];
+  // v604 (2026-06-02): re-add "pencapaian" tab — Milestone section kembali (4d).
+  const valid = ["all", "ringkasan", "top-video", "grafik", "pencapaian"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.statsTab = key;
   if (typeof state === "object" && state) state.statsTab = key;
@@ -54375,25 +55446,36 @@ function maybeOfferSaveCard() {
     }
     popover.dataset.composeMode = mode;
     popover.hidden = false;
-    // Anchor popover ke button — position fixed via getBoundingClientRect
-    if (anchorBtn) {
-      const rect = anchorBtn.getBoundingClientRect();
-      const popoverWidth = 360;
-      const margin = 8;
-      // Default: align right edge of popover ke right edge of button (popover open ke kiri)
-      let left = rect.right - popoverWidth;
-      let top = rect.bottom + margin;
-      // Clamp ke viewport
-      if (left < 16) left = 16;
-      if (left + popoverWidth > window.innerWidth - 16) left = window.innerWidth - popoverWidth - 16;
-      // Auto-flip ke atas kalau ga muat di bawah
-      const popoverHeight = 480; // estimasi
-      if (top + popoverHeight > window.innerHeight - 16) {
-        top = rect.top - popoverHeight - margin;
-        if (top < 16) top = 16;
+    // 5h: di mobile (<=600px) render sebagai bottom-sheet full-width (lihat CSS
+    // .inbox-picker-popover di media query). JS anchor di-skip + inline style
+    // di-clear supaya CSS sheet yang berlaku & tidak pernah overflow.
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (isMobile) {
+      popover.classList.add("inbox-picker-sheet");
+      popover.style.left = "";
+      popover.style.top = "";
+    } else {
+      popover.classList.remove("inbox-picker-sheet");
+      // Anchor popover ke button — position fixed via getBoundingClientRect
+      if (anchorBtn) {
+        const rect = anchorBtn.getBoundingClientRect();
+        const popoverWidth = 360;
+        const margin = 8;
+        // Default: align right edge of popover ke right edge of button (popover open ke kiri)
+        let left = rect.right - popoverWidth;
+        let top = rect.bottom + margin;
+        // Clamp ke viewport (kanan, kiri, atas, bawah)
+        if (left + popoverWidth > window.innerWidth - 16) left = window.innerWidth - popoverWidth - 16;
+        if (left < 16) left = 16;
+        // Auto-flip ke atas kalau ga muat di bawah
+        const popoverHeight = Math.min(480, window.innerHeight - 32);
+        if (top + popoverHeight > window.innerHeight - 16) {
+          top = rect.top - popoverHeight - margin;
+          if (top < 16) top = 16;
+        }
+        popover.style.left = left + "px";
+        popover.style.top = top + "px";
       }
-      popover.style.left = left + "px";
-      popover.style.top = top + "px";
     }
     renderInboxPickerList("");
     setTimeout(() => document.getElementById("inboxPickerSearch")?.focus(), 80);

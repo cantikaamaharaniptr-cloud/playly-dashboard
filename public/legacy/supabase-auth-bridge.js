@@ -176,6 +176,17 @@
     }, STATE_DEBOUNCE_MS);
   }
 
+  // 5k: status sync terakhir yang JUJUR — di-update tiap flushState. Dipakai UI
+  // (inbox) untuk menampilkan "Tersinkron ✓" vs "Tersimpan lokal" tanpa menebak.
+  //   state: "synced" | "local" | "pending"
+  var lastSyncStatus = { state: "pending", reason: null, at: 0 };
+  function emitSyncStatus(stateStr, reason) {
+    lastSyncStatus = { state: stateStr, reason: reason || null, at: Date.now() };
+    try {
+      window.dispatchEvent(new CustomEvent("playly:sync-status", { detail: lastSyncStatus }));
+    } catch (_) {}
+  }
+
   async function flushState(state, serialized) {
     try {
       var resp = await fetch(STATE_ENDPOINT, {
@@ -193,6 +204,7 @@
       if (resp.ok && data && data.ok) {
         lastStateSerialized = serialized;
         lastStateAt = Date.now();
+        emitSyncStatus("synced", null);
         return { synced: true, size: data.size || serialized.length };
       }
       var reason = (data && data.error) || "http_" + resp.status;
@@ -213,9 +225,11 @@
         console.warn("[supabase-bridge] state too large:", data);
       }
       console.warn("[supabase-bridge] state sync failed:", reason);
+      emitSyncStatus("local", reason);
       return { synced: false, reason: reason };
     } catch (err) {
       console.warn("[supabase-bridge] state sync exception:", err);
+      emitSyncStatus("local", String(err));
       return { synced: false, reason: String(err) };
     }
   }
@@ -274,5 +288,7 @@
     syncState: syncState,
     pullState: pullState,
     pullProfile: pullProfile,
+    // 5k: status sync terakhir yang jujur (synced/local/pending).
+    getSyncStatus: function () { return lastSyncStatus; },
   };
 })();

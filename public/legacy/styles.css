@@ -1423,6 +1423,26 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
   color: var(--muted);
   padding: 28px 12px;
 }
+/* Picker "Pesan Baru" — polish (req perbaikan popup 2026-06-12). */
+.cup-title { display: flex; align-items: center; gap: 10px; }
+.cup-title-ico {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2);
+}
+.cup-title-ico svg { width: 16px; height: 16px; }
+.hs-popup-close svg { width: 15px; height: 15px; }
+/* Tag "Mengikuti" di samping nama — bedakan kontak yang sudah di-follow. */
+.cup-follow-tag {
+  display: inline-block; margin-left: 7px; padding: 1px 7px; vertical-align: middle;
+  border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .02em;
+  background: var(--primary-soft, rgba(109,41,50,.18)); color: var(--text-2);
+  border: 1px solid var(--border);
+}
+/* Fokus ring NETRAL cream (bukan wine/gold) — sesuai aturan dashboard user. */
+.email-user-search:focus-within { border-color: rgba(232,216,196,.4); }
+.email-user-item:focus-visible { outline: 2px solid rgba(232,216,196,.4); outline-offset: 1px; }
+.hs-popup-close:focus-visible { outline: 2px solid rgba(232,216,196,.4); outline-offset: 1px; }
 
 /* === EMAIL: compose to user === */
 .email-user-compose-panel {
@@ -10726,15 +10746,43 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   color: var(--text);
 }
 .dm-chat-back svg { width: 18px; height: 18px; }
-/* Show back button hanya saat layout NON-list-only (chat panel visible) */
-.dm-layout:not(.dm-list-only) .dm-chat-back {
-  display: inline-flex;
-  align-items: center;
+/* SINGLE-COLUMN DM (req user 2026-06-12: JANGAN dua-panel/Instagram). Inbox
+   messenger jadi 1 kolom: DAFTAR nama (kontak + thread) full-width; klik nama →
+   panel chat muncul FULL menggantikan daftar; tombol back → daftar.
+   Mekanisme via body.dm-show-chat (di-toggle openDmChat / back).
+   Catatan: aturan mobile (@media max-width:768px) pakai display:flex!important
+   + slide transform → tetap menang di mobile (slide), aturan di bawah hanya
+   efektif di desktop. */
+/* List view = DM. Update req user 2026-06-12: isi PENUH lebar area konten
+   (konsisten dgn halaman Broadcast) — bukan lagi kolom sempit 420px di pojok. */
+section.view[data-view="messages"] #dmLayout.dm-layout {
+  grid-template-columns: 1fr;
+  max-width: none;
+  width: 100%;
+  height: auto;
+  min-height: 300px;
 }
+section.view[data-view="messages"] #dmLayout > .dm-chat { display: none; }
+/* Chat view = full-width, tinggi penuh (gantikan kolom daftar). */
+body.dm-show-chat section.view[data-view="messages"] #dmLayout.dm-layout {
+  max-width: none;
+  height: calc(100vh - 200px);
+}
+body.dm-show-chat section.view[data-view="messages"] #dmLayout > .dm-side { display: none; }
+body.dm-show-chat section.view[data-view="messages"] #dmLayout > .dm-chat { display: flex; }
+/* Back button: tampil saat chat terbuka (desktop & mobile), sembunyi di daftar. */
+.dm-chat-back { display: none; }
+body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: center; }
 
 /* === DM "Semua" overview — kartu per kategori gaya admin Inbox
    (per request user 2026-05-16). Toggle hidden via JS. === */
 .dm-overview[hidden] { display: none; }
+/* Samakan ikon hardcode (chip header/tab/kartu/empty) ke stroke 1.6 — seragam
+   dgn ikon Iconsax (.ui-ico) app. Scoped ke <section> konten, kecuali ui-ico/picon. */
+section[data-view="messages"] svg:not(.ui-ico):not(.picon) { stroke-width: 1.6; }
+/* Ikon JUDUL (chip header) lebih besar dari ikon section di bawahnya — hierarki jelas. */
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg { width: 52px; height: 52px; }
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 28px; height: 28px; }
 .dm-ov-grid {
   grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)) !important;
   margin-top: 16px;
@@ -10853,6 +10901,46 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   word-break: break-word;
 }
 
+/* === Broadcast = FEED NOTIFIKASI (req user 2026-06-12) === */
+/* Broadcast = feed notifikasi: isi PENUH lebar area konten (req user
+   2026-06-12: jangan setengah layar, harus se-halaman penuh). Tanpa cap. */
+#dmBroadcastView.dm-broadcast { margin-top: 16px; max-width: none; width: 100%; }
+.dm-bc-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px; margin-bottom: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  font-size: 12.5px; color: var(--text-2, var(--muted)); line-height: 1.45;
+}
+.dm-bc-note-ico { flex-shrink: 0; color: var(--primary); display: inline-flex; }
+.dm-bc-note-ico svg { width: 18px; height: 18px; }
+.dm-bc-note b { color: var(--text); }
+.dm-bc-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-elev); border: 1px solid var(--border);
+}
+.dm-bc-item.is-unread {
+  background: rgba(109, 41, 50, .14);
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+}
+.dm-bc-item-ico {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  color: var(--primary);
+}
+.dm-bc-item-ico svg { width: 19px; height: 19px; }
+.dm-bc-item-main { flex: 1; min-width: 0; }
+.dm-bc-item-top { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+.dm-bc-item-top strong { font-size: 13px; font-weight: 700; color: var(--text); }
+.dm-bc-item-time { margin-left: auto; font-size: 11px; color: var(--text-2, var(--muted)); flex-shrink: 0; }
+.dm-bc-item-text {
+  margin: 0; font-size: 13px; line-height: 1.5; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+.dm-bc-empty-ico { color: var(--muted); margin-bottom: 6px; }
+.dm-bc-empty-ico svg { width: 34px; height: 34px; }
+
 /* === LEFT SIDE: thread list === */
 .dm-side {
   display: flex;
@@ -10860,25 +10948,192 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   border-right: 1px solid var(--border);
   min-width: 0;
 }
+/* "+ Pesan Baru" compose button — di-inject di atas search panel daftar
+   (unified split 2026-06-12). Solid primary (tidak kena rule outline global). */
+.dm-new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 14px 0;
+  padding: 10px 14px;
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s var(--ease), transform .15s var(--ease);
+}
+.dm-new-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.dm-new-chat-btn svg { width: 16px; height: 16px; }
+.dm-new-chat-btn[hidden] { display: none !important; }
+/* Banner konteks kategori (Broadcast/Permintaan/Arsip) — beda isi tiap halaman. */
+.dm-cat-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 14px 12px;
+  padding: 10px 13px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-2, var(--muted));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.dm-cat-banner-ico { flex-shrink: 0; display: inline-flex; margin-top: 1px; color: var(--text-2, var(--muted)); }
+.dm-cat-banner-ico svg { width: 15px; height: 15px; display: block; }
+.dm-cat-banner-txt { flex: 1; min-width: 0; }
+.dm-cat-banner[hidden] { display: none !important; }
+/* Permintaan = aksi → banner ber-aksen wine; Arsip = penyimpanan → banner
+   muted/datar (req 2026-06-12, bedakan tegas dgn Permintaan). */
+.dm-cat-banner--requests {
+  background: rgba(109,41,50,.14);
+  border-color: rgba(109,41,50,.34);
+  border-left: 3px solid var(--primary);
+  color: var(--text);
+}
+.dm-cat-banner--archived {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-2, var(--muted));
+  opacity: .85;
+}
+/* Baris KONTAK di tab DM (nama user belum ada thread) — req user 2026-06-12. */
+.dm-contacts-head {
+  padding: 14px 16px 6px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-2, var(--muted));
+}
+.dm-contact-row { cursor: pointer; }
+.dm-contact-row .dm-contact-hint { color: var(--text-2, var(--muted)); }
+.dm-contact-start {
+  margin-left: auto; align-self: center; flex-shrink: 0;
+  font-size: 11px; font-weight: 600; color: var(--primary);
+  padding: 3px 11px; border: 1px solid var(--border); border-radius: 999px;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dm-contact-row:hover .dm-contact-start { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* Permintaan vs Arsip — sengaja DIBEDAKAN tegas (req 2026-06-12):
+   Permintaan = KARTU keputusan, prominent (aksen wine + elevated, butuh aksi);
+   Arsip      = DAFTAR penyimpanan, muted/compact + ikon restore (sekunder). */
+
+/* --- Permintaan: kartu aksi prominent --- */
+.dm-thread.dm-req-card {
+  flex-direction: column; align-items: stretch; gap: 11px; cursor: pointer;
+  position: relative;
+  padding: 13px 15px 13px 18px;
+  background: rgba(109,41,50,.12);
+  border: 1px solid rgba(109,41,50,.32);
+  border-left: 3px solid var(--primary);
+  border-radius: 13px;
+}
+.dm-thread.dm-req-card:hover { background: rgba(109,41,50,.18); border-color: rgba(109,41,50,.45); }
+.dm-req-card .dm-req-head { display: flex; align-items: center; gap: 12px; }
+.dm-thread-actions { display: flex; gap: 8px; }
+.dm-act {
+  flex: 1;
+  padding: 9px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+  text-align: center; cursor: pointer; border: 1px solid var(--border);
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dm-act-accept { background: var(--primary); color: #fff; border-color: var(--primary); }
+.dm-act-accept:hover { background: var(--primary-hover); }
+.dm-act-decline { background: transparent; color: var(--text-2, var(--muted)); }
+.dm-act-decline:hover { border-color: var(--danger, #c0392b); color: var(--danger, #c0392b); }
+
+/* --- Arsip: baris penyimpanan muted/compact + ikon restore --- */
+.dm-thread.dm-arc-row {
+  cursor: pointer; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 10px;
+  background: transparent; border: 1px solid transparent;
+}
+.dm-thread.dm-arc-row:hover { background: rgba(255,255,255,.03); border-color: var(--border); }
+.dm-thread.dm-arc-row .avatar { width: 38px; height: 38px; opacity: .55; filter: grayscale(.35); }
+.dm-thread.dm-arc-row .dm-thread-info { opacity: .6; }
+.dm-thread.dm-arc-row .dm-thread-top strong { font-weight: 600; }
+.dm-arc-restore {
+  margin-left: auto; flex-shrink: 0;
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border-radius: 50%; cursor: pointer;
+  background: transparent; color: var(--text-2, var(--muted));
+  border: 1px solid var(--border);
+  transition: background .12s, color .12s, border-color .12s, opacity .12s;
+  opacity: .8;
+}
+.dm-arc-restore svg { width: 17px; height: 17px; }
+.dm-arc-restore:hover { background: var(--primary); color: #fff; border-color: var(--primary); opacity: 1; }
+.dm-thread.dm-arc-row:hover .dm-arc-restore { opacity: 1; }
+/* Opsi 1 (2026-06-12): #dmOverview DIPAKAI LAGI sebagai landing (kartu
+   ringkasan kategori) — visibilitas dikelola _dmApplyView ([hidden]). Hanya
+   view broadcast terpisah (#dmBroadcastView) DIPAKAI LAGI (req user 2026-06-12)
+   sebagai halaman feed notifikasi pengumuman read-only — visibilitas dikelola
+   _dmApplyView ([hidden]). */
+/* Toolbar aksi DM (req user 2026-06-12): 2 tombol segment "Pesan Baru" + "Cari"
+   di KANAN baris tab — DI LUAR kartu DM ("jangan di dalam kolom"). Didorong ke
+   kanan oleh .dm-section-tabs (flex:1). */
+.dm-actions-bar {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.dm-actions-bar[hidden] { display: none !important; }
+.dm-act-seg {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: 10px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s, transform .12s;
+}
+.dm-act-seg svg { width: 16px; height: 16px; }
+.dm-act-seg:hover { background: var(--bg-elev); transform: translateY(-1px); }
+/* "Pesan Baru" = aksi utama (solid wine). */
+.dm-act-seg-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.dm-act-seg-primary:hover { background: var(--primary-hover); }
+/* "Cari" aktif (kotak cari terbuka) → highlight netral cream. */
+.dm-act-seg.is-active { border-color: rgba(232, 216, 196, .5); background: var(--bg-elev); color: var(--text); }
+.dm-act-seg:focus-visible { outline: 2px solid rgba(232, 216, 196, .4); outline-offset: 1px; }
+/* Sembunyikan search GLOBAL topbar khusus di halaman Pesan (req user
+   2026-06-12): tak relevan utk inbox, dan biar tak terlihat 2 kotak cari.
+   Halaman lain tetap punya search global. Selector di-naikkan specificity-nya
+   (html + :not(.auth-mode)) supaya menang dari rule responsif
+   `html body:not(.auth-mode) .topbar .topbar-search { display:flex !important }`. */
+html body[data-active-view="messages"]:not(.auth-mode) .topbar .topbar-search { display: none !important; }
+/* Karena search (flex:1) yang dulu mendorong aksi ke kanan kini hilang, jaga
+   aksi topbar tetap rata kanan di halaman Pesan. */
+html body[data-active-view="messages"]:not(.auth-mode) .topbar .topbar-actions { margin-left: auto !important; }
+
+/* Kotak cari = box TERPISAH (req user 2026-06-12: pisahkan, jangan digabung
+   dgn tombol "Pesan baru" / daftar). Punya border+bg sendiri + margin atas &
+   bawah supaya berdiri sendiri. Default tersembunyi di DM (toggle via "Cari"). */
+.dm-side-search[hidden] { display: none !important; }
 .dm-side-search {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  gap: 9px;
+  margin: 12px 14px;
+  padding: 9px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 .dm-side-search svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
 .dm-side-search input {
   flex: 1; min-width: 0;
-  padding: 8px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  border: 0;
   font-size: 13px;
   color: var(--text);
   outline: none;
 }
-.dm-side-search input:focus { border-color: var(--primary); }
+/* Fokus ring NETRAL cream di container (bukan wine/gold) — aturan dashboard. */
+.dm-side-search:focus-within { border-color: rgba(232, 216, 196, .4); }
 
 .dm-side-tabs {
   display: flex;
@@ -10943,11 +11198,27 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   padding: 6px;
 }
 .dm-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  min-height: 240px;
   padding: 32px 16px;
   text-align: center;
   font-size: 12.5px;
   color: var(--muted);
 }
+.dm-list-empty-ico {
+  display: grid; place-items: center;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  border: 1px solid rgba(232, 216, 196, .14);
+}
+.dm-list-empty-ico svg { width: 28px; height: 28px; color: var(--accent); }
+.dm-list-empty-txt { margin: 0; max-width: 260px; line-height: 1.5; }
 .dm-thread {
   display: flex;
   align-items: center;
@@ -10962,7 +11233,13 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
 .dm-thread.is-active {
   background: var(--primary-soft);
 }
-.dm-thread.is-unread { background: rgba(109, 41, 50, .08); }
+/* Read vs UNREAD — beda warna jelas (req user 2026-06-12). Unread = bg wine +
+   garis aksen kiri + nama tebal + waktu aksen wine. Read = polos/muted. */
+.dm-thread.is-unread {
+  background: rgba(109, 41, 50, .16);
+  border-left: 3px solid var(--primary);
+  padding-left: 9px;   /* kompensasi border 3px supaya konten tak geser */
+}
 .dm-thread .avatar { width: 44px; height: 44px; flex-shrink: 0; font-size: 13px; }
 .dm-thread-info {
   flex: 1;
@@ -10997,10 +11274,29 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Beda di WARNA TEKS obrolan (req user 2026-06-12), BUKAN warna jam.
+   Unread = teks terang (nama + preview); read = teks muted. Jam tetap muted. */
 .dm-thread.is-unread .dm-thread-preview {
   color: var(--text);
   font-weight: 600;
 }
+.dm-thread.is-unread .dm-thread-top strong { font-weight: 800; color: var(--text); }
+/* Read (sudah dilihat) — teks nama + preview di-mute (warna redup), supaya
+   beda jelas dgn unread yg terang. Scoped ke baris thread ([data-dm-thread])
+   saja, BUKAN baris kontak. !important utk menang dari override warna lain. */
+/* Pakai OPACITY (theme-agnostic): di tema gelap var(--muted) resolve ke cream
+   juga, jadi beda warna via opacity lebih andal & aman utk tema terang/gelap.
+   Read = teks di-redupkan; unread = penuh + tebal. */
+.dm-thread[data-dm-thread]:not(.is-unread):not(.is-active) .dm-thread-top strong {
+  opacity: .62 !important;
+  font-weight: 600;
+}
+.dm-thread[data-dm-thread]:not(.is-unread):not(.is-active) .dm-thread-preview {
+  opacity: .55 !important;
+}
+/* Unread — teks penuh (terang) + tebal. */
+.dm-thread.is-unread .dm-thread-top strong,
+.dm-thread.is-unread .dm-thread-preview { opacity: 1 !important; }
 .dm-unread-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
@@ -11228,6 +11524,28 @@ section.view:not(.focus-mode) .messages-3col .ml-col[data-focus-target="archived
   box-shadow: none !important;
 }
 .dm-chat-input .btn { flex-shrink: 0; }
+/* Kirim (send) button — restore SOLID primary. Base .btn.primary is solid
+   (bg var(--primary), white text) but a global outline rule overrides it to
+   transparent+wine-outline → low contrast on the wine chat bg. Scoped override
+   matches the .btn.primary base intent + the .ar-modal precedent. User context
+   = wine (DM composer is user-only). */
+body:not([data-role="admin"]) .dm-chat-input .btn.primary,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:focus,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:focus-visible,
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:active {
+  background: var(--primary) !important;
+  border: 1px solid transparent !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .35) !important;
+  transform: none !important;
+}
+body:not([data-role="admin"]) .dm-chat-input .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(109, 41, 50, .45) !important;
+}
 
 @media (max-width: 768px) {
   .dm-layout {
@@ -34410,25 +34728,46 @@ section.view.user-only[data-view="settings"] .grid-2 > .card {
   .settings-grid, .grid-2 { grid-template-columns: 1fr !important; gap: 12px; }
 }
 
-/* === DM LAYOUT (Messages) === */
+/* === DM LAYOUT (Messages) — mobile slide transition (5f, 2026-06-02) ===
+   Ganti instant display:none/flex toggle + hack back-arrow ::before (40px klik
+   kiri) dgn slide transform yang mulus. List & chat di-stack absolute dlm
+   .dm-layout; chat geser masuk dari kanan saat body.dm-show-chat aktif.
+   Back button nyata = #dmChatBack (selalu tampil di mobile saat chat open). */
 @media (max-width: 768px) {
   .dm-layout {
     grid-template-columns: 1fr !important;
     height: calc(100vh - 160px);
+    position: relative;
+    overflow: hidden;
   }
-  /* Default: tampilkan list. Saat user pilih thread, tampilkan chat panel. */
-  .dm-layout .dm-side { display: flex; }
-  .dm-layout .dm-chat { display: none; }
-  body.dm-show-chat .dm-layout .dm-side { display: none; }
-  body.dm-show-chat .dm-layout .dm-chat { display: flex; }
-  /* Tombol back di header chat untuk kembali ke list */
-  .dm-chat-header::before {
-    content: "‹";
-    font-size: 22px;
-    margin-right: 8px;
-    cursor: pointer;
-    color: var(--muted);
+  .dm-layout .dm-side,
+  .dm-layout .dm-chat {
+    display: flex !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+    will-change: transform;
   }
+  /* Default (list view): list di tempat, chat menunggu di kanan layar. */
+  .dm-layout .dm-side  { transform: translateX(0); z-index: 1; }
+  .dm-layout .dm-chat  { transform: translateX(100%); z-index: 2; }
+  /* Chat view: list geser sedikit ke kiri (parallax halus), chat masuk. */
+  body.dm-show-chat .dm-layout .dm-side { transform: translateX(-22%); }
+  body.dm-show-chat .dm-layout .dm-chat { transform: translateX(0); }
+  /* List-only mode tetap: pastikan chat tdk nyangkut visible saat blm pilih. */
+  .dm-layout.dm-list-only .dm-chat { transform: translateX(100%); }
+  /* Back button nyata selalu tampil di mobile saat ada chat aktif. */
+  .dm-layout:not(.dm-list-only) .dm-chat-back { display: inline-flex; }
+  /* Full-screen chat di mobile (2026-06-12): saat chat dibuka, sembunyikan
+     header "Semua Pesan" + baris tab + global search supaya chat ambil-alih
+     seluruh tinggi layar (HP pendek → ruang chat maksimal). Scoped ke
+     [data-view="messages"] + body.dm-show-chat: hanya saat chat benar-benar
+     dibuka, dan tidak menyentuh header view lain (dm-show-chat bisa persist
+     lintas view). Back button (#dmChatBack) memunculkan kembali list + header. */
+  body.dm-show-chat [data-view="messages"] .view-header,
+  body.dm-show-chat [data-view="messages"] .dm-tabs-search-row-v579 { display: none !important; }
+  body.dm-show-chat [data-view="messages"] #dmLayout.dm-layout { height: calc(100dvh - 56px) !important; }
 }
 
 /* === STATS CHART === */
@@ -46465,39 +46804,92 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
   letter-spacing: 0;
 }
 
-/* === DM SECTION TABS (item 12) === */
+/* === DM SECTION TABS === */
+/* Rombak 2026-06-12: samakan ke pill tab standar dashboard (.riwayat-tab di
+   Statistik/Riwayat/Pustaka/Profile) — pill terpisah mengambang, TANPA kotak
+   pembungkus. Konsistensi visual lintas halaman. */
 .dm-section-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
-  padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  width: fit-content;
+  margin-bottom: 18px;
+  padding: 0 4px;
 }
 .dm-section-tab {
-  padding: 8px 16px;
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s var(--ease);
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
 }
 .dm-section-tab .dmt-ico { display: inline-flex; align-items: center; }
-.dm-section-tab .dmt-ico svg { width: 15px; height: 15px; }
+.dm-section-tab .dmt-ico svg { width: 19px; height: 19px; }
 .dm-section-tab:hover { background: var(--surface-2); color: var(--text); }
 .dm-section-tab.active {
   background: var(--primary);
   color: #fff;
+  border-color: var(--primary);
 }
+/* Tab "Semua" dihapus (2026-06-12): mencampur DM personal + broadcast admin +
+   permintaan jadi satu aliran = kurang fokus/kurang cocok. Default landing
+   sekarang DM (chat personal). Di-hide via CSS — markup index-markup.ts fragile
+   jadi tidak diedit; tombolnya tetap ada di DOM tapi tak tampil. */
+.dm-section-tab[data-dm-filter="all"] { display: none !important; }
+/* Permintaan & Arsip dikeluarkan dari tab bar (req user 2026-06-12) → diakses
+   via entri di atas daftar DM. Tab tinggal DM | Broadcast Admin. */
+.dm-section-tab[data-dm-filter="requests"],
+.dm-section-tab[data-dm-filter="archived"] { display: none !important; }
+/* Konsisten (req user 2026-06-12): submenu sidebar Inbox juga tinggal
+   DM | Broadcast Admin — Permintaan & Arsip sudah jadi entri di dalam DM, jadi
+   subitem sidebar-nya disembunyikan (markup index-markup.ts fragile, tak diedit). */
+.nav-subitem[data-sub-action="dm-filter:requests"],
+.nav-subitem[data-sub-action="dm-filter:archived"] { display: none !important; }
+
+/* Entri seksi (Permintaan/Arsip) di atas daftar DM — pola Instagram/WhatsApp. */
+.dm-section-entry {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  margin: 0 0 4px; padding: 11px 13px; border-radius: 11px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.dm-section-entry:hover { background: rgba(255,255,255,.04); border-color: var(--border); }
+.dm-section-entry-ico {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2, var(--muted));
+}
+.dm-section-entry-ico svg { width: 18px; height: 18px; }
+.dm-section-entry-label { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; }
+.dm-section-entry-count {
+  flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  background: var(--primary); color: #fff;
+}
+.dm-section-entry-arrow { flex-shrink: 0; display: inline-flex; color: var(--text-2, var(--muted)); opacity: .6; }
+.dm-section-entry-arrow svg { width: 16px; height: 16px; }
+/* Pemisah halus antara blok entri dan daftar chat di bawahnya. */
+.dm-section-entry + .dm-thread,
+.dm-section-entry + .dm-contact-row { margin-top: 8px; }
+
+/* Tombol kembali di view Permintaan/Arsip (mereka bukan tab lagi). */
+.dm-subnav-back {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin: 0 0 10px; padding: 6px 11px 6px 7px; border-radius: 999px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-2, var(--muted)); font: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+}
+.dm-subnav-back:hover { background: rgba(255,255,255,.04); color: var(--text); border-color: var(--text-2, var(--muted)); }
+.dm-subnav-back svg { width: 16px; height: 16px; }
 .dm-section-tab-badge {
   display: inline-grid;
   place-items: center;
@@ -49513,7 +49905,9 @@ body:not([data-role="admin"]):not(.auth-mode) .btn.primary:hover {
   box-shadow: 0 6px 16px rgba(109, 41, 50, .42);
 }
 
-/* (5) Focus rings — a11y, gold */
+/* (5) Focus rings — a11y, NETRAL cream (req user: dashboard user jangan pakai
+   ring gold/wine/merah di kolom & halaman mana pun). Dulu gold
+   rgba(220,169,109,.65) → diganti cream. Admin dikecualikan oleh selector. */
 body:not([data-role="admin"]):not(.auth-mode) button:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) a:focus-visible,
 body:not([data-role="admin"]):not(.auth-mode) input:focus-visible,
@@ -71489,7 +71883,10 @@ body[data-theme="light"]:not([data-role="admin"]) .view-header-people .vh-people
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  max-width: 760px;
+  /* Isi penuh lebar area konten (req user 2026-06-12: jangan setengah layar) —
+     cap 760px lama dihapus. */
+  max-width: none;
+  width: 100%;
 }
 .dm-bc-empty {
   padding: 48px 24px;
@@ -72244,15 +72641,11 @@ body:not([data-role="admin"]) #dmOverview .inbox-col-count {
   flex-wrap: nowrap;
 }
 .dm-tabs-search-row-v579 .dm-section-tabs {
-  flex: 0 0 auto;
-  margin-bottom: 0;           /* override default 14px */
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar { height: 4px; }
-.dm-tabs-search-row-v579 .dm-section-tabs::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
-  border-radius: 2px;
+  flex: 1 1 auto;
+  margin-bottom: 0;           /* override default 18px */
+  flex-wrap: wrap;            /* rombak 2026-06-12: tab wrap (bukan scroll) —
+                                 search global sudah dihapus, sejajar referensi
+                                 .riwayat-tab-bar yang wrap di layar sempit. */
 }
 .dm-tabs-search-row-v579 .dm-section-tab { white-space: nowrap; flex-shrink: 0; }
 
@@ -72271,6 +72664,10 @@ body:not([data-role="admin"]) #dmOverview .inbox-col-count {
 .dm-tabs-search-row-v579 .dm-ov-search-inline input {
   font-size: 13px;
 }
+/* Unified split (2026-06-12): global search tab-row (#dmOvSearch) di-retire
+   bareng kartu overview → hilangkan double-search. Search daftar pakai
+   #msgSearch yang ada di atas list panel (.dm-side). */
+.dm-tabs-search-row-v579 .dm-ov-search-inline { display: none !important; }
 
 @media (max-width: 980px) {
   .dm-tabs-search-row-v579 .dm-ov-search-inline { width: 240px; }
@@ -73718,6 +74115,164 @@ textarea#upDesc.upf-desc-textarea {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* =====================================================================
+   v604 (2026-06-02): STATISTIK OVERHAUL — period selector, milestones,
+   per-video drill-down modal. Themed wine/cream, compact, minimalist.
+   ===================================================================== */
+
+/* 4e/4j: unified segmented period control (Mingguan/Bulanan/Tahunan).
+   Reuse #chartTabs .chip-tabs base; add segmented look. */
+#chartTabs.seg-period {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2, #f3ede6);
+  border: 1px solid var(--border, #e3d9cf);
+  border-radius: 10px;
+}
+#chartTabs.seg-period button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #8a7d72);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 13px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#chartTabs.seg-period button:hover { color: var(--text, #3a2e28); }
+#chartTabs.seg-period button.active {
+  background: var(--primary, #6D2932);
+  color: var(--cream, #f6efe6);
+  box-shadow: 0 1px 3px rgba(109, 41, 50, .25);
+}
+
+/* 4d: Milestone & Pencapaian — growth journey cards */
+.stat-milestones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.ms-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e3d9cf);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ms-card-head { display: flex; align-items: center; gap: 10px; }
+.ms-ico {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  background: rgba(109, 41, 50, .08);
+  color: var(--primary, #6D2932);
+}
+.ms-ico svg { width: 18px; height: 18px; }
+.ms-card-title { display: flex; flex-direction: column; line-height: 1.2; }
+.ms-card-title b { font-size: 14px; color: var(--text, #3a2e28); }
+.ms-card-title small { font-size: 11.5px; color: var(--muted, #8a7d72); }
+.ms-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+.ms-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-2, #f3ede6);
+  border: 1px solid var(--border, #e3d9cf);
+  color: var(--muted, #8a7d72);
+}
+.ms-badge.earned {
+  background: linear-gradient(135deg, #BE9752, #a67f3e);
+  border-color: transparent;
+  color: #fff;
+}
+.ms-prog {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface-2, #f3ede6);
+  overflow: hidden;
+}
+.ms-prog-bar {
+  height: 100%;
+  width: var(--w, 0%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary, #6D2932), #9a4651);
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.ms-prog-label { font-size: 11px; color: var(--muted, #8a7d72); }
+
+/* 4c: Video stat detail drill-down modal */
+.vsd-modal { position: fixed; inset: 0; z-index: 4000; display: grid; place-items: center; }
+.vsd-modal[hidden] { display: none; }
+.vsd-backdrop { position: absolute; inset: 0; background: rgba(20, 10, 12, .55); backdrop-filter: blur(2px); }
+.vsd-panel {
+  position: relative;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e3d9cf);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(20, 10, 12, .35);
+  animation: vsdIn .18s ease;
+}
+@keyframes vsdIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.vsd-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 8px;
+  background: var(--surface-2, #f3ede6);
+  color: var(--muted, #8a7d72);
+  cursor: pointer;
+}
+.vsd-close:hover { color: var(--text, #3a2e28); }
+.vsd-close svg { width: 16px; height: 16px; }
+.vsd-header { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; padding-right: 34px; }
+.vsd-thumb { flex: 0 0 auto; width: 72px; height: 48px; border-radius: 9px; overflow: hidden; background: var(--surface-2, #f3ede6); }
+.vsd-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.vsd-title { font-size: 15px; line-height: 1.3; color: var(--text, #3a2e28); margin: 0; }
+.vsd-totals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+.vsd-stat {
+  background: var(--surface-2, #f3ede6);
+  border-radius: 10px;
+  padding: 9px 11px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.vsd-stat-k { font-size: 11px; color: var(--muted, #8a7d72); }
+.vsd-stat b { font-size: 16px; color: var(--text, #3a2e28); }
+.vsd-meta { font-size: 12px; color: var(--muted, #8a7d72); margin: 0 0 12px; }
+.vsd-meta b { color: var(--text, #3a2e28); }
+.vsd-chart-wrap {
+  background: var(--surface-2, #f3ede6);
+  border-radius: 12px;
+  padding: 12px;
+}
+.vsd-chart { width: 100%; height: 110px; display: block; }
+.vsd-legend { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+.vsd-leg { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted, #8a7d72); }
+.vsd-leg i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.vsd-chart-empty {
+  text-align: center;
+  padding: 22px 12px;
+  background: var(--surface-2, #f3ede6);
+  border-radius: 12px;
+  color: var(--muted, #8a7d72);
+}
+.vsd-chart-empty svg { width: 30px; height: 30px; color: var(--primary, #6D2932); opacity: .7; }
+.vsd-chart-empty p { font-size: 13px; font-weight: 600; color: var(--text, #3a2e28); margin: 8px 0 2px; }
+.vsd-chart-empty small { font-size: 11.5px; }
+.vsd-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+.vsd-actions .btn svg { width: 15px; height: 15px; }
 .video-editor-panel .ve-aspect:hover { border-color: var(--primary); }
 
 /* ===== STATISTIK GRAFIK — line chart compact (override sisa ring-chart-v4) ===== */
@@ -75291,3 +75846,256 @@ body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   text-overflow: ellipsis;
 }
 .people-card .people-preview-sub { font-size: 10.5px; color: var(--muted); }
+/* =====================================================================
+   INBOX (DM) ENHANCEMENTS — 5a video attach, 5c typing, 5d reactions,
+   5e edit, 5h mobile picker sheet, 5j broadcast admin, 5k sync status.
+   Themed: wine --primary / cream surfaces. (2026-06-02)
+   ===================================================================== */
+
+/* --- 5a: tombol attach video di input bar --- */
+.dm-chat-attach {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: var(--surface-2, #f3ede6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--primary, #6D2932);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.dm-chat-attach:hover { background: var(--primary, #6D2932); color: #fff; border-color: var(--primary, #6D2932); }
+.dm-chat-attach svg { width: 18px; height: 18px; }
+
+/* --- 5a: video picker modal --- */
+.dm-vidpick-panel { max-width: 460px; width: 100%; }
+.dm-vidpick-search {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 13px; font-family: inherit;
+  outline: none; margin-bottom: 10px;
+}
+.dm-vidpick-search:focus { border-color: var(--primary); }
+.dm-vidpick-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 46vh; overflow-y: auto;
+  margin-bottom: 12px;
+}
+.dm-vidpick-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px; border-radius: 10px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  cursor: pointer; text-align: left; width: 100%;
+  transition: border-color .15s, background .15s;
+}
+.dm-vidpick-row:hover { border-color: var(--primary); background: var(--surface-2, #f3ede6); }
+.dm-vidpick-thumb {
+  position: relative; flex-shrink: 0;
+  width: 72px; height: 44px; border-radius: 7px; overflow: hidden;
+  background: var(--surface-2, #f3ede6);
+  display: grid; place-items: center;
+}
+.dm-vidpick-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.dm-vidpick-noimg { font-size: 18px; }
+.dm-vidpick-dur {
+  position: absolute; bottom: 3px; right: 3px;
+  background: rgba(0,0,0,.72); color: #fff;
+  font-size: 9.5px; padding: 1px 4px; border-radius: 4px;
+}
+.dm-vidpick-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dm-vidpick-meta strong { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-vidpick-meta small { font-size: 11px; color: var(--muted); }
+.dm-vidpick-caption { display: flex; flex-direction: column; gap: 5px; }
+.dm-vidpick-caption span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.dm-vidpick-caption input {
+  padding: 9px 12px; background: var(--surface, #fff);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 13px; font-family: inherit; outline: none;
+}
+.dm-vidpick-caption input:focus { border-color: var(--primary); }
+.dm-vidpick-empty { text-align: center; padding: 24px 12px; color: var(--muted); font-size: 13px; }
+
+/* --- 5c: typing indicator (animated dots) --- */
+.dm-typing { padding: 2px 4px 6px; }
+.dm-typing[hidden] { display: none !important; }
+.dm-typing-dots {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 12px; border-radius: 14px 14px 14px 4px;
+  background: var(--surface-2, #f3ede6);
+  width: fit-content;
+}
+.dm-typing-dots i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted, #8a7d72);
+  animation: dmTypingBounce 1.2s infinite ease-in-out;
+}
+.dm-typing-dots i:nth-child(2) { animation-delay: .18s; }
+.dm-typing-dots i:nth-child(3) { animation-delay: .36s; }
+@keyframes dmTypingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* --- 5d: reactions --- */
+.dm-bubble { position: relative; }
+.dm-bubble-react-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer; opacity: 0;
+  transition: opacity .14s, color .14s, border-color .14s;
+}
+.dm-bubble:hover .dm-bubble-react-btn { opacity: 1; }
+.dm-bubble-react-btn:hover { color: var(--primary); border-color: var(--primary); }
+.dm-bubble-react-btn svg { width: 15px; height: 15px; }
+.dm-bubble.them .dm-bubble-react-btn { right: -30px; }
+.dm-bubble.me .dm-bubble-react-btn { left: -30px; }
+.dm-react-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.dm-react-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 7px 1px 5px; border-radius: 11px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  font-size: 12px; cursor: pointer; line-height: 1.4;
+  transition: border-color .14s, background .14s;
+}
+.dm-react-chip span { font-size: 10.5px; color: var(--muted); font-weight: 700; }
+.dm-react-chip.is-mine { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: var(--primary); }
+.dm-react-chip.is-mine span { color: var(--primary); }
+.dm-react-chip:hover { border-color: var(--primary); }
+.dm-react-palette {
+  position: fixed; z-index: 1200;
+  display: flex; gap: 2px; padding: 5px;
+  background: var(--bg-elev, #fff);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
+  animation: inboxPickerIn .14s ease;
+}
+.dm-react-palette button {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: transparent; cursor: pointer;
+  font-size: 19px; line-height: 1;
+  transition: transform .12s, background .12s;
+}
+.dm-react-palette button:hover { transform: scale(1.22); background: var(--surface-2, #f3ede6); }
+/* quick-reactions row inside the message context menu */
+.msg-ctx-reactions {
+  display: flex; gap: 2px; padding: 2px 2px 6px;
+  margin-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+.msg-ctx-react {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: transparent; cursor: pointer;
+  font-size: 17px; line-height: 1;
+  transition: transform .12s, background .12s;
+}
+.msg-ctx-react:hover { transform: scale(1.2); background: var(--surface-2, #f3ede6); }
+
+/* --- 5e: edited label + inline edit box --- */
+.dm-bubble-edited {
+  margin-left: 6px; font-size: 10px; font-style: italic;
+  color: var(--muted, #8a7d72); opacity: .85;
+}
+.dm-edit-box { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.dm-edit-field {
+  width: 100%; min-width: 180px;
+  padding: 7px 9px; border-radius: 9px;
+  border: 1px solid var(--primary);
+  background: var(--surface, #fff); color: var(--text);
+  font-size: 13px; font-family: inherit; resize: vertical; outline: none;
+}
+.dm-edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.dm-edit-actions button {
+  padding: 4px 11px; border-radius: 7px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface, #fff); color: var(--text);
+}
+.dm-edit-actions .dm-edit-save { background: var(--primary, #6D2932); color: #fff; border-color: var(--primary, #6D2932); }
+.dm-edit-actions button:hover { filter: brightness(1.05); }
+
+/* --- 5b: "cocok di pesan" hint --- */
+.dm-thread-bodymatch {
+  display: inline-block; margin-top: 2px;
+  font-size: 10.5px; color: var(--primary, #6D2932);
+  font-weight: 600;
+}
+
+/* --- 5k: honest sync status indicator --- */
+/* Halus (2026-06-12): indikator sync TANPA kotak nyolok — cuma dot + teks
+   muted, tenang di pojok header. Dot tetap berwarna biar status kebaca. */
+.dm-sync-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0; border-radius: 0;
+  font-size: 11px; font-weight: 500; line-height: 1.4;
+  border: 0;
+  background: transparent;
+  color: var(--text-2, var(--muted));
+  white-space: nowrap;
+  opacity: .8;
+}
+.dm-sync-status .dm-sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted, #8a7d72); flex-shrink: 0;
+}
+.dm-sync-status.is-synced { color: var(--text-2, var(--muted)); }
+.dm-sync-status.is-synced .dm-sync-dot { background: #2ea36a; }
+.dm-sync-status.is-local { color: var(--text-2, var(--muted)); }
+.dm-sync-status.is-local .dm-sync-dot { background: #e0a23a; }
+/* Header Inbox (2026-06-12): pill sync rata tengah vertikal dgn blok judul
+   (lebih rapi drpd flex-end). Scoped ke messages view — tak ganggu halaman
+   lain yg pakai .view-header. */
+section.view[data-view="messages"] > .view-header { align-items: center; }
+.dm-sync-status.is-pending .dm-sync-dot { background: var(--muted, #8a7d72); animation: dmSyncPulse 1.1s infinite; }
+@keyframes dmSyncPulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+
+/* --- 5j: admin "Compose Broadcast" entry + broadcast empty/preview --- */
+.dm-admin-bc-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface, #fff));
+}
+.dm-admin-bc-bar .dm-admin-bc-text strong { display: block; font-size: 13.5px; color: var(--text); }
+.dm-admin-bc-bar .dm-admin-bc-text small { font-size: 11.5px; color: var(--muted); }
+.dm-admin-bc-bar .btn svg { width: 15px; height: 15px; }
+.asm-broadcast-chip {
+  padding: 9px 12px; border-radius: 10px; font-size: 13px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface, #fff));
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  color: var(--text);
+}
+.dm-chat-readonly-note {
+  padding: 12px 16px; margin: 0;
+  font-size: 12px; color: var(--muted, #8a7d72); text-align: center;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2, #f3ede6);
+}
+
+/* --- 5h: recipient picker bottom-sheet on mobile (<=600px) --- */
+@media (max-width: 600px) {
+  .inbox-picker-popover.inbox-picker-sheet {
+    left: 0 !important; right: 0 !important; top: auto !important;
+    bottom: 0;
+    width: 100%; max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 80vh;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    animation: inboxSheetUp .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .inbox-picker-popover.inbox-picker-sheet .inbox-picker-list { max-height: 52vh; }
+  @keyframes inboxSheetUp {
+    from { opacity: 0; transform: translateY(100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .dm-react-palette { gap: 0; }
+  .dm-react-palette button { width: 40px; height: 40px; font-size: 22px; }
+}
