@@ -75943,6 +75943,77 @@ body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   text-transform: uppercase;
 }
 .ha-img {
+/* ===== v619 — USER PROFILE ENHANCEMENTS (Edit Profile + My Profile) ===== */
+
+/* 11d — Bio character counter near the bio textarea */
+.bio-char-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  letter-spacing: .02em;
+  transition: color .15s var(--ease);
+}
+.bio-char-count.bio-char-warn { color: var(--primary); }
+
+/* 11c — My Profile stat tabs: active state (clickable tabs) */
+.myprofile-stat[aria-selected="true"],
+.myprofile-stat.active {
+  background: var(--surface-2);
+}
+.myprofile-stat.active b { color: var(--primary); }
+.myprofile-stat.active small { color: var(--primary); }
+.myprofile-stat.active::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+}
+.myprofile-stat { position: relative; }
+
+/* 11c — My Profile single tab panel + follower/following user list */
+.myprofile-tabpanel { margin-top: 14px; }
+.myprofile-userlist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.myprofile-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s var(--ease), border-color .15s var(--ease);
+}
+.myprofile-user-row:hover {
+  background: var(--surface-2);
+  border-color: var(--primary);
+}
+.mpu-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: #fff;
+}
+.mpu-avatar img {
   position: absolute;
   inset: 0;
   width: 100%;
