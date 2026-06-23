@@ -34308,6 +34308,14 @@ function switchView(name, { fromNav = false } = {}) {
           // via tText (exact match kamus, aman — tak menyentuh data dinamis).
           if (typeof tText === "function") {
             root.querySelectorAll(".unggah-btn-anim, .batal-btn-anim").forEach(btn => {
+              // teks visible biasanya di span .uba-text (atau leaf lain) + kadang text-node langsung.
+              btn.querySelectorAll("*").forEach(el => {
+                if (el.children.length !== 0) return;       // hanya leaf
+                const cur = (el.textContent || "").trim();
+                if (!cur || !/[A-Za-z]/.test(cur)) return;
+                const tr = tText(cur);
+                if (tr && tr !== cur) el.textContent = tr;
+              });
               btn.childNodes.forEach(nd => {
                 if (nd.nodeType === 3) {
                   const cur = nd.textContent.trim();
