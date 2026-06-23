@@ -31,6 +31,9 @@ desktop.ini
 .env
 .env.local
 .env.*.local
+# Local DB credentials (Supabase connection string — JANGAN commit)
+db-url.txt
+db-url.txt/
 
 # Build artifacts
 node_modules/
