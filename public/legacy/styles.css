@@ -7579,6 +7579,11 @@ body[data-theme="light"] .chip-tabs button.active { background: white; }
   background: var(--primary-soft);
   color: var(--primary);
 }
+/* Dark mode: badge hitung chip aktif — teks wine var(--primary) tak terbaca di
+   bg gelap/soft-wine; pakai cream supaya kontras (light tetap wine di pill putih). */
+body[data-theme="dark"] .chip-tabs button.active .chip-count {
+  color: var(--cream, #E8D8C4);
+}
 
 /* Uploading & trash cards */
 .upload-progress-card,
