@@ -38,7 +38,7 @@
     upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
     download: '<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
-    users: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5a3.5 3.5 0 0 1 0 7M17 20a6 6 0 0 0-3-5"/>',
+    users: '<circle cx="7.5" cy="8" r="2.7"/><path d="M3.5 18a4 4 0 0 1 8 0"/><circle cx="16.5" cy="8" r="2.7"/><path d="M12.5 18a4 4 0 0 1 8 0"/>',
     crown: '<path d="M3 7l4 4 5-6 5 6 4-4-2 12H5Z"/><path d="M5 19h14"/>',
     gem: '<path d="M6 4h12l3 5-9 11L3 9Z"/><path d="M3 9h18M9 4 7 9l5 11M15 4l2 5-5 11"/>',
     lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',

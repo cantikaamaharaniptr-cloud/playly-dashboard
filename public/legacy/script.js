@@ -4321,6 +4321,424 @@ function getPref(key, defVal) {
   return obj === undefined ? defVal : obj;
 }
 
+// Rapikan halaman Pengaturan (req user 2026-06-12): kelompokkan 10 kartu yang
+// dulu menumpuk di satu halaman panjang ke dalam TAB (Umum / Keamanan / Data &
+// Akun). DOM-restructure (markup statis di index-markup.ts fragile → tak
+// diedit langsung). Idempotent via dataset.tabbed. Listener data-pref tetap
+// nempel karena node DIPINDAH (appendChild), bukan di-clone.
+function _setupSettingsTabs() {
+  var sec = document.querySelector('section.view[data-view="settings"]');
+  if (!sec) return;
+  var grid = sec.querySelector(".grid-2");
+  if (!grid || grid.dataset.tabbed === "1") return;
+
+  var groupOf = function (h) {
+    if (/Keamanan|Faktor|2FA|Riwayat Aktivitas|Sesi Aktif/i.test(h)) return "keamanan";
+    if (/Ekspor|Hapus Akun|Akun Saya|Profil/i.test(h)) return "data";
+    return "umum"; // Notifikasi, Tampilan, Privasi, Bahasa & Region
+  };
+  var ic = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+  var TABS = [
+    { id: "umum",     label: "Umum",        icon: ic('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>') },
+    { id: "keamanan", label: "Keamanan",    icon: ic('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>') },
+    { id: "data",     label: "Data & Akun", icon: ic('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>') },
+  ];
+
+  var panels = {};
+  TABS.forEach(function (t) {
+    var p = document.createElement("div");
+    p.className = "set-tab-panel";
+    p.dataset.panel = t.id;
+    panels[t.id] = p;
+  });
+  Array.prototype.slice.call(grid.children).forEach(function (card) {
+    var hEl = card.querySelector("h1,h2,h3");
+    var h = hEl ? hEl.textContent.trim() : "";
+    (panels[groupOf(h)] || panels.umum).appendChild(card);
+  });
+
+  var nav = document.createElement("div");
+  nav.className = "set-tabs";
+  TABS.forEach(function (t, i) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "set-tab" + (i === 0 ? " active" : "");
+    b.dataset.settab = t.id;
+    b.innerHTML = '<span class="set-tab-ico" aria-hidden="true">' + t.icon + "</span><span>" + t.label + "</span>";
+    b.addEventListener("click", function () {
+      nav.querySelectorAll(".set-tab").forEach(function (x) { x.classList.toggle("active", x === b); });
+      TABS.forEach(function (tt) { panels[tt.id].hidden = tt.id !== t.id; });
+    });
+    nav.appendChild(b);
+  });
+
+  grid.dataset.tabbed = "1";
+  grid.classList.remove("grid-2");
+  grid.classList.add("set-tab-host");
+  grid.appendChild(nav);
+  TABS.forEach(function (t, i) { panels[t.id].hidden = i !== 0; grid.appendChild(panels[t.id]); });
+}
+
+// Kartu "Akun Saya" di Pengaturan (req user 2026-06-12): edit Nama, Bio, Foto
+// dari Settings (sebelumnya hanya di halaman Profil terpisah). Username & Email
+// read-only (identitas akun — konsisten dgn form profil yg juga tak meng-edit
+// keduanya). Reuse persistUserAndAccount/applyUserToUI/openAvatarEditor.
+function _refreshSettingsAccountCard() {
+  if (typeof user === "undefined" || !user) return;
+  var nm = document.getElementById("setAcctName");
+  var un = document.getElementById("setAcctUsername");
+  var em = document.getElementById("setAcctEmail");
+  var av = document.getElementById("setAcctAvatar");
+  if (nm) nm.textContent = user.name || "—";
+  if (un) un.textContent = user.username ? "@" + user.username : "—";
+  if (em) em.textContent = user.email || "—";
+  if (av) {
+    if (user.avatar) av.innerHTML = '<img src="' + user.avatar + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    else av.innerHTML = '<span>' + ((user.name || "U").split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase() || "U") + "</span>";
+  }
+}
+
+function _setupSettingsAccountCard() {
+  var sec = document.querySelector('section.view[data-view="settings"]');
+  if (!sec) return;
+  if (document.getElementById("setAccountCard")) { _refreshSettingsAccountCard(); return; }
+  // Sisipkan ke grid (sebelum tab-grouping) supaya ikut dikelompokkan ke "Data
+  // & Akun". Kalau sudah ter-tab, sisipkan ke panel data.
+  var host = sec.querySelector(".grid-2") || sec.querySelector('.set-tab-panel[data-panel="data"]');
+  if (!host) return;
+  var card = document.createElement("div");
+  card.className = "card set-account-card";
+  card.id = "setAccountCard";
+  // RINGKASAN akun + pintasan ke halaman Profil (req user 2026-06-13): editor
+  // profil (nama/bio/foto) sudah ada di halaman Profil — JANGAN digandakan di
+  // Settings. Cukup tampilkan ringkasan + tombol "Edit profil" yg buka Profil.
+  card.innerHTML =
+    '<h3><span class="sec-icon-v582" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>Akun Saya</h3>'
+    + '<div class="set-acct-summary">'
+    +   '<div class="avatar set-acct-avatar" id="setAcctAvatar"><span>U</span></div>'
+    +   '<div class="set-acct-summary-info">'
+    +     '<strong id="setAcctName">—</strong>'
+    +     '<span class="set-acct-handle" id="setAcctUsername">—</span>'
+    +     '<span class="set-acct-email" id="setAcctEmail">—</span>'
+    +   '</div>'
+    +   '<button type="button" class="btn primary set-acct-edit" id="setAcctEditProfile">Ubah profil <span aria-hidden="true">→</span></button>'
+    + '</div>';
+  // Taruh paling depan supaya muncul pertama di tab Data & Akun.
+  host.insertBefore(card, host.firstChild);
+
+  document.getElementById("setAcctEditProfile").addEventListener("click", function () {
+    if (typeof switchView === "function") switchView("profile");
+    else location.hash = "#/profile";
+  });
+  _refreshSettingsAccountCard();
+}
+
+// Jaga kartu Akun di Settings tetap sinkron saat profil berubah di mana pun
+// (mis. crop avatar via openAvatarEditor → applyUserToUI). Wrap sekali.
+(function () {
+  if (typeof applyUserToUI !== "function" || applyUserToUI.__acctWrapped) return;
+  var _orig = applyUserToUI;
+  applyUserToUI = function () {
+    var r = _orig.apply(this, arguments);
+    try { if (document.getElementById("setAccountCard")) _refreshSettingsAccountCard(); } catch (e) {}
+    return r;
+  };
+  applyUserToUI.__acctWrapped = true;
+})();
+
+// Polish (req user 2026-06-12): tambah deskripsi 1-baris di tiap toggle Settings
+// supaya jelas fungsinya (sebelumnya cuma label). Idempotent.
+function _setupSettingsToggleDesc() {
+  var DESC = {
+    "notif.message":         "Beri tahu saat ada pesan (DM) masuk.",
+    "notif.comment":         "Beri tahu saat ada yang mengomentari videomu.",
+    "notif.follower":        "Beri tahu saat ada yang mulai mengikutimu.",
+    "notif.like":            "Beri tahu saat ada yang menyukai videomu.",
+    "notif.email":           "Kirim ringkasan notifikasi ke emailmu.",
+    "notif.push":            "Tampilkan notifikasi langsung di perangkat ini.",
+    "display.autoplay":      "Video langsung diputar saat halaman dibuka.",
+    "display.reducedMotion": "Kurangi animasi & transisi untuk tampilan lebih tenang.",
+    "display.compact":       "Rapatkan tata letak — lebih banyak konten per layar.",
+    "privacy.publicProfile": "Siapa pun bisa melihat profil & video publikmu.",
+    "privacy.allowDM":       "Jika dimatikan, hanya yang kamu ikuti yang bisa kirim pesan langsung.",
+    "privacy.hideCounts":    "Angka pengikut & yang kamu ikuti disembunyikan dari orang lain.",
+    "content.hideWatched":   "Video yang sudah kamu tonton tak muncul lagi di feed.",
+  };
+  var togs = document.querySelectorAll('section.view[data-view="settings"] label.tog');
+  Array.prototype.slice.call(togs).forEach(function (tog) {
+    if (tog.dataset.descDone === "1") return;
+    var input = tog.querySelector("input[data-pref]");
+    var span = tog.querySelector("span");
+    if (!input || !span) return;
+    var desc = DESC[input.dataset.pref];
+    if (!desc) return;
+    var wrap = document.createElement("span");
+    wrap.className = "tog-text";
+    span.parentNode.insertBefore(wrap, span);
+    wrap.appendChild(span);
+    var small = document.createElement("small");
+    small.className = "tog-desc";
+    small.textContent = desc;
+    wrap.appendChild(small);
+    tog.dataset.descDone = "1";
+  });
+}
+
+// Petunjuk di tab Keamanan (req user 2026-06-13). Idempotent.
+//  1. Hint di bawah tombol "Ganti Password": kasih tahu PIN 2FA diminta kalau
+//     2FA aktif (perilaku opsi a). Statis → akurat di segala kondisi.
+//  2. Isi ruang kosong kartu 2FA (saat 2FA mati, konten sedikit) dengan daftar
+//     manfaat singkat — tombol tetap di bawah (sejajar tombol password) tapi
+//     void hilang. Faktual, sekalian jelaskan kaitannya ke reset/ganti password.
+function _setupSecurityHints() {
+  var form = document.getElementById("changePasswordForm");
+  if (form && !document.getElementById("changePwHint")) {
+    var hint = document.createElement("p");
+    hint.id = "changePwHint";
+    hint.className = "set-field-hint";
+    hint.textContent = "🔒 PIN 2FA akan diminta saat ganti password jika 2FA aktif.";
+    form.appendChild(hint);
+  }
+  var ts = document.getElementById("twofaSettings");
+  if (ts && !document.getElementById("twofaBenefits")) {
+    var statusRow = ts.querySelector(".twofa-status-row");
+    var box = document.createElement("div");
+    box.id = "twofaBenefits";
+    box.className = "twofa-callout";
+    var SHIELD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>';
+    var items = ["Lapisan kedua selain password",
+                 "PIN 6-digit diminta saat login",
+                 "Dipakai juga saat reset & ganti password"];
+    box.innerHTML = '<div class="twofa-callout-head">' + SHIELD_SVG + '<span>Kenapa aktifkan 2FA?</span></div><ul>' +
+      items.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    if (statusRow && statusRow.nextSibling) ts.insertBefore(box, statusRow.nextSibling);
+    else ts.appendChild(box);
+  }
+
+  // Tab Keamanan: panel jadi 2 kolom supaya Keamanan + 2FA mengisi penuh (tidak
+  // ada kolom kosong di kanan); Riwayat/Sesi tetap full-width (req user 2026-06-13).
+  if (ts) {
+    var kPanel = ts.closest(".set-tab-panel");
+    if (kPanel) kPanel.classList.add("set-panel-keamanan");
+  }
+
+  // Rapikan kartu Riwayat Aktivitas (req user 2026-06-13):
+  //  (1) chip "Semua" belum punya ikon (chip lain punya) → kasih ikon list biar
+  //      konsisten. (2) deskripsi mulai dgn Inggris "Security transparency" di
+  //      tengah kalimat Indonesia → ganti "Transparansi keamanan". Idempotent.
+  var allChip = document.querySelector('section.view[data-view="settings"] [data-audit-filter="all"]');
+  if (allChip && !allChip.querySelector("svg")) {
+    allChip.insertAdjacentHTML("afterbegin",
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><line x1="4" y1="6" x2="4" y2="6"/><line x1="4" y1="12" x2="4" y2="12"/><line x1="4" y1="18" x2="4" y2="18"/></svg>');
+  }
+  var auditCard = document.querySelector('section.view[data-view="settings"] .user-audit-card');
+  if (auditCard) {
+    var d = Array.prototype.slice.call(auditCard.querySelectorAll("small, p"))
+      .find(function (e) { return /Security transparency/.test(e.textContent); });
+    if (d) d.innerHTML = d.innerHTML.replace("Security transparency", "Transparansi keamanan");
+  }
+
+  // Tab Umum: tandai kartu "Bahasa & Region" supaya bisa dibuat full-width
+  // footer (req user 2026-06-13: hindari 1 kartu nyangkut sendiri di bawah).
+  var langCard = Array.prototype.slice.call(
+    document.querySelectorAll('section.view[data-view="settings"] .card')
+  ).find(function (c) {
+    var h = c.querySelector("h3");
+    return h && /Bahasa/.test(h.textContent);
+  });
+  if (langCard) {
+    langCard.classList.add("lang-region-card");
+    var umumPanel = langCard.closest(".set-tab-panel");
+    if (umumPanel) {
+      umumPanel.classList.add("set-panel-umum");
+      _mergeA11yIntoTampilan();      // Opsi C: Aksesibilitas digabung ke Tampilan
+      // Ganti <select> native dgn dropdown custom (req user 2026-06-13: hapus
+      // highlight biru native + fokus ring berwarna; native select tak bisa
+      // di-CSS untuk itu). Idempotent.
+      umumPanel.querySelectorAll("select").forEach(_enhanceSelect);
+    }
+  }
+}
+
+// Opsi C (req user 2026-06-13): Aksesibilitas DIGABUNG ke kartu Tampilan, lalu
+// tambah kartu baru "Hemat Data" → tetap 6 kartu (grid 3+3). Toggle a11y benar2
+// fungsional (class di body + CSS); toggle hemat-data menyimpan pref nyata
+// (data.saver juga set class body). Idempotent.
+var A11Y_TOGGLES = [
+  { pref: "a11y.contrast", label: "Kontras tinggi", desc: "Pertegas garis tepi antar elemen agar lebih jelas.", def: false },
+  { pref: "a11y.boldText", label: "Teks lebih tebal", desc: "Tebalkan teks dashboard supaya lebih mudah dibaca.", def: false }
+];
+var DATASAVER_TOGGLES = [
+  { pref: "data.saver", label: "Mode hemat data", desc: "Kurangi pemakaian data: kualitas & preload ditekan.", def: false },
+  { pref: "data.wifiAutoplay", label: "Auto-play hanya saat WiFi", desc: "Video tak otomatis main saat pakai data seluler.", def: false },
+  { pref: "data.preloadNext", label: "Preload video berikutnya", desc: "Muat awal video selanjutnya biar transisi mulus.", def: true }
+];
+
+function _settingTogHTML(t) {
+  return '<label class="tog" data-desc-done="1" data-no-i18n>' +
+    '<span class="tog-text"><span>' + t.label + "</span>" +
+    '<small class="tog-desc">' + t.desc + "</small></span>" +
+    '<input type="checkbox" data-pref="' + t.pref + '"' + (getPref(t.pref, t.def) ? " checked" : "") + ' data-bound="1"><i></i></label>';
+}
+function _bindSettingToggle(input) {
+  if (!input || input.dataset.boundDyn) return;
+  input.dataset.boundDyn = "1";
+  input.addEventListener("change", function () {
+    setPref(input.dataset.pref, input.checked);
+    applyPrefSideEffects(input.dataset.pref, input.checked);
+  });
+}
+
+function _mergeA11yIntoTampilan() {
+  var card = Array.prototype.slice.call(
+    document.querySelectorAll('section.view[data-view="settings"] .card')
+  ).find(function (c) { return c.querySelector('input[data-pref="display.autoplay"]'); });
+  if (!card || card.dataset.a11yMerged) return;
+  card.dataset.a11yMerged = "1";
+  // Judul → "Tampilan & Aksesibilitas" (lepas data-i18n biar tak ke-revert)
+  var h3 = card.querySelector("h3");
+  if (h3) {
+    h3.removeAttribute("data-i18n");
+    h3.setAttribute("data-no-i18n", "");
+    var tn = Array.prototype.slice.call(h3.childNodes).find(function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+    if (tn) tn.textContent = "Tampilan & Aksesibilitas";
+  }
+  var togs = card.querySelectorAll("label.tog");
+  var last = togs[togs.length - 1];
+  var html = A11Y_TOGGLES.map(_settingTogHTML).join("");
+  if (last) last.insertAdjacentHTML("afterend", html);
+  else card.insertAdjacentHTML("beforeend", html);
+  A11Y_TOGGLES.forEach(function (t) {
+    _bindSettingToggle(card.querySelector('input[data-pref="' + t.pref + '"]'));
+  });
+}
+
+function _setupDataSaverCard(panel) {
+  if (!panel || document.getElementById("dataSaverCard")) return;
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>';
+  var qual = getPref("data.cellularQuality", "auto");
+  var card = document.createElement("div");
+  card.className = "card data-saver-card";
+  card.id = "dataSaverCard";
+  card.innerHTML =
+    '<h3 data-no-i18n><span class="sec-icon-v582" aria-hidden="true">' + ICON + "</span>Hemat Data</h3>" +
+    '<div class="a11y-toggles">' + DATASAVER_TOGGLES.map(_settingTogHTML).join("") + "</div>" +
+    '<div class="upload-form" style="margin-top:12px"><label data-no-i18n>Kualitas video saat data seluler' +
+    '<select data-pref="data.cellularQuality">' +
+    '<option value="auto"' + (qual === "auto" ? " selected" : "") + ">Auto (mengikuti jaringan)</option>" +
+    '<option value="480"' + (qual === "480" ? " selected" : "") + ">480p (hemat)</option>" +
+    '<option value="360"' + (qual === "360" ? " selected" : "") + ">360p (paling hemat)</option>" +
+    "</select></label></div>";
+  // Sisipkan SEBELUM kartu Bahasa & Region biar urutan: Konten · Hemat Data ·
+  // Bahasa & Region (req user 2026-06-13: Bahasa/region paling akhir, kartu
+  // sejenis Konten+Hemat Data berdekatan). Fallback: append di akhir.
+  var langCard = panel.querySelector(".lang-region-card");
+  if (langCard) panel.insertBefore(card, langCard);
+  else panel.appendChild(card);
+  DATASAVER_TOGGLES.forEach(function (t) {
+    _bindSettingToggle(card.querySelector('input[data-pref="' + t.pref + '"]'));
+  });
+  var sel = card.querySelector('select[data-pref="data.cellularQuality"]');
+  if (sel && !sel.dataset.boundDyn) {
+    sel.dataset.boundDyn = "1";
+    sel.addEventListener("change", function () {
+      setPref("data.cellularQuality", sel.value);
+      applyPrefSideEffects("data.cellularQuality", sel.value);
+    });
+  }
+}
+
+// Dropdown custom pengganti <select> native (req user 2026-06-13). Native select
+// popup di Chrome/Windows = OS-rendered → highlight BIRU & fokus ring tak bisa
+// di-CSS. Custom: trigger + panel (group dari optgroup), hover cream / terpilih
+// wine (NOL biru), fokus ring cream netral. Select asli disembunyikan tapi tetap
+// dipakai utk value + change event (logika lama jalan). Idempotent.
+function _enhanceSelect(sel) {
+  if (!sel || sel.dataset.cdrop || sel.tagName !== "SELECT") return;
+  sel.dataset.cdrop = "1";
+  var wrap = document.createElement("div");
+  wrap.className = "cdrop";
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.classList.add("cdrop-native");
+
+  var trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "cdrop-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.innerHTML = '<span class="cdrop-value"></span><svg class="cdrop-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  wrap.appendChild(trigger);
+
+  var panel = document.createElement("div");
+  panel.className = "cdrop-panel";
+  panel.setAttribute("role", "listbox");
+  panel.hidden = true;
+  wrap.appendChild(panel);
+
+  function addOpt(o) {
+    var el = document.createElement("div");
+    el.className = "cdrop-opt";
+    el.setAttribute("role", "option");
+    el.dataset.value = o.value;
+    el.textContent = o.textContent;
+    if (o.value === sel.value) { el.classList.add("sel"); el.setAttribute("aria-selected", "true"); }
+    el.addEventListener("click", function () {
+      sel.value = o.value;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+      updateValue();
+      close();
+    });
+    panel.appendChild(el);
+  }
+  function buildPanel() {
+    panel.innerHTML = "";
+    Array.prototype.slice.call(sel.children).forEach(function (node) {
+      if (node.tagName === "OPTGROUP") {
+        var g = document.createElement("div");
+        g.className = "cdrop-group";
+        g.textContent = node.label;
+        panel.appendChild(g);
+        Array.prototype.slice.call(node.children).forEach(addOpt);
+      } else if (node.tagName === "OPTION") {
+        addOpt(node);
+      }
+    });
+  }
+  function updateValue() {
+    var opt = sel.options[sel.selectedIndex];
+    wrap.querySelector(".cdrop-value").textContent = opt ? opt.textContent : "";
+  }
+  function open() {
+    buildPanel();
+    panel.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    wrap.classList.add("open");
+    // Posisi pintar biar TIDAK kepotong: pilih arah (atas/bawah) yg ruangnya
+    // lebih besar, lalu batasi tinggi panel ke ruang itu (sisanya scroll di
+    // dalam panel). Dijamin tak pernah melewati tepi viewport.
+    var tr = trigger.getBoundingClientRect();
+    var below = window.innerHeight - tr.bottom - 14;
+    var above = tr.top - 14;
+    var useAbove = above > below;
+    panel.style.maxHeight = Math.max(140, Math.min(320, useAbove ? above : below)) + "px";
+    if (useAbove) { panel.style.top = "auto"; panel.style.bottom = "calc(100% + 6px)"; }
+    else { panel.style.top = "calc(100% + 6px)"; panel.style.bottom = "auto"; }
+    var s = panel.querySelector(".cdrop-opt.sel");
+    if (s) s.scrollIntoView({ block: "nearest" });
+  }
+  function close() {
+    panel.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    wrap.classList.remove("open");
+  }
+  trigger.addEventListener("click", function (e) { e.stopPropagation(); panel.hidden ? open() : close(); });
+  document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) close(); });
+  trigger.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  sel.addEventListener("change", updateValue);
+  updateValue();
+}
+
 function populateSettingsPrefs() {
   $$("[data-pref]").forEach(el => {
     const key = el.dataset.pref;
@@ -4348,6 +4766,12 @@ function applyVisualPrefsOnInit() {
   document.body.classList.toggle("reduced-motion", !!getPref("display.reducedMotion", false));
   document.body.classList.toggle("compact-mode", !!getPref("display.compact", false));
   document.body.classList.toggle("no-autoplay", !getPref("display.autoplay", true));
+  // Aksesibilitas (req user 2026-06-13)
+  document.body.classList.toggle("a11y-contrast", !!getPref("a11y.contrast", false));
+  document.body.classList.toggle("a11y-bold-text", !!getPref("a11y.boldText", false));
+  document.body.classList.toggle("a11y-underline", !!getPref("a11y.underlineLinks", false));
+  // Hemat Data (req user 2026-06-13)
+  document.body.classList.toggle("data-saver", !!getPref("data.saver", false));
 }
 
 function applyPrefSideEffects(key, val) {
@@ -4358,11 +4782,47 @@ function applyPrefSideEffects(key, val) {
   }
   if (key === "display.compact") {
     document.body.classList.toggle("compact-mode", !!val);
-    toast(val ? "✓ Compact mode aktif — UI jadi padat" : "✓ Compact mode mati", "success");
+    toast(val ? "✓ Mode ringkas aktif — tampilan lebih padat" : "✓ Mode ringkas mati", "success");
   }
   if (key === "display.autoplay") {
     document.body.classList.toggle("no-autoplay", !val);
-    toast(val ? "✓ Autoplay video aktif" : "✓ Autoplay video dimatikan", "success");
+    toast(val ? "✓ Putar video otomatis aktif" : "✓ Putar video otomatis dimatikan", "success");
+  }
+
+  // Aksesibilitas → CSS class on body (req user 2026-06-13)
+  if (key === "a11y.contrast") {
+    document.body.classList.toggle("a11y-contrast", !!val);
+    toast(val ? "✓ Kontras tinggi aktif" : "✓ Kontras normal", "success");
+  }
+  if (key === "a11y.boldText") {
+    document.body.classList.toggle("a11y-bold-text", !!val);
+    toast(val ? "✓ Teks tebal aktif" : "✓ Teks normal", "success");
+  }
+  if (key === "a11y.underlineLinks") {
+    document.body.classList.toggle("a11y-underline", !!val);
+    toast(val ? "✓ Tautan digarisbawahi" : "✓ Garis bawah tautan mati", "success");
+  }
+
+  // Hemat Data → simpan pref (dibaca pemutaran/preload bila didukung). data.saver
+  // juga set class body. (req user 2026-06-13)
+  if (key === "data.saver") {
+    document.body.classList.toggle("data-saver", !!val);
+    toast(val ? "✓ Mode hemat data aktif" : "✓ Mode hemat data mati", "success");
+  }
+  if (key === "data.wifiAutoplay") {
+    toast(val ? "✓ Auto-play hanya saat WiFi" : "✓ Auto-play di semua jaringan", "success");
+  }
+  if (key === "data.preloadNext") {
+    toast(val ? "✓ Preload video berikutnya aktif" : "✓ Preload dimatikan", "success");
+  }
+  if (key === "data.cellularQuality") {
+    toast("✓ Kualitas saat seluler: " + (val === "auto" ? "Auto" : val + "p"), "success");
+  }
+
+  // Preferensi konten → pengaruhi feed Jelajah (filter dibaca di getFypVideos).
+  if (key === "content.hideWatched") {
+    toast(val ? "✓ Video yang sudah ditonton disembunyikan" : "✓ Video yang sudah ditonton ditampilkan", "success");
+    try { if (typeof renderFYP === "function") renderFYP(); } catch {}
   }
 
   // Notifikasi push browser → minta permission saat di-toggle ON
@@ -4385,12 +4845,12 @@ function applyPrefSideEffects(key, val) {
   if (key === "notif.message") toast(val ? "✓ Notif pesan baru aktif" : "✓ Notif pesan baru dimatikan", "success");
   if (key === "notif.comment") toast(val ? "✓ Notif komentar aktif" : "✓ Notif komentar dimatikan", "success");
   if (key === "notif.follower") toast(val ? "✓ Notif follower baru aktif" : "✓ Notif follower baru dimatikan", "success");
-  if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "info");
+  if (key === "notif.email") toast(val ? "✓ Email notifikasi tersimpan — akan dipakai saat fitur email live" : "✓ Email notifikasi dimatikan", "success");
 
   // Privasi
-  if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya follower yang lihat detail lengkap", "success");
-  if (key === "privacy.showHistory") toast(val ? "✓ Riwayat tonton ditampilkan di profil" : "✓ Riwayat tonton disembunyikan dari profil", "success");
-  if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim DM" : "✓ DM dibatasi — hanya kreator yang kamu follow yang bisa kirim", "success");
+  if (key === "privacy.publicProfile") toast(val ? "✓ Profil publik — semua orang bisa lihat" : "✓ Profil dibatasi — hanya pengikut yang lihat detail lengkap", "success");
+  if (key === "privacy.allowDM") toast(val ? "✓ Semua orang bisa kirim pesan langsung" : "✓ Pesan langsung dibatasi — hanya yang kamu ikuti yang bisa kirim", "success");
+  if (key === "privacy.hideCounts") toast(val ? "✓ Jumlah pengikut disembunyikan dari orang lain" : "✓ Jumlah pengikut ditampilkan", "success");
 
   // Bahasa & timezone — apply langsung ke UI
   if (key === "lang") {
@@ -4661,11 +5121,13 @@ const I18N = {
     "settings.notif.message":    "New message",
     "settings.notif.comment":    "Comment on video",
     "settings.notif.follower":   "New follower",
+    "settings.notif.like":   "Video likes",
     "settings.notif.email":      "Email notification",
     "settings.notif.push":       "Push notification",
     "settings.privacy.public":   "Public profile",
     "settings.privacy.history":  "Show watch history",
     "settings.privacy.dm":       "Allow DM from anyone",
+    "settings.privacy.hidecounts": "Hide follower count",
     "settings.security.oldpw":   "Old Password",
     "settings.security.newpw":   "New Password",
     "settings.security.confirmpw": "Confirm New Password",
@@ -5678,6 +6140,7 @@ const I18N = {
     "settings.notif.message":    "New messages",
     "settings.notif.comment":    "Video comments",
     "settings.notif.follower":   "New followers",
+    "settings.notif.like":   "Video likes",
     "settings.notif.email":      "Email notifications",
     "settings.notif.push":       "Push notifications",
     "settings.desc":             "Adjust app preferences to your needs.",
@@ -6050,7 +6513,7 @@ const I18N = {
     "settings.security":         "Keamanan",
     "settings.autoplay":         "Putar Otomatis Video",
     "settings.reducedmotion":    "Animasi minimal",
-    "settings.compact":          "Mode kompak",
+    "settings.compact":          "Mode ringkas",
     "common.save":               "Simpan",
     "common.cancel":             "Batal",
     "common.search":             "Cari",
@@ -6223,11 +6686,13 @@ const I18N = {
     "settings.notif.message":    "Pesan baru",
     "settings.notif.comment":    "Komentar di video",
     "settings.notif.follower":   "Pengikut baru",
+    "settings.notif.like":   "Suka di video",
     "settings.notif.email":      "Notifikasi email",
     "settings.notif.push":       "Notifikasi push",
     "settings.privacy.public":   "Profil publik",
     "settings.privacy.history":  "Tampilkan riwayat tonton",
-    "settings.privacy.dm":       "Izinkan DM dari semua orang",
+    "settings.privacy.dm":       "Izinkan pesan langsung dari semua orang",
+    "settings.privacy.hidecounts": "Sembunyikan jumlah pengikut",
     "settings.security.oldpw":   "Kata Sandi Lama",
     "settings.security.newpw":   "Kata Sandi Baru",
     "settings.security.confirmpw": "Konfirmasi Kata Sandi Baru",
@@ -6623,9 +7088,10 @@ const I18N = {
     "settings.appearance":       "Tampilan",
     "settings.notif.message":    "Pesan baru",
     "settings.notif.comment":    "Komentar di video",
-    "settings.notif.follower":   "Follower baru",
-    "settings.notif.email":      "Email notifikasi",
-    "settings.notif.push":       "Push notifikasi",
+    "settings.notif.follower":   "Pengikut baru",
+    "settings.notif.like":   "Suka di video",
+    "settings.notif.email":      "Notifikasi email",
+    "settings.notif.push":       "Notifikasi push",
     "help.center":               "Pusat Bantuan",
     // Captcha + 2FA modal ID
     "captcha.title":             "Verifikasi: Susun Kotak",
@@ -7716,6 +8182,7 @@ const I18N = {
     "settings.notif.message":    "Mesej baharu",
     "settings.notif.comment":    "Komen pada video",
     "settings.notif.follower":   "Pengikut baharu",
+    "settings.notif.like":   "Suka pada video",
     "settings.notif.email":      "Pemberitahuan e-mel",
     "settings.notif.push":       "Pemberitahuan tolak",
     "settings.privacy.public":   "Profil awam",
@@ -8996,6 +9463,7 @@ const I18N = {
     "settings.notif.message":    "新しいメッセージ",
     "settings.notif.comment":    "動画へのコメント",
     "settings.notif.follower":   "新しいフォロワー",
+    "settings.notif.like":   "動画へのいいね",
     "settings.notif.email":      "メール通知",
     "settings.notif.push":       "プッシュ通知",
     "settings.privacy.public":   "公開プロフィール",
@@ -10276,6 +10744,7 @@ const I18N = {
     "settings.notif.message":    "رسالة جديدة",
     "settings.notif.comment":    "تعليق على الفيديو",
     "settings.notif.follower":   "متابع جديد",
+    "settings.notif.like":   "إعجاب بالفيديو",
     "settings.notif.email":      "إشعار البريد الإلكتروني",
     "settings.notif.push":       "إشعار الدفع",
     "settings.privacy.public":   "ملف شخصي عام",
@@ -11556,6 +12025,7 @@ const I18N = {
     "settings.notif.message":    "新消息",
     "settings.notif.comment":    "视频评论",
     "settings.notif.follower":   "新粉丝",
+    "settings.notif.like":   "视频点赞",
     "settings.notif.email":      "邮件通知",
     "settings.notif.push":       "推送通知",
     "settings.privacy.public":   "公开资料",
@@ -12836,6 +13306,7 @@ const I18N = {
     "settings.notif.message":    "새 메시지",
     "settings.notif.comment":    "동영상 댓글",
     "settings.notif.follower":   "새 팔로워",
+    "settings.notif.like":   "동영상 좋아요",
     "settings.notif.email":      "이메일 알림",
     "settings.notif.push":       "푸시 알림",
     "settings.privacy.public":   "공개 프로필",
@@ -14116,6 +14587,7 @@ const I18N = {
     "settings.notif.message":    "Nuevo mensaje",
     "settings.notif.comment":    "Comentario en video",
     "settings.notif.follower":   "Nuevo seguidor",
+    "settings.notif.like":   "Me gusta en video",
     "settings.notif.email":      "Notificación por correo",
     "settings.notif.push":       "Notificación push",
     "settings.privacy.public":   "Perfil público",
@@ -15895,6 +16367,19 @@ function populateAdminSessionInfo() {
 }
 
 // ----------------------- CHANGE PASSWORD -----------------------
+// --- Cookie helpers (sesi-only) — dipakai utk "perangkat terpercaya" 2FA saat
+//     ganti password. Codebase lain pakai localStorage; cookie sesi dipilih di
+//     sini krn otomatis hangus saat browser ditutup (req user 2026-06-13). ---
+function setSessionCookie(name, value) {
+  // Tanpa Max-Age/Expires → cookie SESI: browser hapus saat ditutup.
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict`;
+}
+function getCookie(name) {
+  const esc = name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1");
+  const m = document.cookie.match(new RegExp("(?:^|; )" + esc + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 document.getElementById("changePasswordForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   if (!user) return;
@@ -15911,6 +16396,20 @@ document.getElementById("changePasswordForm")?.addEventListener("submit", async 
   if (!acc) return toast("❌ Akun tidak ditemukan", "error");
   const oldOk = await verifyPassword(oldPw, acc.password);
   if (!oldOk) return toast("❌ Password lama salah", "error");
+
+  // OPSI A (req user 2026-06-13): kalau 2FA aktif, WAJIB verifikasi PIN dulu —
+  // setara level keamanan flow "Lupa Kata Sandi". Cookie SESI 'perangkat
+  // terpercaya' (playly-pwverify=email): setelah sekali verifikasi, ganti
+  // password berikutnya dalam sesi browser yang sama skip PIN; otomatis hangus
+  // saat browser ditutup → PIN diminta lagi.
+  if (acc.pin) {
+    const trustedFor = getCookie("playly-pwverify");
+    if (trustedFor !== user.email) {
+      const enteredPin = await open2FAModal(pin => verifyPin(pin, acc.pin));
+      if (!enteredPin) return; // batal / PIN tidak terverifikasi → password TIDAK diubah
+      setSessionCookie("playly-pwverify", user.email);
+    }
+  }
 
   acc.password = await hashPassword(newPw);
   localStorage.setItem(accKey, JSON.stringify(acc));
@@ -31495,6 +31994,20 @@ function switchView(name, { fromNav = false } = {}) {
   if (name === "settings") {
     populateSettingsPrefs();
     refreshTwoFASettings();
+    // Rapikan layout + kartu Akun (req user 2026-06-12). Kartu Akun disisipkan
+    // SEBELUM tab-grouping supaya ikut dikelompokkan ke "Data & Akun". Idempotent.
+    setTimeout(function () {
+      if (typeof _setupSettingsAccountCard === "function") _setupSettingsAccountCard();
+      if (typeof _setupSettingsToggleDesc === "function") _setupSettingsToggleDesc();
+      if (typeof _setupSettingsTabs === "function") _setupSettingsTabs();
+      // Placeholder konfirmasi hapus = "HAPUS" (huruf besar) supaya konsisten dgn
+      // validasi exact-match (req user 2026-06-13). Translator placeholder i18n
+      // memetakan "HAPUS"→"Hapus" via data-orig-ph; set data-orig-ph ke literal
+      // yg TAK ada di peta i18n supaya translator skip & placeholder tetap "HAPUS".
+      var delPh = document.getElementById("deleteAccConfirm");
+      if (delPh) { delPh.placeholder = "HAPUS"; delPh.dataset.origPh = "delete-confirm-literal"; }
+      if (typeof _setupSecurityHints === "function") _setupSecurityHints();
+    }, 20);
     if (user?.role === "admin") {
       populatePlatformSettings();
       populateAdminSessionInfo();
@@ -41036,6 +41549,7 @@ function renderPeople() {
         <button class="btn ghost" data-people-bug="${escapeHtml(a.username)}" title="Bug Report">🐞 Bug</button>
       `;
     }
+    const peopleHideCounts = !isAdminViewer && getOtherUserPrefByUsername(a.username, "privacy.hideCounts", false);
     // Avatar: pakai foto profil (a.avatar) kalau sudah di-set; fallback ke initial
     const avatarInner = a.avatar
       ? `<img src="${escapeHtml(a.avatar)}" alt="${escapeHtml(a.name || a.username || "user")}" loading="lazy"/>`
@@ -51493,10 +52007,10 @@ document.addEventListener("click", e => {
   if (revokeBtn) {
     e.preventDefault();
     const sid = revokeBtn.dataset.sessionRevoke;
-    if (!confirm("Keluar dari device ini? Device tersebut harus login ulang.")) return;
+    if (!confirm("Keluar dari perangkat ini? Perangkat tersebut harus login ulang.")) return;
     removeSession(sid);
     renderActiveSessions();
-    if (typeof toast === "function") toast("✓ Device di-logout", "success");
+    if (typeof toast === "function") toast("✓ Perangkat di-logout", "success");
     return;
   }
   if (e.target.closest("#sessionsLogoutAllBtn")) {
@@ -51504,13 +52018,13 @@ document.addEventListener("click", e => {
     const sessions = getActiveSessions();
     const otherCount = sessions.filter(s => s.id !== _getOrCreateSessionId()).length;
     if (otherCount === 0) {
-      if (typeof toast === "function") toast("Tidak ada device lain yang aktif", "info");
+      if (typeof toast === "function") toast("Tidak ada perangkat lain yang aktif", "info");
       return;
     }
-    if (!confirm(`Keluar dari ${otherCount} device lain? Mereka harus login ulang.`)) return;
+    if (!confirm(`Keluar dari ${otherCount} perangkat lain? Mereka harus login ulang.`)) return;
     logoutAllOtherSessions();
     renderActiveSessions();
-    if (typeof toast === "function") toast(`✓ ${otherCount} device di-logout`, "success");
+    if (typeof toast === "function") toast(`✓ ${otherCount} perangkat di-logout`, "success");
   }
 });
 
@@ -51540,11 +52054,15 @@ document.addEventListener("click", (e) => {
   const input = document.getElementById("deleteAccConfirm");
   const btn = document.getElementById("deleteAccountBtn");
   if (!input || !btn) return;
+  // Konfirmasi EXACT-match "HAPUS" (case-sensitive) — safeguard destruktif lebih
+  // kuat (req user 2026-06-13). Placeholder disamakan biar konsisten.
+  input.placeholder = "HAPUS";
+  const CONFIRM_WORD = "HAPUS";
   input.addEventListener("input", () => {
-    btn.disabled = input.value.trim().toUpperCase() !== "HAPUS";
+    btn.disabled = input.value.trim() !== CONFIRM_WORD;
   });
   btn.addEventListener("click", async () => {
-    if (input.value.trim().toUpperCase() !== "HAPUS") return;
+    if (input.value.trim() !== CONFIRM_WORD) return;
     const proceed = typeof confirmAction === "function"
       ? await confirmAction({
           title: "⚠️ Hapus Akun Permanen?",
@@ -51555,16 +52073,21 @@ document.addEventListener("click", (e) => {
         })
       : confirm("Hapus akun permanen? Semua data hilang dan tidak bisa dipulihkan.");
     if (!proceed) return;
-    // Nuke user-specific data
+    // Hapus HANYA data akun INI (fix bug 2026-06-13: dulu pakai
+    // startsWith("playly-state-") yg menghapus state SEMUA user — di
+    // localStorage/Supabase bersama bisa ikut menghapus data akun lain).
     try {
+      const uname = user?.username;
       const email = String(user?.email || "").toLowerCase();
+      // 1) Per-user keys (state, prefs, history, videos, dll.) milik user ini.
+      if (uname && typeof purgeUserDataByUsername === "function") purgeUserDataByUsername(uname);
+      // 2) Key apa pun yang spesifik mengandung email user ini (mis. akun
+      //    playly-account-<email>, sessions/login-attempts/audit/prefs-<email>).
       if (email) {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i) || "";
-          if (k.includes(email) || k.startsWith("playly-acc-") || k.startsWith("playly-state-")) {
-            keysToRemove.push(k);
-          }
+          if (k.includes(email)) keysToRemove.push(k);
         }
         keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch {} });
       }
@@ -51684,6 +52207,21 @@ const AUDIT_TYPE_META = {
   general:  { icon: "•", label: "Aktivitas", color: "var(--muted)" }
 };
 
+// Tanggal + waktu ABSOLUT (tanpa "Hari ini/Kemarin") utk ditaruh di dalam tiap
+// entri audit (req user 2026-06-13: tidak mau sub-header grup tanggal).
+function _formatAuditDateTimeAbs(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  const date = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  const time = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  return `${date}, ${time}`;
+}
+
+// Default tampilkan sedikit entri (req user 2026-06-13: tidak mau daftar panjang).
+// Sisanya dibuka via tombol "Lihat semua".
+const AUDIT_PREVIEW_COUNT = 5;
+let _auditExpanded = false;
+
 function renderUserAuditLog() {
   const list = document.getElementById("userAuditList");
   if (!list) return;
@@ -51692,12 +52230,19 @@ function renderUserAuditLog() {
   if (filter !== "all") events = events.filter(e => e.type === filter);
   events.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
+  const _toggle = document.getElementById("userAuditToggle");
   if (!events.length) {
     list.innerHTML = `<div class="audit-empty" data-no-i18n>Belum ada aktivitas tercatat${filter !== "all" ? ` untuk kategori "${filter}"` : ""}.</div>`;
+    if (_toggle) _toggle.style.display = "none";
     return;
   }
 
-  list.innerHTML = events.map(ev => {
+  // Tampilkan hanya AUDIT_PREVIEW_COUNT entri dulu (biar tidak panjang); sisanya
+  // dibuka lewat tombol "Lihat semua". Tanpa pengelompokan tanggal; tanggal +
+  // waktu langsung di dalam tiap entri.
+  const total = events.length;
+  const shown = _auditExpanded ? events : events.slice(0, AUDIT_PREVIEW_COUNT);
+  list.innerHTML = shown.map(ev => {
     const meta = AUDIT_TYPE_META[ev.type] || AUDIT_TYPE_META.general;
     return `
       <div class="audit-row" data-audit-id="${escapeHtml(ev.id)}">
@@ -51705,16 +52250,33 @@ function renderUserAuditLog() {
         <div class="audit-info">
           <div class="audit-action-row">
             <strong>${escapeHtml(ev.action || "Aktivitas")}</strong>
-            <span class="audit-type-pill" style="background:${meta.color}22;color:${meta.color}">${escapeHtml(meta.label)}</span>
           </div>
           ${ev.details ? `<p class="audit-details">${escapeHtml(ev.details)}</p>` : ""}
           <small class="audit-meta">
-            ${escapeHtml(_formatAuditTime(ev.ts))} · ${escapeHtml(ev.deviceLabel || "Unknown")}
+            ${escapeHtml(_formatAuditDateTimeAbs(ev.ts))} · ${escapeHtml(ev.deviceLabel || "Unknown")}
           </small>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join("");
+
+  // Tombol "Lihat semua / Tampilkan lebih sedikit" (cuma kalau entri > preview).
+  let toggle = document.getElementById("userAuditToggle");
+  if (total > AUDIT_PREVIEW_COUNT) {
+    if (!toggle) {
+      toggle = document.createElement("button");
+      toggle.id = "userAuditToggle";
+      toggle.type = "button";
+      toggle.className = "audit-toggle-btn";
+      toggle.addEventListener("click", () => { _auditExpanded = !_auditExpanded; renderUserAuditLog(); });
+      list.parentNode.insertBefore(toggle, list.nextSibling);
+    }
+    toggle.style.display = "";
+    toggle.textContent = _auditExpanded
+      ? "Tampilkan lebih sedikit"
+      : `Lihat semua (${total})`;
+  } else if (toggle) {
+    toggle.style.display = "none";
+  }
 }
 
 // Event delegation: filter + clear
@@ -51727,6 +52289,7 @@ document.addEventListener("click", e => {
     const list = document.getElementById("userAuditList");
     if (list) {
       list.dataset.filter = filter;
+      _auditExpanded = false; // reset ke ringkas saat ganti filter
       renderUserAuditLog();
     }
     return;
@@ -52059,9 +52622,10 @@ function renderUserProfile() {
 
   const followerList = getUserFollowers(username);
   const followingList = getUserFollowing(username);
+  const hideCounts = !isMe && user?.role !== "admin" && getOtherUserPrefByUsername(username, "privacy.hideCounts", false);
   $("#upStatVideos").textContent = videos.length.toLocaleString("id-ID");
-  $("#upStatFollowers") && ($("#upStatFollowers").textContent = followerList.length.toLocaleString("id-ID"));
-  $("#upStatFollowing") && ($("#upStatFollowing").textContent = followingList.length.toLocaleString("id-ID"));
+  $("#upStatFollowers") && ($("#upStatFollowers").textContent = hideCounts ? "—" : followerList.length.toLocaleString("id-ID"));
+  $("#upStatFollowing") && ($("#upStatFollowing").textContent = hideCounts ? "—" : followingList.length.toLocaleString("id-ID"));
   // Total likes = sum of likes di semua video kreator ini
   const totalLikes = videos.reduce((s, v) => s + (v.likes || 0), 0);
   $("#upStatLikes") && ($("#upStatLikes").textContent = totalLikes.toLocaleString("id-ID"));

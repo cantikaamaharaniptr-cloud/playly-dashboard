@@ -6962,8 +6962,9 @@ body[data-role="admin"] .audit-filter-btn.active {
   transition: all .15s;
 }
 .session-row.session-current {
-  background: linear-gradient(135deg, rgba(220, 169, 109, .08), rgba(220, 169, 109, .02));
-  border-color: rgba(220, 169, 109, .35);
+  /* Highlight perangkat aktif: CREAM netral (req user 2026-06-13, ganti dari gold). */
+  background: linear-gradient(135deg, rgba(232, 216, 196, .06), rgba(232, 216, 196, .015));
+  border-color: rgba(232, 216, 196, .3);
 }
 body[data-role="admin"] .session-row.session-current {
   background: linear-gradient(135deg, rgba(154, 170, 196, .10), rgba(154, 170, 196, .02));
@@ -6981,7 +6982,7 @@ body[data-role="admin"] .session-row.session-current {
   flex-shrink: 0;
 }
 .session-row.session-current .session-icon {
-  background: rgba(220, 169, 109, .14);
+  background: rgba(232, 216, 196, .12);
 }
 body[data-role="admin"] .session-row.session-current .session-icon {
   background: rgba(154, 170, 196, .14);
@@ -7005,13 +7006,16 @@ body[data-role="admin"] .session-row.session-current .session-icon {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(220, 169, 109, .14);
-  border: 1px solid rgba(220, 169, 109, .42);
-  color: var(--gold, #DCA96D);
+  /* Badge "Perangkat ini": CREAM netral (req user 2026-06-13, ganti dari gold). */
+  background: rgba(232, 216, 196, .12);
+  border: 1px solid rgba(232, 216, 196, .32);
+  color: #e8d8c4;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .04em;
 }
+/* Light: badge "Perangkat ini" teks cream tak terbaca di bg terang -> wine. */
+body[data-theme="light"]:not([data-role="admin"]) .session-badge-current { color: var(--primary); background: rgba(109,41,50,.10); border-color: rgba(109,41,50,.30); }
 body[data-role="admin"] .session-badge-current {
   background: rgba(154, 170, 196, .14);
   border-color: rgba(154, 170, 196, .42);
@@ -9840,6 +9844,11 @@ body[data-role="admin"] .view[data-view="premium-insights"] {
    Settings-grid penuh-lebar (no max-width). Settings-card-all pakai
    CSS multi-column biar 7 section flow ke 2-3 kolom otomatis sesuai
    lebar viewport, mengisi penuh halaman tanpa ruang kosong. */
+/* Pengaturan: samakan ikon hardcode (chip/kartu/tab) ke stroke 1.6 (kecuali ui-ico/picon) */
+section[data-view="settings"] svg:not(.ui-ico):not(.picon) { stroke-width: 1.6; }
+/* Focus <select> netral cream (taat aturan no-colored-focus-ring; sebelumnya border wine) */
+section[data-view="settings"] select:focus,
+section[data-view="settings"] select:focus-visible { border-color: rgba(232, 216, 196, .28) !important; }
 .settings-grid {
   display: flex;
   flex-direction: column;
@@ -12169,6 +12178,17 @@ section.view.focus-mode .messages-3col {
   gap: 6px;
   margin-top: 14px;
 }
+/* Sub-judul grup toggle (mis. "Jenis Notifikasi" / "Saluran") di kartu Pengaturan */
+.tog-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 12px 0 2px;
+}
+.card > .tog-group-label:first-of-type,
+.settings-grid .card .tog-group-label:first-of-type { margin-top: 4px; }
 .tog {
   display: flex;
   align-items: center;
@@ -13256,7 +13276,7 @@ body.reduced-motion .reveal-on-scroll {
    konten muat di viewport tanpa scroll berlebihan. Activated by toggle di
    Settings → Tampilan → Compact mode. */
 body.compact-mode .view {
-  padding-top: 14px;
+  gap: 12px;
 }
 body.compact-mode .view-header {
   margin-bottom: 12px;
@@ -41978,7 +41998,12 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .export-data-head small {
   display: block;
-  margin-top: 4px;
+  /* Dempetkan ke judul (req user 2026-06-13): jarak asal ~15px karena h3
+     ber-ikon 32px. Deskripsi SUDAH ter-indent sejajar judul via rule global
+     (padding-left), jadi cukup TARIK NAIK saja. !important utk mengalahkan
+     rule h3:has(.sec-icon)+small yg set margin-top:4px. -8px = samakan dgn
+     kartu Riwayat/Sesi (req user 2026-06-13: konsistenkan gap). */
+  margin-top: -8px !important;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -42037,7 +42062,9 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 }
 .danger-zone-head small {
   display: block;
-  margin-top: 4px;
+  /* Dempetkan ke judul (req user 2026-06-13) — sama spt Ekspor (tarik naik saja,
+     indent sudah dari rule global). -8px = konsisten dgn Riwayat/Sesi/Ekspor. */
+  margin-top: -8px !important;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-2, var(--muted));
@@ -76456,4 +76483,393 @@ section.view[data-view="messages"] > .view-header { align-items: center; }
   }
   .dm-react-palette { gap: 0; }
   .dm-react-palette button { width: 40px; height: 40px; font-size: 22px; }
+/* === Pengaturan: tab grouping (req user 2026-06-12) — 10 kartu dikelompokkan
+   ke tab Umum/Keamanan/Data biar tak menumpuk di satu halaman panjang. === */
+.set-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.set-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 17px; border-radius: 11px;
+  background: var(--surface); color: var(--text-2, var(--muted));
+  border: 1px solid var(--border);
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s, transform .12s;
+}
+.set-tab .set-tab-ico { display: inline-flex; }
+.set-tab .set-tab-ico svg { width: 16px; height: 16px; }
+.set-tab:hover { background: var(--bg-elev); color: var(--text); transform: translateY(-1px); }
+.set-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.set-tab-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  /* Sejajar (req user 2026-06-13): kartu satu baris tinggi SAMA (atas & bawah
+     rata), tak lagi ragged. Default grid stretch. */
+  align-items: stretch;
+}
+/* Isi kartu Settings dibuat flex-column supaya body bisa mengisi tinggi kartu
+   saat di-stretch (tak ada ruang kosong canggung di bawah). */
+.set-tab-panel > .card { display: flex; flex-direction: column; }
+/* Kartu pendek (mis. 2FA, Ganti Password) yang ikut di-stretch: buat area isi
+   mengisi tinggi & tombol aksi utama menempel ke BAWAH (gaya footer) — ruang
+   kosong jadi di tengah, bukan menggumpal di bawah, jadi terlihat rapi. */
+.set-tab-panel > .card > form.upload-form,
+.set-tab-panel > .card > #twofaSettings { flex: 1; display: flex; flex-direction: column; }
+.set-tab-panel > .card > form.upload-form > .btn,
+.set-tab-panel > .card > #twofaSettings > #twofaActivate,
+.set-tab-panel > .card > #twofaSettings > .twofa-actions { margin-top: auto; }
+.set-tab-panel[hidden] { display: none !important; }
+
+/* Kartu "Akun Saya" di Pengaturan — RINGKASAN akun + pintasan ke halaman Profil
+   (req user 2026-06-13: editor profil sudah ada di Profil, jangan digandakan).
+   Full-width, layout horizontal: avatar + info kiri, tombol "Edit profil" kanan. */
+.set-account-card { grid-column: 1 / -1; }
+/* Garis pembatas antara header "Akun Saya" & konten (req user 2026-06-13). */
+.set-acct-summary { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-top: 13px; padding-top: 15px; border-top: 1px solid var(--border); }
+.set-acct-avatar { width: 56px; height: 56px; min-width: 56px; border-radius: 50%; flex-shrink: 0; font-size: 20px; font-weight: 700; overflow: hidden; display: grid; place-items: center; }
+.set-acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.set-acct-summary-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.set-acct-summary-info strong { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.set-acct-handle { font-size: 13px; color: var(--text-2, var(--muted)); }
+.set-acct-email { font-size: 12.5px; color: var(--muted); }
+.set-acct-edit { margin-left: auto; flex-shrink: 0; align-self: center; }
+/* Tombol aksi .btn.primary di Settings dibuat SOLID wine + teks putih (req user
+   2026-06-13): warnanya pudar/low-kontras karena rule ghost global
+   `body:not([data-role=admin]) .btn.primary { background:transparent!important;
+   color:var(--primary) }`. Specificity dinaikkan + !important utk menang.
+   (Hapus Akun pakai .danger-btn, tak terpengaruh.) */
+body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+body:not([data-role="admin"]) section.view[data-view="settings"] .btn.primary:hover {
+  background: var(--primary-hover, #5a212a) !important;
+}
+/* Tombol "Hapus Akun Permanen": saat AKTIF (sudah ketik HAPUS) jadi SOLID merah
+   danger — sinyal aksi destruktif lebih jelas (req user 2026-06-13). Gradient
+   asal di-override transparan oleh rule ghost agresif, jadi pakai selector
+   ber-specificity tinggi + longhand (background-color & -image) supaya menang.
+   Saat disabled tetap redup (opacity dari rule asal). */
+body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-card .danger-btn:not(:disabled) {
+  background-color: #dc2626 !important;
+  background-image: none !important;
+  color: #fff !important;
+  border-color: #dc2626 !important;
+}
+body:not([data-role="admin"]) section.view[data-view="settings"] .danger-zone-card .danger-btn:not(:disabled):hover {
+  background-color: #b91c1c !important;
+}
+/* Daftar konsekuensi Hapus Akun: rapikan ikon & teks (req user 2026-06-13).
+   Sebelumnya ikon (span.picon-w) nempel ke teks (gap ~1px) & align baseline
+   bikin agak turun. Tetap INLINE — jangan flex/grid pada <li> krn teks punya
+   <b> inline yg bakal pecah jadi flex-item. Cukup atur jarak + center ikon. */
+.danger-zone-card ul li { line-height: 1.55; }
+.danger-zone-card li .picon-w {
+  vertical-align: middle;
+  margin-right: 11px;
+  flex-shrink: 0;
+}
+.danger-zone-card li .picon-w svg { width: 17px; height: 17px; }
+/* Deskripsi 1-baris di tiap toggle (req user 2026-06-12). Label + desc stack di
+   kiri; toggle tetap di kanan. */
+.tog .tog-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
+.tog .tog-desc { font-size: 11px; line-height: 1.4; color: var(--muted); font-weight: 400; }
+.tog { align-items: center; }
+
+/* Hint di bawah tombol Ganti Password + daftar manfaat 2FA (req user 2026-06-13). */
+.set-field-hint {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+/* Kotak callout "Kenapa aktifkan 2FA?" (req user 2026-06-13) — info-box ber-aksen
+   tepi kiri, isi poin-poin. Mengisi ruang kosong kartu 2FA secara menonjol. */
+.twofa-callout {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .025);
+}
+.twofa-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 11px;
+}
+.twofa-callout-head svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #e8d8c4;
+}
+.twofa-callout ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.twofa-callout li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.twofa-callout li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* Header kartu Riwayat Aktivitas: deskripsi sejajar TEKS judul (di kanan ikon,
+   42px = ikon 32 + gap 10) + RAPATKAN jarak judul->deskripsi (req user
+   2026-06-13). Gap visual besar krn h3 setinggi ikon (32px) + margin. */
+section.view[data-view="settings"] .user-audit-card h3 { margin-bottom: 0; }
+section.view[data-view="settings"] .user-audit-card h3 + small {
+  /* <small> default INLINE → margin vertikal diabaikan. Jadikan block dulu. */
+  display: block;
+  padding-left: 42px;
+  /* Ikon 32px memanjang ~11px di bawah teks judul (di dalam h3) → ada ruang
+     kosong. Tarik deskripsi NAIK dgn margin negatif biar benar-benar rapat. */
+  margin-top: -8px;
+}
+
+/* #1 (req user 2026-06-13): tombol "Hapus riwayat" ke kanan-atas sejajar judul.
+   .user-audit-head sudah flex tapi column → ubah ROW; deskripsi otomatis wrap
+   sebelum tombol (sekalian tidak sprawling penuh lebar kartu). */
+section.view[data-view="settings"] .user-audit-head {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+section.view[data-view="settings"] .user-audit-head > div { flex: 1; min-width: 0; }
+section.view[data-view="settings"] #userAuditClearBtn { flex-shrink: 0; margin: 0; }
+/* Rapatkan jarak header → baris chip filter (req user 2026-06-13: terlalu jauh). */
+section.view[data-view="settings"] .user-audit-head { margin-bottom: 6px; }
+
+/* #3: ikon entri audit lebih kecil & proporsional (kotak 40→34px). */
+section.view[data-view="settings"] .user-audit-card .audit-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  border-radius: 9px;
+}
+
+/* #1 (req user 2026-06-13): padatkan entri audit — padding & gap dikurangi,
+   jarak baris dalam dirapatkan. Tinggi entri ~83px → ~66px. */
+section.view[data-view="settings"] .user-audit-card .audit-row {
+  padding: 9px 14px;
+  gap: 12px;
+}
+section.view[data-view="settings"] .user-audit-card .audit-details { margin-bottom: 2px; }
+/* Hilangkan scroll dalam + max-height (480px) yg memotong entri terakhir
+   (req user 2026-06-13: "kepotong"). Daftar tampil utuh, halaman yang scroll. */
+section.view[data-view="settings"] #userAuditList {
+  gap: 7px;
+  max-height: none;
+  overflow: visible;
+}
+/* Tombol "Lihat semua / Tampilkan lebih sedikit" (req user 2026-06-13: daftar
+   ringkas, default 5 entri). */
+.audit-toggle-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.audit-toggle-btn:hover {
+  background: rgba(232, 216, 196, .05);
+  border-color: rgba(232, 216, 196, .25);
+}
+
+/* Sesi Aktif: samakan perbaikan tampilan dgn kartu Riwayat Aktivitas (req user
+   2026-06-13). Judul↔deskripsi rapat (small inline → block + margin negatif),
+   header↔list rapat, ikon entri lebih kecil, entri lebih padat. */
+section.view[data-view="settings"] .sessions-card h3 { margin-bottom: 0; }
+section.view[data-view="settings"] .sessions-card h3 + small {
+  display: block;
+  padding-left: 42px;
+  margin-top: -8px;
+}
+section.view[data-view="settings"] .sessions-head { margin-bottom: 6px; }
+section.view[data-view="settings"] .sessions-card .session-icon {
+  width: 36px;
+  height: 36px;
+}
+/* SVG ikon perangkat tadi cuma ~56% isi kotak (terlihat kecil) → perbesar biar
+   proporsional. !important krn ada rule picon yg lebih spesifik. */
+section.view[data-view="settings"] .sessions-card .session-icon svg { width: 22px !important; height: 22px !important; }
+
+/* "✓ Aktif" dari teks hijau polos → BADGE/pill hijau (req user 2026-06-13),
+   konsisten dgn badge "Perangkat ini". Status indicator → warna hijau OK. */
+section.view[data-view="settings"] .session-current-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, .15);
+  border: 1px solid rgba(16, 185, 129, .35);
+  color: #10B981;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Tab Umum: 5 kartu → susun 3 kolom (3 atas + 2 bawah) di layar lebar, biar
+   lebih seimbang TANPA ada kartu yang melar full-width (req user 2026-06-13:
+   tidak suka Bahasa memanjang). Turun ke 2 lalu 1 kolom di layar sempit.
+   Semua kartu ukuran sama. */
+.set-tab-panel.set-panel-umum { grid-template-columns: 1fr; }
+@media (min-width: 760px) {
+  .set-tab-panel.set-panel-umum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .set-tab-panel.set-panel-umum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Tab Keamanan: 2 kolom (Keamanan + 2FA isi penuh, tanpa kolom kosong di kanan);
+   kartu full-width (Riwayat/Sesi, grid-column 1/-1) tetap membentang. req user
+   2026-06-13. Turun 1 kolom di layar sempit. */
+.set-tab-panel.set-panel-keamanan { grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .set-tab-panel.set-panel-keamanan { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Spacing toggle kartu dinamis (Hemat Data + a11y yg di-merge). */
+.a11y-toggles { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+/* Efek aksesibilitas — class di body, berlaku GLOBAL (bukan dummy):
+   1) Kontras tinggi → border/garis lebih tegas (override --border).
+   2) Teks lebih tebal → font-weight dasar naik (diwarisi teks dashboard).
+   3) Garis bawahi tautan → semua <a> digarisbawahi. */
+/* Kontras tinggi (app-wide): kuatkan token border -> semua border berbasis token ikut;
+   + jaring lebar komponen ber-border hardcoded di SEMUA halaman (kecuali state aksen). */
+body.a11y-contrast { --border: rgba(232, 216, 196, .58); --border-strong: rgba(232, 216, 196, .64); }
+body.a11y-contrast :is(.card,.btn,.tog,.nav-item,.topbar,.hero,input,select,textarea,
+  [class*="-card"],[class*="-tab"],[class*="-badge"],[class*="-banner"],[class*="-pill"],
+  [class*="-chip"],[class*="-empty"],[class*="-box"],[class*="-item"],[class*="-tag"],
+  [class*="-cta"],[class*="-alert"],[class*="-panel"]):not(.active):not(.selected):not(.primary):not(.danger) {
+  border-color: rgba(232, 216, 196, .5) !important;
+}
+/* Teks lebih tebal (app-wide): UNIVERSAL -> semua teks non-judul jadi >=600 di SEMUA halaman. */
+body.a11y-bold-text { font-weight: 600; }
+body.a11y-bold-text *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(strong):not(b) { font-weight: 600 !important; }
+
+/* Dropdown custom pengganti <select> native (req user 2026-06-13): hapus
+   highlight BIRU native OS + fokus ring berwarna. Hover cream, terpilih wine,
+   fokus ring cream netral (sesuai aturan no-colored-focus-ring). */
+.cdrop { position: relative; width: 100%; }
+.cdrop-native {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); border: 0; opacity: 0; pointer-events: none;
+}
+.cdrop-trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 13px;
+  background: #311c22;
+  border: 1px solid rgba(232, 216, 196, .28);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+.cdrop-trigger:hover { border-color: rgba(232, 216, 196, .4); }
+.cdrop-trigger:focus-visible {
+  outline: none;
+  border-color: rgba(232, 216, 196, .5);
+  box-shadow: 0 0 0 3px rgba(232, 216, 196, .15);
+}
+.cdrop.open .cdrop-trigger { border-color: rgba(232, 216, 196, .45); }
+/* Light: trigger dropdown jangan bg gelap hardcoded #311c22 (teks wine tak terbaca). */
+body[data-theme="light"] .cdrop-trigger { background: var(--surface-2); border-color: var(--border); }
+.cdrop-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cdrop-chevron { width: 16px; height: 16px; flex-shrink: 0; opacity: .65; transition: transform .15s; }
+.cdrop.open .cdrop-chevron { transform: rotate(180deg); }
+.cdrop-panel {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: #2b181d;
+  border: 1px solid rgba(232, 216, 196, .18);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .55);
+  max-height: 300px; overflow-y: auto;
+  z-index: 60;
+  padding: 6px;
+}
+.cdrop-group {
+  font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted); opacity: .6;
+  padding: 9px 10px 4px;
+}
+.cdrop-opt {
+  padding: 8px 11px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.3;
+}
+.cdrop-opt:hover { background: rgba(232, 216, 196, .08); }
+.cdrop-opt.sel { background: var(--primary); color: #fff; font-weight: 600; }
+.cdrop-opt.sel:hover { background: var(--primary); }
+
+/* Placeholder input Pengaturan DIPUDARKAN biar beda jelas dgn teks yg sudah
+   diketik (req user 2026-06-13). Di tema ini --muted = --text (#E8D8C4) → tak
+   ada beda; paksa alpha rendah. Teks asli tetap penuh (var(--text)). */
+section.view[data-view="settings"] input::placeholder,
+section.view[data-view="settings"] textarea::placeholder {
+  color: rgba(232, 216, 196, .4) !important;
+  opacity: 1;
+}
+
+/* req user 2026-06-13: TIDAK mau ada fokus ring APAPUN di kolom (input/select/
+   textarea/dropdown) → hilangkan outline & box-shadow ring saat fokus. Border
+   statis kolom tetap. (Tombol/link tetap punya ring cream utk a11y.) */
+section.view[data-view="settings"] input:focus,
+section.view[data-view="settings"] input:focus-visible,
+section.view[data-view="settings"] select:focus,
+section.view[data-view="settings"] select:focus-visible,
+section.view[data-view="settings"] textarea:focus,
+section.view[data-view="settings"] textarea:focus-visible,
+section.view[data-view="settings"] .cdrop-trigger:focus,
+section.view[data-view="settings"] .cdrop-trigger:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+section.view[data-view="settings"] .sessions-card .session-row {
+  padding: 9px 14px;
+  gap: 12px;
+}
+
+/* Chip filter aktif "Semua": dari teks wine redup (kontras rendah) → isian
+   SOLID wine + teks putih, active state jelas & konsisten tema. req user
+   2026-06-13. (Non-admin; rule admin slate-blue tak terpengaruh.) */
+body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
 }
