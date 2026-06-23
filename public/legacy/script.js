@@ -34306,6 +34306,10 @@ function switchView(name, { fromNav = false } = {}) {
     if (typeof renderHomeAchievements === "function") renderHomeAchievements();
     if (typeof renderHomeRanking === "function") renderHomeRanking();
     if (typeof renderHomeRankingSelf === "function") renderHomeRankingSelf();
+    // Divider Beranda (RINGKASAN STATISTIK/PROGRES & PENCAPAIAN/PAPAN PERINGKAT/VIDEO):
+    // de-caps utk id + terjemah eksak (tText) utk bahasa lain. Termasuk pill ber-data-no-i18n
+    // (live dot) yg dilewati tree-walker. Sinkron + timeout kecil (sebagian render async).
+    if (typeof _deCapsHomeLabels === "function") { _deCapsHomeLabels(); setTimeout(_deCapsHomeLabels, 120); }
   }
   if (name === "history") renderHistory();
   if (name === "notifications") {
@@ -37695,7 +37699,7 @@ function _deCapsHomeLabels() {
     "PAPAN PERINGKAT": "Papan Peringkat",
     "VIDEO": "Video",
   };
-  document.querySelectorAll('section.view[data-view="home"] .admin-section-divider span').forEach(span => {
+  document.querySelectorAll('section.view[data-view="home"] .admin-section-divider span, section.view[data-view="home"] .admin-section-divider, section.view[data-view="home"] [data-no-i18n]').forEach(span => {
     span.childNodes.forEach(n => {
       if (n.nodeType === 3) {
         const key = n.textContent.trim();
