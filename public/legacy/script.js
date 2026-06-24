@@ -5027,6 +5027,14 @@ function applyPrefSideEffects(key, val) {
 // settings, page titles). Element punya [data-i18n="key"] → text di-replace.
 const I18N = {
   en: {
+    "common.live": "LIVE",
+    "day.mon": "Mon",
+    "day.tue": "Tue",
+    "day.wed": "Wed",
+    "day.thu": "Thu",
+    "day.fri": "Fri",
+    "day.sat": "Sat",
+    "day.sun": "Sun",
     "hi.sortOldest": "Oldest",
     "lvl.pendatang": "Newcomer",
     "lvl.naikDaun": "Rising Creator",
@@ -6868,6 +6876,14 @@ const I18N = {
     "admin.toast.created.suffix": "created",
   },
   id: {
+    "common.live": "LIVE",
+    "day.mon": "Mon",
+    "day.tue": "Tue",
+    "day.wed": "Wed",
+    "day.thu": "Thu",
+    "day.fri": "Fri",
+    "day.sat": "Sat",
+    "day.sun": "Sun",
     "hi.sortOldest": "Terlama",
     "lvl.pendatang": "Pendatang",
     "lvl.naikDaun": "Kreator Naik Daun",
@@ -8676,6 +8692,15 @@ const I18N = {
     "admin.toast.created.suffix": "berhasil dibuat",
   },
   ms: {
+    "btn.analytics": "Analitik",
+    "common.live": "LANGSUNG",
+    "day.mon": "Isn",
+    "day.tue": "Sel",
+    "day.wed": "Rab",
+    "day.thu": "Kha",
+    "day.fri": "Jum",
+    "day.sat": "Sab",
+    "day.sun": "Ahd",
     "hi.sortOldest": "Terlama",
     "lvl.pendatang": "Pendatang",
     "lvl.naikDaun": "Kreator Sedang Naik",
@@ -10233,6 +10258,15 @@ const I18N = {
     "admin.toast.created.suffix": "berjaya dicipta",
   },
   ja: {
+    "btn.analytics": "分析",
+    "common.live": "ライブ",
+    "day.mon": "月",
+    "day.tue": "火",
+    "day.wed": "水",
+    "day.thu": "木",
+    "day.fri": "金",
+    "day.sat": "土",
+    "day.sun": "日",
     "hi.sortOldest": "最も古い",
     "lvl.pendatang": "新参者",
     "lvl.naikDaun": "注目のクリエイター",
@@ -11790,6 +11824,15 @@ const I18N = {
     "admin.toast.created.suffix": "を作成しました",
   },
   ar: {
+    "btn.analytics": "التحليلات",
+    "common.live": "مباشر",
+    "day.mon": "الإثنين",
+    "day.tue": "الثلاثاء",
+    "day.wed": "الأربعاء",
+    "day.thu": "الخميس",
+    "day.fri": "الجمعة",
+    "day.sat": "السبت",
+    "day.sun": "الأحد",
     "hi.sortOldest": "الأقدم",
     "lvl.pendatang": "وافد جديد",
     "lvl.naikDaun": "مُنشئ صاعد",
@@ -13347,6 +13390,15 @@ const I18N = {
     "admin.toast.created.suffix": "تم إنشاؤه بنجاح",
   },
   zh: {
+    "btn.analytics": "分析",
+    "common.live": "直播",
+    "day.mon": "周一",
+    "day.tue": "周二",
+    "day.wed": "周三",
+    "day.thu": "周四",
+    "day.fri": "周五",
+    "day.sat": "周六",
+    "day.sun": "周日",
     "hi.sortOldest": "最早",
     "lvl.pendatang": "新秀",
     "lvl.naikDaun": "新晋创作者",
@@ -14904,6 +14956,15 @@ const I18N = {
     "admin.toast.created.suffix": "创建成功",
   },
   ko: {
+    "btn.analytics": "분석",
+    "common.live": "라이브",
+    "day.mon": "월",
+    "day.tue": "화",
+    "day.wed": "수",
+    "day.thu": "목",
+    "day.fri": "금",
+    "day.sat": "토",
+    "day.sun": "일",
     "hi.sortOldest": "오래된순",
     "lvl.pendatang": "새내기",
     "lvl.naikDaun": "떠오르는 크리에이터",
@@ -16461,6 +16522,15 @@ const I18N = {
     "admin.toast.created.suffix": "생성됨",
   },
   es: {
+    "btn.analytics": "Analítica",
+    "common.live": "EN VIVO",
+    "day.mon": "Lun",
+    "day.tue": "Mar",
+    "day.wed": "Mié",
+    "day.thu": "Jue",
+    "day.fri": "Vie",
+    "day.sat": "Sáb",
+    "day.sun": "Dom",
     "hi.sortOldest": "Más antiguo",
     "lvl.pendatang": "Recién llegado",
     "lvl.naikDaun": "Creador en ascenso",
@@ -28932,7 +29002,7 @@ function stopAdminLiveRefresh() {
     if (isPaused) {
       // Resume + manual refresh
       btn.classList.remove("paused");
-      btn.querySelector(".lt-label").textContent = "LIVE";
+      btn.querySelector(".lt-label").textContent = (typeof tText === "function") ? tText("LIVE") : "LIVE";
       startAdminLiveRefresh();
       // Trigger refresh sekarang juga
       try {
