@@ -13967,8 +13967,8 @@ body[data-role="admin"] .auth-screen .auth-grid .auth-left-admin { display: flex
 }
 /* Light mode mirror — wine deep di bg terang biar terbaca jelas */
 body[data-theme="light"] .auth-pill-badge {
-  background: rgba(109, 41, 50, .08);
-  border-color: rgba(109, 41, 50, .25);
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary);
   color: #6D2932;
 }
 .auth-pill-dot {
@@ -45540,13 +45540,13 @@ body:not([data-role="admin"]) .hs-card::before {
   .auth-screen.show .auth-left .auth-showcase h2,
   .auth-screen.show .auth-left-admin .auth-showcase h2,
   .auth-screen.show .auth-card,
-  .auth-screen.show .floating-card,
   .auth-screen.show .play-orb,
   .auth-screen.show .auth-orb {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
+  /* floating-card dikeluarkan dari reset: badge hero sengaja tetap float (req user). din/landing. */
 }
 
 
@@ -46912,40 +46912,44 @@ body[data-role="admin"] [data-counter].counter-done {
    ------------------------------------------------------------------------- */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-frame {
   background: #FFFFFF !important;
-  border-color: rgba(102, 34, 34, .18) !important;
+  border-color: rgba(17, 24, 39, .12) !important;
   box-shadow:
-    0 30px 60px rgba(102, 34, 34, .14),
-    0 0 0 1px rgba(102, 34, 34, .05) inset !important;
+    0 30px 60px rgba(17, 24, 39, .12),
+    0 0 0 1px rgba(17, 24, 39, .05) inset !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-chrome {
-  background: rgba(102, 34, 34, .06) !important;
-  border-bottom-color: rgba(102, 34, 34, .14) !important;
+  background: rgba(17, 24, 39, .04) !important;
+  border-bottom-color: rgba(17, 24, 39, .10) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .apc-url {
-  background: rgba(102, 34, 34, .07) !important;
+  background: rgba(17, 24, 39, .05) !important;
   color: var(--muted) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-side {
-  background: rgba(102, 34, 34, .055) !important;
-  border-right-color: rgba(102, 34, 34, .14) !important;
+  background: #FFFFFF !important;
+  border-right-color: rgba(109, 41, 50, .14) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-brand {
-  border-bottom-color: rgba(102, 34, 34, .14) !important;
+  border-bottom-color: rgba(109, 41, 50, .14) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-label {
-  color: var(--muted) !important;
+  color: #842A3B !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item {
-  color: var(--text-2) !important;
+  color: #561C24 !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item.aps-active-nav {
-  color: var(--text) !important;
-  background: rgba(132, 42, 59, .14) !important;
-  box-shadow: inset 2px 0 0 var(--primary) !important;
+  color: #FFFFFF !important;
+  background: var(--primary) !important;
+  box-shadow: none !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item.aps-active-nav svg,
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item.aps-active-nav .picon {
+  color: #FFFFFF !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item em {
-  background: rgba(17, 24, 39, .10) !important; /* netral, no pink (req 2026-06-24) */
-  color: var(--primary) !important;
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
 }
 /* Greeting text */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-greet strong {
@@ -46957,7 +46961,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-greet span {
 /* Stat cards inside preview */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-stat-card {
   background: #FFFFFF !important;
-  border-color: rgba(102, 34, 34, .16) !important;
+  border-color: rgba(17, 24, 39, .10) !important;
   color: var(--text) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-stat-card strong {
@@ -46969,7 +46973,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-stat-lbl {
 /* Trending panel + its thumbnails */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending {
   background: #FFFFFF !important;
-  border-color: rgba(102, 34, 34, .16) !important;
+  border-color: rgba(17, 24, 39, .10) !important;
   color: var(--text) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending-h span {
@@ -46979,14 +46983,19 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending-h smal
   color: var(--muted) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb {
-  background: linear-gradient(135deg, rgba(17, 24, 39, .14), rgba(17, 24, 39, .06)) !important; /* netral, no pink (req 2026-06-24) */
-  color: rgba(60, 50, 45, .6) !important;
+  background: linear-gradient(135deg, #7d3640, #561C24) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb .picon-w {
+  background: rgba(255, 255, 255, .95) !important; color: #6D2932 !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb .picon {
+  color: #6D2932 !important;
 }
 /* Analytics: chart card + KPI tiles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart,
 html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi {
   background: #FFFFFF !important;
-  border-color: rgba(102, 34, 34, .16) !important;
+  border-color: rgba(17, 24, 39, .10) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi span {
   color: var(--muted) !important;
@@ -46994,17 +47003,18 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi span {
 html body[data-theme="light"]:not([data-role="admin"]) .aps-kpi b {
   color: var(--text) !important;
 }
-/* Chart line + area fill — real wine, not pink-on-white */
+/* Chart line tetap wine (#842A3B); area fill NETRAL (rgba wine .16 = pink di putih).
+   2026-06-22: user minta hilangkan pink di landing → fill abu netral. */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart-line {
   stroke: #842A3B !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart-area {
-  fill: rgba(17, 24, 39, .10) !important; /* netral, no pink (req 2026-06-24) */
+  fill: rgba(17, 24, 39, .07) !important;
 }
 /* DM / Pesan screen — list, rows, bubbles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-list {
-  background: linear-gradient(135deg, rgba(17, 24, 39, .06), rgba(17, 24, 39, .03)) !important; /* netral, no pink (req 2026-06-24) */
-  border-color: rgba(17, 24, 39, .12) !important;
+  background: linear-gradient(135deg, rgba(17, 24, 39, .07), rgba(17, 24, 39, .03)) !important;
+  border-color: rgba(17, 24, 39, .10) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-row {
   background: #FFFFFF !important;
@@ -47019,16 +47029,192 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-snip {
   color: var(--text-2) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-bubble.in {
-  background: rgba(17, 24, 39, .07) !important; /* netral, no pink (req 2026-06-24) */
+  background: rgba(17, 24, 39, .07) !important;
   color: var(--text) !important;
 }
 /* Floating cards (Trending / +1.2k / 24.8k / +58 new) below preview */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf {
   background: #FFFFFF !important;
-  border-color: rgba(102, 34, 34, .18) !important;
+  border-color: rgba(17, 24, 39, .12) !important;
   color: var(--text) !important;
-  box-shadow: 0 6px 16px rgba(102, 34, 34, .1) !important;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, .10) !important;
 }
+/* light: LANDING marketing (PRATINJAU/CARA KERJA/FAQ/Hero) — hilangkan hint pink
+   di tema terang. Wine-tint surface (bg/gradient/border/glow) -> neutral abu.
+   Tombol/ikon/teks/garis chart solid wine TETAP. Light-only (dark landing aman),
+   class-doubling utk spesifisitas. din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-step.howit-step {
+  background:
+    radial-gradient(120% 85% at 50% 0%, rgba(17, 24, 39, .05), transparent 55%),
+    linear-gradient(160deg, var(--bg-elev), rgba(17, 24, 39, .03)) !important;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .10) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-card { background: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .pm-ad.pm-ad,
+html body[data-theme="light"]:not([data-role="admin"]) .pm-upgrade-banner.pm-upgrade-banner,
+html body[data-theme="light"]:not([data-role="admin"]) .pm-feature.pm-feature { background: rgba(17, 24, 39, .04) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .pm-tile.pm-tile { border-color: rgba(17, 24, 39, .12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-faq-section .faq-item.faq-item { border-color: rgba(17, 24, 39, .12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) #authFaqSection .faq-item.faq-item:hover,
+html body[data-theme="light"]:not([data-role="admin"]) #authFaqSection .faq-item.faq-item[open] {
+  border-color: var(--border-strong) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .floating-card.floating-card { box-shadow: 0 8px 22px rgba(17, 24, 39, .10) !important; }
+/* Modal login: tab bar/pill rose -> neutral. Logo "P" modal (umb-icon) = gradient
+   brand #6D2932->#C7B7A3->#E8D8C4 (sama persis spt sidebar/hero, 2 tema) via CSS mask
+   TANPA alas (alas gelap bikin muddy). Bentuk P identik (mask contain). din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-tabs.auth-tabs { background: rgba(17, 24, 39, .05) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-tab-pill.auth-tab-pill { background: #FFFFFF !important; box-shadow: 0 1px 3px rgba(17, 24, 39, .12) !important; }
+html body:not([data-role="admin"]) .umb-icon { position: relative !important; background: transparent !important; }
+html body:not([data-role="admin"]) .umb-icon > svg { opacity: 0 !important; }
+html body:not([data-role="admin"]) .umb-icon::after {
+  content: '' !important; position: absolute !important; inset: 0 !important;
+  background: linear-gradient(135deg, #6D2932 0%, #C7B7A3 45%, #E8D8C4 100%) !important;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23000' fill-rule='evenodd' d='M 30 6 L 60 6 C 80 6 92 22 92 38 C 92 58 76 70 56 70 L 42 70 L 42 92 C 42 97 38 98 32 98 C 26 98 22 97 22 92 L 22 14 C 22 10 26 6 30 6 Z M 42 22 L 56 22 C 66 22 72 30 72 38 C 72 46 66 54 56 54 L 42 54 Z'/></svg>") center / contain no-repeat !important;
+}
+/* light: sisa "warna di luar tema" di landing -> neutral. Glow play button yg
+   UNGU (rgba 167,139,250), border floating-card wine, shadow tombol/ikon (wine),
+   dot carousel cream -> semua neutral rgba(17,24,39,.x). Aksen solid wine/teks/
+   logo/gradient TETAP. Scope .auth-screen (dashboard tak kena). din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-illus::before { background: radial-gradient(circle, rgba(17,24,39,0.04), transparent 70%) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .floating-card.floating-card { border-color: rgba(17,24,39,0.12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .apd-dot:not(.apd-active) { background: rgba(17,24,39,0.16) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-num,
+html body[data-theme="light"]:not([data-role="admin"]) #authHowitSection .howit-icon { box-shadow: 0 4px 12px rgba(17,24,39,0.12) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .auth-hero-cta .auth-hero-btn { box-shadow: 0 8px 24px rgba(17,24,39,0.15) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-card .plan-cta { box-shadow: 0 8px 24px rgba(17,24,39,0.15) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .plan-features .pf-ico,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .preview-features .pf-ico { box-shadow: 0 2px 6px rgba(17,24,39,0.12) !important; }
+/* no abu di "kolom" landing (per user): badge eyebrow + tombol sekunder -> wine
+   OUTLINE (bg putih + garis & teks wine), bukan abu. Tombol primer tetap solid
+   wine. din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-eyebrow {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .btn.ghost.auth-hero-btn,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-screen .finalcta-btn-secondary {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+/* gear setting topbar landing: abu -> wine outline (putih + garis & ikon wine) */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-btn {
+  background: #FFFFFF !important; border-color: var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-btn:hover,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings.open .auth-topbar-settings-btn {
+  background: #FFFFFF !important; border-color: var(--text) !important; color: var(--text) !important;
+}
+/* HARGA kartu Free: abu -> wine outline (badge, ikon fitur, tombol, border).
+   Premium dibiarkan (aksen solid wine-nya sendiri). din/landing 2026-06-22. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free .plan-badge {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free .pf-ico {
+  background: #FFFFFF !important; border-color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .btn.ghost.plan-cta {
+  background: #FFFFFF !important; border: 1.5px solid var(--primary) !important; color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .auth-plans-section .plan-card.plan-free {
+  border-color: rgba(109, 41, 50, .20) !important;
+}
+/* PRATINJAU preview Free: abu -> white + wine outline (pill/search/chip/hero/btn/
+   quota/KPI/banner + ikon fitur). Premium preview (gold) dibiarkan. din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free { border-color: rgba(109,41,50,.20) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-pill,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-search,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-hero,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-quota { background: #FFFFFF !important; border-color: rgba(109,41,50,.18) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-chip,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-btn:not(.pm-btn-primary) { background: #FFFFFF !important; border-color: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-ad,
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-upgrade-banner { background: #FFFFFF !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .pm-tile { border-color: rgba(109,41,50,.18) !important; }
+/* Ikon fitur Free = wine; Premium = emas (warna premium yg sudah di-setup #B88A3A). din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico { background: #FFFFFF !important; border-color: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-free .preview-features .pf-ico svg * { stroke: var(--primary) !important; color: var(--primary) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico { background: #FFFFFF !important; border-color: #B88A3A !important; color: #B88A3A !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .preview-features .pf-ico svg * { stroke: #B88A3A !important; color: #B88A3A !important; }
+/* Aksen premium di mockup (chip Thumb kustom/Prioritas + banner "Premium aktif") -> emas set-up. din/landing. */
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile { color: #B88A3A !important; border-color: rgba(184,138,58,.40) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon { color: #B88A3A !important; border-color: rgba(184,138,58,.40) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg * { stroke: #B88A3A !important; color: #B88A3A !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active { background: #FFFFFF !important; border-color: rgba(184,138,58,.40) !important; }
+html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active span, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg, html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg * { color: #B88A3A !important; stroke: #B88A3A !important; }
+/* Dark: chip mockup (Thumb kustom/Prioritas) + banner "Premium aktif" -> emas dark #F2C76A, samakan dgn ikon fitur premium dark. din/landing. */
+html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile { color: #F2C76A !important; border-color: rgba(184,138,58,.45) !important; }
+html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon { color: #F2C76A !important; border-color: rgba(184,138,58,.45) !important; }
+html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-tile-icon svg * { stroke: #F2C76A !important; color: #F2C76A !important; }
+html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active { border-color: rgba(184,138,58,.45) !important; }
+html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active span, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg, html body[data-theme="dark"]:not([data-role="admin"]) .auth-preview-section .preview-card.preview-premium .pm-upgrade-banner.pm-premium-active svg * { color: #F2C76A !important; stroke: #F2C76A !important; }
+/* Dark: link teks modal auth (.auth-link: Lupa kata sandi / Syarat & Ketentuan / Kebijakan Privasi) -> cream, bukan emas accent, biar emas khusus Premium. Underline tetap jadi affordance link aman. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-link { color: #E8D8C4 !important; text-decoration: none !important; }
+/* Dark: placeholder field modal auth -> cream redup (bukan abu UA #757575). din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input::placeholder { color: rgba(232,216,196,.42) !important; -webkit-text-fill-color: rgba(232,216,196,.42) !important; opacity: 1 !important; }
+/* Dark: footer link "Daftar gratis"/"Masuk di sini" (.auth-switch a) -> cream (wine --primary terlalu gelap & tampak pink di bg gelap). din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .auth-card .auth-switch a { color: #E8D8C4 !important; -webkit-text-fill-color: #E8D8C4 !important; text-decoration: none !important; }
+/* Underline link auth: hilang saat diam, muncul hanya saat hover (light + dark). din/landing. */
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card .auth-link, body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card .auth-switch a { text-decoration: none !important; }
+body:not([data-role="admin"]).auth-mode .auth-card .auth-link:hover, body:not([data-role="admin"]).auth-mode .auth-card .auth-switch a:hover { text-decoration: underline !important; text-underline-offset: 2px !important; }
+/* Badge hero (.floating-card) dark: glass cream (bukan putih off-theme), seragam dgn pill LIVE & tombol. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .auth-illus .floating-card { background: linear-gradient(135deg, rgba(232,216,196,.1) 0%, rgba(232,216,196,.03) 100%) !important; border-color: rgba(232,216,196,.18) !important; }
+/* Badge hero compact: pill rapat, font & ikon lebih kecil (2 tema). din/landing. */
+body:not([data-role="admin"]) .auth-illus .floating-card { height: 28px !important; min-height: 0 !important; padding: 0 12px !important; border-radius: 999px !important; gap: 6px !important; font-size: 11px !important; line-height: 1 !important; align-items: center !important; }
+body:not([data-role="admin"]) .auth-illus .floating-card b { font-size: 11px !important; font-weight: 700 !important; }
+html body:not([data-role="admin"]) .auth-illus .floating-card svg.picon, html body:not([data-role="admin"]) .auth-illus .floating-card svg { width: 14px !important; height: 14px !important; min-width: 14px !important; font-size: 14px !important; }
+html body:not([data-role="admin"]) .auth-illus .floating-card span { width: 14px !important; height: 14px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important; font-size: 12px !important; }
+/* Tombol CTA hero compact (2 tema). din/landing. */
+body:not([data-role="admin"]) .auth-hero-btn { padding: 10px 18px !important; font-size: 13.5px !important; border-radius: 10px !important; }
+body:not([data-role="admin"]) .auth-hero-btn svg { width: 15px !important; height: 15px !important; }
+/* Badge hero tetap float walau prefers-reduced-motion (dekoratif, gerak halus, per-badge beda ritme). din/landing. */
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-role="admin"]) .auth-illus .floating-card { animation-name: authChipFloat !important; animation-timing-function: ease-in-out !important; animation-iteration-count: infinite !important; }
+  body:not([data-role="admin"]) .auth-illus .f1 { animation-duration: 5.5s !important; animation-delay: 0s !important; }
+  body:not([data-role="admin"]) .auth-illus .f2 { animation-duration: 6.4s !important; animation-delay: -1.8s !important; }
+  body:not([data-role="admin"]) .auth-illus .f3 { animation-duration: 5s !important; animation-delay: -3.4s !important; }
+}
+/* Dark: label field modal auth (.auth-field > span) -> cream terang, senada baris Ingat saya/Lupa kata sandi. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card .auth-field > span { color: #E8D8C4 !important; }
+/* Dark: step aktif (stepper Daftar) -> netral cream (ring cream terang + fill samar + angka cream), bukan ring/fill wine yang tampak muddy/rose di bg gelap. Beda jelas dari pending (ring redup). din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .signup-stepper .step[data-status="active"] .step-circle { color: #E8D8C4 !important; border-color: rgba(232,216,196,.7) !important; background: rgba(232,216,196,.12) !important; }
+/* Hapus pill "Paket dipilih: Gratis [Ubah]" di form Daftar (per request user) — paket tetap dipilih/diubah di layar "Pilih paket". din/landing. */
+body:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupTierPill { display: none !important; }
+/* Hapus hint Username; pindahkan keterangan ke field Kata Sandi ("Minimal 6 karakter"), tepat di bawah input (atas bar kekuatan). din/landing. */
+body:not([data-role="admin"]) #signupForm .auth-field .field-hint { display: none !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) { display: flex !important; flex-direction: column !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"]) .pw-strength { order: 2 !important; }
+body:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { order: 1 !important; content: "Lebih kuat dengan simbol: ! @ # $ %" !important; display: block !important; font-size: 11px !important; font-weight: 600 !important; margin-top: 6px !important; }
+/* Recovery modal: samakan tinggi judul kartu (reserve 2 baris + center) biar deskripsi kedua kartu sejajar. din/landing. */
+body:not([data-role="admin"]) .ar-choice-card strong { display: flex !important; align-items: center !important; justify-content: center !important; text-align: center !important; min-height: 34px !important; }
+/* Recovery modal: hover kartu pakai warna TEMA (cream dark / wine light), JANGAN emas off-theme. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]) .ar-choice-card:hover { background: rgba(232,216,196,.06) !important; border-color: rgba(232,216,196,.45) !important; box-shadow: 0 6px 16px rgba(0,0,0,.32) !important; }
+body[data-theme="dark"]:not([data-role="admin"]) .ar-choice-card:hover strong { color: #E8D8C4 !important; }
+body[data-theme="dark"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico { filter: none !important; color: #E8D8C4 !important; }
+body[data-theme="dark"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico svg, body[data-theme="dark"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico svg * { stroke: #E8D8C4 !important; color: #E8D8C4 !important; }
+body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card { background: #FFFFFF !important; border-color: rgba(109,41,50,.18) !important; }
+body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card:hover { background: rgba(109,41,50,.06) !important; border-color: rgba(109,41,50,.4) !important; box-shadow: 0 6px 16px rgba(109,41,50,.12) !important; }
+body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card:hover strong { color: #842A3B !important; }
+body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico { filter: none !important; color: #842A3B !important; }
+body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico svg, body[data-theme="light"]:not([data-role="admin"]) .ar-choice-card:hover .ar-choice-ico svg * { stroke: #842A3B !important; color: #842A3B !important; }
+body[data-theme="dark"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(232,216,196,.62) !important; }
+body[data-theme="light"]:not([data-role="admin"]) #signupForm .auth-field:has(input[type="password"])::after { color: rgba(109,41,50,.75) !important; }
+/* Hapus subtitle ganda di form Daftar ("Mulai bagikan kreasimu hari ini.") — sudah ada subtitle header "Mulai bagikan kreasimu". din/landing. */
+body:not([data-role="admin"]) #signupForm .auth-sub { display: none !important; }
+/* Dark: border kolom modal auth netral cream (bukan rose/gold) — focus ring TANPA wine. din/landing. */
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"],
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"],
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"] { border-color: rgba(232,216,196,.16) !important; }
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"]:focus,
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"]:focus,
+body[data-theme="dark"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"]:focus { border-color: rgba(232,216,196,.55) !important; box-shadow: none !important; }
+/* Light: border + focus ring kolom modal auth netral (bukan wine + glow wine). din/landing. */
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"],
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"],
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"] { border-color: rgba(17,24,39,.12) !important; }
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="text"]:focus,
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="email"]:focus,
+body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[type="password"]:focus { border-color: rgba(17,24,39,.35) !important; box-shadow: none !important; }
 
 /* =============================================================
    ADMIN RESET DATA CONFIRM MODAL — replace native confirm() popup.
@@ -55354,14 +55540,14 @@ html body:not([data-role="admin"]):not([data-theme="light"]).auth-mode #authFaqS
 }
 /* LIGHT mode FAQ open/hover — white bg + dark wine text (high specificity) */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item:hover {
-  border-color: rgba(17, 24, 39, .22) !important; /* netral, no pink (req 2026-06-24) */
+  border-color: var(--border-strong) !important;
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(17, 24, 39, .4) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] {
-  border-color: rgba(17, 24, 39, .28) !important; /* netral, no pink (req 2026-06-24) */
+  border-color: var(--border-strong) !important;
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(17, 24, 39, .5) !important;
+  box-shadow: -3px 0 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary * {

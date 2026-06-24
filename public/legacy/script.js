@@ -7689,12 +7689,12 @@ const I18N = {
     "auth.signin.here":          "Masuk di sini",
     "auth.admin.login":          "Login Panel Admin",
     "auth.admin.subtitle":       "Khusus administrator platform",
-    "auth.user.login":           "Login Kreator Playly",
+    "auth.user.login":           "Masuk Kreator Playly",
     "auth.user.subtitle":        "Mulai bagikan kreasimu",
     // Auth showcase ID
     "auth.showcase.user.title":      "Bagikan kreasimu,",
     "auth.showcase.user.title.grad": "sentuh dunia",
-    "auth.showcase.user.desc":       "Platform video modern untuk kreator. Upload, tonton, terhubung dengan jutaan kreator hebat lainnya.",
+    "auth.showcase.user.desc":       "Platform video modern untuk kreator. Unggah, tonton, terhubung dengan jutaan kreator hebat lainnya.",
     "auth.showcase.admin.title":     "Kelola platform,",
     "auth.showcase.admin.title.grad":"jaga komunitas",
     "auth.showcase.admin.desc":      "Dashboard administrator untuk moderasi konten, analytics real-time, manajemen user, iklan, dan revenue platform.",
@@ -7998,21 +7998,21 @@ const I18N = {
     "pm.feature.live":            "Live",
     "pm.feature.priority":        "Prioritas",
     // FREE features bullets
-    "pf.free.1":                 "Badge \"Gratis\" di profil",
+    "pf.free.1":                 "Lencana \"Gratis\" di profil",
     "pf.free.2":                 "Meter kuota bulanan (30 video / 10 GB)",
     "pf.free.3":                 "Iklan sponsor saat menonton",
     "pf.free.4":                 "Analitik dasar (7 hari terakhir saja)",
     "pf.free.5":                 "Ajakan \"Upgrade\" di dropdown & sidebar",
     "pf.free.6":                 "Kualitas playback 720p",
-    "pf.free.7":                 "Badge kreator standar",
+    "pf.free.7":                 "Lencana kreator standar",
     // PREMIUM features bullets
-    "pf.premium.1":              "Badge terverifikasi \"Premium\" di mana-mana",
+    "pf.premium.1":              "Lencana terverifikasi \"Premium\" di mana-mana",
     "pf.premium.2":              "100 GB + 100 video / bulan",
-    "pf.premium.3":              "Bebas iklan — tanpa banner atau running text",
+    "pf.premium.3":              "Bebas iklan — tanpa banner atau teks berjalan",
     "pf.premium.4":              "Analitik lengkap + widget Premium Insights",
     "pf.premium.5":              "Akses cepat: Thumbnail kustom & Premium Insights",
     "pf.premium.6":              "Kualitas playback hingga 4K",
-    "pf.premium.7":              "Tombol dukungan prioritas (live chat)",
+    "pf.premium.7":              "Tombol dukungan prioritas (obrolan langsung)",
     // ===== LANDING: HOW IT WORKS =====
     "howit.eyebrow":             "CARA KERJA",
     "howit.title":               "Dari daftar hingga jadi kreator yang berkembang dalam 6 langkah",
@@ -8026,7 +8026,7 @@ const I18N = {
     "howit.step4.title":         "Bagikan & berinteraksi",
     "howit.step4.desc":          "Bagikan ke media sosial dengan satu klik. Balas komentar, DM fans, bangun komunitas langsung dari dashboard.",
     "howit.step5.title":         "Tumbuh dengan insight",
-    "howit.step5.desc":          "Lacak tayangan, suka, waktu tonton, wilayah teratas. Premium membuka metrik engagement lanjutan & tren prediktif.",
+    "howit.step5.desc":          "Lacak tayangan, suka, waktu tonton, wilayah teratas. Premium membuka metrik interaksi lanjutan & tren prediktif.",
     "howit.step6.title":         "Upgrade & monetisasi",
     "howit.step6.desc":          "Buka 4K, bebas iklan, thumbnail kustom, dan dukungan prioritas dengan Premium. Raih penghasilan dari badge kreator & status terverifikasi.",
     // ===== LANDING: FAQ =====
@@ -8040,7 +8040,7 @@ const I18N = {
     "faq.q3":                    "Apakah video saya benar-benar disimpan secara privat?",
     "faq.a3":                    "Semua unggahan dienkripsi saat tersimpan dan dalam transit. Kami tidak pernah membagikan atau menjual data kamu. Kamu mengontrol visibilitas (publik, tidak terdaftar, privat) per video.",
     "faq.q4":                    "Apakah pelanggan Premium melihat iklan saat menonton?",
-    "faq.a4":                    "Tidak. Akun Premium mendapat pengalaman menonton 100% bebas iklan — tanpa banner, tanpa pre-roll, tanpa running text. Kamu juga bisa pakai Premium untuk menonton konten kreator lain tanpa interupsi sponsor.",
+    "faq.a4":                    "Tidak. Akun Premium mendapat pengalaman menonton 100% bebas iklan — tanpa banner, tanpa pre-roll, tanpa teks berjalan. Kamu juga bisa pakai Premium untuk menonton konten kreator lain tanpa interupsi sponsor.",
     "faq.q5":                    "Bagaimana kebijakan pembatalan?",
     "faq.a5":                    "Batalkan kapan saja, tanpa pertanyaan. Premium tetap aktif sampai akhir periode billing saat ini, kemudian otomatis kembali ke Gratis. Tidak ada biaya tersembunyi.",
     "faq.q6":                    "Apakah Playly tersedia di mobile?",
@@ -8252,9 +8252,9 @@ const I18N = {
     "admin.range.month":          "Bulan Ini",
     "admin.range.year":           "Tahun Ini",
     "admin.empty.views":          "Belum ada views untuk ditampilkan",
-    "admin.ads.desc":             "Konfigurasi iklan yang muncul di video player — running text, banner, dan pre-roll.",
+    "admin.ads.desc":             "Konfigurasi iklan yang muncul di video player — teks berjalan, banner, dan pre-roll.",
     "admin.ads.marquee":          "Teks marquee di atas video. Tambahkan banyak — dirotasi per video.",
-    "admin.ads.empty.run":        "Belum ada running text. Klik",
+    "admin.ads.empty.run":        "Belum ada teks berjalan. Klik",
     "admin.ads.empty.run.tail":   "untuk membuat iklan baru.",
     "admin.ads.empty.banner":     "Belum ada banner. Klik",
     "admin.ads.empty.banner.tail":"untuk mengunggah banner baru.",
@@ -8477,7 +8477,7 @@ const I18N = {
     "admin.an.topfollowers":     "Pengikut Teratas",
     "admin.an.topviews":         "Tontonan Teratas",
     // ===== ADMIN: Ad Manager (ID) =====
-    "admin.ad.desc":             "Atur iklan yang muncul di player video — running text, banner, dan pre-roll.",
+    "admin.ad.desc":             "Atur iklan yang muncul di player video — teks berjalan, banner, dan pre-roll.",
     "admin.ad.runtext":          "Running Text",
     "admin.ad.runtext.desc":     "Teks berjalan (marquee) di atas video. Tambah banyak — diputar bergantian per video.",
     "admin.ad.banner":           "Banner Ad",
@@ -9465,7 +9465,7 @@ const I18N = {
     "auth.stat.monitoring":      "Pemantauan aktif",
     "auth.stat.access":          "Kawalan akses",
     "auth.stat.analytics":       "Analitik masa",
-    "auth.float.trending":       "Trending sekarang",
+    "auth.float.trending":       "Sedang tren",
     "auth.float.moderation":     "Moderasi aktif",
     "auth.float.revenue":        "Penjejak pendapatan",
     "auth.locked.title":         "Akaun dikunci sementara",
@@ -25118,7 +25118,7 @@ function openAdminRecoveryOtpRequestModal(prefillId = "", opts = {}) {
     <div class="modal-backdrop" data-ar-back></div>
     <div class="modal-panel ar-panel-narrow" data-no-i18n>
       <h3 class="ar-text-center" data-no-i18n>🔐 Minta OTP ke ${_arEscapeHtml(_approverLabel)}</h3>
-      <p class="muted ar-text-center" data-no-i18n>Masukkan email/username akunmu. ${_arEscapeHtml(_approverDesc)} akan generate OTP dan kirim 4-digit OTP ke email kamu.</p>
+      <p class="muted ar-text-center" data-no-i18n>Masukkan email/username akunmu. ${_arEscapeHtml(_approverDesc)} akan membuat OTP dan mengirim OTP 4-digit ke email kamu.</p>
       <form class="ar-form" id="arOtpRequestForm">
         <label class="ar-label" data-no-i18n>Email atau Username</label>
         <input type="text" name="id" placeholder="kamu@email.com atau username" value="${_arEscapeHtml(prefillId)}" autocomplete="off" required />
@@ -25771,18 +25771,18 @@ function openUniversalRecoveryChoiceModal(prefillId = "") {
   m.innerHTML = `
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel ar-panel-narrow" data-no-i18n>
-      <h3 class="ar-text-center" data-no-i18n>Pilih cara recovery akun</h3>
+      <h3 class="ar-text-center" data-no-i18n>Pilih cara pemulihan akun</h3>
       <p class="muted ar-text-center" data-no-i18n>Mau reset sendiri atau minta verifikasi dari ${_approverDesc}? Pilih yang paling cocok dengan situasimu.</p>
       <div class="ar-choice-grid">
         <button type="button" class="ar-choice-card" data-ar-choice="self">
           <div class="ar-choice-ico">🔐</div>
           <strong data-no-i18n>Reset Sendiri</strong>
-          <small data-no-i18n>Atur password baru langsung. Kalau akunmu aktif 2FA, perlu masukkan PIN 6-digit untuk verifikasi.</small>
+          <small data-no-i18n>Atur kata sandi baru langsung. Kalau akunmu aktif 2FA, perlu masukkan PIN 6-digit untuk verifikasi.</small>
         </button>
         <button type="button" class="ar-choice-card" data-ar-choice="otp">
           <div class="ar-choice-ico">📨</div>
           <strong data-no-i18n>Minta OTP via ${_arEscapeHtml(_approverLabel)}</strong>
-          <small data-no-i18n>${_arEscapeHtml(_approverDesc.charAt(0).toUpperCase() + _approverDesc.slice(1))} akan kirim OTP 4-digit ke email kamu. Cocok kalau lupa PIN 2FA atau belum aktifkan.</small>
+          <small data-no-i18n>${_arEscapeHtml(_approverDesc.charAt(0).toUpperCase() + _approverDesc.slice(1))} akan kirim OTP 4-digit ke email kamu. Cocok kalau lupa PIN 2FA atau belum mengaktifkannya.</small>
         </button>
       </div>
     </div>
@@ -37624,7 +37624,7 @@ function renderHomeFollowingFeed() {
 
 // =================== HOME TRENDING SEKARANG + UNTUK KAMU ===================
 // Per user 2026-05-11: 2 section baru di akhir home view — 4-col grid video.
-// "Trending sekarang" = top platform videos by views (desc).
+// "Sedang tren" = top platform videos by views (desc).
 // "Untuk kamu" = platform videos filtered by category tag (Vlog/Gaming/etc).
 // Pakai existing .video-card style supaya konsisten dgn dashboard user theme.
 
