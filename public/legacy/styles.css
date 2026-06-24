@@ -12769,6 +12769,11 @@ section[data-view="people"] .people-card .people-actions .btn {
 }
 /* preview video disembunyikan di mode baris (rapat) */
 section[data-view="people"] .people-card .people-preview { display: none; }
+/* Tab Semua/Pengikut/Diikuti DIHILANGKAN (req user 2026-06-24): halaman ini
+   murni cari/discovery (cuma search + daftar semua user). Followers/Following
+   diakses dari PROFIL (angka Pengikut/Mengikuti → daftar), konvensi X/IG/TikTok.
+   Default tab tetap "all" jadi daftar tetap tampil semua. */
+section[data-view="people"] .people-tab-bar { display: none !important; }
 
 .role-badge {
   display: inline-block;
