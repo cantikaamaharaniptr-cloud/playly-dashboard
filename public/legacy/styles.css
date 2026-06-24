@@ -64545,6 +64545,15 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
   color: var(--text);   /* semua pill divider beranda = var(--text) (krem di dark, wine di light) — konsisten, bukan abu */
 }
 
+/* Topbar (light): ikon aksi search & bell/menu jangan abu (--muted/--text-2) →
+   pakai wine tema. Tier pill premium (emas) & toggle inactive dibiarkan
+   (punya warna sendiri). req user 2026-06-24. */
+body[data-theme="light"]:not([data-role="admin"]) .topbar .icon-btn svg,
+body[data-theme="light"]:not([data-role="admin"]) .topbar-search svg {
+  color: var(--text) !important;
+  stroke: var(--text) !important;
+}
+
 /* --- 4 widget fokus-kreator (Checklist / Rekap / Momentum / Leaderboard) ---
    per request user 2026-05-16. Panel base sama dgn .home-ai-ideas. */
 .home-checklist, .home-recap, .home-momentum, .home-ranking-section {
