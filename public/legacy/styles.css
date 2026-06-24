@@ -2128,27 +2128,33 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
   z-index: 1;
 }
 /* Stats → kartu/chip terpisah (bukan baris polos ber-border atas/bawah) */
+/* Stats → BARIS MINIMALIS (req user 2026-06-24): tanpa kotak, angka besar + label
+   kecil, dipisah garis tipis vertikal; garis tipis bawah memisahkan dari tombol. */
 .profile-header-stats {
   border-top: none;
-  border-bottom: none;
-  gap: 10px;
-  padding: 6px 0 4px;
-  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+  padding: 2px 0 16px;
+  flex-wrap: nowrap;
+  width: min(460px, 100%);
 }
 .profile-header-stats .myprofile-stat {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  padding: 10px 16px 8px;
-  min-width: 80px;
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  transition: border-color .15s ease, background .15s ease;
+  background: none !important;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  padding: 2px 6px;
+  flex: 1;
+  min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
-.profile-header-stats .myprofile-stat:hover {
-  border-color: var(--border-strong);
-}
-.profile-header-stats .myprofile-stat b { font-size: 19px; font-weight: 800; color: var(--text); line-height: 1.1; }
-.profile-header-stats .myprofile-stat small { font-size: 10px; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+.profile-header-stats .myprofile-stat:first-child { border-left: none; }
+.profile-header-stats .myprofile-stat b { font-size: 21px; font-weight: 800; color: var(--text); line-height: 1; }
+.profile-header-stats .myprofile-stat small { font-size: 10px; letter-spacing: .04em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+/* buang ikon centang ✓ di label MENGIKUTI (rapi, minimalis) */
+.profile-header-stats .myprofile-stat small::before { content: none !important; }
+.profile-header-stats .myprofile-stat .stat-check,
+.profile-header-stats .myprofile-stat small svg { display: none !important; }
 /* Premium badge — pill emas halus, ditata ulang (lebih kecil & rapi, sejajar nama) */
 .profile-header-name .premium-badge-lg {
   display: inline-flex; align-items: center; gap: 4px;
