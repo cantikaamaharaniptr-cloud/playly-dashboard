@@ -35249,11 +35249,11 @@ body:not([data-role="admin"]) .profile-col::before {
    banner redesign (din/profil-kreator 2026-06-24); !important biar menang. */
 body:not([data-role="admin"]) .profile-header-card::before {
   display: block !important;
-  height: 118px !important;
+  height: 122px !important;
   margin: 0 -24px 0 !important;
   background:
-    radial-gradient(130% 150% at 50% -30%, rgba(132, 42, 59, .45), transparent 62%),
-    linear-gradient(135deg, #4d1a23 0%, #20100f 100%) !important;
+    radial-gradient(120% 150% at 50% -10%, rgba(168, 58, 80, .60), transparent 58%),
+    linear-gradient(180deg, #6d2932 0%, #2a1318 100%) !important;
   box-shadow: none !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
