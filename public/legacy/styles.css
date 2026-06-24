@@ -64553,6 +64553,10 @@ body[data-theme="light"]:not([data-role="admin"]) .topbar-search svg {
   color: var(--text) !important;
   stroke: var(--text) !important;
 }
+/* Breadcrumb: ikon RUMAH (::before mask) + link "Beranda" pakai --text-2 (abu di
+   light) → wine. Hanya light; dark tetap (--text-2 = krem). */
+body[data-theme="light"]:not([data-role="admin"]) .breadcrumb::before { background-color: var(--text) !important; }
+body[data-theme="light"]:not([data-role="admin"]) .breadcrumb a { color: var(--text); }
 
 /* --- 4 widget fokus-kreator (Checklist / Rekap / Momentum / Leaderboard) ---
    per request user 2026-05-16. Panel base sama dgn .home-ai-ideas. */
