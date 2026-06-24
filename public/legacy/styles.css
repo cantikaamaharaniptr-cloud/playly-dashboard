@@ -2211,6 +2211,42 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
 }
 .profile-header-card:has(#upAvatar) .profile-header-actions .btn { justify-content: center; }
 
+/* === Bagian bawah Profil Kreator: TAB (Video | Disukai), DIPOLES
+   (req user 2026-06-24, opsi 1). Ikon + label + badge jumlah; hanya tab aktif
+   tampil + fade halus. Scoped :has(#upVideoGrid) — My Profile tak kena. === */
+.profile-tabs {
+  display: flex; gap: 4px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid rgba(232,216,196,.12);
+}
+.profile-tab {
+  appearance: none; background: none; border: none; cursor: pointer;
+  padding: 9px 16px 12px; margin-bottom: -1px;
+  font-size: 14px; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.profile-tab .ui-ico { font-size: 1.4em; opacity: .9; vertical-align: -0.2em; flex: 0 0 auto; }
+.profile-tab:hover { color: var(--text); background: rgba(232,216,196,.05); }
+.profile-tab.active { color: var(--text); border-bottom-color: rgba(232,216,196,.9); } /* indikator aktif = cream netral (bukan merah) */
+.profile-tab.active .ui-ico { opacity: 1; }
+.profile-tab .pt-count {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  background: rgba(232,216,196,.09); padding: 1px 8px; border-radius: 999px;
+  min-width: 20px; text-align: center;
+}
+.profile-tab.active .pt-count { color: var(--text); background: rgba(232,216,196,.18); }
+/* stack + hanya kolom tab aktif tampil, dengan fade-in */
+.profile-2col:has(#upVideoGrid) { display: block; }
+.profile-2col:has(#upVideoGrid) > .profile-col { width: 100%; display: none; }
+.profile-2col:has(#upVideoGrid)[data-up-tab="videos"] > .profile-col:nth-child(1),
+.profile-2col:has(#upVideoGrid)[data-up-tab="liked"]  > .profile-col:nth-child(2) { display: block; animation: pfTabFade .22s ease; }
+@keyframes pfTabFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* section-head (judul+count) redundan dgn tab → sembunyikan */
+.profile-2col:has(#upVideoGrid) .myprofile-section-head { display: none; }
+
 /* ── Modal daftar Pengikut / Mengikuti (pfl-*) ── */
 .pfl-overlay {
   position: fixed; inset: 0; z-index: 4000;

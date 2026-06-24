@@ -57388,6 +57388,47 @@ function renderUserProfile() {
       }
     }
   }
+
+  // TAB bawah DIPOLES (Video | Disukai) — req user 2026-06-24 (opsi 1): ikon +
+  // label + badge jumlah, lebar penuh, video sendiri utama. Idempotent.
+  const twoCol = $("#upVideoGrid")?.closest(".profile-2col");
+  if (twoCol) {
+    const vCount = profileVisible ? videos.length : 0;
+    const lParsed = likedCountEl ? parseInt(likedCountEl.textContent, 10) : 0;
+    const lCount = Number.isFinite(lParsed) ? lParsed : 0;
+    const ico = (e) => (typeof emojiToIcon === "function" ? emojiToIcon(e) : "");
+    let tabs = twoCol.previousElementSibling;
+    if (!tabs || !tabs.classList || !tabs.classList.contains("profile-tabs")) {
+      tabs = document.createElement("div");
+      tabs.className = "profile-tabs";
+      tabs.setAttribute("role", "tablist");
+      tabs.innerHTML =
+        '<button type="button" class="profile-tab" data-up-tab="videos" role="tab">' + ico("🎬") + '<span data-no-i18n>Video</span> <span class="pt-count" data-up-tab-count="videos">0</span></button>' +
+        '<button type="button" class="profile-tab" data-up-tab="liked" role="tab">' + ico("❤") + '<span data-no-i18n>Disukai</span> <span class="pt-count" data-up-tab-count="liked">0</span></button>';
+      twoCol.parentNode.insertBefore(tabs, twoCol);
+      tabs.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-up-tab]");
+        if (!b) return;
+        const which = b.getAttribute("data-up-tab");
+        twoCol.setAttribute("data-up-tab", which);
+        tabs.querySelectorAll(".profile-tab").forEach(x => {
+          const on = x.getAttribute("data-up-tab") === which;
+          x.classList.toggle("active", on);
+          x.setAttribute("aria-selected", on ? "true" : "false");
+        });
+      });
+    }
+    const setC = (k, n) => { const el = tabs.querySelector('[data-up-tab-count="' + k + '"]'); if (el) el.textContent = n; };
+    setC("videos", vCount);
+    setC("liked", lCount);
+    const cur = twoCol.getAttribute("data-up-tab") || "videos";
+    twoCol.setAttribute("data-up-tab", cur);
+    tabs.querySelectorAll(".profile-tab").forEach(x => {
+      const on = x.getAttribute("data-up-tab") === cur;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
 }
 
 // Click handler untuk avatar/nama kreator di player
