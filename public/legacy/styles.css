@@ -39597,9 +39597,9 @@ html body[data-theme="light"]:not([data-role="admin"]) .psc-copy:hover {
 }
 /* Status pending — gold di dark, ganti ke wine warm bg + dark wine text */
 html body[data-theme="light"]:not([data-role="admin"]) .psc-status[data-status="pending"] {
-  background: rgba(132, 42, 59, .12) !important;
-  color: #6D2932 !important;
-  -webkit-text-fill-color: #6D2932 !important;
+  background: rgba(17, 24, 39, .10) !important; /* netral, no pink (req 2026-06-24) */
+  color: #44403C !important;
+  -webkit-text-fill-color: #44403C !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .psc-status[data-status="approved"] {
   background: rgba(34, 197, 94, .14) !important;
@@ -55354,14 +55354,14 @@ html body:not([data-role="admin"]):not([data-theme="light"]).auth-mode #authFaqS
 }
 /* LIGHT mode FAQ open/hover — white bg + dark wine text (high specificity) */
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item:hover {
-  border-color: rgba(132, 42, 59, .35) !important;
+  border-color: rgba(17, 24, 39, .22) !important; /* netral, no pink (req 2026-06-24) */
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(132, 42, 59, .55) !important;
+  box-shadow: -3px 0 0 0 rgba(17, 24, 39, .4) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] {
-  border-color: rgba(132, 42, 59, .45) !important;
+  border-color: rgba(17, 24, 39, .28) !important; /* netral, no pink (req 2026-06-24) */
   background: #FAFAFA !important;
-  box-shadow: -3px 0 0 0 rgba(132, 42, 59, .75) !important;
+  box-shadow: -3px 0 0 0 rgba(17, 24, 39, .5) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary,
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary * {
@@ -55396,7 +55396,7 @@ html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection
 html body[data-theme="light"]:not([data-role="admin"]).auth-mode #authFaqSection .faq-item[open] > p {
   background: #FFFFFF !important;
   padding-top: 14px !important;
-  border-top: 1px solid rgba(132, 42, 59, .18) !important;
+  border-top: 1px solid rgba(17, 24, 39, .12) !important; /* netral (req 2026-06-24) */
 }
 html body:not([data-role="admin"]).auth-mode #authFaqSection .faq-item summary::after {
   transition: transform .25s ease, color .25s ease !important;
@@ -59437,7 +59437,7 @@ body[data-theme="light"]:not([data-role="admin"]) .faq-item {
 }
 body[data-theme="light"]:not([data-role="admin"]) .faq-item[open] {
   background: #FAFAFA !important;  /* slightly off-white utk distinguish open */
-  border-color: rgba(132, 42, 59, 0.40) !important;
+  border-color: rgba(17, 24, 39, 0.22) !important; /* netral, no pink (req 2026-06-24) */
   box-shadow: 0 4px 14px rgba(102, 34, 34, 0.08);
 }
 body[data-theme="light"]:not([data-role="admin"]) .faq-item summary {
@@ -59530,8 +59530,8 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .pw-toggle .pw-eye 
    translucent), border wine halus, teks + ikon wine jelas terbaca. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-tier-pill,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card[data-auth-state="signup-form"] #signupTierPill {
-  background: rgba(132, 42, 59, 0.07) !important;
-  border: 1px solid rgba(132, 42, 59, 0.28) !important;
+  background: rgba(17, 24, 39, 0.05) !important; /* netral (pill di-hide, jaga-jaga no pink) */
+  border: 1px solid rgba(17, 24, 39, 0.14) !important;
   color: var(--text-2) !important;
 }
 /* Ikon pill "Paket dipilih" diperbesar (per user 2026-05-22). Tidak
@@ -59561,7 +59561,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card[data-auth-state="si
    Kartu pure white solid + border wine halus, badge jelas. */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card {
   background: #FFFFFF !important;
-  border: 1.5px solid rgba(132, 42, 59, 0.24) !important;
+  border: 1.5px solid rgba(17, 24, 39, 0.14) !important; /* netral (req 2026-06-24) */
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card:hover {
   border-color: var(--primary) !important;
@@ -59601,11 +59601,11 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-pre
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .plan-picker-eyebrow {
   color: var(--primary) !important;
   background: #FFFFFF !important;
-  border: 1px solid rgba(132, 42, 59, 0.35) !important;
+  border: 1px solid rgba(17, 24, 39, 0.16) !important; /* netral (req 2026-06-24) */
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card {
   background: #FFFFFF !important;
-  border: 1px solid rgba(132, 42, 59, 0.22) !important;
+  border: 1px solid rgba(17, 24, 39, 0.13) !important; /* netral (req 2026-06-24) */
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card:hover:not(:disabled) {
   border-color: var(--primary) !important;
@@ -71963,7 +71963,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-ad
    keluar dari sudut membulat tile. */
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-tile {
   background: #FFFFFF !important;
-  border: 1px solid rgba(132, 42, 59, 0.22) !important;
+  border: 1px solid rgba(17, 24, 39, 0.13) !important; /* netral (req 2026-06-24) */
   overflow: hidden !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-grid .pm-tile::before {
