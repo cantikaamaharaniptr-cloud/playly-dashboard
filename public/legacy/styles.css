@@ -64539,8 +64539,10 @@ html body[data-theme="light"][data-theme="light"][data-role="admin"][data-role="
    Ikon dihapus dari teks di index.html. */
 .home-divider-progress span,
 .home-divider-ranking span,
-.home-divider-stats span {
-  color: var(--text);
+.home-divider-stats span,
+.home-divider-sorotan span,
+.home-divider-lanjut span {
+  color: var(--text);   /* semua pill divider beranda = var(--text) (krem di dark, wine di light) — konsisten, bukan abu */
 }
 
 /* --- 4 widget fokus-kreator (Checklist / Rekap / Momentum / Leaderboard) ---
