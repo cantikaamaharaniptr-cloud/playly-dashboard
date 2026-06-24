@@ -2209,7 +2209,16 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
   align-self: center; justify-self: end;
   margin: 0; flex-direction: row; align-items: center; gap: 10px;
 }
-.profile-header-card:has(#upAvatar) .profile-header-actions .btn { justify-content: center; }
+.profile-header-card:has(#upAvatar) .profile-header-actions .btn {
+  justify-content: center;
+  font-size: 13px; font-weight: 600;
+  padding: 7px 13px; min-height: 36px; gap: 7px;
+}
+/* ikon tombol aksi (+/amplop/share): proporsional dgn tombol compact.
+   width/height eksplisit utk override rule global ".btn svg{15px}". */
+.profile-header-card:has(#upAvatar) .profile-header-actions .btn .ui-ico {
+  width: 16px; height: 16px; opacity: .95; vertical-align: -0.16em; flex: 0 0 auto;
+}
 
 /* === Bagian bawah Profil Kreator: TAB (Video | Disukai), DIPOLES
    (req user 2026-06-24, opsi 1). Ikon + label + badge jumlah; hanya tab aktif

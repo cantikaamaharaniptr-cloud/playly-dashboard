@@ -57230,6 +57230,8 @@ function renderUserProfile() {
   const MAIL_ICO = _ico('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>');
   // share-nodes (3 simpul) — sama dgn ikon Bagikan player & pustaka (konsisten app-wide).
   const SHARE_ICO = _ico('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>');
+  const PLUS_ICO = _ico('<path d="M12 5v14M5 12h14"/>');   // ikon "+" tombol Ikuti
+  const CHECK_ICO = _ico('<path d="M5 13l4 4L19 7"/>');    // ikon centang saat sudah Mengikuti
   if (messageBtn) messageBtn.innerHTML = MAIL_ICO + ' <span data-no-i18n>Pesan</span>';
   const upShareBtnEl = $("#upShareBtn");
   if (upShareBtnEl) upShareBtnEl.innerHTML = SHARE_ICO + ' <span data-i18n="btn.share">Bagikan</span>';
@@ -57248,14 +57250,18 @@ function renderUserProfile() {
     if (shareBtn) shareBtn.hidden = isAdminViewer;
     if (editBtn) editBtn.hidden = true;
     if (!isAdminViewer) {
-      // Follow button state
+      // Follow button state — opsi A (req user 2026-06-24): ikon "+" saat belum
+      // diikuti, berganti centang saat sudah Mengikuti. Label dibersihkan dari
+      // centang bawaan kamus supaya tak dobel dgn ikon.
       const isFollowing = state.followingCreators.includes(username);
       const theyFollowMe = !!user && followingList.includes(user.username);
-      followBtn.textContent = isFollowing
+      const followLabel = isFollowing
         ? (typeof t === "function" ? t("btn.following", "✓ Mengikuti") : "✓ Mengikuti")
         : (theyFollowMe
             ? (typeof t === "function" ? t("btn.follow.followback", "Ikuti Balik") : "Ikuti Balik")
             : (typeof t === "function" ? t("btn.follow", "Ikuti") : "Ikuti"));
+      const cleanFollowLabel = String(followLabel).replace(/^[\s✓✔]+/, "").trim();
+      followBtn.innerHTML = (isFollowing ? CHECK_ICO : PLUS_ICO) + ' <span data-no-i18n>' + escapeHtml(cleanFollowLabel) + '</span>';
       followBtn.classList.toggle("ghost", isFollowing);
       followBtn.classList.toggle("primary", !isFollowing);
       if (followBackTag) followBackTag.hidden = !theyFollowMe;
