@@ -2095,6 +2095,75 @@ body[data-theme="dark"]:not([data-role="admin"]) .profile-header-handle {
   justify-content: center;
 }
 
+/* === REDESIGN Profil Kreator (2026-06-24, din/profil-kreator):
+   cover banner + avatar ring overlap + stats kartu + premium badge ditata ulang.
+   CSS-only override (markup tak disentuh). === */
+.profile-header-card {
+  position: relative;
+  padding: 0 24px 26px;        /* top=0 → cover banner mengisi atas */
+  overflow: hidden;
+}
+/* Cover banner — gradient wine pekat & elegan (brand, bukan pink-wash), bleed ke tepi kartu */
+.profile-header-card::before {
+  content: "";
+  display: block;
+  height: 118px;
+  margin: 0 -24px 0;
+  background:
+    radial-gradient(130% 150% at 50% -30%, rgba(132, 42, 59, .45), transparent 62%),
+    linear-gradient(135deg, #4d1a23 0%, #20100f 100%);
+}
+body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
+  background:
+    radial-gradient(130% 150% at 50% -30%, rgba(132, 42, 59, .30), transparent 62%),
+    linear-gradient(135deg, #7d3640 0%, #561C24 100%);
+}
+/* Avatar lebih besar + ring senada kartu + overlap cover */
+.profile-header-avatar {
+  width: 120px; height: 120px;
+  margin-top: -60px;
+  border: 4px solid var(--bg-elev);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .38);
+  position: relative;
+  z-index: 1;
+}
+/* Stats → kartu/chip terpisah (bukan baris polos ber-border atas/bawah) */
+.profile-header-stats {
+  border-top: none;
+  border-bottom: none;
+  gap: 10px;
+  padding: 6px 0 4px;
+  flex-wrap: wrap;
+}
+.profile-header-stats .myprofile-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 10px 16px 8px;
+  min-width: 80px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  transition: border-color .15s ease, background .15s ease;
+}
+.profile-header-stats .myprofile-stat:hover {
+  border-color: var(--border-strong);
+}
+.profile-header-stats .myprofile-stat b { font-size: 19px; font-weight: 800; color: var(--text); line-height: 1.1; }
+.profile-header-stats .myprofile-stat small { font-size: 10px; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+/* Premium badge — pill emas halus, ditata ulang (lebih kecil & rapi, sejajar nama) */
+.profile-header-name .premium-badge-lg {
+  display: inline-flex; align-items: center; gap: 4px;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 3px 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #E8C36B, #C99A3A);
+  color: #3a2606;
+  -webkit-text-fill-color: #3a2606;
+  box-shadow: 0 2px 8px rgba(201, 154, 58, .28);
+  border: none;
+}
+
 /* 2 kolom bawah — Videos | Liked Videos. Equal width, gap rapi. */
 .profile-2col {
   display: grid;
