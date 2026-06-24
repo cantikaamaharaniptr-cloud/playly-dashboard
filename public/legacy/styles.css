@@ -53896,8 +53896,8 @@ body[data-theme="dark"]:not([data-role="admin"]) #captchaModal .cap-slide-track.
 }
 /* User LIGHT — track wine-tint di cream, fill + handle wine */
 body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-track {
-  background: rgba(132, 42, 59, .08) !important;
-  border-color: rgba(132, 42, 59, .28) !important;
+  background: rgba(17, 24, 39, .06) !important; /* netral track, no pink (req 2026-06-24) */
+  border-color: rgba(17, 24, 39, .18) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #captchaModal .cap-slide-fill {
   background: linear-gradient(90deg, #842A3B, #A3485A) !important;
@@ -59374,8 +59374,8 @@ body[data-theme="light"]:not([data-role="admin"]) [class*="auth-tab"].active {
 /* Plan badge "Selected plan: Gratis" */
 body[data-theme="light"]:not([data-role="admin"]) .auth-card [class*="plan-pill"],
 body[data-theme="light"]:not([data-role="admin"]) .auth-card [class*="selected-plan"] {
-  background: rgba(132, 42, 59, 0.06) !important;
-  border-color: rgba(102, 34, 34, 0.20) !important;
+  background: rgba(17, 24, 39, 0.05) !important; /* netral, no pink (req 2026-06-24) */
+  border-color: rgba(17, 24, 39, 0.14) !important;
   color: var(--text) !important;
 }
 /* Tier indicator pills (Gratis/Premium) */
@@ -60022,7 +60022,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu {
   box-shadow: 0 8px 30px rgba(102, 34, 34, .16), 0 22px 56px rgba(102, 34, 34, .10) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu .atsm-row:hover {
-  background: rgba(132, 42, 59, .09) !important;
+  background: rgba(17, 24, 39, .06) !important; /* netral hover, no pink (req 2026-06-24) */
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-topbar-settings-menu .atsm-divider {
   background: rgba(102, 34, 34, .15) !important;
@@ -73100,7 +73100,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card-pre
   color: #8a5a18 !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .auth-pick-card .apc-icon {
-  background: rgba(132, 42, 59, .10) !important;
+  background: rgba(17, 24, 39, .07) !important; /* netral, no pink (req 2026-06-24); ikon tetap wine */
   color: var(--primary) !important;
 }
 /* SVG icon di .apc-icon — paksa fill:none + stroke=currentColor walau global
@@ -73149,7 +73149,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-icon svg path 
 
 /* Light mode — ikon kartu wine/bronze terbaca di krem. */
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card .pp-icon {
-  background: rgba(132, 42, 59, .10) !important;
+  background: rgba(17, 24, 39, .07) !important; /* netral, no pink (req 2026-06-24); ikon tetap wine */
   color: var(--primary) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-icon {
