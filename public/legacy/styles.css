@@ -2161,48 +2161,55 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
 .profile-header-stats .myprofile-stat[role="button"]:active { transform: scale(.97); }
 .profile-header-stats .myprofile-stat[role="button"]:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 2px; }
 
-/* === Tata letak DUA SISI (avatar kiri, info kanan) — req user 2026-06-24.
-   Scoped ke kartu Profil Kreator saja via :has(#upAvatar); halaman My Profile
-   (#myProfileAvatar) tetap rata tengah. Pakai CSS Grid: avatar kolom-1 span
-   semua baris, sisanya mengalir ke kolom-2. Banner cover dimatikan, padding
-   atas-bawah seimbang (fix keluhan ruang atas berlebih). === */
+/* === Header Profil Kreator — INFO KIRI, TOMBOL KANAN, compact (req user 2026-06-24).
+   Avatar + nama + @handle + stats jadi SATU blok di kiri (stats nempel bawah
+   nama, BUKAN di tengah); tombol Ikuti/Pesan/Bagikan di tepi kanan, ketengah
+   vertikal. Scoped :has(#upAvatar) — My Profile tak berubah. Avatar absolut
+   (di luar grid) agar baris teks tetap rapat. Banner off. === */
 .profile-header-card:has(#upAvatar) {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 22px;
+  grid-template-columns: minmax(0, 1fr) auto;  /* info kiri | tombol kanan */
+  column-gap: 24px;
   row-gap: 0;
+  grid-auto-rows: min-content;   /* baris teks rapat */
+  align-content: center;         /* blok info ketengah vertikal (samakan avatar) */
   align-items: center;
   text-align: left;
-  padding: 22px 26px;
+  position: relative;
+  padding: 16px 28px 16px 162px; /* compact; padding-kiri sisakan ruang avatar absolut (28+112+22) */
+  min-height: 144px;             /* = avatar 112 + padding atas/bawah; samakan tinggi blok teks+bio */
   overflow: visible;
 }
-/* tidak ada banner di layout dua sisi */
+/* tidak ada banner */
 .profile-header-card:has(#upAvatar)::before { display: none !important; }
-/* avatar: kolom kiri, ketengah vertikal terhadap seluruh info */
+/* avatar: absolut di kiri, ATAS-nya sejajar dgn nama (top:16px = padding-atas).
+   Diperbesar 112px jadi jangkar; karena blok teks bisa lebih tinggi dari avatar
+   (saat ada bio), top-align lebih rapi drpd center (nama tak nongol di atas avatar). */
 .profile-header-card:has(#upAvatar) .profile-header-avatar {
-  grid-column: 1;
-  grid-row: 1 / -1;
-  align-self: center;
-  margin: 0;
-  width: 104px; height: 104px;
+  position: absolute; left: 28px; top: 16px; transform: none;
+  margin: 0; width: 112px; height: 112px;
 }
-/* semua elemen lain → kolom kanan, rata kiri, margin direset */
-.profile-header-card:has(#upAvatar) > :not(.profile-header-avatar) {
-  grid-column: 2;
-  justify-self: stretch;
-  margin: 0;
-  max-width: 100%;
+/* INFO → kolom kiri, rata kiri. Urutan baris dipaksa (grid-row) mengikuti
+   konvensi IG/TikTok/YouTube: nama → @handle → STATS → BIO (bio DI BAWAH stats,
+   bukan di bawah username) → socials. */
+.profile-header-card:has(#upAvatar) > :not(.profile-header-avatar):not(.profile-header-actions) {
+  grid-column: 1; justify-self: start; margin: 0; max-width: 100%;
 }
-/* jarak vertikal antar elemen di kolom kanan (rapat & konsisten) */
-.profile-header-card:has(#upAvatar) .profile-header-name { font-size: 22px; }
-.profile-header-card:has(#upAvatar) .profile-header-handle { margin-top: 2px; }
-.profile-header-card:has(#upAvatar) .profile-header-bio { margin-top: 8px; }
-.profile-header-card:has(#upAvatar) .profile-header-stats { margin-top: 13px; }
-.profile-header-card:has(#upAvatar) .profile-header-actions { margin-top: 14px; }
-/* stats & tombol rata kiri (bukan tengah) di layout dua sisi */
-.profile-header-card:has(#upAvatar) .profile-header-stats { justify-content: flex-start; width: auto; }
+.profile-header-card:has(#upAvatar) .profile-header-name { grid-row: 1; font-size: 21px; }
+.profile-header-card:has(#upAvatar) .profile-header-handle { grid-row: 2; margin-top: 2px !important; }
+.profile-header-card:has(#upAvatar) .profile-header-stats { grid-row: 3; margin-top: 11px !important; justify-content: flex-start; width: auto; }
 .profile-header-card:has(#upAvatar) .profile-header-stats .myprofile-stat:first-child { padding-left: 0; }
-.profile-header-card:has(#upAvatar) .profile-header-actions { justify-content: flex-start; }
+.profile-header-card:has(#upAvatar) .profile-header-bio { grid-row: 4; margin: 10px 0 0 !important; max-width: 520px !important; line-height: 1.45; color: rgba(232,216,196,.82); }
+.profile-header-card:has(#upAvatar) #upSocials { grid-row: 5; margin-top: 6px !important; }
+/* TOMBOL → kolom kanan, menempel tepi kanan, ketengah vertikal.
+   span 99 (bukan 1/-1) supaya benar-benar membentang semua baris info
+   walau grid-template-rows tak eksplisit → align-self center pun bekerja. */
+.profile-header-card:has(#upAvatar) .profile-header-actions {
+  grid-column: 2; grid-row: 1 / span 99;
+  align-self: center; justify-self: end;
+  margin: 0; flex-direction: row; align-items: center; gap: 10px;
+}
+.profile-header-card:has(#upAvatar) .profile-header-actions .btn { justify-content: center; }
 
 /* ── Modal daftar Pengikut / Mengikuti (pfl-*) ── */
 .pfl-overlay {
