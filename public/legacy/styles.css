@@ -6819,7 +6819,7 @@ body[data-role="admin"] .ca-btn.ca-like.active {
   border-radius: 4px;
 }
 body[data-theme="light"] .search-suggestions mark {
-  background: rgba(132, 42, 59, .12); /* light: wine subtle di atas putih */
+  background: rgba(17, 24, 39, .10); /* netral, no pink (req 2026-06-24) */
 }
 .search-suggestions::-webkit-scrollbar { width: 11px; }
 .search-suggestions::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 3px solid var(--bg-elev); }
@@ -6852,7 +6852,7 @@ body[data-theme="light"] .ss-kbd-hints { color: rgba(102, 34, 34, .5); }
   background: rgba(232, 216, 196, .16); color: inherit;
   font-weight: 700; padding: 0.5px 2px; border-radius: 4px;
 }
-body[data-theme="light"] .sr-overlay mark { background: rgba(132, 42, 59, .12); }
+body[data-theme="light"] .sr-overlay mark { background: rgba(17, 24, 39, .10); /* netral, no pink (req 2026-06-24) */ }
 /* 2026-06-17: highlight match TANPA kotak (user tak suka kolom bulat) + lebar dropdown dibatasi */
 .search-suggestions mark, .sr-overlay mark {
   background: none !important; padding: 0 !important; border-radius: 0 !important; font-weight: 800;
@@ -14860,7 +14860,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-car
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1px solid rgba(132, 42, 59, .32) !important;
+  border: 1px solid rgba(17, 24, 39, .14) !important; /* netral, no pink (req 2026-06-24) */
   color: var(--text) !important;
   box-shadow: 0 6px 18px rgba(102, 34, 34, .15) !important;
 }
@@ -39540,8 +39540,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-input::pla
 }
 html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-input:focus {
   background: #FBE9C9 !important;
-  border-color: #842A3B !important;
-  box-shadow: 0 0 0 3px rgba(132, 42, 59, .15) !important;
+  border-color: rgba(17, 24, 39, .38) !important; /* fokus netral, no pink (req 2026-06-24) */
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .12) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-submit {
   background: linear-gradient(135deg, #842A3B 0%, #6D2932 100%) !important;
@@ -39571,8 +39571,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .psc-user-code-hint.ok {
    `#E8C88C` gold) yang invisible di cream bg light user. Plus disabled CTA
    `opacity: .55` bikin button wine pudar jadi cream behind. */
 html body[data-theme="light"]:not([data-role="admin"]) .payment-success-code-box {
-  background: linear-gradient(135deg, rgba(132, 42, 59, .08), rgba(109, 41, 50, .12)) !important;
-  border: 1px solid rgba(109, 41, 50, .28) !important;
+  background: linear-gradient(135deg, rgba(17, 24, 39, .05), rgba(17, 24, 39, .08)) !important; /* netral, no pink (req 2026-06-24) */
+  border: 1px solid rgba(17, 24, 39, .16) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .psc-label {
   color: #561C24 !important;
@@ -46944,7 +46944,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item.aps-ac
   box-shadow: inset 2px 0 0 var(--primary) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-nav-item em {
-  background: rgba(132, 42, 59, .16) !important;
+  background: rgba(17, 24, 39, .10) !important; /* netral, no pink (req 2026-06-24) */
   color: var(--primary) !important;
 }
 /* Greeting text */
@@ -46979,8 +46979,8 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-trending-h smal
   color: var(--muted) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-mini-thumb {
-  background: linear-gradient(135deg, rgba(132, 42, 59, .28), rgba(132, 42, 59, .1)) !important;
-  color: rgba(102, 34, 34, .55) !important;
+  background: linear-gradient(135deg, rgba(17, 24, 39, .14), rgba(17, 24, 39, .06)) !important; /* netral, no pink (req 2026-06-24) */
+  color: rgba(60, 50, 45, .6) !important;
 }
 /* Analytics: chart card + KPI tiles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart,
@@ -46999,12 +46999,12 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-chart-line {
   stroke: #842A3B !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-chart-area {
-  fill: rgba(132, 42, 59, .16) !important;
+  fill: rgba(17, 24, 39, .10) !important; /* netral, no pink (req 2026-06-24) */
 }
 /* DM / Pesan screen — list, rows, bubbles */
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-list {
-  background: linear-gradient(135deg, rgba(132, 42, 59, .12), rgba(132, 42, 59, .05)) !important;
-  border-color: rgba(102, 34, 34, .16) !important;
+  background: linear-gradient(135deg, rgba(17, 24, 39, .06), rgba(17, 24, 39, .03)) !important; /* netral, no pink (req 2026-06-24) */
+  border-color: rgba(17, 24, 39, .12) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-row {
   background: #FFFFFF !important;
@@ -47019,7 +47019,7 @@ html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-snip {
   color: var(--text-2) !important;
 }
 html body[data-theme="light"]:not([data-role="admin"]) .aps-dm-bubble.in {
-  background: rgba(132, 42, 59, .12) !important;
+  background: rgba(17, 24, 39, .07) !important; /* netral, no pink (req 2026-06-24) */
   color: var(--text) !important;
 }
 /* Floating cards (Trending / +1.2k / 24.8k / +58 new) below preview */
@@ -59318,9 +59318,9 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-form select:focus,
 body[data-theme="light"]:not([data-role="admin"]) .auth-form textarea:focus,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card .input-wrap input:focus,
 body[data-theme="light"]:not([data-role="admin"]) .auth-card input:focus {
-  border-color: #842A3B !important;
+  border-color: rgba(17, 24, 39, .38) !important; /* fokus netral, no pink (req 2026-06-24) */
   background: #FFFFFF !important;
-  box-shadow: 0 0 0 3px rgba(132, 42, 59, .12) !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .10) !important;
   outline: none !important;
 }
 /* Icon di sebelah kiri input (mail / lock) — match dark wine.
