@@ -5027,6 +5027,10 @@ function applyPrefSideEffects(key, val) {
 // settings, page titles). Element punya [data-i18n="key"] → text di-replace.
 const I18N = {
   en: {
+    "up.profEmptyTitle": "No videos yet",
+    "up.profEmptyDesc": "This creator hasn't uploaded any videos yet.",
+    "up.likedEmptyTitle": "No liked videos yet",
+    "up.profPrivate": "This profile is private",
     "common.live": "LIVE",
     "day.mon": "Mon",
     "day.tue": "Tue",
@@ -6876,6 +6880,10 @@ const I18N = {
     "admin.toast.created.suffix": "created",
   },
   id: {
+    "up.profEmptyTitle": "Belum ada video",
+    "up.profEmptyDesc": "Kreator ini belum upload video apa pun.",
+    "up.likedEmptyTitle": "Belum ada video yang disukai",
+    "up.profPrivate": "Profil ini privat",
     "common.live": "LIVE",
     "day.mon": "Mon",
     "day.tue": "Tue",
@@ -8692,6 +8700,10 @@ const I18N = {
     "admin.toast.created.suffix": "berhasil dibuat",
   },
   ms: {
+    "up.profEmptyTitle": "Belum ada video",
+    "up.profEmptyDesc": "Kreator ini belum memuat naik sebarang video.",
+    "up.likedEmptyTitle": "Belum ada video disukai",
+    "up.profPrivate": "Profil ini peribadi",
     "btn.analytics": "Analitik",
     "common.live": "LANGSUNG",
     "day.mon": "Isn",
@@ -10258,6 +10270,10 @@ const I18N = {
     "admin.toast.created.suffix": "berjaya dicipta",
   },
   ja: {
+    "up.profEmptyTitle": "まだ動画がありません",
+    "up.profEmptyDesc": "このクリエイターはまだ動画を投稿していません。",
+    "up.likedEmptyTitle": "高評価した動画がありません",
+    "up.profPrivate": "このプロフィールは非公開です",
     "btn.analytics": "分析",
     "common.live": "ライブ",
     "day.mon": "月",
@@ -11824,6 +11840,10 @@ const I18N = {
     "admin.toast.created.suffix": "を作成しました",
   },
   ar: {
+    "up.profEmptyTitle": "لا توجد فيديوهات بعد",
+    "up.profEmptyDesc": "لم يرفع هذا المُنشئ أي فيديو بعد.",
+    "up.likedEmptyTitle": "لا توجد فيديوهات مُعجب بها بعد",
+    "up.profPrivate": "هذا الملف الشخصي خاص",
     "btn.analytics": "التحليلات",
     "common.live": "مباشر",
     "day.mon": "الإثنين",
@@ -13390,6 +13410,10 @@ const I18N = {
     "admin.toast.created.suffix": "تم إنشاؤه بنجاح",
   },
   zh: {
+    "up.profEmptyTitle": "还没有视频",
+    "up.profEmptyDesc": "该创作者还没有上传任何视频。",
+    "up.likedEmptyTitle": "还没有点赞的视频",
+    "up.profPrivate": "此资料为私密",
     "btn.analytics": "分析",
     "common.live": "直播",
     "day.mon": "周一",
@@ -14956,6 +14980,10 @@ const I18N = {
     "admin.toast.created.suffix": "创建成功",
   },
   ko: {
+    "up.profEmptyTitle": "아직 동영상이 없습니다",
+    "up.profEmptyDesc": "이 크리에이터는 아직 동영상을 올리지 않았습니다.",
+    "up.likedEmptyTitle": "좋아요한 동영상이 없습니다",
+    "up.profPrivate": "이 프로필은 비공개입니다",
     "btn.analytics": "분석",
     "common.live": "라이브",
     "day.mon": "월",
@@ -16522,6 +16550,10 @@ const I18N = {
     "admin.toast.created.suffix": "생성됨",
   },
   es: {
+    "up.profEmptyTitle": "Aún no hay videos",
+    "up.profEmptyDesc": "Este creador aún no ha subido ningún video.",
+    "up.likedEmptyTitle": "Aún no hay videos que te gusten",
+    "up.profPrivate": "Este perfil es privado",
     "btn.analytics": "Analítica",
     "common.live": "EN VIVO",
     "day.mon": "Lun",
@@ -57142,7 +57174,11 @@ function renderUserProfile() {
       // Follow button state
       const isFollowing = state.followingCreators.includes(username);
       const theyFollowMe = !!user && followingList.includes(user.username);
-      followBtn.textContent = isFollowing ? "✓ Following" : (theyFollowMe ? "Follow Balik" : "Follow");
+      followBtn.textContent = isFollowing
+        ? (typeof t === "function" ? t("btn.following", "✓ Mengikuti") : "✓ Mengikuti")
+        : (theyFollowMe
+            ? (typeof t === "function" ? t("btn.follow.followback", "Ikuti Balik") : "Ikuti Balik")
+            : (typeof t === "function" ? t("btn.follow", "Ikuti") : "Ikuti"));
       followBtn.classList.toggle("ghost", isFollowing);
       followBtn.classList.toggle("primary", !isFollowing);
       if (followBackTag) followBackTag.hidden = !theyFollowMe;
