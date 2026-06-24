@@ -35240,11 +35240,26 @@ body:not([data-role="admin"]) .trending-card::before,
 body:not([data-role="admin"]) .trending-card-home::before,
 body:not([data-role="admin"]) .ml-col::before,
 body:not([data-role="admin"]) .myprofile-card::before,
-body:not([data-role="admin"]) .profile-header-card::before,
 body:not([data-role="admin"]) .profile-col::before {
   display: none !important;
   background: none !important;
   box-shadow: none !important;
+}
+/* profile-header-card::before DIKECUALIKAN dari reset di atas — dipakai utk cover
+   banner redesign (din/profil-kreator 2026-06-24); !important biar menang. */
+body:not([data-role="admin"]) .profile-header-card::before {
+  display: block !important;
+  height: 118px !important;
+  margin: 0 -24px 0 !important;
+  background:
+    radial-gradient(130% 150% at 50% -30%, rgba(132, 42, 59, .45), transparent 62%),
+    linear-gradient(135deg, #4d1a23 0%, #20100f 100%) !important;
+  box-shadow: none !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
+  background:
+    radial-gradient(130% 150% at 50% -30%, rgba(132, 42, 59, .30), transparent 62%),
+    linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
 }
 /* Tombol primary masih boleh ada SUBTLE elevation untuk affordance */
 body:not([data-role="admin"]) .btn.primary {
