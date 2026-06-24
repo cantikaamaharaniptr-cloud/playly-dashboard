@@ -15003,10 +15003,13 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-illus .floating-car
 .pac-sub { font-size: .85rem; color: var(--text-muted, #aaa); margin: 0 0 1.4rem; max-width: 300px; margin-inline: auto; line-height: 1.55; }
 .pac-btns { display: flex; flex-direction: column; gap: .625rem; max-width: 280px; margin: 0 auto; }
 .pac-btn { width: 100%; justify-content: center; }
-/* Tier pill — only show in signup-form mode */
-.auth-card[data-auth-state="signin"] #signupTierPill { display: none !important; }
-.auth-card[data-auth-state="signup-form"] #signupTierPill {
-  display: inline-flex !important;
+/* Tier pill "Paket dipilih: Gratis [ubah]" — DISEMBUNYIKAN total (req user
+   2026-06-24: tak boleh ada di popup login/daftar + tak boleh ada tint pink di
+   light mode). Pill ini vestigial dari flow lama (tier-pick kini post-signup),
+   jadi aman disembunyikan di SEMUA state. */
+.auth-card[data-auth-state="signin"] #signupTierPill,
+.auth-card[data-auth-state="signup-form"] #signupTierPill { display: none !important; }
+.auth-card[data-auth-state="signup-form-DISABLED"] #signupTierPill {
   align-items: center;
   gap: 5px;
   padding: 3px 9px;
