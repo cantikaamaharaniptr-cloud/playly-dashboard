@@ -2128,27 +2128,25 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
   z-index: 1;
 }
 /* Stats → kartu/chip terpisah (bukan baris polos ber-border atas/bawah) */
-/* Stats → BARIS MINIMALIS (req user 2026-06-24): tanpa kotak, angka besar + label
-   kecil, dipisah garis tipis vertikal; garis tipis bawah memisahkan dari tombol. */
+/* Stats → BARIS MINIMALIS (req user 2026-06-24): tanpa kotak, TANPA garis pembatas
+   (vertikal & horizontal dihapus per req) — angka besar + label kecil, jarak rapi. */
 .profile-header-stats {
   border-top: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
   gap: 0;
-  padding: 2px 0 16px;
+  padding: 6px 0 6px;
   flex-wrap: nowrap;
-  width: min(460px, 100%);
+  width: min(440px, 100%);
 }
 .profile-header-stats .myprofile-stat {
   background: none !important;
   border: none;
-  border-left: 1px solid var(--border);
   border-radius: 0;
   padding: 2px 6px;
   flex: 1;
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
-.profile-header-stats .myprofile-stat:first-child { border-left: none; }
 .profile-header-stats .myprofile-stat b { font-size: 21px; font-weight: 800; color: var(--text); line-height: 1; }
 .profile-header-stats .myprofile-stat small { font-size: 10px; letter-spacing: .04em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
 /* buang ikon centang ✓ di label MENGIKUTI (rapi, minimalis) */
