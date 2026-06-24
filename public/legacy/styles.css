@@ -2133,26 +2133,76 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
 .profile-header-stats {
   border-top: none;
   border-bottom: none;
-  gap: 0;
-  padding: 6px 0 6px;
+  gap: 2px;
+  padding: 4px 0;
   flex-wrap: nowrap;
-  width: min(440px, 100%);
+  width: auto;
+  justify-content: center;
 }
 .profile-header-stats .myprofile-stat {
   background: none !important;
   border: none;
   border-radius: 0;
-  padding: 2px 6px;
-  flex: 1;
+  padding: 2px 12px;
+  flex: 0 0 auto;
   min-width: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
 }
-.profile-header-stats .myprofile-stat b { font-size: 21px; font-weight: 800; color: var(--text); line-height: 1; }
-.profile-header-stats .myprofile-stat small { font-size: 10px; letter-spacing: .04em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+.profile-header-stats .myprofile-stat b { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+.profile-header-stats .myprofile-stat small { font-size: 11px; letter-spacing: 0; color: var(--muted); text-transform: none; font-weight: 600; }
 /* buang ikon centang ✓ di label MENGIKUTI (rapi, minimalis) */
 .profile-header-stats .myprofile-stat small::before { content: none !important; }
 .profile-header-stats .myprofile-stat .stat-check,
 .profile-header-stats .myprofile-stat small svg { display: none !important; }
+/* stat yg bisa diklik (Pengikut/Mengikuti) — affordance halus saat hover/fokus */
+.profile-header-stats .myprofile-stat[role="button"] { border-radius: 12px; transition: background .15s ease, transform .12s ease; }
+.profile-header-stats .myprofile-stat[role="button"]:hover { background: rgba(232,216,196,.07) !important; }
+.profile-header-stats .myprofile-stat[role="button"]:hover b { color: var(--brand-2, #d9a36a); }
+.profile-header-stats .myprofile-stat[role="button"]:active { transform: scale(.97); }
+.profile-header-stats .myprofile-stat[role="button"]:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 2px; }
+
+/* ── Modal daftar Pengikut / Mengikuti (pfl-*) ── */
+.pfl-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(10, 6, 8, .62);
+  backdrop-filter: blur(3px);
+  animation: pflFade .16s ease;
+}
+@keyframes pflFade { from { opacity: 0; } to { opacity: 1; } }
+.pfl-panel {
+  width: min(420px, 100%);
+  max-height: min(560px, 84vh);
+  display: flex; flex-direction: column;
+  background: var(--bg-elev, #1c0f13);
+  border: 1px solid rgba(232,216,196,.12);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  overflow: hidden;
+  animation: pflPop .18s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes pflPop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.pfl-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(232,216,196,.10);
+}
+.pfl-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 8px; }
+.pfl-count { font-size: 12px; font-weight: 600; color: var(--muted); }
+.pfl-close {
+  width: 32px; height: 32px; border-radius: 9px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--muted); font-size: 15px; line-height: 1;
+  transition: background .15s ease, color .15s ease;
+}
+.pfl-close:hover { background: rgba(232,216,196,.08); color: var(--text); }
+.pfl-body { overflow-y: auto; padding: 8px; }
+.pfl-body .myprofile-userlist { display: flex; flex-direction: column; gap: 2px; }
+.pfl-empty { text-align: center; padding: 38px 20px; color: var(--muted); }
+.pfl-empty-ic { font-size: 30px; opacity: .55; margin-bottom: 8px; }
+.pfl-empty p { margin: 0; font-size: 13px; }
 /* Premium badge — pill emas halus, ditata ulang (lebih kecil & rapi, sejajar nama) */
 .profile-header-name .premium-badge-lg {
   display: inline-flex; align-items: center; gap: 4px;

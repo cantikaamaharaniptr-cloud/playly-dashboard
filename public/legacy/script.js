@@ -57061,6 +57061,46 @@ function getUserVideos(username, { ownView = false } = {}) {
   } catch { return []; }
 }
 
+// Modal daftar Pengikut / Mengikuti utk halaman Profil Kreator (req user 2026-06-24:
+// stats harus bisa diklik utk lihat daftar). Reuse myProfileUserRow (avatar+nama+
+// @handle) + openUserProfile utk klik baris. Modal di-append ke body (overlay sendiri).
+function openProfileFollowList(username, type) {
+  if (!username) return;
+  const isFollowing = type === "following";
+  const raw = isFollowing
+    ? (typeof getUserFollowing === "function" ? getUserFollowing(username) : [])
+    : (typeof getUserFollowers === "function" ? getUserFollowers(username) : []);
+  const rows = (Array.isArray(raw) ? raw : []).filter(Boolean);
+  const title = isFollowing ? "Mengikuti" : "Pengikut";
+  const rowFn = (typeof myProfileUserRow === "function") ? myProfileUserRow : (u) => `<button class="myprofile-user-row" data-open-user="${escapeHtml(u)}"><span class="mpu-text"><strong>@${escapeHtml(u)}</strong></span></button>`;
+  const bodyHtml = rows.length
+    ? `<div class="myprofile-userlist">${rows.map(rowFn).join("")}</div>`
+    : `<div class="pfl-empty"><div class="pfl-empty-ic" aria-hidden="true">👥</div><p>${isFollowing ? "Belum mengikuti siapa pun." : "Belum ada pengikut."}</p></div>`;
+  document.getElementById("profileFollowModal")?.remove();
+  const m = document.createElement("div");
+  m.id = "profileFollowModal";
+  m.className = "pfl-overlay";
+  m.innerHTML =
+    '<div class="pfl-panel" role="dialog" aria-modal="true" aria-label="' + title + '">' +
+      '<div class="pfl-head"><h3>' + title + ' <span class="pfl-count">' + rows.length + '</span></h3>' +
+      '<button type="button" class="pfl-close" aria-label="Tutup">✕</button></div>' +
+      '<div class="pfl-body">' + bodyHtml + '</div>' +
+    '</div>';
+  document.body.appendChild(m);
+  document.body.style.overflow = "hidden";
+  const close = () => { m.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", onEsc); };
+  const onEsc = (e) => { if (e.key === "Escape") close(); };
+  m.querySelector(".pfl-close")?.addEventListener("click", close);
+  m.addEventListener("click", (e) => { if (e.target === m) close(); });
+  m.querySelectorAll("[data-open-user]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const u = b.getAttribute("data-open-user");
+    close();
+    if (u && typeof openUserProfile === "function") openUserProfile(u);
+  }));
+  document.addEventListener("keydown", onEsc);
+}
+
 function openUserProfile(username) {
   if (!username) return;
   // Klik profil sendiri → ke editor profil
@@ -57150,6 +57190,32 @@ function renderUserProfile() {
   // Total likes = sum of likes di semua video kreator ini
   const totalLikes = videos.reduce((s, v) => s + (v.likes || 0), 0);
   $("#upStatLikes") && ($("#upStatLikes").textContent = totalLikes.toLocaleString("id-ID"));
+
+  // Stat Pengikut/Mengikuti bisa diklik → buka daftar (req user 2026-06-24).
+  // Video & Suka tidak punya daftar → cursor default. Hormati hideCounts (privasi).
+  const wireStatCell = (statId, listType, clickable) => {
+    const cell = $("#" + statId)?.closest(".myprofile-stat");
+    if (!cell) return;
+    cell.onclick = null;
+    cell.onkeydown = null;
+    if (clickable) {
+      cell.style.cursor = "pointer";
+      cell.setAttribute("role", "button");
+      cell.setAttribute("tabindex", "0");
+      const open = () => openProfileFollowList(username, listType);
+      cell.onclick = open;
+      cell.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+    } else {
+      cell.style.cursor = "default";
+      cell.removeAttribute("role");
+      cell.removeAttribute("tabindex");
+    }
+  };
+  const canViewLists = profileVisible && !hideCounts;
+  wireStatCell("upStatVideos", null, false);
+  wireStatCell("upStatFollowers", "followers", canViewLists);
+  wireStatCell("upStatFollowing", "following", canViewLists);
+  wireStatCell("upStatLikes", null, false);
 
   // Action buttons — own channel pakai "Edit Profil + Bagikan", other pakai "Follow + Pesan + Bagikan"
   const followBtn = $("#upFollowBtn");
