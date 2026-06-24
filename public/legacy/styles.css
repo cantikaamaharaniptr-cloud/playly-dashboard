@@ -64996,13 +64996,13 @@ body[data-theme="light"] .hlv-next-pct,
 body[data-theme="light"] .hlv-chip b { color: var(--text); }                 /* angka/+XP emphasis → wine */
 body[data-theme="light"] .lt-empty-bar-txt { color: var(--text-2); }
 body[data-theme="light"] .lt-empty-link {
-  color: var(--text);
-  border-color: rgba(109, 41, 50, .28);
-  background: rgba(109, 41, 50, .05);
+  color: var(--text);                       /* teks wine */
+  background: rgba(232, 216, 196, .30);     /* pill CREAM hangat (bukan abu) */
+  border-color: rgba(232, 216, 196, .85);
 }
 body[data-theme="light"] .lt-empty-link:hover {
-  background: rgba(109, 41, 50, .10);
-  border-color: rgba(109, 41, 50, .45);
+  background: rgba(232, 216, 196, .45);
+  border-color: rgba(216, 196, 168, 1);
 }
 /* Pencapaian terkunci: opacity 0.58 (utk dark) terlalu pudar di light → naikkan
    biar tetap kebaca tapi masih beda dari yang sudah terbuka. (user baru = semua
@@ -65014,19 +65014,19 @@ body[data-theme="light"] #hrkSelf b { color: var(--text); }   /* override #hrkSe
 /* SOROTAN slot kosong: kotak placeholder + play-icon krem (.08/.5) hilang di
    light → kotak jadi tint gelap tipis + ikon muted gelap. */
 body[data-theme="light"] .hsv-thumb-ph {
-  background: rgba(17, 24, 39, .04);
-  color: rgba(17, 24, 39, .30);
+  background: rgba(232, 216, 196, .25);   /* cream HANGAT tema (bukan abu/slate, bukan pink) */
+  color: var(--text);                     /* ikon play wine tema (bukan abu) */
 }
 /* tombol "Unggah Video" empty (krem outline + teks putih, ID-scoped !important)
    → wine kebaca. Spesifisitas dinaikkan dgn body[data-theme] + !important. */
 body[data-theme="light"] section.view[data-view="home"] #homeSorotan .hsv-empty-btn {
-  color: var(--text) !important;
-  background: rgba(109, 41, 50, .06) !important;
-  border-color: rgba(109, 41, 50, .30) !important;
+  color: var(--text) !important;                       /* teks wine */
+  background: rgba(232, 216, 196, .30) !important;      /* pill CREAM hangat (bukan abu) */
+  border-color: rgba(232, 216, 196, .85) !important;
 }
 body[data-theme="light"] section.view[data-view="home"] #homeSorotan .hsv-empty-btn:hover {
-  background: rgba(109, 41, 50, .12) !important;
-  border-color: rgba(109, 41, 50, .45) !important;
+  background: rgba(232, 216, 196, .45) !important;
+  border-color: rgba(216, 196, 168, 1) !important;
 }
 .lt-thumb { position: relative; aspect-ratio: 16 / 9; background: rgba(232, 216, 196, .08); overflow: hidden; }
 .lt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
