@@ -12774,6 +12774,12 @@ section[data-view="people"] .people-card .people-preview { display: none; }
    diakses dari PROFIL (angka Pengikut/Mengikuti → daftar), konvensi X/IG/TikTok.
    Default tab tetap "all" jadi daftar tetap tampil semua. */
 section[data-view="people"] .people-tab-bar { display: none !important; }
+/* Petunjuk cari (saat kotak pencarian kosong — daftar tak ditampilkan otomatis) */
+section[data-view="people"] .people-search-hint {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 52px 20px; color: var(--muted); text-align: center; font-size: 13.5px;
+}
+section[data-view="people"] .people-search-hint .ui-ico { width: 34px; height: 34px; opacity: .5; }
 
 .role-badge {
   display: inline-block;

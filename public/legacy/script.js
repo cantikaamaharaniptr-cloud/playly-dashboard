@@ -44564,6 +44564,15 @@ function renderPeople() {
   setT("peopleCntFollowers", followersAccounts.length);
   setT("peopleCntFollowing", followingAccounts.length);
 
+  // req user 2026-06-24: JANGAN tampilkan semua kreator otomatis di awal —
+  // daftar baru muncul setelah user mengetik (min 1 huruf). Query kosong →
+  // tampilkan petunjuk cari, bukan seluruh daftar user.
+  if (!q) {
+    grid.innerHTML = `<div class="people-empty people-search-hint">${typeof emojiToIcon === "function" ? emojiToIcon("🔍") : ""}<span>Ketik nama atau username untuk mencari kreator.</span></div>`;
+    if (moreWrap) moreWrap.hidden = true;
+    return;
+  }
+
   let pool;
   if (activeTab === "followers")      pool = followersAccounts;
   else if (activeTab === "following") pool = followingAccounts;
