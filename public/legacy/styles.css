@@ -2161,6 +2161,49 @@ body[data-theme="light"]:not([data-role="admin"]) .profile-header-card::before {
 .profile-header-stats .myprofile-stat[role="button"]:active { transform: scale(.97); }
 .profile-header-stats .myprofile-stat[role="button"]:focus-visible { outline: 2px solid rgba(232,216,196,.45); outline-offset: 2px; }
 
+/* === Tata letak DUA SISI (avatar kiri, info kanan) — req user 2026-06-24.
+   Scoped ke kartu Profil Kreator saja via :has(#upAvatar); halaman My Profile
+   (#myProfileAvatar) tetap rata tengah. Pakai CSS Grid: avatar kolom-1 span
+   semua baris, sisanya mengalir ke kolom-2. Banner cover dimatikan, padding
+   atas-bawah seimbang (fix keluhan ruang atas berlebih). === */
+.profile-header-card:has(#upAvatar) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 22px;
+  row-gap: 0;
+  align-items: center;
+  text-align: left;
+  padding: 22px 26px;
+  overflow: visible;
+}
+/* tidak ada banner di layout dua sisi */
+.profile-header-card:has(#upAvatar)::before { display: none !important; }
+/* avatar: kolom kiri, ketengah vertikal terhadap seluruh info */
+.profile-header-card:has(#upAvatar) .profile-header-avatar {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: center;
+  margin: 0;
+  width: 104px; height: 104px;
+}
+/* semua elemen lain → kolom kanan, rata kiri, margin direset */
+.profile-header-card:has(#upAvatar) > :not(.profile-header-avatar) {
+  grid-column: 2;
+  justify-self: stretch;
+  margin: 0;
+  max-width: 100%;
+}
+/* jarak vertikal antar elemen di kolom kanan (rapat & konsisten) */
+.profile-header-card:has(#upAvatar) .profile-header-name { font-size: 22px; }
+.profile-header-card:has(#upAvatar) .profile-header-handle { margin-top: 2px; }
+.profile-header-card:has(#upAvatar) .profile-header-bio { margin-top: 8px; }
+.profile-header-card:has(#upAvatar) .profile-header-stats { margin-top: 13px; }
+.profile-header-card:has(#upAvatar) .profile-header-actions { margin-top: 14px; }
+/* stats & tombol rata kiri (bukan tengah) di layout dua sisi */
+.profile-header-card:has(#upAvatar) .profile-header-stats { justify-content: flex-start; width: auto; }
+.profile-header-card:has(#upAvatar) .profile-header-stats .myprofile-stat:first-child { padding-left: 0; }
+.profile-header-card:has(#upAvatar) .profile-header-actions { justify-content: flex-start; }
+
 /* ── Modal daftar Pengikut / Mengikuti (pfl-*) ── */
 .pfl-overlay {
   position: fixed; inset: 0; z-index: 4000;
