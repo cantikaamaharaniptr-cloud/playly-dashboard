@@ -43230,7 +43230,7 @@ function fypCardHTML(v) {
           <span data-fyp-comment-count="${v.id}">${fmtNum(commentCount)}</span>
         </button>
         <button class="fyp-action share" data-fyp-share="${v.id}" title="Bagikan / Kirim">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
           <span data-fyp-share-count="${v.id}">${fmtNum(shareCount)}</span>
         </button>
         <!-- Tontonan = STAT PASIF (per request user 2026-05-16): bukan tombol
@@ -57222,6 +57222,17 @@ function renderUserProfile() {
   const messageBtn = $("#upMessageBtn");
   const editBtn = $("#upEditBtn");
   const followBackTag = $("#upFollowsYou");
+
+  // Ikon tombol Pesan & Bagikan (req user 2026-06-24): Pesan = amplop, Bagikan =
+  // share-nodes klasik. Diset di sini (bukan emoji di markup) supaya tahan i18n
+  // (emoji+label satu text-node bisa terhapus saat translate) & tak ganggu 🔗 global.
+  const _ico = (d) => '<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em" style="vertical-align:-0.14em" aria-hidden="true">' + d + '</svg>';
+  const MAIL_ICO = _ico('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>');
+  // share-nodes (3 simpul) — sama dgn ikon Bagikan player & pustaka (konsisten app-wide).
+  const SHARE_ICO = _ico('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>');
+  if (messageBtn) messageBtn.innerHTML = MAIL_ICO + ' <span data-no-i18n>Pesan</span>';
+  const upShareBtnEl = $("#upShareBtn");
+  if (upShareBtnEl) upShareBtnEl.innerHTML = SHARE_ICO + ' <span data-i18n="btn.share">Bagikan</span>';
 
   if (isMe) {
     // Hide MENGIKUTIMU badge — gak relevan di own channel
