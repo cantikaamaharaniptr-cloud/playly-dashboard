@@ -47899,7 +47899,9 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
    #DCA96D (gold redup) → #F3D9A8 (gold terang), opacity status
    .85 → 1 supaya "AKTIF" tak ikut redup. Ikon bintang tetap. */
 .dashboard-tier-pill[data-tier="premium"] .dtp-label { color: var(--text); }
-.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: var(--text-2); opacity: 1; }
+/* "Aktif" disamakan dgn "Premium" (req user 2026-06-24): var(--text-2) kebaca
+   abu di light → var(--text). Weight sudah 500 (.topbar rule) = sama dgn teks lain. */
+.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: var(--text); opacity: 1; }
 .dashboard-tier-pill[data-tier="premium"]:hover {
   background: linear-gradient(135deg, rgba(220,169,109,.32), rgba(80,16,10,.18));
   box-shadow: 0 4px 14px rgba(220, 169, 109, .35);
