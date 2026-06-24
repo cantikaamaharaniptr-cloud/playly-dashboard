@@ -47814,9 +47814,11 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
 /* v795: badge Premium diselaraskan ke tema (cream/wine), bukan emas/kuning. */
 .dashboard-tier-pill[data-tier="premium"] {
-  /* 2026-06-16: premium kini nuansa WINE + teks cream (bukan emas). Bersih & on-palette. */
-  border-color: rgba(109, 41, 50, .5);
-  background: linear-gradient(135deg, rgba(109,41,50,.22), rgba(109,41,50,.08));
+  /* 2026-06-24 (req user): premium = GOLD (sesuai akun premium & lencana Premium).
+     Gradient emas + teks coklat-gelap → kebaca di light & dark, konsisten badge.
+     !important utk kalahkan rule body:not(admin) .dashboard-tier-pill (surface/border). */
+  border-color: rgba(201, 154, 58, .6) !important;
+  background: linear-gradient(135deg, #E8C36B, #C99A3A) !important;
   box-shadow: none;
   animation: none;
   position: relative;
@@ -47838,7 +47840,7 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
   pointer-events: none;
 }
 .dashboard-tier-pill[data-tier="premium"] .dtp-icon {
-  color: var(--accent); /* 2026-06-17: cream (ganti emas) */
+  color: #3a2606; /* 2026-06-24: coklat gelap di atas gradient emas (premium) */
   animation: tierPillStar 1.6s ease-in-out infinite;
 }
 /* Bintang pill premium (request user 2026-05-17):
@@ -47898,14 +47900,24 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
 /* Teks pill premium dibuat lebih TERANG (request user 2026-05-17):
    #DCA96D (gold redup) → #F3D9A8 (gold terang), opacity status
    .85 → 1 supaya "AKTIF" tak ikut redup. Ikon bintang tetap. */
-.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: var(--text); }
-/* "Aktif" disamakan dgn "Premium" (req user 2026-06-24): var(--text-2) kebaca
-   abu di light → var(--text). Weight sudah 500 (.topbar rule) = sama dgn teks lain. */
-.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: var(--text); opacity: 1; }
+/* Premium = gold (req user 2026-06-24): teks "Premium" & "Aktif" coklat-gelap
+   di atas gradient emas — kebaca, seragam, sesuai warna akun premium. */
+.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #3a2606; }
+.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #3a2606; opacity: 1; }
 .dashboard-tier-pill[data-tier="premium"]:hover {
-  background: linear-gradient(135deg, rgba(220,169,109,.32), rgba(80,16,10,.18));
-  box-shadow: 0 4px 14px rgba(220, 169, 109, .35);
+  background: linear-gradient(135deg, #EFCE7C, #D4A544) !important;   /* hover = emas sedikit lebih terang */
+  box-shadow: 0 4px 14px rgba(201, 154, 58, .35);
   animation-play-state: paused;
+}
+/* Spesifisitas (0,4,1) utk MENGALAHKAN rule body:not(admin):not(auth-mode)
+   .dashboard-tier-pill {bg var(--surface)/border var(--border) !important} (0,3,1)
+   yg tadinya menimpa emas → premium TETAP emas. */
+body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill[data-tier="premium"] {
+  background: linear-gradient(135deg, #E8C36B, #C99A3A) !important;
+  border-color: rgba(201, 154, 58, .6) !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill[data-tier="premium"]:hover {
+  background: linear-gradient(135deg, #EFCE7C, #D4A544) !important;
 }
 @keyframes tierPillGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232,216,196,0); }
@@ -57675,19 +57687,24 @@ body:not([data-role="admin"]) [data-view="home"] .home-news-row { order: 9; }
    border var(--border).
    ========================================================= */
 body:not([data-role="admin"]):not(.auth-mode) .breadcrumb,
-body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill,
-body:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill {
+body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill:not([data-tier="premium"]),
+body:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill:not([data-tier="premium"]) {
   border-radius: 12px !important;
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   box-shadow: none !important;
   height: 40px !important;
 }
-/* Hover state — match topbar-search/icon-btn */
+/* Hover state — match topbar-search/icon-btn. Premium DIKECUALIKAN (premium = emas). */
 body:not([data-role="admin"]):not(.auth-mode) .breadcrumb:hover,
-body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill:hover {
+body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill:not([data-tier="premium"]):hover {
   background: var(--surface-2) !important;
   border-color: var(--border-strong) !important;
+}
+/* Premium pill TETAP radius/height seragam tapi warna emas (border/bg via rule premium). */
+body:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] {
+  border-radius: 12px !important;
+  height: 40px !important;
 }
 
 /* =========================================================
