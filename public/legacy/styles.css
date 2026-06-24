@@ -12730,6 +12730,46 @@ section.view.focus-mode .messages-3col {
   border-radius: inherit;
 }
 .people-card .avatar.has-photo span { display: none; }
+
+/* === Cari Kreator: tampilan DAFTAR BARIS (list) — req user 2026-06-24.
+   Ganti grid kartu 4-kolom jadi baris lebar-penuh ala X/LinkedIn: avatar kiri,
+   nama/@handle/bio tengah, tombol kanan. Scoped section[data-view="people"]
+   (spesifisitas > rule .people-card lama → menang di mana pun posisinya). === */
+section[data-view="people"] .people-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+section[data-view="people"] .people-card {
+  grid-template-columns: 48px minmax(0, 1fr) auto; /* avatar | info | aksi */
+  grid-template-areas:
+    "avatar name    actions"
+    "avatar handle  actions"
+    "avatar bio     actions";
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 1px;
+  padding: 12px 18px;
+  min-height: 66px;
+}
+section[data-view="people"] .people-card:hover { transform: none; background: rgba(232,216,196,.04); }
+section[data-view="people"] .people-card .avatar       { grid-area: avatar; align-self: center; }
+section[data-view="people"] .people-card .people-name  { grid-area: name; }
+section[data-view="people"] .people-card .people-handle{ grid-area: handle; }
+section[data-view="people"] .people-card .people-bio {
+  grid-area: bio; margin-top: 1px; -webkit-line-clamp: 1; max-width: 100%;
+}
+/* tombol → kolom kanan, sebaris, ketengah vertikal, tak melar */
+section[data-view="people"] .people-card .people-actions {
+  grid-area: actions; align-self: center; justify-self: end;
+  flex-wrap: nowrap; margin-top: 0; gap: 8px;
+}
+section[data-view="people"] .people-card .people-actions .btn {
+  flex: 0 0 auto; min-width: 0; padding: 8px 15px;
+}
+/* preview video disembunyikan di mode baris (rapat) */
+section[data-view="people"] .people-card .people-preview { display: none; }
+
 .role-badge {
   display: inline-block;
   padding: 2px 7px;
