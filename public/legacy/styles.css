@@ -83,23 +83,25 @@ body[data-theme="light"] {
      light mode standar/profesional. Wine text & accents tetap = brand identity.
      2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
      nested chip slightly grey (#F5F5F5). */
-  --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
-  --bg-elev: #FFFFFF;     /* Card surface — pure white */
-  --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
+  /* 2026-06-25 (req user): light mode = PUTIH NETRAL bersih — BUKAN cream/taupe (hangat)
+     & BUKAN slate (dingin). Surface putih, garis halus abu NETRAL (rgba 0,0,0), aksen wine. */
+  --bg: #FAFAFA;          /* Page bg — near-white netral (tanpa rona) */
+  --bg-elev: #FFFFFF;     /* Card surface — putih murni */
+  --bg-elev-2: #FFFFFF;   /* Accent surface — putih murni */
+  --surface: rgba(0, 0, 0, 0.03);    /* abu NETRAL (bukan taupe/slate) */
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.18);
   --text: #6D2932;        /* Deep wine — main text */
-  --text-2: #5F564E;      /* Wine — secondary text */
-  --muted: #7A716A;       /* Light wine — muted/meta */
-  --primary: #842A3B;     /* Wine — primary actions */
-  --primary-hover: #6D2932; /* Deep wine — hover */
+  --text-2: #4B4B4B;      /* Abu netral — secondary text (bukan taupe) */
+  --muted: #6E6E6E;       /* Abu netral — muted/meta (bukan taupe) */
+  --primary: #6D2932;     /* Deep wine — primary actions */
+  --primary-hover: #561C24; /* Darker wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
-  --primary-soft: rgba(132, 42, 59, 0.10);
-  --accent: #842A3B;      /* Light wine — accents */
-  --accent-soft: rgba(132, 42, 59, 0.14);
+  --primary-soft: rgba(109, 41, 50, 0.10);
+  --accent: #6D2932;      /* Deep wine — accents */
+  --accent-soft: rgba(109, 41, 50, 0.14);
   --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
   --shadow-sm: 0 1px 2px rgba(17,24,39,.06), 0 2px 6px rgba(17,24,39,.05);
   --shadow-md: 0 4px 12px rgba(17,24,39,.08), 0 12px 32px rgba(17,24,39,.07);
@@ -107,7 +109,7 @@ body[data-theme="light"] {
   --grad-soft:  linear-gradient(135deg, rgba(17,24,39,0.04), rgba(17,24,39,0.01));
   --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #FFFFFF 100%);
   --grad-card:  linear-gradient(140deg, #FFFFFF 0%, rgba(17,24,39,.02) 100%);
-  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%);
+  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
   --glow-soft:        none;
   --glow-soft-hover:  none;
   --glow-soft-cream:  none;
@@ -2940,7 +2942,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border: 2px solid var(--bg);
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
-#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: var(--primary); border: 2.5px solid var(--bg); /* 2026-06-25: pink #d6485f -> wine tema (no-pink) */ }
 
 .mobile-only { display: none; }
 
@@ -3232,11 +3234,11 @@ body[data-theme="dark"] .theme-switch button.active {
 }
 body[data-theme="light"] .theme-switch { background: rgba(102, 34, 34, .06); }
 body[data-theme="light"] .theme-switch button { color: rgba(109, 41, 50, .5); }
-body[data-theme="light"] .theme-switch button:hover { color: #842A3B; }
+body[data-theme="light"] .theme-switch button:hover { color: #6D2932; }
 body[data-theme="light"] .theme-switch button.active {
   background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(132, 42, 59, .3);
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .3);
 }
 
 .user-chip {
@@ -29291,17 +29293,23 @@ section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn {
   color: var(--text) !important;
 }
+/* 2026-06-25 (req user: jangan cream): primary = wine solid + teks putih; ghost = putih + teks wine + border netral. */
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
-  background: rgba(232, 216, 196, .55) !important;
-  border-color: rgba(232, 216, 196, .95) !important;
+  color: #fff !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost {
-  background: rgba(232, 216, 196, .28) !important;
-  border-color: rgba(232, 216, 196, .7) !important;
+  background: var(--bg-elev) !important;
+  border-color: var(--border-strong) !important;
 }
-body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
-  background: rgba(232, 216, 196, .7) !important;
-  border-color: rgba(232, 216, 196, 1) !important;
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost:hover {
+  background: var(--surface) !important;
+  border-color: var(--text) !important;
 }
 /* LIGHT mode: tombol play di kartu PREVIEW feed pakai scrim GELAP charcoal
    rgba(26,12,16,.45) (warna dark theme #1A0C10) -> di latar terang jadi lingkaran
@@ -29344,6 +29352,16 @@ body[data-theme="light"] section.view[data-view="discover"] .fyp-sk-play {
   font-size: 12px; font-weight: 700; color: rgba(232, 216, 196, .4);
   padding: 5px 12px; border-radius: 999px;
   border: 1px solid rgba(232, 216, 196, .18);
+}
+/* 2026-06-25 (req user: jangan cream/pudar) — LIGHT: skeleton shimmer & "+ Ikuti"
+   pakai abu NETRAL (bukan cream), sedikit lebih jelas. Dark tetap cream shimmer. */
+body[data-theme="light"] .fyp-sk {
+  background: linear-gradient(100deg, rgba(0,0,0,.05) 30%, rgba(0,0,0,.11) 50%, rgba(0,0,0,.05) 70%);
+  background-size: 200% 100%;
+}
+body[data-theme="light"] .fyp-sk-follow {
+  color: var(--muted) !important;
+  border-color: var(--border) !important;
 }
 /* Area video preview: SHIMMER terang + ikon play, PORTRAIT 4:5 (max 70vh) —
    sama proporsi dgn kartu asli (req user 2026-06-16), tapi shimmer terang
@@ -44498,6 +44516,27 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   border-color: rgba(102, 34, 34, .18) !important;
   color: var(--text) !important;
   box-shadow: 0 6px 16px rgba(102, 34, 34, .1) !important;
+}
+
+/* ============================================================
+   2026-06-26 — JELAJAH (discover): samakan warna dgn Statistik.
+   Glyph kotak ikon cream->putih; skeleton FYP cream->netral.
+   ============================================================ */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .sec-icon-v582,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .sec-icon-v582 svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .sec-icon-v582 svg * {
+  color: #FFFFFF !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .fyp-sk-play,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .fyp-sk-act,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .fyp-sk-count,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="discover"] .fyp-sk {
+  color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important;
+  border-color: var(--border) !important;
+}
+body[data-theme="dark"] section[data-view="discover"] .sec-icon-v582 svg,
+body[data-theme="dark"] section[data-view="discover"] .sec-icon-v582 svg * {
+  color: #FFFFFF !important;
 }
 
 /* =============================================================
