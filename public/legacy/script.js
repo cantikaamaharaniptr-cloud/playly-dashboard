@@ -25904,7 +25904,7 @@ const ONBOARDING_STEPS = [
     // Arahkan ke nav Upload yg pasti ada & benar2 buat upload.
     target: '.nav-item[data-view="upload"]',
     title: '📹 Upload Video Pertamamu',
-    body: 'Lewat menu Upload ini kamu unggah video. Format MP4/MOV/MKV, kuota 1 GB gratis per bulan. Premium dapat AI subtitle + auto-tag.',
+    body: 'Lewat menu Upload ini kamu unggah video. Format MP4/MOV/MKV, kuota gratis 10 GB + 30 video per bulan. Premium dapat AI subtitle + auto-tag.',
     position: 'right'
   },
   {
@@ -25933,7 +25933,7 @@ const ONBOARDING_STEPS = [
   },
   {
     target: '.nav-item[data-view="people"]',
-    title: '🔎 Pencarian Kreator',
+    title: '👥 Pencarian Kreator',
     body: 'Cari kreator lain, follow akun yang menarik, atau temukan teman lewat username/nama. Build network kamu di sini.',
     position: 'right'
   },
