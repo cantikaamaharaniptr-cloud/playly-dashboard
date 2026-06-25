@@ -83,23 +83,25 @@ body[data-theme="light"] {
      light mode standar/profesional. Wine text & accents tetap = brand identity.
      2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
      nested chip slightly grey (#F5F5F5). */
-  --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
-  --bg-elev: #FFFFFF;     /* Card surface — pure white */
-  --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
-  --text: #6D2932;        /* Deep wine — main text */
-  --text-2: #5F564E;      /* Wine — secondary text */
-  --muted: #7A716A;       /* Light wine — muted/meta */
-  --primary: #842A3B;     /* Wine — primary actions */
-  --primary-hover: #6D2932; /* Deep wine — hover */
-  --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
-  --primary-soft: rgba(132, 42, 59, 0.10);
-  --accent: #842A3B;      /* Light wine — accents */
-  --accent-soft: rgba(132, 42, 59, 0.14);
+  /* 2026-06-25 (req user): light mode = PUTIH NETRAL bersih (konsisten Beranda/Jelajahi) —
+     BUKAN cream/taupe (hangat) & BUKAN slate (dingin). Surface putih, garis abu NETRAL, aksen wine. */
+  --bg: #FAFAFA;
+  --bg-elev: #FFFFFF;
+  --bg-elev-2: #FFFFFF;
+  --surface: rgba(0, 0, 0, 0.03);
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --text: #6D2932;
+  --text-2: #4B4B4B;
+  --muted: #6E6E6E;
+  --primary: #6D2932;
+  --primary-hover: #561C24;
+  --primary-deep: #561C24;
+  --primary-soft: rgba(109, 41, 50, 0.10);
+  --accent: #6D2932;
+  --accent-soft: rgba(109, 41, 50, 0.14);
   --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
   --shadow-sm: 0 1px 2px rgba(17,24,39,.06), 0 2px 6px rgba(17,24,39,.05);
   --shadow-md: 0 4px 12px rgba(17,24,39,.08), 0 12px 32px rgba(17,24,39,.07);
@@ -107,7 +109,7 @@ body[data-theme="light"] {
   --grad-soft:  linear-gradient(135deg, rgba(17,24,39,0.04), rgba(17,24,39,0.01));
   --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #FFFFFF 100%);
   --grad-card:  linear-gradient(140deg, #FFFFFF 0%, rgba(17,24,39,.02) 100%);
-  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%);
+  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
   --glow-soft:        none;
   --glow-soft-hover:  none;
   --glow-soft-cream:  none;
@@ -2940,7 +2942,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border: 2px solid var(--bg);
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
-#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: var(--primary); border: 2.5px solid var(--bg); /* 2026-06-25: pink #d6485f -> wine tema (no-pink) */ }
 
 .mobile-only { display: none; }
 
@@ -3232,11 +3234,11 @@ body[data-theme="dark"] .theme-switch button.active {
 }
 body[data-theme="light"] .theme-switch { background: rgba(102, 34, 34, .06); }
 body[data-theme="light"] .theme-switch button { color: rgba(109, 41, 50, .5); }
-body[data-theme="light"] .theme-switch button:hover { color: #842A3B; }
+body[data-theme="light"] .theme-switch button:hover { color: #6D2932; }
 body[data-theme="light"] .theme-switch button.active {
   background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(132, 42, 59, .3);
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .3);
 }
 
 .user-chip {
@@ -45051,6 +45053,112 @@ html body[data-theme="light"]:not([data-role="admin"]) .upload-actions-btns #sta
 }
 html body[data-theme="light"]:not([data-role="admin"]) .upload-actions-btns #startUpload:hover {
   background: #6D2932 !important;
+}
+
+/* ============================================================
+   2026-06-26 — UNGGAH: samakan warna dgn halaman Statistik.
+   Kotak ikon = wine SOLID + glyph PUTIH; kartu putih + border netral;
+   hapus cream/pink (wine-tint .12-.24 terbaca pink di light). Light di
+   blok ini; kotak ikon dark disamakan putih di blok dark setelahnya.
+   ============================================================ */
+/* Header glyph: cream -> putih (kotak sudah wine solid, samakan Statistik). */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .view-header .sec-icon-v582,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .view-header .sec-icon-v582 svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .view-header .sec-icon-v582 svg * {
+  color: #FFFFFF !important;
+}
+/* Kotak ikon (label section, AI, emoji kartu subtitle): wine-tint(pink) -> wine SOLID + glyph putih. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ico,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ai-ico,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-emoji {
+  background: linear-gradient(135deg,#7d3640,#561C24) !important;
+  border-color: transparent !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ico svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ico svg *,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ai-ico svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ai-ico svg *,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-emoji svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-emoji svg * {
+  color: #FFFFFF !important;
+}
+/* Kartu premium (AI assist & subtitle): bg wine-tint(pink) -> putih + border netral. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-ai-assist,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-ai,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-manual {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+/* Segmented/option card: wine-tint .12(pink) -> netral surface. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-seg-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+/* Overlay terkunci (gelap) — konten cream -> PUTIH (kontras di atas overlay gelap). */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-badge,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-badge svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-badge svg * {
+  color: #FFFFFF !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-badge {
+  border-color: rgba(255,255,255,.5) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-title {
+  color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-lock-sub {
+  color: rgba(255,255,255,.82) !important; -webkit-text-fill-color: rgba(255,255,255,.82) !important;
+}
+/* Pill PREMIUM (di kartu putih): wine solid + teks PUTIH (bukan cream). */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-premium-pill {
+  background: var(--primary) !important;
+  color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important;
+  border-color: transparent !important;
+}
+/* Tombol sub/CTA (di kartu): cream -> ghost on-theme (surface netral + teks wine + border netral). */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-btn,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-btn span,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-cta {
+  background: var(--surface) !important;
+  color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+/* Override rule cream spesifisitas tinggi (~72670 = (0,6,2) & .btn.primary/.ghost):
+   prefix html body[data-theme=light] menaikkan spesifisitas supaya menang. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 .upf-sub-btn,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-ai .upf-sub-act3 #upSubtitleAutoBtn,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-card-manual .upf-sub-act3 .upf-sub-btn,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-ai .upf-sub-card-cta,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card-manual .upf-sub-card-cta,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .btn.primary.upf-sub-card-cta,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .btn.ghost.upf-sub-card-cta {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 .upf-sub-btn:hover,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-2col .upf-sub-act3 #upSubtitleAutoBtn:hover {
+  background: var(--surface-2) !important;
+  border-color: var(--border-strong) !important;
+}
+
+/* DARK: samakan kotak ikon Unggah dgn Statistik dark — wine SOLID + glyph PUTIH. */
+body[data-theme="dark"] section[data-view="upload"] .view-header .sec-icon-v582 svg,
+body[data-theme="dark"] section[data-view="upload"] .view-header .sec-icon-v582 svg *,
+body[data-theme="dark"] section[data-view="upload"] .upf-ico svg,
+body[data-theme="dark"] section[data-view="upload"] .upf-ico svg *,
+body[data-theme="dark"] section[data-view="upload"] .upf-ai-ico svg,
+body[data-theme="dark"] section[data-view="upload"] .upf-ai-ico svg *,
+body[data-theme="dark"] section[data-view="upload"] .upf-sub-card-emoji svg,
+body[data-theme="dark"] section[data-view="upload"] .upf-sub-card-emoji svg * {
+  color: #FFFFFF !important;
+}
+body[data-theme="dark"] section[data-view="upload"] .upf-ico,
+body[data-theme="dark"] section[data-view="upload"] .upf-ai-ico,
+body[data-theme="dark"] section[data-view="upload"] .upf-sub-card-emoji {
+  background: linear-gradient(135deg,#7d3640,#561C24) !important;
+  border-color: transparent !important;
 }
 
 /* === SIGNUP STEPPER (Profil/Username/Akun/Selesai) — light user ===
