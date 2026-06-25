@@ -29283,6 +29283,34 @@ section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
   background: rgba(232, 216, 196, .17) !important;
   border-color: rgba(232, 216, 196, .45) !important;
 }
+/* LIGHT mode fix (req user 2026-06-24): desain di atas dibuat utk DARK (pill cream
+   + teks cream var(--cream) di latar gelap). Di LIGHT, var(--cream)=#FFF -> teks
+   PUTIH di atas pill cream tipis = nyaris tak terbaca (pudar). Di light: teks jadi
+   WINE (var --text), pill cream dibuat jelas, border cream lebih tegas. Tetap
+   "kedua tombol pill cream konsisten, primary sedikit lebih terisi". */
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn {
+  color: var(--text) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
+  background: rgba(232, 216, 196, .55) !important;
+  border-color: rgba(232, 216, 196, .95) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost {
+  background: rgba(232, 216, 196, .28) !important;
+  border-color: rgba(232, 216, 196, .7) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
+  background: rgba(232, 216, 196, .7) !important;
+  border-color: rgba(232, 216, 196, 1) !important;
+}
+/* LIGHT mode: tombol play di kartu PREVIEW feed pakai scrim GELAP charcoal
+   rgba(26,12,16,.45) (warna dark theme #1A0C10) -> di latar terang jadi lingkaran
+   ABU/gelap yang tidak menyatu tema. Di light: jadi lingkaran WINE solid (tak
+   mungkin terbaca pink) + ikon cream. Dark mode tetap scrim gelap. */
+body[data-theme="light"] section.view[data-view="discover"] .fyp-sk-play {
+  background: var(--primary) !important;
+  border-color: rgba(232, 216, 196, .45) !important;
+}
 /* Kartu PREVIEW feed Jelajahi saat kosong (req user 2026-06-16): kartu jelas
    (header + area video ber-ikon play + baris aksi asli muted) supaya layout &
    fitur feed bisa di-review. Bukan konten dummy — area video kosong ber-ikon. */
