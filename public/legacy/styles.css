@@ -148,12 +148,16 @@ body[data-theme="light"] {
   --text: #6D2932;        /* Deep wine — main text */
   --text-2: #5F564E;      /* Wine — secondary text */
   --muted: #7A716A;       /* Light wine — muted/meta */
-  --primary: #842A3B;     /* Wine — primary actions */
-  --primary-hover: #6D2932; /* Deep wine — hover */
+  /* 2026-06-24 (req user: "jangan ada warna pink"): wine ROSIER #842A3B di light
+     mode terbaca PINK di atas cream terang (toggle tema, aksen, badge). Diturunkan
+     ke wine DALAM #6D2932 (sama dgn --text & nav aktif yg sudah disetujui). Soft-tint
+     ikut pakai rgb wine dalam (109,41,50), bukan 132,42,59. */
+  --primary: #6D2932;     /* Deep wine — primary actions (was #842A3B, terbaca pink) */
+  --primary-hover: #561C24; /* Darker wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
-  --primary-soft: rgba(132, 42, 59, 0.10);
-  --accent: #842A3B;      /* Light wine — accents */
-  --accent-soft: rgba(132, 42, 59, 0.14);
+  --primary-soft: rgba(109, 41, 50, 0.10);
+  --accent: #6D2932;      /* Deep wine — accents (was #842A3B, terbaca pink) */
+  --accent-soft: rgba(109, 41, 50, 0.14);
   --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
   --shadow-sm: 0 1px 2px rgba(17,24,39,.06), 0 2px 6px rgba(17,24,39,.05);
   --shadow-md: 0 4px 12px rgba(17,24,39,.08), 0 12px 32px rgba(17,24,39,.07);
@@ -3461,7 +3465,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border: 2px solid var(--bg);
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
-#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: var(--primary); border: 2.5px solid var(--bg); /* 2026-06-24: pink #d6485f -> wine tema (var --primary), sesuai komentar "wine palet menyatu tema" + aturan no-pink */ }
 
 /* 2026-06-16 (topbar): ikon pill tarif/pembayaran kini SVG monokrom — beri ukuran
    konsisten dgn ikon topbar lain (lonceng/tema 17px). */
@@ -3469,7 +3473,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
 .dashboard-tier-pill .dtp-icon svg { width: 17px; height: 17px; display: block; }
 /* Titik notifikasi di lonceng: dari merah → wine palet (lebih kalem, menyatu tema).
    Khusus lonceng topbar (id), tidak mengubah .dot-indicator global lain. */
-#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: var(--primary); border: 2.5px solid var(--bg); /* 2026-06-24: pink #d6485f -> wine tema (var --primary), sesuai komentar "wine palet menyatu tema" + aturan no-pink */ }
 /* Titik notif di bell DEFAULT tersembunyi; ditampilkan via JS (renderNotifications)
    HANYA kalau ada notif belum dibaca — cegah titik dummy statis kedip saat load
    (req user 2026-06-13). */
@@ -3768,11 +3772,11 @@ body[data-theme="dark"] .theme-switch button.active {
 }
 body[data-theme="light"] .theme-switch { background: rgba(102, 34, 34, .06); }
 body[data-theme="light"] .theme-switch button { color: rgba(109, 41, 50, .5); }
-body[data-theme="light"] .theme-switch button:hover { color: #842A3B; }
+body[data-theme="light"] .theme-switch button:hover { color: #6D2932; }
 body[data-theme="light"] .theme-switch button.active {
   background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(132, 42, 59, .3);
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .3);
 }
 
 .user-chip {
@@ -47814,11 +47818,10 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
 /* Premium state — gold gradient + glow + animasi shimmer (per user 2026-05-06) */
 /* v795: badge Premium diselaraskan ke tema (cream/wine), bukan emas/kuning. */
 .dashboard-tier-pill[data-tier="premium"] {
-  /* 2026-06-24 (req user): premium = GOLD (sesuai akun premium & lencana Premium).
-     Gradient emas + teks coklat-gelap → kebaca di light & dark, konsisten badge.
-     !important utk kalahkan rule body:not(admin) .dashboard-tier-pill (surface/border). */
-  border-color: rgba(201, 154, 58, .6) !important;
-  background: linear-gradient(135deg, #E8C36B, #C99A3A) !important;
+  /* 2026-06-24 (req user): premium = emas HALUS, SAMA dgn lencana ★ PREMIUM
+     (bukan gradient emas pekat). Emas halus + teks emas #e3b566 → elegan & konsisten. */
+  border-color: rgba(212, 166, 74, .38) !important;
+  background: rgba(212, 166, 74, .13) !important;
   box-shadow: none;
   animation: none;
   position: relative;
@@ -47840,7 +47843,7 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
   pointer-events: none;
 }
 .dashboard-tier-pill[data-tier="premium"] .dtp-icon {
-  color: #3a2606; /* 2026-06-24: coklat gelap di atas gradient emas (premium) */
+  color: #e3b566; /* 2026-06-24: emas (sama dgn teks & lencana ★ PREMIUM) */
   animation: tierPillStar 1.6s ease-in-out infinite;
 }
 /* Bintang pill premium (request user 2026-05-17):
@@ -47900,24 +47903,25 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
 /* Teks pill premium dibuat lebih TERANG (request user 2026-05-17):
    #DCA96D (gold redup) → #F3D9A8 (gold terang), opacity status
    .85 → 1 supaya "AKTIF" tak ikut redup. Ikon bintang tetap. */
-/* Premium = gold (req user 2026-06-24): teks "Premium" & "Aktif" coklat-gelap
-   di atas gradient emas — kebaca, seragam, sesuai warna akun premium. */
-.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #3a2606; }
-.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #3a2606; opacity: 1; }
+/* Premium = emas (req user 2026-06-24): teks "Premium" & "Aktif" EMAS #e3b566,
+   sama dgn lencana ★ PREMIUM (elegan & konsisten, bukan coklat di atas emas pekat). */
+.dashboard-tier-pill[data-tier="premium"] .dtp-label { color: #e3b566; }
+.dashboard-tier-pill[data-tier="premium"] .dtp-status { color: #e3b566; opacity: 1; }
 .dashboard-tier-pill[data-tier="premium"]:hover {
-  background: linear-gradient(135deg, #EFCE7C, #D4A544) !important;   /* hover = emas sedikit lebih terang */
-  box-shadow: 0 4px 14px rgba(201, 154, 58, .35);
+  background: rgba(212, 166, 74, .2) !important;   /* hover = emas halus sedikit lebih kuat */
+  box-shadow: none;
   animation-play-state: paused;
 }
 /* Spesifisitas (0,4,1) utk MENGALAHKAN rule body:not(admin):not(auth-mode)
    .dashboard-tier-pill {bg var(--surface)/border var(--border) !important} (0,3,1)
    yg tadinya menimpa emas → premium TETAP emas. */
 body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill[data-tier="premium"] {
-  background: linear-gradient(135deg, #E8C36B, #C99A3A) !important;
-  border-color: rgba(201, 154, 58, .6) !important;
+  background: rgba(212, 166, 74, .13) !important;   /* SAMA dgn lencana ★ PREMIUM: emas halus */
+  border-color: rgba(212, 166, 74, .38) !important;
 }
 body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill[data-tier="premium"]:hover {
-  background: linear-gradient(135deg, #EFCE7C, #D4A544) !important;
+  background: rgba(212, 166, 74, .2) !important;
+  border-color: rgba(212, 166, 74, .5) !important;
 }
 @keyframes tierPillGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232,216,196,0); }
@@ -57701,10 +57705,36 @@ body:not([data-role="admin"]):not(.auth-mode) .dashboard-tier-pill:not([data-tie
   background: var(--surface-2) !important;
   border-color: var(--border-strong) !important;
 }
-/* Premium pill TETAP radius/height seragam tapi warna emas (border/bg via rule premium). */
+/* Premium pill: emas HALUS via rule ID (spesifisitas tertinggi) supaya menang
+   atas semua override netral/cream. Pakai gradient emas tipis (menang via
+   background-image) + border emas. Warna sama nuansa lencana ★ PREMIUM. */
 body:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] {
   border-radius: 12px !important;
   height: 40px !important;
+  background: linear-gradient(135deg, rgba(212,166,74,.18), rgba(212,166,74,.10)) !important;
+  border: 1px solid rgba(212,166,74,.42) !important;
+}
+body:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"]:hover {
+  background: linear-gradient(135deg, rgba(212,166,74,.26), rgba(212,166,74,.16)) !important;
+  border-color: rgba(212,166,74,.55) !important;
+}
+/* LIGHT MODE premium pill (req user 2026-06-24: "terlalu pudar, kurang enak
+   dibaca"). #e3b566 (emas terang) bagus di DARK tapi pudar di bg terang →
+   di LIGHT: isi emas sedikit lebih pekat + border lebih tegas + teks/ikon
+   EMAS LEBIH GELAP (#9C7016) supaya kontras & terbaca. Tetap nuansa emas tema
+   (bukan coklat, bukan gradient pekat). Dark tetap #e3b566 (sudah terbaca). */
+body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] {
+  background: linear-gradient(135deg, rgba(212,166,74,.24), rgba(212,166,74,.15)) !important;
+  border: 1px solid rgba(212,166,74,.58) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"]:hover {
+  background: linear-gradient(135deg, rgba(212,166,74,.32), rgba(212,166,74,.22)) !important;
+  border-color: rgba(212,166,74,.72) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] .dtp-label,
+body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] .dtp-status,
+body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) #dashboardTierPill[data-tier="premium"] .dtp-icon {
+  color: #9C7016 !important;
 }
 
 /* =========================================================

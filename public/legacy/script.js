@@ -21217,7 +21217,7 @@ function renderDashboardTierPill() {
   pill.dataset.tier = tier;
   if (tier === "premium") {
     pill.innerHTML =
-      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/></svg></span>' +
+      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/></svg></span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">Premium</span>' +
         '<span class="dtp-status">' + (isID ? "Aktif" : "Active") + '</span>' +
