@@ -62752,7 +62752,8 @@ function saveVideoEdit() {
     if (document.body && document.body.dataset.role === "admin") return;
     // Per request user 2026-05-16: krem #E8D8C4 (dulu baca --muted dari :root
     // = #806a5e gelap → angka stat gelap). +heroStatFollowing biar seragam.
-    var col = "#E8D8C4";
+    // 2026-06-26: theme-aware — di LIGHT cream invisible di kartu putih → WINE.
+    var col = (document.body && document.body.getAttribute("data-theme") === "light") ? "#6D2932" : "#E8D8C4";
     ["heroStatVideos", "heroStatViews", "heroStatFollowers", "heroStatFollowing"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.style.setProperty("color", col, "important");
@@ -62762,7 +62763,7 @@ function saveVideoEdit() {
   setTimeout(applyColor, 500);
   setTimeout(applyColor, 1500);
   var mo = new MutationObserver(applyColor);
-  if (document.body) mo.observe(document.body, { childList: true, subtree: true });
+  if (document.body) mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-theme"] });
 })();
 
 /* =========================================================
