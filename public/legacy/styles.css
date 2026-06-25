@@ -83,23 +83,23 @@ body[data-theme="light"] {
      light mode standar/profesional. Wine text & accents tetap = brand identity.
      2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
      nested chip slightly grey (#F5F5F5). */
-  --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
+  --bg: #FAFAFA;          /* Page bg — putih netral bersih (no warm/cool tint) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
+  --surface: rgba(0, 0, 0, 0.03);
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.18);       /* dinaikkan dari .10 — biar batas field/kartu jelas di light (field putih-di-putih tadinya tak terlihat) */
+  --border-strong: rgba(0, 0, 0, 0.28);
   --text: #6D2932;        /* Deep wine — main text */
-  --text-2: #5F564E;      /* Wine — secondary text */
-  --muted: #7A716A;       /* Light wine — muted/meta */
-  --primary: #842A3B;     /* Wine — primary actions */
-  --primary-hover: #6D2932; /* Deep wine — hover */
+  --text-2: #4B4B4B;      /* Neutral dark grey — secondary text */
+  --muted: #6E6E6E;       /* Neutral grey — muted/meta */
+  --primary: #6D2932;     /* Wine — primary actions */
+  --primary-hover: #561C24; /* Deep wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
-  --primary-soft: rgba(132, 42, 59, 0.10);
-  --accent: #842A3B;      /* Light wine — accents */
-  --accent-soft: rgba(132, 42, 59, 0.14);
+  --primary-soft: rgba(109, 41, 50, 0.10);
+  --accent: #6D2932;      /* Wine — accents */
+  --accent-soft: rgba(109, 41, 50, 0.14);
   --cream: #FFFFFF;       /* White — text on wine buttons (was warm cream) */
   --shadow-sm: 0 1px 2px rgba(17,24,39,.06), 0 2px 6px rgba(17,24,39,.05);
   --shadow-md: 0 4px 12px rgba(17,24,39,.08), 0 12px 32px rgba(17,24,39,.07);
@@ -107,7 +107,7 @@ body[data-theme="light"] {
   --grad-soft:  linear-gradient(135deg, rgba(17,24,39,0.04), rgba(17,24,39,0.01));
   --grad-hero:  linear-gradient(135deg, #4A1818 0%, #662222 30%, #842A3B 55%, #A3485A 78%, #FFFFFF 100%);
   --grad-card:  linear-gradient(140deg, #FFFFFF 0%, rgba(17,24,39,.02) 100%);
-  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%);
+  --grad-cream: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
   --glow-soft:        none;
   --glow-soft-hover:  none;
   --glow-soft-cream:  none;
@@ -2940,7 +2940,7 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border: 2px solid var(--bg);
 }
 .dot-indicator.pulse { animation: pulse 2s infinite; }
-#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: #d6485f; border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
+#openNotif .dot-indicator { width: 10px; height: 10px; top: 7px; right: 7px; background: var(--primary); border: 2.5px solid var(--bg); /* 2026-06-17: lebih besar + terang biar tampak */ }
 
 .mobile-only { display: none; }
 
@@ -2961,6 +2961,15 @@ body:not([data-role="admin"]) .topbar > .topbar-actions {
   border-color: var(--primary);
   background: var(--bg-elev);
   box-shadow: 0 0 0 3px var(--primary-soft);
+}
+/* 2026-06-25: LIGHT — bar pencarian (kolom Cari) jangan samar (putih + border tipis di
+   topbar near-putih). Bg abu jelas + border kuat + ikon kaca pembesar wine = mudah ditemukan. */
+body[data-theme="light"]:not([data-role="admin"]) .topbar-search {
+  background: var(--surface-2) !important;
+  border-color: var(--border-strong) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .topbar-search svg {
+  color: var(--primary) !important;
 }
 .topbar-search svg { width: 16px; height: 16px; color: var(--muted); }
 .topbar-search input {
@@ -3232,11 +3241,11 @@ body[data-theme="dark"] .theme-switch button.active {
 }
 body[data-theme="light"] .theme-switch { background: rgba(102, 34, 34, .06); }
 body[data-theme="light"] .theme-switch button { color: rgba(109, 41, 50, .5); }
-body[data-theme="light"] .theme-switch button:hover { color: #842A3B; }
+body[data-theme="light"] .theme-switch button:hover { color: #6D2932; }
 body[data-theme="light"] .theme-switch button.active {
   background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(132, 42, 59, .3);
+  box-shadow: 0 2px 6px rgba(109, 41, 50, .3);
 }
 
 .user-chip {
@@ -41658,6 +41667,11 @@ section[data-view="stats"] .mini-chart-card .mini-chart-total {
   color: var(--muted);
   background: rgba(140,150,180,.1);
 }
+/* 2026-06-25: LIGHT mode — delta NAIK jangan hijau (off-theme); pakai wine + chip abu netral.
+   Turun tetap merah (warning, diizinkan). Flat netralkan rona biru-abu. */
+body[data-theme="light"] .mini-chart-card .mc-delta-up { color: var(--primary); background: var(--surface-2); }
+body[data-theme="light"] .mini-chart-card .mc-delta-down { background: var(--surface-2); }
+body[data-theme="light"] .mini-chart-card .mc-delta-flat { background: var(--surface-2); }
 section[data-view="stats"] .mini-chart-card .chart-wrap {
   padding: 0 !important;
   margin-top: auto;
@@ -50474,6 +50488,36 @@ body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .achiev
   transform: none !important;
   box-shadow: none !important;
 }
+/* 2026-06-25: LIGHT — user mau kartu Statistik PUNYA BATAS (jangan "bare"/menyatu dgn bg).
+   Override gaya bare (transparent/no-border) -> kartu PUTIH + border netral + shadow halus.
+   Spesifisitas tinggi (html + [data-theme] ganda) supaya menang atas rule .chart-card-bare di atas.
+   Hanya kartu SECTION luar + KPI; mini-chart-card (dalam) & ringkasan-block (wrapper) dibiarkan
+   transparan supaya tak ada kotak ganda/bersarang. */
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-card.chart-card-bare,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .chart-card-bare,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .top-perf-card-bare,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #topPerfCard,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .stats-extra-section {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(0,0,0,0.04) !important;
+  padding: 18px 20px !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] #statsRow .stat-card,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .stat-card {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+/* Kartu "Grafik Tontonan" (mini-chart-card) DI DALAM kartu Grafik — di dark dia kotak sendiri
+   (nested, bg lebih terang). Light: samakan -> kotak nested = bg abu recessed + border netral. */
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .mini-chart-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
 
 /* Stats section head — also no card chrome */
 body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .stats-section-head {
@@ -56168,6 +56212,32 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card input[type="passwor
   border: 1px solid rgba(102, 34, 34, 0.20) !important;
   color: #662222 !important;
   -webkit-text-fill-color: #662222 !important;
+}
+/* 2026-06-25: LIGHT mode — SEMUA field input/textarea/select DASHBOARD (saat login) terlihat
+   jelas. Sebelumnya putih (#FFF) di atas halaman near-putih + border super tipis (var--border .1)
+   = tak terlihat. Fix: bg abu muda + border netral jelas. Spesifisitas tinggi (atribut digandakan)
+   supaya MENANG atas rule field per-komponen yg pakai !important (mis. .upf-field, dll).
+   Kecualikan input gabungan borderless (search/tags). */
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="text"]:not(.sr-query-input):not(.upf-tags-input),
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="email"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="password"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="number"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="search"]:not(.sr-query-input),
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="tel"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="url"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="date"],
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) textarea:not(.sr-query-input),
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) select {
+  background-color: #F4F4F5 !important;
+  border: 1px solid rgba(0, 0, 0, 0.22) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="text"]:focus:not(.sr-query-input),
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="email"]:focus,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) input[type="password"]:focus,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) textarea:focus,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not([data-role="admin"]):not(.auth-mode) select:focus {
+  border-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: #FFFFFF !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) .auth-form input::placeholder,
 body[data-theme="light"]:not([data-role="admin"]) .auth-form textarea::placeholder,
@@ -70869,6 +70939,36 @@ body[data-theme="light"]:not([data-role="admin"]) .stat-icon {
 body[data-theme="light"]:not([data-role="admin"]) .stat-icon svg {
   color: #FFF1D2;
 }
+/* 2026-06-25: LIGHT mode — hilangkan rona PINK di Statistik. Wine-tint alpha-rendah di
+   atas putih terbaca pink (header card --primary 15%, kartu rgba wine .04 + border wine,
+   chip ikon --primary 34%). Netralkan: header/kartu jadi putih+abu netral; chip ikon jadi
+   kotak WINE SOLID (bukan wine transparan) supaya tegas & tak pink. Ikon chip tetap cream. */
+body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] .view-header {
+  background: var(--bg-elev) !important;        /* putih, bukan gradient abu */
+  border-color: var(--primary) !important;      /* per user: jangan abu -> border WINE */
+}
+body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] .stat-card {
+  background: var(--bg-elev) !important;
+  border-color: var(--border) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] #statsRow .stat-icon {
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+}
+/* Strip atas kartu KPI: emas (rgba 190,151,82) -> WINE konsisten di light (solid, bukan
+   wine transparan biar tak terbaca pink). Hover border emas -> netral juga. */
+body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-card::before {
+  background: linear-gradient(90deg, transparent 0%, var(--primary) 30%, var(--primary) 70%, transparent 100%) !important;
+  opacity: 0.85 !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) [data-view="stats"] .stat-card:hover {
+  border-color: var(--border-strong) !important;
+}
+/* Ikon SECTION kecil (Ringkasan Performa / Grafik Statistik / Grafik Tontonan) tadinya
+   wine @32% = PUCAT/buram di light. Buat WINE SOLID spt ikon besar & chip KPI → konsisten,
+   ikon putih jadi tegas (tidak buram). */
+body[data-theme="light"]:not([data-role="admin"]) section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+}
 
 @media (prefers-reduced-motion: reduce) {
   body:not([data-role="admin"]) [data-view="stats"] .stat-card:hover { transform: none; }
@@ -72270,8 +72370,8 @@ section[data-view="stats"] .riwayat-tab svg { width: 14px !important; height: 14
 /* Header halaman (sec-icon-lg, kotak wine) tetap menonjol; ikon judul SECTION
    dibuat flat & netral supaya jelas level-nya di bawah judul halaman. */
 section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
-  background: var(--surface-2) !important;
-  color: var(--text-2, var(--muted)) !important;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+  color: #FFFFFF !important;
   box-shadow: none !important;
 }
 /* Judul halaman sedikit lebih besar; judul section lebih kecil & subtitle muted */
@@ -72325,8 +72425,8 @@ section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) {
   display: inline-flex !important; align-items: center; justify-content: center;
   width: 30px !important; height: 30px !important; flex: 0 0 auto;
   border-radius: 50% !important;
-  background: color-mix(in srgb, var(--primary) 32%, transparent) !important;
-  color: var(--cream, #E8D8C4) !important;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+  color: #FFFFFF !important;
   box-shadow: none !important;
 }
 section[data-view="stats"] .sec-icon-v582:not(.sec-icon-lg) svg { width: 15px !important; height: 15px !important; }
@@ -72594,11 +72694,93 @@ section[data-view="stats"] .src-val b { color: var(--text); font-weight: 800; ma
 }
 
 /* ===== STATISTIK — empty-state jujur + hapus kolom Top Durasi (estimasi) ===== */
-section[data-view="stats"] .src-empty { text-align: center; padding: 22px 14px; }
-section[data-view="stats"] .src-empty-ic { width: 40px; height: 40px; margin: 0 auto 10px; color: var(--primary); opacity: .6; }
-section[data-view="stats"] .src-empty-ic svg { width: 100%; height: 100%; }
-section[data-view="stats"] .src-empty p { font-weight: 700; color: var(--text); margin: 0 0 4px; font-size: 14px; }
-section[data-view="stats"] .src-empty small { color: var(--muted); font-size: 12px; }
+/* v787: empty-state Sumber Trafik/Audiens dirapikan (UI/UX) — placeholder dashed + ikon
+   dalam lingkaran + judul + subjudul, spacing lega (bukan numpuk satu baris). */
+section[data-view="stats"] .src-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 10px;
+  padding: 36px 24px;
+  border: 1.5px dashed var(--border); border-radius: 14px;
+  background: var(--surface);
+}
+section[data-view="stats"] .src-empty-ic {
+  width: 56px; height: 56px; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-2); color: var(--primary); opacity: 1;
+}
+section[data-view="stats"] .src-empty-ic svg { width: 26px; height: 26px; }
+section[data-view="stats"] .src-empty-title { font-weight: 800; color: var(--text); margin: 2px 0 0; font-size: 15px; }
+section[data-view="stats"] .src-empty-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; max-width: 320px; margin: 0 auto; }
+/* fallback kalau JS lama masih pakai <p>/<small> tanpa kelas */
+section[data-view="stats"] .src-empty p { font-weight: 800; color: var(--text); margin: 2px 0 0; font-size: 15px; }
+section[data-view="stats"] .src-empty small { color: var(--muted); font-size: 12.5px; line-height: 1.5; max-width: 320px; }
+/* 2026-06-25: SAMAKAN ketebalan SEMUA ikon Statistik ke ICONSAX (stroke 1.6) — konsisten.
+   (sebelumnya header sec-icon=2.2, KPI stat-icon=1.8, mc-icon=2, picon=2.1). Grafik (chart-wrap)
+   TIDAK termasuk supaya garis grafik tak ikut berubah. */
+section[data-view="stats"] .sec-icon-v582 svg, section[data-view="stats"] .sec-icon-v582 svg *,
+section[data-view="stats"] .st-ico svg, section[data-view="stats"] .st-ico svg *,
+section[data-view="stats"] #statsRow .stat-icon svg, section[data-view="stats"] #statsRow .stat-icon svg *,
+section[data-view="stats"] .stat-icon svg, section[data-view="stats"] .stat-icon svg *,
+section[data-view="stats"] .mc-icon svg, section[data-view="stats"] .mc-icon svg *,
+section[data-view="stats"] .mc-icon .picon, section[data-view="stats"] .mc-icon .picon *,
+section[data-view="stats"] .riwayat-tab-bar .stat-tab svg, section[data-view="stats"] .riwayat-tab-bar .stat-tab svg *,
+section[data-view="stats"] .src-empty-ic svg, section[data-view="stats"] .src-empty-ic svg * {
+  stroke-width: 1.5 !important;
+  vector-effect: non-scaling-stroke !important;  /* garis SAMA TEBAL di semua ukuran ikon (ikon besar tak lagi tebal) */
+}
+/* 2026-06-25: ikon DI KOTAK WINE (header/section/KPI/grafik) jadi PUTIH, bukan cream (#FFF1D2/#F5E3C0).
+   Tab (outline wine) & empty-state (lingkaran, ikon wine) DIKECUALIKAN. */
+body[data-theme="light"] section[data-view="stats"] .sec-icon-v582 svg, body[data-theme="light"] section[data-view="stats"] .sec-icon-v582 svg *,
+body[data-theme="light"] section[data-view="stats"] .st-ico svg, body[data-theme="light"] section[data-view="stats"] .st-ico svg *,
+body[data-theme="light"] section[data-view="stats"] #statsRow .stat-icon svg, body[data-theme="light"] section[data-view="stats"] #statsRow .stat-icon svg *,
+body[data-theme="light"] section[data-view="stats"] .stat-icon svg, body[data-theme="light"] section[data-view="stats"] .stat-icon svg *,
+body[data-theme="light"] section[data-view="stats"] .mc-icon svg, body[data-theme="light"] section[data-view="stats"] .mc-icon svg *,
+body[data-theme="light"] section[data-view="stats"] .mc-icon .picon, body[data-theme="light"] section[data-view="stats"] .mc-icon .picon * {
+  color: #FFFFFF !important;
+}
+/* 2026-06-25: tombol CTA empty-state Performa Video teksnya cream (#E8D8C4) -> putih (tombol wine). */
+body[data-theme="light"] section[data-view="stats"] .tpe-cta,
+body[data-theme="light"] section[data-view="stats"] .tpe-cta * { color: #FFFFFF !important; }
+
+/* ============================================================
+   2026-06-25 — DARK: selaraskan Statistik dgn light (light sudah benar).
+   Semua kotak ikon = wine SOLID + glyph PUTIH; strip kartu wine (bukan
+   emas); ikon empty-state cream (tak buram); delta on-theme (bukan hijau).
+   ============================================================ */
+/* 1. Kotak ikon KPI: wine pudar .34 -> wine SOLID (samakan dgn .st-ico section). */
+body[data-theme="dark"] section[data-view="stats"] #statsRow .stat-icon,
+body[data-theme="dark"] section[data-view="stats"] .stat-icon {
+  background: linear-gradient(135deg,#7d3640,#561C24) !important;
+}
+/* 2. Glyph ikon KPI: cream -> PUTIH (samakan dgn header/section/grafik yg sudah putih). */
+body[data-theme="dark"] section[data-view="stats"] #statsRow .stat-icon svg,
+body[data-theme="dark"] section[data-view="stats"] #statsRow .stat-icon svg *,
+body[data-theme="dark"] section[data-view="stats"] .stat-icon svg,
+body[data-theme="dark"] section[data-view="stats"] .stat-icon svg *,
+body[data-theme="dark"] section[data-view="stats"] .stat-icon .picon,
+body[data-theme="dark"] section[data-view="stats"] .stat-icon .picon * {
+  color: #FFFFFF !important;
+}
+/* 3. Strip atas kartu KPI: emas (190,151,82) -> wine (samakan dgn light). */
+body[data-theme="dark"] section[data-view="stats"] #statsRow .stat-card::before {
+  background: linear-gradient(90deg, transparent 0%, #842A3B 30%, #842A3B 70%, transparent 100%) !important;
+}
+/* 4. Ikon empty-state (Sumber Trafik/Audiens): wine gelap (buram di dark) -> cream. */
+body[data-theme="dark"] section[data-view="stats"] .src-empty-ic svg,
+body[data-theme="dark"] section[data-view="stats"] .src-empty-ic svg *,
+body[data-theme="dark"] section[data-view="stats"] .src-empty-ic .picon,
+body[data-theme="dark"] section[data-view="stats"] .src-empty-ic .picon * {
+  color: #E8D8C4 !important; stroke: #E8D8C4 !important;
+}
+/* 5. Delta perubahan grafik: hijau (#10b981) -> netral cream (konsep sama dgn light = aksen on neutral). */
+body[data-theme="dark"] section[data-view="stats"] .mc-delta,
+body[data-theme="dark"] section[data-view="stats"] .mc-delta-up,
+body[data-theme="dark"] section[data-view="stats"] .mc-delta-down {
+  color: #E8D8C4 !important;
+  background: rgba(232,216,196,0.10) !important;
+  border-color: rgba(232,216,196,0.22) !important;
+}
 /* Top Durasi (watch time) = estimasi, bukan data nyata → sembunyikan; sisakan 3 kolom */
 section[data-view="stats"] .top-perf-col:has(#topPerformWatch) { display: none !important; }
 section[data-view="stats"] .top-perf-4col { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
@@ -72946,6 +73128,13 @@ section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg {
   width: 54px !important; height: 54px !important; border-radius: 15px !important;
 }
 section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 27px !important; height: 27px !important; }
+/* 2026-06-25: per user — ikon judul "Statistik" jangan cream, jadikan PUTIH (di atas kotak wine). */
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg,
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg .picon,
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg { color: #FFFFFF !important; }
+/* 2026-06-25: per user — hapus (sembunyikan) badge LIVE di header Statistik. */
+section[data-view="stats"] #statsLiveBadge,
+section[data-view="stats"] .view-header .hqs-live-badge { display: none !important; }
 /* 2) Ikon judul section — sedang (sebelumnya 30px, terlalu kecil) */
 section[data-view="stats"] .st-ico {
   width: 40px !important; height: 40px !important; border-radius: 11px !important;
@@ -72960,13 +73149,16 @@ section[data-view="stats"] #statsRow .stat-icon svg { width: 19px !important; he
    Judul = solid pekat (tetap) > Section = wine sedang > KPI = wine lembut.
    =================================================================== */
 /* Judul halaman: tetap gradient wine solid (paling menonjol) — tak diubah. */
-/* Section: wine sedang (sebelumnya ~26%) */
+/* 2026-06-25: user mau SEMUA kotak ikon KONSISTEN wine SOLID (bukan 3 tingkat pucat).
+   Section .st-ico (tadinya wine 46% = pucat/buram) -> wine SOLID, ikon putih. */
 section[data-view="stats"] .st-ico {
-  background: color-mix(in srgb, var(--primary) 46%, transparent) !important;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+  color: #FFFFFF !important;
 }
-/* KPI: wine paling lembut (sebelumnya ~24%) */
+section[data-view="stats"] .st-ico svg { color: #FFFFFF !important; }
+/* KPI: ikut SOLID juga (tadinya wine 18% lembut) supaya seragam dgn section & judul. */
 section[data-view="stats"] #statsRow .stat-icon {
-  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
 }
 
 /* ===================================================================
@@ -73123,7 +73315,8 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon {
   width: 38px !important; height: 38px !important; border-radius: 11px !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  background: linear-gradient(135deg, #7d3640 0%, #561C24 100%) !important;
+  color: #FFFFFF !important;
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon .picon,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .mc-icon svg {
@@ -73246,6 +73439,31 @@ body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
   animation: none !important;
 }
+/* 2026-06-25: LIGHT mode — badge LIVE jangan hijau (off-theme); pakai WINE on-theme.
+   Sediakan keyframes wine khusus light supaya denyut/ring ikut wine (keyframes asli hardcode hijau). */
+body[data-theme="light"] section[data-view="stats"] #statsLiveBadge .hqs-live-dot {
+  background: #6D2932 !important;
+  box-shadow: 0 0 6px rgba(109,41,50,.85) !important;
+  animation: statsLiveCoreLight 1.4s ease-in-out infinite !important;
+}
+body[data-theme="light"] section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  border-color: rgba(109,41,50,.75) !important;
+  animation: statsLiveRingLight 1.4s ease-out infinite !important;
+}
+@keyframes statsLiveCoreLight {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 5px rgba(109,41,50,.6); }
+  50%      { transform: scale(1.28); box-shadow: 0 0 10px rgba(109,41,50,.95); }
+}
+@keyframes statsLiveRingLight {
+  0%   { transform: scale(.5); opacity: .9; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+body[data-theme="light"] #statsLiveBadge.hqs-live-badge,
+body[data-theme="light"] section[data-view="stats"] .hqs-live-badge {
+  color: var(--primary);
+  background: var(--surface);
+  border-color: var(--border);
+}
 
 /* ===================================================================
    STATISTIK v770 — tab metrik jadi SEGMENTED CONTROL (per user):
@@ -73337,6 +73555,46 @@ section[data-view="stats"] .riwayat-tab-bar .stat-tab.active {
 }
 section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico { display: inline-flex !important; flex: 0 0 auto; }
 section[data-view="stats"] .riwayat-tab-bar .stat-tab-ico svg { width: 15px !important; height: 15px !important; }
+/* 2026-06-25: LIGHT — tab stats non-aktif. Border/bg cream lama jadi tak terlihat di putih
+   (cream=putih di light). Jadikan pill ABU NETRAL terdefinisi + IKON WINE (on-theme, samakan
+   dgn nav sidebar). Teks tetap abu netral. Tab aktif tetap pil wine + ikon/teks putih. */
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active) {
+  background: transparent !important;
+  border-color: var(--primary) !important;   /* per user: jangan abu -> outline WINE */
+  color: var(--text) !important;             /* label WINE (bukan abu) */
+}
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active):hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active):hover .stat-tab-ico,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active):hover .stat-tab-ico svg,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active):hover > svg,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active):hover .picon {
+  color: #fff !important;
+}
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active) .stat-tab-ico,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active) .stat-tab-ico svg,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active) > svg,
+body[data-theme="light"] section[data-view="stats"] .riwayat-tab-bar .stat-tab:not(.active) .picon {
+  color: var(--primary) !important;
+}
+/* 2026-06-25: per user — tab AKTIF dibuat lebih TEGAS (light & dark): pill wine penuh +
+   teks & ikon PUTIH + sedikit lebih tebal + shadow wine halus → jelas mana yg sedang dibuka. */
+html body section[data-view="stats"] .riwayat-tab-bar .stat-tab.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 9px rgba(109, 41, 50, 0.38) !important;
+}
+html body section[data-view="stats"] .riwayat-tab-bar .stat-tab.active .stat-tab-ico,
+html body section[data-view="stats"] .riwayat-tab-bar .stat-tab.active .stat-tab-ico svg,
+html body section[data-view="stats"] .riwayat-tab-bar .stat-tab.active > svg,
+html body section[data-view="stats"] .riwayat-tab-bar .stat-tab.active .picon {
+  color: #fff !important;
+}
 
 /* ===================================================================
    STATISTIK v773 — rapatkan heading "Grafik Stats" -> tab metrik
@@ -73348,6 +73606,24 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 }
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn {
   padding: 5px 4px !important;
+}
+/* 2026-06-25: LIGHT — tab metrik AKTIF (Tontonan dll) tadinya color cream (=putih di light)
+   di atas bg transparan = teks TAK TERLIHAT (cuma underline). Jadikan teks WINE (terbaca,
+   on-theme); underline wine tetap. Dark dibiarkan (cream readable di gelap). */
+html body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chart-metric-tabs .cmt-btn.active {
+  color: var(--primary) !important;
+}
+/* Period toggle (Bulanan/Tahunan): aktif = bg putih + teks cream(=putih) = invisible di light.
+   Teks aktif jadi WINE (terbaca di atas bg putih). */
+html body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs .active,
+html body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [data-stats-section="grafik"] .chip-tabs button.active {
+  color: var(--primary) !important;
+}
+/* Tombol kembali stats: teks/border cream (=putih di light) di atas bg putih = invisible.
+   Light: teks wine + border abu netral. */
+body[data-theme="light"] .stats-back-btn {
+  color: var(--text) !important;
+  border-color: var(--border) !important;
 }
 
 /* ===================================================================
@@ -73495,6 +73771,140 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .t
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
 html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
   text-align: center !important;
+}
+/* 2026-06-25: LIGHT — tabel Performa Video NETRALKAN. Semua bagian tadinya color-mix(var(--text) X%)
+   = wine-tint = PINK di putih (header bg/teks, separator, zebra, hover, kolom). Jadikan abu netral;
+   aksen WINE hanya utk kolom sort AKTIF & hover header. Atribut-ganda biar menang atas v780/v781. */
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th {
+  background: var(--surface) !important;
+  border-bottom: 1.5px solid var(--border-strong) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-th-vid {
+  color: var(--muted) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.active,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table thead th.active,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th:hover:not(.tp-th-vid) {
+  color: var(--primary) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody td {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table th.tp-num-h,
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table td.tp-num {
+  border-left: 1px solid var(--border) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:nth-child(even) td {
+  background: var(--surface) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table tbody tr:hover td {
+  background: var(--surface-2) !important;
+}
+html body[data-theme="light"][data-theme="light"]:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] .tp-table .tp-sub {
+  color: var(--muted) !important;
+}
+/* ===== v786: Performa Video = KARTU GRID (ganti tabel berkolom, per user). Pakai var tema
+   (otomatis benar di light + dark). ===== */
+section[data-view="stats"] #topPerformList .tp-sort-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 16px;
+}
+section[data-view="stats"] #topPerformList .tp-sort-label {
+  font-size: 12px; font-weight: 600; color: var(--muted); margin-right: 2px;
+}
+section[data-view="stats"] #topPerformList .tp-sort-btn {
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  transition: background .12s, border-color .12s, color .12s;
+}
+section[data-view="stats"] #topPerformList .tp-sort-btn:hover { color: var(--text); border-color: var(--border-strong); }
+section[data-view="stats"] #topPerformList .tp-sort-btn.active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+/* OPSI 3: LIST + chip statistik — baris per video dgn garis pemisah (tanpa kotak per baris),
+   statistik = pill inline "Label Nilai" di kanan. */
+section[data-view="stats"] #topPerformList .tp-grid {
+  display: flex; flex-direction: column; gap: 0;
+}
+section[data-view="stats"] #topPerformList .tp-card {
+  display: flex; flex-direction: row; align-items: center; gap: 14px; cursor: pointer;
+  padding: 12px 6px; border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+section[data-view="stats"] #topPerformList .tp-card:last-child { border-bottom: 0; }
+section[data-view="stats"] #topPerformList .tp-card:hover { background: var(--surface); }
+section[data-view="stats"] #topPerformList .tp-card-thumb {
+  flex: 0 0 auto; width: 96px; height: 54px; border-radius: 8px;
+  background: var(--surface-2) center / cover no-repeat;
+  background-image: linear-gradient(135deg, var(--primary-deep, #561C24), var(--primary, #6D2932));
+}
+section[data-view="stats"] #topPerformList .tp-card-info {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px;
+}
+section[data-view="stats"] #topPerformList .tp-card-title {
+  font-weight: 700; font-size: 14px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+section[data-view="stats"] #topPerformList .tp-card-sub { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+section[data-view="stats"] #topPerformList .tp-card-stats {
+  flex: 0 0 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px;
+}
+section[data-view="stats"] #topPerformList .tp-stat {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+section[data-view="stats"] #topPerformList .tp-stat i {
+  font-style: normal; font-size: 11px; font-weight: 600; color: var(--muted);
+}
+section[data-view="stats"] #topPerformList .tp-stat b {
+  font-size: 13px; font-weight: 800; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+/* Pil metrik AKTIF = wine SOLID + teks putih (jelas terbaca di light & dark; di dark
+   var(--primary) sbg teks tadinya wine-gelap-di-gelap = tak terbaca). */
+section[data-view="stats"] #topPerformList .tp-stat.is-sort { background: var(--primary); border-color: var(--primary); }
+section[data-view="stats"] #topPerformList .tp-stat.is-sort i { color: rgba(255, 255, 255, 0.85); }
+section[data-view="stats"] #topPerformList .tp-stat.is-sort b { color: #fff; }
+/* DARK: --muted = #E8D8C4 (sama dgn --text) → label/sub/sort tak ter-dim. Redupkan utk hierarki. */
+body[data-theme="dark"] section[data-view="stats"] #topPerformList .tp-stat:not(.is-sort) i,
+body[data-theme="dark"] section[data-view="stats"] #topPerformList .tp-card-sub,
+body[data-theme="dark"] section[data-view="stats"] #topPerformList .tp-sort-label,
+body[data-theme="dark"] section[data-view="stats"] #topPerformList .tp-sort-btn:not(.active) {
+  color: rgba(232, 216, 196, 0.5) !important;
+}
+/* Tooltip penjelasan TERSTRUKTUR (mis. metrik "Interaksi") — judul + rumus (kotak sorot) +
+   penjelasan + catatan, biar mudah dibaca. Muncul saat hover/fokus. */
+section[data-view="stats"] #topPerformList .has-tip { position: relative; }
+section[data-view="stats"] #topPerformList .tp-tip {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 60;
+  width: max-content; max-width: 280px;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px; border-radius: 10px;
+  background: var(--text); color: var(--bg-elev);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+  text-align: left; white-space: normal;
+  font-size: 11.5px; font-weight: 500; line-height: 1.45; letter-spacing: 0; text-transform: none;
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease, visibility .14s;
+  pointer-events: none;
+}
+section[data-view="stats"] #topPerformList .has-tip:hover .tp-tip,
+section[data-view="stats"] #topPerformList .has-tip:focus-visible .tp-tip {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+section[data-view="stats"] #topPerformList .tp-tip .tp-tip-h { font-size: 12.5px; font-weight: 800; }
+section[data-view="stats"] #topPerformList .tp-tip .tp-tip-f {
+  font-weight: 700; font-variant-numeric: tabular-nums; align-self: flex-start;
+  padding: 5px 9px; border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-elev) 20%, transparent);
+}
+section[data-view="stats"] #topPerformList .tp-tip .tp-tip-d { opacity: .92; }
+section[data-view="stats"] #topPerformList .tp-tip .tp-tip-n { opacity: .68; font-size: 10.5px; }
+section[data-view="stats"] #topPerformList .tp-tip::before {
+  content: ""; position: absolute; bottom: 100%; right: 14px;
+  border: 6px solid transparent; border-bottom-color: var(--text);
 }
 /* (opsi 2) baris bisa diklik */
 section[data-view="stats"] .tp-table tbody tr { cursor: pointer !important; }

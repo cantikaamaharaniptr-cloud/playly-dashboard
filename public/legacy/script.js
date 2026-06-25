@@ -37460,7 +37460,12 @@ function drawMiniChart(metric) {
     followers: "#C9926A", // Pengikut — warm sand
     comments:  "#B06A86", // Komentar — rose
   };
-  const c = colors[metric] || colors.views;
+  // 2026-06-25: palet hangat per-metrik (rose/terracotta/sand) terbaca PINK/off-theme →
+  // pakai WINE konsisten di KEDUA mode: light #6D2932 (di atas putih), dark #842A3B (wine
+  // lebih terang biar jelas di atas gelap). 'colors' lama disimpan sbg catatan saja.
+  const _isLightChart = document.body.getAttribute("data-theme") === "light";
+  const c = _isLightChart ? "#6D2932" : "#842A3B";
+  const _fillTop = _isLightChart ? ".12" : ".18"; // fill area tipis di kedua mode biar tak pekat
   const fillId = `chartFill-${metric}`;
 
   // v762: garis HALUS (smooth) — bukan lagi tangga (step). Catmull-Rom→bezier.
@@ -37508,7 +37513,7 @@ function drawMiniChart(metric) {
   svg.innerHTML = `
     <defs>
       <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${c}" stop-opacity=".2"/>
+        <stop offset="0%" stop-color="${c}" stop-opacity="${_fillTop}"/>
         <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
       </linearGradient>
     </defs>
@@ -37518,9 +37523,12 @@ function drawMiniChart(metric) {
   `;
 
   // Label periode (sumbu-X) di bawah grafik — biar jelas tiap titik mewakili apa.
+  // 2026-06-25: label hari/minggu/bulan = DATA → translate="no" supaya i18n tak merusak
+  // (mis. "Min" jadi "mnt", "Mei"/"Agu" dst). Lihat [[i18n-deeptranslate-corrupts-data]].
   let axis = wrap.querySelector(".mc-axis");
   if (!axis) { axis = document.createElement("div"); axis.className = "mc-axis"; }
-  axis.innerHTML = (data.labels || []).map(l => `<span>${escapeHtml(String(l))}</span>`).join("");
+  axis.setAttribute("translate", "no");
+  axis.innerHTML = (data.labels || []).map(l => `<span translate="no">${escapeHtml(String(l))}</span>`).join("");
   wrap.appendChild(axis);
 
   const tip = $("#chartTip");
@@ -37536,7 +37544,8 @@ function drawMiniChart(metric) {
       const cx = +d.getAttribute("data-x") * (rect.width / W) + rect.left + window.scrollX;
       const cy = +d.getAttribute("data-y") * (rect.height / H) + rect.top + window.scrollY;
       if (tip) {
-        tip.innerHTML = `<small>${data.labels[i] || ""}</small><b>${(+d.getAttribute("data-val")).toLocaleString("id-ID")} ${unitLabel}</b>`;
+        tip.setAttribute("translate", "no"); // label periode + angka = data, jangan di-i18n
+        tip.innerHTML = `<small translate="no">${data.labels[i] || ""}</small><b>${(+d.getAttribute("data-val")).toLocaleString("id-ID")} ${unitLabel}</b>`;
         tip.style.position = "fixed";
         tip.style.left = `${cx - tip.offsetWidth / 2 - window.scrollX}px`;
         tip.style.top = `${cy - tip.offsetHeight - 10 - window.scrollY}px`;
@@ -37624,11 +37633,14 @@ function renderStatsExtras() {
   if (!grafik || !grafik.parentElement) return;
   // JUJUR: app belum melacak sumber trafik & lokasi penonton → tampilkan
   // empty-state "Belum ada data" (bukan angka karangan).
-  const emptyHtml = (msg, hint) => `
+  // v787: empty-state dirapikan (UI/UX) — ikon relevan per kartu dalam lingkaran + judul + subjudul.
+  const IC_TRAFFIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>`;
+  const IC_GEO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg>`;
+  const emptyHtml = (icon, msg, hint) => `
     <div class="src-empty">
-      <div class="src-empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg></div>
-      <p>${escapeHtml(msg)}</p>
-      <small>${escapeHtml(hint)}</small>
+      <div class="src-empty-ic" aria-hidden="true">${icon}</div>
+      <p class="src-empty-title">${escapeHtml(msg)}</p>
+      <small class="src-empty-sub">${escapeHtml(hint)}</small>
     </div>`;
   const ensure = (key, title) => {
     let sec = view.querySelector(`.stats-extra-section[data-stats-section="${key}"]`);
@@ -37643,9 +37655,9 @@ function renderStatsExtras() {
     return sec;
   };
   ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML =
-    emptyHtml("Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
+    emptyHtml(IC_TRAFFIC, "Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
   ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
-    emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
+    emptyHtml(IC_GEO, "Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
 
   // ROMBAK SUSUNAN: Grafik (chart) naik jadi hero — sebelum Performa Video.
   const topCard = view.querySelector("#topPerfCard");
@@ -37667,12 +37679,12 @@ function renderStatsExtras() {
 function decorateStatsHeadings() {
   const view = document.querySelector('section.view[data-view="stats"]');
   if (!view) return;
-  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   const ICO = {
     ringkasan: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>`,
     "top-video": `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>`,
     grafik: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>`,
-    traffic: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>`,
+    traffic: `<svg ${S}><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>`,
     geo: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>`,
   };
   const setIco = (h3, key) => {
@@ -37730,7 +37742,7 @@ function buildStatsTabs() {
   const view = document.querySelector('section.view[data-view="stats"]');
   const bar = view && view.querySelector(".riwayat-tab-bar");
   if (!bar || bar.dataset.statsBuilt) return;
-  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   // v772: tab in-page = FILTER (data-stats-tab), sinkron sidebar. Klik ditangani
   // handler global button[data-stats-tab] -> setStatsTab(); active di-toggle oleh
   // setStatsTab. Ikon ringkasan = pie (samakan dgn heading).
@@ -37738,7 +37750,7 @@ function buildStatsTabs() {
     { k: "ringkasan", l: "Ringkasan", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>` },
     { k: "grafik", l: "Grafik", i: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>` },
     { k: "top-video", l: "Performa Video", i: `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>` },
-    { k: "traffic", l: "Sumber Trafik", i: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>` },
+    { k: "traffic", l: "Sumber Trafik", i: `<svg ${S}><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>` },
     { k: "geo", l: "Audiens", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>` },
   ];
   const cur = view.dataset.statsTab || "all";
@@ -37814,15 +37826,7 @@ function renderTopPerforming() {
   rows.sort((a, b) => (a[sort.key] - b[sort.key]) * dir);
 
   const arrow = k => sort.key === k ? (sort.dir === "asc" ? " ↑" : " ↓") : "";
-  const th = (k, label) => `<th class="tp-th tp-num-h${sort.key === k ? " active" : ""}" data-sort="${k}">${label}${arrow(k)}</th>`;
-  const thead = `<thead><tr>
-    <th class="tp-th-vid">Video</th>
-    ${th("views", "Tontonan")}
-    ${th("likes", "Suka")}
-    ${th("comments", "Komentar")}
-    ${th("eng", "Interaksi")}
-  </tr></thead>`;
-  // v781: metadata kolom Video (durasi · tanggal upload) di bawah judul.
+  // v781: metadata (durasi · tanggal upload) di bawah judul.
   const vidMeta = (v) => {
     const parts = [];
     if (v.duration) parts.push(escapeHtml(String(v.duration)));
@@ -37836,26 +37840,38 @@ function renderTopPerforming() {
     }
     return parts.join(" · ");
   };
-  const body = rows.slice(0, 20).map(r => `<tr class="tp-row" data-vid="${r.v.id}" role="button" tabindex="0" title="Buka video">
-    <td class="tp-vid"><div class="tp-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div><div class="tp-vid-text"><span class="tp-title">${escapeHtml(r.v.title || "")}</span>${vidMeta(r.v) ? `<span class="tp-sub">${vidMeta(r.v)}</span>` : ""}</div></td>
-    <td class="tp-num">${fmt(r.views)}</td>
-    <td class="tp-num">${fmt(r.likes)}</td>
-    <td class="tp-num">${fmt(r.comments)}</td>
-    <td class="tp-num">${r.eng > 0 ? r.eng.toFixed(1) + "%" : "—"}</td>
-  </tr>`).join("");
-  list.innerHTML = `<table class="tp-table">${thead}<tbody>${body}</tbody></table>`;
+  // v786 (per user): GANTI tabel berkolom -> KARTU GRID. Urutkan via tombol chip di atas grid.
+  const ENGAGE_TIP = `<b class="tp-tip-h">Interaksi (engagement)</b><span class="tp-tip-f">(Suka + Komentar) ÷ Tontonan × 100%</span><span class="tp-tip-d">Seberapa aktif penonton berinteraksi dibanding jumlah yang menonton.</span><span class="tp-tip-n">“—” = belum ada data (tontonan &amp; interaksi masih 0).</span>`;
+  const tipEl = (tip) => tip ? `<span class="tp-tip" role="tooltip">${tip}</span>` : "";
+  const sortBtn = (k, label, tip) => `<button type="button" class="tp-sort-btn${sort.key === k ? " active" : ""}${tip ? " has-tip" : ""}" data-sort="${k}">${label}${arrow(k)}${tipEl(tip)}</button>`;
+  const sortBar = `<div class="tp-sort-bar"><span class="tp-sort-label">Urutkan</span>${sortBtn("views", "Tontonan")}${sortBtn("likes", "Suka")}${sortBtn("comments", "Komentar")}${sortBtn("eng", "Interaksi", ENGAGE_TIP)}</div>`;
+  const stat = (label, val, on, tip) => `<span class="tp-stat${on ? " is-sort" : ""}${tip ? " has-tip" : ""}"><i>${label}</i><b>${val}</b>${tipEl(tip)}</span>`;
+  const cards = rows.slice(0, 24).map(r => `<div class="tp-card" data-vid="${r.v.id}" role="button" tabindex="0" title="Buka video">
+    <div class="tp-card-thumb"${r.v.thumb ? ` style="background-image:url('${escapeHtml(r.v.thumb)}')"` : ""}></div>
+    <div class="tp-card-info">
+      <div class="tp-card-title">${escapeHtml(r.v.title || "")}</div>
+      ${vidMeta(r.v) ? `<div class="tp-card-sub">${vidMeta(r.v)}</div>` : ""}
+    </div>
+    <div class="tp-card-stats">
+      ${stat("Tontonan", fmt(r.views), sort.key === "views")}
+      ${stat("Suka", fmt(r.likes), sort.key === "likes")}
+      ${stat("Komentar", fmt(r.comments), sort.key === "comments")}
+      ${stat("Interaksi", r.eng > 0 ? r.eng.toFixed(1) + "%" : "—", sort.key === "eng", ENGAGE_TIP)}
+    </div>
+  </div>`).join("");
+  list.innerHTML = sortBar + `<div class="tp-grid">${cards}</div>`;
 
-  list.querySelectorAll("th[data-sort]").forEach(thEl => thEl.addEventListener("click", () => {
-    const k = thEl.dataset.sort;
+  list.querySelectorAll(".tp-sort-btn[data-sort]").forEach(btnEl => btnEl.addEventListener("click", () => {
+    const k = btnEl.dataset.sort;
     if (sort.key === k) sort.dir = sort.dir === "asc" ? "desc" : "asc";
     else { sort.key = k; sort.dir = "desc"; }
     renderTopPerforming();
   }));
-  // v781: baris clickable → buka video (id bisa string/number → kirim apa adanya)
+  // baris/kartu clickable → buka video (id bisa string/number → kirim apa adanya)
   const openVid = (id) => { if (typeof openPlayer === "function") openPlayer(/^\d+$/.test(id) ? +id : id); };
-  list.querySelectorAll(".tp-row").forEach(row => {
-    row.addEventListener("click", () => openVid(row.dataset.vid));
-    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openVid(row.dataset.vid); } });
+  list.querySelectorAll(".tp-card").forEach(cardEl => {
+    cardEl.addEventListener("click", () => openVid(cardEl.dataset.vid));
+    cardEl.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openVid(cardEl.dataset.vid); } });
   });
   if (typeof decorateStatsHeadings === "function") decorateStatsHeadings();
 }
