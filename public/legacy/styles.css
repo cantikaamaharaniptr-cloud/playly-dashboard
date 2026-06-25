@@ -6550,6 +6550,19 @@ body[data-role="admin"] .onboarding-step-pill {
   color: var(--text);
   line-height: 1.3;
 }
+/* Ikon judul di-clone dari elemen target (nav) — samakan ukuran/warna dgn judul */
+.onboarding-title-ico {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: -0.18em;
+  margin-right: 7px;
+  color: var(--text);
+}
+.onboarding-title-ico svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
 .onboarding-body {
   margin: 0 0 14px;
   font-size: 13px;

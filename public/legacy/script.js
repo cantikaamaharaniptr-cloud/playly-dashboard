@@ -26160,11 +26160,16 @@ function _positionOnboardingUI(target, step) {
   const total = ONBOARDING_STEPS.length;
   const i = _onboardingState.stepIndex;
   const arrowClass = ttArrow ? `onboarding-arrow-${ttArrow}` : '';
+  // Ikon judul = ikon ASLI dari elemen target (nav item dll.) supaya 100% konsisten
+  // dgn ikon dashboard. Emoji di judul = fallback kalau target tak punya <svg>.
+  let _obIco = '';
+  try { const _ti = target.querySelector('svg'); if (_ti) _obIco = _ti.outerHTML; } catch (e) {}
+  const _obTitle = _obIco ? step.title.replace(/^\S+\s+/, '') : step.title;
   root.innerHTML = `
     <div class="onboarding-spotlight" style="left:${spotX}px;top:${spotY}px;width:${spotW}px;height:${spotH}px;"></div>
     <div class="onboarding-tooltip ${arrowClass}" style="left:${ttX}px;top:${ttY}px;width:${ttW}px;">
       <div class="onboarding-step-pill">LANGKAH ${i + 1} / ${total}</div>
-      <h4 class="onboarding-title">${_obEscape(step.title)}</h4>
+      <h4 class="onboarding-title">${_obIco ? ('<span class="onboarding-title-ico" aria-hidden="true">' + _obIco + '</span>') : ''}${_obEscape(_obTitle)}</h4>
       <p class="onboarding-body">${_obEscape(step.body)}</p>
       <div class="onboarding-progress">
         ${ONBOARDING_STEPS.map((_, idx) => `<span class="onboarding-dot${idx === i ? ' active' : ''}${idx < i ? ' done' : ''}"></span>`).join('')}
