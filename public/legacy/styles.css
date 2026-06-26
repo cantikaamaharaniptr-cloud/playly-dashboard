@@ -85,17 +85,17 @@ body[data-theme="light"] {
      nested chip slightly grey (#F5F5F5). */
   /* v(netral bersih 2026-06-21): struktur NETRAL (teks/muted/border/surface/shadow
      abu netral), wine DIPERTAHANKAN hanya sebagai aksen (tombol/primary/active). */
-  --bg: #F7F8FA;          /* Page bg — netral clean off-white */
+  --bg: #FAFAFA;          /* Page bg — putih netral (samakan standar Statistik) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
+  --surface: rgba(0, 0, 0, 0.03);     /* 2026-06-26: slate(17,24,39)->netral hitam (user tolak slate) */
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.18);
+  --border-strong: rgba(0, 0, 0, 0.28);
   --text: #6D2932;        /* Netral near-black — teks utama */
-  --text-2: #5F564E;      /* Netral slate — teks sekunder */
-  --muted: #7A716A;       /* Netral gray — muted/meta */
+  --text-2: #4B4B4B;      /* Netral abu — teks sekunder (bukan taupe) */
+  --muted: #6E6E6E;       /* Netral abu — muted/meta (bukan taupe) */
   --primary: #842A3B;     /* Wine — aksen (tombol/active/link) DIPERTAHANKAN */
   --primary-hover: #6D2932;
   --primary-deep: #561C24;
@@ -44792,6 +44792,25 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   border-color: rgba(102, 34, 34, .18) !important;
   color: var(--text) !important;
   box-shadow: 0 6px 16px rgba(102, 34, 34, .1) !important;
+}
+
+/* ============================================================
+   2026-06-26 — PREMIUM INSIGHTS: samakan warna dgn Statistik.
+   Glyph kotak ikon (sec-icon + ikon analitik) cream->putih (light & dark).
+   ============================================================ */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .sec-icon-v582,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .sec-icon-v582 svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .sec-icon-v582 svg *,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .st-ico svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .stat-icon svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="premium-insights"] .mc-icon svg {
+  color: #FFFFFF !important;
+}
+body[data-theme="dark"] section[data-view="premium-insights"] .sec-icon-v582 svg,
+body[data-theme="dark"] section[data-view="premium-insights"] .sec-icon-v582 svg *,
+body[data-theme="dark"] section[data-view="premium-insights"] .st-ico svg,
+body[data-theme="dark"] section[data-view="premium-insights"] .stat-icon svg {
+  color: #FFFFFF !important;
 }
 
 /* =============================================================
