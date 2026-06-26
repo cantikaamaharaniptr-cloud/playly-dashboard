@@ -228,7 +228,7 @@
     // Ikon dibuat lebih besar + tebal + ada ukuran minimum supaya
     // tetap jelas walau font induknya kecil (mis. judul section).
     ".picon{display:block;width:1.3em;height:1.3em;min-width:20px;min-height:20px;" +
-    "stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;" +
+    "stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;" +
     "stroke-linejoin:round;overflow:visible}" +
     // vertical-align:middle + align-self:center → ikon SELALU center
     // sejajar teks, baik di baris teks biasa maupun judul flex.
@@ -239,7 +239,7 @@
     "h1 .picon,h2 .picon,h3 .picon,h4 .picon,h5 .picon," +
     ".section-title .picon,.sec-title .picon,.card-title .picon,.card-head .picon," +
     ".sec-head .picon,.panel-title .picon,.block-title .picon,[class*='-title'] .picon{" +
-    "width:1.45em;height:1.45em;min-width:23px;min-height:23px;stroke-width:2}" +
+    "width:1.45em;height:1.45em;min-width:23px;min-height:23px;stroke-width:1.6}" +
     // Dot status jangan terlalu besar.
     ".picon-w[data-picon='dot'] .picon{width:.7em;height:.7em;min-width:9px;min-height:9px}" +
     // Konteks teks KECIL (footer link, copy, pill, meta, breadcrumb):
@@ -251,7 +251,7 @@
     ".auth-mini-footer .picon,.afs-foot .picon,footer .picon," +
     "[class*='footer'] .picon,[class*='-copy'] .picon," +
     "[class*='pill'] .picon,[class*='meta'] .picon,[class*='breadcrumb'] .picon{" +
-    "width:1.05em;height:1.05em;min-width:0;min-height:0;stroke-width:2}";
+    "width:1.05em;height:1.05em;min-width:0;min-height:0;stroke-width:1.6}";
   (document.head || document.documentElement).appendChild(st);
 
   function svg(name) {
