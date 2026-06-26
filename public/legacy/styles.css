@@ -30015,6 +30015,98 @@ body[data-role="admin"] .up-section-head h3 span { color: var(--admin-accent); }
 }
 .up-empty p { font-size: 13px; color: var(--muted); }
 
+/* ===================================================================
+   PROFIL REDESIGN — port ke main (req user 26 Jun). Profil Saya + Profil
+   Kreator: header 2-sisi, kartu landscape 16:9, tab Video/Disukai, popup
+   Pengikut/Mengikuti, bg dark netral. Scoped + !important biar menang atas
+   CSS profil lama main. =================================================== */
+/* kartu landscape 16:9 */
+.mp-vtile { cursor: pointer; }
+.mp-vthumb { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: var(--surface-2) center / cover no-repeat; transition: transform .14s, box-shadow .14s; }
+.mp-vtile:hover .mp-vthumb { transform: scale(1.012); box-shadow: 0 8px 22px rgba(0,0,0,.34); }
+.mp-vthumb::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 38%; background: linear-gradient(to top, rgba(0,0,0,.55), transparent); pointer-events: none; }
+.mp-vplays { position: absolute; left: 10px; bottom: 9px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.mp-vplays svg { width: 13px; height: 13px; }
+.mp-vdur { position: absolute; right: 9px; bottom: 9px; z-index: 1; font-size: 11px; font-weight: 700; color: #fff; background: rgba(0,0,0,.5); padding: 2px 7px; border-radius: 6px; }
+.mpu-init { font-weight: 700; }
+/* tab bar Video/Disukai */
+.myprofile-vidtabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin: 0 0 14px; justify-content: flex-start; }
+.myprofile-vidtab { display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; }
+.myprofile-vidtab svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.myprofile-vidtab:hover { color: var(--text); }
+.myprofile-vidtab.active { color: var(--text); font-weight: 700; border-bottom-color: var(--primary); }
+/* header 2-SISI (avatar kiri | info | tombol kanan) — kedua profil */
+section[data-view="user-profile"] .profile-header-card,
+section[data-view="myprofile"] .profile-header-card {
+  display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important;
+  gap: 22px !important; text-align: left !important; padding: 20px 24px !important;
+}
+section[data-view="user-profile"] .profile-header-card > .profile-header-avatar,
+section[data-view="myprofile"] .profile-header-card > .profile-header-avatar { margin: 0 !important; flex: 0 0 auto !important; width: 84px !important; height: 84px !important; min-width: 84px !important; position: static !important; inset: auto !important; transform: none !important; }
+/* main creator header pakai grid + avatar absolut + padding-kiri 162px — paksa flex 2-sisi baru */
+section[data-view="user-profile"] .profile-header-card:has(#upAvatar) { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 22px !important; padding: 20px 24px !important; min-height: 0 !important; grid-template-columns: none !important; }
+section[data-view="user-profile"] .profile-header-card > .profile-header-avatar span,
+section[data-view="myprofile"] .profile-header-card > .profile-header-avatar span { font-size: 28px !important; }
+section[data-view="user-profile"] .profile-header-card .up-head-info,
+section[data-view="myprofile"] .profile-header-card .up-head-info { flex: 0 1 auto !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 5px !important; min-width: 0 !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-name,
+section[data-view="myprofile"] .profile-header-card .profile-header-name { margin: 0 !important; font-size: 21px !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-handle,
+section[data-view="myprofile"] .profile-header-card .profile-header-handle { margin: 0 !important; color: #6E6E6E !important; }
+body[data-theme="dark"] section[data-view="user-profile"] .profile-header-card .profile-header-handle,
+body[data-theme="dark"] section[data-view="myprofile"] .profile-header-card .profile-header-handle { color: rgba(232,216,196,.5) !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-bio,
+section[data-view="myprofile"] .profile-header-card .profile-header-bio { margin: 2px 0 0 !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-stats,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats { justify-content: flex-start !important; border: none !important; padding: 4px 0 0 !important; margin: 2px 0 0 !important; width: auto !important; gap: 22px !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat b,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat b { font-size: 19px !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat small,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat small { text-transform: none !important; letter-spacing: .01em !important; font-size: 12.5px !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-actions,
+section[data-view="myprofile"] .profile-header-card .profile-header-actions { justify-content: flex-end !important; width: auto !important; margin: 0 0 0 auto !important; flex: 0 0 auto !important; align-self: center !important; }
+section[data-view="user-profile"] .profile-header-card .up-socials,
+section[data-view="myprofile"] .profile-header-card .up-socials { justify-content: flex-start !important; width: auto !important; }
+/* kreator: stats display-only, Pengikut(2)/Mengikuti(3) klik popup */
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat,
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat:hover { background: none !important; box-shadow: none !important; cursor: default !important; padding: 0 !important; transform: none !important; }
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat:nth-child(2),
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat:nth-child(3) { cursor: pointer !important; }
+/* Profil Saya: stats tanpa kotak/garis; Pengikut/Mengikuti klik popup */
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat,
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat:hover,
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active,
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat[aria-selected="true"] { background: none !important; box-shadow: none !important; padding: 0 !important; transform: none !important; cursor: default !important; }
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active::after { display: none !important; }
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat[data-myprofile-stat="followers"],
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat[data-myprofile-stat="following"] { cursor: pointer !important; }
+/* grid landscape */
+#myProfileVideoGrid, #myProfileLikedGrid,
+section[data-view="user-profile"] #upVideoGrid, section[data-view="user-profile"] #upLikedGrid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important; gap: 12px !important; }
+#myProfileVideoGrid[hidden], #myProfileLikedGrid[hidden],
+section[data-view="user-profile"] #upVideoGrid[hidden], section[data-view="user-profile"] #upLikedGrid[hidden] { display: none !important; }
+section[data-view="user-profile"] .mp-vthumb { aspect-ratio: 16 / 9 !important; }
+/* kreator tab: 1 kolom, sembunyikan judul section */
+section[data-view="user-profile"] .profile-2col { display: block !important; }
+section[data-view="user-profile"] .profile-2col > .profile-col { width: 100% !important; }
+section[data-view="user-profile"] .profile-2col .myprofile-section-head { display: none !important; }
+section[data-view="user-profile"] #upVidTabs { margin: 4px 0 14px !important; }
+/* empty-state tanpa kotak */
+#myProfileTabEmpty.up-empty,
+section[data-view="user-profile"] #upEmpty.up-empty,
+section[data-view="user-profile"] #upLikedEmpty.up-empty { border: none !important; background: none !important; padding: 44px 20px !important; }
+/* popup Pengikut/Mengikuti (kedua profil), tanpa X */
+#myProfileUsersModal .mp-users-panel, #upUsersModal .mp-users-panel { max-width: 420px; }
+#myProfileUsersModal #mpUsersTitle, #upUsersModal #upUsersTitle { margin-bottom: 14px; }
+#myProfileUsersModal .myprofile-userlist, #upUsersModal .myprofile-userlist { max-height: 60vh; overflow-y: auto; }
+#myProfileUsersModal .mp-users-empty, #upUsersModal .mp-users-empty { text-align: center; padding: 30px 8px 6px; margin: 0; }
+/* bg dark netral (tutup .starry-sky wine penuh termasuk padding .main) */
+body[data-theme="dark"] section[data-view="myprofile"],
+body[data-theme="dark"] section[data-view="user-profile"] { position: relative; min-height: calc(100dvh - 70px); }
+body[data-theme="dark"] section[data-view="myprofile"]::before,
+body[data-theme="dark"] section[data-view="user-profile"]::before { content: ""; position: absolute; inset: -16px -24px -32px; background: #1a0c10; z-index: -1; pointer-events: none; }
+/* ===================== END PROFIL REDESIGN ===================== */
+
 @media (max-width: 768px) {
   .up-hero { padding: 22px 18px; }
   .up-hero-content { gap: 18px; }
