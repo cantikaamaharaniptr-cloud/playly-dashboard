@@ -9,7 +9,7 @@ import type { Metadata, Viewport } from 'next';
 import { legacyAsset } from '@/app/_legacy/legacy-asset';
 
 // Cache-bust version preserved verbatim from legacy index.html.
-const STYLES_V = '20260626-kreator-headerleft2';
+const STYLES_V = '20260626-kreator-compact';
 
 // FOUC guard (verbatim from index.html <head>): hide admin-only DOM on non-admin
 // views before styles.css finishes loading, so admin UI never flashes.
