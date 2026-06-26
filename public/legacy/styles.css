@@ -44065,17 +44065,26 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   color: var(--text); font-weight: 700; border-bottom-color: var(--primary);
 }
 /* Bg netral di DARK: tutupi gradient wine starry-sky (req user: "netral seperti halaman lain"). */
-body[data-theme="dark"] section[data-view="myprofile"] {
+body[data-theme="dark"] section[data-view="myprofile"],
+body[data-theme="dark"] section[data-view="user-profile"] {
   background: #1a0c10 !important;
   min-height: calc(100dvh - 70px);
 }
+/* Profil kreator (user-profile) — samakan gaya Profil Saya: layout 2-kolom diubah
+   jadi single-column TABBED (tab Video/Disukai via .up-vidtabs); sembunyikan
+   judul section lama, tampil hanya kolom aktif. (req 2026-06-26) */
+section[data-view="user-profile"] .profile-2col { display: block !important; }
+section[data-view="user-profile"] .profile-col { display: none !important; }
+section[data-view="user-profile"] .profile-col.up-col-on { display: block !important; }
+section[data-view="user-profile"] .profile-col .myprofile-section-head { display: none !important; }
 /* Grid video profil gaya TikTok/IG (referensi web) — kartu POTRET 3:4 + jumlah
    tayangan overlay di thumbnail + judul 2 baris. Scoped ke id grid profil supaya
    tak mengganggu .lib-grid Pustaka. */
 /* Bersih ala Instagram/TikTok: kolom lebih sedikit & besar, jarak rapat, tanpa
    border & tanpa caption (cuma view-count + durasi overlay). Ref IG: 3:4, gap tipis,
    minimal; TikTok: view-count di cover. */
-#myProfileVideoGrid, #myProfileLikedGrid {
+#myProfileVideoGrid, #myProfileLikedGrid,
+#upVideoGrid, #upLikedGrid {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
   gap: 8px !important;
