@@ -44069,6 +44069,35 @@ body[data-theme="dark"] section[data-view="myprofile"] {
   background: #1a0c10 !important;
   min-height: calc(100dvh - 70px);
 }
+/* ============================================================
+   2026-06-26 — PROFIL KREATOR (user-profile): header RATA KIRI 2-sisi
+   (avatar kiri | nama/handle/stats Pengikut-Mengikuti/tombol kanan),
+   bukan rata tengah (req user — kembalikan layout lama). Khusus user-profile;
+   Profil Saya (myprofile) tetap rata tengah. Pakai grid: avatar kolom-1
+   span semua baris, sisanya stack di kolom-2 kiri. */
+section[data-view="user-profile"] .profile-header-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 32px !important;
+  text-align: left !important;
+}
+section[data-view="user-profile"] .profile-header-card > .profile-header-avatar {
+  margin: 0 !important; flex: 0 0 auto !important;
+}
+section[data-view="user-profile"] .profile-header-card .up-head-info {
+  flex: 1 1 auto !important; display: flex !important; flex-direction: column !important;
+  align-items: flex-start !important; gap: 8px !important; min-width: 0 !important;
+}
+/* stats + tombol aksi rata kiri (bukan center); buang garis pembatas tengah */
+section[data-view="user-profile"] .profile-header-card .profile-header-stats {
+  justify-content: flex-start !important; border: none !important; padding-left: 0 !important; margin-left: 0 !important; width: auto !important;
+}
+section[data-view="user-profile"] .profile-header-card .profile-header-actions,
+section[data-view="user-profile"] .profile-header-card .up-socials {
+  justify-content: flex-start !important; width: auto !important;
+}
 /* Grid video profil gaya TikTok/IG (referensi web) — kartu POTRET 3:4 + jumlah
    tayangan overlay di thumbnail + judul 2 baris. Scoped ke id grid profil supaya
    tak mengganggu .lib-grid Pustaka. */

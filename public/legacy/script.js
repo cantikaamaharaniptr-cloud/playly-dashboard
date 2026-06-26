@@ -49172,6 +49172,17 @@ function isProfilePubliclyVisibleTo(targetUsername) {
 function renderUserProfile() {
   const username = state?._viewingUser;
   if (!username) return;
+  // v(2026-06-26): header profil kreator RATA KIRI 2-sisi (avatar | info) — bungkus
+  // konten non-avatar ke .up-head-info sekali saja supaya bisa flex. req user.
+  (function ensureUpHeaderLayout() {
+    const card = document.querySelector('section.view[data-view="user-profile"] .profile-header-card');
+    if (!card || card.querySelector(".up-head-info")) return;
+    const avatar = card.querySelector(".profile-header-avatar");
+    const info = document.createElement("div");
+    info.className = "up-head-info";
+    [...card.children].forEach(ch => { if (ch !== avatar) info.appendChild(ch); });
+    card.appendChild(info);
+  })();
   const isMe = !!user && username === user.username;  // ← deteksi own channel
   const acc = findAccountByUsername(username);
   // Privasi: profil di-private + viewer bukan follower & bukan admin → render terbatas
