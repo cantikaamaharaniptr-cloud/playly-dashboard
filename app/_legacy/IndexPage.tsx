@@ -12,7 +12,7 @@ import { INDEX_PREPAINT } from './index-prepaint';
 import { legacyAsset } from './legacy-asset';
 
 // Cache-bust versions preserved verbatim from legacy index.html.
-const V_MAIN = '20260626-userprof-match';
+const V_MAIN = '20260626-stats-static';
 const V_CLOUD = '20260526-audit-user-section-v557';
 const V_PICONS = '20260626-picon-iconsax16';
 const V_PARTICLES = '20260516-particles-v2';

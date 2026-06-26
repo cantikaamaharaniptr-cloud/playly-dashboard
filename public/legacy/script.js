@@ -45751,6 +45751,15 @@ function renderMyProfile() {
   document.getElementById("myProfileFollowingCount").textContent = fmtNum(followingCount);
   document.getElementById("myProfileLikeCount").textContent = fmtNum(totalLikes);
 
+  // v(2026-06-26): stats (Postingan/Pengikut/Mengikuti/Suka) = DISPLAY-ONLY, samakan
+  // profil kreator (di sana cuma angka statis, tak diklik / tak buka daftar user).
+  // Lepas data-myprofile-stat → bukan tab + tak ada highlight aktif. Navigasi video
+  // sudah lewat .myprofile-vidtabs. Pengikut/Mengikuti tampil sbg angka saja.
+  document.querySelectorAll('section.view[data-view="myprofile"] .profile-header-stats .myprofile-stat').forEach(el => {
+    el.removeAttribute("data-myprofile-stat");
+    el.classList.remove("active");
+  });
+
   // v(2026-06-26): tab bar eksplisit "Video Saya"/"Disukai" di atas grid (req user:
   // biar jelas mana video saya & yang disukai). Reuse mekanisme data-myprofile-stat
   // (handler bindMyProfileClicks + renderMyProfileTab) → klik langsung ganti grid.
