@@ -30078,6 +30078,11 @@ section[data-view="myprofile"] .profile-header-stats .myprofile-stat:hover,
 section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active,
 section[data-view="myprofile"] .profile-header-stats .myprofile-stat[aria-selected="true"] { background: none !important; box-shadow: none !important; padding: 0 !important; transform: none !important; cursor: default !important; }
 section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active::after { display: none !important; }
+/* teks stat aktif = terang (--text), JANGAN wine --primary (di dark jadi gelap/redup) */
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active b,
+section[data-view="myprofile"] .profile-header-stats .myprofile-stat.active small,
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat.active b,
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat.active small { color: var(--text) !important; }
 section[data-view="myprofile"] .profile-header-stats .myprofile-stat[data-myprofile-stat="followers"],
 section[data-view="myprofile"] .profile-header-stats .myprofile-stat[data-myprofile-stat="following"] { cursor: pointer !important; }
 /* grid landscape */
