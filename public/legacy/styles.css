@@ -44064,11 +44064,6 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 .myprofile-vidtab.active {
   color: var(--text); font-weight: 700; border-bottom-color: var(--primary);
 }
-/* Stats Profil Saya = display-only (samakan profil kreator: angka statis, tak diklik). */
-section[data-view="myprofile"] .profile-header-stats .myprofile-stat,
-section[data-view="myprofile"] .profile-header-stats .myprofile-stat:hover {
-  cursor: default !important; background: none !important; box-shadow: none !important; transform: none !important;
-}
 /* Bg netral di DARK: tutupi gradient wine starry-sky (req user: "netral seperti halaman lain"). */
 body[data-theme="dark"] section[data-view="myprofile"] {
   background: #1a0c10 !important;
