@@ -49178,32 +49178,6 @@ function isProfilePubliclyVisibleTo(targetUsername) {
   return targetFollowers.includes(user?.username);
 }
 
-// v(2026-06-26): tab Video/Disukai untuk profil kreator (samakan gaya Profil Saya).
-// Sisipkan tab bar underline + ubah .profile-2col jadi single-column tabbed (toggle .profile-col).
-function ensureUpProfileTabs() {
-  const view = document.querySelector('section.view[data-view="user-profile"]');
-  if (!view) return;
-  const twocol = view.querySelector(".profile-2col");
-  if (!twocol || !twocol.parentElement) return;
-  let bar = view.querySelector(".up-vidtabs");
-  if (!bar) {
-    bar = document.createElement("div");
-    bar.className = "myprofile-vidtabs up-vidtabs";
-    bar.innerHTML =
-      '<button type="button" class="myprofile-vidtab" data-upcol="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Video</span></button>' +
-      '<button type="button" class="myprofile-vidtab" data-upcol="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5C6.5 16.5 3 13.2 3 9.2 3 6.6 5 5 7.2 5c1.6 0 2.9.9 3.8 2.1C11.9 5.9 13.2 5 14.8 5 17 5 19 6.6 19 9.2c0 4-3.5 7.3-7 11.3z"/></svg><span>Disukai</span></button>';
-    twocol.parentElement.insertBefore(bar, twocol);
-    const setCol = (i) => {
-      twocol.querySelectorAll(".profile-col").forEach((c, idx) => c.classList.toggle("up-col-on", idx === Number(i)));
-      bar.querySelectorAll(".myprofile-vidtab").forEach(b => b.classList.toggle("active", b.getAttribute("data-upcol") === String(i)));
-    };
-    bar.addEventListener("click", e => { const b = e.target.closest("[data-upcol]"); if (b) setCol(b.getAttribute("data-upcol")); });
-    bar.__setCol = setCol;
-  }
-  // Selalu reset ke tab pertama (Video) tiap buka profil.
-  if (bar.__setCol) bar.__setCol(0);
-}
-
 function renderUserProfile() {
   const username = state?._viewingUser;
   if (!username) return;
@@ -49292,10 +49266,6 @@ function renderUserProfile() {
   if (acc?.github)    socials.push(`<a href="https://github.com/${encodeURIComponent(acc.github)}" target="_blank" rel="noopener">🐙 ${escapeHtml(acc.github)}</a>`);
   $("#upSocials").innerHTML = socials.join("");
 
-  // v(2026-06-26): samakan dgn Profil Saya — tab Video/Disukai (underline) +
-  // grid potret TikTok (lihat ensureUpProfileTabs); ganti layout 2-kolom.
-  ensureUpProfileTabs();
-
   // Video grid
   const grid = $("#upVideoGrid");
   const empty = $("#upEmpty");
@@ -49313,13 +49283,20 @@ function renderUserProfile() {
     if (empty) empty.hidden = false;
   } else {
     if (empty) empty.hidden = true;
-    grid.innerHTML = videos.map(v => `
-      <div class="mp-vtile" data-vid="${v.id}" title="${escapeHtml(v.title || "")}">
-        <div class="mp-vthumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
-          <span class="mp-vplays"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${v.views || 0}</span>
-          ${v.duration ? `<span class="mp-vdur">${v.duration}</span>` : ""}
+    grid.innerHTML = videos.map(v => {
+      const ts = v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0);
+      const timeText = ts ? relTime(ts) : (v.time || "");
+      return `
+      <div class="lib-item" data-vid="${v.id}">
+        <div class="lib-thumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
+          ${v.duration ? `<span class="lib-thumb-dur">${v.duration}</span>` : ""}
         </div>
-      </div>`).join("");
+        <div class="lib-meta">
+          <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
+          <small>${v.views || 0} tayangan · ${escapeHtml(timeText)}</small>
+        </div>
+      </div>`;
+    }).join("");
     // Pre-cache video objects so findVideo can always locate them
     window.__vidCache = window.__vidCache || {};
     videos.forEach(v => { window.__vidCache[String(v.id)] = v; });
@@ -49373,10 +49350,13 @@ function renderUserProfile() {
     } else {
       if (likedEmpty) likedEmpty.hidden = true;
       likedGrid.innerHTML = likedVideos.map(v => `
-        <div class="mp-vtile" data-liked-vid="${v.id}" title="${escapeHtml(v.title || "")}">
-          <div class="mp-vthumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
-            <span class="mp-vplays"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${v.views || 0}</span>
-            ${v.duration ? `<span class="mp-vdur">${v.duration}</span>` : ""}
+        <div class="lib-item" data-liked-vid="${v.id}">
+          <div class="lib-thumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
+            ${v.duration ? `<span class="lib-thumb-dur">${v.duration}</span>` : ""}
+          </div>
+          <div class="lib-meta">
+            <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
+            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} tayangan</small>
           </div>
         </div>
       `).join("");
