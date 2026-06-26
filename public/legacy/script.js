@@ -4397,7 +4397,7 @@ function populateProfileForm() {
   $("#profileJoined") && ($("#profileJoined").textContent = joined);
   $("#profileTotalVid") && ($("#profileTotalVid").textContent = state?.myVideos?.length || 0);
   $("#profileTotalFollow") && ($("#profileTotalFollow").textContent = state?.followingCreators?.length || 0);
-  $("#profileRole") && ($("#profileRole").textContent = user.role === "admin" ? "Administrator" : "User");
+  $("#profileRole") && ($("#profileRole").textContent = user.role === "admin" ? "Administrator" : "Pengguna");
   $("#profileInfoUsername") && ($("#profileInfoUsername").textContent = user.username ? "@" + user.username : "—");
   $("#profileInfoEmail") && ($("#profileInfoEmail").textContent = user.email || "—");
   const tierMap = { premium: "Premium ⭐", premium_yearly: "Premium Tahunan ⭐", premium_lifetime: "Premium Lifetime ⭐", free: "Gratis" };
@@ -6082,7 +6082,7 @@ const I18N = {
     "user.email.waiting":            "Awaiting Reply",
     "user.email.replies.from.admin": "Replies from Playly admin.",
     // Edit profile
-    "profile.edit.title":        "👤 Edit Profile",
+    "profile.edit.title":        "Edit Profile",
     "profile.edit.desc":         "Set the info shown on your profile.",
     "profile.identity":          "🪪 Identity",
     "profile.choose.photo":      "Choose Photo",
@@ -7021,7 +7021,7 @@ const I18N = {
     "user.email.replies":            "Balasan Email",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan dari admin Playly.",
-    "profile.edit.title":        "👤 Ubah Profil",
+    "profile.edit.title":        "Ubah Profil",
     "profile.edit.desc":         "Atur informasi yang ditampilkan di profilmu.",
     "profile.identity":          "🪪 Identitas",
     "profile.choose.photo":      "Pilih Foto",
@@ -8916,7 +8916,7 @@ const I18N = {
     "user.email.replies":            "Balasan",
     "user.email.waiting":            "Menunggu Balasan",
     "user.email.replies.from.admin": "Balasan daripada admin Playly.",
-    "profile.edit.title":        "👤 Ubah Profil",
+    "profile.edit.title":        "Ubah Profil",
     "profile.edit.desc":         "Tetapkan maklumat yang ditunjukkan pada profil anda.",
     "profile.identity":          "🪪 Identiti",
     "profile.choose.photo":      "Pilih Foto",
@@ -10196,7 +10196,7 @@ const I18N = {
     "user.email.replies":            "返信",
     "user.email.waiting":            "返信待ち",
     "user.email.replies.from.admin": "Playly管理者からの返信。",
-    "profile.edit.title":        "👤 プロフィール編集",
+    "profile.edit.title":        "プロフィール編集",
     "profile.edit.desc":         "プロフィールに表示する情報を設定。",
     "profile.identity":          "🪪 アイデンティティ",
     "profile.choose.photo":      "写真を選択",
@@ -11476,7 +11476,7 @@ const I18N = {
     "user.email.replies":            "الردود",
     "user.email.waiting":            "في انتظار الرد",
     "user.email.replies.from.admin": "ردود من مسؤول Playly.",
-    "profile.edit.title":        "👤 تعديل الملف الشخصي",
+    "profile.edit.title":        "تعديل الملف الشخصي",
     "profile.edit.desc":         "حدد المعلومات المعروضة على ملفك الشخصي.",
     "profile.identity":          "🪪 الهوية",
     "profile.choose.photo":      "اختر صورة",
@@ -12756,7 +12756,7 @@ const I18N = {
     "user.email.replies":            "回复",
     "user.email.waiting":            "等待回复",
     "user.email.replies.from.admin": "来自 Playly 管理员的回复。",
-    "profile.edit.title":        "👤 编辑资料",
+    "profile.edit.title":        "编辑资料",
     "profile.edit.desc":         "设置在你资料上显示的信息。",
     "profile.identity":          "🪪 身份",
     "profile.choose.photo":      "选择照片",
@@ -14036,7 +14036,7 @@ const I18N = {
     "user.email.replies":            "답장",
     "user.email.waiting":            "답장 대기 중",
     "user.email.replies.from.admin": "Playly 관리자의 답장.",
-    "profile.edit.title":        "👤 프로필 편집",
+    "profile.edit.title":        "프로필 편집",
     "profile.edit.desc":         "프로필에 표시되는 정보를 설정하세요.",
     "profile.identity":          "🪪 신원",
     "profile.choose.photo":      "사진 선택",
@@ -15316,7 +15316,7 @@ const I18N = {
     "user.email.replies":            "Respuestas",
     "user.email.waiting":            "Esperando Respuesta",
     "user.email.replies.from.admin": "Respuestas del admin de Playly.",
-    "profile.edit.title":        "👤 Editar Perfil",
+    "profile.edit.title":        "Editar Perfil",
     "profile.edit.desc":         "Establece la información mostrada en tu perfil.",
     "profile.identity":          "🪪 Identidad",
     "profile.choose.photo":      "Elegir Foto",
