@@ -44092,12 +44092,13 @@ section[data-view="user-profile"] .profile-header-card > .profile-header-avatar 
   font-size: 28px !important;
 }
 section[data-view="user-profile"] .profile-header-card .up-head-info {
-  flex: 1 1 auto !important; display: flex !important; flex-direction: column !important;
+  flex: 0 1 auto !important; display: flex !important; flex-direction: column !important;
   align-items: flex-start !important; gap: 5px !important; min-width: 0 !important;
 }
 /* nama/handle compact */
 section[data-view="user-profile"] .profile-header-card .profile-header-name { margin: 0 !important; font-size: 21px !important; }
-section[data-view="user-profile"] .profile-header-card .profile-header-handle { margin: 0 !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-handle { margin: 0 !important; color: #6E6E6E !important; }
+body[data-theme="dark"] section[data-view="user-profile"] .profile-header-card .profile-header-handle { color: rgba(232,216,196,.5) !important; }
 section[data-view="user-profile"] .profile-header-card .profile-header-bio { margin: 2px 0 0 !important; }
 /* stats rata kiri, rapat, tanpa garis & tanpa hover-box (bukan tab di profil kreator) */
 section[data-view="user-profile"] .profile-header-card .profile-header-stats {
@@ -44108,9 +44109,17 @@ section[data-view="user-profile"] .profile-header-card .profile-header-stats .my
 section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat:hover {
   background: none !important; box-shadow: none !important; cursor: default !important; padding: 0 !important; transform: none !important;
 }
-/* tombol aksi rata kiri + rapat */
+/* stat lebih besar + label TANPA capslock (req user) */
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat b {
+  font-size: 19px !important;
+}
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat small {
+  text-transform: none !important; letter-spacing: .01em !important; font-size: 12.5px !important;
+}
+/* tombol aksi DIDORONG ke sisi KANAN (2-sisi: kiri identitas | kanan aksi) */
 section[data-view="user-profile"] .profile-header-card .profile-header-actions {
-  justify-content: flex-start !important; width: auto !important; margin: 8px 0 0 !important;
+  justify-content: flex-end !important; width: auto !important;
+  margin: 0 0 0 auto !important; flex: 0 0 auto !important; align-self: center !important;
 }
 section[data-view="user-profile"] .profile-header-card .up-socials {
   justify-content: flex-start !important; width: auto !important;

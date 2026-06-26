@@ -49178,10 +49178,12 @@ function renderUserProfile() {
     const card = document.querySelector('section.view[data-view="user-profile"] .profile-header-card');
     if (!card || card.querySelector(".up-head-info")) return;
     const avatar = card.querySelector(".profile-header-avatar");
+    const actions = card.querySelector(".profile-header-actions"); // tombol -> sisi KANAN
     const info = document.createElement("div");
     info.className = "up-head-info";
-    [...card.children].forEach(ch => { if (ch !== avatar) info.appendChild(ch); });
-    card.appendChild(info);
+    // Sisi KIRI = avatar + info (nama/handle/stats); tombol aksi TIDAK ikut (biar di kanan).
+    [...card.children].forEach(ch => { if (ch !== avatar && ch !== actions) info.appendChild(ch); });
+    if (actions) card.insertBefore(info, actions); else card.appendChild(info);
   })();
   const isMe = !!user && username === user.username;  // ← deteksi own channel
   const acc = findAccountByUsername(username);
@@ -49247,11 +49249,17 @@ function renderUserProfile() {
     if (messageBtn) messageBtn.hidden = false;
     if (shareBtn) shareBtn.hidden = isAdminViewer;
     if (editBtn) editBtn.hidden = true;
+    // Ikon tombol Pesan & Bagikan — Iconsax konsisten (req user 26 Jun); translate="no" cegah i18n re-inject
+    if (messageBtn) { messageBtn.innerHTML = '<span class="picon-w"><svg class="picon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span> Pesan'; messageBtn.setAttribute("translate","no"); }
+    if (shareBtn) { shareBtn.innerHTML = '<span class="picon-w"><svg class="picon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></span> Bagikan'; shareBtn.setAttribute("translate","no"); }
     if (!isAdminViewer) {
       // Follow button state
       const isFollowing = state.followingCreators.includes(username);
       const theyFollowMe = !!user && followingList.includes(user.username);
-      followBtn.textContent = isFollowing ? "✓ Following" : (theyFollowMe ? "Follow Balik" : "Follow");
+      const _pcUp = (p) => `<span class="picon-w"><svg class="picon" viewBox="0 0 24 24" aria-hidden="true">${p}</svg></span> `;
+      const _icoFollowUp = '<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="8" r="4"/><path d="M19 8v6M22 11h-6"/>';
+      followBtn.innerHTML = isFollowing ? (_pcUp('<path d="M20 6 9 17l-5-5"/>') + "Mengikuti") : (_pcUp(_icoFollowUp) + (theyFollowMe ? "Ikuti Balik" : "Ikuti"));
+      followBtn.setAttribute("translate", "no");
       followBtn.classList.toggle("ghost", isFollowing);
       followBtn.classList.toggle("primary", !isFollowing);
       if (followBackTag) followBackTag.hidden = !theyFollowMe;
