@@ -44064,18 +44064,31 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 .myprofile-vidtab.active {
   color: var(--text); font-weight: 700; border-bottom-color: var(--primary);
 }
-/* Bg netral di DARK: tutupi gradient wine starry-sky (req user: "netral seperti halaman lain"). */
+/* Bg netral di DARK: tutupi gradient wine .starry-sky PENUH termasuk padding .main
+   (req user: jangan ada "kolom"/strip wine di tepi kiri konten). Bg solid di section
+   saja menyisakan strip wine di padding kiri/kanan .main → pakai ::before full-bleed
+   (inset -16/-24/-32 = padding .main 16/24/32) di z-index -1: DI ATAS .starry-sky
+   (z-2) tapi DI BAWAH konten; tidak menggeser layout & tidak bikin scroll. */
 body[data-theme="dark"] section[data-view="myprofile"] {
-  background: #1a0c10 !important;
+  background: transparent !important;
+  position: relative;
   min-height: calc(100dvh - 70px);
 }
+body[data-theme="dark"] section[data-view="myprofile"]::before {
+  content: "";
+  position: absolute;
+  inset: -16px -24px -32px;
+  background: #1a0c10;
+  z-index: -1;
+  pointer-events: none;
+}
 /* ============================================================
-   2026-06-26 — PROFIL KREATOR (user-profile): header RATA KIRI 2-sisi
-   (avatar kiri | nama/handle/stats Pengikut-Mengikuti/tombol kanan),
-   bukan rata tengah (req user — kembalikan layout lama). Khusus user-profile;
-   Profil Saya (myprofile) tetap rata tengah. Pakai grid: avatar kolom-1
-   span semua baris, sisanya stack di kolom-2 kiri. */
-section[data-view="user-profile"] .profile-header-card {
+   2026-06-26 — HEADER PROFIL 2-SISI (avatar KIRI | nama/handle/stats | tombol KANAN),
+   bukan rata tengah (req user). Dipakai BERSAMA oleh PROFIL KREATOR (user-profile)
+   DAN PROFIL SAYA (myprofile). Beda: profil kreator stats display-only; Profil Saya
+   stats TETAP bisa diklik (ganti grid / lihat pengikut). */
+section[data-view="user-profile"] .profile-header-card,
+section[data-view="myprofile"] .profile-header-card {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -44084,60 +44097,102 @@ section[data-view="user-profile"] .profile-header-card {
   text-align: left !important;
   padding: 20px 24px !important;
 }
-section[data-view="user-profile"] .profile-header-card > .profile-header-avatar {
+section[data-view="user-profile"] .profile-header-card > .profile-header-avatar,
+section[data-view="myprofile"] .profile-header-card > .profile-header-avatar {
   margin: 0 !important; flex: 0 0 auto !important;
   width: 84px !important; height: 84px !important; min-width: 84px !important;
 }
-section[data-view="user-profile"] .profile-header-card > .profile-header-avatar span {
+section[data-view="user-profile"] .profile-header-card > .profile-header-avatar span,
+section[data-view="myprofile"] .profile-header-card > .profile-header-avatar span {
   font-size: 28px !important;
 }
-section[data-view="user-profile"] .profile-header-card .up-head-info {
+section[data-view="user-profile"] .profile-header-card .up-head-info,
+section[data-view="myprofile"] .profile-header-card .up-head-info {
   flex: 0 1 auto !important; display: flex !important; flex-direction: column !important;
   align-items: flex-start !important; gap: 5px !important; min-width: 0 !important;
 }
 /* nama/handle compact */
-section[data-view="user-profile"] .profile-header-card .profile-header-name { margin: 0 !important; font-size: 21px !important; }
-section[data-view="user-profile"] .profile-header-card .profile-header-handle { margin: 0 !important; color: #6E6E6E !important; }
-body[data-theme="dark"] section[data-view="user-profile"] .profile-header-card .profile-header-handle { color: rgba(232,216,196,.5) !important; }
-section[data-view="user-profile"] .profile-header-card .profile-header-bio { margin: 2px 0 0 !important; }
-/* stats rata kiri, rapat, tanpa garis & tanpa hover-box (bukan tab di profil kreator) */
-section[data-view="user-profile"] .profile-header-card .profile-header-stats {
+section[data-view="user-profile"] .profile-header-card .profile-header-name,
+section[data-view="myprofile"] .profile-header-card .profile-header-name { margin: 0 !important; font-size: 21px !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-handle,
+section[data-view="myprofile"] .profile-header-card .profile-header-handle { margin: 0 !important; color: #6E6E6E !important; }
+body[data-theme="dark"] section[data-view="user-profile"] .profile-header-card .profile-header-handle,
+body[data-theme="dark"] section[data-view="myprofile"] .profile-header-card .profile-header-handle { color: rgba(232,216,196,.5) !important; }
+section[data-view="user-profile"] .profile-header-card .profile-header-bio,
+section[data-view="myprofile"] .profile-header-card .profile-header-bio { margin: 2px 0 0 !important; }
+/* stats rata kiri, rapat */
+section[data-view="user-profile"] .profile-header-card .profile-header-stats,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats {
   justify-content: flex-start !important; border: none !important;
   padding: 4px 0 0 !important; margin: 2px 0 0 !important; width: auto !important; gap: 22px !important;
 }
+/* profil kreator: stats display-only (tanpa hover-box, cursor default) */
 section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat,
 section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat:hover {
   background: none !important; box-shadow: none !important; cursor: default !important; padding: 0 !important; transform: none !important;
 }
+/* Profil Saya: stats TANPA kotak/garis (req user "tidak mau kolom seperti ini") —
+   bersih spt kreator; tetap bisa diklik (cursor pointer) tapi tak ada highlight kotak/underline */
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat:hover,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat.active,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat[aria-selected="true"] {
+  background: none !important; box-shadow: none !important; padding: 0 !important; transform: none !important; cursor: default !important;
+}
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat.active::after {
+  display: none !important;
+}
+/* Pengikut & Mengikuti BISA diklik (buka popup daftar) → cursor pointer (req user) */
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat[data-myprofile-stat="followers"],
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat[data-myprofile-stat="following"] {
+  cursor: pointer !important;
+}
+/* Popup daftar Pengikut/Mengikuti */
+#myProfileUsersModal .mp-users-panel { max-width: 420px; }
+#myProfileUsersModal #mpUsersTitle { margin-bottom: 14px; }
+#myProfileUsersModal .myprofile-userlist { max-height: 60vh; overflow-y: auto; }
+#myProfileUsersModal .mp-users-empty { text-align: center; padding: 30px 8px 6px; margin: 0; }
+/* Tanpa tombol X sama sekali (req user) — tutup via backdrop / Esc. */
 /* stat lebih besar + label TANPA capslock (req user) */
-section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat b {
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat b,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat b {
   font-size: 19px !important;
 }
-section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat small {
+section[data-view="user-profile"] .profile-header-card .profile-header-stats .myprofile-stat small,
+section[data-view="myprofile"] .profile-header-card .profile-header-stats .myprofile-stat small {
   text-transform: none !important; letter-spacing: .01em !important; font-size: 12.5px !important;
 }
 /* tombol aksi DIDORONG ke sisi KANAN (2-sisi: kiri identitas | kanan aksi) */
-section[data-view="user-profile"] .profile-header-card .profile-header-actions {
+section[data-view="user-profile"] .profile-header-card .profile-header-actions,
+section[data-view="myprofile"] .profile-header-card .profile-header-actions {
   justify-content: flex-end !important; width: auto !important;
   margin: 0 0 0 auto !important; flex: 0 0 auto !important; align-self: center !important;
 }
-section[data-view="user-profile"] .profile-header-card .up-socials {
+section[data-view="user-profile"] .profile-header-card .up-socials,
+section[data-view="myprofile"] .profile-header-card .up-socials {
   justify-content: flex-start !important; width: auto !important;
 }
-/* Grid video profil gaya TikTok/IG (referensi web) — kartu POTRET 3:4 + jumlah
-   tayangan overlay di thumbnail + judul 2 baris. Scoped ke id grid profil supaya
-   tak mengganggu .lib-grid Pustaka. */
-/* Bersih ala Instagram/TikTok: kolom lebih sedikit & besar, jarak rapat, tanpa
-   border & tanpa caption (cuma view-count + durasi overlay). Ref IG: 3:4, gap tipis,
-   minimal; TikTok: view-count di cover. */
+/* Grid video profil — kartu LANDSCAPE 16:9 (req user 26 Jun: video horizontal jangan
+   kepotong jadi "kolom" potret). Gaya YouTube: thumbnail 16:9 + view-count/durasi
+   overlay. Scoped ke id grid profil supaya tak mengganggu .lib-grid Pustaka. */
 #myProfileVideoGrid, #myProfileLikedGrid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
-  gap: 8px !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 12px !important;
+}
+/* FIX (req user): display:grid !important di atas meng-override atribut [hidden] →
+   grid "Video Saya" tetap tampil saat pindah tab (mis. Disukai). Hormati [hidden]. */
+#myProfileVideoGrid[hidden], #myProfileLikedGrid[hidden] { display: none !important; }
+/* Empty-state Profil Saya TANPA kotak (req user "jangan ada kolom") — buang border &
+   background kartu, sisakan ikon + teks di tengah. */
+#myProfileTabEmpty.up-empty {
+  border: none !important;
+  background: none !important;
+  padding: 44px 20px !important;
 }
 .mp-vtile { cursor: pointer; }
 .mp-vthumb {
-  position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden;
+  position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
   background: var(--surface-2) center / cover no-repeat; transition: transform .14s, box-shadow .14s;
 }
 .mp-vtile:hover .mp-vthumb { transform: scale(1.012); box-shadow: 0 8px 22px rgba(0,0,0,.34); }
@@ -72320,13 +72375,16 @@ textarea#upDesc.upf-desc-textarea {
 }
 .bio-char-count.bio-char-warn { color: var(--primary); }
 
-/* 11c — My Profile stat tabs: active state (clickable tabs) */
+/* 11c — My Profile stat tabs: active state (clickable tabs).
+   v(2026-06-26): kotak aktif dulu bg --surface-2 + teks --primary → di DARK jadi
+   wine-di-atas-wine (low contrast, angka gelap). Fix: highlight netral tipis +
+   teks --text (cream di dark, wine di light) + garis bawah penanda. req user. */
 .myprofile-stat[aria-selected="true"],
 .myprofile-stat.active {
-  background: var(--surface-2);
+  background: rgba(0,0,0,.05);
 }
-.myprofile-stat.active b { color: var(--primary); }
-.myprofile-stat.active small { color: var(--primary); }
+.myprofile-stat.active b,
+.myprofile-stat.active small { color: var(--text); }
 .myprofile-stat.active::after {
   content: "";
   position: absolute;
@@ -72337,6 +72395,11 @@ textarea#upDesc.upf-desc-textarea {
   border-radius: 2px;
   background: var(--primary);
 }
+body[data-theme="dark"] .myprofile-stat[aria-selected="true"],
+body[data-theme="dark"] .myprofile-stat.active {
+  background: rgba(232,216,196,.10);
+}
+body[data-theme="dark"] .myprofile-stat.active::after { background: var(--text); }
 .myprofile-stat { position: relative; }
 
 /* 11c — My Profile single tab panel + follower/following user list */

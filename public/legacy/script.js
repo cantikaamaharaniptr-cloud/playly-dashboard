@@ -45690,6 +45690,40 @@ document.addEventListener("keydown", e => {
 //   Kanan: My Videos grid (flexible, klik = inline play)
 function renderMyProfile() {
   if (!user) return;
+  // v(2026-06-26): header Profil Saya disamakan dgn Profil Kreator — 2-SISI
+  // (avatar KIRI | nama/handle/stats | tombol KANAN). Bungkus konten non-avatar &
+  // non-actions ke .up-head-info sekali saja (mirror ensureUpHeaderLayout). req user.
+  (function ensureMyProfileHeaderLayout() {
+    const card = document.querySelector('section.view[data-view="myprofile"] .profile-header-card');
+    if (!card || card.querySelector(".up-head-info")) return;
+    const avatar = card.querySelector(".profile-header-avatar");
+    const actions = card.querySelector(".profile-header-actions"); // tombol -> sisi KANAN
+    const info = document.createElement("div");
+    info.className = "up-head-info";
+    [...card.children].forEach(ch => { if (ch !== avatar && ch !== actions) info.appendChild(ch); });
+    if (actions) card.insertBefore(info, actions); else card.appendChild(info);
+  })();
+  // Tombol aksi: "Ikuti" diganti "Ubah Profil" (own profile) + Pesan + Bagikan —
+  // samakan dgn profil kreator (req user). Ikon Iconsax (picon 1.6), translate="no".
+  (function ensureMyProfileActions() {
+    const actions = document.querySelector('section.view[data-view="myprofile"] .profile-header-card .profile-header-actions');
+    if (!actions || actions.dataset.built2side) return;
+    actions.dataset.built2side = "1";
+    const pc = (p) => `<span class="picon-w"><svg class="picon" viewBox="0 0 24 24" aria-hidden="true">${p}</svg></span> `;
+    const icoEdit  = '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>';
+    const icoMsg   = '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>';
+    const icoShare = '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>';
+    actions.innerHTML =
+      `<button type="button" class="btn primary" data-pd-action="profile" translate="no">${pc(icoEdit)}Ubah Profil</button>` +
+      `<button type="button" class="btn ghost" id="myProfileMsgBtn" translate="no">${pc(icoMsg)}Pesan</button>` +
+      `<button type="button" class="btn ghost" id="myProfileShareBtn" translate="no">${pc(icoShare)}Bagikan</button>`;
+    actions.querySelector("#myProfileMsgBtn").addEventListener("click", () => { if (typeof switchView === "function") switchView("messages"); });
+    actions.querySelector("#myProfileShareBtn").addEventListener("click", () => {
+      const u = (user && user.username) || "";
+      try { navigator.clipboard && navigator.clipboard.writeText("https://playly.app/u/" + u); } catch (e) {}
+      if (typeof toast === "function") toast("🔗 Link profil disalin", "success");
+    });
+  })();
   myProfileActiveTab = "posts"; // v619: tiap buka My Profile mulai dari tab Postingan.
   // Premium Insight / tier widget dipindah ke My Profile (per request user
   // 2026-05-15 v54). Render di sini supaya keisi tiap kali My Profile dibuka.
@@ -45887,16 +45921,81 @@ function renderMyProfileTab(which) {
 }
 
 // Bind klik my-profile video tile → inline player (inject ke halaman myprofile)
+// Popup daftar Pengikut / Mengikuti (req user: stat header bisa diklik → tampil POPUP,
+// bukan ganti konten inline yg janggal). Modal dibuat sekali, di-reuse.
+function openMyProfileUsersPopup(type) {
+  if (!user) return;
+  const isFollowers = type === "followers";
+  const title = isFollowers ? "Pengikut" : "Mengikuti";
+  let usernames = isFollowers
+    ? ((typeof getUserFollowers === "function") ? getUserFollowers(user.username) : [])
+    : (Array.isArray(state && state.followingCreators) ? state.followingCreators.slice() : []);
+  usernames = (usernames || []).filter(Boolean);
+
+  let modal = document.getElementById("myProfileUsersModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "myProfileUsersModal";
+    modal.className = "modal";
+    // Tanpa tombol X (req user) — tutup via klik backdrop / tekan Esc.
+    modal.innerHTML =
+      '<div class="modal-backdrop" data-close></div>' +
+      '<div class="modal-panel mp-users-panel">' +
+        '<h3 id="mpUsersTitle" translate="no"></h3>' +
+        '<div class="myprofile-userlist" id="mpUsersList"></div>' +
+        '<p class="mp-users-empty muted" id="mpUsersEmpty" hidden></p>' +
+      '</div>';
+    document.body.appendChild(modal);
+    const close = () => modal.classList.remove("show");
+    modal.addEventListener("click", e => {
+      if (e.target.closest("[data-close]")) { close(); return; }
+      const row = e.target.closest("[data-open-user]");
+      if (row) {
+        close();
+        const uname = row.getAttribute("data-open-user");
+        if (uname && typeof openUserProfile === "function") openUserProfile(uname);
+      }
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && modal.classList.contains("show")) close();
+    });
+  }
+  modal.querySelector("#mpUsersTitle").textContent = title;
+  const listEl = modal.querySelector("#mpUsersList");
+  const emptyEl = modal.querySelector("#mpUsersEmpty");
+  if (!usernames.length) {
+    listEl.hidden = true; listEl.innerHTML = "";
+    emptyEl.hidden = false;
+    emptyEl.textContent = isFollowers ? "Belum ada pengikut" : "Belum mengikuti siapa pun";
+  } else {
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+    listEl.innerHTML = usernames.map(u => myProfileUserRow(u)).join("");
+  }
+  modal.classList.add("show");
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis(modal); } catch (e) {} }
+}
+
 (function bindMyProfileClicks() {
   const view = document.querySelector('section.view[data-view="myprofile"]');
   if (!view || view.__myProfileBound) return;
   view.__myProfileBound = true;
   view.addEventListener("click", e => {
-    // v619: tab switch (Postingan/Pengikut/Mengikuti/Suka).
-    const tabBtn = e.target.closest("[data-myprofile-stat]");
+    // Ganti tab HANYA via tab bar (.myprofile-vidtab: Video Saya/Disukai/Disimpan/Ditonton).
+    // Stat header (Postingan/Pengikut/Mengikuti/Suka) = display-only (req user: klik
+    // "Pengikut" dulu munculin daftar followers yg janggal/terputus dari tab bar).
+    const tabBtn = e.target.closest(".myprofile-vidtab[data-myprofile-stat]");
     if (tabBtn) {
       const which = tabBtn.getAttribute("data-myprofile-stat");
       if (typeof renderMyProfileTab === "function") renderMyProfileTab(which);
+      return;
+    }
+    // Stat header Pengikut/Mengikuti → POPUP daftar (req user). Postingan/Suka tetap
+    // display-only (kontennya sudah ada di tab bar Video Saya/Disukai).
+    const statBtn = e.target.closest('.profile-header-stats .myprofile-stat[data-myprofile-stat]');
+    if (statBtn) {
+      const which = statBtn.getAttribute("data-myprofile-stat");
+      if (which === "followers" || which === "following") openMyProfileUsersPopup(which);
       return;
     }
     // v619: klik baris user (followers/following) → buka profil mereka.
