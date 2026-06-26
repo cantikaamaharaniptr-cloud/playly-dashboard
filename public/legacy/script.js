@@ -52196,7 +52196,7 @@ async function renderStoragePage() {
       fileList.innerHTML = (typeof window._emptyRichV24 === "function")
         ? window._emptyRichV24({
             kind: "storage",
-            title: "Storage kamu masih kosong",
+            title: "Penyimpanan kamu masih kosong",
             copy: "Unggah video pertamamu untuk mulai berbagi konten.",
             cta: { label: "Unggah sekarang", view: "upload" },
             extra: "storage-empty",
