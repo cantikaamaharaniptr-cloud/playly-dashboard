@@ -83,17 +83,17 @@ body[data-theme="light"] {
      light mode standar/profesional. Wine text & accents tetap = brand identity.
      2-level hierarki: page sedikit off-white (#FAFAFA), card pure white (#FFF),
      nested chip slightly grey (#F5F5F5). */
-  --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
+  --bg: #FAFAFA;          /* Page bg — putih netral (samakan standar Statistik) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
+  --surface: rgba(0, 0, 0, 0.03);     /* 2026-06-26: slate(17,24,39)->netral hitam (user tolak slate) */
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.18);
+  --border-strong: rgba(0, 0, 0, 0.28);
   --text: #6D2932;        /* Deep wine — main text */
-  --text-2: #5F564E;      /* Wine — secondary text */
-  --muted: #7A716A;       /* Light wine — muted/meta */
+  --text-2: #4B4B4B;      /* Netral abu — secondary text (bukan taupe) */
+  --muted: #6E6E6E;       /* Netral abu — muted/meta (bukan taupe) */
   --primary: #842A3B;     /* Wine — primary actions */
   --primary-hover: #6D2932; /* Deep wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
@@ -44380,6 +44380,24 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
   border-color: rgba(102, 34, 34, .18) !important;
   color: var(--text) !important;
   box-shadow: 0 6px 16px rgba(102, 34, 34, .1) !important;
+}
+
+/* ============================================================
+   2026-06-26 — PESAN (messages): samakan warna dgn Statistik.
+   Glyph kotak ikon (sec-icon) cream->putih; border ikon empty (dm-list-
+   empty-ico) cream->netral.
+   ============================================================ */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="messages"] .sec-icon-v582,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="messages"] .sec-icon-v582 svg,
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="messages"] .sec-icon-v582 svg * {
+  color: #FFFFFF !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="messages"] .dm-list-empty-ico {
+  border-color: var(--border) !important;
+}
+body[data-theme="dark"] section[data-view="messages"] .sec-icon-v582 svg,
+body[data-theme="dark"] section[data-view="messages"] .sec-icon-v582 svg * {
+  color: #FFFFFF !important;
 }
 
 /* =============================================================
