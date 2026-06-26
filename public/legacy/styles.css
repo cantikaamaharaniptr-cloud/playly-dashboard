@@ -44157,6 +44157,43 @@ section[data-view="user-profile"] .profile-header-card .up-socials {
 }
 
 /* ============================================================
+   2026-06-26 — PROFIL KREATOR (user-profile) disamakan dgn Profil Saya (req user).
+   Bedanya cuma tombol Ikuti (vs Ubah Profil). ============================================ */
+/* Grid video landscape 16:9 bersih (sama Profil Saya), kartu mp-vtile */
+section[data-view="user-profile"] #upVideoGrid,
+section[data-view="user-profile"] #upLikedGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 12px !important;
+}
+section[data-view="user-profile"] #upVideoGrid[hidden],
+section[data-view="user-profile"] #upLikedGrid[hidden] { display: none !important; }
+section[data-view="user-profile"] .mp-vthumb { aspect-ratio: 16 / 9 !important; }
+/* Tab bar Video/Disukai: 1 kolom, judul section disembunyikan (digantikan tab) */
+section[data-view="user-profile"] .profile-2col { display: block !important; }
+section[data-view="user-profile"] .profile-2col > .profile-col { width: 100% !important; }
+section[data-view="user-profile"] .profile-2col .myprofile-section-head { display: none !important; }
+section[data-view="user-profile"] #upVidTabs { margin: 4px 0 14px !important; }
+/* Pengikut(2) & Mengikuti(3) bisa diklik → popup */
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat:nth-child(2),
+section[data-view="user-profile"] .profile-header-stats .myprofile-stat:nth-child(3) { cursor: pointer !important; }
+/* Empty-state TANPA kotak (sama Profil Saya) */
+section[data-view="user-profile"] #upEmpty.up-empty,
+section[data-view="user-profile"] #upLikedEmpty.up-empty {
+  border: none !important; background: none !important; padding: 44px 20px !important;
+}
+/* Popup daftar Pengikut/Mengikuti (sama Profil Saya, tanpa X) */
+#upUsersModal .mp-users-panel { max-width: 420px; }
+#upUsersModal #upUsersTitle { margin-bottom: 14px; }
+#upUsersModal .myprofile-userlist { max-height: 60vh; overflow-y: auto; }
+#upUsersModal .mp-users-empty { text-align: center; padding: 30px 8px 6px; margin: 0; }
+/* Bg netral dark (tutup .starry-sky wine penuh termasuk padding, sama Profil Saya) */
+body[data-theme="dark"] section[data-view="user-profile"] { position: relative; min-height: calc(100dvh - 70px); }
+body[data-theme="dark"] section[data-view="user-profile"]::before {
+  content: ""; position: absolute; inset: -16px -24px -32px; background: #1a0c10; z-index: -1; pointer-events: none;
+}
+
+/* ============================================================
    2026-06-26 — PROFIL (myprofile/user-profile/profile): samakan dgn Statistik.
    Glyph kotak ikon (sec-icon)->putih; teks+ikon tombol wine-solid cream->putih.
    ============================================================ */

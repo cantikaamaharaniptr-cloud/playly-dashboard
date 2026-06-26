@@ -49169,6 +49169,66 @@ function isProfilePubliclyVisibleTo(targetUsername) {
   return targetFollowers.includes(user?.username);
 }
 
+// v(2026-06-26): profil kreator disamakan dgn Profil Saya — tab Video/Disukai (toggle
+// 2 kolom) + popup Pengikut/Mengikuti. req user.
+function showUpTab(which) {
+  const sec = document.querySelector('section.view[data-view="user-profile"]');
+  if (!sec) return;
+  which = (which === "liked") ? "liked" : "video";
+  if (state) state._upActiveTab = which;
+  const cols = sec.querySelectorAll(".profile-2col > .profile-col");
+  if (cols[0]) cols[0].hidden = (which !== "video");
+  if (cols[1]) cols[1].hidden = (which !== "liked");
+  sec.querySelectorAll("#upVidTabs [data-up-tab]").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-up-tab") === which);
+  });
+}
+// Popup daftar Pengikut/Mengikuti kreator yg DILIHAT (state._viewingUser). Tanpa tombol X.
+function openCreatorUsersPopup(type) {
+  const username = state && state._viewingUser;
+  if (!username) return;
+  const isFollowers = type === "followers";
+  const title = isFollowers ? "Pengikut" : "Mengikuti";
+  let usernames = isFollowers
+    ? ((typeof getUserFollowers === "function") ? getUserFollowers(username) : [])
+    : ((typeof getUserFollowing === "function") ? getUserFollowing(username) : []);
+  usernames = (usernames || []).filter(Boolean);
+  let modal = document.getElementById("upUsersModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "upUsersModal";
+    modal.className = "modal";
+    modal.innerHTML =
+      '<div class="modal-backdrop" data-close></div>' +
+      '<div class="modal-panel mp-users-panel">' +
+        '<h3 id="upUsersTitle" translate="no"></h3>' +
+        '<div class="myprofile-userlist" id="upUsersList"></div>' +
+        '<p class="mp-users-empty muted" id="upUsersEmpty" hidden></p>' +
+      '</div>';
+    document.body.appendChild(modal);
+    const close = () => modal.classList.remove("show");
+    modal.addEventListener("click", e => {
+      if (e.target.closest("[data-close]")) { close(); return; }
+      const row = e.target.closest("[data-open-user]");
+      if (row) { close(); const u = row.getAttribute("data-open-user"); if (u && typeof openUserProfile === "function") openUserProfile(u); }
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("show")) close(); });
+  }
+  modal.querySelector("#upUsersTitle").textContent = title;
+  const listEl = modal.querySelector("#upUsersList");
+  const emptyEl = modal.querySelector("#upUsersEmpty");
+  if (!usernames.length) {
+    listEl.hidden = true; listEl.innerHTML = "";
+    emptyEl.hidden = false;
+    emptyEl.textContent = isFollowers ? "Belum ada pengikut" : "Belum mengikuti siapa pun";
+  } else {
+    emptyEl.hidden = true; listEl.hidden = false;
+    listEl.innerHTML = usernames.map(u => myProfileUserRow(u)).join("");
+  }
+  modal.classList.add("show");
+  if (typeof convertUiEmojis === "function") { try { convertUiEmojis(modal); } catch (e) {} }
+}
+
 function renderUserProfile() {
   const username = state?._viewingUser;
   if (!username) return;
@@ -49184,6 +49244,32 @@ function renderUserProfile() {
     // Sisi KIRI = avatar + info (nama/handle/stats); tombol aksi TIDAK ikut (biar di kanan).
     [...card.children].forEach(ch => { if (ch !== avatar && ch !== actions) info.appendChild(ch); });
     if (actions) card.insertBefore(info, actions); else card.appendChild(info);
+  })();
+  // Tab bar Video/Disukai (toggle 2 kolom) + bind klik stat Pengikut/Mengikuti → popup.
+  (function ensureUpProfileTabs() {
+    const sec = document.querySelector('section.view[data-view="user-profile"]');
+    if (!sec) return;
+    const col2 = sec.querySelector(".profile-2col");
+    if (col2 && !sec.querySelector("#upVidTabs")) {
+      const bar = document.createElement("div");
+      bar.id = "upVidTabs";
+      bar.className = "myprofile-vidtabs";
+      bar.innerHTML =
+        '<button type="button" class="myprofile-vidtab active" data-up-tab="video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Video</span></button>' +
+        '<button type="button" class="myprofile-vidtab" data-up-tab="liked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5C6.5 16.5 3 13.2 3 9.2 3 6.6 5 5 7.2 5c1.6 0 2.9.9 3.8 2.1C11.9 5.9 13.2 5 14.8 5 17 5 19 6.6 19 9.2c0 4-3.5 7.3-7 11.3z"/></svg><span>Disukai</span></button>';
+      col2.parentElement.insertBefore(bar, col2);
+    }
+    if (sec.__upTabsBound) return;
+    sec.__upTabsBound = true;
+    sec.addEventListener("click", e => {
+      const tab = e.target.closest("[data-up-tab]");
+      if (tab) { showUpTab(tab.getAttribute("data-up-tab")); return; }
+      const stat = e.target.closest(".profile-header-stats .myprofile-stat");
+      if (stat) {
+        if (stat.querySelector("#upStatFollowers")) openCreatorUsersPopup("followers");
+        else if (stat.querySelector("#upStatFollowing")) openCreatorUsersPopup("following");
+      }
+    });
   })();
   const isMe = !!user && username === user.username;  // ← deteksi own channel
   const acc = findAccountByUsername(username);
@@ -49293,20 +49379,9 @@ function renderUserProfile() {
     if (empty) empty.hidden = false;
   } else {
     if (empty) empty.hidden = true;
-    grid.innerHTML = videos.map(v => {
-      const ts = v.createdAt || (typeof v.id === "number" && v.id > 1e12 ? v.id : 0);
-      const timeText = ts ? relTime(ts) : (v.time || "");
-      return `
-      <div class="lib-item" data-vid="${v.id}">
-        <div class="lib-thumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
-          ${v.duration ? `<span class="lib-thumb-dur">${v.duration}</span>` : ""}
-        </div>
-        <div class="lib-meta">
-          <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-          <small>${v.views || 0} tayangan · ${escapeHtml(timeText)}</small>
-        </div>
-      </div>`;
-    }).join("");
+    // v(2026-06-26): kartu kreator disamakan dgn Profil Saya — landscape 16:9 bersih
+    // (overlay tayangan+durasi, tanpa caption). Reuse myProfileVideoTile (data-vid).
+    grid.innerHTML = videos.map(myProfileVideoTile).join("");
     // Pre-cache video objects so findVideo can always locate them
     window.__vidCache = window.__vidCache || {};
     videos.forEach(v => { window.__vidCache[String(v.id)] = v; });
@@ -49359,17 +49434,17 @@ function renderUserProfile() {
       if (likedEmpty) likedEmpty.hidden = false;
     } else {
       if (likedEmpty) likedEmpty.hidden = true;
-      likedGrid.innerHTML = likedVideos.map(v => `
-        <div class="lib-item" data-liked-vid="${v.id}">
-          <div class="lib-thumb" ${v.thumb ? `style="background-image:url('${v.thumb}')"` : ""}>
-            ${v.duration ? `<span class="lib-thumb-dur">${v.duration}</span>` : ""}
+      // v(2026-06-26): kartu landscape 16:9 bersih (sama Profil Saya), data-liked-vid.
+      likedGrid.innerHTML = likedVideos.map(v => {
+        const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
+        const thumbBg = v.thumb ? `style="background-image:url('${v.thumb}')"` : "";
+        return `<div class="mp-vtile" data-liked-vid="${v.id}" title="${escapeHtml(v.title || "Video")}">
+          <div class="mp-vthumb" ${thumbBg}>
+            <span class="mp-vplays"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${views}</span>
+            ${v.duration ? `<span class="mp-vdur">${v.duration}</span>` : ""}
           </div>
-          <div class="lib-meta">
-            <strong title="${escapeHtml(v.title || "")}">${escapeHtml(v.title || "")}</strong>
-            <small>@${escapeHtml(v.creator || "")} · ${v.views || 0} tayangan</small>
-          </div>
-        </div>
-      `).join("");
+        </div>`;
+      }).join("");
       window.__vidCache = window.__vidCache || {};
       likedVideos.forEach(v => { if (v) window.__vidCache[String(v.id)] = v; });
       if (!likedGrid.__vidClickBound) {
@@ -49392,6 +49467,8 @@ function renderUserProfile() {
       }
     }
   }
+  // Tab aktif (default Video) — samakan dgn tab bar Profil Saya. req user.
+  showUpTab(state && state._upActiveTab ? state._upActiveTab : "video");
 }
 
 // Click handler untuk avatar/nama kreator di player
