@@ -45751,25 +45751,40 @@ function renderMyProfile() {
   document.getElementById("myProfileFollowingCount").textContent = fmtNum(followingCount);
   document.getElementById("myProfileLikeCount").textContent = fmtNum(totalLikes);
 
+  // v(2026-06-26): tab bar eksplisit "Video Saya"/"Disukai" di atas grid (req user:
+  // biar jelas mana video saya & yang disukai). Reuse mekanisme data-myprofile-stat
+  // (handler bindMyProfileClicks + renderMyProfileTab) → klik langsung ganti grid.
+  (function ensureMyProfileVidTabs() {
+    const panel = document.getElementById("myProfileTabPanel");
+    if (!panel || !panel.parentElement || document.getElementById("myProfileVidTabs")) return;
+    const bar = document.createElement("div");
+    bar.id = "myProfileVidTabs";
+    bar.className = "myprofile-vidtabs";
+    bar.innerHTML =
+      '<button type="button" class="myprofile-vidtab" data-myprofile-stat="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Video Saya</span></button>' +
+      '<button type="button" class="myprofile-vidtab" data-myprofile-stat="likes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5C6.5 16.5 3 13.2 3 9.2 3 6.6 5 5 7.2 5c1.6 0 2.9.9 3.8 2.1C11.9 5.9 13.2 5 14.8 5 17 5 19 6.6 19 9.2c0 4-3.5 7.3-7 11.3z"/></svg><span>Disukai</span></button>' +
+      '<button type="button" class="myprofile-vidtab" data-myprofile-stat="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/></svg><span>Disimpan</span></button>' +
+      '<button type="button" class="myprofile-vidtab" data-myprofile-stat="watched"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg><span>Ditonton</span></button>';
+    panel.parentElement.insertBefore(bar, panel);
+  })();
+
   // Render tab yang aktif (default "posts"). v619.
   renderMyProfileTab(myProfileActiveTab);
 }
 
 // v619: helper render satu lib-item video card (dipakai tab posts + likes).
+// v(2026-06-26): kartu profil gaya TikTok/IG (referensi web) — thumbnail POTRET
+// (video vertikal), jumlah tayangan overlay di atas thumbnail, judul 2 baris di bawah.
 function myProfileVideoTile(v) {
   const title = escapeHtml(v.title || "Video");
   const thumb = v.thumb || v.thumbnail || "";
   const views = v.viewsNum != null ? fmtNum(v.viewsNum) : (v.views || "0");
   const duration = v.duration || "";
   const thumbBg = thumb ? `style="background-image:url('${thumb}')"` : "";
-  return `<div class="lib-item" data-vid="${v.id}">
-      <div class="lib-thumb" ${thumbBg}>
-        ${thumb ? "" : "<span class='lib-thumb-fallback'>🎬</span>"}
-        ${duration ? `<span class="lib-thumb-dur">${duration}</span>` : ""}
-      </div>
-      <div class="lib-meta">
-        <strong title="${title}">${title}</strong>
-        <small>${views} tayangan</small>
+  return `<div class="mp-vtile" data-vid="${v.id}" title="${title}">
+      <div class="mp-vthumb" ${thumbBg}>
+        <span class="mp-vplays"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${views}</span>
+        ${duration ? `<span class="mp-vdur">${duration}</span>` : ""}
       </div>
     </div>`;
 }
@@ -45799,7 +45814,7 @@ let myProfileActiveTab = "posts";
 // (#myProfileVideoGrid / #myProfileLikedGrid / #myProfileUserList) + empty-state.
 function renderMyProfileTab(which) {
   if (!user) return;
-  const tabs = ["posts", "followers", "following", "likes"];
+  const tabs = ["posts", "likes", "saved", "watched", "followers", "following"];
   if (!tabs.includes(which)) which = "posts";
   myProfileActiveTab = which;
 
@@ -45841,6 +45856,19 @@ function renderMyProfileTab(which) {
       liked.hidden = false;
       liked.innerHTML = likedVideos.map(myProfileVideoTile).join("");
     }
+  } else if (which === "saved") {
+    // v(2026-06-26): video tersimpan (bookmark) — state.saved = array id video.
+    const ids = Array.isArray(state?.saved) ? state.saved : [];
+    const vids = ids.map(id => (typeof findVideo === "function" ? findVideo(+id) : null)).filter(Boolean);
+    if (!vids.length) return showEmpty("Belum ada video tersimpan", "🔖");
+    if (grid) { grid.hidden = false; grid.innerHTML = vids.map(myProfileVideoTile).join(""); }
+  } else if (which === "watched") {
+    // v(2026-06-26): video yang sudah ditonton — dari state.history (videoId), dedup.
+    const hist = Array.isArray(state?.history) ? state.history : [];
+    const uniqIds = [...new Set(hist.map(h => h && h.videoId).filter(id => id != null))];
+    const vids = uniqIds.map(id => (typeof findVideo === "function" ? findVideo(+id) : null)).filter(Boolean);
+    if (!vids.length) return showEmpty("Belum ada video ditonton", "👁️");
+    if (grid) { grid.hidden = false; grid.innerHTML = vids.map(myProfileVideoTile).join(""); }
   } else if (which === "followers") {
     const users = (typeof getUserFollowers === "function") ? getUserFollowers(user.username) : [];
     if (!users.length) return showEmpty("Belum ada pengikut", "👥");
@@ -45878,7 +45906,7 @@ function renderMyProfileTab(which) {
       if (uname && typeof openUserProfile === "function") openUserProfile(uname);
       return;
     }
-    const item = e.target.closest(".lib-item");
+    const item = e.target.closest(".lib-item, .mp-vtile");
     if (!item) return;
     const id = Number(item.dataset.vid);
     if (Number.isFinite(id)) {

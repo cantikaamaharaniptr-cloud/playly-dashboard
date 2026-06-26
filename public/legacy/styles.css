@@ -44044,6 +44044,64 @@ html body[data-theme="light"]:not([data-role="admin"]) .auth-preview-floats .apf
 }
 
 /* ============================================================
+   2026-06-26 — PROFIL SAYA (myprofile): tab bar Video Saya/Disukai + bg netral.
+   ============================================================ */
+/* Tab bar gaya IG/TikTok (referensi web): underline indicator + ikon, minimal —
+   bukan pill. Aktif = teks tegas + garis bawah wine; nonaktif = abu redup. */
+.myprofile-vidtabs {
+  display: flex; justify-content: flex-start; gap: 8px; margin: 4px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+.myprofile-vidtab {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 12px 4px; background: none; border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; margin-right: 18px;
+  font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer;
+  transition: color .15s, border-color .15s; line-height: 1.2;
+}
+.myprofile-vidtab svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.myprofile-vidtab:hover { color: var(--text); }
+.myprofile-vidtab.active {
+  color: var(--text); font-weight: 700; border-bottom-color: var(--primary);
+}
+/* Bg netral di DARK: tutupi gradient wine starry-sky (req user: "netral seperti halaman lain"). */
+body[data-theme="dark"] section[data-view="myprofile"] {
+  background: #1a0c10 !important;
+  min-height: calc(100dvh - 70px);
+}
+/* Grid video profil gaya TikTok/IG (referensi web) — kartu POTRET 3:4 + jumlah
+   tayangan overlay di thumbnail + judul 2 baris. Scoped ke id grid profil supaya
+   tak mengganggu .lib-grid Pustaka. */
+/* Bersih ala Instagram/TikTok: kolom lebih sedikit & besar, jarak rapat, tanpa
+   border & tanpa caption (cuma view-count + durasi overlay). Ref IG: 3:4, gap tipis,
+   minimal; TikTok: view-count di cover. */
+#myProfileVideoGrid, #myProfileLikedGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
+  gap: 8px !important;
+}
+.mp-vtile { cursor: pointer; }
+.mp-vthumb {
+  position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden;
+  background: var(--surface-2) center / cover no-repeat; transition: transform .14s, box-shadow .14s;
+}
+.mp-vtile:hover .mp-vthumb { transform: scale(1.012); box-shadow: 0 8px 22px rgba(0,0,0,.34); }
+.mp-vthumb::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
+  background: linear-gradient(to top, rgba(0,0,0,.55), transparent); pointer-events: none;
+}
+.mp-vplays {
+  position: absolute; left: 10px; bottom: 9px; z-index: 1;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6);
+}
+.mp-vdur {
+  position: absolute; right: 9px; bottom: 9px; z-index: 1;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: rgba(0,0,0,.5); padding: 2px 7px; border-radius: 6px;
+}
+
+/* ============================================================
    2026-06-26 — PROFIL (myprofile/user-profile/profile): samakan dgn Statistik.
    Glyph kotak ikon (sec-icon)->putih; teks+ikon tombol wine-solid cream->putih.
    ============================================================ */
