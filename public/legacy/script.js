@@ -28633,8 +28633,14 @@ async function applyAdOverlays(videoEl) {
   // Pre-roll: inject DULU sebelum overlay lain
   const prItem = pickAdItemForPlay(cfg.preroll, "pr");
   if (prItem) {
-    const url = prItem.hasBlob ? await getPrerollItemBlobUrl(prItem.id) : prItem.videoUrl;
-    if (url) await playPrerollAd(videoEl, url, prItem);
+    // Pre-roll bisa VIDEO atau GAMBAR. Dulu cuma baca videoUrl → iklan GAMBAR
+    // (mediaType="image", disimpan di imageUrl) di-skip total. (port bin/kelola-iklan)
+    if (prItem.mediaType === "image") {
+      if (prItem.imageUrl) await playImagePrerollAd(videoEl, prItem.imageUrl, prItem);
+    } else {
+      const url = prItem.hasBlob ? await getPrerollItemBlobUrl(prItem.id) : prItem.videoUrl;
+      if (url) await playPrerollAd(videoEl, url, prItem);
+    }
   }
 
   // Running text — mode "all" tampilkan semua sekaligus, lainnya pilih satu
@@ -28932,6 +28938,60 @@ function playPrerollAd(videoEl, url, c) {
         if (skipBtn.disabled) return;
         finish();
       });
+    }
+  });
+}
+
+// Pre-roll GAMBAR — tampilkan gambar mengisi player selama durationSec (default
+// 5s) + tombol Lewati (skipAfterSec), lalu lanjut video utama. Mirror
+// playPrerollAd tapi pakai <img> (bukan memutar video). FIX: dulu pre-roll
+// gambar di-skip total karena applyAdOverlays cuma baca videoUrl. (port bin/kelola-iklan)
+function playImagePrerollAd(videoEl, imageUrl, c) {
+  return new Promise(resolve => {
+    const screen = videoEl.closest(".player-screen, .lib-inline-screen");
+    if (!screen || !imageUrl) return resolve();
+
+    const overlay = document.createElement("div");
+    overlay.className = "ad-overlay ad-preroll ad-preroll-image";
+    const linkOpen = c.linkUrl ? `<a href="${c.linkUrl}" target="_blank" rel="noopener" class="ad-preroll-imglink">` : "";
+    const linkClose = c.linkUrl ? `</a>` : "";
+    overlay.innerHTML = `
+      ${linkOpen}<img class="ad-preroll-img" src="${imageUrl}" alt="iklan"/>${linkClose}
+      <span class="ad-preroll-label">📢 Iklan</span>
+      <button class="ad-preroll-skip" hidden>Lewati ›</button>
+    `;
+    screen.appendChild(overlay);
+    try { videoEl.pause(); } catch {}
+
+    const skipBtn = overlay.querySelector(".ad-preroll-skip");
+    let countdownTimer = null, doneTimer = null;
+    const cleanup = () => {
+      if (countdownTimer) clearInterval(countdownTimer);
+      if (doneTimer) clearTimeout(doneTimer);
+      overlay.remove();
+      try { videoEl.play().catch(() => {}); } catch {}
+      resolve();
+    };
+
+    // Auto-selesai setelah durationSec
+    const dur = Math.max(1, Number(c.durationSec) || 5);
+    doneTimer = setTimeout(cleanup, dur * 1000);
+
+    // Tombol Lewati (sama pola dgn pre-roll video)
+    if (c.skippable) {
+      let remaining = Math.max(0, Number(c.skipAfterSec) || 0);
+      if (remaining === 0) {
+        skipBtn.hidden = false; skipBtn.textContent = "Lewati ›";
+      } else {
+        skipBtn.hidden = false; skipBtn.disabled = true;
+        skipBtn.textContent = `Lewati dalam ${remaining}…`;
+        countdownTimer = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) { skipBtn.disabled = false; skipBtn.textContent = "Lewati ›"; clearInterval(countdownTimer); }
+          else skipBtn.textContent = `Lewati dalam ${remaining}…`;
+        }, 1000);
+      }
+      skipBtn.addEventListener("click", () => { if (!skipBtn.disabled) cleanup(); });
     }
   });
 }
