@@ -1,0 +1,11 @@
+# Mark legacy vanilla bundle as vendored so GitHub Linguist excludes it from
+# repository language statistics. Files inside public/legacy/ are the pre-Next.js
+# Playly dashboard — preserved during the Next.js migration (Phases 1-6) and
+# removed at cutover (Phase 7).
+public/legacy/** linguist-vendored=true
+
+# Cleanup SQL helpers — operational scripts, not application code.
+scripts/** linguist-vendored=true
+
+# Lockfiles — generated, not authored.
+package-lock.json linguist-generated=true

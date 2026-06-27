@@ -1,0 +1,56 @@
+# Vercel
+.vercel/
+
+# Claude Code local config (don't commit personal IDE settings)
+.claude/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary scratch files
+.tmp_*
+*.tmp
+
+# Local env / secrets
+.env
+.env.local
+.env.*.local
+# Local DB credentials (Supabase connection string — JANGAN commit)
+db-url.txt
+db-url.txt/
+
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# Next.js
+.next/
+out/
+
+# Generated minified legacy assets (built by scripts/minify-legacy.mjs in prebuild)
+public/legacy/*.min.js
+public/legacy/*.min.css
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright/MCP browser snapshots (ephemeral test artifacts)
+.playwright-mcp/
+*.png
