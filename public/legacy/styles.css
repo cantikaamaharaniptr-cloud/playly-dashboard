@@ -47898,6 +47898,32 @@ body.auth-mode .dashboard-sync-pill { display: none !important; }
 .cloud-reconnect-modal .crc-actions { display: flex; gap: 10px; margin-top: 6px; }
 .cloud-reconnect-modal .crc-actions .btn { flex: 1; justify-content: center; }
 
+/* ===== HP (≤640px): rapihkan tabel & kartu admin biar tombol aksi tak kepotong.
+   Scoped via media query -> tampilan PC (layar lebar) TIDAK terpengaruh sama sekali. ===== */
+@media (max-width: 640px) {
+  /* Biar tabel mengecil mengikuti kolom yg tersisa (bukan dipaksa lebar) */
+  #adminUserTable, #adminVideoTable { min-width: 0 !important; }
+
+  /* Manajemen Akun — sisakan User · Status · Aksi. Sembunyikan Email/Peran/Tier/Video/Bergabung */
+  #adminUserTable th:nth-child(3), #adminUserTable td:nth-child(3),
+  #adminUserTable th:nth-child(4), #adminUserTable td:nth-child(4),
+  #adminUserTable .col-tier,
+  #adminUserTable .col-videos,
+  #adminUserTable th:nth-child(7), #adminUserTable td:nth-child(7) { display: none; }
+
+  /* Kontrol Konten — sisakan Video · Status · Aksi. Sembunyikan Kreator/Tayangan/Suka/Upload */
+  #adminVideoTable th:nth-child(3), #adminVideoTable td:nth-child(3),
+  #adminVideoTable th:nth-child(4), #adminVideoTable td:nth-child(4),
+  #adminVideoTable th:nth-child(5), #adminVideoTable td:nth-child(5),
+  #adminVideoTable th:nth-child(7), #adminVideoTable td:nth-child(7) { display: none; }
+
+  /* Analitik — kartu "Pencapaian" numpuk 1 kolom (samakan specificity aturan admin 2-kolom). */
+  body[data-role="admin"] section[data-view="admin-analytics"]:not(.focus-mode) .an-tops-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 .dashboard-tier-pill {
   display: inline-flex;
   align-items: center;
