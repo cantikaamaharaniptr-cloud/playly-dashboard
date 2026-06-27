@@ -72392,7 +72392,7 @@ body.reduced-motion .preview-card .preview-features li { opacity: 1; transform: 
 /* --- Toggle periode penagihan Bulanan/Tahunan DIHAPUS (2026-05-22, per
    user). Landing page cukup tampil harga bulanan + catatan hemat
    tahunan statis (.plan-price-note); pemilihan periode riil ada di
-   plan-picker saat checkout. CSS .plan-billing-*/.pbt-* dibuang. --- */
+   plan-picker saat checkout. CSS .plan-billing-* dan .pbt-* dibuang. --- */
 
 /* --- Premium card elevation — GLOW saja, TANPA scale supaya ukuran
    kartu SAMA dengan Free (per user 2026-05-22: "samakan ukuran"). --- */
@@ -78131,6 +78131,8 @@ section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
 }
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot,
 body.reduced-motion section[data-view="stats"] #statsLiveBadge .hqs-live-dot::after {
+  animation: none !important;
+}
 /* ===================================================================
    PUSTAKA SAYA — header POLOS (per user 2026-06-21): kartu wine besar
    dibuang; jadi judul + deskripsi biasa supaya bagian atas ringan.
@@ -79150,6 +79152,7 @@ html body:not([data-role="admin"]):not(.auth-mode) section[data-view="stats"] [d
 #chartTip:not(.show) {
   opacity: 0 !important;
   visibility: hidden !important;
+}
 /* ===================================================================
    PLAYER — tombol Dislike (di-inject via JS, cermin Like). Pill konsisten;
    state aktif NETRAL (beda dari Like yang wine/--primary) supaya jelas terbedakan.
@@ -79341,6 +79344,7 @@ body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   content: ""; /* ✎ dihapus 2026-06-15 — ikon pensil sudah di kiri chip (SVG) */
   font-size: 11px;
   opacity: .8;
+}
 /* (7e) Caption pengganti sparkline saat snapshot < 2 hari (honest, themed).
    .hpf-spark-note = class baru yg dipakai renderHomePerfCard; .hpf-no-data
    dipertahankan sbg dead-rule sesuai konvensi codebase. */
@@ -79351,6 +79355,7 @@ body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   border: 1px dashed var(--border);
   border-radius: 10px;
   background: rgba(255, 255, 255, .03);
+}
 
 /* =========================================================================
    (7a) WATCH-TIME ESTIMATE TAG — honest "≈ est." badge di label kartu
@@ -79396,6 +79401,11 @@ body:not([data-role="admin"]) .breadcrumb:has(a[data-stats-origin])::before {
   text-transform: uppercase;
 }
 .ha-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 /* ===== v619 — USER PROFILE ENHANCEMENTS (Edit Profile + My Profile) ===== */
 
 /* 11d — Bio character counter near the bio textarea */
@@ -80299,6 +80309,7 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-b
   color: #fff;
   border-color: var(--primary);
 }
+/* ===================================================================
    PLAYER v695 — empty-state layar video + rapikan frame slot iklan.
    =================================================================== */
 /* Empty-state: video gagal dimuat → placeholder di atas layar. */
@@ -80417,6 +80428,7 @@ body:not([data-role="admin"]) section.view[data-view="settings"] .audit-filter-b
 .vem-grid .vem-col .upf-field,
 .vem-grid .vem-col .upf-pair { margin: 0 !important; }
 @media (max-width: 780px) { .vem-grid { grid-template-columns: 1fr; } }
+/* ===================================================================
    PUSTAKA SAYA v737 — tombol Suka/Bagikan: ganti BENTUK (pill → kotak rounded
    radius 10px, serasi dgn input/Kirim) + WARNA tema dashboard (wine-tinted).
    Flat: tanpa animasi/transisi, tanpa focus ring, tanpa glass.
