@@ -29661,6 +29661,77 @@ function setKPI(el, val) {
   }
 }
 
+// ===== TARGET BULANAN — progress user baru & pendapatan vs target admin =====
+const ADMIN_TARGETS_KEY = "playly-admin-targets";
+function getAdminTargets() {
+  try { const t = JSON.parse(localStorage.getItem(ADMIN_TARGETS_KEY) || "null"); if (t && typeof t === "object") return t; } catch {}
+  return { users: 50, revenue: 5000000 };   // default awal kalau belum di-set
+}
+function setAdminTargets(t) {
+  try { localStorage.setItem(ADMIN_TARGETS_KEY, JSON.stringify(t)); } catch {}
+}
+function _monthStartTs() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1).getTime(); }
+function renderAdminTargets() {
+  const body = document.getElementById("adminTargetsBody");
+  if (!body) return;
+  const tg = getAdminTargets();
+  const monthStart = _monthStartTs();
+  // User baru bulan ini (exclude admin)
+  const newUsers = getAllAccounts().filter(a =>
+    a.role !== "admin" && a.joinedAt && new Date(a.joinedAt).getTime() >= monthStart).length;
+  // Pendapatan bulan ini (ledger entry ts >= awal bulan)
+  let revMonth = 0;
+  try {
+    const r = computeRevenueFromLedger();
+    revMonth = (r.ledger || []).filter(l => Number(l.ts) >= monthStart).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+  } catch {}
+  const rows = [
+    { label: "User Baru",  cur: newUsers, tgt: Number(tg.users) || 0,   fmt: fmtNum,     grad: "#5B7BB4,#9DB4DA" },
+    { label: "Pendapatan", cur: revMonth, tgt: Number(tg.revenue) || 0, fmt: fmtRpShort, grad: "#3FB37F,#7BE0A9" },
+  ];
+  body.innerHTML = rows.map(r => {
+    const pct = r.tgt > 0 ? Math.min(100, Math.round((r.cur / r.tgt) * 100)) : 0;
+    const done = r.tgt > 0 && r.cur >= r.tgt;
+    return `<div class="atg-row" style="margin:14px 0 4px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;gap:10px">
+          <span style="font-weight:700;color:var(--text)">${r.label}${done ? " 🎉" : ""}</span>
+          <span style="color:var(--muted);white-space:nowrap">${r.fmt(r.cur)} / ${r.fmt(r.tgt)} <b style="color:var(--text)">(${pct}%)</b></span>
+        </div>
+        <div style="height:9px;border-radius:999px;background:rgba(165,175,195,.15);overflow:hidden;margin-top:7px">
+          <i style="display:block;height:100%;width:${pct}%;border-radius:999px;background:linear-gradient(90deg,${r.grad});transition:width .7s ease"></i>
+        </div>
+      </div>`;
+  }).join("");
+}
+function openAdminTargetEdit() {
+  const body = document.getElementById("adminTargetsBody");
+  if (!body) return;
+  const tg = getAdminTargets();
+  const inp = "width:100%;margin-top:5px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px";
+  body.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;max-width:420px">
+      <label style="font-size:13px;font-weight:700;color:var(--text)">🎯 Target User Baru (bulan ini)
+        <input type="number" id="atgInUsers" min="0" value="${Number(tg.users) || 0}" style="${inp}"/>
+      </label>
+      <label style="font-size:13px;font-weight:700;color:var(--text)">💰 Target Pendapatan (Rp, bulan ini)
+        <input type="number" id="atgInRevenue" min="0" value="${Number(tg.revenue) || 0}" style="${inp}"/>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost sm" id="atgCancel">Batal</button>
+        <button class="btn primary sm" id="atgSave">Simpan</button>
+      </div>
+    </div>`;
+  document.getElementById("atgSave").addEventListener("click", () => {
+    const users = Math.max(0, parseInt(document.getElementById("atgInUsers").value, 10) || 0);
+    const revenue = Math.max(0, parseInt(document.getElementById("atgInRevenue").value, 10) || 0);
+    setAdminTargets({ users, revenue });
+    renderAdminTargets();
+    toast("✓ Target bulan ini diperbarui", "success");
+  });
+  document.getElementById("atgCancel").addEventListener("click", renderAdminTargets);
+}
+document.getElementById("adminTargetEdit")?.addEventListener("click", openAdminTargetEdit);
+
+
 function renderAdminKPI() {
   const m = getAdminMetrics();
   // Total Pengguna = user only (admin di-exclude — admin punya tab sendiri di User Management)
@@ -29669,6 +29740,7 @@ function renderAdminKPI() {
   setKPI($("#kpiVideos"), fmtNum(m.videos.length));
   setKPI($("#kpiViews"), fmtNum(m.totalViews));
   setKPI($("#kpiRevenue"), fmtIDR(m.revenue));
+  renderAdminTargets();
   // Count-up animation on numeric KPIs (after setKPI sets initial value + flash)
   setTimeout(() => {
     countUp($("#kpiUsers"),  userCount,            fmtNum);
