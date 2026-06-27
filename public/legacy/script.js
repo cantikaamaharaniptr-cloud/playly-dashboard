@@ -29242,6 +29242,73 @@ function renderAdminRevenue() {
 }
 
 // Refresh manual buttons
+// Export laporan pendapatan → CSV (bisa dibuka di Excel). Ngambil data dari
+// computeRevenueFromLedger() jadi ngehormatin date filter yg lagi aktif.
+function exportRevenueCsv() {
+  let r = null;
+  try { r = computeRevenueFromLedger(); } catch (_) {}
+  const ledger = (r && Array.isArray(r.ledger)) ? r.ledger : [];
+  if (!ledger.length) {
+    toast("Belum ada data pendapatan untuk diekspor.", "warning");
+    return;
+  }
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmtDate = (ts) => {
+    const d = new Date(Number(ts) || 0);
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const typeLabel = (t) => {
+    t = (t || "").toLowerCase();
+    if (t === "ads") return "Iklan";
+    if (t === "subscription" || t === "sub") return "Langganan";
+    return t || "Lainnya";
+  };
+  // Escape sel CSV: bungkus pakai quote kalau ada koma/quote/newline.
+  const esc = (v) => {
+    const s = String(v == null ? "" : v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const summary = [
+    ["Laporan Pendapatan Playly"],
+    ["Diekspor", fmtDate(Date.now())],
+    ["Periode", r.filterActive ? "Terfilter (sesuai filter tanggal aktif)" : "Semua waktu"],
+    ["Total transaksi", ledger.length],
+    ["Total pendapatan (Rp)", Math.floor(r.total || 0)],
+    ["Langganan (Rp)", Math.floor(r.sub || 0)],
+    ["Iklan (Rp)", Math.floor(r.ads || 0)],
+    [],
+  ];
+  const header = ["Tanggal", "Jumlah (Rp)", "Tipe", "Sumber", "Plan", "Kode"];
+  const rows = ledger.map((l) => [
+    fmtDate(l.ts),
+    Math.floor(Number(l.amount) || 0),
+    typeLabel(l.type),
+    l.source || "",
+    l.plan || "",
+    l.code || "",
+  ]);
+  const lines = [
+    ...summary.map((cols) => cols.map(esc).join(",")),
+    header.map(esc).join(","),
+    ...rows.map((cols) => cols.map(esc).join(",")),
+  ];
+  // BOM "﻿" supaya Excel baca UTF-8 dgn benar (huruf · & Rp gak rusak).
+  const csv = "﻿" + lines.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pendapatan-playly-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`✓ ${ledger.length} transaksi diekspor ke CSV`, "success");
+}
+$("#exportRevenueCsv")?.addEventListener("click", exportRevenueCsv);
+
+
 $("#refreshAdminRevenue")?.addEventListener("click", () => {
   renderAdminRevenue();
   toast("✓ Revenue di-refresh", "success");
