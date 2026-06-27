@@ -279,6 +279,15 @@
     filtered.push({ key, value, queuedAt: Date.now() });
     saveRetryQueue(filtered);
   }
+  // Apakah error menandakan kegagalan PERMANEN (RLS deny / bukan pemilik) —
+  // jalur ini tak akan pernah sukses untuk key tsb → JANGAN antre ulang.
+  // Sebelumnya (bug 2026-06-27): retry queue selalu pakai jalur anon yang
+  // SELALU ditolak RLS untuk key per-user → entry di-retry selamanya tiap 30s
+  // + tiap focus (spam console + boros egress + key user sendiri tak tersimpan).
+  function isPermanentRlsError(msg) {
+    return /row-level security|violates|not authorized|permission denied|policy/i.test(String(msg || ""));
+  }
+
   let _retryFlushing = false;
   async function flushRetryQueue() {
     if (_retryFlushing) return;
@@ -289,14 +298,62 @@
     _retryFlushing = true;
     const remaining = [];
     for (const entry of q) {
+      // Akun user lain yg ke-pull ke localStorage ini — jangan pernah push
+      // (bukan punya kita), buang dari antrean supaya tidak loop.
+      if (isForeignAccountKey(entry.key)) {
+        console.warn("[cloud] retry dibuang (akun user lain):", entry.key);
+        continue;
+      }
       try {
+        // Key per-user WAJIB lewat bridge (cookie auth). Jalur anon selalu
+        // ditolak RLS untuk key ini → kalau dipaksa anon, loop selamanya.
+        if (useKvBridge() && isPerUserBridgeKey(entry.key)) {
+          const res = await pushViaKvBridge(entry.key, entry.value);
+          if (res.ok) continue; // sukses → keluar dari antrean
+          // 401/403 = bukan pemilik key (mis. akun user lain yg ke-pull ke
+          // localStorage ini) atau sesi habis → tak akan pernah sukses → DROP.
+          if (res.status === 401 || res.status === 403) {
+            console.warn("[cloud] retry dibuang (bukan pemilik / sesi habis):", entry.key);
+            continue;
+          }
+          // Selain itu (network / 5xx) → transien, simpan untuk dicoba lagi.
+          remaining.push(entry);
+          continue;
+        }
+        // Key platform → jalur anon.
         const { error } = await sb.from("kv")
           .upsert({ key: entry.key, value: entry.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
-        if (error) { remaining.push(entry); console.warn("[cloud] retry still failing:", entry.key, error.message); }
+        if (error) {
+          if (isPermanentRlsError(error.message)) {
+            console.warn("[cloud] retry dibuang (RLS permanen):", entry.key);
+            continue; // permanen → DROP, jangan loop
+          }
+          remaining.push(entry); // transien → simpan
+          console.warn("[cloud] retry still failing:", entry.key, error.message);
+        }
       } catch (err) { remaining.push(entry); console.warn("[cloud] retry exception:", entry.key, err); }
     }
     saveRetryQueue(remaining);
     _retryFlushing = false;
+  }
+
+  // Email user yang sedang login (lowercase) — untuk cegah push akun ORANG LAIN.
+  function currentUserEmail() {
+    try {
+      var u = JSON.parse(window.localStorage.getItem("playly-user") || "null");
+      return u && u.email ? String(u.email).toLowerCase() : null;
+    } catch (_) { return null; }
+  }
+  // playly-account-{email} milik user LAIN — ke-pull ke localStorage ini karena
+  // policy baca kv masih permisif (P2). JANGAN push: server stamp user_id KITA
+  // ke baris itu → korup kepemilikan, dan jalur retry-nya bikin loop. Drop saja.
+  function isForeignAccountKey(key) {
+    if (typeof key !== "string" || key.indexOf("playly-account-") !== 0) return false;
+    var suffix = key.slice("playly-account-".length).toLowerCase();
+    if (suffix.indexOf("@") === -1) return false; // system key, bukan akun email
+    var me = currentUserEmail();
+    if (!me) return false; // belum tahu siapa kita → jangan agresif drop
+    return suffix !== me;
   }
 
   // === push (fire-and-forget) ============================================
@@ -305,6 +362,7 @@
     if (!sb) return;
     if (!shouldSync(key)) return;
     if (key === RETRY_QUEUE_KEY) return; // jangan loop the retry queue itself
+    if (isForeignAccountKey(key)) return; // jangan push akun user lain
     let value;
     try { value = JSON.parse(raw); } catch { value = raw; }
     // Phase B6a-3 (2026-05-25): per-user keys → route via /api/kv/sync
@@ -345,7 +403,13 @@
           } catch {}
           const { error } = await sb.from("kv")
             .upsert({ key, value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
-          if (error) { enqueueRetry(key, merged); console.warn("[cloud] merge-push failed, queued retry:", error.message); }
+          if (error) {
+            if (isPermanentRlsError(error.message)) {
+              console.warn("[cloud] merge-push ditolak RLS — tidak diantre:", key, error.message);
+            } else {
+              enqueueRetry(key, merged); console.warn("[cloud] merge-push failed, queued retry:", error.message);
+            }
+          }
         } catch (err) { enqueueRetry(key, value); console.warn("[cloud] merge-push exception, queued retry:", err); }
       })();
       return;
@@ -356,7 +420,13 @@
         { onConflict: "key" }
       )
       .then(({ error }) => {
-        if (error) { enqueueRetry(key, value); console.warn("[cloud] push failed, queued retry:", error.message); }
+        if (error) {
+          if (isPermanentRlsError(error.message)) {
+            console.warn("[cloud] push ditolak RLS — tidak diantre:", key, error.message);
+          } else {
+            enqueueRetry(key, value); console.warn("[cloud] push failed, queued retry:", error.message);
+          }
+        }
       })
       .catch((err) => { enqueueRetry(key, value); console.warn("[cloud] push exception, queued retry:", err); });
   }
