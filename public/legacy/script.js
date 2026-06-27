@@ -23437,8 +23437,48 @@ $("#signinForm").addEventListener("submit", async e => {
     return onFail("email", "Username tidak ditemukan", "❌ Username tidak ditemukan");
   }
 
+  // CLOUD RECOVERY (2026-06-27): akun tak ada di DEVICE ini (clear cache /
+  // ganti perangkat) tapi MUNGKIN ada di cloud. Sebelum menolak, coba pulihkan:
+  //   1) verifyStrict → cek ketat ke Supabase Auth (TANPA signup-fallback, jadi
+  //      tidak bikin akun baru kalau email asing) — sekaligus verifikasi password.
+  //   2) kalau verified → syncSignin set cookie sesi (signin, bukan signup,
+  //      karena user sudah pasti ada) → tarik akun + state milik user dari cloud.
+  // Hanya untuk input EMAIL (username butuh map ke email yg tak ada lokal).
+  let recoveredFromCloud = false;
+  if (!existing && identifier.includes("@") &&
+      window.supabaseAuthBridge && window.cloudSync && window.cloudSync.enabled) {
+    try {
+      const vr = await window.supabaseAuthBridge.verifyStrict(email, password);
+      if (vr && vr.ok && vr.verified) {
+        const rec = await window.supabaseAuthBridge.syncSignin(email, password);
+        if (rec && rec.synced) {
+          // Cookie sesi sudah ter-set → tarik data milik user dari cloud.
+          try { await window.cloudSync.softResync({ force: true }); } catch (_) {}
+          existing = JSON.parse(localStorage.getItem(`playly-account-${email}`) || "null");
+          if (!existing) {
+            // Belum ke-bawa softResync → ambil row akun spesifik via bridge.
+            try {
+              const r = await fetch(`/api/kv/sync?key=${encodeURIComponent(`playly-account-${email}`)}`, { credentials: "same-origin" });
+              const d = await r.json().catch(() => null);
+              if (d && d.ok && d.row && d.row.value != null) {
+                const raw = typeof d.row.value === "string" ? d.row.value : JSON.stringify(d.row.value);
+                localStorage.setItem(`playly-account-${email}`, raw);
+                existing = JSON.parse(raw);
+              }
+            } catch (_) {}
+          }
+          if (existing) {
+            recoveredFromCloud = true; // password sudah diverifikasi Supabase Auth
+            console.log("[Auth] akun dipulihkan dari cloud:", email);
+            toast("☁️ Akun dipulihkan dari cloud", "success");
+          }
+        }
+      }
+    } catch (err) { console.warn("[Auth] cloud recovery gagal:", err); }
+  }
+
   // Akun harus sudah terdaftar — tidak ada auto-create dari email asing.
-  // Login gagal (email belum terdaftar) → catat sebagai kegagalan, tetap di halaman login.
+  // Login gagal (email belum terdaftar, & tak ada di cloud) → catat kegagalan.
   if (!existing) {
     return onFail("email", "Email belum terdaftar — silakan Daftar dulu", "❌ Email belum terdaftar — silakan Daftar dulu");
   }
@@ -23446,8 +23486,11 @@ $("#signinForm").addEventListener("submit", async e => {
   // Verifikasi password DULU — sebelum guard role. Kalau password salah, user
   // hanya lihat pesan "Password salah" (tidak bocor info bahwa email itu admin).
   // Popup "Akses Ditolak" hanya untuk credentials yang sudah lulus verifikasi.
-  const passwordOk = await verifyPassword(password, existing.password);
-  console.log("[Auth] password check", passwordOk);
+  // recoveredFromCloud: password sudah diverifikasi server-side oleh Supabase
+  // Auth (verifyStrict) saat pemulihan → skip cek hash lokal (hindari false-
+  // negative kalau format hash lokal beda/hash drift).
+  const passwordOk = recoveredFromCloud ? true : await verifyPassword(password, existing.password);
+  console.log("[Auth] password check", passwordOk, recoveredFromCloud ? "(via cloud recovery)" : "");
   if (!passwordOk) {
     // B6b P1 telemetry (2026-05-25 v545): kalau local reject, panggil bridge
     // verify juga untuk catat false-negative case (local salah / hash drift).
