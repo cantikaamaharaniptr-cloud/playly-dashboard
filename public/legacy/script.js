@@ -3672,6 +3672,32 @@ function bootWithWelcome() {
   }
 }
 
+// Boot watchdog (req user 2026-06-26): kalau dashboard masih nyangkut di layar
+// loading ("Memuat...") setelah 10 detik PADAHAL ada sesi login tersimpan — gejala
+// transisi deploy / boot transien — pulihkan SEKALI dengan reload (anti-loop via
+// sessionStorage). Tidak menghapus data apa pun; hanya menjalankan ulang boot.
+(function bootStuckWatchdog() {
+  function check() {
+    try {
+      if (!document.body.classList.contains("auth-mode")) return; // sudah masuk dashboard
+      var hasSession = !!localStorage.getItem("playly-user") ||
+        !!localStorage.getItem("playly-current-email") ||
+        Object.keys(localStorage).some(function (k) { return /sb-.*auth-token/.test(k); });
+      if (!hasSession) return;                                   // memang di landing (belum login)
+      if (sessionStorage.getItem("playly-boot-recovered")) return; // sudah coba sekali → stop
+      sessionStorage.setItem("playly-boot-recovered", "1");
+      var u = new URL(location.href);
+      u.searchParams.set("_r", String(Date.now()));              // cache-bust HTML + paksa boot ulang
+      location.replace(u.toString());
+    } catch (e) {}
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(check, 10000); });
+  } else {
+    setTimeout(check, 10000);
+  }
+})();
+
 function bootDashboard() {
   console.log("[bootDashboard] called", { hasUser: !!user, email: user?.email, pickedRole });
   // HARD GUARD per request 2026-05-10: dashboard tidak boleh boot tanpa user.
