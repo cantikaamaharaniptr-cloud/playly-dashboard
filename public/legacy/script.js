@@ -21342,6 +21342,93 @@ function initSyncStatusPill() {
     window.addEventListener("playly:sync-status", (e) => {
       try { if (e && e.detail && e.detail.state) update(e.detail.state); } catch (_) {}
     });
+    // Klik saat "Tersimpan lokal" → buka modal sambung ulang cloud (re-auth).
+    pill.addEventListener("click", () => {
+      if (pill.dataset.state === "local") { try { openCloudReconnectModal(); } catch (_) {} }
+    });
+  }
+}
+
+// ===== Sambung ulang cloud (2026-06-27) =====================================
+// Saat auto-boot, sesi Supabase bisa kedaluwarsa → /api/state/sync 401 → data
+// user diam-diam tak tersinkron (P1). Badge "Tersimpan lokal" → klik → modal ini
+// minta password (email sudah diketahui) → verifyStrict + syncSignin → sesi pulih
+// → softResync → data tersinkron lagi. Tanpa modal ini, user tak punya cara mudah
+// menyambungkan kembali (dulu cuma warning console).
+function openCloudReconnectModal() {
+  if (typeof user !== "object" || !user || !user.email) return;
+  const isID = (typeof currentLang === "function") ? (currentLang() === "id") : true;
+  let modal = document.getElementById("cloudReconnectModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "cloudReconnectModal";
+    modal.className = "modal-overlay cloud-reconnect-modal";
+    modal.innerHTML =
+      '<div class="cloud-reconnect-card" role="dialog" aria-modal="true" aria-labelledby="crcTitle">' +
+        '<div class="crc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 1.9-8.6A6 6 0 0 0 8.4 7.5M5.4 9.4A4.5 4.5 0 0 0 6 19h10"/><path d="m2 2 20 20"/></svg></div>' +
+        '<h3 class="crc-title" id="crcTitle">' + (isID ? "Sambungkan ulang cloud" : "Reconnect cloud") + '</h3>' +
+        '<p class="crc-desc">' + (isID ? "Sesi cloud kedaluwarsa, jadi datamu belum tersinkron. Masukkan password untuk menyambungkan kembali." : "Your cloud session expired, so your data isn't syncing. Enter your password to reconnect.") + '</p>' +
+        '<label class="crc-field"><span>Email</span><input type="email" id="crcEmail" readonly></label>' +
+        '<label class="crc-field"><span>Password</span><input type="password" id="crcPassword" autocomplete="current-password" placeholder="' + (isID ? "Password akunmu" : "Your password") + '"></label>' +
+        '<p class="crc-error" id="crcError" hidden></p>' +
+        '<div class="crc-actions"><button type="button" class="btn ghost" id="crcCancel">' + (isID ? "Nanti" : "Later") + '</button><button type="button" class="btn primary" id="crcSubmit">' + (isID ? "Sambungkan" : "Reconnect") + '</button></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => { if (e.target === modal) closeCloudReconnectModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("show")) closeCloudReconnectModal(); });
+    modal.querySelector("#crcCancel").addEventListener("click", closeCloudReconnectModal);
+    modal.querySelector("#crcPassword").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); modal.querySelector("#crcSubmit").click(); } });
+    modal.querySelector("#crcSubmit").addEventListener("click", () => { doCloudReconnect(); });
+  }
+  modal.querySelector("#crcEmail").value = user.email;
+  const pw = modal.querySelector("#crcPassword"); pw.value = "";
+  modal.querySelector("#crcError").hidden = true;
+  modal.classList.add("show");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => pw.focus(), 100);
+}
+
+function closeCloudReconnectModal() {
+  const modal = document.getElementById("cloudReconnectModal");
+  if (!modal) return;
+  modal.classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+async function doCloudReconnect() {
+  const modal = document.getElementById("cloudReconnectModal");
+  if (!modal) return;
+  const isID = (typeof currentLang === "function") ? (currentLang() === "id") : true;
+  const email = (typeof user === "object" && user && user.email) ? user.email : modal.querySelector("#crcEmail").value;
+  const pw = modal.querySelector("#crcPassword").value;
+  const err = modal.querySelector("#crcError");
+  const btn = modal.querySelector("#crcSubmit");
+  const showErr = (m) => { err.textContent = m; err.hidden = false; };
+  if (!pw) { showErr(isID ? "Masukkan password dulu." : "Enter your password."); return; }
+  if (!window.supabaseAuthBridge) { showErr(isID ? "Bridge cloud tak tersedia." : "Cloud bridge unavailable."); return; }
+  btn.classList.add("loading"); btn.disabled = true; err.hidden = true;
+  try {
+    const vr = await window.supabaseAuthBridge.verifyStrict(email, pw);
+    if (!vr || !vr.ok) {
+      showErr(isID ? "Tak bisa menghubungi server. Coba lagi." : "Couldn't reach server. Try again.");
+    } else if (!vr.verified) {
+      showErr(isID ? "Password salah." : "Wrong password.");
+    } else {
+      const rec = await window.supabaseAuthBridge.syncSignin(email, pw, (typeof user === "object" ? user : undefined));
+      if (rec && rec.synced) {
+        window.PLAYLY_CLOUD_SESSION_EXPIRED = false;
+        try { await window.cloudSync?.softResync?.({ force: true }); } catch (_) {}
+        try { window.dispatchEvent(new CustomEvent("playly:sync-status", { detail: { state: "synced", reason: null } })); } catch (_) {}
+        closeCloudReconnectModal();
+        if (typeof toast === "function") toast(isID ? "☁️ Cloud tersambung kembali — data tersinkron" : "☁️ Cloud reconnected — data synced", "success");
+      } else {
+        showErr(isID ? "Gagal menyambung. Coba lagi." : "Reconnect failed. Try again.");
+      }
+    }
+  } catch (e) {
+    showErr(isID ? "Terjadi kesalahan. Coba lagi." : "Something went wrong. Try again.");
+  } finally {
+    btn.classList.remove("loading"); btn.disabled = false;
   }
 }
 
@@ -59718,10 +59805,14 @@ if (tryAutoBoot()) {
             "[cloud-bridge] Supabase session expired/missing on auto-boot.\n" +
             "  → Cloud-sync push will fall back to anon-key (still works).\n" +
             "  → R2 video upload will fall back to Supabase Storage.\n" +
-            "  → Re-login (logout + login) to restore full cloud sync."
+            "  → Klik badge 'Tersimpan lokal' di top bar untuk sambung ulang."
           );
+          // Drive badge status sinkron (2026-06-27): tampilkan "Tersimpan lokal"
+          // → user bisa klik untuk sambung ulang (openCloudReconnectModal).
+          try { window.dispatchEvent(new CustomEvent("playly:sync-status", { detail: { state: "local", reason: "session_expired" } })); } catch (_) {}
         } else if (r.ok) {
           window.PLAYLY_CLOUD_SESSION_EXPIRED = false;
+          try { window.dispatchEvent(new CustomEvent("playly:sync-status", { detail: { state: "synced", reason: null } })); } catch (_) {}
         }
       })
       .catch(() => {
