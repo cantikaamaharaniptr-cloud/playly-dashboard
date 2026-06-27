@@ -22447,6 +22447,12 @@ document.addEventListener("click", e => {
     const code = actBtn.dataset.pqdmCode;
     const act = actBtn.dataset.pqdmAct;
     if (actBtn.disabled) return;
+    // Gate (port bin/admin2): approve/reject pembayaran Premium hanya SUPER ADMIN.
+    // Admin biasa boleh lihat detail + kirim kode verifikasi, tapi tak boleh
+    // memutuskan (approve/reject) krn itu mengaktifkan akses berbayar.
+    if ((act === "approve" || act === "reject") && typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+      return toast("🔒 Hanya super admin yang bisa approve/reject pembayaran Premium", "warning");
+    }
     if (act === "send-code") {
       const arr = getPremiumPayments();
       const idx = arr.findIndex(p => p.code === code);
@@ -30670,6 +30676,10 @@ document.addEventListener("keydown", (e) => {
 // dilindungi (sama seperti suspend dulu). Cleanup localStorage account + state +
 // welcome flag, lalu push event ke audit log + toast.
 function deleteUserAccount(username) {
+  // Gate (port bin/admin2): hapus user PERMANEN hanya SUPER ADMIN; admin biasa dilarang.
+  if (typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+    return toast("🔒 Hanya super admin yang bisa menghapus user permanen", "warning");
+  }
   const accountKey = Object.keys(localStorage).find(k => {
     if (!k.startsWith("playly-account-")) return false;
     try { return JSON.parse(localStorage.getItem(k))?.username === username; } catch { return false; }
@@ -31288,6 +31298,11 @@ $("#asmSendBtn")?.addEventListener("click", () => {
   const text = $("#asmBody").value.trim();
   if (!text) return toast("⚠️ Pesan kosong", "warning");
   if (!__asmTargets.length) return;
+  // Gate (port bin/admin2): BROADCAST massal hanya SUPER ADMIN. Admin biasa
+  // boleh kirim pesan ke 1 user, tapi tak boleh broadcast ke semua user.
+  if (__asmIsBroadcast && typeof isSuperAdmin === "function" && !isSuperAdmin(user)) {
+    return toast("🔒 Hanya super admin yang bisa broadcast ke semua user", "warning");
+  }
 
   __asmTargets.forEach(u => deliverAdminMessage(u, text, __asmIsBroadcast));
   logAdminMessageSent(__asmTargets, text);
