@@ -3731,11 +3731,13 @@ function bootDashboard() {
   // Konversi emoji UI -> ikon Iconsax-style (2026-06-17). Jalan setelah render
   // awal; observer akan menangani view/konten yang dirender belakangan.
   setTimeout(function () { try { initUiEmojiConvert(); } catch (e) {} }, 350);
-  // Refresh all UI bound to user
-  applyUserToUI();
-  applyRoleToUI();
-  initDashboard();
-  refreshStorageUsage();
+  // Refresh all UI bound to user — RESILIENSI (req user 2026-06-26): bungkus tiap
+  // langkah supaya SATU error (mis. data user/markup tertentu) tak menghentikan boot
+  // → dashboard tetap render, tidak nyangkut "Memuat...".
+  try { applyUserToUI(); } catch (e) { console.error("[boot] applyUserToUI gagal:", e); }
+  try { applyRoleToUI(); } catch (e) { console.error("[boot] applyRoleToUI gagal:", e); }
+  try { initDashboard(); } catch (e) { console.error("[boot] initDashboard gagal:", e); }
+  try { refreshStorageUsage(); } catch (e) { console.error("[boot] refreshStorageUsage gagal:", e); }
   // Render payment status pill in topbar (visible if user has pending/approved/rejected premium payment)
   try { if (typeof renderDashboardPaymentPill === "function") renderDashboardPaymentPill(); } catch {}
   // Render permanent tier pill (Free / Premium) next to theme toggle.
@@ -4010,15 +4012,17 @@ function applyUserToUI() {
   $$(".user-chip .avatar span").forEach(setAvatarSpan);
   $$(".sidebar .profile-card strong").forEach(el => el.textContent = user.name);
   $$(".sidebar .profile-card small").forEach(el => el.textContent = `Online • @${user.username}`);
-  $$(".user-chip .user-name").forEach(el => el.textContent = user.name.split(" ")[0]);
+  $$(".user-chip .user-name").forEach(el => el.textContent = (user.name || user.username || "").split(" ")[0]);
 
-  // Profile dropdown header
-  const pdHead = $(".pd-header");
-  if (pdHead) {
-    setAvatarSpan(pdHead.querySelector(".avatar span"));
-    pdHead.querySelector("strong").textContent = user.name;
-    pdHead.querySelector("small").textContent = user.email;
-  }
+  // Profile dropdown header (guard: sub-elemen mungkin tak ada → jangan throw)
+  try {
+    const pdHead = $(".pd-header");
+    if (pdHead) {
+      setAvatarSpan(pdHead.querySelector(".avatar span"));
+      const _pdS = pdHead.querySelector("strong"); if (_pdS) _pdS.textContent = user.name;
+      const _pdSm = pdHead.querySelector("small"); if (_pdSm) _pdSm.textContent = user.email;
+    }
+  } catch (e) { console.warn("[applyUserToUI] pd-header:", e); }
 
   // Hero greeting — ikon tangan-melambai SVG monokrom (no backtick, concat).
   const heroH = $(".hero-text h2");
@@ -4029,7 +4033,7 @@ function applyUserToUI() {
     var _ghh = new Date().getHours();
     var _ghk = _ghh < 5 ? "greet.night" : _ghh < 11 ? "greet.morning"
       : _ghh < 15 ? "greet.afternoon" : _ghh < 19 ? "greet.evening" : "greet.night";
-    heroH.innerHTML = t(_ghk) + ", " + user.name.split(" ")[0] + ' <span class="wave">' + _hWave + '</span>';
+    heroH.innerHTML = t(_ghk) + ", " + (user.name || user.username || "").split(" ")[0] + ' <span class="wave">' + _hWave + '</span>';
   }
 
   // Creator Hub identitas — pakai nama lengkap + @username supaya jelas siapa yang
@@ -4041,12 +4045,10 @@ function applyUserToUI() {
     if (heroHandle) heroHandle.textContent = `@${user.username || "user"} · creator hub`;
   }
 
-  // Avatar gambar (kalau ada)
-  syncAvatarImages();
-
-  // Profile edit form
-  populateProfileForm();
-  populateSettingsPrefs();
+  // Avatar gambar + form — guarded biar SATU error tak menghentikan applyUserToUI.
+  try { syncAvatarImages(); } catch (e) { console.warn("[applyUserToUI] syncAvatarImages:", e); }
+  try { populateProfileForm(); } catch (e) { console.warn("[applyUserToUI] populateProfileForm:", e); }
+  try { populateSettingsPrefs(); } catch (e) { console.warn("[applyUserToUI] populateSettingsPrefs:", e); }
 }
 
 // ----------------------- AVATAR (sync gambar di tempat-tempat utama user sendiri) -----------------------
