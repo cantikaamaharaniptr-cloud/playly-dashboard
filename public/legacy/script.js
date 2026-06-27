@@ -2270,7 +2270,6 @@ const VIEW_TITLES = {
   "admin-comms-broadcasts": "Riwayat Broadcast",
   "admin-audit": "Log Audit",
   "admin-inbox": "Inbox",
-  "admin-tickets": "Tiket Dukungan",
   "admin-reports": "Laporan Bug", "admin-analytics": "Analitik & Monitoring",
   "admin-revenue": "Pendapatan", "admin-ads": "Kelola Iklan"
 };
