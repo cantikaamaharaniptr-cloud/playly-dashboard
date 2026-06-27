@@ -58687,6 +58687,36 @@ document.addEventListener("click", (e) => {
     if (typeof toast === "function") toast("✓ Semua notifikasi ditandai dibaca", "success");
     return;
   }
+  // Hapus 1 notif via tombol ✕ (.ndd-del) — DICEK SEBELUM handler item di bawah
+  // supaya klik ✕ menghapus, bukan menandai-dibaca / navigasi. (port bin/analitik-monitoring)
+  const _nddDel = t.closest("#notifDropdown .ndd-del");
+  if (_nddDel) {
+    e.preventDefault();
+    e.stopPropagation();
+    const _delItem = _nddDel.closest(".ndd-item");
+    const _delId = _delItem ? _delItem.getAttribute("data-notif-id") : null;
+    if (_delId != null && Array.isArray(state?.notifications)) {
+      state.notifications = state.notifications.filter(n => String(n?.id) !== String(_delId));
+      try { saveState(); } catch {}
+      try { renderNotifDropdownContent?.(); } catch {}
+      try { renderNotifications?.(); } catch {}
+      try { renderNotifPage?.(); } catch {}
+    }
+    return;
+  }
+  // "Hapus semua" notif di dropdown → kosongkan daftar. (port bin/analitik-monitoring)
+  if (t.closest("#notifDropdownClearAll")) {
+    e.preventDefault();
+    if (Array.isArray(state?.notifications)) {
+      state.notifications = [];
+      try { saveState(); } catch {}
+    }
+    try { renderNotifDropdownContent?.(); } catch {}
+    try { renderNotifications?.(); } catch {}
+    try { renderNotifPage?.(); } catch {}
+    if (typeof toast === "function") toast("🗑️ Semua notifikasi dihapus", "success");
+    return;
+  }
   // Close dropdown via X button atau outside click
   if (t.closest("#notifDropdown .ndd-close")) {
     e.preventDefault();
@@ -63843,12 +63873,31 @@ function _updateNotifDropdownFooter(isAdmin) {
       markBtn.id = "notifDropdownMarkAll";
       markBtn.type = "button";
       markBtn.className = "btn ghost sm ndd-markall";
-      markBtn.textContent = "✓ Tandai semua dibaca";
+      markBtn.textContent = "✓ Tandai dibaca";
       foot.insertBefore(markBtn, foot.firstChild);
     }
     markBtn.style.display = "";
   } else if (markBtn) {
     markBtn.style.display = "none";
+  }
+  // "Hapus semua" — tampil utk user kalau ADA notif (baca/belum) biar daftar
+  // bisa dikosongkan. Inject dinamis (pola sama markAll), bukan di markup statis.
+  // (port bin/analitik-monitoring)
+  let clearBtn = document.getElementById("notifDropdownClearAll");
+  const totalNotif = Array.isArray(state?.notifications) ? state.notifications.length : 0;
+  if (!isAdmin && totalNotif > 0) {
+    if (!clearBtn) {
+      clearBtn = document.createElement("button");
+      clearBtn.id = "notifDropdownClearAll";
+      clearBtn.type = "button";
+      clearBtn.className = "btn ghost sm ndd-clearall";
+      clearBtn.textContent = "🗑️ Hapus semua";
+      const openBtn = document.getElementById("notifDropdownOpenPanel");
+      if (openBtn) foot.insertBefore(clearBtn, openBtn); else foot.appendChild(clearBtn);
+    }
+    clearBtn.style.display = "";
+  } else if (clearBtn) {
+    clearBtn.style.display = "none";
   }
 }
 function renderNotifDropdownContent() {
@@ -63912,6 +63961,7 @@ function renderNotifDropdownContent() {
         ${it.time ? `<span class="ndd-time">${it.time}</span>` : ""}
       </div>
       ${it.unread ? `<span class="ndd-unread-dot" aria-label="Belum dibaca"></span>` : ""}
+      ${it.id && !it.jump ? `<button type="button" class="ndd-del" title="Hapus notifikasi" aria-label="Hapus">✕</button>` : ""}
     </div>
   `).join("");
 }

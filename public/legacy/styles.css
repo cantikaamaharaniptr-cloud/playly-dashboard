@@ -59270,6 +59270,24 @@ body:not([data-role="admin"]) #notifDropdown .ndd-markall {
   color: rgba(232, 216, 196, .7);
 }
 .ndd-foot-arrow { margin-left: 3px; opacity: .65; }
+/* "Hapus semua" + tombol ✕ hapus per-item (port bin/analitik-monitoring).
+   Footer user bisa 3 tombol: markAll + clearAll (sekunder, kanan-atas) lalu
+   "Lihat detail" full-width di baris bawah. */
+body:not([data-role="admin"]) #notifDropdown .ndd-foot { flex-wrap: wrap; }
+body:not([data-role="admin"]) #notifDropdown .ndd-clearall {
+  flex: 0 0 auto; width: auto; white-space: nowrap;
+  font-size: 12px; padding: 8px 10px;
+  color: rgba(232, 216, 196, .7);
+}
+body:not([data-role="admin"]) #notifDropdown #notifDropdownOpenPanel { flex: 1 1 100%; width: auto; }
+.notif-dropdown .ndd-del {
+  flex-shrink: 0; background: transparent; border: 0;
+  color: var(--muted); font-size: 12px; line-height: 1;
+  width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
+  opacity: .5; transition: opacity .15s, background .15s, color .15s;
+}
+.notif-dropdown .ndd-item:hover .ndd-del { opacity: 1; }
+.notif-dropdown .ndd-del:hover { background: rgba(239, 68, 68, .15); color: #ef4444; }
 
 /* Admin theme override — slate accent untuk dropdown */
 body[data-role="admin"] .notif-dropdown {
