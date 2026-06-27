@@ -21416,11 +21416,14 @@ async function doCloudReconnect() {
     } else {
       const rec = await window.supabaseAuthBridge.syncSignin(email, pw, (typeof user === "object" ? user : undefined));
       if (rec && rec.synced) {
+        // Sesi pulih → langsung beri feedback UI; JANGAN blok ke softResync yg
+        // bisa lambat di dataset besar (sebelumnya modal nyangkut ~8s). Resync
+        // jalan di background; listener playly:cloud-applied re-render view.
         window.PLAYLY_CLOUD_SESSION_EXPIRED = false;
-        try { await window.cloudSync?.softResync?.({ force: true }); } catch (_) {}
         try { window.dispatchEvent(new CustomEvent("playly:sync-status", { detail: { state: "synced", reason: null } })); } catch (_) {}
         closeCloudReconnectModal();
         if (typeof toast === "function") toast(isID ? "☁️ Cloud tersambung kembali — data tersinkron" : "☁️ Cloud reconnected — data synced", "success");
+        try { window.cloudSync?.softResync?.({ force: true }); } catch (_) {} // background, tanpa await
       } else {
         showErr(isID ? "Gagal menyambung. Coba lagi." : "Reconnect failed. Try again.");
       }
