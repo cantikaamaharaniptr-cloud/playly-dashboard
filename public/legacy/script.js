@@ -32285,6 +32285,81 @@ function adminVideoStatusBadge(status) {
   return `<span class="gv-status ${m.cls}">${m.label}</span>`;
 }
 
+// ===== PENGUMUMAN — banner platform-wide (admin -> semua user). Disync via cloud (key playly-*). =====
+const ANNOUNCEMENT_KEY = "playly-announcement";
+function getAnnouncement() {
+  try { return JSON.parse(localStorage.getItem(ANNOUNCEMENT_KEY) || "null"); } catch { return null; }
+}
+function setAnnouncement(a) {
+  try { localStorage.setItem(ANNOUNCEMENT_KEY, JSON.stringify(a)); } catch {}
+}
+function renderAnnouncementBanner() {
+  const a = getAnnouncement();
+  const dismissed = sessionStorage.getItem("playly-ann-dismissed");
+  const show = a && a.active && a.text && String(a.ts) !== dismissed;
+  let bar = document.getElementById("announcementBanner");
+  if (!show) { bar?.remove(); return; }
+  const colors = {
+    info:    "linear-gradient(90deg,#2C5F8A,#3C78AE)",
+    promo:   "linear-gradient(90deg,#7b4dff,#9b6bff)",
+    warning: "linear-gradient(90deg,#B8860B,#C99A2E)",
+  };
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "announcementBanner";
+    const topbar = document.querySelector("main.main > .topbar");
+    if (topbar) topbar.insertAdjacentElement("afterend", bar);
+    else (document.querySelector("main.main") || document.body).prepend(bar);
+  }
+  bar.style.cssText = `display:flex;align-items:center;gap:12px;justify-content:center;padding:10px 18px;color:#fff;font-size:14px;font-weight:600;text-align:center;background:${colors[a.type] || colors.info}`;
+  bar.innerHTML = `<span style="font-size:16px">📣</span><span>${escapeHtml(a.text)}</span>` +
+    `<button data-ann-dismiss title="Tutup" style="margin-left:8px;background:rgba(255,255,255,.22);border:0;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:13px;flex-shrink:0">✕</button>`;
+  bar.querySelector("[data-ann-dismiss]").onclick = () => {
+    try { sessionStorage.setItem("playly-ann-dismissed", String(a.ts)); } catch {}
+    bar.remove();
+  };
+}
+function openAnnouncementModal() {
+  document.getElementById("announcementModal")?.remove();
+  const a = getAnnouncement() || { text: "", type: "info", active: false };
+  const back = document.createElement("div");
+  back.id = "announcementModal";
+  back.style.cssText = "position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px";
+  const radio = (val, label) => `<label style="display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text);cursor:pointer"><input type="radio" name="annType" value="${val}" ${a.type === val ? "checked" : ""}/> ${label}</label>`;
+  back.innerHTML = `<div style="background:var(--bg-elev,#1a2233);border:1px solid var(--border);border-radius:16px;max-width:520px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h3 style="margin:0;font-size:17px;color:var(--text)">📣 Buat Pengumuman</h3>
+        <button data-ann-close style="background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px">Banner ini muncul di atas layar SEMUA user.</p>
+      <textarea id="annText" rows="2" placeholder="Tulis pengumuman... (mis. Maintenance Sabtu 20:00 WIB)" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;resize:vertical">${escapeHtml(a.text)}</textarea>
+      <div style="display:flex;gap:18px;margin:14px 0;flex-wrap:wrap">${radio("info", "ℹ️ Info")} ${radio("promo", "🎉 Promo")} ${radio("warning", "⚠️ Peringatan")}</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);cursor:pointer;margin-bottom:16px"><input type="checkbox" id="annActive" ${a.active ? "checked" : ""}/> Aktifkan sekarang (tampilkan ke user)</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost sm" data-ann-close>Batal</button>
+        <button class="btn primary sm" id="annSave">Simpan</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  back.addEventListener("click", e => { if (e.target === back || e.target.closest("[data-ann-close]")) back.remove(); });
+  document.getElementById("annSave").addEventListener("click", () => {
+    const text = (document.getElementById("annText").value || "").trim();
+    const type = (back.querySelector('input[name="annType"]:checked') || {}).value || "info";
+    const active = document.getElementById("annActive").checked;
+    setAnnouncement({ text, type, active, ts: Date.now() });
+    try { sessionStorage.removeItem("playly-ann-dismissed"); } catch {}
+    renderAnnouncementBanner();
+    back.remove();
+    toast(active && text ? "✓ Pengumuman aktif & tampil ke user" : "✓ Pengumuman disimpan (nonaktif)", "success");
+  });
+}
+document.getElementById("adminAnnouncementBtn")?.addEventListener("click", openAnnouncementModal);
+window.addEventListener("playly:cloud-applied", e => {
+  if ((e.detail?.keys || []).includes(ANNOUNCEMENT_KEY)) renderAnnouncementBanner();
+});
+setTimeout(renderAnnouncementBanner, 1500);
+
+
 function renderAdminVideos() {
   const tbody = $("#adminVideoTbody"); if (!tbody) return;
 
