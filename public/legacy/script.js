@@ -23645,14 +23645,35 @@ $("#signinForm").addEventListener("submit", async e => {
   // recoveredFromCloud: password sudah diverifikasi server-side oleh Supabase
   // Auth (verifyStrict) saat pemulihan → skip cek hash lokal (hindari false-
   // negative kalau format hash lokal beda/hash drift).
-  const passwordOk = recoveredFromCloud ? true : await verifyPassword(password, existing.password);
+  let passwordOk = recoveredFromCloud ? true : await verifyPassword(password, existing.password);
   console.log("[Auth] password check", passwordOk, recoveredFromCloud ? "(via cloud recovery)" : "");
   if (!passwordOk) {
-    // B6b P1 telemetry (2026-05-25 v545): kalau local reject, panggil bridge
-    // verify juga untuk catat false-negative case (local salah / hash drift).
-    // Fire-and-forget, jangan block onFail.
-    try { recordAuthVerifyTelemetry(email, password, /*localOk=*/false); } catch (_) {}
-    return onFail("password", "Password salah", "❌ Password salah");
+    // HEAL-ON-CLOUD-VERIFY (2026-06-27): hash lokal bisa BEDA dari password cloud
+    // (hash drift / akun lokal lama disinkron dari device lain). Supabase Auth =
+    // sumber kebenaran. Kalau cloud memverifikasi password → TERIMA login +
+    // PERBAIKI hash lokal supaya login lokal berikutnya cocok. Hanya untuk input
+    // email + bridge aktif. Tanpa ini, user dgn hash lokal basi "Password salah"
+    // terus padahal password cloud-nya benar.
+    if (identifier.includes("@") && window.supabaseAuthBridge && window.supabaseAuthBridge.verifyStrict) {
+      try {
+        const vr = await window.supabaseAuthBridge.verifyStrict(email, password);
+        if (vr && vr.ok && vr.verified) {
+          passwordOk = true;
+          try {
+            const newHash = await hashPassword(password);
+            const healed = { ...existing, password: newHash };
+            localStorage.setItem(`playly-account-${email}`, JSON.stringify(healed));
+            existing = healed;
+            console.log("[Auth] hash lokal di-heal dari verifikasi cloud:", email);
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    if (!passwordOk) {
+      // B6b P1 telemetry: local reject + cloud reject → catat false-negative.
+      try { recordAuthVerifyTelemetry(email, password, /*localOk=*/false); } catch (_) {}
+      return onFail("password", "Password salah", "❌ Password salah");
+    }
   }
 
   // B6b P1 telemetry: local pass → cek apakah bridge setuju. Background only,
