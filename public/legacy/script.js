@@ -3742,6 +3742,9 @@ function bootDashboard() {
   try { if (typeof renderDashboardPaymentPill === "function") renderDashboardPaymentPill(); } catch {}
   // Render permanent tier pill (Free / Premium) next to theme toggle.
   try { if (typeof renderDashboardTierPill === "function") renderDashboardTierPill(); } catch {}
+  // Badge status sinkron cloud (2026-06-27): tampil "Tersinkron / Menyinkronkan /
+  // Tersimpan lokal" supaya user tahu kapan data belum aman di cloud.
+  try { if (typeof initSyncStatusPill === "function") initSyncStatusPill(); } catch (e) { console.warn("[boot] initSyncStatusPill:", e); }
   // Pastikan pill di halaman login ikut di-clear begitu user masuk dashboard.
   // Guard hasActiveSession di renderAuthPaymentBanner akan auto-hide.
   try { if (typeof renderAuthPaymentBanner === "function") renderAuthPaymentBanner(); } catch {}
@@ -21275,6 +21278,69 @@ function renderDashboardTierPill() {
         // Premium → open detail popup with start/end dates
         openPremiumStatusPopup();
       }
+    });
+  }
+}
+
+// Badge status sinkron cloud (2026-06-27). Tampilkan apakah data user sudah
+// tersimpan ke cloud atau masih lokal saja — supaya tidak ada lagi "data hilang
+// diam-diam". Sumber: event `playly:sync-status` + getSyncStatus() dari
+// supabase-auth-bridge (status push state blob ke /api/state/sync).
+//   synced  → "Tersinkron"      (netral/muted)
+//   pending → "Menyinkronkan…"  (netral + ikon berputar)
+//   local   → "Tersimpan lokal" (aksen WINE = perlu perhatian)
+// Pill DI-INJECT ke .topbar-actions (tidak menyentuh markup statis yg rapuh).
+function initSyncStatusPill() {
+  const acts = document.querySelector(".topbar-actions");
+  if (!acts) return;
+  let pill = document.getElementById("dashboardSyncPill");
+  if (!pill) {
+    pill = document.createElement("div");
+    pill.id = "dashboardSyncPill";
+    pill.className = "dashboard-sync-pill";
+    pill.hidden = true; // sembunyi sampai ada status nyata
+    pill.innerHTML = '<span class="dsp-icon" aria-hidden="true"></span><span class="dsp-label"></span>';
+    acts.insertBefore(pill, acts.firstChild); // item paling kiri di topbar-actions
+  }
+  const ICONS = {
+    synced:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .4-8.98A6 6 0 1 0 7 13.5"/><path d="m8.5 15 2 2 4-4"/></svg>',
+    pending: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/><path d="M21 3v6h-6"/></svg>',
+    local:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 2 20 20"/><path d="M17.5 19a4.5 4.5 0 0 0 1.9-8.6A6 6 0 0 0 8.4 7.5M5.4 9.4A4.5 4.5 0 0 0 6 19h10"/></svg>',
+  };
+  const isID = (typeof currentLang === "function") ? (currentLang() === "id") : true;
+  const LABELS = {
+    synced:  isID ? "Tersinkron"      : "Synced",
+    pending: isID ? "Menyinkronkan…"  : "Syncing…",
+    local:   isID ? "Tersimpan lokal" : "Saved locally",
+  };
+  const TITLES = {
+    synced:  isID ? "Data tersimpan & tersinkron ke cloud" : "Data saved & synced to cloud",
+    pending: isID ? "Menyinkronkan data ke cloud…" : "Syncing data to cloud…",
+    local:   isID ? "Tersimpan di perangkat ini saja — belum tersinkron ke cloud" : "Saved on this device only — not synced to cloud",
+  };
+  const update = (state) => {
+    const s = (state === "synced" || state === "local" || state === "pending") ? state : "pending";
+    pill.hidden = false;
+    pill.dataset.state = s;
+    const ic = pill.querySelector(".dsp-icon");
+    const lb = pill.querySelector(".dsp-label");
+    if (ic) ic.innerHTML = ICONS[s];
+    if (lb) lb.textContent = LABELS[s];
+    pill.title = TITLES[s];
+    pill.setAttribute("aria-label", TITLES[s]);
+  };
+  // Init dari status terakhir — hanya tampil kalau sudah ada percobaan sync nyata
+  // (at > 0). Status awal "pending/at:0" dibiarkan tersembunyi biar tak misleading.
+  try {
+    const st = (window.supabaseAuthBridge && window.supabaseAuthBridge.getSyncStatus)
+      ? window.supabaseAuthBridge.getSyncStatus() : null;
+    if (st && st.at > 0 && st.state) update(st.state);
+  } catch (_) {}
+  // Dengar perubahan status (sekali pasang listener).
+  if (!pill.dataset.wired) {
+    pill.dataset.wired = "1";
+    window.addEventListener("playly:sync-status", (e) => {
+      try { if (e && e.detail && e.detail.state) update(e.detail.state); } catch (_) {}
     });
   }
 }
