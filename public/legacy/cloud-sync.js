@@ -372,9 +372,19 @@
     if (useKvBridge() && isPerUserBridgeKey(key)) {
       pushViaKvBridge(key, value).then(function (res) {
         if (!res.ok) {
-          // Bridge gagal — fallback ke anon path (existing behavior)
-          console.warn("[cloud] bridge push failed for " + key + " — fallback to anon. Reason:", res.reason);
-          pushViaAnon(key, value, raw);
+          // SECURITY (P3, 2026-06-27): JANGAN fallback ke anon untuk key
+          // per-user. Jalur anon menulis row user_id=NULL yang lolos
+          // kv_anon_platform_insert → ANON-READABLE → bocor data akun
+          // (password hash). Itu sumber "orphan account" yg ke-expose.
+          // 403 = bukan pemilik key → buang. Selain itu (401 sesi belum
+          // siap / network / 5xx) = transien → antre, retry via BRIDGE
+          // (flushRetryQueue sudah route per-user lewat bridge).
+          if (res.status === 403) {
+            console.warn("[cloud] bridge push ditolak (bukan pemilik), drop:", key);
+          } else {
+            console.warn("[cloud] bridge push gagal — antre retry via bridge (bukan anon):", key, res.reason);
+            enqueueRetry(key, value);
+          }
         }
         // res.ok = sukses → no further action
       });
