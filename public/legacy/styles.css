@@ -79948,6 +79948,7 @@ section.view[data-view="messages"] > .view-header { align-items: center; }
   }
   .dm-react-palette { gap: 0; }
   .dm-react-palette button { width: 40px; height: 40px; font-size: 22px; }
+}
 /* === Pengaturan: tab grouping (req user 2026-06-12) — 10 kartu dikelompokkan
    ke tab Umum/Keamanan/Data biar tak menumpuk di satu halaman panjang. === */
 .set-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
