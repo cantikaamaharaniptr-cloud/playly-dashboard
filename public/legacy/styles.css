@@ -77756,15 +77756,16 @@ section[data-view="stats"] #statsPageDesc {
 }
 
 /* ===================================================================
-   STATISTIK v732 — judul "KARTU HEADER" (per pilihan user)
-   Bungkus ikon + judul + deskripsi + LIVE dalam satu kartu wine lembut.
+   STATISTIK v734 — header POLOS (per user 2026-06-28): kartu wine v732
+   DIBUANG, samakan dgn halaman lain (judul tanpa box). LIVE + rentang
+   waktu tetap sbg kontrol header biasa di kanan.
    =================================================================== */
 section[data-view="stats"] .view-header {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-elev)), var(--bg-elev)) !important;
-  border: 1px solid color-mix(in srgb, var(--cream, #E8D8C4) 22%, transparent) !important;
-  border-radius: 16px !important;
-  padding: 18px 20px !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,.26) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 2px 2px 0 !important;
+  box-shadow: none !important;
   align-items: center !important;
 }
 /* Di dalam kartu, judul block & LIVE rapi */
