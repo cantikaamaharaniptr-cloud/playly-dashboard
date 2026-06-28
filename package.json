@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "check:css": "node scripts/check-css.mjs",
     "minify:legacy": "node scripts/minify-legacy.mjs",
-    "prebuild": "node scripts/minify-legacy.mjs",
+    "prebuild": "node scripts/check-css.mjs && node scripts/minify-legacy.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
