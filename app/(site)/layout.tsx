@@ -5,11 +5,28 @@
 // index.html declared, so styles.css + script.js keep matching exactly. The
 // page body markup itself lives in app/_legacy/IndexPage.tsx (rendered verbatim
 // from the extracted legacy markup) — no .html file involved.
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
 import type { Metadata, Viewport } from 'next';
 import { legacyAsset } from '@/app/_legacy/legacy-asset';
 
-// Cache-bust version preserved verbatim from legacy index.html.
-const STYLES_V = '20260627-preroll-image';
+// Cache-bust ?v= untuk styles.css — OTOMATIS dari hash isi CSS yang disajikan,
+// jadi BERUBAH sendiri tiap kali CSS berubah (di-compute sekali saat build).
+// Sebelumnya di-set manual & sering lupa di-bump → browser nyangkut cache CSS
+// lama (immutable 1thn) meski server sudah update. Fallback string statis kalau
+// file tak terbaca (mis. dev sebelum minify).
+function cssVersion(): string {
+  try {
+    const file = process.env.NODE_ENV === 'production'
+      ? 'public/legacy/styles.min.css'
+      : 'public/legacy/styles.css';
+    return createHash('md5').update(readFileSync(path.join(process.cwd(), file))).digest('hex').slice(0, 12);
+  } catch {
+    return '20260628-fallback';
+  }
+}
+const STYLES_V = cssVersion();
 
 // FOUC guard (verbatim from index.html <head>): hide admin-only DOM on non-admin
 // views before styles.css finishes loading, so admin UI never flashes.
