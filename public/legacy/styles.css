@@ -73978,7 +73978,7 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-icon svg path 
 
 /* Light mode — ikon kartu wine/bronze terbaca di krem. */
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card .pp-icon {
-  background: rgba(17, 24, 39, .07) !important; /* netral, no pink (req 2026-06-24); ikon tetap wine */
+  background: rgba(132, 42, 59, .12) !important; /* wine tint — match setup .apc-icon (buang slate/abu, req 2026-06-29) */
   color: var(--primary) !important;
 }
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-icon {
