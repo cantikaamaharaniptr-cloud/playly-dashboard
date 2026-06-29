@@ -532,7 +532,7 @@ const EMOJI_ICON = {
   '🚀': _ixSvg('<path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5"/><path d="M9 15l-2-2c1-5 5-9 11-9 0 6-4 10-9 11z"/><circle cx="14.5" cy="9.5" r="1.3"/>'),
   '👋': _ixSvg('<path d="M7 11V6.6a1.4 1.4 0 0 1 2.8 0V11m0-1.2V5a1.4 1.4 0 0 1 2.8 0v4.8m0-.5V6a1.4 1.4 0 0 1 2.8 0v6a6 6 0 0 1-6 6 5 5 0 0 1-3.5-1.5L4 14a1.4 1.4 0 0 1 2-2l1 1"/>'),
   '🐛': _ixSvg('<g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M12 6.8C9 6.8 6.8 9.4 6.8 12.9C6.8 16.6 9.1 19.8 12 19.8C14.9 19.8 17.2 16.6 17.2 12.9C17.2 9.4 15 6.8 12 6.8Z"/><path d="M12 7.6V19.4"/><path d="M9.7 9.4C10.3 8.1 11 7.3 12 7.3C13 7.3 13.7 8.1 14.3 9.4"/><path d="M10.6 7.1C9.6 5.5 8.1 4.4 6.6 4.4"/><path d="M13.4 7.1C14.4 5.5 15.9 4.4 17.4 4.4"/><path d="M6.9 11C5.4 10.4 4.4 9.4 3.9 8.2"/><path d="M6.6 13.9C5.2 13.9 4.2 13.8 3.3 13.4"/><path d="M7 16.7C5.6 17.3 4.6 18.3 4.1 19.5"/><path d="M17.1 11C18.6 10.4 19.6 9.4 20.1 8.2"/><path d="M17.4 13.9C18.8 13.9 19.8 13.8 20.7 13.4"/><path d="M17 16.7C18.4 17.3 19.4 18.3 19.9 19.5"/></g>'),
-  '👑': _ixSvg('<path d="M4 17l-1.2-8.5 5 3.5L12 5l4.2 4 5-3.5L20 17z"/><path d="M4 17h16"/>'),
+  '👑': _ixSvg('<path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/>'),
   '⚡': _ixSvg('<path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/>'),
   '🔔': _ixSvg('<path d="M6 9a6 6 0 1 1 12 0c0 5.5 2 6.5 2 6.5H4S6 14.5 6 9z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>'),
   '🌐': _ixSvg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>'),
@@ -1050,6 +1050,55 @@ function isAllowedAdminEmail(email) {
   if (e === OFFICIAL_ADMIN_EMAIL) return true;
   return getExtraAdminEmails().includes(e);
 }
+
+// ----------------------- PURGE AKUN STALE LOKAL (sekali, LOKAL-SAJA) -----------------------
+// req user 2026-06-29: akun uji/dummy lama (mis. test123@playly.com, bintang123,
+// demoplayly2026, dummy@playly.test, admin.playly2, dll) nyangkut di localStorage
+// device meski SUDAH DIHAPUS dari Supabase → muncul di Cari Kreator / feed /
+// search. Diverifikasi: Supabase bersih (resync TIDAK memunculkannya lagi), jadi
+// ini murni sisa cache localStorage.
+//
+// Purge ini LOKAL-SAJA: pakai removeItem NATIVE (un-hijacked) dari iframe supaya
+// TIDAK memicu hijack cloud-sync.removeItem → TIDAK menghapus apa pun dari
+// Supabase. Akun real (admin + user login) di-keep & tetap aman + re-sync; akun
+// stale tak balik krn memang sudah tak ada di cloud. BEDA TOTAL dgn purge lama
+// berbahaya (lihat ~baris 1008) yg cloud-delete lintas-device. Flag pakai prefix
+// `__` (bukan `playly-`) supaya TIDAK ikut di-sync → tiap device purge sendiri 1x.
+(function purgeStaleLocalAccountsOnce() {
+  var FLAG = "__playly_stale_purge_v1";
+  try {
+    if (localStorage.getItem(FLAG)) return;
+    // removeItem native (tanpa hijack cloud-sync) → benar-benar lokal
+    var nativeRemove = null;
+    try {
+      var ifr = document.createElement("iframe");
+      ifr.style.display = "none";
+      (document.body || document.documentElement).appendChild(ifr);
+      nativeRemove = ifr.contentWindow.Storage.prototype.removeItem;
+      ifr.remove();
+    } catch (e) {}
+    // Tanpa removeItem native, JANGAN purge (hindari risiko cloud-delete). Tandai
+    // selesai supaya tak retry tiap load.
+    if (typeof nativeRemove !== "function") { localStorage.setItem(FLAG, "1"); return; }
+    var localRemove = function (k) { try { nativeRemove.call(window.localStorage, k); } catch (e) {} };
+    var keepEmail = "";
+    try { var cu = JSON.parse(localStorage.getItem("playly-user") || "null"); keepEmail = String((cu && cu.email) || "").toLowerCase(); } catch (e) {}
+    var acctKeys = [];
+    for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf("playly-account-") === 0) acctKeys.push(k); }
+    acctKeys.forEach(function (k) {
+      var a = null; try { a = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+      if (!a || !a.email || !a.username) return;                 // skip key sistem/non-akun
+      var em = String(a.email).toLowerCase();
+      if (keepEmail && em === keepEmail) return;                 // keep user yang login
+      if (isAllowedAdminEmail(em)) return;                       // keep admin resmi/allowlist
+      localRemove(k);                                            // hapus akun stale (lokal)
+      var sk = "playly-state-" + a.username;
+      if (localStorage.getItem(sk)) localRemove(sk);             // + state-nya
+    });
+    localStorage.setItem(FLAG, "1");
+  } catch (e) {}
+})();
+
 // Super admin = OFFICIAL_ADMIN_EMAIL. Hanya super admin yang boleh kelola
 // admin tambahan (buat/cabut). Admin tambahan punya akses penuh sisanya.
 function isSuperAdmin(u) {
@@ -6942,7 +6991,7 @@ const I18N = {
     "hi.chipTotal": "Total",
     "hi.filterAll": "Semua",
     "hi.sortLatest": "Terbaru",
-    "st.subtitle": "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.",
+    "st.subtitle": "Performa channel kamu — ringkasan, grafik, dan performa video.",
     "st.summary": "Ringkasan",
     "st.graph": "Grafik",
     "st.videoPerf": "Performa Video",
@@ -20238,35 +20287,35 @@ const PP_ICON_SVG = {
   // flame
   flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 5 5 11a5 5 0 0 1-10 0c0-3 2-5 2-5s1 2 3 2c0-3-2-5 0-8z"/></svg>',
   // crown
-  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4 5 5-7 5 7 4-5v11H3z"/><path d="M3 18h18"/></svg>'
+  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>'
 };
 
 const PREMIUM_PLANS = {
   trial: {
-    key: "trial", name: "Uji Coba Gratis", durationLabel: "7 hari",
+    key: "trial", name: "Uji Coba Premium", durationLabel: "7 hari",
     durationMs: 7 * 24 * 60 * 60 * 1000, price: 0, priceLabel: "Gratis",
     icon: "gift", desc: "Coba Premium 7 hari, tanpa kartu kredit.",
-    features: ["Semua fitur Premium", "Otomatis turun ke Gratis setelah 7 hari", "Sekali per akun"]
+    features: ["Semua fitur Premium aktif 7 hari", "Tanpa kartu kredit", "Otomatis kembali ke Gratis setelah 7 hari (tanpa tagihan)", "Sekali per akun"]
   },
   monthly: {
     key: "monthly", name: "Bulanan", durationLabel: "1 bulan",
     durationMs: 30 * 24 * 60 * 60 * 1000, price: 9.99, priceLabel: "$9.99", suffix: "/bulan",
     icon: "sparkle", desc: "Akses Premium penuh, ditagih bulanan. Batal kapan saja.",
-    features: ["Unggah tanpa batas", "Kualitas 4K", "Bebas iklan", "Dukungan prioritas"]
+    features: ["Unggah tanpa batas", "Kualitas 4K & bebas iklan", "Dukungan prioritas", "Batal kapan saja"]
   },
   yearly: {
     key: "yearly", name: "Tahunan", durationLabel: "1 tahun",
     durationMs: 365 * 24 * 60 * 60 * 1000, price: 89.99, priceLabel: "$89.99", suffix: "/tahun",
     badge: "HEMAT 25%", recommended: true,
     icon: "flame", desc: "Nilai terbaik — 12 bulan dengan harga 9 bulan.",
-    features: ["Semua fitur Bulanan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun", "Dukungan kreator prioritas"]
+    features: ["Semua fitur paket Bulanan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun", "Ditagih 1× per tahun"]
   },
   lifetime: {
     key: "lifetime", name: "Selamanya", durationLabel: "Selamanya",
     durationMs: null, price: 199, priceLabel: "$199", suffix: "sekali bayar",
     badge: "PALING UNTUNG",
     icon: "crown", desc: "Sekali bayar. Premium selamanya, tanpa perpanjangan.",
-    features: ["Semua fitur Tahunan", "Tanpa batas waktu", "Semua fitur baru termasuk", "Akses Founders Club"]
+    features: ["Semua fitur paket Tahunan", "Bayar sekali, akses selamanya", "Semua fitur baru otomatis termasuk", "Akses Founders Club"]
   }
 };
 
@@ -22062,7 +22111,7 @@ function renderBillingHistory(opts = {}) {
     monthly:  isID ? "Bulanan"      : "Monthly",
     yearly:   isID ? "Tahunan"      : "Yearly",
     lifetime: isID ? "Seumur Hidup" : "Lifetime",
-    trial:    isID ? "Uji Coba Gratis" : "Free Trial",
+    trial:    isID ? "Uji Coba Premium" : "Premium Trial",
   };
   const statusText = {
     pending:  isID ? "Pending"   : "Pending",
@@ -26613,8 +26662,26 @@ window._onboarding = {
 
 // ====================================================================
 
+// req user 2026-06-29: section "Riwayat Pembelian" DIPINDAH dari Riwayat ke
+// halaman Langganan (premium-insights). Markup section masih di-render di view
+// Riwayat (SSR), jadi tiap load kita RELOKASI elemennya ke view premium-insights
+// — ditaruh sebagai SIBLING #premiumInsightsPage (di LUAR konten yg di-gate
+// premium) supaya tampil utk semua tier. Idempotent.
+function _relocatePembelianToLangganan() {
+  try {
+    const premView = document.querySelector('section.view[data-view="premium-insights"]');
+    const sec = document.querySelector('.riwayat-section[data-section="pembelian"]');
+    if (!premView || !sec) return;
+    if (premView.contains(sec)) return;            // sudah dipindah
+    const anchor = premView.querySelector("#premiumInsightsPage");
+    if (anchor) anchor.after(sec); else premView.appendChild(sec);
+    sec.classList.add("pembelian-relocated");      // hook styling kalau perlu
+  } catch (e) {}
+}
+
 function initDashboard() {
   renderAll();
+  try { _relocatePembelianToLangganan(); } catch (e) {}
   startLiveClock();
   initFabUpload();
   if (user.role === "admin") {
@@ -35065,7 +35132,13 @@ function switchView(name, { fromNav = false } = {}) {
 
   // Tier-gated views (premium-only) — render premium UI atau upgrade prompt
   // Live Stream view dihapus 2026-05-04 — routing skip.
-  if (name === "premium-insights") renderPremiumInsightsView();
+  if (name === "premium-insights") {
+    renderPremiumInsightsView();
+    // Pastikan section Pembelian (dipindah ke sini) ter-relokasi + ter-populate
+    // tiap kali halaman Langganan dibuka (req user 2026-06-29).
+    try { _relocatePembelianToLangganan(); } catch (e) {}
+    try { if (typeof renderPurchaseHistory === "function") renderPurchaseHistory(); } catch (e) {}
+  }
 
   if (name === "home") {
     // Refresh konten home tiap kali user navigate ke sini — supaya Featured
@@ -35854,14 +35927,15 @@ function renderStatsRow() {
     { label: "Total Tontonan", value: fmtNum(myViews), raw: myViews, icon: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.2"/>`, c1: "#7d3640", c2: "#561C24", trend: myViews > 0 ? "up" : null, trendText: myViews > 0 ? "views earned" : "—", spark: "#BE9752" },
     { label: "Total Suka", value: fmtNum(myLikes), raw: myLikes, icon: `<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myLikes > 0 ? "up" : null, trendText: myLikes > 0 ? "disukai user" : "—", spark: "#BE9752" },
     { label: "Total Komentar", value: fmtNum(myComments), raw: myComments, icon: `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myComments > 0 ? "up" : null, trendText: myComments > 0 ? "komentar diterima" : "—", spark: "#BE9752" },
-    { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" },
-    { label: "Interaksi", value: engagementText, raw: engagementPct, icon: `<path d="M3 12h3.5l2-6 4 13 2.6-7H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`, c1: "#7d3640", c2: "#561C24", trend: engagementPct > 0 ? "up" : null, trendText: engagementPct > 0 ? "(likes + komentar) / views" : "—", spark: "#BE9752" }
+    { label: "Pengikut", value: fmtNum(myFollowers), raw: myFollowers, icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`, c1: "#7d3640", c2: "#561C24", trend: myFollowers > 0 ? "up" : null, trendText: myFollowers > 0 ? "subscribers channel" : "—", spark: "#BE9752" }
+    // KPI "Interaksi" (engagement %) DIHAPUS (req user 2026-06-29): hampir selalu
+    // "—"/low-value. engagementPct/engagementText di atas jadi tak terpakai (aman).
   ];
 
   // v693 (2026-06-08): kartu disederhanakan — ikon + label + nilai (tanpa
   // sparkline & trend pill yg ramai), layout horizontal compact.
   // v752: kartu KPI clickable → tiap kartu mengarah ke halaman/section detail.
-  const KPI_KEYS = ["videos", "views", "likes", "comments", "followers", "engagement"];
+  const KPI_KEYS = ["videos", "views", "likes", "comments", "followers"];
   row.innerHTML = cards.map((c, i) => `
     <div class="stat-card" data-kpi="${KPI_KEYS[i] || ""}" role="button" tabindex="0" title="Lihat detail">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none">${c.icon}</svg></div>
@@ -36319,8 +36393,12 @@ function refreshHeroGreeting() {
   const clockTier = $("#heroClockTier");
   if (clockTier) {
     const isPrem = user.tier === "premium" || user.role === "admin";
-    clockTier.textContent = isPrem ? "Premium" : "Gratis";
+    // Badge tier HANYA tampil utk Premium (req user 2026-06-29). User Gratis →
+    // badge disembunyikan (jangan tampilkan "Gratis") biar baris identitas bersih.
+    // Toggle 2 arah supaya saat upgrade/downgrade di sesi langsung ikut update.
+    clockTier.textContent = isPrem ? "Premium" : "";
     clockTier.classList.toggle("hpc-tier-premium", isPrem);
+    clockTier.style.display = isPrem ? "" : "none";
   }
   // Bio singkat (per request v56) — user.bio / prefs; empty → placeholder clickable
   try {
@@ -36857,9 +36935,12 @@ function _patchHomeProfileCard() {
       _top.appendChild(_tier);
     }
   } catch {}
-  // Pindah bio ke dalam .hpc-id (bawah @username) → hapus 1 baris terpisah shg
-  // kartu profil lebih pendek & PERSIS sejajar dgn hero, isi tetap rapi
-  // (req user 2026-06-15).
+  // Bio dipindah ke dalam .hpc-id (bawah @username) → kartu profil COMPACT (tanpa
+  // baris terpisah) shg tetap sama tinggi dgn hero kiri "tanpa void" (req user
+  // 2026-06-15). Alignment avatar/nama/badge ditangani CSS `align-items:
+  // flex-start` di #home-hero .hpc-top + badge `align-self:flex-start` (ketiganya
+  // rata-ATAS) — BUKAN dgn memindah bio keluar (yg bikin kartu lebih tinggi shg
+  // kedua kolom tak sejajar; req user 2026-06-29).
   try {
     const _id = document.querySelector(".hpc-id");
     const _bio = document.getElementById("hpcBio");
@@ -41442,7 +41523,9 @@ const historyState = { contLimit: 10, riwayatLimit: 10 };
 function setRiwayatTab(tab) {
   const view = document.querySelector('section.view[data-view="history"]');
   if (!view) return;
-  const valid = ["all", "aktivitas", "pembelian", "search-user", "search-video"];
+  // search-user/search-video DICABUT + pembelian DIPINDAH ke halaman Langganan
+  // (premium-insights) — req user 2026-06-29. Riwayat tinggal: Semua · Tontonan.
+  const valid = ["all", "aktivitas"];
   const key = valid.includes(tab) ? tab : "all";
   view.dataset.riwayatTab = key;
   // Persist
@@ -41869,12 +41952,10 @@ function renderHistory() {
     };
     const undo = window._histUndo
       ? `<div class="hist-undo"><span>Item dihapus.</span><button type="button" data-hist-undo>${HIC.undo}<span>Urungkan</span></button></div>` : "";
+    // Chip ringkasan/filter (Total/Belum selesai/Selesai) DIHAPUS (req user
+    // 2026-06-29, opsi 1): filter DOBEL dgn dropdown "Semua/Belum selesai/Selesai"
+    // di bawah → cukup dropdown saja, toolbar lebih bersih.
     toolbar.innerHTML = `
-      <div class="hist-summary">
-        <button type="button" class="hist-stat total${filter === "all" ? " is-active" : ""}" data-hist-filter="all"><b>${totalAll}</b> ${tText("Total")}</button>
-        <button type="button" class="hist-stat prog${filter === "progress" ? " is-active" : ""}" data-hist-filter="progress"><b>${inProg}</b> ${tText("Belum selesai")}</button>
-        <button type="button" class="hist-stat done${filter === "done" ? " is-active" : ""}" data-hist-filter="done"><b>${doneCnt}</b> ${tText("Selesai")}</button>
-      </div>
       <div class="hist-controls">
         ${dd("filter", filter, [["all", tText("Semua")], ["progress", tText("Belum selesai")], ["done", tText("Selesai")]])}
         ${dd("sort", sortMode, [["newest", tText("Terbaru")], ["oldest", tText("Terlama")]])}
@@ -42579,23 +42660,17 @@ function renderStatsExtras() {
     sec.querySelector("h3").textContent = title;
     return sec;
   };
-  ensure("traffic", "Sumber Trafik").querySelector(".src-list").innerHTML =
-    emptyHtml("Belum ada data sumber trafik", "Asal penonton menemukan videomu akan muncul di sini saat pelacakan trafik aktif.");
-  ensure("geo", "Audiens per Negara").querySelector(".src-list").innerHTML =
-    emptyHtml("Belum ada data audiens", "Sebaran lokasi penonton akan muncul di sini saat pelacakan lokasi aktif.");
+  // Sumber Trafik & Audiens per Negara DIHAPUS (req user 2026-06-29): app TIDAK
+  // melacak trafik/lokasi penonton → section selalu kosong + dobel dgn Demografi
+  // Audiens di Insight Premium. (ensure/emptyHtml di atas jadi tak terpakai—aman.)
+  // Buang juga kalau ter-render dari versi lama / render sebelumnya.
+  view.querySelectorAll('.stats-extra-section[data-stats-section="traffic"], .stats-extra-section[data-stats-section="geo"], .stats-extra-grid').forEach(el => el.remove());
 
   // ROMBAK SUSUNAN: Grafik (chart) naik jadi hero — sebelum Performa Video.
   const topCard = view.querySelector("#topPerfCard");
   if (grafik && topCard && topCard.previousElementSibling !== grafik) {
     view.insertBefore(grafik, topCard);
   }
-  // Sumber Trafik + Audiens per Negara → 2 kolom berdampingan.
-  let grid = view.querySelector(".stats-extra-grid");
-  if (!grid) { grid = document.createElement("div"); grid.className = "stats-extra-grid"; view.appendChild(grid); }
-  const tEl = view.querySelector('.stats-extra-section[data-stats-section="traffic"]');
-  const gEl = view.querySelector('.stats-extra-section[data-stats-section="geo"]');
-  if (tEl) grid.appendChild(tEl);
-  if (gEl) grid.appendChild(gEl);
   decorateStatsHeadings();
 }
 
@@ -42658,7 +42733,10 @@ function drawChart() {
   drawMiniChart("views");
   drawMiniChart("followers");
   drawMiniChart("comments");
-  buildStatsTabs();
+  // Tab bar Statistik DIHAPUS (req user 2026-06-29): halaman cuma 3 section yg
+  // muat di-scroll → filter per-section tak perlu. Paksa "all" (tampil semua) +
+  // bar disembunyikan via CSS. (buildStatsTabs tak dipanggil lagi.)
+  setStatsTab("all");
 }
 
 // v724 (2026-06-08): tab bar Statistik dibangun ulang biar LENGKAP, URUT &
@@ -42673,11 +42751,13 @@ function buildStatsTabs() {
   // handler global button[data-stats-tab] -> setStatsTab(); active di-toggle oleh
   // setStatsTab. Ikon ringkasan = pie (samakan dgn heading).
   const TABS = [
+    // "Semua" = default aktif + cara balik lihat semua section setelah memfilter
+    // (req user 2026-06-29: samakan dgn Pustaka yg punya tab aktif default).
+    { k: "all", l: "Semua", i: `<svg ${S}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
     { k: "ringkasan", l: "Ringkasan", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M12 12V3M12 12l7.8 4.5"/></svg>` },
     { k: "grafik", l: "Grafik", i: `<svg ${S}><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h7v7"/></svg>` },
     { k: "top-video", l: "Performa Video", i: `<svg ${S}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>` },
-    { k: "traffic", l: "Sumber Trafik", i: `<svg ${S}><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.5 10.8l7-3.4M8.5 13.2l7 3.4"/></svg>` },
-    { k: "geo", l: "Audiens", i: `<svg ${S}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/></svg>` },
+    // Tab "Sumber Trafik" + "Audiens" DIHAPUS (req user 2026-06-29) — section-nya dibuang.
   ];
   const cur = view.dataset.statsTab || "all";
   bar.innerHTML = TABS.map(t => `<button type="button" class="riwayat-tab stat-tab${t.k === cur ? " active" : ""}" data-stats-tab="${t.k}"><span class="stat-tab-ico">${t.i}</span>${t.l}</button>`).join("");
@@ -52769,11 +52849,9 @@ function getUserEmails() { return normalizeEmailEntries(); }
 
 // Folder metadata — dipakai untuk filter, judul, hint, dan empty state.
 const USER_EMAIL_FOLDERS = {
-  all:     { title: "Semua Email",      hint: "Gabungan semua email dari Email Masuk, Terkirim, Balasan, dan Menunggu.", empty: { icon: "📂", title: "Belum ada email",          desc: "Tulis email pertamamu lewat tombol Tulis Email di atas." } },
+  all:     { title: "Semua Email",      hint: "Gabungan semua email dari Email Masuk dan Terkirim.", empty: { icon: "📂", title: "Belum ada email",          desc: "Tulis email pertamamu lewat tombol Tulis Email di atas." } },
   inbox:   { title: "Email Masuk",      hint: "Balasan dari admin & email masuk dari pengguna lain.",                    empty: { icon: "📥", title: "Belum ada email masuk",     desc: "Balasan admin & email dari pengguna lain akan muncul di sini." } },
   sent:    { title: "Email Terkirim",   hint: "Semua email yang sudah kamu kirim (ke admin & pengguna).",                empty: { icon: "✉️", title: "Belum ada email terkirim",  desc: "Klik \"Tulis Email\" untuk mengirim ke admin atau pengguna lain." } },
-  replied: { title: "Balasan Email",    hint: "Email yang sudah mendapat balasan.",                                      empty: { icon: "💬", title: "Belum ada balasan",         desc: "Email yang dibalas admin atau pengguna lain akan muncul di sini." } },
-  waiting: { title: "Menunggu Balasan", hint: "Email kamu yang belum dibalas.",                                          empty: { icon: "⏳", title: "Tidak ada yang menunggu",   desc: "Semua email kamu sudah dibalas." } },
   trash:   { title: "Sampah",           hint: "Email yang kamu hapus. Bisa dipulihkan atau dihapus permanen.",           empty: { icon: "🗑️", title: "Sampah kosong",            desc: "Email yang kamu hapus akan muncul di sini." } },
 };
 
@@ -56444,7 +56522,7 @@ function _gsRenderHistoryDropdown() {
   drop.innerHTML = `
     <div class="ss-section">
       <div class="ss-section-title-row">
-        <span class="ss-section-title">PENCARIAN TERAKHIR</span>
+        <span class="ss-section-title">Pencarian terakhir</span>
         <button type="button" class="ss-clear-history" data-ss-clear-history>Hapus semua</button>
       </div>
       ${history.map(q => `
@@ -56480,7 +56558,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   // v619 (2026-05-28): + HALAMAN section (quick-nav) di top
   if (pageMatches.length) {
     html += `<div class="ss-section">
-      <div class="ss-section-title">HALAMAN</div>
+      <div class="ss-section-title">Halaman</div>
       ${pageMatches.map(p => `
         <button type="button" class="ss-item ss-item-page" data-ss-page="${escapeHtml(p.view)}">
           <div class="ss-page-icon" aria-hidden="true">${_gsPageIcon(p.icon)}</div>
@@ -56493,7 +56571,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   }
   if (videoMatches.length) {
     html += `<div class="ss-section">
-      <div class="ss-section-title">VIDEO</div>
+      <div class="ss-section-title">Video</div>
       ${videoMatches.slice(0, 5).map(v => {
         const thumb = v.thumb || v.thumbnail || "";
         const init = String(v.creator || v.username || "?")[0].toUpperCase();
@@ -56509,7 +56587,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   }
   if (creatorMatches.length) {
     html += `<div class="ss-section">
-      <div class="ss-section-title">KREATOR</div>
+      <div class="ss-section-title">Kreator</div>
       ${creatorMatches.slice(0, 4).map(a => {
         const init = String(a.name || a.username || "?")[0].toUpperCase();
         return `<button type="button" class="ss-item" data-ss-user="${escapeHtml(a.username || "")}">
@@ -56525,7 +56603,7 @@ function _gsRender(query, videoMatches, creatorMatches, hashtagMatches, pageMatc
   // v619 (2026-05-28): + HASHTAG section
   if (hashtagMatches.length) {
     html += `<div class="ss-section">
-      <div class="ss-section-title">HASHTAG</div>
+      <div class="ss-section-title">Hashtag</div>
       ${hashtagMatches.map(h => `
         <button type="button" class="ss-item" data-ss-hashtag="${escapeHtml(h.tag)}">
           <div class="ss-hashtag-icon" aria-hidden="true">#</div>
@@ -61639,7 +61717,7 @@ function setStatsTab(tab) {
   });
   // Update title + breadcrumb sesuai tab.
   const meta = {
-    "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, performa video, trafik & audiens.", crumb: "Statistik" },
+    "all":        { title: "Statistik",            desc: "Performa channel kamu — ringkasan, grafik, dan performa video.", crumb: "Statistik" },
     "ringkasan":  { title: "Ringkasan Performa",   desc: "Total video, tontonan, suka, komentar, pengikut, dan engagement.",             crumb: "Ringkasan" },
     "grafik":     { title: "Grafik Statistik",     desc: "Tren video, tontonan, pengikut, dan komentar per minggu/bulan/tahun.",         crumb: "Grafik" },
     "top-video":  { title: "Performa Video",       desc: "Tabel performa tiap video — tontonan, suka, komentar, dan engagement.",       crumb: "Performa Video" },

@@ -137,13 +137,15 @@ body[data-theme="light"] {
   --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  /* req user 2026-06-28: surface/border → WINE TIPIS (nuansa wine lembut, bukan
-     abu/slate); teks-redup/ikon taupe → WINE. Semua chrome senada tema wine. */
-  --surface: rgba(132, 42, 59, 0.05);
-  --surface-2: rgba(132, 42, 59, 0.08);
-  --surface-3: rgba(132, 42, 59, 0.13);
-  --border: rgba(132, 42, 59, 0.18);
-  --border-strong: rgba(132, 42, 59, 0.30);
+  /* req user 2026-06-29: NOL warna PINK & ABU di mana pun. Wine-tint alpha-rendah
+     di atas putih TERBACA PINK → jadi semua surface = PUTIH. Definisi/elevasi via
+     BORDER wine tipis + bayangan (bukan fill). Aksen kuat = wine SOLID (--primary).
+     Border tetap wine (garis, bukan fill → tak terbaca pink). */
+  --surface: #FFFFFF;
+  --surface-2: #FFFFFF;
+  --surface-3: #FFFFFF;
+  --border: rgba(132, 42, 59, 0.22);
+  --border-strong: rgba(132, 42, 59, 0.38);
   --text: #6D2932;        /* Deep wine — main text */
   --text-2: #8C3A45;      /* Wine — secondary text (was taupe #5F564E) */
   --muted: rgba(132, 42, 59, 0.70); /* Muted wine — meta/ikon (was taupe #7A716A) */
@@ -1752,10 +1754,10 @@ body[data-role="admin"] .nav-group.expanded .nav-toggle { color: #FFFFFF; }
 .ea-change:hover { color: var(--text); background: var(--surface-2); }
 /* Header halaman Email: chip ikon kiri + blok (judul+deskripsi) kanan, sejajar.
    Chip diperbesar agar seimbang dgn judul besar; deskripsi sedikit dinaikkan. */
-.email-head-flex { display: flex; align-items: center; gap: 16px; }
-.email-head-flex > .sec-icon-v582.sec-icon-lg { width: 52px; height: 52px; border-radius: 15px; margin-right: 0; vertical-align: 0; }
-.email-head-flex > .sec-icon-v582.sec-icon-lg svg { width: 28px; height: 28px; }
-.view-header .email-head-flex h2 { margin: 0 0 4px; }
+.email-head-flex { display: flex; align-items: center; gap: 14px; }
+.email-head-flex > .sec-icon-v582.sec-icon-lg { width: 40px; height: 40px; border-radius: 11px; margin-right: 0; vertical-align: 0; }
+.email-head-flex > .sec-icon-v582.sec-icon-lg svg { width: 22px; height: 22px; }
+.view-header .email-head-flex h2 { margin: 0 0 2px; font-size: 22px; }
 .view-header .email-head-flex p { margin: 0; font-size: 14px; }
 
 /* Meta line + info badge di list email */
@@ -4094,8 +4096,131 @@ body[data-theme="light"] .hs-icon.videos,
 body[data-theme="light"] .hs-icon.views,
 body[data-theme="light"] .hs-icon.following,
 body[data-theme="light"] .hs-icon.likes {
-  background: linear-gradient(135deg, rgba(132, 42, 59, .18), rgba(132, 42, 59, .08)) !important;
-  color: #842A3B !important;
+  background: var(--primary) !important; /* SOLID wine (bukan gradient tint = pink); req 2026-06-29 */
+  color: #fff !important;
+}
+/* =========================================================================
+   NOL PINK/ABU di light mode (req user 2026-06-29) — kotak ikon / badge /
+   avatar fitur: SOLID wine + ikon/inisial PUTIH (bukan gradient wine-tint yg
+   terbaca PINK). Kartu/thumb nested: PUTIH (border wine tipis dari --border).
+   Disisipkan in-place (zona aman parser, bukan di akhir file).
+   ========================================================================= */
+body[data-theme="light"]:not([data-role="admin"]) .ha-badge-ico,
+body[data-theme="light"]:not([data-role="admin"]) .hqs-icon-box,
+body[data-theme="light"]:not([data-role="admin"]) .sec-icon-v582,
+body[data-theme="light"]:not([data-role="admin"]) .uwc-star,
+body[data-theme="light"]:not([data-role="admin"]) .hpc-avatar,
+body[data-theme="light"]:not([data-role="admin"]) .avatar {
+  background: var(--primary) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+/* Sisa fill CREAM (rgba(232,216,196,..)) dark-theme yg bocor ke light → PUTIH. */
+body[data-theme="light"]:not([data-role="admin"]) .hero-tip,
+body[data-theme="light"]:not([data-role="admin"]) .lt-card,
+body[data-theme="light"]:not([data-role="admin"]) .ranking-empty-state {
+  background: #fff !important;
+  background-image: none !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .ha-badge-ico svg,
+body[data-theme="light"]:not([data-role="admin"]) .hqs-icon-box svg,
+body[data-theme="light"]:not([data-role="admin"]) .sec-icon-v582 svg,
+body[data-theme="light"]:not([data-role="admin"]) .uwc-star svg,
+body[data-theme="light"]:not([data-role="admin"]) .avatar svg {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+/* Kartu/thumb nested → PUTIH (buang fill wine-tint = pink). */
+body[data-theme="light"]:not([data-role="admin"]) .hqs-card,
+body[data-theme="light"]:not([data-role="admin"]) .hsv-thumb {
+  background: #fff !important;
+  background-image: none !important;
+}
+/* Progress bar pencapaian: track PUTIH + border wine tipis, isi SOLID wine. */
+body[data-theme="light"]:not([data-role="admin"]) .ha-badge-bar {
+  background: #fff !important;
+  border: 1px solid rgba(132, 42, 59, 0.22) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .ha-badge-bar > * {
+  background: var(--primary) !important;
+}
+/* Tombol ghost/sekunder → PUTIH + border wine tipis + teks wine (bukan fill
+   wine-tint = pink). Tombol primary tetap solid wine (tak disentuh). */
+body[data-theme="light"]:not([data-role="admin"]) .btn.ghost,
+body[data-theme="light"]:not([data-role="admin"]) .hpc-act-btn.ghost {
+  background: #fff !important;
+  background-image: none !important;
+  border: 1px solid rgba(132, 42, 59, 0.28) !important;
+  color: var(--primary) !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .btn.ghost:hover,
+body[data-theme="light"]:not([data-role="admin"]) .hpc-act-btn.ghost:hover {
+  background: #fff !important;
+  border-color: rgba(132, 42, 59, 0.5) !important;
+}
+/* Sisa nilai CREAM dark-theme yg bocor ke light (rgba(232,216,196,..)) di
+   tombol/link empty-state → netralkan jadi PUTIH + border wine (no cream). */
+body[data-theme="light"]:not([data-role="admin"]) .lt-empty-link,
+body[data-theme="light"]:not([data-role="admin"]) .hsv-empty-btn {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: rgba(132, 42, 59, 0.28) !important;
+  color: var(--primary) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) .hsv-empty-btn.btn.primary,
+html body[data-theme="light"]:not([data-role="admin"]) .hsv-empty-btn.btn.primary span,
+html body[data-theme="light"]:not([data-role="admin"]) .lt-empty .btn.primary,
+html body[data-theme="light"]:not([data-role="admin"]) .lt-empty .btn.primary span {
+  background: var(--primary) !important;
+  background-image: none !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+/* ---- SWEEP halaman lain (req user 2026-06-29): kotak ikon/avatar spesifik
+   halaman (Unggah/Riwayat/Profil/Email) → SOLID wine + ikon PUTIH. ---- */
+body[data-theme="light"]:not([data-role="admin"]) .upf-ico,
+body[data-theme="light"]:not([data-role="admin"]) .upf-ai-ico,
+body[data-theme="light"]:not([data-role="admin"]) .dz-pro-empty-icon,
+body[data-theme="light"]:not([data-role="admin"]) .up-empty-icon,
+body[data-theme="light"]:not([data-role="admin"]) .user-email-folder,
+body[data-theme="light"]:not([data-role="admin"]) .profile-header-avatar {
+  background: var(--primary) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) .upf-ico svg,
+body[data-theme="light"]:not([data-role="admin"]) .upf-ai-ico svg,
+body[data-theme="light"]:not([data-role="admin"]) .dz-pro-empty-icon svg,
+body[data-theme="light"]:not([data-role="admin"]) .up-empty-icon svg,
+body[data-theme="light"]:not([data-role="admin"]) .user-email-folder svg,
+body[data-theme="light"]:not([data-role="admin"]) .profile-header-avatar svg {
+  color: #fff !important; stroke: #fff !important;
+}
+/* Kartu/panel/badge/illustrasi/emoji-box spesifik halaman → PUTIH (buang pink/cream). */
+body[data-theme="light"]:not([data-role="admin"]) .upf-seg-card,
+body[data-theme="light"]:not([data-role="admin"]) .upf-sub-card-emoji,
+body[data-theme="light"]:not([data-role="admin"]) .hist-stat,
+body[data-theme="light"]:not([data-role="admin"]) .twofa-badge,
+body[data-theme="light"]:not([data-role="admin"]) .er-illust,
+body[data-theme="light"]:not([data-role="admin"]) .upf-ai-assist {
+  background: #fff !important;
+  background-image: none !important;
+}
+/* Tombol & kartu sub Unggah — spesifisitas TINGGI (scoped view + html prefix)
+   utk menang atas rule cream/gradient lama. Tombol → putih + border wine (teks
+   wine dari rule 48964); kartu → putih (buang gradient wine = pink) + border wine. */
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-btn {
+  background: #fff !important;
+  background-image: none !important;
+  border: 1px solid rgba(132, 42, 59, 0.28) !important;
+}
+html body[data-theme="light"]:not([data-role="admin"]) section[data-view="upload"] .upf-sub-card {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: rgba(132, 42, 59, 0.2) !important;
 }
 .hs-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .hs-card small,
@@ -4987,8 +5112,17 @@ body[data-theme="light"] .trending-retry-btn:hover {
    + isi ditata rapi/proporsional (req user 2026-06-15: jangan berantakan) —
    spacing nyaman, stat box ukuran wajar (tidak disesakkan). */
 #home-hero .hero-content { align-items: flex-start !important; }
-#home-hero .hero-clock.user { flex: 0 1 580px; max-width: 600px; min-width: 380px; padding: 16px 24px !important; }
-#home-hero .hero-profile-card { gap: 13px; }
+/* Baris identitas kartu: avatar + (nama/@username/bio) + badge tier RATA-ATAS
+   (req user 2026-06-29: "kolomnya tidak sejajar"). Default .hpc-top center bikin
+   avatar & badge ter-center ke kolom-id yg tinggi (krn bio jadi baris ke-3) shg
+   nyangkut di tengah, tak sejajar nama. flex-start = ketiganya mulai dari atas.
+   Badge override align-self center-nya juga. */
+#home-hero .hpc-top { align-items: flex-start !important; }
+#home-hero .hpc-top > .hpc-tier-badge { align-self: flex-start !important; }
+/* Padding & gap dirapatkan tipis supaya tinggi kartu ≈ kotak hero kiri → kedua
+   kolom sejajar (sebelumnya kartu menjorok ke bawah). */
+#home-hero .hero-clock.user { flex: 0 1 580px; max-width: 600px; min-width: 380px; padding: 13px 24px !important; }
+#home-hero .hero-profile-card { gap: 9px; }
 /* bio dipindah ke dalam .hpc-id (bawah @username) → beri jarak kecil dari username */
 #home-hero .hpc-id .hpc-bio { margin-top: 6px; }
 
@@ -6987,15 +7121,29 @@ body[data-role="admin"] .ca-btn.ca-like.active {
   padding: 8px 0;
 }
 .search-suggestions .ss-section + .ss-section {
-  border-top: 1px solid var(--border);
+  border-top: 0;
+  position: relative;
 }
+/* Garis pembatas antar-section: INSET 14px (sejajar teks/ikon item), tidak
+   full-bleed sampai tepi kartu (req user 2026-06-29). */
+.search-suggestions .ss-section + .ss-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: var(--border);
+}
+/* Judul section (Halaman/Video/Kreator/Hashtag): Title Case, BUKAN CAPSLOCK
+   (req user 2026-06-29) — text-transform none + letter-spacing normal. */
 .search-suggestions .ss-section-title {
-  padding: 6px 14px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: .12em;
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .005em;
   color: var(--muted);
-  text-transform: uppercase;
+  text-transform: none;
 }
 .search-suggestions .ss-item {
   display: flex;
@@ -7078,13 +7226,22 @@ body[data-role="admin"] .ca-btn.ca-like.active {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Subtitle (@handle · N tontonan) jadi BLOK rapi di bawah judul + jarak tipis
+   biar susunan teks 2-baris konsisten (req user 2026-06-29). */
 .search-suggestions .ss-info small {
+  display: block;
+  margin-top: 1px;
   font-size: 11.5px;
   color: var(--muted);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .search-suggestions .ss-empty {
   padding: 24px 16px;
@@ -7242,23 +7399,36 @@ html body:not([data-role="admin"]):not(.auth-mode) .topbar-search.ts-caret-on in
 .sr-close-btn:hover { background: var(--surface-3); }
 .sr-search-box { flex: 1; max-width: 620px; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 15px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; transition: border-color .15s; }
 html body:not([data-role="admin"]):not(.auth-mode) .sr-search-box:focus-within { border-color: rgba(232,216,196,.45); }
+/* Light: header (kotak search + tombol tutup) PUTIH + border wine tipis, buang fill pink. */
+body[data-theme="light"] .sr-close-btn { background: #fff; border-color: rgba(132,42,59,.2); }
+body[data-theme="light"] .sr-close-btn:hover { background: rgba(132,42,59,.05); }
+body[data-theme="light"] .sr-search-box { background: #fff; border-color: rgba(132,42,59,.28); }
+html body[data-theme="light"]:not([data-role="admin"]):not(.auth-mode) .sr-search-box:focus-within { border-color: rgba(132,42,59,.5); }
 .sr-search-ic { width: 16px; height: 16px; flex: none; color: var(--text-2); }
 .sr-query-input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--text); font-size: 14px; caret-color: var(--accent); }
 .sr-query-input::placeholder { color: rgba(232,216,196,.42); }
-body[data-theme="light"] .sr-query-input::placeholder { color: rgba(102,34,34,.45); }
+body[data-theme="light"] .sr-query-input::placeholder { color: rgba(132,42,59,.45); }
 /* toolbar filter horizontal */
-.sr-toolbar { display: flex; align-items: center; gap: 16px 20px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+/* Toolbar & filter di-STACK vertikal (req user 2026-06-29: dulu meta+3 grup
+   filter berebut 1 baris flex-wrap → terlihat acak/berdempet). Sekarang: meta di
+   atas, lalu Durasi/Waktu/Urutkan masing-masing 1 baris dgn label di-align. */
+.sr-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
 .sr-toolbar-meta { font-size: 13px; color: var(--text-2); }
 .sr-toolbar-meta strong { color: var(--text); font-weight: 700; }
 .sr-toolbar-meta .sr-q { color: var(--text); }
-.sr-filtbar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; margin-left: auto; }
-.sr-fl { display: flex; align-items: center; gap: 6px; }
-.sr-fl-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,216,196,.5); }
-body[data-theme="light"] .sr-fl-label { color: rgba(102,34,34,.5); }
-.sr-chip { padding: 5px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all .14s; white-space: nowrap; }
+.sr-filtbar { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; margin-left: 0; }
+.sr-fl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* Label filter: Title Case (BUKAN capslock), lebar tetap supaya chip mulai sejajar. */
+.sr-fl-label { flex: none; min-width: 62px; font-size: 11px; font-weight: 700; letter-spacing: .005em; text-transform: none; color: rgba(232,216,196,.5); }
+body[data-theme="light"] .sr-fl-label { color: rgba(132,42,59,.62); }
+.sr-chip { padding: 6px 13px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all .14s; white-space: nowrap; }
 .sr-chip:hover { background: var(--surface-3); border-color: var(--border-strong); }
 .sr-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-body[data-theme="light"] .sr-chip.active { background: rgba(132,42,59,.12); border-color: rgba(132,42,59,.5); color: var(--primary); }
+/* Light: inactive = PUTIH + border wine tipis (TANPA fill pink), active = SOLID
+   wine biar jelas terbedakan (req user 2026-06-29: no pink + active harus beda). */
+body[data-theme="light"] .sr-chip { background: #fff; border-color: rgba(132,42,59,.26); color: var(--text); }
+body[data-theme="light"] .sr-chip:hover { background: #fff; border-color: rgba(132,42,59,.55); }
+body[data-theme="light"] .sr-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 body[data-role="admin"] .sr-chip.active { background: rgba(154,170,196,.14); color: #9AAAC4; border-color: rgba(154,170,196,.55); }
 /* body + content */
 .sr-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
@@ -7267,13 +7437,20 @@ body[data-role="admin"] .sr-chip.active { background: rgba(154,170,196,.14); col
 .sr-content::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 3px solid var(--bg-elev); }
 .sr-content::-webkit-scrollbar-track { background: transparent; }
 .sr-section { margin-bottom: 30px; }
-.sr-section-title { margin: 0 0 14px; font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: rgba(232,216,196,.55); display: flex; align-items: center; gap: 8px; }
-body[data-theme="light"] .sr-section-title { color: rgba(102,34,34,.6); }
+/* Judul section: Title Case (BUKAN capslock), warna teks tema (bukan coklat). */
+.sr-section-title { margin: 0 0 14px; font-size: 13.5px; font-weight: 700; letter-spacing: .005em; text-transform: none; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+body[data-theme="light"] .sr-section-title { color: var(--text-2); }
 .sr-sec-count { font-size: 11px; font-weight: 700; color: var(--text-2); background: var(--surface-2); border-radius: 999px; padding: 1px 8px; letter-spacing: 0; }
+body[data-theme="light"] .sr-sec-count { background: transparent; border: 1px solid rgba(132,42,59,.26); color: var(--primary); padding: 0 7px; }
 /* kreator */
-.sr-creators-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 10px; }
-.sr-creator-card { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; text-align: left; color: inherit; transition: all .15s; }
+.sr-creators-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 12px; }
+.sr-creator-card { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; text-align: left; color: inherit; transition: all .15s; }
 .sr-creator-card:hover { background: var(--surface-2); border-color: var(--border-strong); transform: translateY(-1px); }
+/* Light: kartu kreator PUTIH + border wine tipis (buang fill pink dari --surface). */
+body[data-theme="light"] .sr-creator-card { background: #fff; border-color: rgba(132,42,59,.18); }
+body[data-theme="light"] .sr-creator-card:hover { background: #fff; border-color: rgba(132,42,59,.45); }
+/* Avatar = SOLID wine + inisial putih (bukan gradient wine-tint yg terbaca PINK). */
+body[data-theme="light"] .sr-creator-avatar { background: var(--primary); border-color: transparent; color: #fff; }
 .sr-creator-avatar { width: 42px; height: 42px; flex: none; border-radius: 50%; background: linear-gradient(135deg, var(--surface-3), var(--surface-2)); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--text); }
 .sr-creator-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .sr-creator-info strong { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -7282,7 +7459,7 @@ body[data-theme="light"] .sr-section-title { color: rgba(102,34,34,.6); }
 .sr-creator-go svg { width: 16px; height: 16px; }
 .sr-creator-card:hover .sr-creator-go { opacity: .85; transform: translateX(2px); }
 /* video — gaya modern (thumb + meta di bawah, borderless) */
-.sr-videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 18px 16px; }
+.sr-videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 24px 18px; }
 .sr-video-card { display: flex; flex-direction: column; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: inherit; }
 .sr-video-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: var(--surface-3); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .sr-video-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
@@ -7297,6 +7474,11 @@ body[data-theme="light"] .sr-section-title { color: rgba(102,34,34,.6); }
 .sr-by-name { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sr-video-stats { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
 .sr-video-stats .ui-ico { width: 1em; height: 1em; }
+/* Light: buang sisa pink/abu di section video — thumb fallback PUTIH, avatar
+   kecil @kreator SOLID wine + inisial putih (bukan --surface-3 wine-tint).
+   req user 2026-06-29: no hint pink/abu. */
+body[data-theme="light"] .sr-video-thumb { background: #fff; }
+body[data-theme="light"] .sr-by-ava { background: var(--primary); color: #fff; }
 /* empty */
 .sr-empty { text-align: center; padding: 64px 20px; }
 .sr-empty-icon { display: inline-flex; font-size: 44px; margin-bottom: 14px; opacity: .5; }
@@ -8223,6 +8405,38 @@ section.view[data-view="stats"] .stats-row {
   box-shadow: var(--shadow-sm);
 }
 body[data-theme="light"] .chip-tabs button.active { background: white; }
+
+/* Aktivitas: filter tipe (req user 2026-06-29) — dipindah ke baris sendiri di
+   bawah header + selaras gaya tab app: chip ber-ikon, ukuran konsisten, aktif
+   wine (active state diwarnai rule !important "Activity page chip-tabs" di bawah).
+   Ikon via ::before mask supaya AMAN dari i18n re-inject (tak menyentuh teks). */
+#activityFilters.activity-filter-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 4px 0 18px; padding: 0;
+  background: none; border: 0; border-radius: 0; width: auto;
+}
+#activityFilters.activity-filter-row button {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: 10px;
+  font-size: 12.5px; font-weight: 600; line-height: 1;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-2);
+}
+#activityFilters.activity-filter-row button:hover { color: var(--text); border-color: var(--border-strong); }
+#activityFilters.activity-filter-row button.active { border-color: var(--primary); }
+#activityFilters.activity-filter-row button::before {
+  content: ""; width: 15px; height: 15px; flex: 0 0 auto;
+  background: currentColor;
+  -webkit-mask: center / contain no-repeat var(--af-ico);
+  mask: center / contain no-repeat var(--af-ico);
+}
+#activityFilters.activity-filter-row button[data-act-filter="all"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Crect%20x%3D'3'%20y%3D'3'%20width%3D'7'%20height%3D'7'%20rx%3D'1.5'%2F%3E%3Crect%20x%3D'14'%20y%3D'3'%20width%3D'7'%20height%3D'7'%20rx%3D'1.5'%2F%3E%3Crect%20x%3D'3'%20y%3D'14'%20width%3D'7'%20height%3D'7'%20rx%3D'1.5'%2F%3E%3Crect%20x%3D'14'%20y%3D'14'%20width%3D'7'%20height%3D'7'%20rx%3D'1.5'%2F%3E%3C%2Fsvg%3E"); }
+#activityFilters.activity-filter-row button[data-act-filter="like"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M12%2020.3C6.5%2016.6%203.5%2013.3%203.5%209.6c0-2.4%201.9-4.1%204.1-4.1%201.7%200%202.9%201%204.4%202.6%201.5-1.6%202.7-2.6%204.4-2.6%202.2%200%204.1%201.7%204.1%204.1%200%203.7-3%207-8.5%2010.7z'%2F%3E%3C%2Fsvg%3E"); }
+#activityFilters.activity-filter-row button[data-act-filter="comment"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20.5%2011.5a8%208%200%200%201-11.6%207.1L4%2020.5l1.9-4.7A8%208%200%201%201%2020.5%2011.5z'%2F%3E%3C%2Fsvg%3E"); }
+#activityFilters.activity-filter-row button[data-act-filter="share"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Ccircle%20cx%3D'17.5'%20cy%3D'5.5'%20r%3D'2.5'%2F%3E%3Ccircle%20cx%3D'6.5'%20cy%3D'12'%20r%3D'2.5'%2F%3E%3Ccircle%20cx%3D'17.5'%20cy%3D'18.5'%20r%3D'2.5'%2F%3E%3Cpath%20d%3D'M8.7%2013.2l6.6%204.1M15.3%206.7l-6.6%204.1'%2F%3E%3C%2Fsvg%3E"); }
+#activityFilters.activity-filter-row button[data-act-filter="follow"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Ccircle%20cx%3D'9'%20cy%3D'8'%20r%3D'3.3'%2F%3E%3Cpath%20d%3D'M3.5%2019a5.5%205.5%200%200%201%2011%200'%2F%3E%3Cpath%20d%3D'M19%207.5v5M21.5%2010h-5'%2F%3E%3C%2Fsvg%3E"); }
+#activityFilters.activity-filter-row button[data-act-filter="upload"] { --af-ico: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M12%2015.5V4.5'%2F%3E%3Cpath%20d%3D'M7.5%209L12%204.5%2016.5%209'%2F%3E%3Cpath%20d%3D'M5%2019.5h14'%2F%3E%3C%2Fsvg%3E"); }
+
 
 .chip-count {
   display: inline-flex;
@@ -11433,8 +11647,8 @@ body.dm-show-chat .dm-chat-back { display: inline-flex !important; align-items: 
    dgn ikon Iconsax (.ui-ico) app. Scoped ke <section> konten, kecuali ui-ico/picon. */
 section[data-view="messages"] svg:not(.ui-ico):not(.picon) { stroke-width: 1.6; }
 /* Ikon JUDUL (chip header) lebih besar dari ikon section di bawahnya — hierarki jelas. */
-section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg { width: 52px; height: 52px; }
-section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 28px; height: 28px; }
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg { width: 40px; height: 40px; border-radius: 11px; }
+section[data-view="messages"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 22px; height: 22px; }
 .dm-ov-grid {
   grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)) !important;
   margin-top: 16px;
@@ -43705,6 +43919,15 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
   border-radius: 16px;
   padding: 18px 20px 22px;
 }
+/* req user 2026-06-29: HAPUS section "Pencarian User" & "Pencarian Video" dari
+   Riwayat (niche/low-value) — sembunyikan kartu section + tab/nav-nya. Tab JS juga
+   sudah dicabut dari `valid`. Riwayat tinggal: Semua · Tontonan · Pembelian. */
+.riwayat-section[data-section="search-user"],
+.riwayat-section[data-section="search-video"],
+[data-riwayat-tab="search-user"],
+[data-riwayat-tab="search-video"] {
+  display: none !important;
+}
 .riwayat-section-head {
   display: flex;
   align-items: center;
@@ -44191,7 +44414,10 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .hdd-btn[aria-expanded="true"] { border-color: var(--primary); }
 .hdd-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
 .hdd-menu {
-  position: absolute; top: calc(100% + 6px); left: auto; right: 0; z-index: 1000;
+  /* LEFT-align (req user 2026-06-29): dulu right:0 + min-width 150px > trigger
+     sempit → menu melebar ke KIRI menembus/ketutup sidebar (huruf depan
+     terpotong). Buka ke KANAN dari tepi kiri trigger (ada ruang). */
+  position: absolute; top: calc(100% + 6px); left: 0; right: auto; z-index: 1000;
   min-width: 150px; margin: 0; padding: 5px; list-style: none;
   background: var(--bg-elev-2, #311c22); border: 1px solid var(--border-strong, var(--border)); border-radius: 11px;
   box-shadow: 0 14px 34px rgba(0,0,0,.55);
@@ -44208,13 +44434,19 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .hist-summary button.hist-stat { cursor: pointer; transition: box-shadow .12s, border-color .12s, background .12s; font-family: inherit; }
 .hist-summary button.hist-stat:hover { border-color: currentColor; }
 .hist-summary button.hist-stat.is-active { box-shadow: inset 0 0 0 1.5px currentColor; }
-/* warna pill dibedakan per makna: total (wine) · belum selesai (amber) · selesai (hijau) */
-.hist-summary .hist-stat.total { background: var(--accent-soft, rgba(199,183,163,.14)); border-color: color-mix(in srgb, var(--accent, #C7B7A3) 45%, var(--border)); color: var(--text-2, var(--muted)); }
-.hist-summary .hist-stat.total b { color: var(--text); }
-.hist-summary .hist-stat.prog { background: rgba(212, 162, 74, .15); border-color: rgba(212, 162, 74, .55); color: #d9b367; }
-.hist-summary .hist-stat.prog b { color: #efce8b; }
-.hist-summary .hist-stat.done { background: rgba(86, 168, 110, .15); border-color: rgba(86, 168, 110, .55); color: #76c290; }
-.hist-summary .hist-stat.done b { color: #99d7ad; }
+/* req user 2026-06-29: TANPA warna-warni — pill status SERAGAM neutral (cream di
+   dark / wine di light), bukan amber (Belum selesai) & hijau (Selesai). Filter
+   aktif tetap jelas via ring .is-active (currentColor). */
+.hist-summary .hist-stat.total,
+.hist-summary .hist-stat.prog,
+.hist-summary .hist-stat.done {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-2);
+}
+.hist-summary .hist-stat.total b,
+.hist-summary .hist-stat.prog b,
+.hist-summary .hist-stat.done b { color: var(--text); }
 .hdd-menu[hidden] { display: none; }
 .hdd-menu li {
   padding: 7px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
@@ -44456,8 +44688,10 @@ body[data-role="admin"] .view.active .admin-kpi .admin-kpi-card:nth-child(4) { a
 .rwt-act-btn svg { width: 14px; height: 14px; }
 .rwt-act-btn.rwt-act-play { color: var(--cream, #E8D8C4); background: var(--primary); border-color: var(--primary); }
 .rwt-act-btn.rwt-act-play:hover { background: var(--primary-hover, #8c3a45); border-color: var(--primary-hover, #8c3a45); }
-.rwt-act-btn.rwt-act-del { color: var(--danger, #c0392b); border-color: color-mix(in srgb, var(--danger, #c0392b) 45%, var(--border)); }
-.rwt-act-btn.rwt-act-del:hover { background: color-mix(in srgb, var(--danger, #c0392b) 16%, transparent); border-color: var(--danger, #c0392b); }
+/* req user 2026-06-29: Hapus TIDAK merah — netral sesuai tema (ghost cream/wine),
+   beda dari Lanjutkan (wine solid). */
+.rwt-act-btn.rwt-act-del { color: var(--text-2); background: var(--surface-2); border-color: var(--border); }
+.rwt-act-btn.rwt-act-del:hover { color: var(--text); background: var(--surface-3); border-color: var(--border-strong); }
 
 /* Halaman Downloads — 2 section split (Dashboard / File) */
 .dl-section { margin-top: 18px; }
@@ -44972,12 +45206,14 @@ body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-bad { color: #B9
 .storage-file-del {
   flex: 0 0 auto;
   background: transparent;
-  border: 1px solid var(--border);
+  /* Hapus video = aksi KRUSIAL/berbahaya → jelas MERAH saat diam (req user
+     2026-06-29), beda dari Hapus low-stakes (Riwayat = netral). */
+  border: 1px solid color-mix(in srgb, var(--danger, #c0392b) 45%, var(--border));
   border-radius: 8px;
   padding: 7px 13px;
   cursor: pointer;
   font-size: .88rem;
-  color: var(--text-2);
+  color: var(--danger, #c0392b);
   transition: all .15s;
 }
 .storage-file-del:hover {
@@ -45044,6 +45280,11 @@ body[data-theme="light"]:not([data-role="admin"]) .sf-status.sf-bad { color: #B9
   .storage-file-thumb { width: 44px; height: 28px; }
   .sf-status { font-size: .72rem; padding: 2px 8px; }
 }
+
+/* Tab bar Statistik DIHAPUS (req user 2026-06-29): halaman cuma 3 section yang
+   muat di-scroll → filter per-section tak perlu. Bar disembunyikan; statsTab
+   dipaksa "all" di JS (buildStatsTabs tak dipanggil) → semua section tampil. */
+.view[data-view="stats"] .riwayat-tab-bar { display: none !important; }
 
 /* Statistik page — show/hide section by data-stats-tab.
    "all" → semua section terlihat (default saat masuk dari sidebar). */
@@ -49133,19 +49374,19 @@ body:not([data-role="admin"]) .upf-field input[type="datetime-local"]::-webkit-c
 .dm-section-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 99px;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-2);
-  font-size: .85rem;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
 .dm-section-tab .dmt-ico { display: inline-flex; align-items: center; }
-.dm-section-tab .dmt-ico svg { width: 19px; height: 19px; }
+.dm-section-tab .dmt-ico svg { width: 16px; height: 16px; }
 .dm-section-tab:hover { background: var(--surface-2); color: var(--text); }
 .dm-section-tab.active {
   background: var(--primary);
@@ -49934,10 +50175,10 @@ body[data-role="admin"] .upf-field input[type="datetime-local"]::-webkit-calenda
 /* Hanya berlaku saat upload view aktif — tanpa `.active` rule ini override
    `.view { display: none }` dan bikin form upload nyangkut di setiap halaman. */
 section.view[data-view="upload"].active {
-  height: calc(100vh - 90px);
+  height: calc(100vh - 104px);
   overflow: hidden;
   padding: 0 24px 12px !important;
-  margin-top: -14px;
+  margin-top: 0; /* dulu -14px → header dempet ke top bar (req user 2026-06-29); samakan gap dgn view lain (~17px). Tinggi dikurangi 14px agar bawah tak terpotong. */
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
@@ -73976,14 +74217,20 @@ body[data-theme="light"]:not([data-role="admin"]) .auth-card .apc-icon svg path 
 }
 .pp-card-recommended .pp-features li .pp-check { color: #FFE9C8; }
 
-/* Light mode — ikon kartu wine/bronze terbaca di krem. */
-body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card .pp-icon {
-  background: rgba(132, 42, 59, .12) !important; /* wine tint — match setup .apc-icon (buang slate/abu, req 2026-06-29) */
-  color: var(--primary) !important;
-}
+/* Light mode — kotak ikon paket = SOLID wine + ikon PUTIH (req user 2026-06-29:
+   no-pink/abu di mana pun). Dulu wine-tint .12 (base) & gold-tint (recommended)
+   = terbaca PINK/peach di putih → samakan dgn semua kotak ikon dashboard. */
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card .pp-icon,
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-card-recommended .pp-icon {
-  background: rgba(184, 134, 47, .16) !important;
-  color: #8a5a18 !important;
+  background: var(--primary) !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg path,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg rect,
+body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-icon svg circle {
+  color: #fff !important; stroke: #fff !important;
 }
 /* Check SVG light mode — wine/bronze. */
 body[data-theme="light"]:not([data-role="admin"]) #planPickerModal .pp-features li .pp-check {
@@ -77931,9 +78178,12 @@ section[data-view="stats"] #statsRow .stat-value { font-size: 27px !important; }
    =================================================================== */
 /* 1) Ikon judul halaman — paling besar */
 section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg {
-  width: 54px !important; height: 54px !important; border-radius: 15px !important;
+  width: 40px !important; height: 40px !important; border-radius: 11px !important;
 }
-section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 27px !important; height: 27px !important; }
+section[data-view="stats"] .view-header .sec-icon-v582.sec-icon-lg svg { width: 22px !important; height: 22px !important; }
+/* Judul halaman Statistik → 22px (samakan dgn header standar, req user 2026-06-29).
+   Spesifisitas dibuat > rule #statsPageTitle 20px (pakai ID + .view + .view-header). */
+html body:not([data-role="admin"]):not(.auth-mode) section.view[data-view="stats"] .view-header #statsPageTitle { font-size: 22px !important; }
 /* 2) Ikon judul section — sedang (sebelumnya 30px, terlalu kecil) */
 section[data-view="stats"] .st-ico {
   width: 40px !important; height: 40px !important; border-radius: 11px !important;
