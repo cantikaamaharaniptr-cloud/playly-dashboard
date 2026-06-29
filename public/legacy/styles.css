@@ -30237,6 +30237,13 @@ body[data-theme="dark"] section[data-view="user-profile"]::before { content: "";
 .disc-search-input:focus  { border-color: rgba(232, 216, 196, .5); }
 /* Hilangkan tombol clear bawaan search agar konsisten tema */
 .disc-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+/* LIGHT MODE (req user 2026-06-28): placeholder/ikon/border fokus pakai cream
+   (dark-mode) → buram di latar putih. Override pakai abu netral (tanpa cream,
+   tanpa wine/gold/merah — sesuai aturan focus ring netral dashboard). */
+body[data-theme="light"] .disc-search-ico { color: rgba(0, 0, 0, .42); }
+body[data-theme="light"] .disc-search-input::placeholder { color: rgba(0, 0, 0, .42); }
+body[data-theme="light"] .disc-search-input:hover { border-color: rgba(0, 0, 0, .28); }
+body[data-theme="light"] .disc-search-input:focus { border-color: rgba(0, 0, 0, .42); }
 @media (max-width: 560px) {
   .disc-search-wrap { flex: 1 1 100%; }
 }
@@ -30374,7 +30381,7 @@ body:not([data-role="admin"]) .discover-col-suggest .suggest-item .btn.primary:h
   background: var(--border-strong);
   border-radius: 3px;
 }
-.discover-col-suggest .ds-bento-head { margin-bottom: 6px; }
+.discover-col-suggest .ds-bento-head { display: none; } /* badge "ORANG"/People dihapus (req user 2026-06-28) — redundant di kartu Kreator Disarankan */
 
 /* New Videos section in Discover */
 .discover-new-section {
@@ -31467,23 +31474,26 @@ section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
   background: rgba(232, 216, 196, .17) !important;
   border-color: rgba(232, 216, 196, .45) !important;
 }
-/* LIGHT MODE (req user 2026-06-28): tombol empty feed default pakai cream
-   dark-mode → buram di latar putih. Override: teks WINE (aksen light) + isian
-   wine lembut (primary) / abu netral (ghost) supaya jelas terlihat. */
-body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn {
-  color: #6D2932 !important;
-}
+/* LIGHT MODE (req user 2026-06-28): tombol empty feed default cream dark-mode →
+   buram di putih. Override pakai warna SOLID (TIDAK transparan, req user):
+   primary = wine penuh + teks putih; ghost = putih solid + teks/garis wine. */
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
-  background: rgba(109, 41, 50, .10) !important;
-  border-color: rgba(109, 41, 50, .34) !important;
+  background: #6D2932 !important;
+  border-color: #6D2932 !important;
+  color: #fff !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary:hover {
+  background: #581f27 !important;
+  border-color: #581f27 !important;
 }
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost {
-  background: rgba(0, 0, 0, .025) !important;
-  border-color: rgba(0, 0, 0, .16) !important;
+  background: #fff !important;
+  border-color: #dcd4d4 !important;
+  color: #6D2932 !important;
 }
-body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
-  background: rgba(109, 41, 50, .16) !important;
-  border-color: rgba(109, 41, 50, .44) !important;
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost:hover {
+  background: #f7f2f2 !important;
+  border-color: #c9bcbc !important;
 }
 /* Ikon lingkaran empty feed: color var(--cream) (cream) → wine di light mode. */
 body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-icon {
@@ -47891,6 +47901,8 @@ body[data-theme="light"]:not([data-role="admin"]).auth-mode .auth-card input[typ
   white-space: nowrap;
   cursor: default;
 }
+/* Sync pill "Tersinkron / Tersimpan lokal" DIHAPUS dari top bar (req user 2026-06-28). */
+#dashboardSyncPill, .dashboard-sync-pill { display: none !important; }
 .dashboard-sync-pill[hidden] { display: none !important; }
 body.auth-mode .dashboard-sync-pill { display: none !important; }
 .dashboard-sync-pill .dsp-icon { display: flex; align-items: center; justify-content: center; line-height: 1; }

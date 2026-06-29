@@ -21320,7 +21320,7 @@ function renderDashboardTierPill() {
     // semua dihapus. Info Premium ada di tooltip hover. Bersih +
     // minimal di chrome topbar. Klik buka plan picker.
     pill.innerHTML =
-      '<span class="dtp-icon">🌱</span>' +
+      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 9-9h7v7c0 5-4 9-9 9z"/><path d="M11 20c0-5 3-9 9-12"/></svg></span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">' + (isID ? "Gratis" : "Free") + '</span>' +
       '</span>';
