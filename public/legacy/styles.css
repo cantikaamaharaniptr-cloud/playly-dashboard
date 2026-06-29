@@ -3732,8 +3732,9 @@ body[data-theme="dark"] .help-panel .help-quick-card:hover { border-color: rgba(
 .topbar .dashboard-tier-pill .dtp-label,
 .topbar .dashboard-tier-pill .dtp-status,
 .topbar .dashboard-payment-pill .atpp-label,
-.topbar .user-chip .user-name { font-size: 13px !important; font-weight: 500 !important; letter-spacing: .2px !important; }
-.topbar .topbar-search input { font-size: 13px !important; }
+.topbar .user-chip .user-name { font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: .2px !important; }
+.topbar .topbar-search input { font-size: 13.5px !important; font-weight: 600 !important; }
+.topbar .topbar-search input::placeholder { font-weight: 600 !important; }
 .topbar .topbar-home-nav .thn-link svg,
 .topbar .dashboard-tier-pill .dtp-icon svg,
 .topbar .dashboard-payment-pill .atpp-icon svg { stroke-width: 1.6px !important; }
