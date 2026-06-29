@@ -137,13 +137,13 @@ body[data-theme="light"] {
   --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  /* req user 2026-06-28: surface/border slate(17,24,39) → NETRAL MURNI rgba(0,0,0)
-     (buang slate); teks-redup/ikon taupe → WINE (buang abu). Border tetap tipis. */
-  --surface: rgba(0, 0, 0, 0.03);
-  --surface-2: rgba(0, 0, 0, 0.06);
-  --surface-3: rgba(0, 0, 0, 0.10);
-  --border: rgba(0, 0, 0, 0.10);
-  --border-strong: rgba(0, 0, 0, 0.20);
+  /* req user 2026-06-28: surface/border → WINE TIPIS (nuansa wine lembut, bukan
+     abu/slate); teks-redup/ikon taupe → WINE. Semua chrome senada tema wine. */
+  --surface: rgba(132, 42, 59, 0.05);
+  --surface-2: rgba(132, 42, 59, 0.08);
+  --surface-3: rgba(132, 42, 59, 0.13);
+  --border: rgba(132, 42, 59, 0.18);
+  --border-strong: rgba(132, 42, 59, 0.30);
   --text: #6D2932;        /* Deep wine — main text */
   --text-2: #8C3A45;      /* Wine — secondary text (was taupe #5F564E) */
   --muted: rgba(132, 42, 59, 0.70); /* Muted wine — meta/ikon (was taupe #7A716A) */
