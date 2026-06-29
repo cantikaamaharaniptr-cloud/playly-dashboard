@@ -54,3 +54,16 @@ public/legacy/*.min.css
 # Playwright/MCP browser snapshots (ephemeral test artifacts)
 .playwright-mcp/
 *.png
+
+
+# === pola lintasAI (ditambah otomatis pemasang) ===
+# Cegah kebocoran: rahasia kit, identitas per-staff, folder cadangan.
+.claude-kit/.audit-log
+.claude-kit/.manifest-secret
+.claude-kit/.install-manifest.json
+.git-identity-*
+.staff-profile.md
+.claude-kit.backup-*/
+*.backup-*
+*.bak
+*.bak.*
