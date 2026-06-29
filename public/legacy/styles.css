@@ -31467,6 +31467,28 @@ section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
   background: rgba(232, 216, 196, .17) !important;
   border-color: rgba(232, 216, 196, .45) !important;
 }
+/* LIGHT MODE (req user 2026-06-28): tombol empty feed default pakai cream
+   dark-mode → buram di latar putih. Override: teks WINE (aksen light) + isian
+   wine lembut (primary) / abu netral (ghost) supaya jelas terlihat. */
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn {
+  color: #6D2932 !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.primary {
+  background: rgba(109, 41, 50, .10) !important;
+  border-color: rgba(109, 41, 50, .34) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn.ghost {
+  background: rgba(0, 0, 0, .025) !important;
+  border-color: rgba(0, 0, 0, .16) !important;
+}
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-actions .btn:hover {
+  background: rgba(109, 41, 50, .16) !important;
+  border-color: rgba(109, 41, 50, .44) !important;
+}
+/* Ikon lingkaran empty feed: color var(--cream) (cream) → wine di light mode. */
+body[data-theme="light"] section.view[data-view="discover"] .fyp-empty-icon {
+  color: #6D2932;
+}
 /* Kartu PREVIEW feed Jelajahi saat kosong (req user 2026-06-16): kartu jelas
    (header + area video ber-ikon play + baris aksi asli muted) supaya layout &
    fitur feed bisa di-review. Bukan konten dummy — area video kosong ber-ikon. */
