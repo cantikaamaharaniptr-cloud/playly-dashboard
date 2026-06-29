@@ -43871,6 +43871,12 @@ function fypCardHTML(v) {
   const saved = state?.saved?.includes(v.id);
   const following = state?.followingCreators?.includes(v.creator);
   const init = avatarInitial(v.creator);
+  // Inisial user SAAT INI utk avatar composer komentar (.fyp-cm-av-me). FIX
+  // 2026-06-29: dulu pakai `myInit` yg TIDAK ada di scope fungsi ini (cuma
+  // didefinisikan di fungsi aktivitas lain) → ReferenceError tiap kartu feed
+  // punya video → renderFYP throw → initDashboard halt → dashboard nyangkut
+  // "Memuat..." & tak route ke admin-dashboard. Ekspresi robust (user null → "U").
+  const myInit = (((user && (user.name || user.username)) || "U") + "").trim().charAt(0).toUpperCase();
   const commentCount = state?.comments?.[v.id]?.length || 0;
   const shareCount = getShareCount(v.id);
   // Real-time relative timestamp — pakai _fypTime (publishedAt/uploadedAt/
