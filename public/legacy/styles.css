@@ -137,14 +137,16 @@ body[data-theme="light"] {
   --bg: #F7F8FA;          /* Page bg — very subtle off-white (slight 2-level hierarchy vs cards) */
   --bg-elev: #FFFFFF;     /* Card surface — pure white */
   --bg-elev-2: #FFFFFF;   /* Accent surface — pure white (kept = bg-elev for clean look; nested chips pakai surface tokens) */
-  --surface: rgba(17, 24, 39, 0.03);
-  --surface-2: rgba(17, 24, 39, 0.06);
-  --surface-3: rgba(17, 24, 39, 0.10);
-  --border: rgba(17, 24, 39, 0.10);
-  --border-strong: rgba(17, 24, 39, 0.20);
+  /* req user 2026-06-28: surface/border slate(17,24,39) → NETRAL MURNI rgba(0,0,0)
+     (buang slate); teks-redup/ikon taupe → WINE (buang abu). Border tetap tipis. */
+  --surface: rgba(0, 0, 0, 0.03);
+  --surface-2: rgba(0, 0, 0, 0.06);
+  --surface-3: rgba(0, 0, 0, 0.10);
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.20);
   --text: #6D2932;        /* Deep wine — main text */
-  --text-2: #5F564E;      /* Wine — secondary text */
-  --muted: #7A716A;       /* Light wine — muted/meta */
+  --text-2: #8C3A45;      /* Wine — secondary text (was taupe #5F564E) */
+  --muted: rgba(132, 42, 59, 0.70); /* Muted wine — meta/ikon (was taupe #7A716A) */
   --primary: #842A3B;     /* Wine — primary actions */
   --primary-hover: #6D2932; /* Deep wine — hover */
   --primary-deep: #561C24;  /* Darker wine — pressed/deepest */
@@ -4085,6 +4087,15 @@ body[data-role="admin"] .bento-tile.bento-feat::before {
 .hs-icon.views     { background: linear-gradient(135deg, rgba(173, 181, 189, .25), rgba(173, 181, 189, .12)); color: #88d5fb; }
 .hs-icon.following { background: linear-gradient(135deg, rgba(168, 247, 167, .25), rgba(168, 247, 167, .12)); color: #a8f7a7; }
 .hs-icon.likes     { background: linear-gradient(135deg, rgba(244, 114, 182, .25), rgba(244, 114, 182, .12)); color: #ff9bc6; }
+/* req user 2026-06-28: ikon statistik di LIGHT MODE jangan warna-warni off-theme
+   (emas/biru/hijau/pink) — semua jadi WINE seragam (dark mode tetap warnanya). */
+body[data-theme="light"] .hs-icon.videos,
+body[data-theme="light"] .hs-icon.views,
+body[data-theme="light"] .hs-icon.following,
+body[data-theme="light"] .hs-icon.likes {
+  background: linear-gradient(135deg, rgba(132, 42, 59, .18), rgba(132, 42, 59, .08)) !important;
+  color: #842A3B !important;
+}
 .hs-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .hs-card small,
 .hs-info small {
