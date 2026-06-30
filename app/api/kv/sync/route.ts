@@ -24,8 +24,8 @@
 //   GET   /api/kv/sync?key=X            → fetch single per-user value
 //   DELETE /api/kv/sync  body { key }   → delete per-user row
 
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 // Same prefix list as cloud-sync.js PER_USER_PREFIXES_BRIDGE.
 // Sync between these 2 lists MANDATORY — keep in lockstep.
@@ -68,23 +68,20 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
   if (!body.key || typeof body.key !== 'string') {
-    return NextResponse.json({ ok: false, error: 'missing_key' }, { status: 400 });
+    return jsonError('missing_key', 400);
   }
   if (body.value === undefined) {
-    return NextResponse.json({ ok: false, error: 'missing_value' }, { status: 400 });
+    return jsonError('missing_value', 400);
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
@@ -93,10 +90,7 @@ export async function POST(req: Request) {
 
   // Per-user keys WAJIB ada session
   if (isPerUserKey(body.key) && !authUser?.id) {
-    return NextResponse.json(
-      { ok: false, error: 'not_authenticated' },
-      { status: 401 },
-    );
+    return jsonError('not_authenticated', 401);
   }
 
   // Stamp user_id otomatis untuk per-user keys (server-side, can't be spoofed)
@@ -113,40 +107,31 @@ export async function POST(req: Request) {
 
   if (error) {
     if (error.code === '42P01' || /relation/.test(error.message)) {
-      return NextResponse.json(
-        { ok: false, error: 'schema_missing' },
-        { status: 503 },
-      );
+      return jsonError('schema_missing', 503);
     }
     if (error.code === '42703' || /column .* does not exist/.test(error.message)) {
       // user_id column belum di-apply (migration 0008 not yet run)
-      return NextResponse.json(
-        { ok: false, error: 'schema_outdated' },
-        { status: 503 },
-      );
+      return jsonError('schema_outdated', 503);
     }
     console.warn('[kv/sync] upsert failed:', error.message);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ ok: true, perUser: isPerUserKey(body.key) });
+  return jsonOk({ perUser: isPerUserKey(body.key) });
 }
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const key = url.searchParams.get('key');
   if (!key) {
-    return NextResponse.json({ ok: false, error: 'missing_key_param' }, { status: 400 });
+    return jsonError('missing_key_param', 400);
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
@@ -154,7 +139,7 @@ export async function GET(req: Request) {
   } = await supabase.auth.getUser();
 
   if (isPerUserKey(key) && !authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   const { data, error } = await supabase
@@ -164,10 +149,10 @@ export async function GET(req: Request) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ ok: true, row: data });
+  return jsonOk({ row: data });
 }
 
 export async function DELETE(req: Request) {
@@ -175,20 +160,17 @@ export async function DELETE(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
   if (!body.key) {
-    return NextResponse.json({ ok: false, error: 'missing_key' }, { status: 400 });
+    return jsonError('missing_key', 400);
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
@@ -196,7 +178,7 @@ export async function DELETE(req: Request) {
   } = await supabase.auth.getUser();
 
   if (isPerUserKey(body.key) && !authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   const { error } = await supabase
@@ -205,8 +187,8 @@ export async function DELETE(req: Request) {
     .eq('key', body.key);
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ ok: true });
+  return jsonOk();
 }

@@ -9,25 +9,22 @@
 // Tidak ada POST di sini — write profile masih lewat /api/auth/bridge
 // (upsert otomatis pada signin/signup, B2 behavior).
 
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 export async function GET() {
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
   if (!authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   const { data, error } = await supabase
@@ -38,17 +35,14 @@ export async function GET() {
 
   if (error) {
     if (error.code === '42P01' || /relation/.test(error.message)) {
-      return NextResponse.json(
-        { ok: false, error: 'schema_missing' },
-        { status: 503 },
-      );
+      return jsonError('schema_missing', 503);
     }
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
   if (!data) {
-    return NextResponse.json({ ok: true, profile: null });
+    return jsonOk({ profile: null });
   }
 
-  return NextResponse.json({ ok: true, profile: data });
+  return jsonOk({ profile: data });
 }

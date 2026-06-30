@@ -20,8 +20,8 @@
 //   503 { ok: false, error: "supabase_unavailable" }   — env hilang / network down
 //   400 { ok: false, error: "missing_credentials" }    — body invalid
 
-import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 type VerifyBody = {
   email?: string;
@@ -33,26 +33,20 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
 
   const email = (body.email || '').trim().toLowerCase();
   const password = body.password || '';
 
   if (!email || !password) {
-    return NextResponse.json(
-      { ok: false, error: 'missing_credentials' },
-      { status: 400 },
-    );
+    return jsonError('missing_credentials', 400);
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   // Stateless client: persistSession=false memastikan token hasil signin
@@ -81,7 +75,7 @@ export async function POST(req: Request) {
     if (msg.includes('invalid login')) reason = 'wrong_or_missing';
     else if (msg.includes('email not confirmed')) reason = 'email_unconfirmed';
     else if (msg.includes('rate')) reason = 'rate_limited';
-    return NextResponse.json({ ok: true, verified: false, reason });
+    return jsonOk({ verified: false, reason });
   }
 
   // signin sukses → discard session (kita gak persist). Cuma return verified.
@@ -93,8 +87,7 @@ export async function POST(req: Request) {
     /* ignore — stateless, ga ada cookie */
   }
 
-  return NextResponse.json({
-    ok: true,
+  return jsonOk({
     verified: true,
     userId: data.user?.id || null,
   });
