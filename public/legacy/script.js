@@ -35003,7 +35003,7 @@ function switchView(name, { fromNav = false } = {}) {
   // Redirect ke admin-dashboard + toast info.
   const USER_ONLY_VIEWS = [
     "videos", "upload", "storage", "profile", "myprofile",
-    "stats", "insight", "premium-insight",
+    "stats", "insight", "premium-insight", "premium-insights",
     "people", "discover", "history", "activity",
     "player", "user-profile", "user-email"
   ];

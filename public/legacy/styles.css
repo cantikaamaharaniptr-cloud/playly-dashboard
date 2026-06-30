@@ -3330,6 +3330,15 @@ section.view.focus-mode .view-actions { display: flex !important; }
 }
 .footer-link svg { width: 17px; height: 17px; opacity: .8; }
 .footer-link:hover { color: var(--text); background: var(--surface-2); }
+/* Admin: sembunyikan footer-link "Langganan" (data-view=premium-insights) — fitur
+   pengguna kreator, bukan admin. Pasangan dari guard switchView USER_ONLY_VIEWS
+   (premium-insights). Per request 2026-06-30. */
+body[data-role="admin"] .footer-link[data-view="premium-insights"] { display: none !important; }
+/* Halaman Aktivitas: sembunyikan baris filter chip (Semua/Suka/Komentar/Dibagikan/
+   Pengikut/Unggah) — user mau cukup judul "Aktivitas" + feed, tanpa section filter.
+   Feed default = Semua (tampilkan semua), jadi fungsi feed tetap utuh. Per request
+   2026-06-30. */
+.view[data-view="activity"] #activityFilters { display: none !important; }
 
 .profile-card {
   display: flex; align-items: center; gap: 10px;
