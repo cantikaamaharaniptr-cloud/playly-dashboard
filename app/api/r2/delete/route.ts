@@ -14,10 +14,10 @@
 // Response 401: not_authenticated
 // Response 400: bad request
 
-import { NextResponse } from 'next/server';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getR2Config, videoObjectKey } from '@/lib/r2/client';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 type DeleteBody = {
   id?: string;
@@ -28,10 +28,7 @@ type DeleteBody = {
 export async function POST(req: Request) {
   const r2 = getR2Config();
   if (!r2) {
-    return NextResponse.json(
-      { ok: false, error: 'r2_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('r2_unavailable', 503);
   }
 
   // Auth check — anon nggak boleh delete.
@@ -43,33 +40,24 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
     authUserId = authUser?.id || null;
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'auth_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('auth_unavailable', 503);
   }
   if (!authUserId) {
-    return NextResponse.json(
-      { ok: false, error: 'not_authenticated' },
-      { status: 401 },
-    );
+    return jsonError('not_authenticated', 401);
   }
 
   let body: DeleteBody;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
 
   let key = String(body.key || '').trim();
   if (!key) {
     const id = String(body.id || '').trim();
     if (!id) {
-      return NextResponse.json(
-        { ok: false, error: 'missing_id_or_key' },
-        { status: 400 },
-      );
+      return jsonError('missing_id_or_key', 400);
     }
     key = videoObjectKey(id, body.contentType);
   }
@@ -77,10 +65,7 @@ export async function POST(req: Request) {
   // Safety: scope key to videos/ prefix supaya endpoint ini gak bisa
   // di-abuse hapus object lain (kalau bucket nanti shared multi-prefix).
   if (!key.startsWith('videos/')) {
-    return NextResponse.json(
-      { ok: false, error: 'invalid_key_scope' },
-      { status: 400 },
-    );
+    return jsonError('invalid_key_scope', 400);
   }
 
   try {
@@ -95,11 +80,8 @@ export async function POST(req: Request) {
     // R2 DeleteObject = idempotent (404 / not-found gak throw biasanya),
     // tapi tetap surface error lain.
     console.warn('[r2/delete] failed:', msg);
-    return NextResponse.json(
-      { ok: false, error: 'delete_failed', message: msg },
-      { status: 500 },
-    );
+    return jsonError('delete_failed', 500, { message: msg });
   }
 
-  return NextResponse.json({ ok: true, key });
+  return jsonOk({ key });
 }

@@ -9,8 +9,8 @@
 // Goal: legacy UI utuh, backend = Supabase. Tahap berikut (B3-B5) shift
 // state data + switch primary source ke Supabase.
 
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 type BridgeBody = {
   email?: string;
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
 
   const email = (body.email || '').trim().toLowerCase();
@@ -38,20 +38,14 @@ export async function POST(req: Request) {
   const name = (body.name || '').trim();
 
   if (!email || !password) {
-    return NextResponse.json(
-      { ok: false, error: 'missing_credentials' },
-      { status: 400 },
-    );
+    return jsonError('missing_credentials', 400);
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   // 1. Auth flow — try signin, fallback signup
@@ -68,10 +62,7 @@ export async function POST(req: Request) {
       options: { data: name ? { name } : {} },
     });
     if (signupErr) {
-      return NextResponse.json(
-        { ok: false, error: signupErr.message },
-        { status: 401 },
-      );
+      return jsonError(signupErr.message, 401);
     }
     // signUp sukses → signin lagi supaya cookie ter-set
     const { error: retryErr } = await supabase.auth.signInWithPassword({
@@ -79,10 +70,7 @@ export async function POST(req: Request) {
       password,
     });
     if (retryErr) {
-      return NextResponse.json(
-        { ok: false, error: retryErr.message },
-        { status: 401 },
-      );
+      return jsonError(retryErr.message, 401);
     }
     action = 'signup';
   }
@@ -121,7 +109,7 @@ export async function POST(req: Request) {
     console.warn('[bridge] profile sync exception:', err);
   }
 
-  return NextResponse.json({ ok: true, action, profileSynced });
+  return jsonOk({ action, profileSynced });
 }
 
 // DELETE — signout (clear Supabase cookie).
@@ -132,7 +120,7 @@ export async function DELETE() {
   } catch {
     // ignore — cookie mungkin sudah nggak ada
   }
-  return NextResponse.json({ ok: true });
+  return jsonOk();
 }
 
 function buildProfileData(

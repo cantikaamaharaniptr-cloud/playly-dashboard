@@ -12,8 +12,8 @@
 //
 // Auth wajib (cookie session). Tanpa cookie → 401.
 
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 // Hard cap blob size — defense terhadap localStorage yang membengkak
 // (mis. user upload banyak myVideos dengan thumbnail base64).
@@ -26,33 +26,24 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
+    return jsonError('bad_json', 400);
   }
 
   if (!body || typeof body.state !== 'object' || body.state === null) {
-    return NextResponse.json(
-      { ok: false, error: 'missing_state' },
-      { status: 400 },
-    );
+    return jsonError('missing_state', 400);
   }
 
   // Quick size guard sebelum hit Supabase.
   const stateStr = JSON.stringify(body.state);
   if (stateStr.length > MAX_STATE_BYTES) {
-    return NextResponse.json(
-      { ok: false, error: 'state_too_large', size: stateStr.length, max: MAX_STATE_BYTES },
-      { status: 413 },
-    );
+    return jsonError('state_too_large', 413, { size: stateStr.length, max: MAX_STATE_BYTES });
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
@@ -60,7 +51,7 @@ export async function POST(req: Request) {
     error: authErr,
   } = await supabase.auth.getUser();
   if (authErr || !authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   const { error: upsertErr } = await supabase
@@ -72,19 +63,13 @@ export async function POST(req: Request) {
     // (legacy tetap baca localStorage), tapi log eksplisit.
     if (upsertErr.code === '42P01' || /relation/.test(upsertErr.message)) {
       console.warn('[state/sync] user_state table belum di-apply (run migration 0005)');
-      return NextResponse.json(
-        { ok: false, error: 'schema_missing' },
-        { status: 503 },
-      );
+      return jsonError('schema_missing', 503);
     }
     console.warn('[state/sync] upsert failed:', upsertErr.message);
-    return NextResponse.json(
-      { ok: false, error: upsertErr.message },
-      { status: 500 },
-    );
+    return jsonError(upsertErr.message, 500);
   }
 
-  return NextResponse.json({ ok: true, size: stateStr.length });
+  return jsonOk({ size: stateStr.length });
 }
 
 export async function GET() {
@@ -92,17 +77,14 @@ export async function GET() {
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
   if (!authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   const { data, error } = await supabase
@@ -113,16 +95,12 @@ export async function GET() {
 
   if (error) {
     if (error.code === '42P01' || /relation/.test(error.message)) {
-      return NextResponse.json(
-        { ok: false, error: 'schema_missing' },
-        { status: 503 },
-      );
+      return jsonError('schema_missing', 503);
     }
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({
-    ok: true,
+  return jsonOk({
     state: data?.state ?? null,
     updated_at: data?.updated_at ?? null,
   });

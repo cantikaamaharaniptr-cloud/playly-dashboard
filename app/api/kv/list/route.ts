@@ -18,8 +18,8 @@
 //   GET /api/kv/list?since=ISOSTRING  → return rows updated_at > since
 //   GET /api/kv/list?keysonly=1       → return cuma keys (egress opt)
 
-import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { jsonError, jsonOk } from '@/lib/api/responses';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -30,10 +30,7 @@ export async function GET(req: Request) {
   try {
     supabase = await createClient();
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'supabase_unavailable' },
-      { status: 503 },
-    );
+    return jsonError('supabase_unavailable', 503);
   }
 
   const {
@@ -44,7 +41,7 @@ export async function GET(req: Request) {
   // Setelah migration 0012 drop kv_anon_all + add kv_anon_platform_read,
   // anon path masih bisa read platform rows. Per-user reads cuma via bridge.
   if (!authUser?.id) {
-    return NextResponse.json({ ok: false, error: 'not_authenticated' }, { status: 401 });
+    return jsonError('not_authenticated', 401);
   }
 
   // Query kv table — RLS otomatis filter: platform rows (user_id NULL) +
@@ -62,23 +59,16 @@ export async function GET(req: Request) {
 
   if (error) {
     if (error.code === '42P01' || /relation/.test(error.message)) {
-      return NextResponse.json(
-        { ok: false, error: 'schema_missing' },
-        { status: 503 },
-      );
+      return jsonError('schema_missing', 503);
     }
     if (error.code === '42703') {
-      return NextResponse.json(
-        { ok: false, error: 'schema_outdated' },
-        { status: 503 },
-      );
+      return jsonError('schema_outdated', 503);
     }
     console.warn('[kv/list] query failed:', error.message);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({
-    ok: true,
+  return jsonOk({
     rows: data || [],
     count: data?.length || 0,
     since: since || null,
