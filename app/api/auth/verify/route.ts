@@ -79,12 +79,18 @@ export async function POST(req: Request) {
   }
 
   // signin sukses → discard session (kita gak persist). Cuma return verified.
-  // Defensive: signOut di stateless client = no-op (no session to clear)
-  // tapi panggil supaya pasti gak ada token lingering di memory.
+  // FIX SESI (2026-07-02): WAJIB scope 'local'. Tanpa argumen, supabase-js
+  // default ke scope 'global' yang mencabut SELURUH refresh-token milik user di
+  // server — TERMASUK sesi browser yang SEDANG login. Karena endpoint telemetri
+  // ini dipanggil TEPAT setelah login (parallel-verify), global signOut men-
+  // cabut sesi user yang barusan dibuat → /api/*/ jadi 401 beberapa detik pasca-
+  // login (state gagal tersimpan lintas-device). 'local' hanya mencabut sesi
+  // efemeral (persistSession:false) yang dibuat pemanggilan ini. Terbukti via
+  // uji: syncSignin→sesi 200, lalu verifyStrict (global)→sesi jadi 401.
   try {
-    await supa.auth.signOut();
+    await supa.auth.signOut({ scope: 'local' });
   } catch {
-    /* ignore — stateless, ga ada cookie */
+    /* ignore — stateless, tak ada cookie */
   }
 
   return jsonOk({
