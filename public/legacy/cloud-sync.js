@@ -1149,7 +1149,7 @@
   function injectMainScript() {
     if (document.querySelector('script[data-playly-main]')) return;
     const s = document.createElement("script");
-    s.src = "script.js?v=20260601-edit-video-v692";
+    s.src = "script.js?v=20260702-ai-tag-icon-v61";
     s.dataset.playlyMain = "1";
     document.body.appendChild(s);
   }

@@ -68,6 +68,11 @@ export const viewport: Viewport = {
 };
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
+  // Dev: hitung ULANG hash CSS tiap render supaya edit styles.css langsung kebaca
+  // tanpa restart server (STYLES_V const di-freeze saat modul load → edit CSS tak
+  // meng-update ?v= → browser nyangkut cache lama). Prod: tetap pakai hash
+  // build-time (STYLES_V const) supaya caching immutable jalan (nol cost runtime).
+  const stylesV = process.env.NODE_ENV === 'production' ? STYLES_V : cssVersion();
   return (
     <html lang="id" suppressHydrationWarning>
       <body data-theme="dark" className="auth-mode" suppressHydrationWarning>
@@ -79,7 +84,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
           precedence="high"
         />
-        <link rel="stylesheet" href={legacyAsset('styles.css', STYLES_V)} precedence="high" />
+        <link rel="stylesheet" href={legacyAsset('styles.css', stylesV)} precedence="high" />
         <style href="playly-fouc-guard" precedence="high">
           {FOUC_CSS}
         </style>

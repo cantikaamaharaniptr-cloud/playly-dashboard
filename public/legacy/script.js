@@ -1915,6 +1915,21 @@ async function hydrateProfileFromCloud(email) {
       touched = true;
     }
   });
+  // TIER = status berbayar → AUTHORITATIVE dari server, BUKAN preferensi lokal.
+  // Aturan gap-fill di atas ("cloud never overwrites non-empty") BENAR untuk
+  // nama/bio, tapi SALAH untuk tier: kalau server bilang "premium" sedangkan
+  // salinan lokal masih "free" (data lama sebelum aktivasi), lokal HARUS ikut
+  // naik ke premium. Bugfix 2026-07-01: dulu status premium dari server tak
+  // pernah menimpa "free" lokal → user premium tampil "Gratis" di device/origin
+  // yg punya salinan lama (mis. localhost vs live). UPGRADE-ONLY: hanya menaikkan
+  // free→premium, TIDAK pernah menurunkan premium→free lewat sync (biar premium
+  // yg belum ter-push ke server tidak hilang gara-gara penyelarasan).
+  let tierUpgraded = false;
+  if (cloud.tier === "premium" && localAcc.tier !== "premium") {
+    localAcc.tier = "premium";
+    touched = true;
+    tierUpgraded = true;
+  }
   if (touched) {
     try { localStorage.setItem(acctKey, JSON.stringify(localAcc)); } catch (_) {}
     // Re-sync in-memory user kalau sesi ini lagi login sbg user ini
@@ -1924,9 +1939,28 @@ async function hydrateProfileFromCloud(email) {
           user[k] = cloudMapped[k];
         }
       });
+      // Tier authoritative upgrade utk sesi live (alasan sama seperti di atas).
+      // Bawa serta detail langganan dari salinan lokal bila ada (paket/tanggal)
+      // supaya kartu Status Langganan tidak kosong.
+      if (tierUpgraded) {
+        user.tier = "premium";
+        if (!user.premiumPlan && localAcc.premiumPlan) user.premiumPlan = localAcc.premiumPlan;
+        if (!user.premiumStartedAt && localAcc.premiumStartedAt) user.premiumStartedAt = localAcc.premiumStartedAt;
+        if (!user.premiumExpiresAt && localAcc.premiumExpiresAt) user.premiumExpiresAt = localAcc.premiumExpiresAt;
+      }
       try { localStorage.setItem("playly-user", JSON.stringify(user)); } catch (_) {}
     }
-    console.info("[hydrate-profile] gap-filled local from cloud:", email);
+    // Kalau tier baru naik ke premium, refresh UI supaya badge + warna emas
+    // langsung berubah walau bootDashboard sudah lewat (hydration kadang selesai
+    // SETELAH first render — lihat komentar safeBoot: "hydration ... trigger
+    // renderAll sendiri").
+    if (tierUpgraded) {
+      try { if (document.body) document.body.dataset.tier = "premium"; } catch (_) {}
+      try { if (typeof applyRoleToUI === "function") applyRoleToUI(); } catch (_) {}
+      try { if (typeof renderDashboardTierPill === "function") renderDashboardTierPill(); } catch (_) {}
+      try { if (typeof renderDashboardPaymentPill === "function") renderDashboardPaymentPill(); } catch (_) {}
+    }
+    console.info("[hydrate-profile] gap-filled local from cloud:", email, tierUpgraded ? "(tier→premium)" : "");
     return { applied: true, mode: "gap_fill" };
   }
   console.info("[hydrate-profile] local profile sudah lengkap — skip cloud:", email);
@@ -2312,7 +2346,7 @@ const VIEW_TITLES = {
   stats: "Statistik", messages: "Pesan", activity: "Aktivitas", discover: "Jelajahi", people: "Cari Kreator", profile: "Ubah Profil", settings: "Pengaturan",
   player: "Pustaka Saya", "user-profile": "Profil Kreator", "myprofile": "Profil Saya",
   "user-email": "Email", storage: "Penyimpanan", notifications: "Notifikasi",
-  "premium-insights": "Insight Premium",
+  "premium-insights": "Langganan",
   "admin-dashboard": "Beranda", "admin-users": "Manajemen Akun",
   "admin-videos": "Kontrol Konten",
   "admin-comms": "Percakapan",
@@ -2391,7 +2425,7 @@ function applyRoleToUI() {
       tierBadge.hidden = true;
     } else {
       const tier = user?.tier || "free";
-      tierBadge.textContent = tier === "premium" ? "⭐ Premium" : "🌱 Free";
+      tierBadge.innerHTML = tier === "premium" ? '<span class="dtp-metal">Premium</span>' : "🌱 Free";
       tierBadge.dataset.tier = tier;
       tierBadge.hidden = false;
     }
@@ -2414,12 +2448,12 @@ function applyRoleToUI() {
       utb.hidden = false;
       if (utbTitle) utbTitle.textContent = "Premium · Kuota 100 GB/bulan";
       if (utbDesc)  utbDesc.textContent  = "Tanpa batas ukuran file & durasi — kuota 100 GB + 100 video / bulan (10x lipat Free). Reset tiap tanggal 1.";
-      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV · 100 GB + 100 video/bulan<br/><span class="dz-promo">( Kamu Premium — tanpa batas ukuran file &amp; durasi <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      if (dzLimit)  dzLimit.innerHTML  = 'Format: MP4, MOV, MKV · 100 GB + 100 video/bulan<br/><span class="dz-promo">( Kamu Premium — tanpa batas ukuran file &amp; durasi <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg> )</span>';
     } else {
       utb.hidden = true;
       // G audit (2026-05-25): copy informatif + framing "Butuh lebih?" supaya
       // tidak terasa limit-pressure. (5 Jun 2026: kuota free 10 GB + 30 video.)
-      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 10 GB + 30 video/bulan<br/><span class="dz-promo">( Butuh lebih? Premium 100 GB + 100 video/bulan <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg> )</span>';
+      if (dzLimit) dzLimit.innerHTML = 'Format: MP4, MOV, MKV · 10 GB + 30 video/bulan<br/><span class="dz-promo">( Butuh lebih? Premium 100 GB + 100 video/bulan <svg class="dz-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg> )</span>';
     }
   }
 
@@ -8077,7 +8111,7 @@ const I18N = {
     "pm.ad.text":                 "Coba Playly Premium → Tanpa iklan",
     "pm.upgrade.bold":            "Upgrade ke Premium",
     "pm.upgrade.tail":            "— Buka semua tanpa batas",
-    "pm.insights.head":           "Insight Premium",
+    "pm.insights.head":           "Langganan",
     "pm.insights.engagement":     "Tingkat interaksi",
     "pm.insights.watch":          "Rata-rata waktu tonton",
     "pm.insights.region":         "Wilayah teratas",
@@ -19704,7 +19738,7 @@ function setAuthState(state, opts = {}) {
       const pillLabel = document.getElementById("signupTierPillLabel");
       const pillIcon = document.getElementById("signupTierPillIcon");
       if (pillLabel) pillLabel.textContent = opts.tier === "premium" ? "Premium" : "Gratis";
-      if (pillIcon) pillIcon.textContent = opts.tier === "premium" ? "⭐" : "🌱";
+      if (pillIcon) pillIcon.innerHTML = opts.tier === "premium" ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:1em;height:1em;vertical-align:-0.13em"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>' : "🌱";
     }
   }
   // Scroll auth screen ke top supaya konten baru selalu kelihatan
@@ -20287,7 +20321,11 @@ const PP_ICON_SVG = {
   // flame
   flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 5 5 11a5 5 0 0 1-10 0c0-3 2-5 2-5s1 2 3 2c0-3-2-5 0-8z"/></svg>',
   // crown
-  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>'
+  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>',
+  // star (5-point) — paket Bulanan
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.6 6.8 19.3l1-5.9L3.5 9.3l5.9-.9z"/></svg>',
+  // gem / diamond — paket Tahunan (nilai terbaik)
+  gem: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4 7 9l5 11M15 4l2 5-5 11"/></svg>'
 };
 
 const PREMIUM_PLANS = {
@@ -20300,14 +20338,14 @@ const PREMIUM_PLANS = {
   monthly: {
     key: "monthly", name: "Bulanan", durationLabel: "1 bulan",
     durationMs: 30 * 24 * 60 * 60 * 1000, price: 9.99, priceLabel: "$9.99", suffix: "/bulan",
-    icon: "sparkle", desc: "Akses Premium penuh, ditagih bulanan. Batal kapan saja.",
+    icon: "star", desc: "Akses Premium penuh, ditagih bulanan. Batal kapan saja.",
     features: ["Unggah tanpa batas", "Kualitas 4K & bebas iklan", "Dukungan prioritas", "Batal kapan saja"]
   },
   yearly: {
     key: "yearly", name: "Tahunan", durationLabel: "1 tahun",
     durationMs: 365 * 24 * 60 * 60 * 1000, price: 89.99, priceLabel: "$89.99", suffix: "/tahun",
     badge: "HEMAT 25%", recommended: true,
-    icon: "flame", desc: "Nilai terbaik — 12 bulan dengan harga 9 bulan.",
+    icon: "gem", desc: "Nilai terbaik — 12 bulan dengan harga 9 bulan.",
     features: ["Semua fitur paket Bulanan", "Hemat Rp 495.000 vs bulanan", "Harga terkunci 1 tahun", "Ditagih 1× per tahun"]
   },
   lifetime: {
@@ -20356,14 +20394,12 @@ function renderPlanPicker(context) {
     const disabled = key === "trial" && trialUsedByThisAcc;
     const badge = p.badge ? `<span class="pp-badge">${p.badge}</span>` : "";
     const recommended = p.recommended ? ' pp-card-recommended' : "";
-    const featuresHtml = (p.features || []).map(f => `<li>${checkSvg}<span>${f}</span></li>`).join("");
-    // p.icon adalah key (gift/sparkle/flame/crown) → lookup ke PP_ICON_SVG.
-    // Fallback ke emoji raw kalau key tidak dikenali (backward compat).
-    const iconHtml = PP_ICON_SVG[p.icon] || p.icon || "";
+    const featuresHtml = (p.features || []).map(f => `<li><span>${f}</span></li>`).join("");
+    // Ikon per-kartu dihapus (per req user 2026-06-30): pricing table lebih bersih
+    // & premium — bedakan paket lewat nama + harga + label (HEMAT/PALING UNTUNG).
     return `
       <button type="button" class="pp-card${recommended}${disabled ? ' pp-disabled' : ''}" data-plan-key="${p.key}"${disabled ? ' disabled' : ''}>
         ${badge}
-        <span class="pp-icon">${iconHtml}</span>
         <strong class="pp-name">${p.name}</strong>
         <span class="pp-price">${p.priceLabel}${p.suffix ? `<small>${p.suffix}</small>` : ""}</span>
         ${p.price > 0 ? `<span class="pp-price-idr">≈ ${fmtUsdAsIdr(p.price)}</span>` : ""}
@@ -20629,6 +20665,33 @@ function getPremiumPayments() {
 function savePremiumPayments(arr) {
   try { localStorage.setItem(PREMIUM_PAYMENTS_KEY, JSON.stringify(arr)); }
   catch (err) { console.warn("[premium] save failed:", err); }
+}
+// 2026-07-01: pengaman — user Premium tapi riwayat kosong (mis. akses diberi admin,
+// catatan pending tak ter-sync ke user) → buat 1 catatan "approved" otomatis supaya
+// Riwayat Pembelian tidak kosong. Idempotent: hanya jalan kalau belum ada catatan. (req owner)
+function ensurePremiumHistoryRecord() {
+  try {
+    const u = window.user;
+    if (!u || u.tier !== "premium") return;
+    const arr = (typeof getPremiumPayments === "function") ? getPremiumPayments() : [];
+    if (arr.length > 0) return;                       // sudah ada catatan — jangan tambah
+    const startedAt = u.premiumStartedAt || Date.now();
+    const rec = {
+      code: (typeof generatePremiumCode === "function") ? generatePremiumCode() : ("PLY-" + String(startedAt).slice(-8)),
+      email: u.email || "",
+      username: u.username || "",
+      tier: "premium",
+      plan: u.premiumPlan || "lifetime",
+      amount: 0,
+      method: "Admin Grant",
+      paidAt: startedAt,
+      status: "approved",
+      flowContext: "admin-grant",
+      note: "Akses Premium dari admin"
+    };
+    arr.unshift(rec);
+    if (typeof savePremiumPayments === "function") savePremiumPayments(arr);
+  } catch (err) { console.warn("[premium] ensureHistory:", err); }
 }
 function generatePremiumCode() {
   // PLY-XXXXXXXX format, no confusing chars (no 0/O/1/I/L)
@@ -21300,7 +21363,7 @@ function renderDashboardPaymentPill() {
   const _atppSvg = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
   const iconMap  = {
     pending:  _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-    approved: _atppSvg('<path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/>'),
+    approved: _atppSvg('<path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/>'),
     rejected: _atppSvg('<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>'),
   };
   const labelMap = isID
@@ -21357,10 +21420,9 @@ function renderDashboardTierPill() {
   pill.dataset.tier = tier;
   if (tier === "premium") {
     pill.innerHTML =
-      '<span class="dtp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.3L20 9.3l-4 3.9 1 5.8L12 16.7 7 19l1-5.8-4-3.9 5.8-1L12 3Z"/></svg></span>' +
+      '<span class="dtp-icon"><svg viewBox="4 5 92 90" stroke="none"><defs><linearGradient id="dtpPGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F0C878"/><stop offset="0.25" stop-color="#FFFBE0"/><stop offset="0.5" stop-color="#F8D89A"/><stop offset="0.75" stop-color="#FFFBE0"/><stop offset="1" stop-color="#F0C878"/></linearGradient></defs><path fill="url(#dtpPGrad)" d="M50 7 L63.52 34.39 L93.75 38.79 L71.87 60.11 L77.03 90.21 L50 76 L22.97 90.21 L28.13 60.11 L6.25 38.79 L36.48 34.39 Z"/><text x="50" y="72" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="54" fill="#4E220F">P</text></svg></span>' +
       '<span class="dtp-text">' +
         '<span class="dtp-label">Premium</span>' +
-        '<span class="dtp-status">' + (isID ? "Aktif" : "Active") + '</span>' +
       '</span>';
     pill.title = isID ? "Akun Premium aktif" : "Premium account active";
   } else {
@@ -21556,7 +21618,7 @@ function openPremiumStatusPopup() {
     modal.className = "modal-overlay premium-status-popup";
     modal.innerHTML = `
       <div class="premium-status-card" role="dialog" aria-modal="true">
-        <div class="psp-icon-burst" data-no-picon><svg viewBox="0 0 24 24" fill="#FFC94D" aria-hidden="true" style="width:1em;height:1em;display:block"><path d="M12 2l2.92 6.26 6.58.86-4.83 4.66 1.2 6.5L12 17.9 5.13 20.28l1.2-6.5L1.5 9.12l6.58-.86z"/></svg></div>
+        <div class="psp-icon-burst" data-no-picon><svg viewBox="0 0 24 24" fill="#FFC94D" aria-hidden="true" style="width:1em;height:1em;display:block"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/></svg></div>
         <h3 class="psp-title">${isID ? "Akun Premium Aktif" : "Premium Account Active"}</h3>
         <p class="psp-subtitle" id="pspPlan">—</p>
         <div class="psp-dates">
@@ -22049,8 +22111,21 @@ function openPaymentStatusModal() {
   renderPaymentStatusModal();
   const modal = document.getElementById("paymentStatusModal");
   if (!modal) return;
-  // Hanya show kalau ada record — kalau tidak, fungsi render sudah hide
-  const hasRecord = (typeof findAuthScreenPayment === "function") ? !!findAuthScreenPayment() : false;
+  // Hanya show kalau ada record. Cek dgn urutan SAMA seperti renderPaymentStatusModal:
+  // prefer findDashboardPayment (per-user, by user.email) saat ada user login, baru
+  // fallback findAuthScreenPayment (device-wide, kasus halaman login belum sign-in).
+  // Bugfix 2026-07-01: dulu guard ini cuma pakai findAuthScreenPayment → untuk user
+  // yg sudah premium tier, findAuthScreenPayment menandai payment "activated" lalu
+  // return null, jadi modal tak pernah tampil — padahal badge "Premium aktif! Klik
+  // lihat" tetap muncul (di-render oleh findDashboardPayment). Akibatnya badge terasa
+  // "tidak bisa diklik". Sekarang samakan sumber datanya dgn render.
+  let hasRecord = false;
+  if (typeof findDashboardPayment === "function" && typeof user === "object" && user) {
+    hasRecord = !!findDashboardPayment();
+  }
+  if (!hasRecord && typeof findAuthScreenPayment === "function") {
+    hasRecord = !!findAuthScreenPayment();
+  }
   if (hasRecord) modal.classList.add("show");
 }
 
@@ -26670,16 +26745,35 @@ window._onboarding = {
 function _relocatePembelianToLangganan() {
   try {
     const premView = document.querySelector('section.view[data-view="premium-insights"]');
+    if (premView) { /* 2026-07-01: samakan ikon judul halaman "Langganan" dgn ikon sidebar (kartu, bukan sparkle) req owner */
+      const hIco = premView.querySelector('.view-header .sec-icon-v582 svg');
+      if (hIco && /M12 2L13\.5/.test(hIco.innerHTML)) hIco.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>';
+    }
     const sec = document.querySelector('.riwayat-section[data-section="pembelian"]');
     if (!premView || !sec) return;
     if (premView.contains(sec)) return;            // sudah dipindah
     const anchor = premView.querySelector("#premiumInsightsPage");
     if (anchor) anchor.after(sec); else premView.appendChild(sec);
     sec.classList.add("pembelian-relocated");      // hook styling kalau perlu
+    const rIco = sec.querySelector('.riwayat-section-head .sec-icon-v582 svg'); /* 2026-07-01: ikon "Riwayat Pembelian" → kwitansi (bukan kartu) req owner */
+    if (rIco) rIco.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3"/><path d="M8 8h8M8 12h6"/></svg>';
+    // 2026-07-01: susun ulang header "Riwayat Pembelian" → ikon terpisah + judul/deskripsi ditumpuk (rsh-text), samakan header lain (req owner)
+    const rHead = sec.querySelector('.riwayat-section-head');
+    if (rHead && !rHead.querySelector('.rsh-text')) {
+      const rh3 = rHead.querySelector('h3');
+      const rico = rHead.querySelector('.sec-icon-v582');
+      const rsm = rHead.querySelector('small');
+      if (rh3 && rico) {
+        rHead.insertBefore(rico, rHead.firstChild);
+        const rtx = document.createElement('div'); rtx.className = 'rsh-text';
+        rHead.appendChild(rtx); rtx.appendChild(rh3); if (rsm) rtx.appendChild(rsm);
+      }
+    }
   } catch (e) {}
 }
 
 function initDashboard() {
+  try { ensurePremiumHistoryRecord(); } catch (e) {}
   renderAll();
   try { _relocatePembelianToLangganan(); } catch (e) {}
   startLiveClock();
@@ -30503,7 +30597,7 @@ function renderAdminUsers() {
       <td><div class="user-cell" ${userCellAction}><div class="avatar-sm">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="" referrerpolicy="no-referrer"/>` : init}</div><div><b>${r.name}</b><small style="display:block;color:var(--muted);font-size:11px">@${r.username}</small></div></div></td>
       <td>${r.email}</td>
       <td><span class="role-tag ${r.role}">${r.role.toUpperCase()}</span></td>
-      <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? `<svg class="tier-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.6 6.8 19.3l1-5.9L3.5 9.3l5.9-.9Z"/></svg>` : ""}${tierLabel}</span></td>
+      <td class="col-tier"><span class="tier-badge ${isPrem ? "premium" : "free"}" title="${tierExpiry}" ${tierBadgeAction}>${isPrem ? `<svg class="tier-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/></svg>` : ""}${tierLabel}</span></td>
       <td class="col-videos">${r.videos}</td>
       <td>${r.joinedAt}</td>
       <td><span class="row-status status-${r.status}" title="${r.lastActivity ? `Last activity: ${relTime(r.lastActivity)}` : "No activity recorded"}">${statusLabel}</span></td>
@@ -37628,15 +37722,25 @@ function renderPremiumInsightsView() {
   const planKey = user?.premiumPlan || "monthly";
   const plan = (typeof PREMIUM_PLANS !== "undefined" && PREMIUM_PLANS[planKey]) || { name: "Aktif", priceLabel: "-", suffix: "", durationMs: 30 * 86400000 };
   const expiresAt = user?.premiumExpiresAt || null;
+  // Lifetime (paket "Selamanya") = durationMs null → premiumExpiresAt juga null
+  // (lihat computePremiumExpiry). Untuk paket ini tak ada tanggal kadaluarsa, jadi
+  // "BERLAKU SAMPAI" harus "Selamanya", bukan "—". Bugfix 2026-07-01.
+  const isLifetime = (plan.durationMs == null) || (planKey === "lifetime");
   const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000)) : null;
   const expDateStr = expiresAt
     ? new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
-    : "—";
+    : (isLifetime ? "Selamanya" : "—");
   // v661: versi pendek (28 Mei 2027) untuk box hero compact — hindari wrap.
   const expDateShort = expiresAt
     ? new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
-    : "—";
-  const premiumSinceMs = (expiresAt && plan.durationMs) ? expiresAt - plan.durationMs : null;
+    : (isLifetime ? "Selamanya" : "—");
+  // AKTIF SEJAK: pakai user.premiumStartedAt (di-set saat premium diaktifkan /
+  // disetujui admin) — sumber langsung & akurat. Fallback ke hitung-mundur
+  // (expiresAt − durationMs) hanya kalau premiumStartedAt tak ada. Bugfix 2026-07-01:
+  // dulu SELALU hitung-mundur → untuk lifetime (expiresAt null) hasilnya "—",
+  // padahal tanggal mulai tersimpan di premiumStartedAt.
+  const premiumSinceMs = Number(user?.premiumStartedAt) ||
+    ((expiresAt && plan.durationMs) ? expiresAt - plan.durationMs : null);
   const premiumSinceStr = premiumSinceMs
     ? new Date(premiumSinceMs).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
     : "—";
@@ -37654,9 +37758,12 @@ function renderPremiumInsightsView() {
   const _icoPlay = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20" fill="currentColor" stroke="none"/></svg>`;
   const _icoSparkle = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.7L12 14.8 6.9 17.5l1-5.7-4-4 5.6-.8Z"/></svg>`;
   const _icoCoin = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M9 9h4a2 2 0 1 1 0 4H9v2h5"/></svg>`;
-  const _icoStar = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 16l-6.5 4.5 2-7L2 9h7Z"/></svg>`;
+  const _icoShield = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>`;
+  const _icoReceipt = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3"/><path d="M8 8h8M8 12h6"/></svg>`;
+  const _icoCalendar = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 2.5v4M16 2.5v4"/><path d="M8.5 14.5l2.2 2.2 4.3-4.3"/></svg>`;
+  const _icoStar = `<svg viewBox="4 5 92 90"><defs><linearGradient id="mfStarG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F0C878"/><stop offset=".5" stop-color="#FFFBE0"/><stop offset="1" stop-color="#F0C878"/></linearGradient></defs><path fill="url(#mfStarG)" d="M50 7 L63.52 34.39 L93.75 38.79 L71.87 60.11 L77.03 90.21 L50 76 L22.97 90.21 L28.13 60.11 L6.25 38.79 L36.48 34.39 Z"/><text x="50" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="54" fill="#4E220F">P</text></svg>`;
   // v651: filled star untuk badge hero membership
-  const _icoStarSolid = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 17.56l-5.9 3.1 1.13-6.57L2.45 9.44l6.6-.96Z"/></svg>`;
+  const _icoStarSolid = `<svg viewBox="4 5 92 90" fill="currentColor"><path d="M50 7 L63.52 34.39 L93.75 38.79 L71.87 60.11 L77.03 90.21 L50 76 L22.97 90.21 L28.13 60.11 L6.25 38.79 L36.48 34.39 Z"/></svg>`;
   // v658: hero pakai _icoStarSolid (ikon premium yang konsisten dgn app).
   const _icoCard = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>`;
   const _icoSave = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M6 10l6 6 6-6"/><path d="M5 20h14"/></svg>`;
@@ -37673,7 +37780,7 @@ function renderPremiumInsightsView() {
                 ? `<img src="${escapeHtml(user.avatar)}" alt=""/>`
                 : `<span class="pi-hero5-avatar-fb">${escapeHtml((user?.name || user?.username || "U").charAt(0).toUpperCase())}</span>`}
             </div>
-            <span class="pi-hero5-star" aria-hidden="true">${_icoStarSolid}</span>
+            <span class="pi-hero5-star" aria-hidden="true">${_icoStar}</span>
           </div>
           <div class="pi-hero5-id">
             <h3 class="pi-hero5-name" data-no-i18n>${escapeHtml(user?.name || ("@" + (user?.username || "kamu")))}</h3>
@@ -37768,7 +37875,7 @@ function renderPremiumInsightsView() {
       <!-- 5. STATUS LANGGANAN -->
       <div class="pi-card pi-card-big pi-sub-card">
         <div class="pi-card-head pi-head-stack">
-          ${_iconWrap(_icoCard)}
+          ${_iconWrap(_icoCalendar)}
           <div class="pi-head-text">
             <h4 data-no-i18n>Status Langganan</h4>
             <small>Detail paket Premium kamu.</small>
@@ -37791,10 +37898,6 @@ function renderPremiumInsightsView() {
             <small>BERLAKU SAMPAI</small>
             <strong>${escapeHtml(expDateStr)}${daysLeft != null ? ` <span class="pi-sub-tag">(${daysLeft} hari lagi)</span>` : ""}</strong>
           </div>
-        </div>
-        <div class="pi-sub-actions">
-          <button type="button" class="btn ghost sm" id="piSubHistory">📜 Riwayat Pembelian</button>
-          <button type="button" class="btn ghost sm" id="piSubManage">⚙ Kelola Langganan</button>
         </div>
       </div>
 
@@ -37837,13 +37940,7 @@ function renderPremiumInsightsView() {
       document.querySelector('[data-view="' + view + '"]')?.click();
     });
   });
-  document.getElementById("piSubHistory")?.addEventListener("click", () => {
-    const histBtn = document.querySelector('.nav-item[data-view="history"]') || document.querySelector('[data-view="history"]');
-    histBtn?.click();
-  });
-  document.getElementById("piSubManage")?.addEventListener("click", () => {
-    document.getElementById("pdUpgradeBtn")?.click();
-  });
+  // 2026-07-01: tombol "Riwayat Pembelian" + "Kelola Langganan" DIHAPUS — redundan/tak berfungsi utk user premium (req owner)
   // v652: hero "Kelola Membership"
   document.getElementById("piHeroManage")?.addEventListener("click", () => {
     document.getElementById("pdUpgradeBtn")?.click();
@@ -44051,7 +44148,7 @@ function fypCommentsPanelHTML(videoId) {
       <div class="fyp-comments-panel-item">
         <div class="avatar"><span>${escapeHtml(init)}</span></div>
         <div class="content">
-          <div class="author">@${escapeHtml(name)}</div>
+          <div class="author">@${escapeHtml(name)}${(c.premium || c.tier === "premium") ? '<span class="cmt-premium-tick" title="Premium" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>' : ''}</div>
           <div class="text">${escapeHtml(c.text || c.body || "")}</div>
           ${ts ? `<div class="ts">${escapeHtml(ts)}</div>` : ""}
         </div>
@@ -45477,8 +45574,8 @@ function renderPeople() {
     ].filter(Boolean).join(" ");
     return `
       <div class="${cardClasses}" data-people-open="${escapeHtml(a.username)}">
-        <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true">★</i>' : ''}</div>
-        <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator">★ Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
+        <div class="avatar${isPremium ? ' avatar-premium' : ''}${a.avatar ? ' has-photo' : ''}">${avatarInner}${isPremium ? '<i class="avatar-premium-star" aria-hidden="true"><svg viewBox="4 5 92 90" style="width:.82em;height:.82em"><path fill="currentColor" d="M50 7 L63.52 34.39 L93.75 38.79 L71.87 60.11 L77.03 90.21 L50 76 L22.97 90.21 L28.13 60.11 L6.25 38.79 L36.48 34.39 Z"/></svg></i>' : ''}</div>
+        <div class="people-name">${escapeHtml(a.name)} ${isAdmin ? `<span class="role-badge admin">${isSuperAdminAcc ? 'Super Admin' : 'Admin'}</span>` : ''}${isPremium ? '<span class="premium-badge" title="Premium creator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:1em;height:1em;vertical-align:-0.13em;margin-right:3px"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>Premium</span>' : ''}${theyFollowMe ? '<span class="follow-back-tag">Follows you</span>' : ''}</div>
         <div class="people-handle">${handle}${!isAdmin ? ` • <span class="people-followers">${followerCount} pengikut</span>` : ''}${bioOnly ? ' <span class="people-bio-tag" title="Cocok di bio / profil">cocok di bio</span>' : ''}</div>
         ${a.bio ? `<p class="people-bio">${escapeHtml(a.bio)}</p>` : ""}
         ${previewHTML}
@@ -52194,7 +52291,10 @@ function clearUploadFieldError(input) {
     };
     const pickIcon = (t) => {
       t = (t || "").toLowerCase();
-      if (/auto judul|assist|\bai\b/.test(t)) return ICONS.ai;
+      /* Label AI Assist ("Judul & Tag Otomatis") → ikon TAG. Match BAIK teks EN asli
+         "AI Assist" (saat fungsi jalan sebelum i18n) MAUPUN teks ID "...tag otomatis"
+         (setelah diterjemahkan) — dulu keliru dapat ikon robot ICONS.ai. Req owner 2026-07-02. */
+      if (/auto judul|assist|\bai\b/.test(t) || (/tag/.test(t) && /otomatis|auto|automatik/.test(t))) return ICONS.tag;
       if (t.includes("hashtag")) return ICONS.hash;
       if (t.includes("kategori") || t.includes("category")) return ICONS.tag;
       if (t.includes("deskripsi") || t.includes("description")) return ICONS.desc;
@@ -53832,7 +53932,7 @@ function renderMyProfile() {
       const star = document.createElement("i");
       star.className = "avatar-premium-star";
       star.setAttribute("aria-hidden", "true");
-      star.textContent = "★";
+      star.innerHTML = '<svg viewBox="4 5 92 90" style="width:.82em;height:.82em"><path fill="currentColor" d="M50 7 L63.52 34.39 L93.75 38.79 L71.87 60.11 L77.03 90.21 L50 76 L22.97 90.21 L28.13 60.11 L6.25 38.79 L36.48 34.39 Z"/></svg>';
       avatarEl.appendChild(star);
     }
   }
@@ -53848,7 +53948,7 @@ function renderMyProfile() {
       const span = document.createElement("span");
       span.className = "premium-badge premium-badge-lg";
       span.title = "Premium creator";
-      span.textContent = "★ Premium";
+      span.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:1em;height:1em;vertical-align:-0.13em;margin-right:3px"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>Premium';
       dnEl.appendChild(span);
     }
   }
@@ -54491,7 +54591,7 @@ function refreshLibInlineComments(id) {
       <div class="lib-inline-comment-item">
         <div class="avatar"><span>${escapeHtml(init)}</span></div>
         <div class="content">
-          <div class="author">@${escapeHtml(name)}<span class="ts">${escapeHtml(ts)}</span></div>
+          <div class="author">@${escapeHtml(name)}${(c.premium || c.tier === "premium") ? '<span class="cmt-premium-tick" title="Premium" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>' : ''}<span class="ts">${escapeHtml(ts)}</span></div>
           <div class="text">${escapeHtml(c.text || c.body || "")}</div>
         </div>
       </div>`;
@@ -55227,6 +55327,7 @@ function closeLibInlinePlayer() {
       author: user?.username || "anon",
       text,
       ts: Date.now(),
+      premium: (user?.tier === "premium"), // 2026-07-02: simpan status premium → badge centang di komentar (req owner)
     });
     saveState();
     field.value = "";
@@ -58172,7 +58273,7 @@ function renderUserProfile() {
       span.id = "upPremiumBadge";
       span.className = "premium-badge premium-badge-lg";
       span.title = "Premium creator";
-      span.textContent = "★ Premium";
+      span.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:1em;height:1em;vertical-align:-0.13em;margin-right:3px"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>Premium';
       dnEl.appendChild(span);
     }
   }
@@ -61354,7 +61455,7 @@ document.getElementById("playerBackBtn")?.addEventListener("click", () => {
 const STO_IC = {
   trash:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
   restore: '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
-  star:    '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.4 5.8 21 7.2 14 2 9.3 8.9 8.6 12 2"/></svg>',
+  star:    '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/></svg>',
   alert:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
   clock:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
   check:   '<svg class="sto-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
