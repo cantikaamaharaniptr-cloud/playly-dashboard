@@ -83,6 +83,24 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
     if (authUser?.id) {
       const profileData = buildProfileData(authUser.id, email, body);
+      // GUARD ANTI-DOWNGRADE (2026-07-01): tier = status berbayar → SERVER yang
+      // authoritative, BUKAN client. Login dari device yg salinan lokalnya masih
+      // "free" (mis. localhost yg belum ter-sync) akan mengirim tier:"free" lalu
+      // meng-upsert-nya → MENGHAPUS premium di cloud (user kehilangan status
+      // berbayar + tampil "Gratis" di semua device). Maka: kalau client kirim
+      // "free" TAPI cloud sudah "premium", JANGAN sentuh kolom tier saat upsert
+      // (biarkan tetap premium). Upgrade (free→premium) tetap boleh dari client;
+      // downgrade sah tetap bisa lewat jalur admin/expiry server-side, bukan login.
+      if (profileData.tier === 'free') {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('tier')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (existingProfile && existingProfile.tier === 'premium') {
+          delete (profileData as { tier?: string }).tier;
+        }
+      }
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profileData, { onConflict: 'id' });
