@@ -291,6 +291,9 @@
   let _retryFlushing = false;
   async function flushRetryQueue() {
     if (_retryFlushing) return;
+    // Jangan flush selama jendela login (suspend) — biar tak ikut membanjiri
+    // sesi yang baru dibentuk (lihat pushToCloud). Di-flush setelah resume.
+    if (typeof window !== "undefined" && window.__PLAYLY_SUSPEND_CLOUD) return;
     const sb = client();
     if (!sb) return;
     const q = loadRetryQueue();
@@ -386,6 +389,17 @@
     if (key === RETRY_QUEUE_KEY) return; // jangan loop the retry queue itself
     if (isForeignAccountKey(key)) return; // jangan push akun user lain
     if (!isPushableAccountKey(key)) return; // account key: hanya push milik user login terkonfirmasi (cegah badai 401 saat boot)
+    // FIX RACE-SESI (2026-07-02): selama JENDELA LOGIN (suspend aktif), JANGAN
+    // push — cukup ANTRE. Login+boot menulis banyak key (playly-user, akun, flag
+    // welcome, state) → tiap tulisan memicu pushToCloud → badai request ter-
+    // autentikasi berbarengan tepat setelah signin → race cookie sesi
+    // @supabase/ssr → sesi batal (401). Push tertunda di-flush setelah sesi
+    // stabil (script.js safeBoot). Push saat sesi STABIL terbukti aman.
+    if (typeof window !== "undefined" && window.__PLAYLY_SUSPEND_CLOUD) {
+      let v; try { v = JSON.parse(raw); } catch { v = raw; }
+      enqueueRetry(key, v);
+      return;
+    }
     let value;
     try { value = JSON.parse(raw); } catch { value = raw; }
     // Phase B6a-3 (2026-05-25): per-user keys → route via /api/kv/sync

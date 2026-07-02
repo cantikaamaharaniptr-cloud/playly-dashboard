@@ -23803,6 +23803,20 @@ $("#signinForm").addEventListener("submit", async e => {
   //      karena user sudah pasti ada) → tarik akun + state milik user dari cloud.
   // Hanya untuk input EMAIL (username butuh map ke email yg tak ada lokal).
   let recoveredFromCloud = false;
+  // FIX RACE-SESI (2026-07-02): TUNDA semua push cloud selama jendela login.
+  // Login+boot menulis banyak key localStorage → tiap tulisan memicu pushToCloud
+  // → badai request ter-autentikasi berbarengan tepat setelah signin → race
+  // cookie sesi @supabase/ssr → sesi batal (/api/*/ jadi 401). Suspend =
+  // push di-antre, di-flush setelah sesi stabil (safeBoot). Failsafe 12 detik
+  // memastikan suspend TAK PERNAH nyangkut (mis. login gagal / koneksi putus).
+  try {
+    window.__PLAYLY_SUSPEND_CLOUD = true;
+    clearTimeout(window.__PLAYLY_SUSPEND_TIMER);
+    window.__PLAYLY_SUSPEND_TIMER = setTimeout(function () {
+      window.__PLAYLY_SUSPEND_CLOUD = false;
+      try { window.cloudSync && window.cloudSync.softResync && window.cloudSync.softResync({ force: true }); } catch (_) {}
+    }, 12000);
+  } catch (_) {}
   if (!existing && identifier.includes("@") &&
       window.supabaseAuthBridge && window.cloudSync && window.cloudSync.enabled) {
     try {
@@ -24071,6 +24085,17 @@ $("#signinForm").addEventListener("submit", async e => {
     console.log("[Auth] booting dashboard");
     try { bootDashboard(); afterBoot(); }
     catch (err) { console.error("[Auth] bootDashboard threw:", err); toast("⚠️ Gagal masuk dashboard — refresh halaman", "error"); }
+    // FIX RACE-SESI (2026-07-02): dashboard sudah tampil → sesi Supabase sudah
+    // stabil. Lepas suspend cloud + flush push yang tertunda selama login
+    // (delay kecil supaya tulisan boot terakhir ikut ter-antre dulu, baru
+    // di-flush sekaligus saat sesi stabil — burst di sini aman).
+    try {
+      setTimeout(function () {
+        try { clearTimeout(window.__PLAYLY_SUSPEND_TIMER); } catch (_) {}
+        window.__PLAYLY_SUSPEND_CLOUD = false;
+        try { window.cloudSync && window.cloudSync.softResync && window.cloudSync.softResync({ force: true }); } catch (_) {}
+      }, 2000);
+    } catch (_) {}
   };
   // Failsafe: 3.5s setelah welcome triggered, kalau done() belum panggil → force boot.
   setTimeout(() => { if (!booted) { console.warn("[Auth] welcome callback timeout — force boot"); safeBoot(); } }, 3500);
