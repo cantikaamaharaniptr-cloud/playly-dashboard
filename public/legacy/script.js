@@ -23974,10 +23974,24 @@ $("#signinForm").addEventListener("submit", async e => {
   // SETELAH cookie ter-set, pull state + profile dari Supabase dan apply
   // kalau cloud lebih baru — enables cross-device dashboard continuity.
   // Non-blocking di sini — boot loop yang await dgn budget waktu 1.5s.
+  //
+  // FIX SESI-GANDA (2026-07-02): kalau akun BARU dipulihkan dari cloud
+  // (recoveredFromCloud === true), syncSignin SUDAH dijalankan di jalur cloud-
+  // recovery di atas + cookie sesi Supabase sudah VALID (buktinya akun berhasil
+  // ditarik). Memanggil syncSignin LAGI di sini = signInWithPassword kedua →
+  // merotasi refresh-token → membatalkan cookie sesi yang barusan valid →
+  // request berikutnya (pullProfile/pullState) kena 401 → tier premium + state
+  // gagal ter-hydrate di device baru (gejala "premium tidak muncul saat ganti
+  // perangkat"). Maka: signin di sini HANYA kalau sesi belum dibentuk (login
+  // akun yang sudah ada lokal). Kalau sudah recovery → langsung hydrate.
   const _bridgeHydrationPromise = (async () => {
     try {
-      const syncRes = await window.supabaseAuthBridge?.syncSignin?.(email, password, user);
-      if (syncRes && syncRes.synced) {
+      let sessionReady = recoveredFromCloud;
+      if (!sessionReady) {
+        const syncRes = await window.supabaseAuthBridge?.syncSignin?.(email, password, user);
+        sessionReady = !!(syncRes && syncRes.synced);
+      }
+      if (sessionReady) {
         // Hydrate state + profile paralel (independent endpoints).
         const [stateRes, profileRes] = await Promise.all([
           hydrateStateFromCloud(user.username),
