@@ -23992,11 +23992,16 @@ $("#signinForm").addEventListener("submit", async e => {
         sessionReady = !!(syncRes && syncRes.synced);
       }
       if (sessionReady) {
-        // Hydrate state + profile paralel (independent endpoints).
-        const [stateRes, profileRes] = await Promise.all([
-          hydrateStateFromCloud(user.username),
-          hydrateProfileFromCloud(user.email),
-        ]);
+        // FIX RACE-SESI (2026-07-02): hydrate BERURUTAN, BUKAN Promise.all.
+        // Terbukti empiris: sesi Supabase STABIL kalau dibentuk bersih (1
+        // request), tapi BATAL (→ /api/state/sync + /api/profile/me 401 bbrp
+        // detik pasca-login) saat BANYAK request ter-autentikasi menyerbu
+        // berbarengan di jendela tepat setelah signin — race refresh-token/
+        // chunked-cookie @supabase/ssr (2 respons menulis cookie sesi yang
+        // saling menimpa). Menjalankan satu-per-satu = tak ada tumpang-tindih
+        // penulisan cookie → sesi bertahan.
+        const stateRes = await hydrateStateFromCloud(user.username);
+        const profileRes = await hydrateProfileFromCloud(user.email);
         return { state: stateRes, profile: profileRes };
       }
     } catch (_) {}
