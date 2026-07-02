@@ -20280,6 +20280,18 @@ document.getElementById("pdUpgradeBtn")?.addEventListener("click", () => {
           localStorage.setItem(`playly-account-${user.email}`, JSON.stringify(acc));
           localStorage.setItem("playly-user", JSON.stringify(user));
         } catch {}
+        // Dorong tier ke DB (profiles) SEKARANG — tak menunggu login berikutnya —
+        // supaya premium konsisten lintas-perangkat (fix "premium hilang" saat ganti
+        // device). Fire-and-forget: kalau gagal (offline/schema belum ada), localStorage
+        // + bridge upsert saat login berikut tetap jadi cadangan (tanpa regresi).
+        try {
+          fetch("/api/profile/tier", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ tier: "premium" }),
+          }).catch(() => {});
+        } catch {}
         applyRoleToUI?.();
         const plan = PREMIUM_PLANS[planKey];
         // planKey === "lifetime" → tampilkan "Selamanya" (durationLabel sudah Indonesia: "Selamanya").
