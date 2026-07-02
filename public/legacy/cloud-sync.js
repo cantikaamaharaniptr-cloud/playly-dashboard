@@ -356,6 +356,28 @@
     return suffix !== me;
   }
 
+  // Guard PUSH khusus account key — LEBIH KETAT dari isForeignAccountKey.
+  // account key (playly-account-{email}) HANYA boleh di-push kalau kita
+  // TERKONFIRMASI pemiliknya: email login diketahui DAN cocok. Saat identitas
+  // belum diketahui (jendela boot/login SEBELUM playly-user keisi), account key
+  // milik SIAPA PUN TIDAK di-push.
+  //
+  // FIX BADAI-401 (2026-07-02): key akun lain (mis. playly-account-admin...)
+  // ke-tarik ke localStorage via kebijakan baca cloud yang masih permisif, lalu
+  // saat boot (email belum diketahui) ikut ke-push → ditolak 401 berulang. Badai
+  // request 401 berbarengan ini (diduga) memicu race refresh-token @supabase/ssr
+  // → cookie sesi user yang barusan valid ikut dibatalkan → /api/profile/me +
+  // /api/state/sync jadi 401 (state gagal tersimpan lintas-device). Dengan guard
+  // ini, account key hanya di-push saat pemilik terkonfirmasi → badai hilang.
+  // (System key playly-account-{non-email} + key non-account tak diatur di sini.)
+  function isPushableAccountKey(key) {
+    if (typeof key !== "string" || key.indexOf("playly-account-") !== 0) return true;
+    var suffix = key.slice("playly-account-".length).toLowerCase();
+    if (suffix.indexOf("@") === -1) return true; // system key (bukan email) → boleh
+    var me = currentUserEmail();
+    return !!me && suffix === me; // hanya push kalau email login diketahui + cocok
+  }
+
   // === push (fire-and-forget) ============================================
   function pushToCloud(key, raw) {
     const sb = client();
@@ -363,6 +385,7 @@
     if (!shouldSync(key)) return;
     if (key === RETRY_QUEUE_KEY) return; // jangan loop the retry queue itself
     if (isForeignAccountKey(key)) return; // jangan push akun user lain
+    if (!isPushableAccountKey(key)) return; // account key: hanya push milik user login terkonfirmasi (cegah badai 401 saat boot)
     let value;
     try { value = JSON.parse(raw); } catch { value = raw; }
     // Phase B6a-3 (2026-05-25): per-user keys → route via /api/kv/sync
