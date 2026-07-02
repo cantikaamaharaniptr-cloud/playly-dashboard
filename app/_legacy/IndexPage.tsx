@@ -34,13 +34,24 @@ function assetVersion(file: string, fallback: string): string {
   }
 }
 
+// Hash build-time (dipakai di PROD, dihitung sekali — nol overhead runtime).
 const V_MAIN = assetVersion('script.js', '20260627-admin2-gates');
 const V_CLOUD_SYNC = assetVersion('cloud-sync.js', '20260627-orphan-leak-fix-v559');
 const V_AUTH_BRIDGE = assetVersion('supabase-auth-bridge.js', '20260627-orphan-leak-fix-v559');
 const V_PICONS = assetVersion('picons.js', '20260516-settings-ico-v188');
 const V_PARTICLES = assetVersion('particles-bg.js', '20260516-particles-v2');
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export default function IndexPage() {
+  // Dev: hitung ULANG hash tiap render supaya edit JS (script.js/cloud-sync.js/dll)
+  // LANGSUNG kebaca tanpa restart server (const V_* di atas di-freeze saat modul
+  // load → edit tak update ?v= → browser nyangkut cache lama, seperti bug STYLES_V).
+  // Prod: pakai hash build-time (const di atas) — nol overhead runtime.
+  const vMain = IS_DEV ? assetVersion('script.js', V_MAIN) : V_MAIN;
+  const vCloud = IS_DEV ? assetVersion('cloud-sync.js', V_CLOUD_SYNC) : V_CLOUD_SYNC;
+  const vAuth = IS_DEV ? assetVersion('supabase-auth-bridge.js', V_AUTH_BRIDGE) : V_AUTH_BRIDGE;
+  const vPicons = IS_DEV ? assetVersion('picons.js', V_PICONS) : V_PICONS;
+  const vParticles = IS_DEV ? assetVersion('particles-bg.js', V_PARTICLES) : V_PARTICLES;
   return (
     <>
       {/* Pre-paint admin role detection — must run before the markup paints
@@ -53,11 +64,11 @@ export default function IndexPage() {
       {/* Scripts in the exact original order. */}
       <script src={legacyAsset('index-config.js')} />
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" />
-      <script src={legacyAsset('cloud-sync.js', V_CLOUD_SYNC)} />
-      <script src={legacyAsset('supabase-auth-bridge.js', V_AUTH_BRIDGE)} />
-      <script src={legacyAsset('script.js', V_MAIN)} data-playly-main="1" />
-      <script src={legacyAsset('picons.js', V_PICONS)} />
-      <script src={legacyAsset('particles-bg.js', V_PARTICLES)} />
+      <script src={legacyAsset('cloud-sync.js', vCloud)} />
+      <script src={legacyAsset('supabase-auth-bridge.js', vAuth)} />
+      <script src={legacyAsset('script.js', vMain)} data-playly-main="1" />
+      <script src={legacyAsset('picons.js', vPicons)} />
+      <script src={legacyAsset('particles-bg.js', vParticles)} />
       <script src={legacyAsset('index-ensure.js')} />
     </>
   );

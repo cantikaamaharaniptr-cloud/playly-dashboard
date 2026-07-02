@@ -39,7 +39,7 @@
     download: '<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
     users: '<circle cx="7.5" cy="8" r="2.7"/><path d="M3.5 18a4 4 0 0 1 8 0"/><circle cx="16.5" cy="8" r="2.7"/><path d="M12.5 18a4 4 0 0 1 8 0"/>',
-    crown: '<path d="M3 7l4 4 5-6 5 6 4-4-2 12H5Z"/><path d="M5 19h14"/>',
+    crown: '<path d="M3 17V8l4.5 3L12 5l4.5 6L21 8v9z"/><path d="M3 17h18"/>',
     gem: '<path d="M6 4h12l3 5-9 11L3 9Z"/><path d="M3 9h18M9 4 7 9l5 11M15 4l2 5-5 11"/>',
     lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
     unlock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/>',
